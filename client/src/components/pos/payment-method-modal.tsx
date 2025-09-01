@@ -82,19 +82,39 @@ export function PaymentMethodModal({
     timestamp: new Date().toISOString()
   });
 
-  if (!orderForPayment || !orderForPayment.id) {
-    console.error(`❌ PAYMENT MODAL: orderForPayment is missing or invalid:`, {
-      orderForPayment: orderForPayment,
-      orderForPaymentType: typeof orderForPayment,
-      hasId: orderForPayment?.id,
+  // Validate orderForPayment exists or create fallback order info
+  const orderInfo = orderForPayment || {
+    id: `temp-${Date.now()}`,
+    total: total || 0,
+    subtotal: total || 0,
+    tax: 0,
+    items: cartItems || []
+  };
+
+  // Log for debugging but don't block the modal
+  if (!orderForPayment) {
+    console.warn("⚠️ WARNING: orderForPayment is undefined, using fallback");
+    console.log("🔍 Payment Modal Debug - Using fallback order:", {
+      isOpen,
+      total,
+      cartItems: cartItems?.length,
+      orderForPayment,
+      orderInfo,
+      receipt
+    });
+  }
+
+  if (!orderInfo.id) {
+    console.error(`❌ PAYMENT MODAL: orderInfo.id is missing`, {
+      orderInfo,
       timestamp: new Date().toISOString()
     });
   } else {
-    console.log(`✅ PAYMENT MODAL: orderForPayment is valid:`, {
-      id: orderForPayment.id,
-      status: orderForPayment.status,
-      tableId: orderForPayment.tableId,
-      total: orderForPayment.total,
+    console.log(`✅ PAYMENT MODAL: orderInfo is valid:`, {
+      id: orderInfo.id,
+      status: orderInfo.status,
+      tableId: orderInfo.tableId,
+      total: orderInfo.total,
       timestamp: new Date().toISOString()
     });
   }
@@ -285,68 +305,51 @@ export function PaymentMethodModal({
     console.log(`🚀 ========================================`);
     console.log(`🚀 HANDLESELECT FUNCTION ENTRY POINT`);
     console.log(`🚀 ========================================`);
-    console.log(`🔥 HANDLESELECT FUNCTION CALLED - Method: ${method}, Order ID: ${orderForPayment?.id}`);
+    console.log(`🔥 HANDLESELECT FUNCTION CALLED - Method: ${method}, Order ID: ${orderInfo.id}`);
     console.log(`🔍 Function entry debug:`, {
       method: method,
       methodType: typeof method,
       orderForPayment: orderForPayment,
-      orderId: orderForPayment?.id,
+      orderInfoId: orderInfo.id,
       orderForPaymentFullObject: JSON.stringify(orderForPayment, null, 2),
       timestamp: new Date().toISOString()
     });
 
-    // EARLY VALIDATION: Check if orderForPayment exists
-    if (!orderForPayment) {
-      console.error(`❌ CRITICAL ERROR: orderForPayment is null/undefined`);
+    // EARLY VALIDATION: Check if orderInfo exists and has an ID
+    if (!orderInfo || !orderInfo.id) {
+      console.error(`❌ CRITICAL ERROR: orderInfo is missing or has no ID`);
       console.error(`🔍 Debug info:`, {
-        orderForPayment: orderForPayment,
-        orderForPaymentType: typeof orderForPayment,
-        method: method,
-        propsReceived: {
-          isOpen: isOpen,
-          total: total,
-          cartItems: cartItems?.length,
-          receipt: receipt
-        }
+        orderInfo: orderInfo,
+        orderInfoType: typeof orderInfo,
+        hasId: 'id' in (orderInfo || {}),
+        id: orderInfo?.id,
+        idType: typeof orderInfo?.id
       });
       alert('Lỗi: Không tìm thấy thông tin đơn hàng để thanh toán');
       return;
     }
 
-    if (!orderForPayment.id) {
-      console.error(`❌ CRITICAL ERROR: orderForPayment.id is missing`);
-      console.error(`🔍 Debug info:`, {
-        orderForPayment: orderForPayment,
-        orderForPaymentKeys: Object.keys(orderForPayment || {}),
-        hasId: 'id' in (orderForPayment || {}),
-        id: orderForPayment.id,
-        idType: typeof orderForPayment.id
-      });
-      alert('Lỗi: ID đơn hàng không hợp lệ');
-      return;
-    }
+    console.log(`✅ VALIDATION PASSED: orderInfo is valid`);
 
-    console.log(`✅ VALIDATION PASSED: orderForPayment is valid`);
-    
     setSelectedPaymentMethod(method);
-    
-    console.log(`🔄 Payment method selected: ${method} for order ${orderForPayment?.id}`);
-    
+
+    console.log(`🔄 Payment method selected: ${method} for order ${orderInfo?.id}`);
+
     // CRITICAL: Update order status to 'paid' immediately when payment method is selected
-    console.log(`🔍 CHECKING IF ORDER ID EXISTS: ${orderForPayment?.id}`);
-    if (orderForPayment?.id) {
+    console.log(`🔍 CHECKING IF ORDER ID EXISTS: ${orderInfo?.id}`);
+    if (orderInfo?.id) {
       try {
-        console.log(`🚀 STARTING updateOrderStatus call for order ${orderForPayment.id} with payment method: ${method}`);
+        console.log(`🚀 STARTING updateOrderStatus call for order ${orderInfo.id} with payment method: ${method}`);
         console.log(`📋 Order details before updateOrderStatus call:`, {
-          orderId: orderForPayment.id,
-          currentStatus: orderForPayment.status,
+          orderId: orderInfo.id,
+          currentStatus: orderInfo.status,
           paymentMethod: method,
           timestamp: new Date().toISOString()
         });
-        
-        console.log(`🔥 MAKING API CALL NOW: PUT /api/orders/${orderForPayment.id}/status`);
-        
-        const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
+
+        console.log(`🔥 MAKING API CALL NOW: PUT /api/orders/${orderInfo.id}/status`);
+
+        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -355,17 +358,17 @@ export function PaymentMethodModal({
             status: 'paid'
           }),
         });
-        
+
         console.log(`🔍 API Response received:`, {
           status: statusResponse.status,
           statusText: statusResponse.statusText,
           ok: statusResponse.ok,
           url: statusResponse.url
         });
-        
+
         if (statusResponse.ok) {
           const updatedOrder = await statusResponse.json();
-          console.log(`✅ updateOrderStatus completed successfully for order ${orderForPayment.id}`);
+          console.log(`✅ updateOrderStatus completed successfully for order ${orderInfo.id}`);
           console.log(`🎯 Order status changed: ${updatedOrder.previousStatus} → 'paid'`);
           console.log(`📊 Updated order details:`, {
             orderId: updatedOrder.id,
@@ -375,10 +378,10 @@ export function PaymentMethodModal({
           });
         } else {
           const errorText = await statusResponse.text();
-          console.error(`❌ updateOrderStatus failed for order ${orderForPayment.id}:`, errorText);
+          console.error(`❌ updateOrderStatus failed for order ${orderInfo.id}:`, errorText);
         }
       } catch (error) {
-        console.error(`❌ Error calling updateOrderStatus for order ${orderForPayment.id}:`, error);
+        console.error(`❌ Error calling updateOrderStatus for order ${orderInfo.id}:`, error);
         console.error(`🔍 Error details:`, {
           errorType: error?.constructor?.name,
           errorMessage: error?.message,
@@ -402,8 +405,8 @@ export function PaymentMethodModal({
         // Use exact total with proper priority
         const orderTotal =
           receipt?.exactTotal ??
-          orderForPayment?.exactTotal ??
-          orderForPayment?.total ??
+          orderInfo?.exactTotal ??
+          orderInfo?.total ??
           total ??
           0;
 
@@ -519,8 +522,8 @@ export function PaymentMethodModal({
         try {
           const orderTotal =
             receipt?.exactTotal ??
-            orderForPayment?.exactTotal ??
-            orderForPayment?.total ??
+            orderInfo?.exactTotal ??
+            orderInfo?.total ??
             total ??
             0;
           const fallbackData = `Payment via QR\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
@@ -547,8 +550,8 @@ export function PaymentMethodModal({
         // Use exact total with proper priority for QR payment
         const orderTotal =
           receipt?.exactTotal ??
-          orderForPayment?.exactTotal ??
-          orderForPayment?.total ??
+          orderInfo?.exactTotal ??
+          orderInfo?.total ??
           total ??
           0;
         const qrData = `Payment via ${method}\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
@@ -625,10 +628,10 @@ export function PaymentMethodModal({
   const handleCashPaymentComplete = async () => {
     const receivedAmount = parseFloat(cashAmountInput || "0");
 
-    // Sử dụng exact total with proper priority
+    // Use exact total with proper priority
     const orderTotal = receipt?.exactTotal ??
-                      orderForPayment?.exactTotal ??
-                      orderForPayment?.total ??
+                      orderInfo?.exactTotal ??
+                      orderInfo?.total ??
                       total ??
                       0;
 
@@ -662,25 +665,25 @@ export function PaymentMethodModal({
   const handleEInvoiceConfirm = async (eInvoiceData: any) => {
     console.log("📧 E-Invoice confirmed from payment modal:", eInvoiceData);
 
-    if (!orderForPayment?.id) {
+    if (!orderInfo?.id) {
       console.error("❌ No order ID found for payment update");
       return;
     }
 
     try {
-      console.log("🔄 Step 1: Starting payment process for order:", orderForPayment.id);
+      console.log("🔄 Step 1: Starting payment process for order:", orderInfo.id);
 
       // STEP 1: Update order status to 'paid' using the dedicated status endpoint
       console.log("📤 Step 1: Updating order status to 'paid'");
       console.log(`🔍 Order details before update:`, {
-        orderId: orderForPayment.id,
-        currentStatus: orderForPayment.status,
-        tableId: orderForPayment.tableId,
-        total: orderForPayment.total,
+        orderId: orderInfo.id,
+        currentStatus: orderInfo.status,
+        tableId: orderInfo.tableId,
+        total: orderInfo.total,
         paymentMethod: selectedPaymentMethod
       });
 
-      const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
+      const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -700,7 +703,7 @@ export function PaymentMethodModal({
 
       const statusResult = await statusResponse.json();
       console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
-      console.log(`🎯 Order status changed: ${orderForPayment.status} → 'paid'`);
+      console.log(`🎯 Order status changed: ${orderInfo.status} → 'paid'`);
 
       // STEP 2: Update order with payment details
       console.log("📤 Step 2: Adding payment details to order");
@@ -712,12 +715,12 @@ export function PaymentMethodModal({
 
       // Add cash payment specific data if applicable
       if (selectedPaymentMethod === "cash" && cashAmountInput) {
-        const orderTotal = receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0;
+        const orderTotal = receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0;
         paymentData.amountReceived = parseFloat(cashAmountInput).toFixed(2);
         paymentData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
       }
 
-      const paymentResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
+      const paymentResponse = await fetch(`/api/orders/${orderInfo.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -737,23 +740,23 @@ export function PaymentMethodModal({
       // STEP 3: Create receipt data for printing
       console.log("🔄 Step 3: Creating receipt data for printing");
       const receiptData = {
-        ...orderForPayment,
-        transactionId: `ORDER-${orderForPayment.id}`,
-        items: orderForPayment.orderItems || [],
-        subtotal: orderForPayment.subtotal || "0",
-        tax: orderForPayment.tax || "0", 
-        total: orderForPayment.total || "0",
-        exactSubtotal: orderForPayment.exactSubtotal || 0,
-        exactTax: orderForPayment.exactTax || 0,
-        exactTotal: orderForPayment.exactTotal || 0,
+        ...orderInfo,
+        transactionId: `ORDER-${orderInfo.id}`,
+        items: orderInfo.items || [],
+        subtotal: orderInfo.subtotal || "0",
+        tax: orderInfo.tax || "0",
+        total: orderInfo.total || "0",
+        exactSubtotal: orderInfo.exactSubtotal || 0,
+        exactTax: orderInfo.exactTax || 0,
+        exactTotal: orderInfo.exactTotal || 0,
         paymentMethod: selectedPaymentMethod,
         cashierName: eInvoiceData.cashierName || "System User",
         createdAt: new Date().toISOString(),
         paidAt: new Date().toISOString(),
         einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
         amountReceived: selectedPaymentMethod === "cash" && cashAmountInput ? parseFloat(cashAmountInput) : null,
-        change: selectedPaymentMethod === "cash" && cashAmountInput ? 
-          parseFloat(cashAmountInput) - (orderForPayment.exactTotal || orderForPayment.total || 0) : null
+        change: selectedPaymentMethod === "cash" && cashAmountInput ?
+          parseFloat(cashAmountInput) - (orderInfo.exactTotal || orderInfo.total || 0) : null
       };
 
       // STEP 4: Force immediate UI refresh after successful status update
@@ -765,41 +768,41 @@ export function PaymentMethodModal({
         const events = [
           new CustomEvent('orderStatusUpdated', {
             detail: {
-              orderId: orderForPayment.id,
+              orderId: orderInfo.id,
               status: 'paid',
-              previousStatus: orderForPayment.status,
-              tableId: orderForPayment.tableId,
+              previousStatus: orderInfo.status,
+              tableId: orderInfo.tableId,
               paymentMethod: selectedPaymentMethod,
               timestamp: new Date().toISOString()
             }
           }),
           new CustomEvent('refreshOrders', {
-            detail: { 
+            detail: {
               immediate: true,
-              orderId: orderForPayment.id,
+              orderId: orderInfo.id,
               newStatus: 'paid'
             }
           }),
           new CustomEvent('refreshTables', {
-            detail: { 
+            detail: {
               immediate: true,
-              tableId: orderForPayment.tableId,
-              orderId: orderForPayment.id
+              tableId: orderInfo.tableId,
+              orderId: orderInfo.id
             }
           }),
           new CustomEvent('paymentCompleted', {
-            detail: { 
-              orderId: orderForPayment.id, 
-              tableId: orderForPayment.tableId,
+            detail: {
+              orderId: orderInfo.id,
+              tableId: orderInfo.tableId,
               paymentMethod: selectedPaymentMethod,
               timestamp: new Date().toISOString()
             }
           }),
           new CustomEvent('tableStatusUpdate', {
-            detail: { 
-              tableId: orderForPayment.tableId, 
+            detail: {
+              tableId: orderInfo.tableId,
               checkForRelease: true,
-              orderId: orderForPayment.id,
+              orderId: orderInfo.id,
               immediate: true
             }
           })
@@ -814,10 +817,10 @@ export function PaymentMethodModal({
         setTimeout(() => {
           console.log("🔄 Manual UI refresh trigger");
           window.dispatchEvent(new CustomEvent('forceRefresh', {
-            detail: { 
+            detail: {
               reason: 'payment_completed',
-              orderId: orderForPayment.id,
-              tableId: orderForPayment.tableId
+              orderId: orderInfo.id,
+              tableId: orderInfo.tableId
             }
           }));
         }, 500);
@@ -834,15 +837,15 @@ export function PaymentMethodModal({
       onSelectMethod("paymentCompleted", {
         ...eInvoiceData,
         originalPaymentMethod: selectedPaymentMethod,
-        orderId: orderForPayment.id,
-        tableId: orderForPayment.tableId,
+        orderId: orderInfo.id,
+        tableId: orderInfo.tableId,
         success: true,
         completed: true,
         receipt: receiptData,
         shouldShowReceipt: true,
         paymentData: selectedPaymentMethod === "cash" ? {
           amountReceived: parseFloat(cashAmountInput || "0"),
-          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
+          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0)
         } : null
       });
 
@@ -858,13 +861,13 @@ export function PaymentMethodModal({
       onSelectMethod("paymentError", {
         ...eInvoiceData,
         originalPaymentMethod: selectedPaymentMethod,
-        orderId: orderForPayment?.id,
-        tableId: orderForPayment?.tableId,
+        orderId: orderInfo?.id,
+        tableId: orderInfo?.tableId,
         success: false,
         error: error.message,
         paymentData: selectedPaymentMethod === "cash" ? {
           amountReceived: parseFloat(cashAmountInput || "0"),
-          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
+          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0)
         } : null
       });
     }
@@ -922,8 +925,8 @@ export function PaymentMethodModal({
     const orderTotal =
       receipt?.exactTotal ??
       parseFloat(receipt?.total || "0") ??
-      orderForPayment?.exactTotal ??
-      orderForPayment?.total ??
+      orderInfo?.exactTotal ??
+      orderInfo?.total ??
       total;
     if (parseFloat(cashAmountInput) >= orderTotal) {
       handleCashPaymentComplete();
@@ -1126,8 +1129,8 @@ export function PaymentMethodModal({
                   {/* Use exact total with proper priority for QR payment */}
                   {Math.floor(
                     receipt?.exactTotal ??
-                      orderForPayment?.exactTotal ??
-                      orderForPayment?.total ??
+                      orderInfo?.exactTotal ??
+                      orderInfo?.total ??
                       total ??
                       0,
                   ).toLocaleString("vi-VN")}{" "}
@@ -1148,12 +1151,12 @@ export function PaymentMethodModal({
                       variant="outline"
                       className="flex items-center justify-start p-4 h-auto"
                       onClick={() => {
-                        console.log(`🔥 BUTTON CLICKED - Method: ${method.id}, Order ID: ${orderForPayment?.id}`);
+                        console.log(`🔥 BUTTON CLICKED - Method: ${method.id}, Order ID: ${orderInfo.id}`);
                         console.log(`🔍 Button click debug:`, {
                           methodId: method.id,
                           methodName: method.name,
                           orderForPayment: orderForPayment,
-                          orderId: orderForPayment?.id,
+                          orderInfoId: orderInfo.id,
                           timestamp: new Date().toISOString()
                         });
                         handleSelect(method.id);
@@ -1234,8 +1237,8 @@ export function PaymentMethodModal({
                     {/* Use exact total with proper priority for QR payment */}
                     {Math.floor(
                       receipt?.exactTotal ??
-                        orderForPayment?.exactTotal ??
-                        orderForPayment?.total ??
+                        orderInfo?.exactTotal ??
+                        orderInfo?.total ??
                         total ??
                         0,
                     ).toLocaleString("vi-VN")}{" "}
@@ -1370,8 +1373,8 @@ export function PaymentMethodModal({
                     {/* Use exact total with proper priority for cash payment */}
                     {Math.floor(
                       receipt?.exactTotal ??
-                        orderForPayment?.exactTotal ??
-                        orderForPayment?.total ??
+                        orderInfo?.exactTotal ??
+                        orderInfo?.total ??
                         total ??
                         0,
                     ).toLocaleString("vi-VN")}{" "}
@@ -1421,8 +1424,8 @@ export function PaymentMethodModal({
                         const receivedAmount = parseFloat(cashAmountInput || "0");
                         // Sử dụng exact priority order giống như table payment
                         const orderTotal = receipt?.exactTotal ??
-                                         orderForPayment?.exactTotal ??
-                                         orderForPayment?.total ??
+                                         orderInfo?.exactTotal ??
+                                         orderInfo?.total ??
                                          total;
                         const changeAmount = receivedAmount - orderTotal;
                         return changeAmount >= 0
@@ -1435,8 +1438,8 @@ export function PaymentMethodModal({
                           (() => {
                             const receivedAmount = parseFloat(cashAmountInput || "0");
                             const orderTotal = receipt?.exactTotal ??
-                                             orderForPayment?.exactTotal ??
-                                             orderForPayment?.total ??
+                                             orderInfo?.exactTotal ??
+                                             orderInfo?.total ??
                                              total;
                             const changeAmount = receivedAmount - orderTotal;
                             return changeAmount >= 0 ? "text-green-800" : "text-red-800";
@@ -1445,8 +1448,8 @@ export function PaymentMethodModal({
                           {(() => {
                             const receivedAmount = parseFloat(cashAmountInput || "0");
                             const orderTotal = receipt?.exactTotal ??
-                                             orderForPayment?.exactTotal ??
-                                             orderForPayment?.total ??
+                                             orderInfo?.exactTotal ??
+                                             orderInfo?.total ??
                                              total;
                             const changeAmount = receivedAmount - orderTotal;
                             return changeAmount >= 0 ? "Tiền thối:" : "Còn thiếu:";
@@ -1456,8 +1459,8 @@ export function PaymentMethodModal({
                           (() => {
                             const receivedAmount = parseFloat(cashAmountInput || "0");
                             const orderTotal = receipt?.exactTotal ??
-                                             orderForPayment?.exactTotal ??
-                                             orderForPayment?.total ??
+                                             orderInfo?.exactTotal ??
+                                             orderInfo?.total ??
                                              total;
                             const changeAmount = receivedAmount - orderTotal;
                             return changeAmount >= 0 ? "text-green-600" : "text-red-600";
@@ -1469,8 +1472,8 @@ export function PaymentMethodModal({
 
                             // Sử dụng exact priority order giống như table payment
                             const orderTotal = receipt?.exactTotal ??
-                                             orderForPayment?.exactTotal ??
-                                             orderForPayment?.total ??
+                                             orderInfo?.exactTotal ??
+                                             orderInfo?.total ??
                                              total;
 
                             // Tính tiền thối: Tiền khách đưa - Tổng tiền cần thanh toán
@@ -1572,8 +1575,8 @@ export function PaymentMethodModal({
                     !cashAmountInput ||
                     parseFloat(cashAmountInput) <
                       (receipt?.exactTotal ??
-                       orderForPayment?.exactTotal ??
-                       orderForPayment?.total ??
+                       orderInfo?.exactTotal ??
+                       orderInfo?.total ??
                        total)
                   }
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-400"
@@ -1591,28 +1594,28 @@ export function PaymentMethodModal({
         <EInvoiceModal
           isOpen={showEInvoice}
           onClose={handleEInvoiceClose}
-          onConfirm={handleEInvoiceConfirm}
+          onConfirm={handleEInvoiceComplete}
           total={(() => {
             // Debug current data to understand the issue
             console.log("💰 Payment Modal EInvoice Total Debug:", {
               orderForPayment: orderForPayment,
               receipt: receipt,
               propTotal: total,
-              orderForPaymentTotal: orderForPayment?.total,
-              orderForPaymentExactTotal: orderForPayment?.exactTotal,
+              orderInfoTotal: orderInfo?.total,
+              orderInfoExactTotal: orderInfo?.exactTotal,
               receiptTotal: receipt?.total,
               receiptExactTotal: receipt?.exactTotal
             });
 
-            // Priority: orderForPayment data first, then receipt, then fallback to prop total
+            // Priority: orderInfo data first, then receipt, then fallback to prop total
             let calculatedTotal = 0;
 
-            if (orderForPayment?.total) {
-              calculatedTotal = parseFloat(orderForPayment.total.toString());
-              console.log("💰 Using orderForPayment.total for EInvoice:", calculatedTotal);
-            } else if (orderForPayment?.exactTotal) {
-              calculatedTotal = parseFloat(orderForPayment.exactTotal.toString());
-              console.log("💰 Using orderForPayment.exactTotal for EInvoice:", calculatedTotal);
+            if (orderInfo?.total) {
+              calculatedTotal = parseFloat(orderInfo.total.toString());
+              console.log("💰 Using orderInfo.total for EInvoice:", calculatedTotal);
+            } else if (orderInfo?.exactTotal) {
+              calculatedTotal = parseFloat(orderInfo.exactTotal.toString());
+              console.log("💰 Using orderInfo.exactTotal for EInvoice:", calculatedTotal);
             } else if (receipt?.exactTotal) {
               calculatedTotal = parseFloat(receipt.exactTotal.toString());
               console.log("💰 Using receipt.exactTotal for EInvoice:", calculatedTotal);
@@ -1629,9 +1632,9 @@ export function PaymentMethodModal({
           })()}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={(() => {
-            // Use orderItems from orderForPayment first, then fallback to other sources
+            // Use orderItems from orderInfo first, then fallback to other sources
             const itemsToMap =
-              orderForPayment?.orderItems ||
+              orderInfo?.items ||
               receipt?.orderItems ||
               cartItems ||
               [];
@@ -1641,7 +1644,7 @@ export function PaymentMethodModal({
             );
             console.log("📦 Payment Modal CartItems Debug:", {
               orderForPayment: orderForPayment,
-              orderItems: orderForPayment?.orderItems,
+              orderInfoItems: orderInfo?.items,
               receipt: receipt,
               receiptOrderItems: receipt?.orderItems,
               cartItems: cartItems,
