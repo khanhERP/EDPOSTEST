@@ -1224,6 +1224,15 @@ export class DatabaseStorage implements IStorage {
       timestamp: new Date().toISOString()
     });
     
+    console.log(`🔍 DEBUG: Input parameters validation:`, {
+      orderId: id,
+      orderIdType: typeof id,
+      orderIdValid: !isNaN(id) && id > 0,
+      newStatus: status,
+      statusType: typeof status,
+      statusValid: status && status.trim().length > 0
+    });
+    
     const database = tenantDb || db;
 
     // First, get the current order to know its table
@@ -1311,13 +1320,26 @@ export class DatabaseStorage implements IStorage {
       // CRITICAL: Handle table status update when order is paid
       if (status === "paid" && order.tableId) {
         console.log(`💳 Order PAID - IMMEDIATELY processing table ${order.tableId} release`);
+        console.log(`🔍 DEBUG: Table release process started:`, {
+          orderId: id,
+          tableId: order.tableId,
+          newStatus: status,
+          timestamp: new Date().toISOString()
+        });
 
         try {
           // Import tables from schema
           const { tables } = await import("@shared/schema");
+          console.log(`✅ Tables schema imported successfully`);
 
           // Check for other ACTIVE orders on the same table (excluding current order and paid/cancelled orders)
           const activeStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
+          console.log(`🔍 DEBUG: Checking for other active orders on table ${order.tableId}:`, {
+            excludeOrderId: id,
+            activeStatuses: activeStatuses,
+            tableId: order.tableId
+          });
+
           const otherActiveOrders = await database
             .select()
             .from(orders)
@@ -1330,6 +1352,8 @@ export class DatabaseStorage implements IStorage {
                 )
               )
             );
+
+          console.log(`🔍 DEBUG: Query completed - found ${otherActiveOrders.length} other active orders`);
 
           console.log(`🔍 Active orders remaining on table ${order.tableId}:`, {
             count: otherActiveOrders.length,
@@ -1358,6 +1382,12 @@ export class DatabaseStorage implements IStorage {
             // FORCE table release if no other active orders exist
             if (otherActiveOrders.length === 0) {
               console.log(`🔓 FORCING table ${order.tableId} release - no active orders remaining`);
+              console.log(`🔍 DEBUG: Table release attempt:`, {
+                tableId: order.tableId,
+                currentTableStatus: currentTable.status,
+                targetStatus: "available",
+                updateTimestamp: new Date().toISOString()
+              });
               
               const [updatedTable] = await database
                 .update(tables)
@@ -1368,32 +1398,115 @@ export class DatabaseStorage implements IStorage {
                 .where(eq(tables.id, order.tableId))
                 .returning();
               
+              console.log(`🔍 DEBUG: Table update query result:`, {
+                updatedTableExists: !!updatedTable,
+                updatedTableData: updatedTable ? {
+                  id: updatedTable.id,
+                  tableNumber: updatedTable.tableNumber,
+                  status: updatedTable.status,
+                  updatedAt: updatedTable.updatedAt
+                } : null
+              });
+              
               if (updatedTable) {
                 console.log(`✅ Table ${order.tableId} FORCEFULLY released:`, {
                   id: updatedTable.id,
                   tableNumber: updatedTable.tableNumber,
                   previousStatus: currentTable.status,
-                  newStatus: updatedTable.status
+                  newStatus: updatedTable.status,
+                  updateSuccess: true
                 });
+
+                console.log(`🔍 DEBUG: Verifying table status after update...`);
+                const [verifyTable] = await database
+                  .select()
+                  .from(tables)
+                  .where(eq(tables.id, order.tableId));
+                
+                console.log(`🔍 DEBUG: Table verification result:`, {
+                  tableFound: !!verifyTable,
+                  verifiedStatus: verifyTable?.status,
+                  verifiedUpdatedAt: verifyTable?.updatedAt
+                });
+
               } else {
                 console.error(`❌ CRITICAL: Failed to release table ${order.tableId} - no table returned`);
+                console.log(`🔍 DEBUG: Table update failed - investigating...`);
+                
+                // Debug: Check if table exists
+                const [checkTable] = await database
+                  .select()
+                  .from(tables)
+                  .where(eq(tables.id, order.tableId));
+                
+                console.log(`🔍 DEBUG: Table existence check:`, {
+                  tableExists: !!checkTable,
+                  tableData: checkTable ? {
+                    id: checkTable.id,
+                    tableNumber: checkTable.tableNumber,
+                    status: checkTable.status
+                  } : null
+                });
               }
             } else {
               console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherActiveOrders.length} active orders:`);
+              console.log(`🔍 DEBUG: Active orders preventing table release:`, {
+                tableId: order.tableId,
+                activeOrdersCount: otherActiveOrders.length,
+                activeOrdersDetails: otherActiveOrders.map(o => ({
+                  id: o.id,
+                  orderNumber: o.orderNumber,
+                  status: o.status,
+                  orderedAt: o.orderedAt
+                }))
+              });
+              
               otherActiveOrders.forEach((activeOrder, index) => {
-                console.log(`   ${index + 1}. Order ${activeOrder.orderNumber} (${activeOrder.status})`);
+                console.log(`   ${index + 1}. Order ${activeOrder.orderNumber} (${activeOrder.status}) - ID: ${activeOrder.id}`);
               });
             }
           }
         } catch (tableError) {
           console.error(`❌ CRITICAL: Error processing table status update for table ${order.tableId}:`, tableError);
+          console.log(`🔍 DEBUG: Table update error details:`, {
+            errorType: tableError?.constructor?.name,
+            errorMessage: tableError?.message,
+            errorStack: tableError?.stack,
+            tableId: order.tableId,
+            orderId: id
+          });
         }
+      } else {
+        console.log(`🔍 DEBUG: Order status is not 'paid' or no tableId - skipping table update:`, {
+          orderStatus: status,
+          tableId: order.tableId,
+          isPaidStatus: status === "paid",
+          hasTableId: !!order.tableId
+        });
       }
+
+      console.log(`🔍 DEBUG: Final order state before return:`, {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        tableId: order.tableId,
+        paidAt: order.paidAt,
+        updatedAt: order.updatedAt,
+        updateSuccess: true
+      });
 
       console.log(`=== END UPDATING ORDER STATUS ===`);
       return order;
     } catch (error) {
       console.error(`❌ Error updating order status:`, error);
+      console.log(`🔍 DEBUG: Storage layer error details:`, {
+        errorType: error?.constructor?.name,
+        errorMessage: error?.message,
+        errorStack: error?.stack,
+        orderId: id,
+        requestedStatus: status,
+        timestamp: new Date().toISOString()
+      });
       throw error;
     }
   }

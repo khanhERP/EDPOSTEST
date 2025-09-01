@@ -1080,6 +1080,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
         timestamp: new Date().toISOString()
       });
 
+      console.log(`🔍 DEBUG: API Request validation:`, {
+        originalId: req.params.id,
+        parsedId: id,
+        isValidId: !isNaN(id) && id > 0,
+        requestedStatus: status,
+        statusType: typeof status,
+        isValidStatus: status && typeof status === 'string' && status.trim().length > 0,
+        tenantDbType: tenantDb ? typeof tenantDb : 'undefined'
+      });
+
       if (isNaN(id)) {
         console.error(`❌ Invalid order ID: ${req.params.id}`);
         return res.status(400).json({ message: "Invalid order ID" });
@@ -1110,15 +1120,55 @@ export async function registerRoutes(app: Express): Promise < Server > {
         timestamp: new Date().toISOString()
       });
 
+      console.log(`🔍 DEBUG: About to call storage.updateOrderStatus with:`, {
+        id: id,
+        status: status,
+        tenantDb: !!tenantDb
+      });
+
       // Update order status using storage layer
       const order = await storage.updateOrderStatus(id, status, tenantDb);
 
+      console.log(`🔍 DEBUG: storage.updateOrderStatus returned:`, {
+        orderExists: !!order,
+        orderData: order ? {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          status: order.status,
+          tableId: order.tableId,
+          paidAt: order.paidAt,
+          updatedAt: order.updatedAt
+        } : null
+      });
+
       if (!order) {
         console.error(`❌ API: Order update failed for ID: ${id}`);
+        console.log(`🔍 DEBUG: Investigating why order update failed...`);
+        
+        // Check if order exists at all
+        const [checkOrder] = await db
+          .select()
+          .from(orders)
+          .where(eq(orders.id, id));
+        
+        console.log(`🔍 DEBUG: Order existence check:`, {
+          orderExists: !!checkOrder,
+          orderData: checkOrder ? {
+            id: checkOrder.id,
+            orderNumber: checkOrder.orderNumber,
+            currentStatus: checkOrder.status,
+            tableId: checkOrder.tableId
+          } : null
+        });
+
         return res.status(500).json({ 
           message: "Failed to update order status",
           orderId: id,
-          requestedStatus: status
+          requestedStatus: status,
+          debug: {
+            orderExists: !!checkOrder,
+            orderCurrentStatus: checkOrder?.status
+          }
         });
       }
 

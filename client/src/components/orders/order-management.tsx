@@ -509,12 +509,38 @@ export function OrderManagement() {
   const handleStatusUpdate = async (orderId: number, newStatus: string) => {
     try {
       console.log(`🔄 Order Management: Updating order ${orderId} status to ${newStatus}`);
+      console.log(`🔍 DEBUG: Frontend status update details:`, {
+        orderId: orderId,
+        orderIdType: typeof orderId,
+        orderIdValid: !isNaN(orderId) && orderId > 0,
+        newStatus: newStatus,
+        statusType: typeof newStatus,
+        statusValid: newStatus && newStatus.trim().length > 0,
+        timestamp: new Date().toISOString()
+      });
 
+      console.log(`🔍 DEBUG: Making API request to update order status...`);
       const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: newStatus });
+
+      console.log(`🔍 DEBUG: API Response details:`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
 
       if (response.ok) {
         const updatedOrder = await response.json();
         console.log(`✅ Order Management: Status updated successfully:`, updatedOrder);
+        console.log(`🔍 DEBUG: Updated order details:`, {
+          orderId: updatedOrder.id,
+          orderNumber: updatedOrder.orderNumber,
+          previousStatus: updatedOrder.previousStatus,
+          newStatus: updatedOrder.status,
+          tableId: updatedOrder.tableId,
+          paidAt: updatedOrder.paidAt,
+          updateTimestamp: updatedOrder.updateTimestamp
+        });
 
         // Force refresh the orders list
         queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
@@ -527,6 +553,13 @@ export function OrderManagement() {
       } else {
         const errorText = await response.text();
         console.error(`❌ Order Management: Failed to update status:`, errorText);
+        console.log(`🔍 DEBUG: API Error details:`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText,
+          orderId: orderId,
+          requestedStatus: newStatus
+        });
 
         toast({
           title: "Lỗi",
@@ -536,6 +569,15 @@ export function OrderManagement() {
       }
     } catch (error) {
       console.error('❌ Order Management: Error updating order status:', error);
+      console.log(`🔍 DEBUG: Exception details:`, {
+        errorType: error?.constructor?.name,
+        errorMessage: error?.message,
+        errorStack: error?.stack,
+        orderId: orderId,
+        requestedStatus: newStatus,
+        timestamp: new Date().toISOString()
+      });
+      
       toast({
         title: "Lỗi",
         description: "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng",
