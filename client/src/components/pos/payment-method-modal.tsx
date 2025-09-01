@@ -255,8 +255,27 @@ export function PaymentMethodModal({
     
     console.log(`🔄 Payment method selected: ${method} for order ${orderForPayment?.id}`);
     
-    // NOTE: Không cập nhật trạng thái đơn hàng ngay tại đây
-    // Sẽ cập nhật sau khi hoàn tất E-invoice trong handleEInvoiceConfirm
+    // CRITICAL: Update order status to 'paid' immediately when payment method is selected
+    if (orderForPayment?.id) {
+      try {
+        console.log(`🔄 Calling updateOrderStatus for order ${orderForPayment.id} with payment method: ${method}`);
+        
+        const statusResponse = await apiRequest('PUT', `/api/orders/${orderForPayment.id}/status`, {
+          status: 'paid'
+        });
+        
+        if (statusResponse.ok) {
+          const updatedOrder = await statusResponse.json();
+          console.log(`✅ updateOrderStatus completed successfully for order ${orderForPayment.id}`);
+          console.log(`🎯 Order status changed: ${updatedOrder.previousStatus} → 'paid'`);
+        } else {
+          const errorText = await statusResponse.text();
+          console.error(`❌ updateOrderStatus failed for order ${orderForPayment.id}:`, errorText);
+        }
+      } catch (error) {
+        console.error(`❌ Error calling updateOrderStatus for order ${orderForPayment.id}:`, error);
+      }
+    }
 
     if (method === "cash") {
       // Reset cash amount input when showing cash payment
