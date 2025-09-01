@@ -1216,6 +1216,16 @@ export class DatabaseStorage implements IStorage {
     status: string,
     tenantDb?: any,
   ): Promise<Order | undefined> {
+    console.log(`=== STORAGE: updateOrderStatus CALLED ===`);
+    console.log(`📞 STORAGE: Function called with parameters:`, {
+      orderId: id,
+      orderIdType: typeof id,
+      newStatus: status,
+      statusType: typeof status,
+      tenantDbExists: !!tenantDb,
+      callStack: new Error().stack?.split('\n').slice(1, 4).join('\n'),
+      timestamp: new Date().toISOString()
+    });
     console.log(`=== UPDATING ORDER STATUS ===`);
     console.log(`Order ID: ${id}, New Status: ${status}`);
     console.log(`🔍 Database info:`, {

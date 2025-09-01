@@ -1067,6 +1067,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
   app.put("/api/orders/:id/status", async (req: TenantRequest, res) => {
     try {
+      console.log(`📞 API: /api/orders/:id/status ENDPOINT CALLED`);
       const id = parseInt(req.params.id);
       const { status } = req.body;
       const tenantDb = await getTenantDatabase(req);
@@ -1141,6 +1142,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       // Add timing measurement
       const startTime = Date.now();
       console.log(`⏱️ DEBUG: Starting storage.updateOrderStatus call at:`, new Date().toISOString());
+      console.log(`📞 API: CALLING storage.updateOrderStatus(${id}, "${status}")`);
 
       // Update order status using storage layer
       let order;

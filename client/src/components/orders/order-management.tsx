@@ -531,16 +531,17 @@ export function OrderManagement() {
     setOrderDetailsOpen(true);
   };
 
-  const handleStatusUpdate = async (orderId: number, newStatus: string) => {
+  const updateOrderStatus = async (orderId: number, newStatus: string) => {
     try {
-      console.log(`🔄 Order Management: Updating order ${orderId} status to ${newStatus}`);
-      console.log(`🔍 DEBUG: Frontend status update details:`, {
+      console.log(`📞 ORDER MANAGEMENT: updateOrderStatus FUNCTION CALLED`);
+      console.log(`🔍 Order Management: updateOrderStatus called:`, {
         orderId: orderId,
         orderIdType: typeof orderId,
         orderIdValid: !isNaN(orderId) && orderId > 0,
         newStatus: newStatus,
         statusType: typeof newStatus,
         statusValid: newStatus && newStatus.trim().length > 0,
+        callStack: new Error().stack?.split('\n').slice(1, 3).join('\n'),
         timestamp: new Date().toISOString()
       });
 
@@ -1162,7 +1163,7 @@ export function OrderManagement() {
                       {order.status === 'pending' && (
                         <Button
                           size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'confirmed')}
+                          onClick={() => updateOrderStatus(order.id, 'confirmed')}
                           className="flex-1"
                         >
                           {t('orders.confirm')}
@@ -1172,7 +1173,7 @@ export function OrderManagement() {
                       {order.status === 'confirmed' && (
                         <Button
                           size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'preparing')}
+                          onClick={() => updateOrderStatus(order.id, 'preparing')}
                           className="flex-1"
                         >
                           {t('orders.startCooking')}
@@ -1182,7 +1183,7 @@ export function OrderManagement() {
                       {order.status === 'preparing' && (
                         <Button
                           size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'ready')}
+                          onClick={() => updateOrderStatus(order.id, 'ready')}
                           className="flex-1"
                         >
                           {t('orders.ready')}
@@ -1192,7 +1193,7 @@ export function OrderManagement() {
                       {order.status === 'ready' && (
                         <Button
                           size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'served')}
+                          onClick={() => updateOrderStatus(order.id, 'served')}
                           className="flex-1"
                         >
                           {t('orders.served')}
@@ -1202,7 +1203,96 @@ export function OrderManagement() {
                       {order.status === 'served' && (
                         <Button
                           size="sm"
-                          onClick={() => handlePaymentClick(order)}
+                          onClick={async () => {
+                            console.log("📄 ORDER MANAGEMENT: PAYMENT BUTTON CLICKED");
+                            console.log("📄 Order Management: Payment button clicked for order:", selectedOrder.id);
+                            console.log(`🔍 Order Management: E-invoice status for order ${selectedOrder.id}:`, {
+                              einvoiceStatus: selectedOrder.einvoiceStatus,
+                              type: typeof selectedOrder.einvoiceStatus,
+                              willCallUpdateOrderStatus: selectedOrder.einvoiceStatus !== 0
+                            });
+
+                            if (selectedOrder.einvoiceStatus === 0) {
+                              // E-invoice not published - show receipt preview for publishing
+                              console.log("🔍 DEBUG: Building cartItems for Receipt Preview Modal");
+
+                              const previewData = {
+                                ...selectedOrder,
+                                paymentMethod: "preview",
+                                transactionId: `PREVIEW-${Date.now()}`,
+                                items: orderItems || [],
+                                exactSubtotal: parseFloat(selectedOrder.subtotal || "0"),
+                                exactTax: parseFloat(selectedOrder.tax || "0"),
+                                exactTotal: parseFloat(selectedOrder.total || "0"),
+                                cashierName: "Order Management",
+                                createdAt: new Date().toISOString(),
+                                orderItems: orderItems || []
+                              };
+
+                              console.log("previewReceipt:", previewData);
+                              console.log("previewReceipt?.items:", previewData.items);
+
+                              const processedItems = previewData.items?.map((item: any) => {
+                                console.log("🔍 Mapping preview item:", item);
+                                return {
+                                  id: item.productId,
+                                  name: item.productName,
+                                  price: parseFloat(item.price || item.unitPrice || "0"),
+                                  quantity: item.quantity,
+                                  sku: item.sku || item.productSku || '',
+                                  taxRate: item.taxRate || 10
+                                };
+                              }) || [];
+
+                              console.log("✅ Mapped cartItems for preview:", processedItems);
+
+                              const completeOrderForPayment = {
+                                ...previewData,
+                                processedItems: processedItems
+                              };
+
+                              console.log("💰 Receipt Preview Modal total:", parseFloat(selectedOrder.total || "0"));
+
+                              console.log("📦 Mapping cart items for Payment Modal:", processedItems.length);
+
+                              console.log("💳 Setting up Receipt Preview Modal...", {
+                                orderId: selectedOrder.id,
+                                hasItems: processedItems.length > 0,
+                                total: parseFloat(selectedOrder.total || "0"),
+                                processedItemsCount: processedItems.length
+                              });
+
+                              // Set all required data states first
+                              setOrderForPayment(completeOrderForPayment);
+                              setPreviewReceipt(previewData);
+                              setShowReceiptPreview(true);
+                            } else {
+                              // E-invoice already published - direct payment
+                              console.log("💳 ORDER MANAGEMENT: E-invoice already published - WILL CALL updateOrderStatus");
+                              console.log("💳 E-invoice already published - proceeding to direct payment");
+                              console.log("📞 ORDER MANAGEMENT: About to call updateOrderStatus for paid status");
+
+                              const processedItems = orderItems?.map((item: any) => ({
+                                id: item.productId,
+                                name: item.productName || item.name,
+                                price: parseFloat(item.unitPrice || item.price || "0"),
+                                quantity: item.quantity,
+                                sku: item.sku || item.productSku || '',
+                                taxRate: item.taxRate || 10
+                              })) || [];
+
+                              setOrderForPayment({
+                                ...selectedOrder,
+                                processedItems: processedItems
+                              });
+
+                              console.log("📞 ORDER MANAGEMENT: CALLING updateOrderStatus NOW with 'paid' status");
+                              await updateOrderStatus(selectedOrder.id, 'paid');
+                              console.log("✅ ORDER MANAGEMENT: updateOrderStatus call completed");
+
+                              setShowReceiptPreview(true);
+                            }
+                          }}
                           className="flex-1 bg-green-600 hover:bg-green-700"
                         >
                           <CreditCard className="w-3 h-3 mr-1" />
@@ -1518,7 +1608,7 @@ export function OrderManagement() {
                           total: finalTotal,
                         });
 
-                        // Store the complete order data for payment flow with order ID
+                        // Prepare complete order data for payment flow with order ID
                         const completeOrderForPayment = {
                           ...selectedOrder,
                           orderItems: orderItems || [],
@@ -2095,7 +2185,7 @@ export function OrderManagement() {
               name: item.productName || item.name,
               price: parseFloat(item.price || item.unitPrice || '0'),
               quantity: item.quantity,
-              sku: item.sku || `SP${item.productId}`,
+              sku: item.sku || item.productSku || '',
               taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
             };
           });
