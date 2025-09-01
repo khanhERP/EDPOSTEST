@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,9 +40,19 @@ export function OrderManagement() {
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
+  const [shouldOpenReceiptPreview, setShouldOpenReceiptPreview] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  // Effect to handle opening the receipt preview modal
+  useEffect(() => {
+    if (shouldOpenReceiptPreview && previewReceipt && orderForPayment) {
+      console.log('🚀 Receipt preview modal should now be open');
+      setShowReceiptPreview(true);
+      setShouldOpenReceiptPreview(false); // Reset the flag
+    }
+  }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
@@ -1549,32 +1559,18 @@ export function OrderManagement() {
                         setOrderDetailsOpen(false);
 
                         // Then open receipt preview modal with a small delay
-                        setTimeout(() => {
-                          setShowReceiptPreview(true);
-                          console.log('✅ DEBUG: Receipt preview modal opened with states:', {
-                            showReceiptPreview: true,
-                            previewReceiptExists: !!previewData,
-                            orderForPaymentExists: !!completeOrderForPayment,
-                            orderForPaymentId: completeOrderForPayment?.id,
-                            afterSetState: {
-                              showReceiptPreview: true,
-                              orderForPayment: !!orderForPayment,
-                              previewReceipt: !!previewReceipt,
-                              orderDetailsOpen: false
-                            },
-                            timestamp: new Date().toISOString()
-                          });
+                        // CRITICAL FIX: Set states properly and use useEffect to trigger modal
+                        console.log('🔄 Setting all states in correct order');
 
-                          // Force a re-render check
-                          setTimeout(() => {
-                            console.log('🔍 DEBUG: Modal state verification after 500ms:', {
-                              showReceiptPreview: showReceiptPreview,
-                              previewReceipt: !!previewReceipt,
-                              orderForPayment: !!orderForPayment,
-                              timestamp: new Date().toISOString()
-                            });
-                          }, 500);
-                        }, 200);
+                        // Close order details immediately
+                        setOrderDetailsOpen(false);
+
+                        // Set all data states first
+                        setOrderForPayment(completeOrderForPayment);
+                        setPreviewReceipt(previewData);
+
+                        // Use a flag to trigger modal opening
+                        setShouldOpenReceiptPreview(true);
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
