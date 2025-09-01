@@ -565,7 +565,7 @@ export function OrderManagement() {
 
         // CRITICAL: Force immediate query refresh and UI update
         console.log(`🔄 FORCING immediate UI refresh after status update...`);
-        
+
         // Invalidate and refetch queries immediately
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
@@ -617,7 +617,7 @@ export function OrderManagement() {
         requestedStatus: newStatus,
         timestamp: new Date().toISOString()
       });
-      
+
       toast({
         title: "Lỗi",
         description: "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng",
@@ -1508,7 +1508,7 @@ export function OrderManagement() {
                           total: finalTotal,
                         });
 
-                        // Store the complete order data with proper field mapping for payment flow
+                        // Store the complete order data for payment flow with order ID
                         const completeOrderForPayment = {
                           ...selectedOrder,
                           orderItems: orderItems || [],
@@ -1526,26 +1526,42 @@ export function OrderManagement() {
                           processedItemsCount: processedItems.length
                         });
 
-                        console.log(`🔍 DEBUG: Setting modal states:`, {
+                        console.log('🔍 DEBUG: Setting modal states:', {
                           orderForPayment: !!completeOrderForPayment,
+                          orderForPaymentId: completeOrderForPayment?.id,
                           previewReceipt: !!previewData,
                           showReceiptPreview: true,
                           orderDetailsOpen: false,
                           timestamp: new Date().toISOString()
                         });
 
+                        // Ensure order ID is present before proceeding
+                        if (!completeOrderForPayment?.id || !selectedOrder?.id) {
+                          console.error('❌ Missing order ID for payment flow:', {
+                            completeOrderForPaymentId: completeOrderForPayment?.id,
+                            selectedOrderId: selectedOrder?.id
+                          });
+                          toast({
+                            title: 'Lỗi',
+                            description: 'Không tìm thấy ID đơn hàng. Vui lòng thử lại.',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+
                         // Set states in correct order to prevent race conditions
                         setOrderForPayment(completeOrderForPayment);
                         setPreviewReceipt(previewData);
-                        
+
                         // Use setTimeout to ensure states are set before opening modal
                         setTimeout(() => {
                           setOrderDetailsOpen(false);
                           setShowReceiptPreview(true);
-                          console.log(`✅ DEBUG: Receipt preview modal opened with states:`, {
+                          console.log('✅ DEBUG: Receipt preview modal opened with states:', {
                             showReceiptPreview: true,
                             previewReceiptExists: !!previewData,
                             orderForPaymentExists: !!completeOrderForPayment,
+                            orderForPaymentId: completeOrderForPayment?.id,
                             timestamp: new Date().toISOString()
                           });
                         }, 100);
@@ -1922,7 +1938,7 @@ export function OrderManagement() {
                       // Use CreateQRPos API for transfer payment like QR Code
                       try {
                         setQrLoading(true);
-                        const { createQRPosAsync } = await import("@/lib/api");
+                        const { createQRPosAsync, CreateQRPosRequest } = await import("@/lib/api");
                         const { CreateQRPosRequest } = await import("@/lib/api");
 
                         const transactionUuid = `TXN-TRANSFER-${Date.now()}`;
@@ -2032,7 +2048,7 @@ export function OrderManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Receipt Preview Modal - Step 1: "Xem trước hóa đơn" */}
+      {/* Receipt Modal - Step 1: "Xem trước hóa đơn" */}
       <ReceiptModal
         isOpen={showReceiptPreview}
         onClose={() => {
@@ -2060,7 +2076,7 @@ export function OrderManagement() {
             orderNumber: completeOrderForPayment.orderNumber,
             hasOrderItems: !!(completeOrderForPayment.orderItems?.length)
           });
-          
+
           setOrderForPayment(completeOrderForPayment);
 
           // Close preview and show payment method modal
@@ -2072,7 +2088,7 @@ export function OrderManagement() {
           console.log('🔍 DEBUG: Building cartItems for Receipt Preview Modal');
           console.log('previewReceipt:', previewReceipt);
           console.log('previewReceipt?.items:', previewReceipt?.items);
-          
+
           if (!previewReceipt?.items || !Array.isArray(previewReceipt.items)) {
             console.log('❌ No valid preview receipt items found');
             return [];
