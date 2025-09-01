@@ -21,6 +21,20 @@ import { EInvoiceModal } from "./einvoice-modal";
 import { usePopupSignal } from "@/hooks/use-popup-signal";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 
+// Helper function for API requests (assuming it exists and handles headers, etc.)
+// If not, you'll need to implement it or use fetch directly like in the original code.
+// For demonstration, let's assume a simple fetch wrapper.
+async function apiRequest(method: string, url: string, body?: any) {
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    ...(body && { body: JSON.stringify(body) }),
+  };
+  return fetch(url, options);
+}
+
 interface PaymentMethodModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -250,7 +264,7 @@ export function PaymentMethodModal({
           total: orderForPayment.total,
           paymentMethod: method
         });
-        
+
         // Gọi API updateOrderStatus để cập nhật trạng thái đơn hàng thành 'paid'
         const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
           method: 'PUT',
@@ -266,7 +280,7 @@ export function PaymentMethodModal({
           const statusResult = await statusResponse.json();
           console.log(`✅ updateOrderStatus completed successfully for order ${orderForPayment.id}:`, statusResult);
           console.log(`🎯 Order status changed: ${orderForPayment.status} → 'paid'`);
-          
+
           // Dispatch UI refresh events sau khi updateOrderStatus thành công
           if (typeof window !== 'undefined') {
             const events = [
@@ -281,7 +295,21 @@ export function PaymentMethodModal({
                 }
               }),
               new CustomEvent('refreshOrders'),
-              new CustomEvent('refreshTables')
+              new CustomEvent('refreshTables'),
+              new CustomEvent('paymentCompleted', {
+                detail: {
+                  orderId: orderForPayment.id,
+                  tableId: orderForPayment.tableId,
+                  paymentMethod: method
+                }
+              }),
+              new CustomEvent('tableStatusUpdate', {
+                detail: {
+                  tableId: orderForPayment.tableId,
+                  checkForRelease: true,
+                  orderId: orderForPayment.id
+                }
+              })
             ];
 
             events.forEach(event => {
@@ -591,7 +619,7 @@ export function PaymentMethodModal({
 
     try {
       console.log("🔄 Step 1: Starting payment process for order:", orderForPayment.id);
-      
+
       // STEP 1: Update order status to 'paid' first using the dedicated status endpoint
       console.log("📤 Step 1: Updating order status to 'paid'");
       const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
@@ -669,7 +697,7 @@ export function PaymentMethodModal({
 
       // STEP 4: Force refresh UI immediately after successful status update
       console.log("🔄 Step 4: Dispatching UI refresh events");
-      
+
       if (typeof window !== 'undefined') {
         const events = [
           new CustomEvent('orderStatusUpdated', {
@@ -729,12 +757,12 @@ export function PaymentMethodModal({
 
     } catch (error) {
       console.error("❌ ERROR in payment process:", error);
-      
+
       // Close modals to prevent getting stuck
       setShowEInvoice(false);
       setSelectedPaymentMethod("");
       onClose();
-      
+
       // Pass error data to parent component
       onSelectMethod("paymentError", {
         ...eInvoiceData,
@@ -753,7 +781,7 @@ export function PaymentMethodModal({
 
   const handleEInvoiceClose = () => {
     console.log("🔙 E-invoice modal closed - closing entire payment flow");
-    
+
     setShowEInvoice(false);
     setSelectedPaymentMethod("");
     onClose(); // Always close the entire payment modal when E-invoice is closed
@@ -1477,7 +1505,7 @@ export function PaymentMethodModal({
 
             // Priority: orderForPayment data first, then receipt, then fallback to prop total
             let calculatedTotal = 0;
-            
+
             if (orderForPayment?.total) {
               calculatedTotal = parseFloat(orderForPayment.total.toString());
               console.log("💰 Using orderForPayment.total for EInvoice:", calculatedTotal);
@@ -1494,7 +1522,7 @@ export function PaymentMethodModal({
               calculatedTotal = parseFloat(total?.toString() || "0");
               console.log("💰 Using fallback total for EInvoice:", calculatedTotal);
             }
-            
+
             console.log("💰 Final calculated total for EInvoice:", calculatedTotal);
             return Math.floor(calculatedTotal || 0);
           })()}
@@ -1548,7 +1576,7 @@ export function PaymentMethodModal({
                 taxRate: product?.taxRate ? parseFloat(product.taxRate.toString()) : (item.taxRate || 0),
                 afterTaxPrice: product?.afterTaxPrice || null,
               };
-              
+
               console.log(`📦 Final mapped item ${index + 1}:`, mappedItem);
               return mappedItem;
             });

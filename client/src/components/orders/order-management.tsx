@@ -1079,6 +1079,52 @@ export function OrderManagement() {
     new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
   ) : [];
 
+  // Add event listeners for auto-refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+    }, 15000);
+
+    // Listen for manual refresh events
+    const handleOrderStatusUpdate = (event: CustomEvent) => {
+      console.log(`🔄 Order Management: Received orderStatusUpdated event:`, event.detail);
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+    };
+
+    const handlePaymentComplete = (event: CustomEvent) => {
+      console.log(`💳 Order Management: Received paymentCompleted event:`, event.detail);
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+    };
+
+    const handleRefreshOrders = () => {
+      console.log(`🔄 Order Management: Manual refresh orders triggered`);
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+    };
+
+    const handleRefreshTables = () => {
+      console.log(`🔄 Order Management: Manual refresh tables triggered`);
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+    };
+
+    // Add event listeners
+    window.addEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
+    window.addEventListener('paymentCompleted', handlePaymentComplete as EventListener);
+    window.addEventListener('refreshOrders', handleRefreshOrders);
+    window.addEventListener('refreshTables', handleRefreshTables);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
+      window.removeEventListener('paymentCompleted', handlePaymentComplete as EventListener);
+      window.removeEventListener('refreshOrders', handleRefreshOrders);
+      window.removeEventListener('refreshTables', handleRefreshTables);
+    };
+  }, [queryClient]);
+
+
   return (
     <div className="space-y-6">
       {/* Header */}
