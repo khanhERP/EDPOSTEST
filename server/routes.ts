@@ -1075,6 +1075,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       console.log(`🚀 ========================================`);
       console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
 
+      // Get tenant database first
+      const tenantDb = await getTenantDatabase(req);
+
       // Enhanced request logging
       console.log(`🔍 Request details: {`);
       console.log(`  method: '${req.method}',`);
