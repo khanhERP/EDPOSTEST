@@ -554,11 +554,11 @@ export function OrderManagement() {
       console.log(`🔍 DEBUG: About to call API endpoint: PUT /api/orders/${orderId}/status`);
       console.log(`🔍 DEBUG: Request payload:`, { status: newStatus });
       console.log(`🔍 DEBUG: Making API request to update order status...`);
-      
+
       const startTime = Date.now();
       const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: newStatus });
       const endTime = Date.now();
-      
+
       console.log(`⏱️ API CALL COMPLETED in ${endTime - startTime}ms for order ${orderId}`);
 
       console.log(`🔍 DEBUG: API Response details:`, {
@@ -1559,26 +1559,23 @@ export function OrderManagement() {
                           }
                         });
 
-                        // Set states in correct order to prevent race conditions
+                        // Close order details modal first
+                        setOrderDetailsOpen(false);
+
+                        // Set all data at once to prevent race conditions
                         setOrderForPayment(completeOrderForPayment);
                         setPreviewReceipt(previewData);
 
-                        // Close order details first
-                        setOrderDetailsOpen(false);
+                        console.log('🚀 Opening receipt preview modal with data:', {
+                          previewData: !!previewData,
+                          completeOrderForPayment: !!completeOrderForPayment,
+                          orderItemsCount: processedItems.length
+                        });
 
-                        // Then open receipt preview modal with a small delay
-                        // CRITICAL FIX: Set states properly and use useEffect to trigger modal
-                        console.log('🔄 Setting all states in correct order');
-
-                        // Close order details immediately
-                        setOrderDetailsOpen(false);
-
-                        // Set all data states first
-                        setOrderForPayment(completeOrderForPayment);
-                        setPreviewReceipt(previewData);
-
-                        // Use a flag to trigger modal opening
-                        setShouldOpenReceiptPreview(true);
+                        // Open modal immediately after data is set
+                        setTimeout(() => {
+                          setShowReceiptPreview(true);
+                        }, 50);
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
@@ -2078,7 +2075,7 @@ export function OrderManagement() {
         return null;
       })()}
       <ReceiptModal
-        isOpen={showReceiptPreview && !!previewReceipt}
+        isOpen={showReceiptPreview}
         onClose={() => {
           console.log("🔴 Order Management: Closing receipt preview modal");
           console.log("🔍 DEBUG: Modal close - current states:", {
@@ -2088,6 +2085,7 @@ export function OrderManagement() {
           });
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
+          setOrderForPayment(null); // Clear orderForPayment when closing preview
         }}
         onConfirm={() => {
           console.log("📄 Order Management: Receipt preview confirmed, starting payment flow");
@@ -2176,33 +2174,24 @@ export function OrderManagement() {
             setShowReceiptModal(true);
             setOrderForPayment(null);
           } else {
-            // Otherwise continue to E-invoice modal
-            console.log('🔄 Order Management: Continuing to E-invoice modal');
-            // If method.nameKey is 'einvoice', show E-invoice modal directly
-            if (method.nameKey === 'einvoice') {
-              setShowEInvoiceModal(true);
-            } else {
-              // For other payment methods, proceed with payment completion
-              const orderToPayFor = orderForPayment || selectedOrder;
-              console.log('💳 Processing payment for order:', {
-                orderToPayFor: !!orderToPayFor,
-                orderToPayForId: orderToPayFor?.id,
-                paymentMethod: method.nameKey
-              });
+            // For other payment methods, proceed with payment completion
+            console.log('💳 Processing payment for order:', {
+              orderId: orderForPayment?.id,
+              paymentMethod: method.nameKey
+            });
 
-              if (orderToPayFor?.id) {
-                completePaymentMutation.mutate({
-                  orderId: orderToPayFor.id,
-                  paymentMethod: method.nameKey,
-                });
-              } else {
-                console.error('❌ No valid order ID found for payment');
-                toast({
-                  title: 'Lỗi',
-                  description: 'Không tìm thấy ID đơn hàng để thanh toán',
-                  variant: 'destructive',
-                });
-              }
+            if (orderForPayment?.id) {
+              completePaymentMutation.mutate({
+                orderId: orderForPayment.id,
+                paymentMethod: method.nameKey,
+              });
+            } else {
+              console.error('❌ No valid order ID found for payment');
+              toast({
+                title: 'Lỗi',
+                description: 'Không tìm thấy ID đơn hàng để thanh toán',
+                variant: 'destructive',
+              });
             }
           }
         }}
