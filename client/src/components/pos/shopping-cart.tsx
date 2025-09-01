@@ -297,12 +297,33 @@ export function ShoppingCart({
         throw new Error("Created order doesn't have a valid ID");
       }
 
-      console.log("💾 Setting currentOrderForPayment:", createdOrder.id);
-      setCurrentOrderForPayment(createdOrder);
+      // Calculate exact totals for the order
+      const exactSubtotal = subtotal;
+      const exactTax = tax; 
+      const exactTotal = total;
+
+      // Add exact calculations to created order
+      const orderWithExactTotals = {
+        ...createdOrder,
+        exactSubtotal,
+        exactTax,
+        exactTotal
+      };
+
+      console.log("💾 Setting currentOrderForPayment with exact totals:", {
+        orderId: orderWithExactTotals.id,
+        exactSubtotal,
+        exactTax,
+        exactTotal,
+        originalTotal: createdOrder.total
+      });
+      
+      setCurrentOrderForPayment(orderWithExactTotals);
       
       // Add small delay to ensure state is updated before opening modal
       setTimeout(() => {
-        console.log("🚀 Opening payment modal with order:", createdOrder.id);
+        console.log("🚀 Opening payment modal with order:", orderWithExactTotals.id);
+        console.log("🔍 currentOrderForPayment state before modal:", orderWithExactTotals);
         setShowPaymentModal(true);
       }, 100);
 
@@ -330,20 +351,36 @@ export function ShoppingCart({
 
   const handlePaymentMethodSelect = (method: string, data?: any) => {
     console.log(
-      "🎯 Shopping cart: Step 3: Payment method selected:",
+      "🎯 Shopping cart: Payment method selected:",
       method,
       data,
     );
 
-    // Step 3: Payment method selected, now go directly to Step 4: E-Invoice modal
-    setShowPaymentMethodModal(false);
-    setSelectedPaymentMethod(method);
-
-    // Go directly to E-invoice modal for invoice processing (no duplicate payment selection)
-    console.log(
-      "📧 Shopping cart: Going directly to E-invoice modal for invoice processing",
-    );
-    setShowEInvoiceModal(true);
+    // Close payment modal and handle the payment completion
+    setShowPaymentModal(false);
+    
+    if (data?.success && data?.completed) {
+      console.log("✅ Payment completed successfully:", data);
+      
+      // Clear cart after successful payment
+      onClearCart();
+      
+      // Show receipt if available
+      if (data.receipt) {
+        setSelectedReceipt(data.receipt);
+        setShowReceiptModal(true);
+      }
+      
+      // Reset current order
+      setCurrentOrderForPayment(null);
+    } else if (data?.error) {
+      console.error("❌ Payment failed:", data.error);
+      toast({
+        title: "Lỗi thanh toán",
+        description: data.error,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCardPaymentMethodSelect = (method: string) => {
