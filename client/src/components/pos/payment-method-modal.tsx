@@ -239,6 +239,53 @@ export function PaymentMethodModal({
   const handleSelect = async (method: string) => {
     setSelectedPaymentMethod(method);
 
+    // **BƯỚC MỚI: Cập nhật trạng thái đơn hàng ngay khi chọn phương thức thanh toán**
+    if (orderForPayment?.id) {
+      try {
+        console.log(`🔄 Updating order status to 'paid' when selecting payment method: ${method}`);
+        
+        const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'paid'
+          }),
+        });
+
+        if (statusResponse.ok) {
+          const statusResult = await statusResponse.json();
+          console.log(`✅ Order status updated to 'paid' after selecting ${method}:`, statusResult);
+          
+          // Dispatch UI refresh events immediately after status update
+          if (typeof window !== 'undefined') {
+            const events = [
+              new CustomEvent('orderStatusUpdated', {
+                detail: {
+                  orderId: orderForPayment.id,
+                  status: 'paid',
+                  tableId: orderForPayment.tableId,
+                  paymentMethod: method
+                }
+              }),
+              new CustomEvent('refreshOrders'),
+              new CustomEvent('refreshTables')
+            ];
+
+            events.forEach(event => {
+              console.log("📡 Dispatching early event:", event.type, event.detail);
+              window.dispatchEvent(event);
+            });
+          }
+        } else {
+          console.error(`❌ Failed to update order status when selecting ${method}`);
+        }
+      } catch (error) {
+        console.error(`❌ Error updating order status when selecting payment method:`, error);
+      }
+    }
+
     if (method === "cash") {
       // Reset cash amount input when showing cash payment
       setCashAmountInput("");
