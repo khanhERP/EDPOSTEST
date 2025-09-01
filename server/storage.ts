@@ -176,7 +176,7 @@ export interface IStorage {
   ): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<boolean>;
   updateCustomerVisit(
-    customerId: number,
+    id: number,
     amount: number,
     points: number,
   ): Promise<Customer | undefined>;
@@ -1181,7 +1181,7 @@ export class DatabaseStorage implements IStorage {
           // Only update table status to available if no other unpaid orders exist
           if (otherUnpaidOrders.length === 0) {
             console.log(`🔓 No unpaid orders remaining - releasing table ${updatedOrder.tableId}`);
-
+            
             const [updatedTable] = await database
               .update(tables)
               .set({ 
@@ -1190,7 +1190,7 @@ export class DatabaseStorage implements IStorage {
               })
               .where(eq(tables.id, updatedOrder.tableId))
               .returning();
-
+            
             if (updatedTable) {
               console.log(`✅ Table ${updatedOrder.tableId} released successfully`);
             } else {
@@ -1216,85 +1216,32 @@ export class DatabaseStorage implements IStorage {
     status: string,
     tenantDb?: any,
   ): Promise<Order | undefined> {
-    console.log(`=== STORAGE: UPDATING ORDER STATUS START ===`);
-    console.log(`🎯 Storage updateOrderStatus called:`, {
-      orderId: id,
-      newStatus: status,
-      tenantDb: !!tenantDb,
+    console.log(`=== UPDATING ORDER STATUS ===`);
+    console.log(`Order ID: ${id}, New Status: ${status}`);
+    console.log(`🔍 Database info:`, {
+      usingTenantDb: !!tenantDb,
       dbType: tenantDb ? 'tenant' : 'default',
       timestamp: new Date().toISOString()
     });
-
+    
     const database = tenantDb || db;
 
-    console.log(`🔍 Storage: Database connection info:`, {
-      databaseObject: !!database,
-      isDefaultDb: database === db,
-      timestamp: new Date().toISOString()
-    });
-
     // First, get the current order to know its table
-    console.log(`🔍 Storage: Fetching current order with ID: ${id}`);
-    console.log(`🔍 Storage: Database query details:`, {
-      query: `SELECT * FROM orders WHERE id = ${id}`,
-      using: database === db ? 'default_db' : 'tenant_db'
-    });
-
-    let currentOrder;
-    try {
-      const queryResult = await database
-        .select()
-        .from(orders)
-        .where(eq(orders.id, id));
-
-      console.log(`🔍 Storage: Database query executed, result:`, {
-        resultCount: queryResult.length,
-        firstResult: queryResult[0] ? {
-          id: queryResult[0].id,
-          orderNumber: queryResult[0].orderNumber,
-          status: queryResult[0].status,
-          tableId: queryResult[0].tableId
-        } : null
-      });
-
-      currentOrder = queryResult[0];
-    } catch (queryError) {
-      console.error(`❌ Storage: Database query failed:`, {
-        error: queryError,
-        errorMessage: queryError?.message,
-        errorStack: queryError?.stack,
-        orderId: id
-      });
-      throw queryError;
-    }
+    console.log(`🔍 Fetching current order with ID: ${id}`);
+    const [currentOrder] = await database
+      .select()
+      .from(orders)
+      .where(eq(orders.id, id));
 
     if (!currentOrder) {
-      console.error(`❌ Storage: Order not found for ID: ${id}`);
-
-      // Enhanced debugging
-      console.log(`🔍 Storage: Debugging order not found...`);
+      console.error(`❌ Order not found: ${id}`);
+      console.log(`🔍 Attempting to fetch all orders to debug...`);
       try {
-        const allOrdersCount = await database
-          .select({ count: sql<number>`count(*)` })
-          .from(orders);
-        console.log(`🔍 Storage: Total orders in database:`, allOrdersCount[0]?.count);
-
-        const recentOrders = await database
-          .select({ id: orders.id, orderNumber: orders.orderNumber, status: orders.status })
-          .from(orders)
-          .orderBy(desc(orders.id))
-          .limit(10);
-        console.log(`🔍 Storage: Recent orders in database:`, recentOrders);
-
-        const exactIdSearch = await database
-          .select()
-          .from(orders)
-          .where(sql`${orders.id}::text = ${id.toString()}`);
-        console.log(`🔍 Storage: Exact ID search result:`, exactIdSearch.length);
+        const allOrders = await database.select().from(orders).limit(5);
+        console.log(`🔍 Sample orders in database:`, allOrders.map(o => ({ id: o.id, orderNumber: o.orderNumber, status: o.status })));
       } catch (debugError) {
-        console.error(`❌ Storage: Debug queries failed:`, debugError);
+        console.error(`❌ Error fetching sample orders:`, debugError);
       }
-
       return undefined;
     }
 
@@ -1319,86 +1266,36 @@ export class DatabaseStorage implements IStorage {
       console.log(`💳 Setting paidAt timestamp for order ${id}:`, updateData.paidAt);
     }
 
-    console.log(`🔍 Storage: Update data being sent:`, updateData);
-    console.log(`🔍 Storage: Update query targeting order ID: ${id}`);
-    console.log(`🔍 Storage: About to execute UPDATE query...`);
+    console.log(`🔍 Update data being sent:`, updateData);
+    console.log(`🔍 Update query targeting order ID: ${id}`);
 
-    let order;
     try {
-      console.log(`📤 Storage: Executing database UPDATE...`);
-      console.log(`📤 Storage: SQL equivalent: UPDATE orders SET status='${status}', updated_at='${updateData.updatedAt}' WHERE id=${id}`);
-
-      const updateResult = await database
+      const [order] = await database
         .update(orders)
         .set(updateData)
         .where(eq(orders.id, id))
         .returning();
 
-      console.log(`📥 Storage: Database UPDATE completed:`, {
-        resultCount: updateResult.length,
-        resultType: typeof updateResult,
-        isArray: Array.isArray(updateResult)
-      });
-
-      order = updateResult[0];
-
-      console.log(`🔍 Storage: Database update result analysis:`, {
+      console.log(`🔍 Database update result:`, {
         orderReturned: !!order,
-        resultLength: updateResult.length,
         orderData: order ? {
           id: order.id,
-          orderNumber: order.orderNumber,
           status: order.status,
           paidAt: order.paidAt,
-          updatedAt: order.updatedAt,
-          tableId: order.tableId
+          updatedAt: order.updatedAt
         } : null
       });
 
       if (!order) {
-        console.error(`❌ Storage: No order returned after status update for ID: ${id}`);
-
-        // Detailed verification
-        console.log(`🔍 Storage: Performing post-update verification...`);
-        try {
-          const [verifyOrder] = await database
-            .select()
-            .from(orders)
-            .where(eq(orders.id, id));
-
-          console.log(`🔍 Storage: Post-update verification:`, {
-            orderExists: !!verifyOrder,
-            orderData: verifyOrder ? {
-              id: verifyOrder.id,
-              status: verifyOrder.status,
-              updatedAt: verifyOrder.updatedAt
-            } : null
-          });
-
-          if (verifyOrder) {
-            console.log(`🤔 Storage: Order exists but wasn't returned by UPDATE - possible database issue`);
-            order = verifyOrder; // Use the verified order
-          }
-        } catch (verifyError) {
-          console.error(`❌ Storage: Verification query failed:`, verifyError);
-        }
-
-        if (!order) {
-          return undefined;
-        }
+        console.error(`❌ No order returned after status update for ID: ${id}`);
+        console.log(`🔍 Verifying order still exists...`);
+        const [verifyOrder] = await database
+          .select()
+          .from(orders)
+          .where(eq(orders.id, id));
+        console.log(`🔍 Order verification result:`, verifyOrder ? 'EXISTS' : 'NOT FOUND');
+        return undefined;
       }
-    } catch (updateError) {
-      console.error(`❌ Storage: Database UPDATE failed:`, {
-        error: updateError,
-        errorMessage: updateError?.message,
-        errorCode: updateError?.code,
-        errorStack: updateError?.stack,
-        orderId: id,
-        status: status,
-        updateData: updateData
-      });
-      throw updateError;
-    }
 
       console.log(`✅ Order status updated successfully:`, {
         id: order.id,
@@ -1461,7 +1358,7 @@ export class DatabaseStorage implements IStorage {
             // FORCE table release if no other active orders exist
             if (otherActiveOrders.length === 0) {
               console.log(`🔓 FORCING table ${order.tableId} release - no active orders remaining`);
-
+              
               const [updatedTable] = await database
                 .update(tables)
                 .set({ 
@@ -1470,7 +1367,7 @@ export class DatabaseStorage implements IStorage {
                 })
                 .where(eq(tables.id, order.tableId))
                 .returning();
-
+              
               if (updatedTable) {
                 console.log(`✅ Table ${order.tableId} FORCEFULLY released:`, {
                   id: updatedTable.id,
@@ -1791,7 +1688,7 @@ export class DatabaseStorage implements IStorage {
     customerId: number,
     amount: number,
     points: number,
-  ): Promise<Customer | undefined> {
+  ) {
     const [customer] = await db
       .select()
       .from(customers)

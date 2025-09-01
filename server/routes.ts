@@ -1066,111 +1066,59 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   app.put("/api/orders/:id/status", async (req: TenantRequest, res) => {
-    console.log('=== API ORDER STATUS UPDATE DEBUG START ===');
-    
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
-      console.log(`📋 API: Order status update called:`, {
-        requestedOrderId: req.params.id,
-        parsedOrderId: id,
-        newStatus: status,
-        requestMethod: req.method,
-        requestUrl: req.url,
-        requestPath: req.path,
-        contentType: req.headers['content-type'],
-        userAgent: req.headers['user-agent'],
-        fullBody: req.body,
+      console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
+      console.log(`🔍 Request details:`, {
+        params: req.params,
+        body: req.body,
+        headers: req.headers['content-type'],
         tenantDbExists: !!tenantDb,
         timestamp: new Date().toISOString()
       });
 
-      // Validation checks with detailed logging
       if (isNaN(id)) {
-        console.error(`❌ API: Order ID validation failed:`, {
-          originalValue: req.params.id,
-          parsedValue: id,
-          isNaN: isNaN(id),
-          type: typeof req.params.id
-        });
+        console.error(`❌ Invalid order ID: ${req.params.id}`);
         return res.status(400).json({ message: "Invalid order ID" });
       }
 
       if (!status) {
-        console.error(`❌ API: Status validation failed:`, {
-          statusValue: status,
-          statusType: typeof status,
-          fullBody: req.body,
-          bodyKeys: Object.keys(req.body || {})
-        });
+        console.error(`❌ Missing status in request body, received:`, req.body);
         return res.status(400).json({ message: "Status is required" });
       }
 
-      console.log(`✅ API: Validation passed, proceeding with order ${id} status update to ${status}`);
-
-      // Get current order state with detailed logging
-      console.log(`🔍 API: Fetching current order from database...`);
+      // First get the current order to log its current state
       const [currentOrder] = await db
         .select()
         .from(orders)
         .where(eq(orders.id, id));
 
       if (!currentOrder) {
-        console.error(`❌ API: Order not found in database:`, {
-          searchedId: id,
-          timestamp: new Date().toISOString()
-        });
-
-        // Debug: Try to find similar orders
-        console.log(`🔍 API: Searching for orders with similar IDs...`);
-        try {
-          const similarOrders = await db
-            .select({ id: orders.id, orderNumber: orders.orderNumber, status: orders.status })
-            .from(orders)
-            .limit(10);
-          console.log(`🔍 API: Found ${similarOrders.length} orders in database:`, similarOrders);
-        } catch (debugError) {
-          console.error(`❌ API: Error during debug search:`, debugError);
-        }
-
+        console.error(`❌ Order not found for ID: ${id}`);
         return res.status(404).json({ message: "Order not found" });
       }
 
-      console.log(`📊 API: Current order found:`, {
+      console.log(`📊 API: Current order state before update:`, {
         orderId: currentOrder.id,
         orderNumber: currentOrder.orderNumber,
         tableId: currentOrder.tableId,
         currentStatus: currentOrder.status,
         requestedStatus: status,
-        orderedAt: currentOrder.orderedAt,
-        paidAt: currentOrder.paidAt,
-        einvoiceStatus: currentOrder.einvoiceStatus,
-        paymentMethod: currentOrder.paymentMethod
+        timestamp: new Date().toISOString()
       });
 
-      // Call storage layer with detailed logging
-      console.log(`🔍 API: Calling storage.updateOrderStatus...`);
+      // Update order status using storage layer
       const order = await storage.updateOrderStatus(id, status, tenantDb);
 
-      console.log(`🔍 API: Storage layer response:`, {
-        orderReturned: !!order,
-        orderData: order ? {
-          id: order.id,
-          status: order.status,
-          paidAt: order.paidAt,
-          updatedAt: order.updatedAt
-        } : null
-      });
-
       if (!order) {
-        console.error(`❌ API: Storage layer returned null for order ${id}`);
+        console.error(`❌ API: Order update failed for ID: ${id}`);
         return res.status(500).json({ 
           message: "Failed to update order status",
           orderId: id,
-          requestedStatus: status,
-          storageLayerResult: 'null'
+          requestedStatus: status
         });
       }
 
@@ -1183,46 +1131,41 @@ export async function registerRoutes(app: Express): Promise < Server > {
         paymentMethod: order.paymentMethod,
         paidAt: order.paidAt,
         einvoiceStatus: order.einvoiceStatus,
-        updatedAt: order.updatedAt,
         timestamp: new Date().toISOString()
       });
 
-      // Table status logging for paid orders
+      // If status was updated to 'paid', also check and log table status
       if (status === 'paid' && order.tableId) {
-        console.log(`💳 API: Order marked as PAID - checking table ${order.tableId} status...`);
-        
         try {
           const [tableAfterUpdate] = await db
             .select()
             .from(tables)
             .where(eq(tables.id, order.tableId));
 
-          console.log(`📋 API: Table status after payment:`, {
+          console.log(`📋 API: Table status after order payment:`, {
             tableId: order.tableId,
             tableNumber: tableAfterUpdate?.tableNumber,
             tableStatus: tableAfterUpdate?.status,
             timestamp: new Date().toISOString()
           });
 
-          // Log all orders on this table for debugging
-          const allTableOrders = await db
+          // Log all remaining orders on this table for debugging
+          const remainingOrders = await db
             .select({
               id: orders.id,
               orderNumber: orders.orderNumber,
-              status: orders.status,
-              total: orders.total
+              status: orders.status
             })
             .from(orders)
             .where(eq(orders.tableId, order.tableId));
 
           console.log(`📋 API: All orders on table ${order.tableId}:`, {
             tableId: order.tableId,
-            totalOrders: allTableOrders.length,
-            orders: allTableOrders.map(o => ({
+            totalOrders: remainingOrders.length,
+            orders: remainingOrders.map(o => ({
               id: o.id,
               orderNumber: o.orderNumber,
-              status: o.status,
-              total: o.total
+              status: o.status
             }))
           });
         } catch (tableCheckError) {
@@ -1230,38 +1173,22 @@ export async function registerRoutes(app: Express): Promise < Server > {
         }
       }
 
-      // Comprehensive response
-      const responseData = {
+      // Send comprehensive response data
+      res.json({
         ...order,
         updated: true,
         previousStatus: currentOrder.status,
         updateTimestamp: new Date().toISOString(),
         success: true
-      };
-
-      console.log(`📤 API: Sending response:`, responseData);
-      res.json(responseData);
-
-    } catch (error) {
-      console.error('=== API ORDER STATUS UPDATE ERROR ===');
-      console.error(`❌ API Error details:`, {
-        errorType: error?.constructor?.name,
-        errorMessage: error?.message,
-        errorStack: error?.stack,
-        requestParams: req.params,
-        requestBody: req.body,
-        timestamp: new Date().toISOString()
       });
-
+    } catch (error) {
+      console.error(`❌ Error updating order status via API:`, error);
       res.status(500).json({ 
         message: "Failed to update order status",
         error: error instanceof Error ? error.message : String(error),
-        timestamp: new Date().toISOString(),
-        requestId: req.params.id
+        timestamp: new Date().toISOString()
       });
     }
-
-    console.log('=== API ORDER STATUS UPDATE DEBUG END ===');
   });
 
   app.post("/api/orders/:id/payment", async (req: TenantRequest, res) => {
