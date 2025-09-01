@@ -1151,20 +1151,20 @@ export class DatabaseStorage implements IStorage {
         console.log(`💳 Order ${order.status} - checking table ${updatedOrder.tableId} for release`);
 
         try {
-          // Check for other unpaid orders on the same table
+          // Check for other unpaid orders on the same table (excluding current order)
           const unpaidStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
           const otherUnpaidOrders = await database
-            .select()
-            .from(orders)
-            .where(
-              and(
-                eq(orders.tableId, updatedOrder.tableId),
-                not(eq(orders.id, id)), // Exclude current order
-                or(
-                  ...unpaidStatuses.map(unpaidStatus => eq(orders.status, unpaidStatus))
-                )
-              )
-            );
+                .select()
+                .from(orders)
+                .where(
+                  and(
+                    eq(orders.tableId, updatedOrder.tableId),
+                    not(eq(orders.id, Number(id))), // Exclude current order
+                    or(
+                      ...unpaidStatuses.map(unpaidStatus => eq(orders.status, unpaidStatus))
+                    )
+                  )
+                );
 
           console.log(`🔍 Unpaid orders remaining on table ${updatedOrder.tableId}:`, {
             count: otherUnpaidOrders.length,
