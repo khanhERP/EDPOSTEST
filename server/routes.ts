@@ -1071,13 +1071,29 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const { status } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
+      console.log(`🚀 ========================================`);
+      console.log(`🚀 API ENDPOINT CALLED: PUT /api/orders/${id}/status`);
+      console.log(`🚀 ========================================`);
       console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
       console.log(`🔍 Request details:`, {
+        method: req.method,
+        url: req.url,
+        originalUrl: req.originalUrl,
         params: req.params,
         body: req.body,
         headers: req.headers['content-type'],
+        userAgent: req.headers['user-agent'],
         tenantDbExists: !!tenantDb,
         timestamp: new Date().toISOString()
+      });
+
+      console.log(`🚀 ABOUT TO CALL storage.updateOrderStatus(${id}, '${status}', tenantDb)`);
+      console.log(`🔍 Function call parameters:`, {
+        orderId: id,
+        orderIdType: typeof id,
+        status: status,
+        statusType: typeof status,
+        tenantDb: !!tenantDb
       });
 
       console.log(`🔍 DEBUG: API Request validation:`, {
@@ -1145,15 +1161,36 @@ export async function registerRoutes(app: Express): Promise < Server > {
       // Update order status using storage layer
       let order;
       try {
+        console.log(`🚀 CALLING storage.updateOrderStatus(${id}, '${status}', tenantDb)`);
+        console.log(`🔍 BEFORE CALL: Current thread state:`, {
+          processId: process.pid,
+          timestamp: new Date().toISOString(),
+          memoryUsage: process.memoryUsage(),
+          nodeVersion: process.version
+        });
+        
         order = await storage.updateOrderStatus(id, status, tenantDb);
+        
         const endTime = Date.now();
-        console.log(`⏱️ DEBUG: storage.updateOrderStatus completed in ${endTime - startTime}ms`);
+        console.log(`✅ STORAGE CALL COMPLETED: storage.updateOrderStatus returned after ${endTime - startTime}ms`);
+        console.log(`🔍 AFTER CALL: storage.updateOrderStatus result:`, {
+          orderReturned: !!order,
+          orderData: order ? {
+            id: order.id,
+            orderNumber: order.orderNumber,
+            status: order.status,
+            paidAt: order.paidAt,
+            updateTimestamp: order.updatedAt
+          } : null
+        });
       } catch (storageError) {
         const endTime = Date.now();
-        console.error(`❌ DEBUG: storage.updateOrderStatus failed after ${endTime - startTime}ms:`, {
+        console.error(`❌ STORAGE CALL FAILED: storage.updateOrderStatus failed after ${endTime - startTime}ms:`, {
           error: storageError,
           errorMessage: storageError instanceof Error ? storageError.message : String(storageError),
-          errorStack: storageError instanceof Error ? storageError.stack : 'No stack trace'
+          errorStack: storageError instanceof Error ? storageError.stack : 'No stack trace',
+          orderId: id,
+          requestedStatus: status
         });
         throw storageError;
       }

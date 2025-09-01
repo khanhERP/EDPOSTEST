@@ -1216,11 +1216,30 @@ export class DatabaseStorage implements IStorage {
     status: string,
     tenantDb?: any,
   ): Promise<Order | undefined> {
+    console.log(`🚀 ========================================`);
+    console.log(`🚀 STORAGE: updateOrderStatus FUNCTION CALLED`);
+    console.log(`🚀 ========================================`);
     console.log(`=== UPDATING ORDER STATUS ===`);
     console.log(`Order ID: ${id}, New Status: ${status}`);
+    console.log(`🔍 Function call stack:`, new Error().stack?.split('\n').slice(1, 4));
+    console.log(`🔍 Function called with parameters:`, {
+      id: id,
+      idType: typeof id,
+      status: status,
+      statusType: typeof status,
+      tenantDb: !!tenantDb
+    });
     console.log(`🔍 Database info:`, {
       usingTenantDb: !!tenantDb,
       dbType: tenantDb ? 'tenant' : 'default',
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`✅ CONFIRMATION: updateOrderStatus function HAS BEEN CALLED successfully`);
+    console.log(`🔍 Process info:`, {
+      processId: process.pid,
+      nodeVersion: process.version,
+      platform: process.platform,
       timestamp: new Date().toISOString()
     });
     
@@ -1279,11 +1298,32 @@ export class DatabaseStorage implements IStorage {
     console.log(`🔍 Update query targeting order ID: ${id}`);
 
     try {
+      console.log(`🚀 EXECUTING DATABASE UPDATE QUERY NOW...`);
+      console.log(`🔍 Database query details:`, {
+        table: 'orders',
+        updateData: updateData,
+        whereCondition: `id = ${id}`,
+        queryType: 'UPDATE with RETURNING',
+        timestamp: new Date().toISOString()
+      });
+      
+      const queryStartTime = Date.now();
+      console.log(`⏱️ DATABASE QUERY STARTED at:`, new Date().toISOString());
+      
       const [order] = await database
         .update(orders)
         .set(updateData)
         .where(eq(orders.id, id))
         .returning();
+        
+      const queryEndTime = Date.now();
+      console.log(`⏱️ DATABASE QUERY COMPLETED in ${queryEndTime - queryStartTime}ms`);
+      console.log(`🔍 Database query execution result:`, {
+        queryDuration: `${queryEndTime - queryStartTime}ms`,
+        rowsAffected: order ? 1 : 0,
+        orderReturned: !!order,
+        timestamp: new Date().toISOString()
+      });
 
       console.log(`🔍 Database update result:`, {
         orderReturned: !!order,

@@ -550,8 +550,16 @@ export function OrderManagement() {
         timestamp: new Date().toISOString()
       });
 
+      console.log(`🚀 STARTING API CALL: updateOrderStatus for order ${orderId} to status ${newStatus}`);
+      console.log(`🔍 DEBUG: About to call API endpoint: PUT /api/orders/${orderId}/status`);
+      console.log(`🔍 DEBUG: Request payload:`, { status: newStatus });
       console.log(`🔍 DEBUG: Making API request to update order status...`);
+      
+      const startTime = Date.now();
       const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: newStatus });
+      const endTime = Date.now();
+      
+      console.log(`⏱️ API CALL COMPLETED in ${endTime - startTime}ms for order ${orderId}`);
 
       console.log(`🔍 DEBUG: API Response details:`, {
         status: response.status,
