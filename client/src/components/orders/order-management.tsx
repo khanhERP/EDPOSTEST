@@ -49,6 +49,21 @@ export function OrderManagement() {
     refetchInterval: 15000, // Refetch every 15 seconds for faster updates
     refetchOnWindowFocus: true, // Refetch when window regains focus
     staleTime: 5000, // Consider data stale after 5 seconds
+    onSuccess: (data) => {
+      console.log(`🔍 DEBUG: Orders query onSuccess called:`, {
+        ordersCount: data?.length || 0,
+        timestamp: new Date().toISOString(),
+        firstFewOrders: data?.slice(0, 3)?.map((o: any) => ({ 
+          id: o.id, 
+          orderNumber: o.orderNumber, 
+          status: o.status, 
+          tableId: o.tableId 
+        }))
+      });
+    },
+    onError: (error) => {
+      console.error(`❌ DEBUG: Orders query onError:`, error);
+    }
   });
 
   const { data: tables } = useQuery({
@@ -519,6 +534,12 @@ export function OrderManagement() {
         timestamp: new Date().toISOString()
       });
 
+      console.log(`🔍 DEBUG: Current orders state before update:`, {
+        ordersCount: orders?.length || 0,
+        currentOrderInState: orders?.find((o: any) => o.id === orderId),
+        timestamp: new Date().toISOString()
+      });
+
       console.log(`🔍 DEBUG: Making API request to update order status...`);
       const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: newStatus });
 
@@ -542,9 +563,28 @@ export function OrderManagement() {
           updateTimestamp: updatedOrder.updateTimestamp
         });
 
-        // Force refresh the orders list
-        queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+        // CRITICAL: Force immediate query refresh and UI update
+        console.log(`🔄 FORCING immediate UI refresh after status update...`);
+        
+        // Invalidate and refetch queries immediately
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+        ]);
+
+        console.log(`✅ Queries refreshed after status update`);
+
+        // Force component re-render by checking if state was actually updated
+        setTimeout(() => {
+          console.log(`🔍 POST-UPDATE: Checking if orders state was updated:`, {
+            ordersCount: orders?.length || 0,
+            updatedOrderInState: orders?.find((o: any) => o.id === orderId),
+            expectedStatus: newStatus,
+            timestamp: new Date().toISOString()
+          });
+        }, 1000);
 
         toast({
           title: "Thành công",
@@ -1379,9 +1419,26 @@ export function OrderManagement() {
                     <Button
                       onClick={() => {
                         console.log('🎯 Order Management: Starting payment flow - showing receipt preview first');
+                        console.log(`🔍 DEBUG: Payment button click state:`, {
+                          selectedOrder: !!selectedOrder,
+                          selectedOrderId: selectedOrder?.id,
+                          selectedOrderStatus: selectedOrder?.status,
+                          orderItems: !!orderItems,
+                          orderItemsLength: Array.isArray(orderItems) ? orderItems.length : 0,
+                          orderItemsLoading: orderItemsLoading,
+                          orderDetailsOpen: orderDetailsOpen,
+                          timestamp: new Date().toISOString()
+                        });
 
                         if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
                           console.error('❌ Missing order data for preview');
+                          console.log(`🔍 DEBUG: Missing data details:`, {
+                            selectedOrder: !!selectedOrder,
+                            orderItems: !!orderItems,
+                            orderItemsIsArray: Array.isArray(orderItems),
+                            orderItemsType: typeof orderItems,
+                            orderItemsValue: orderItems
+                          });
                           toast({
                             title: 'Lỗi',
                             description: 'Không thể tạo xem trước hóa đơn. Vui lòng thử lại.',
@@ -1469,10 +1526,24 @@ export function OrderManagement() {
                           processedItemsCount: processedItems.length
                         });
 
+                        console.log(`🔍 DEBUG: Setting modal states:`, {
+                          orderForPayment: !!completeOrderForPayment,
+                          previewReceipt: !!previewData,
+                          showReceiptPreview: true,
+                          orderDetailsOpen: false,
+                          timestamp: new Date().toISOString()
+                        });
+
                         setOrderForPayment(completeOrderForPayment);
                         setPreviewReceipt(previewData);
                         setOrderDetailsOpen(false);
                         setShowReceiptPreview(true);
+
+                        console.log(`🔍 DEBUG: Modal states set - checking if modal should open:`, {
+                          showReceiptPreview: true,
+                          previewReceiptExists: !!previewData,
+                          timestamp: new Date().toISOString()
+                        });
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
