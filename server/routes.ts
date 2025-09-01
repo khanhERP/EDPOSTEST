@@ -1214,6 +1214,24 @@ export async function registerRoutes(app: Express): Promise < Server > {
         timestamp: new Date().toISOString()
       });
 
+      // If status is 'paid', also update payment status
+      if (status === 'paid') {
+        console.log(`💳 Order PAID - Updating payment status in database`);
+        try {
+          await db
+            .update(orders)
+            .set({
+              paymentStatus: 'paid',
+              paidAt: new Date()
+            })
+            .where(eq(orders.id, id));
+          
+          console.log(`✅ Payment status updated to 'paid' for order ${id}`);
+        } catch (paymentUpdateError) {
+          console.error(`❌ Failed to update payment status:`, paymentUpdateError);
+        }
+      }
+
       // If status was updated to 'paid', also check and log table status
       if (status === 'paid' && order.tableId) {
         try {
