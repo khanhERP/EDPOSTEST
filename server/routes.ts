@@ -1090,6 +1090,18 @@ export async function registerRoutes(app: Express): Promise < Server > {
         tenantDbType: tenantDb ? typeof tenantDb : 'undefined'
       });
 
+      // Add database connection test
+      try {
+        const testQuery = await db.execute(sql`SELECT 1 as test`);
+        console.log(`🔍 DEBUG: Database connection test successful:`, testQuery.rows?.[0]);
+      } catch (dbError) {
+        console.error(`❌ DEBUG: Database connection test failed:`, dbError);
+        return res.status(500).json({ 
+          message: "Database connection failed",
+          error: dbError instanceof Error ? dbError.message : String(dbError)
+        });
+      }
+
       if (isNaN(id)) {
         console.error(`❌ Invalid order ID: ${req.params.id}`);
         return res.status(400).json({ message: "Invalid order ID" });
@@ -1126,8 +1138,25 @@ export async function registerRoutes(app: Express): Promise < Server > {
         tenantDb: !!tenantDb
       });
 
+      // Add timing measurement
+      const startTime = Date.now();
+      console.log(`⏱️ DEBUG: Starting storage.updateOrderStatus call at:`, new Date().toISOString());
+
       // Update order status using storage layer
-      const order = await storage.updateOrderStatus(id, status, tenantDb);
+      let order;
+      try {
+        order = await storage.updateOrderStatus(id, status, tenantDb);
+        const endTime = Date.now();
+        console.log(`⏱️ DEBUG: storage.updateOrderStatus completed in ${endTime - startTime}ms`);
+      } catch (storageError) {
+        const endTime = Date.now();
+        console.error(`❌ DEBUG: storage.updateOrderStatus failed after ${endTime - startTime}ms:`, {
+          error: storageError,
+          errorMessage: storageError instanceof Error ? storageError.message : String(storageError),
+          errorStack: storageError instanceof Error ? storageError.stack : 'No stack trace'
+        });
+        throw storageError;
+      }
 
       console.log(`🔍 DEBUG: storage.updateOrderStatus returned:`, {
         orderExists: !!order,
@@ -1138,7 +1167,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
           tableId: order.tableId,
           paidAt: order.paidAt,
           updatedAt: order.updatedAt
-        } : null
+        } : null,
+        returnType: typeof order
       });
 
       if (!order) {

@@ -53,11 +53,11 @@ export function OrderManagement() {
       console.log(`🔍 DEBUG: Orders query onSuccess called:`, {
         ordersCount: data?.length || 0,
         timestamp: new Date().toISOString(),
-        firstFewOrders: data?.slice(0, 3)?.map((o: any) => ({ 
-          id: o.id, 
-          orderNumber: o.orderNumber, 
-          status: o.status, 
-          tableId: o.tableId 
+        firstFewOrders: data?.slice(0, 3)?.map((o: any) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          tableId: o.tableId
         }))
       });
     },
@@ -1526,45 +1526,55 @@ export function OrderManagement() {
                           processedItemsCount: processedItems.length
                         });
 
-                        console.log('🔍 DEBUG: Setting modal states:', {
-                          orderForPayment: !!completeOrderForPayment,
-                          orderForPaymentId: completeOrderForPayment?.id,
-                          previewReceipt: !!previewData,
-                          showReceiptPreview: true,
-                          orderDetailsOpen: false,
-                          timestamp: new Date().toISOString()
+                        console.log(`🔍 DEBUG: Setting modal states for payment preview:`, {
+                          beforeSetState: {
+                            showReceiptPreview: showReceiptPreview,
+                            orderForPayment: !!orderForPayment,
+                            previewReceipt: !!previewReceipt,
+                            orderDetailsOpen: orderDetailsOpen
+                          },
+                          aboutToSet: {
+                            orderForPayment: !!completeOrderForPayment,
+                            previewReceipt: !!previewData,
+                            orderDetailsOpen: false,
+                            showReceiptPreview: true
+                          }
                         });
-
-                        // Ensure order ID is present before proceeding
-                        if (!completeOrderForPayment?.id || !selectedOrder?.id) {
-                          console.error('❌ Missing order ID for payment flow:', {
-                            completeOrderForPaymentId: completeOrderForPayment?.id,
-                            selectedOrderId: selectedOrder?.id
-                          });
-                          toast({
-                            title: 'Lỗi',
-                            description: 'Không tìm thấy ID đơn hàng. Vui lòng thử lại.',
-                            variant: 'destructive',
-                          });
-                          return;
-                        }
 
                         // Set states in correct order to prevent race conditions
                         setOrderForPayment(completeOrderForPayment);
                         setPreviewReceipt(previewData);
 
-                        // Use setTimeout to ensure states are set before opening modal
+                        // Close order details first
+                        setOrderDetailsOpen(false);
+
+                        // Then open receipt preview modal with a small delay
                         setTimeout(() => {
-                          setOrderDetailsOpen(false);
                           setShowReceiptPreview(true);
                           console.log('✅ DEBUG: Receipt preview modal opened with states:', {
                             showReceiptPreview: true,
                             previewReceiptExists: !!previewData,
                             orderForPaymentExists: !!completeOrderForPayment,
                             orderForPaymentId: completeOrderForPayment?.id,
+                            afterSetState: {
+                              showReceiptPreview: true,
+                              orderForPayment: !!orderForPayment,
+                              previewReceipt: !!previewReceipt,
+                              orderDetailsOpen: false
+                            },
                             timestamp: new Date().toISOString()
                           });
-                        }, 100);
+
+                          // Force a re-render check
+                          setTimeout(() => {
+                            console.log('🔍 DEBUG: Modal state verification after 500ms:', {
+                              showReceiptPreview: showReceiptPreview,
+                              previewReceipt: !!previewReceipt,
+                              orderForPayment: !!orderForPayment,
+                              timestamp: new Date().toISOString()
+                            });
+                          }, 500);
+                        }, 200);
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
@@ -2048,10 +2058,30 @@ export function OrderManagement() {
       </Dialog>
 
       {/* Receipt Modal - Step 1: "Xem trước hóa đơn" */}
+      {(() => {
+        console.log('🔍 DEBUG: Receipt Modal props before render:', {
+          showReceiptPreview: showReceiptPreview,
+          previewReceiptExists: !!previewReceipt,
+          combinedIsOpen: showReceiptPreview && !!previewReceipt,
+          previewReceiptData: previewReceipt ? {
+            id: previewReceipt.id,
+            orderNumber: previewReceipt.orderNumber,
+            total: previewReceipt.total,
+            itemsCount: previewReceipt.items?.length || 0
+          } : null,
+          timestamp: new Date().toISOString()
+        });
+        return null;
+      })()}
       <ReceiptModal
-        isOpen={showReceiptPreview}
+        isOpen={showReceiptPreview && !!previewReceipt}
         onClose={() => {
           console.log("🔴 Order Management: Closing receipt preview modal");
+          console.log("🔍 DEBUG: Modal close - current states:", {
+            showReceiptPreview: showReceiptPreview,
+            previewReceipt: !!previewReceipt,
+            orderForPayment: !!orderForPayment
+          });
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
         }}
