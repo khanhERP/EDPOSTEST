@@ -251,11 +251,21 @@ export function PaymentMethodModal({
   const paymentMethods = getPaymentMethods();
 
   const handleSelect = async (method: string) => {
+    console.log(`🔥 HANDLESELECT FUNCTION CALLED - Method: ${method}, Order ID: ${orderForPayment?.id}`);
+    console.log(`🔍 Function entry debug:`, {
+      method: method,
+      methodType: typeof method,
+      orderForPayment: orderForPayment,
+      orderId: orderForPayment?.id,
+      timestamp: new Date().toISOString()
+    });
+    
     setSelectedPaymentMethod(method);
     
     console.log(`🔄 Payment method selected: ${method} for order ${orderForPayment?.id}`);
     
     // CRITICAL: Update order status to 'paid' immediately when payment method is selected
+    console.log(`🔍 CHECKING IF ORDER ID EXISTS: ${orderForPayment?.id}`);
     if (orderForPayment?.id) {
       try {
         console.log(`🚀 STARTING updateOrderStatus call for order ${orderForPayment.id} with payment method: ${method}`);
@@ -1069,7 +1079,17 @@ export function PaymentMethodModal({
                       key={method.id}
                       variant="outline"
                       className="flex items-center justify-start p-4 h-auto"
-                      onClick={() => handleSelect(method.id)}
+                      onClick={() => {
+                        console.log(`🔥 BUTTON CLICKED - Method: ${method.id}, Order ID: ${orderForPayment?.id}`);
+                        console.log(`🔍 Button click debug:`, {
+                          methodId: method.id,
+                          methodName: method.name,
+                          orderForPayment: orderForPayment,
+                          orderId: orderForPayment?.id,
+                          timestamp: new Date().toISOString()
+                        });
+                        handleSelect(method.id);
+                      }}
                       disabled={isLoading}
                     >
                       <IconComponent className="mr-3" size={24} />
