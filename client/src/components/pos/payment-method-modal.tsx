@@ -259,21 +259,44 @@ export function PaymentMethodModal({
     if (orderForPayment?.id) {
       try {
         console.log(`🔄 Calling updateOrderStatus for order ${orderForPayment.id} with payment method: ${method}`);
+        console.log(`📋 Order details before updateOrderStatus call:`, {
+          orderId: orderForPayment.id,
+          currentStatus: orderForPayment.status,
+          paymentMethod: method,
+          timestamp: new Date().toISOString()
+        });
         
         const statusResponse = await apiRequest('PUT', `/api/orders/${orderForPayment.id}/status`, {
           status: 'paid'
+        });
+        
+        console.log(`🔍 API Response received:`, {
+          status: statusResponse.status,
+          statusText: statusResponse.statusText,
+          ok: statusResponse.ok
         });
         
         if (statusResponse.ok) {
           const updatedOrder = await statusResponse.json();
           console.log(`✅ updateOrderStatus completed successfully for order ${orderForPayment.id}`);
           console.log(`🎯 Order status changed: ${updatedOrder.previousStatus} → 'paid'`);
+          console.log(`📊 Updated order details:`, {
+            orderId: updatedOrder.id,
+            newStatus: updatedOrder.status,
+            paidAt: updatedOrder.paidAt,
+            updateTimestamp: updatedOrder.updatedAt
+          });
         } else {
           const errorText = await statusResponse.text();
           console.error(`❌ updateOrderStatus failed for order ${orderForPayment.id}:`, errorText);
         }
       } catch (error) {
         console.error(`❌ Error calling updateOrderStatus for order ${orderForPayment.id}:`, error);
+        console.error(`🔍 Error details:`, {
+          errorType: error?.constructor?.name,
+          errorMessage: error?.message,
+          errorStack: error?.stack
+        });
       }
     }
 
