@@ -282,10 +282,29 @@ export function ShoppingCart({
 
       const createdOrder = await response.json();
       console.log("✅ Order created successfully:", createdOrder);
+      console.log("🔍 Created order details:", {
+        orderId: createdOrder?.id,
+        orderNumber: createdOrder?.orderNumber,
+        status: createdOrder?.status,
+        total: createdOrder?.total,
+        orderItems: createdOrder?.orderItems?.length || 0,
+        fullObject: JSON.stringify(createdOrder, null, 2)
+      });
 
-      // Store created order for payment
+      // Store created order for payment with validation
+      if (!createdOrder || !createdOrder.id) {
+        console.error("❌ Created order is invalid:", createdOrder);
+        throw new Error("Created order doesn't have a valid ID");
+      }
+
+      console.log("💾 Setting currentOrderForPayment:", createdOrder.id);
       setCurrentOrderForPayment(createdOrder);
-      setShowPaymentModal(true);
+      
+      // Add small delay to ensure state is updated before opening modal
+      setTimeout(() => {
+        console.log("🚀 Opening payment modal with order:", createdOrder.id);
+        setShowPaymentModal(true);
+      }, 100);
 
     } catch (error) {
       console.error("❌ Failed to create order:", error);
@@ -647,25 +666,36 @@ export function ShoppingCart({
       />
 
       {/* Step 2: Payment Method Selection Modal */}
-      <PaymentMethodModal
-        isOpen={showPaymentModal}
-        onClose={() => {
-          console.log("🔴 Step 2: Closing payment method modal");
-          setShowPaymentModal(false);
-          setCurrentOrderForPayment(null); // Reset order when closing
-        }}
-        onSelectMethod={handlePaymentMethodSelect}
-        total={total}
-        cartItems={cart.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),
-          quantity: item.quantity,
-          sku: String(item.id),
-          taxRate: parseFloat(item.taxRate || "0"),
-        }))}
-        orderForPayment={currentOrderForPayment} // ✅ Pass created order
-      />
+      {showPaymentModal && (
+        <PaymentMethodModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            console.log("🔴 Step 2: Closing payment method modal");
+            setShowPaymentModal(false);
+            setCurrentOrderForPayment(null); // Reset order when closing
+          }}
+          onSelectMethod={handlePaymentMethodSelect}
+          total={total}
+          cartItems={cart.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            sku: String(item.id),
+            taxRate: parseFloat(item.taxRate || "0"),
+          }))}
+          orderForPayment={(() => {
+            console.log("🔍 SHOPPING CART: PaymentMethodModal props check:", {
+              currentOrderForPayment: currentOrderForPayment,
+              currentOrderForPaymentId: currentOrderForPayment?.id,
+              currentOrderForPaymentType: typeof currentOrderForPayment,
+              showPaymentModal: showPaymentModal,
+              timestamp: new Date().toISOString()
+            });
+            return currentOrderForPayment;
+          })()} // ✅ Pass created order with debug
+        />
+      )}
 
       {/* Step 4: E-Invoice Modal for invoice processing */}
       {showEInvoiceModal && (
