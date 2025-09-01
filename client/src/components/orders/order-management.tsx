@@ -56,9 +56,9 @@ export function OrderManagement() {
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
-    refetchInterval: 15000, // Refetch every 15 seconds for faster updates
+    refetchInterval: 10000, // Refetch every 10 seconds for faster updates
     refetchOnWindowFocus: true, // Refetch when window regains focus
-    staleTime: 5000, // Consider data stale after 5 seconds
+    staleTime: 1000, // Consider data stale after 1 second for immediate updates
     onSuccess: (data) => {
       console.log(`🔍 DEBUG: Orders query onSuccess called:`, {
         ordersCount: data?.length || 0,
@@ -1087,40 +1087,90 @@ export function OrderManagement() {
     }, 15000);
 
     // Listen for manual refresh events
-    const handleOrderStatusUpdate = (event: CustomEvent) => {
+    const handleOrderStatusUpdate = async (event: CustomEvent) => {
       console.log(`🔄 Order Management: Received orderStatusUpdated event:`, event.detail);
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      
+      // Force immediate refresh with refetch
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
+      
+      console.log(`✅ Order Management: Immediate refresh completed after status update`);
     };
 
-    const handlePaymentComplete = (event: CustomEvent) => {
+    const handlePaymentComplete = async (event: CustomEvent) => {
       console.log(`💳 Order Management: Received paymentCompleted event:`, event.detail);
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      
+      // Force immediate refresh with refetch
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
+      
+      console.log(`✅ Order Management: Immediate refresh completed after payment`);
     };
 
-    const handleRefreshOrders = () => {
-      console.log(`🔄 Order Management: Manual refresh orders triggered`);
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+    const handleRefreshOrders = async (event?: CustomEvent) => {
+      console.log(`🔄 Order Management: Manual refresh orders triggered`, event?.detail);
+      
+      if (event?.detail?.immediate) {
+        // Force immediate refetch for immediate updates
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/orders'] })
+        ]);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      }
     };
 
-    const handleRefreshTables = () => {
-      console.log(`🔄 Order Management: Manual refresh tables triggered`);
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+    const handleRefreshTables = async (event?: CustomEvent) => {
+      console.log(`🔄 Order Management: Manual refresh tables triggered`, event?.detail);
+      
+      if (event?.detail?.immediate) {
+        // Force immediate refetch for immediate updates
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+        ]);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      }
+    };
+
+    const handleForceRefresh = async (event: CustomEvent) => {
+      console.log(`🔄 Order Management: Force refresh triggered:`, event.detail);
+      
+      // Force complete UI refresh
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
+      
+      console.log(`✅ Order Management: Force refresh completed`);
     };
 
     // Add event listeners
     window.addEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
     window.addEventListener('paymentCompleted', handlePaymentComplete as EventListener);
-    window.addEventListener('refreshOrders', handleRefreshOrders);
-    window.addEventListener('refreshTables', handleRefreshTables);
+    window.addEventListener('refreshOrders', handleRefreshOrders as EventListener);
+    window.addEventListener('refreshTables', handleRefreshTables as EventListener);
+    window.addEventListener('forceRefresh', handleForceRefresh as EventListener);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
       window.removeEventListener('paymentCompleted', handlePaymentComplete as EventListener);
-      window.removeEventListener('refreshOrders', handleRefreshOrders);
-      window.removeEventListener('refreshTables', handleRefreshTables);
+      window.removeEventListener('refreshOrders', handleRefreshOrders as EventListener);
+      window.removeEventListener('refreshTables', handleRefreshTables as EventListener);
+      window.removeEventListener('forceRefresh', handleForceRefresh as EventListener);
     };
   }, [queryClient]);
 

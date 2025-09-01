@@ -252,90 +252,11 @@ export function PaymentMethodModal({
 
   const handleSelect = async (method: string) => {
     setSelectedPaymentMethod(method);
-
-    // **BƯỚC MỚI: Gọi updateOrderStatus ngay khi chọn phương thức thanh toán**
-    if (orderForPayment?.id) {
-      try {
-        console.log(`🔄 Calling updateOrderStatus for order ${orderForPayment.id} with payment method: ${method}`);
-        console.log(`📋 Order details:`, {
-          orderId: orderForPayment.id,
-          currentStatus: orderForPayment.status,
-          tableId: orderForPayment.tableId,
-          total: orderForPayment.total,
-          paymentMethod: method
-        });
-
-        // Gọi API updateOrderStatus để cập nhật trạng thái đơn hàng thành 'paid'
-        const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'paid'
-          }),
-        });
-
-        if (statusResponse.ok) {
-          const statusResult = await statusResponse.json();
-          console.log(`✅ updateOrderStatus completed successfully for order ${orderForPayment.id}:`, statusResult);
-          console.log(`🎯 Order status changed: ${orderForPayment.status} → 'paid'`);
-
-          // Dispatch UI refresh events sau khi updateOrderStatus thành công
-          if (typeof window !== 'undefined') {
-            const events = [
-              new CustomEvent('orderStatusUpdated', {
-                detail: {
-                  orderId: orderForPayment.id,
-                  status: 'paid',
-                  previousStatus: orderForPayment.status,
-                  tableId: orderForPayment.tableId,
-                  paymentMethod: method,
-                  timestamp: new Date().toISOString()
-                }
-              }),
-              new CustomEvent('refreshOrders'),
-              new CustomEvent('refreshTables'),
-              new CustomEvent('paymentCompleted', {
-                detail: {
-                  orderId: orderForPayment.id,
-                  tableId: orderForPayment.tableId,
-                  paymentMethod: method
-                }
-              }),
-              new CustomEvent('tableStatusUpdate', {
-                detail: {
-                  tableId: orderForPayment.tableId,
-                  checkForRelease: true,
-                  orderId: orderForPayment.id
-                }
-              })
-            ];
-
-            events.forEach(event => {
-              console.log("📡 Dispatching UI refresh event after updateOrderStatus:", event.type, event.detail);
-              window.dispatchEvent(event);
-            });
-          }
-        } else {
-          const errorText = await statusResponse.text();
-          console.error(`❌ updateOrderStatus failed for order ${orderForPayment.id}:`, {
-            status: statusResponse.status,
-            statusText: statusResponse.statusText,
-            error: errorText
-          });
-          throw new Error(`updateOrderStatus failed: ${errorText}`);
-        }
-      } catch (error) {
-        console.error(`❌ Error calling updateOrderStatus for order ${orderForPayment.id}:`, {
-          errorMessage: error.message,
-          errorStack: error.stack,
-          paymentMethod: method,
-          orderId: orderForPayment.id
-        });
-        // Không throw error để không làm gián đoạn flow thanh toán
-      }
-    }
+    
+    console.log(`🔄 Payment method selected: ${method} for order ${orderForPayment?.id}`);
+    
+    // NOTE: Không cập nhật trạng thái đơn hàng ngay tại đây
+    // Sẽ cập nhật sau khi hoàn tất E-invoice trong handleEInvoiceConfirm
 
     if (method === "cash") {
       // Reset cash amount input when showing cash payment
@@ -620,8 +541,16 @@ export function PaymentMethodModal({
     try {
       console.log("🔄 Step 1: Starting payment process for order:", orderForPayment.id);
 
-      // STEP 1: Update order status to 'paid' first using the dedicated status endpoint
+      // STEP 1: Update order status to 'paid' using the dedicated status endpoint
       console.log("📤 Step 1: Updating order status to 'paid'");
+      console.log(`🔍 Order details before update:`, {
+        orderId: orderForPayment.id,
+        currentStatus: orderForPayment.status,
+        tableId: orderForPayment.tableId,
+        total: orderForPayment.total,
+        paymentMethod: selectedPaymentMethod
+      });
+
       const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
         method: 'PUT',
         headers: {
@@ -632,6 +561,8 @@ export function PaymentMethodModal({
         }),
       });
 
+      console.log(`🔍 API Response status: ${statusResponse.status} ${statusResponse.statusText}`);
+
       if (!statusResponse.ok) {
         const errorText = await statusResponse.text();
         console.error("❌ Step 1 FAILED: Order status update failed:", errorText);
@@ -640,6 +571,7 @@ export function PaymentMethodModal({
 
       const statusResult = await statusResponse.json();
       console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
+      console.log(`🎯 Order status changed: ${orderForPayment.status} → 'paid'`);
 
       // STEP 2: Update order with payment details
       console.log("📤 Step 2: Adding payment details to order");
@@ -695,41 +627,71 @@ export function PaymentMethodModal({
           parseFloat(cashAmountInput) - (orderForPayment.exactTotal || orderForPayment.total || 0) : null
       };
 
-      // STEP 4: Force refresh UI immediately after successful status update
+      // STEP 4: Force immediate UI refresh after successful status update
       console.log("🔄 Step 4: Dispatching UI refresh events");
 
+      // Force immediate query refresh
       if (typeof window !== 'undefined') {
+        // Dispatch immediate UI refresh events
         const events = [
           new CustomEvent('orderStatusUpdated', {
             detail: {
               orderId: orderForPayment.id,
               status: 'paid',
+              previousStatus: orderForPayment.status,
               tableId: orderForPayment.tableId,
-              paymentMethod: selectedPaymentMethod
+              paymentMethod: selectedPaymentMethod,
+              timestamp: new Date().toISOString()
             }
           }),
-          new CustomEvent('refreshOrders'),
-          new CustomEvent('refreshTables'),
+          new CustomEvent('refreshOrders', {
+            detail: { 
+              immediate: true,
+              orderId: orderForPayment.id,
+              newStatus: 'paid'
+            }
+          }),
+          new CustomEvent('refreshTables', {
+            detail: { 
+              immediate: true,
+              tableId: orderForPayment.tableId,
+              orderId: orderForPayment.id
+            }
+          }),
           new CustomEvent('paymentCompleted', {
             detail: { 
               orderId: orderForPayment.id, 
               tableId: orderForPayment.tableId,
-              paymentMethod: selectedPaymentMethod
+              paymentMethod: selectedPaymentMethod,
+              timestamp: new Date().toISOString()
             }
           }),
           new CustomEvent('tableStatusUpdate', {
             detail: { 
               tableId: orderForPayment.tableId, 
               checkForRelease: true,
-              orderId: orderForPayment.id
+              orderId: orderForPayment.id,
+              immediate: true
             }
           })
         ];
 
         events.forEach(event => {
-          console.log("📡 Dispatching event:", event.type, event.detail);
+          console.log("📡 Dispatching immediate UI refresh event:", event.type, event.detail);
           window.dispatchEvent(event);
         });
+
+        // Also trigger a manual page refresh after a short delay if needed
+        setTimeout(() => {
+          console.log("🔄 Manual UI refresh trigger");
+          window.dispatchEvent(new CustomEvent('forceRefresh', {
+            detail: { 
+              reason: 'payment_completed',
+              orderId: orderForPayment.id,
+              tableId: orderForPayment.tableId
+            }
+          }));
+        }, 500);
       }
 
       // STEP 5: Close all modals and complete payment flow
