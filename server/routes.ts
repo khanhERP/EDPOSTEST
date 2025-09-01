@@ -1174,13 +1174,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (!order) {
         console.error(`❌ API: Order update failed for ID: ${id}`);
         console.log(`🔍 DEBUG: Investigating why order update failed...`);
-        
+
         // Check if order exists at all
         const [checkOrder] = await db
           .select()
           .from(orders)
           .where(eq(orders.id, id));
-        
+
         console.log(`🔍 DEBUG: Order existence check:`, {
           orderExists: !!checkOrder,
           orderData: checkOrder ? {
@@ -1225,7 +1225,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
               paidAt: new Date()
             })
             .where(eq(orders.id, id));
-          
+
           console.log(`✅ Payment status updated to 'paid' for order ${id}`);
         } catch (paymentUpdateError) {
           console.error(`❌ Failed to update payment status:`, paymentUpdateError);

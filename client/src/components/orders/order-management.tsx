@@ -1536,25 +1536,6 @@ export function OrderManagement() {
                           processedItemsCount: processedItems.length
                         });
 
-                        console.log(`🔍 DEBUG: Setting modal states for payment preview:`, {
-                          beforeSetState: {
-                            showReceiptPreview: showReceiptPreview,
-                            orderForPayment: !!orderForPayment,
-                            previewReceipt: !!previewReceipt,
-                            orderDetailsOpen: orderDetailsOpen
-                          },
-                          aboutToSet: {
-                            orderForPayment: !!completeOrderForPayment,
-                            previewReceipt: !!previewData,
-                            orderDetailsOpen: false,
-                            showReceiptPreview: true
-                          }
-                        });
-
-                        // Set states in correct order to prevent race conditions
-                        setOrderForPayment(completeOrderForPayment);
-                        setPreviewReceipt(previewData);
-
                         // Set all required data states first
                         setOrderForPayment(completeOrderForPayment);
                         setPreviewReceipt(previewData);
@@ -2054,21 +2035,7 @@ export function OrderManagement() {
       </Dialog>
 
       {/* Receipt Modal - Step 1: "Xem trước hóa đơn" */}
-      {(() => {
-        console.log('🔍 DEBUG: Receipt Modal props before render:', {
-          showReceiptPreview: showReceiptPreview,
-          previewReceiptExists: !!previewReceipt,
-          combinedIsOpen: showReceiptPreview && !!previewReceipt,
-          previewReceiptData: previewReceipt ? {
-            id: previewReceipt.id,
-            orderNumber: previewReceipt.orderNumber,
-            total: previewReceipt.total,
-            itemsCount: previewReceipt.items?.length || 0
-          } : null,
-          timestamp: new Date().toISOString()
-        });
-        return null;
-      })()}
+      {/* Removed the unnecessary console log here */}
       <ReceiptModal
         isOpen={showReceiptPreview}
         onClose={() => {
@@ -2080,7 +2047,7 @@ export function OrderManagement() {
           });
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
-          setOrderForPayment(null);
+          setOrderForPayment(null); // Reset orderForPayment when closing
         }}
         onConfirm={() => {
           console.log("📄 Order Management: Receipt preview confirmed, starting payment flow");
