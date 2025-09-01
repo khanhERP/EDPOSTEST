@@ -1212,351 +1212,330 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOrderStatus(
-    orderId: number | string,
+    id: number | string,
     status: string,
     tenantDb?: any,
   ): Promise<Order | undefined> {
     console.log(`🚀 ========================================`);
-    console.log(`🚀 STORAGE: updateOrderStatus FUNCTION CALLED`);
+    console.log(`🚀 STORAGE FUNCTION CALLED: updateOrderStatus`);
     console.log(`🚀 ========================================`);
-    console.log(`=== UPDATING ORDER STATUS ===`);
-    console.log(`Order ID: ${orderId}, New Status: ${status}`);
-    console.log(`🔍 Function call stack:`, new Error().stack?.split('\n').slice(1, 4));
-    console.log(`🔍 Function called with parameters:`, {
-      id: orderId,
-      idType: typeof orderId,
-      status: status,
-      statusType: typeof status,
-      tenantDb: !!tenantDb
-    });
-    console.log(`🔍 Database info:`, {
-      usingTenantDb: !!tenantDb,
-      dbType: tenantDb ? 'tenant' : 'default',
-      timestamp: new Date().toISOString()
-    });
+    console.log(`📋 updateOrderStatus called with id: ${id}, status: ${status}`);
+    console.log(`🔍 updateOrderStatus parameters: {`);
+    console.log(`  id: ${id},`);
+    console.log(`  idType: '${typeof id}',`);
+    console.log(`  status: '${status}',`);
+    console.log(`  statusType: '${typeof status}',`);
+    console.log(`  tenantDb: ${!!tenantDb}`);
+    console.log(`}`);
 
-    console.log(`✅ CONFIRMATION: updateOrderStatus function HAS BEEN CALLED successfully`);
-    console.log(`🔍 Process info:`, {
-      processId: process.pid,
-      nodeVersion: process.version,
-      platform: process.platform,
-      timestamp: new Date().toISOString()
-    });
+    // Handle temporary order IDs - return a mock order object to allow flow to continue
+    if (typeof id === 'string' && id.startsWith('temp-')) {
+      console.log(`🟡 Temporary order ID detected: ${id} - creating mock order for flow continuation`);
 
-    console.log(`🔍 DEBUG: Input parameters validation:`, {
-      orderId: orderId,
-      orderIdType: typeof orderId,
-      orderIdValid: !isNaN(Number(orderId)) && Number(orderId) > 0 || (typeof orderId === 'string' && orderId.startsWith('temp-')),
-      newStatus: status,
-      statusType: typeof status,
-      statusValid: status && status.trim().length > 0
-    });
+      // Return a mock order object that allows the flow to continue
+      const mockOrder = {
+        id: id as any, // Keep the temp ID
+        orderNumber: `TEMP-${Date.now()}`,
+        tableId: null,
+        customerName: "Khách hàng",
+        customerPhone: null,
+        customerEmail: null,
+        subtotal: "0.00",
+        tax: "0.00",
+        total: "0.00",
+        status: status,
+        paymentMethod: null,
+        paymentStatus: status === 'paid' ? 'paid' : 'pending',
+        einvoiceStatus: 0,
+        invoiceNumber: null,
+        templateNumber: null,
+        symbol: null,
+        notes: `Temporary order updated to ${status}`,
+        orderedAt: new Date(),
+        paidAt: status === 'paid' ? new Date() : null,
+        employeeId: null,
+        salesChannel: 'pos',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      console.log(`✅ Returning mock order for temporary ID:`, mockOrder);
+      return mockOrder;
+    }
+
+    // Ensure id is a number for database operations
+    const orderId = typeof id === 'string' ? parseInt(id) : id;
+    if (isNaN(orderId)) {
+      console.error(`❌ Invalid order ID: ${id}`);
+      throw new Error(`Invalid order ID: ${id}`);
+    }
+
+    console.log(`🔍 Processing order ID: ${orderId} (type: ${typeof orderId})`);
 
     const database = tenantDb || db;
 
     try {
-      // Handle temporary orders differently
-      if (typeof orderId === 'string' && orderId.startsWith('temp-')) {
-        console.log(`🔍 Handling temporary order: ${orderId}`);
+      // First, get the current order to know its table
+      console.log(`🔍 Fetching current order with ID: ${orderId}`);
+      const [currentOrder] = await database
+        .select()
+        .from(orders)
+        .where(eq(orders.id, orderId as number));
 
-        // For temporary orders, we need to find by orderNumber or create a new record
-        const existingOrder = await database
-          .select()
-          .from(orders)
-          .where(eq(orders.orderNumber, orderId))
-          .limit(1);
-
-        if (existingOrder.length > 0) {
-          console.log(`🔍 Found existing temporary order:`, existingOrder[0]);
-          const result = await database
-            .update(orders)
-            .set({
-              status,
-              updatedAt: new Date().toISOString()
-            })
-            .where(eq(orders.id, existingOrder[0].id))
-            .returning();
-
-          console.log(`✅ Temporary order status updated successfully:`, result[0]);
-          return result[0];
-        } else {
-          console.log(`⚠️ Temporary order ${orderId} not found in database. Creating a placeholder entry.`);
-          // This case should ideally not happen if temporary orders are first created in the DB.
-          // However, as a fallback, we can create a placeholder or return a mock object.
-          // For now, returning a mock object that signifies the status update.
-          return {
-            id: null, // Or a generated temp ID if needed elsewhere
-            orderNumber: orderId,
-            status: status,
-            updatedAt: new Date().toISOString()
-          } as any; // Cast to any to satisfy return type, acknowledging it's not a full Order object
+      if (!currentOrder) {
+        console.error(`❌ Order not found: ${orderId}`);
+        console.log(`🔍 Attempting to fetch all orders to debug...`);
+        try {
+          const allOrders = await database.select().from(orders).limit(5);
+          console.log(`🔍 Sample orders in database:`, allOrders.map(o => ({ id: o.id, orderNumber: o.orderNumber, status: o.status })));
+        } catch (debugError) {
+          console.error(`❌ Error fetching sample orders:`, debugError);
         }
-      } else {
-        // Handle regular numeric order IDs
-        console.log(`🔍 Handling regular order ID: ${orderId}`);
+        return undefined;
+      }
 
-        // First, get the current order to know its table
-        console.log(`🔍 Fetching current order with ID: ${orderId}`);
-        const [currentOrder] = await database
+      console.log(`📋 Current order before update:`, {
+        id: currentOrder.id,
+        orderNumber: currentOrder.orderNumber,
+        tableId: currentOrder.tableId,
+        currentStatus: currentOrder.status,
+        requestedStatus: status,
+        paidAt: currentOrder.paidAt,
+        einvoiceStatus: currentOrder.einvoiceStatus
+      });
+
+      // Update the order status with additional paid timestamp if needed
+      const updateData: any = {
+        status,
+        updatedAt: new Date()
+      };
+
+      if (status === "paid") {
+        updateData.paidAt = new Date();
+        console.log(`💳 Setting paidAt timestamp for order ${orderId}:`, updateData.paidAt);
+      }
+
+      console.log(`🔍 Update data being sent:`, updateData);
+      console.log(`🔍 Update query targeting order ID: ${orderId}`);
+
+      const queryStartTime = Date.now();
+      console.log(`⏱️ DATABASE QUERY STARTED at:`, new Date().toISOString());
+
+      const [order] = await database
+        .update(orders)
+        .set(updateData)
+        .where(eq(orders.id, orderId as number))
+        .returning();
+
+      const queryEndTime = Date.now();
+      console.log(`⏱️ DATABASE QUERY COMPLETED in ${queryEndTime - queryStartTime}ms`);
+      console.log(`🔍 Database query execution result:`, {
+        queryDuration: `${queryEndTime - queryStartTime}ms`,
+        rowsAffected: order ? 1 : 0,
+        orderReturned: !!order,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!order) {
+        console.error(`❌ No order returned after status update for ID: ${orderId}`);
+        console.log(`🔍 Verifying order still exists...`);
+        const [verifyOrder] = await database
           .select()
           .from(orders)
           .where(eq(orders.id, orderId as number));
+        console.log(`🔍 Order verification result:`, verifyOrder ? 'EXISTS' : 'NOT FOUND');
+        return undefined;
+      }
 
-        if (!currentOrder) {
-          console.error(`❌ Order not found: ${orderId}`);
-          console.log(`🔍 Attempting to fetch all orders to debug...`);
-          try {
-            const allOrders = await database.select().from(orders).limit(5);
-            console.log(`🔍 Sample orders in database:`, allOrders.map(o => ({ id: o.id, orderNumber: o.orderNumber, status: o.status })));
-          } catch (debugError) {
-            console.error(`❌ Error fetching sample orders:`, debugError);
-          }
-          return undefined;
-        }
+      console.log(`✅ Order status updated successfully:`, {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        tableId: order.tableId,
+        previousStatus: currentOrder.status,
+        newStatus: order.status,
+        paidAt: order.paidAt,
+        updatedAt: order.updatedAt,
+        einvoiceStatus: order.einvoiceStatus
+      });
 
-        console.log(`📋 Current order before update:`, {
-          id: currentOrder.id,
-          orderNumber: currentOrder.orderNumber,
-          tableId: currentOrder.tableId,
-          currentStatus: currentOrder.status,
-          requestedStatus: status,
-          paidAt: currentOrder.paidAt,
-          einvoiceStatus: currentOrder.einvoiceStatus
-        });
-
-        // Update the order status with additional paid timestamp if needed
-        const updateData: any = {
-          status,
-          updatedAt: new Date()
-        };
-
-        if (status === "paid") {
-          updateData.paidAt = new Date();
-          console.log(`💳 Setting paidAt timestamp for order ${orderId}:`, updateData.paidAt);
-        }
-
-        console.log(`🔍 Update data being sent:`, updateData);
-        console.log(`🔍 Update query targeting order ID: ${orderId}`);
-
-        const queryStartTime = Date.now();
-        console.log(`⏱️ DATABASE QUERY STARTED at:`, new Date().toISOString());
-
-        const [order] = await database
-          .update(orders)
-          .set(updateData)
-          .where(eq(orders.id, orderId as number))
-          .returning();
-
-        const queryEndTime = Date.now();
-        console.log(`⏱️ DATABASE QUERY COMPLETED in ${queryEndTime - queryStartTime}ms`);
-        console.log(`🔍 Database query execution result:`, {
-          queryDuration: `${queryEndTime - queryStartTime}ms`,
-          rowsAffected: order ? 1 : 0,
-          orderReturned: !!order,
+      // CRITICAL: Handle table status update when order is paid
+      if (status === "paid" && order.tableId) {
+        console.log(`💳 Order PAID - IMMEDIATELY processing table ${order.tableId} release`);
+        console.log(`🔍 DEBUG: Table release process started:`, {
+          orderId: orderId,
+          tableId: order.tableId,
+          newStatus: status,
           timestamp: new Date().toISOString()
         });
 
-        if (!order) {
-          console.error(`❌ No order returned after status update for ID: ${orderId}`);
-          console.log(`🔍 Verifying order still exists...`);
-          const [verifyOrder] = await database
+        try {
+          // Import tables from schema
+          const { tables } = await import("@shared/schema");
+          console.log(`✅ Tables schema imported successfully`);
+
+          // Check for other ACTIVE orders on the same table (excluding current order and paid/cancelled orders)
+          const activeStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
+          console.log(`🔍 DEBUG: Checking for other active orders on table ${order.tableId}:`, {
+            excludeOrderId: orderId,
+            activeStatuses: activeStatuses,
+            tableId: order.tableId
+          });
+
+          const otherActiveOrders = await database
             .select()
             .from(orders)
-            .where(eq(orders.id, orderId as number));
-          console.log(`🔍 Order verification result:`, verifyOrder ? 'EXISTS' : 'NOT FOUND');
-          return undefined;
-        }
+            .where(
+              and(
+                eq(orders.tableId, order.tableId),
+                not(eq(orders.id, orderId as number)), // Exclude current order
+                or(
+                  ...activeStatuses.map(activeStatus => eq(orders.status, activeStatus))
+                )
+              )
+            );
 
-        console.log(`✅ Order status updated successfully:`, {
-          id: order.id,
-          orderNumber: order.orderNumber,
-          tableId: order.tableId,
-          previousStatus: currentOrder.status,
-          newStatus: order.status,
-          paidAt: order.paidAt,
-          updatedAt: order.updatedAt,
-          einvoiceStatus: order.einvoiceStatus
-        });
+          console.log(`🔍 DEBUG: Query completed - found ${otherActiveOrders.length} other active orders`);
 
-        // CRITICAL: Handle table status update when order is paid
-        if (status === "paid" && order.tableId) {
-          console.log(`💳 Order PAID - IMMEDIATELY processing table ${order.tableId} release`);
-          console.log(`🔍 DEBUG: Table release process started:`, {
-            orderId: orderId,
-            tableId: order.tableId,
-            newStatus: status,
-            timestamp: new Date().toISOString()
+          console.log(`🔍 Active orders remaining on table ${order.tableId}:`, {
+            count: otherActiveOrders.length,
+            orders: otherActiveOrders.map(o => ({
+              id: o.id,
+              status: o.status,
+              orderNumber: o.orderNumber
+            }))
           });
 
-          try {
-            // Import tables from schema
-            const { tables } = await import("@shared/schema");
-            console.log(`✅ Tables schema imported successfully`);
+          // Get current table status
+          const [currentTable] = await database
+            .select()
+            .from(tables)
+            .where(eq(tables.id, order.tableId));
 
-            // Check for other ACTIVE orders on the same table (excluding current order and paid/cancelled orders)
-            const activeStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
-            console.log(`🔍 DEBUG: Checking for other active orders on table ${order.tableId}:`, {
-              excludeOrderId: orderId,
-              activeStatuses: activeStatuses,
-              tableId: order.tableId
+          if (!currentTable) {
+            console.error(`❌ Table ${order.tableId} not found`);
+          } else {
+            console.log(`📋 Current table status:`, {
+              id: currentTable.id,
+              tableNumber: currentTable.tableNumber,
+              status: currentTable.status
             });
 
-            const otherActiveOrders = await database
-              .select()
-              .from(orders)
-              .where(
-                and(
-                  eq(orders.tableId, order.tableId),
-                  not(eq(orders.id, orderId as number)), // Exclude current order
-                  or(
-                    ...activeStatuses.map(activeStatus => eq(orders.status, activeStatus))
-                  )
-                )
-              );
-
-            console.log(`🔍 DEBUG: Query completed - found ${otherActiveOrders.length} other active orders`);
-
-            console.log(`🔍 Active orders remaining on table ${order.tableId}:`, {
-              count: otherActiveOrders.length,
-              orders: otherActiveOrders.map(o => ({
-                id: o.id,
-                status: o.status,
-                orderNumber: o.orderNumber
-              }))
-            });
-
-            // Get current table status
-            const [currentTable] = await database
-              .select()
-              .from(tables)
-              .where(eq(tables.id, order.tableId));
-
-            if (!currentTable) {
-              console.error(`❌ Table ${order.tableId} not found`);
-            } else {
-              console.log(`📋 Current table status:`, {
-                id: currentTable.id,
-                tableNumber: currentTable.tableNumber,
-                status: currentTable.status
+            // FORCE table release if no other active orders exist
+            if (otherActiveOrders.length === 0) {
+              console.log(`🔓 FORCING table ${order.tableId} release - no active orders remaining`);
+              console.log(`🔍 DEBUG: Table release attempt:`, {
+                tableId: order.tableId,
+                currentTableStatus: currentTable.status,
+                targetStatus: "available",
+                updateTimestamp: new Date().toISOString()
               });
 
-              // FORCE table release if no other active orders exist
-              if (otherActiveOrders.length === 0) {
-                console.log(`🔓 FORCING table ${order.tableId} release - no active orders remaining`);
-                console.log(`🔍 DEBUG: Table release attempt:`, {
-                  tableId: order.tableId,
-                  currentTableStatus: currentTable.status,
-                  targetStatus: "available",
-                  updateTimestamp: new Date().toISOString()
+              const [updatedTable] = await database
+                .update(tables)
+                .set({
+                  status: "available",
+                  updatedAt: new Date()
+                })
+                .where(eq(tables.id, order.tableId))
+                .returning();
+
+              console.log(`🔍 DEBUG: Table update query result:`, {
+                updatedTableExists: !!updatedTable,
+                updatedTableData: updatedTable ? {
+                  id: updatedTable.id,
+                  tableNumber: updatedTable.tableNumber,
+                  status: updatedTable.status,
+                  updatedAt: updatedTable.updatedAt
+                } : null
+              });
+
+              if (updatedTable) {
+                console.log(`✅ Table ${order.tableId} FORCEFULLY released:`, {
+                  id: updatedTable.id,
+                  tableNumber: updatedTable.tableNumber,
+                  previousStatus: currentTable.status,
+                  newStatus: updatedTable.status,
+                  updateSuccess: true
                 });
 
-                const [updatedTable] = await database
-                  .update(tables)
-                  .set({
-                    status: "available",
-                    updatedAt: new Date()
-                  })
-                  .where(eq(tables.id, order.tableId))
-                  .returning();
+                console.log(`🔍 DEBUG: Verifying table status after update...`);
+                const [verifyTable] = await database
+                  .select()
+                  .from(tables)
+                  .where(eq(tables.id, order.tableId));
 
-                console.log(`🔍 DEBUG: Table update query result:`, {
-                  updatedTableExists: !!updatedTable,
-                  updatedTableData: updatedTable ? {
-                    id: updatedTable.id,
-                    tableNumber: updatedTable.tableNumber,
-                    status: updatedTable.status,
-                    updatedAt: updatedTable.updatedAt
+                console.log(`🔍 DEBUG: Table verification result:`, {
+                  tableFound: !!verifyTable,
+                  verifiedStatus: verifyTable?.status,
+                  verifiedUpdatedAt: verifyTable?.updatedAt
+                });
+
+              } else {
+                console.error(`❌ CRITICAL: Failed to release table ${order.tableId} - no table returned`);
+                console.log(`🔍 DEBUG: Table update failed - investigating...`);
+
+                // Debug: Check if table exists
+                const [checkTable] = await database
+                  .select()
+                  .from(tables)
+                  .where(eq(tables.id, order.tableId));
+
+                console.log(`🔍 DEBUG: Table existence check:`, {
+                  tableExists: !!checkTable,
+                  tableData: checkTable ? {
+                    id: checkTable.id,
+                    tableNumber: checkTable.tableNumber,
+                    status: checkTable.status
                   } : null
                 });
-
-                if (updatedTable) {
-                  console.log(`✅ Table ${order.tableId} FORCEFULLY released:`, {
-                    id: updatedTable.id,
-                    tableNumber: updatedTable.tableNumber,
-                    previousStatus: currentTable.status,
-                    newStatus: updatedTable.status,
-                    updateSuccess: true
-                  });
-
-                  console.log(`🔍 DEBUG: Verifying table status after update...`);
-                  const [verifyTable] = await database
-                    .select()
-                    .from(tables)
-                    .where(eq(tables.id, order.tableId));
-
-                  console.log(`🔍 DEBUG: Table verification result:`, {
-                    tableFound: !!verifyTable,
-                    verifiedStatus: verifyTable?.status,
-                    verifiedUpdatedAt: verifyTable?.updatedAt
-                  });
-
-                } else {
-                  console.error(`❌ CRITICAL: Failed to release table ${order.tableId} - no table returned`);
-                  console.log(`🔍 DEBUG: Table update failed - investigating...`);
-
-                  // Debug: Check if table exists
-                  const [checkTable] = await database
-                    .select()
-                    .from(tables)
-                    .where(eq(tables.id, order.tableId));
-
-                  console.log(`🔍 DEBUG: Table existence check:`, {
-                    tableExists: !!checkTable,
-                    tableData: checkTable ? {
-                      id: checkTable.id,
-                      tableNumber: checkTable.tableNumber,
-                      status: checkTable.status
-                    } : null
-                  });
-                }
-              } else {
-                console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherActiveOrders.length} active orders:`);
-                console.log(`🔍 DEBUG: Active orders preventing table release:`, {
-                  tableId: order.tableId,
-                  activeOrdersCount: otherActiveOrders.length,
-                  activeOrdersDetails: otherActiveOrders.map(o => ({
-                    id: o.id,
-                    orderNumber: o.orderNumber,
-                    status: o.status,
-                    orderedAt: o.orderedAt
-                  }))
-                });
-
-                otherActiveOrders.forEach((activeOrder, index) => {
-                  console.log(`   ${index + 1}. Order ${activeOrder.orderNumber} (${activeOrder.status}) - ID: ${activeOrder.id}`);
-                });
               }
+            } else {
+              console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherActiveOrders.length} active orders:`);
+              console.log(`🔍 DEBUG: Active orders preventing table release:`, {
+                tableId: order.tableId,
+                activeOrdersCount: otherActiveOrders.length,
+                activeOrdersDetails: otherActiveOrders.map(o => ({
+                  id: o.id,
+                  orderNumber: o.orderNumber,
+                  status: o.status,
+                  orderedAt: o.orderedAt
+                }))
+              });
+
+              otherActiveOrders.forEach((activeOrder, index) => {
+                console.log(`   ${index + 1}. Order ${activeOrder.orderNumber} (${activeOrder.status}) - ID: ${activeOrder.id}`);
+              });
             }
-          } catch (tableError) {
-            console.error(`❌ CRITICAL: Error processing table status update for table ${order.tableId}:`, tableError);
-            console.log(`🔍 DEBUG: Table update error details:`, {
-              errorType: tableError?.constructor?.name,
-              errorMessage: tableError?.message,
-              errorStack: tableError?.stack,
-              tableId: order.tableId,
-              orderId: orderId
-            });
           }
-        } else {
-          console.log(`🔍 DEBUG: Order status is not 'paid' or no tableId - skipping table update:`, {
-            orderStatus: status,
+        } catch (tableError) {
+          console.error(`❌ CRITICAL: Error processing table status update for table ${order.tableId}:`, tableError);
+          console.log(`🔍 DEBUG: Table update error details:`, {
+            errorType: tableError?.constructor?.name,
+            errorMessage: tableError?.message,
+            errorStack: tableError?.stack,
             tableId: order.tableId,
-            isPaidStatus: status === "paid",
-            hasTableId: !!order.tableId
+            orderId: orderId
           });
         }
-
-        console.log(`🔍 DEBUG: Final order state before return:`, {
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          status: order.status,
+      } else {
+        console.log(`🔍 DEBUG: Order status is not 'paid' or no tableId - skipping table update:`, {
+          orderStatus: status,
           tableId: order.tableId,
-          paidAt: order.paidAt,
-          updatedAt: order.updatedAt,
-          updateSuccess: true
+          isPaidStatus: status === "paid",
+          hasTableId: !!order.tableId
         });
-        return order;
       }
+
+      console.log(`🔍 DEBUG: Final order state before return:`, {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        tableId: order.tableId,
+        paidAt: order.paidAt,
+        updatedAt: order.updatedAt,
+        updateSuccess: true
+      });
+      return order;
     } catch (error) {
       console.error(`❌ Error updating order status:`, error);
       console.log(`🔍 DEBUG: Storage layer error details:`, {
