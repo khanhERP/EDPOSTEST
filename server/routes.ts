@@ -1067,7 +1067,6 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
   app.put("/api/orders/:id/status", async (req: TenantRequest, res) => {
     try {
-      console.log(`📞 API: /api/orders/:id/status ENDPOINT CALLED`);
       const id = parseInt(req.params.id);
       const { status } = req.body;
       const tenantDb = await getTenantDatabase(req);
@@ -1142,7 +1141,6 @@ export async function registerRoutes(app: Express): Promise < Server > {
       // Add timing measurement
       const startTime = Date.now();
       console.log(`⏱️ DEBUG: Starting storage.updateOrderStatus call at:`, new Date().toISOString());
-      console.log(`📞 API: CALLING storage.updateOrderStatus(${id}, "${status}")`);
 
       // Update order status using storage layer
       let order;
@@ -1176,13 +1174,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (!order) {
         console.error(`❌ API: Order update failed for ID: ${id}`);
         console.log(`🔍 DEBUG: Investigating why order update failed...`);
-
+        
         // Check if order exists at all
         const [checkOrder] = await db
           .select()
           .from(orders)
           .where(eq(orders.id, id));
-
+        
         console.log(`🔍 DEBUG: Order existence check:`, {
           orderExists: !!checkOrder,
           orderData: checkOrder ? {
@@ -1215,24 +1213,6 @@ export async function registerRoutes(app: Express): Promise < Server > {
         einvoiceStatus: order.einvoiceStatus,
         timestamp: new Date().toISOString()
       });
-
-      // If status is 'paid', also update payment status
-      if (status === 'paid') {
-        console.log(`💳 Order PAID - Updating payment status in database`);
-        try {
-          await db
-            .update(orders)
-            .set({
-              paymentStatus: 'paid',
-              paidAt: new Date()
-            })
-            .where(eq(orders.id, id));
-
-          console.log(`✅ Payment status updated to 'paid' for order ${id}`);
-        } catch (paymentUpdateError) {
-          console.error(`❌ Failed to update payment status:`, paymentUpdateError);
-        }
-      }
 
       // If status was updated to 'paid', also check and log table status
       if (status === 'paid' && order.tableId) {

@@ -40,17 +40,19 @@ export function OrderManagement() {
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
-  
+  const [shouldOpenReceiptPreview, setShouldOpenReceiptPreview] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // Effect to ensure receipt preview opens when data is ready
+  // Effect to handle opening the receipt preview modal
   useEffect(() => {
-    if (previewReceipt && orderForPayment && showReceiptPreview) {
-      console.log('🚀 Receipt preview modal data is ready and should be open');
+    if (shouldOpenReceiptPreview && previewReceipt && orderForPayment) {
+      console.log('🚀 Receipt preview modal should now be open');
+      setShowReceiptPreview(true);
+      setShouldOpenReceiptPreview(false); // Reset the flag
     }
-  }, [previewReceipt, orderForPayment, showReceiptPreview]);
+  }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
@@ -529,17 +531,16 @@ export function OrderManagement() {
     setOrderDetailsOpen(true);
   };
 
-  const updateOrderStatus = async (orderId: number, newStatus: string) => {
+  const handleStatusUpdate = async (orderId: number, newStatus: string) => {
     try {
-      console.log(`📞 ORDER MANAGEMENT: updateOrderStatus FUNCTION CALLED`);
-      console.log(`🔍 Order Management: updateOrderStatus called:`, {
+      console.log(`🔄 Order Management: Updating order ${orderId} status to ${newStatus}`);
+      console.log(`🔍 DEBUG: Frontend status update details:`, {
         orderId: orderId,
         orderIdType: typeof orderId,
         orderIdValid: !isNaN(orderId) && orderId > 0,
         newStatus: newStatus,
         statusType: typeof newStatus,
         statusValid: newStatus && newStatus.trim().length > 0,
-        callStack: new Error().stack?.split('\n').slice(1, 3).join('\n'),
         timestamp: new Date().toISOString()
       });
 
@@ -1161,7 +1162,7 @@ export function OrderManagement() {
                       {order.status === 'pending' && (
                         <Button
                           size="sm"
-                          onClick={() => updateOrderStatus(order.id, 'confirmed')}
+                          onClick={() => handleStatusUpdate(order.id, 'confirmed')}
                           className="flex-1"
                         >
                           {t('orders.confirm')}
@@ -1171,7 +1172,7 @@ export function OrderManagement() {
                       {order.status === 'confirmed' && (
                         <Button
                           size="sm"
-                          onClick={() => updateOrderStatus(order.id, 'preparing')}
+                          onClick={() => handleStatusUpdate(order.id, 'preparing')}
                           className="flex-1"
                         >
                           {t('orders.startCooking')}
@@ -1181,7 +1182,7 @@ export function OrderManagement() {
                       {order.status === 'preparing' && (
                         <Button
                           size="sm"
-                          onClick={() => updateOrderStatus(order.id, 'ready')}
+                          onClick={() => handleStatusUpdate(order.id, 'ready')}
                           className="flex-1"
                         >
                           {t('orders.ready')}
@@ -1191,7 +1192,7 @@ export function OrderManagement() {
                       {order.status === 'ready' && (
                         <Button
                           size="sm"
-                          onClick={() => updateOrderStatus(order.id, 'served')}
+                          onClick={() => handleStatusUpdate(order.id, 'served')}
                           className="flex-1"
                         >
                           {t('orders.served')}
@@ -1201,96 +1202,7 @@ export function OrderManagement() {
                       {order.status === 'served' && (
                         <Button
                           size="sm"
-                          onClick={async () => {
-                            console.log("📄 ORDER MANAGEMENT: PAYMENT BUTTON CLICKED");
-                            console.log("📄 Order Management: Payment button clicked for order:", selectedOrder.id);
-                            console.log(`🔍 Order Management: E-invoice status for order ${selectedOrder.id}:`, {
-                              einvoiceStatus: selectedOrder.einvoiceStatus,
-                              type: typeof selectedOrder.einvoiceStatus,
-                              willCallUpdateOrderStatus: selectedOrder.einvoiceStatus !== 0
-                            });
-
-                            if (selectedOrder.einvoiceStatus === 0) {
-                              // E-invoice not published - show receipt preview for publishing
-                              console.log("🔍 DEBUG: Building cartItems for Receipt Preview Modal");
-
-                              const previewData = {
-                                ...selectedOrder,
-                                paymentMethod: "preview",
-                                transactionId: `PREVIEW-${Date.now()}`,
-                                items: orderItems || [],
-                                exactSubtotal: parseFloat(selectedOrder.subtotal || "0"),
-                                exactTax: parseFloat(selectedOrder.tax || "0"),
-                                exactTotal: parseFloat(selectedOrder.total || "0"),
-                                cashierName: "Order Management",
-                                createdAt: new Date().toISOString(),
-                                orderItems: orderItems || []
-                              };
-
-                              console.log("previewReceipt:", previewData);
-                              console.log("previewReceipt?.items:", previewData.items);
-
-                              const processedItems = previewData.items?.map((item: any) => {
-                                console.log("🔍 Mapping preview item:", item);
-                                return {
-                                  id: item.productId,
-                                  name: item.productName,
-                                  price: parseFloat(item.price || item.unitPrice || "0"),
-                                  quantity: item.quantity,
-                                  sku: item.sku || item.productSku || '',
-                                  taxRate: item.taxRate || 10
-                                };
-                              }) || [];
-
-                              console.log("✅ Mapped cartItems for preview:", processedItems);
-
-                              const completeOrderForPayment = {
-                                ...previewData,
-                                processedItems: processedItems
-                              };
-
-                              console.log("💰 Receipt Preview Modal total:", parseFloat(selectedOrder.total || "0"));
-
-                              console.log("📦 Mapping cart items for Payment Modal:", processedItems.length);
-
-                              console.log("💳 Setting up Receipt Preview Modal...", {
-                                orderId: selectedOrder.id,
-                                hasItems: processedItems.length > 0,
-                                total: parseFloat(selectedOrder.total || "0"),
-                                processedItemsCount: processedItems.length
-                              });
-
-                              // Set all required data states first
-                              setOrderForPayment(completeOrderForPayment);
-                              setPreviewReceipt(previewData);
-                              setShowReceiptPreview(true);
-                            } else {
-                              // E-invoice already published - direct payment
-                              console.log("💳 ORDER MANAGEMENT: E-invoice already published - WILL CALL updateOrderStatus");
-                              console.log("💳 E-invoice already published - proceeding to direct payment");
-                              console.log("📞 ORDER MANAGEMENT: About to call updateOrderStatus for paid status");
-
-                              const processedItems = orderItems?.map((item: any) => ({
-                                id: item.productId,
-                                name: item.productName || item.name,
-                                price: parseFloat(item.unitPrice || item.price || "0"),
-                                quantity: item.quantity,
-                                sku: item.sku || item.productSku || '',
-                                taxRate: item.taxRate || 10
-                              })) || [];
-
-                              setOrderForPayment({
-                                ...selectedOrder,
-                                processedItems: processedItems
-                              });
-
-                              console.log("📞 ORDER MANAGEMENT: CALLING updateOrderStatus NOW with 'paid' status");
-                              await updateOrderStatus(selectedOrder.id, 'paid');
-                              console.log("✅ ORDER MANAGEMENT: updateOrderStatus call completed");
-
-                              setShowReceiptPreview(true);
-                            }
-                          }}
+                          onClick={() => handlePaymentClick(order)}
                           className="flex-1 bg-green-600 hover:bg-green-700"
                         >
                           <CreditCard className="w-3 h-3 mr-1" />
@@ -1606,7 +1518,7 @@ export function OrderManagement() {
                           total: finalTotal,
                         });
 
-                        // Prepare complete order data for payment flow with order ID
+                        // Store the complete order data for payment flow with order ID
                         const completeOrderForPayment = {
                           ...selectedOrder,
                           orderItems: orderItems || [],
@@ -1624,22 +1536,41 @@ export function OrderManagement() {
                           processedItemsCount: processedItems.length
                         });
 
-                        // Set all required data states first
+                        console.log(`🔍 DEBUG: Setting modal states for payment preview:`, {
+                          beforeSetState: {
+                            showReceiptPreview: showReceiptPreview,
+                            orderForPayment: !!orderForPayment,
+                            previewReceipt: !!previewReceipt,
+                            orderDetailsOpen: orderDetailsOpen
+                          },
+                          aboutToSet: {
+                            orderForPayment: !!completeOrderForPayment,
+                            previewReceipt: !!previewData,
+                            orderDetailsOpen: false,
+                            showReceiptPreview: true
+                          }
+                        });
+
+                        // Set states in correct order to prevent race conditions
                         setOrderForPayment(completeOrderForPayment);
                         setPreviewReceipt(previewData);
 
-                        // Close order details modal first
+                        // Close order details first
                         setOrderDetailsOpen(false);
 
-                        // Open receipt preview modal with a proper state update sequence
-                        console.log('🚀 Opening receipt preview modal with data:', {
-                          previewData: !!previewData,
-                          completeOrderForPayment: !!completeOrderForPayment,
-                          orderItemsCount: processedItems.length
-                        });
-                        
-                        // Force immediate modal open
-                        setShowReceiptPreview(true);
+                        // Then open receipt preview modal with a small delay
+                        // CRITICAL FIX: Set states properly and use useEffect to trigger modal
+                        console.log('🔄 Setting all states in correct order');
+
+                        // Close order details immediately
+                        setOrderDetailsOpen(false);
+
+                        // Set all data states first
+                        setOrderForPayment(completeOrderForPayment);
+                        setPreviewReceipt(previewData);
+
+                        // Use a flag to trigger modal opening
+                        setShouldOpenReceiptPreview(true);
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
@@ -2123,8 +2054,23 @@ export function OrderManagement() {
       </Dialog>
 
       {/* Receipt Modal - Step 1: "Xem trước hóa đơn" */}
+      {(() => {
+        console.log('🔍 DEBUG: Receipt Modal props before render:', {
+          showReceiptPreview: showReceiptPreview,
+          previewReceiptExists: !!previewReceipt,
+          combinedIsOpen: showReceiptPreview && !!previewReceipt,
+          previewReceiptData: previewReceipt ? {
+            id: previewReceipt.id,
+            orderNumber: previewReceipt.orderNumber,
+            total: previewReceipt.total,
+            itemsCount: previewReceipt.items?.length || 0
+          } : null,
+          timestamp: new Date().toISOString()
+        });
+        return null;
+      })()}
       <ReceiptModal
-        isOpen={showReceiptPreview && !!previewReceipt && !!orderForPayment}
+        isOpen={showReceiptPreview && !!previewReceipt}
         onClose={() => {
           console.log("🔴 Order Management: Closing receipt preview modal");
           console.log("🔍 DEBUG: Modal close - current states:", {
@@ -2134,7 +2080,6 @@ export function OrderManagement() {
           });
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
-          setOrderForPayment(null); // Reset orderForPayment when closing
         }}
         onConfirm={() => {
           console.log("📄 Order Management: Receipt preview confirmed, starting payment flow");
@@ -2182,7 +2127,7 @@ export function OrderManagement() {
               name: item.productName || item.name,
               price: parseFloat(item.price || item.unitPrice || '0'),
               quantity: item.quantity,
-              sku: item.sku || item.productSku || '',
+              sku: item.sku || `SP${item.productId}`,
               taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
             };
           });
