@@ -239,11 +239,19 @@ export function PaymentMethodModal({
   const handleSelect = async (method: string) => {
     setSelectedPaymentMethod(method);
 
-    // **BƯỚC MỚI: Cập nhật trạng thái đơn hàng ngay khi chọn phương thức thanh toán**
+    // **BƯỚC MỚI: Gọi updateOrderStatus ngay khi chọn phương thức thanh toán**
     if (orderForPayment?.id) {
       try {
-        console.log(`🔄 Updating order status to 'paid' when selecting payment method: ${method}`);
+        console.log(`🔄 Calling updateOrderStatus for order ${orderForPayment.id} with payment method: ${method}`);
+        console.log(`📋 Order details:`, {
+          orderId: orderForPayment.id,
+          currentStatus: orderForPayment.status,
+          tableId: orderForPayment.tableId,
+          total: orderForPayment.total,
+          paymentMethod: method
+        });
         
+        // Gọi API updateOrderStatus để cập nhật trạng thái đơn hàng thành 'paid'
         const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
           method: 'PUT',
           headers: {
@@ -256,17 +264,20 @@ export function PaymentMethodModal({
 
         if (statusResponse.ok) {
           const statusResult = await statusResponse.json();
-          console.log(`✅ Order status updated to 'paid' after selecting ${method}:`, statusResult);
+          console.log(`✅ updateOrderStatus completed successfully for order ${orderForPayment.id}:`, statusResult);
+          console.log(`🎯 Order status changed: ${orderForPayment.status} → 'paid'`);
           
-          // Dispatch UI refresh events immediately after status update
+          // Dispatch UI refresh events sau khi updateOrderStatus thành công
           if (typeof window !== 'undefined') {
             const events = [
               new CustomEvent('orderStatusUpdated', {
                 detail: {
                   orderId: orderForPayment.id,
                   status: 'paid',
+                  previousStatus: orderForPayment.status,
                   tableId: orderForPayment.tableId,
-                  paymentMethod: method
+                  paymentMethod: method,
+                  timestamp: new Date().toISOString()
                 }
               }),
               new CustomEvent('refreshOrders'),
@@ -274,15 +285,27 @@ export function PaymentMethodModal({
             ];
 
             events.forEach(event => {
-              console.log("📡 Dispatching early event:", event.type, event.detail);
+              console.log("📡 Dispatching UI refresh event after updateOrderStatus:", event.type, event.detail);
               window.dispatchEvent(event);
             });
           }
         } else {
-          console.error(`❌ Failed to update order status when selecting ${method}`);
+          const errorText = await statusResponse.text();
+          console.error(`❌ updateOrderStatus failed for order ${orderForPayment.id}:`, {
+            status: statusResponse.status,
+            statusText: statusResponse.statusText,
+            error: errorText
+          });
+          throw new Error(`updateOrderStatus failed: ${errorText}`);
         }
       } catch (error) {
-        console.error(`❌ Error updating order status when selecting payment method:`, error);
+        console.error(`❌ Error calling updateOrderStatus for order ${orderForPayment.id}:`, {
+          errorMessage: error.message,
+          errorStack: error.stack,
+          paymentMethod: method,
+          orderId: orderForPayment.id
+        });
+        // Không throw error để không làm gián đoạn flow thanh toán
       }
     }
 
