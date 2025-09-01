@@ -68,6 +68,37 @@ export function PaymentMethodModal({
   getProductName, // Receive getProductName function
   receipt, // Receive receipt prop
 }: PaymentMethodModalProps) {
+  // CRITICAL DEBUG: Log all props when component mounts
+  console.log(`🔍 PAYMENT MODAL PROPS DEBUG:`, {
+    isOpen: isOpen,
+    total: total,
+    cartItems: cartItems?.length || 0,
+    orderForPayment: orderForPayment,
+    orderForPaymentId: orderForPayment?.id,
+    orderForPaymentStatus: orderForPayment?.status,
+    orderForPaymentTableId: orderForPayment?.tableId,
+    receipt: receipt,
+    products: products?.length || 0,
+    timestamp: new Date().toISOString()
+  });
+
+  if (!orderForPayment || !orderForPayment.id) {
+    console.error(`❌ PAYMENT MODAL: orderForPayment is missing or invalid:`, {
+      orderForPayment: orderForPayment,
+      orderForPaymentType: typeof orderForPayment,
+      hasId: orderForPayment?.id,
+      timestamp: new Date().toISOString()
+    });
+  } else {
+    console.log(`✅ PAYMENT MODAL: orderForPayment is valid:`, {
+      id: orderForPayment.id,
+      status: orderForPayment.status,
+      tableId: orderForPayment.tableId,
+      total: orderForPayment.total,
+      timestamp: new Date().toISOString()
+    });
+  }
+
   const { t } = useTranslation();
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
@@ -251,14 +282,51 @@ export function PaymentMethodModal({
   const paymentMethods = getPaymentMethods();
 
   const handleSelect = async (method: string) => {
+    console.log(`🚀 ========================================`);
+    console.log(`🚀 HANDLESELECT FUNCTION ENTRY POINT`);
+    console.log(`🚀 ========================================`);
     console.log(`🔥 HANDLESELECT FUNCTION CALLED - Method: ${method}, Order ID: ${orderForPayment?.id}`);
     console.log(`🔍 Function entry debug:`, {
       method: method,
       methodType: typeof method,
       orderForPayment: orderForPayment,
       orderId: orderForPayment?.id,
+      orderForPaymentFullObject: JSON.stringify(orderForPayment, null, 2),
       timestamp: new Date().toISOString()
     });
+
+    // EARLY VALIDATION: Check if orderForPayment exists
+    if (!orderForPayment) {
+      console.error(`❌ CRITICAL ERROR: orderForPayment is null/undefined`);
+      console.error(`🔍 Debug info:`, {
+        orderForPayment: orderForPayment,
+        orderForPaymentType: typeof orderForPayment,
+        method: method,
+        propsReceived: {
+          isOpen: isOpen,
+          total: total,
+          cartItems: cartItems?.length,
+          receipt: receipt
+        }
+      });
+      alert('Lỗi: Không tìm thấy thông tin đơn hàng để thanh toán');
+      return;
+    }
+
+    if (!orderForPayment.id) {
+      console.error(`❌ CRITICAL ERROR: orderForPayment.id is missing`);
+      console.error(`🔍 Debug info:`, {
+        orderForPayment: orderForPayment,
+        orderForPaymentKeys: Object.keys(orderForPayment || {}),
+        hasId: 'id' in (orderForPayment || {}),
+        id: orderForPayment.id,
+        idType: typeof orderForPayment.id
+      });
+      alert('Lỗi: ID đơn hàng không hợp lệ');
+      return;
+    }
+
+    console.log(`✅ VALIDATION PASSED: orderForPayment is valid`);
     
     setSelectedPaymentMethod(method);
     
