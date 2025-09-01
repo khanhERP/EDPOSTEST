@@ -258,7 +258,7 @@ export function PaymentMethodModal({
     // CRITICAL: Update order status to 'paid' immediately when payment method is selected
     if (orderForPayment?.id) {
       try {
-        console.log(`🔄 Calling updateOrderStatus for order ${orderForPayment.id} with payment method: ${method}`);
+        console.log(`🚀 STARTING updateOrderStatus call for order ${orderForPayment.id} with payment method: ${method}`);
         console.log(`📋 Order details before updateOrderStatus call:`, {
           orderId: orderForPayment.id,
           currentStatus: orderForPayment.status,
@@ -266,14 +266,23 @@ export function PaymentMethodModal({
           timestamp: new Date().toISOString()
         });
         
-        const statusResponse = await apiRequest('PUT', `/api/orders/${orderForPayment.id}/status`, {
-          status: 'paid'
+        console.log(`🔥 MAKING API CALL NOW: PUT /api/orders/${orderForPayment.id}/status`);
+        
+        const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'paid'
+          }),
         });
         
         console.log(`🔍 API Response received:`, {
           status: statusResponse.status,
           statusText: statusResponse.statusText,
-          ok: statusResponse.ok
+          ok: statusResponse.ok,
+          url: statusResponse.url
         });
         
         if (statusResponse.ok) {
