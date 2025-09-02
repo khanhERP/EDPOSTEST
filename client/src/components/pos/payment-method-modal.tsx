@@ -367,15 +367,13 @@ export function PaymentMethodModal({
         });
 
         if (statusResponse.ok) {
-          const updatedOrder = await statusResponse.json();
-          console.log(`✅ updateOrderStatus completed successfully for order ${orderInfo.id}`);
-          console.log(`🎯 Order status changed: ${updatedOrder.previousStatus} → 'paid'`);
-          console.log(`📊 Updated order details:`, {
-            orderId: updatedOrder.id,
-            newStatus: updatedOrder.status,
-            paidAt: updatedOrder.paidAt,
-            updateTimestamp: updatedOrder.updatedAt
-          });
+          const data = await statusResponse.json();
+          console.log(`✅ Order status updated successfully:`, data);
+
+          // CRITICAL: Set showEInvoice to true AFTER successful payment
+          console.log(`🔥 SETTING showEInvoice = true AFTER SUCCESSFUL PAYMENT`);
+          setShowEInvoice(true);
+          console.log(`🔍 DEBUG: showEInvoice state after setting:`, true);
         } else {
           const errorText = await statusResponse.text();
           console.error(`❌ updateOrderStatus failed for order ${orderInfo.id}:`, errorText);
