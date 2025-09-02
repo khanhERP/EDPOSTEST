@@ -1152,6 +1152,7 @@ export class DatabaseStorage implements IStorage {
 
         try {
           // Check for other unpaid orders on the same table (excluding current order)
+          // Only process if current order is a real database order (not temporary)
           const unpaidStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
           const otherUnpaidOrders = await database
                 .select()

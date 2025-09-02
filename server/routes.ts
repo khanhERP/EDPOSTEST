@@ -1153,15 +1153,29 @@ export async function registerRoutes(app: Express): Promise < Server > {
         return res.status(400).json({ message: "Status is required" });
       }
 
-      // First get the current order to log its current state
-      const [currentOrder] = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.id, orderId as number)); // Cast to number for query if not temporary
+      // Skip database query for temporary order IDs
+      let currentOrder = null;
+      if (!isTemporaryId) {
+        // First get the current order to log its current state
+        const [foundOrder] = await db
+          .select()
+          .from(orders)
+          .where(eq(orders.id, orderId as number)); // Cast to number for query
 
-      if (!currentOrder) {
-        console.error(`❌ Order not found for ID: ${id}`);
-        return res.status(404).json({ message: "Order not found" });
+        if (!foundOrder) {
+          console.error(`❌ Order not found for ID: ${id}`);
+          return res.status(404).json({ message: "Order not found" });
+        }
+        currentOrder = foundOrder;
+      } else {
+        console.log(`🟡 Skipping database query for temporary order ID: ${id}`);
+        // Create mock current order for temporary ID
+        currentOrder = {
+          id: orderId,
+          orderNumber: `TEMP-${Date.now()}`,
+          status: 'pending',
+          tableId: null
+        };
       }
 
       console.log(`📊 API: Current order state before update:`, {
