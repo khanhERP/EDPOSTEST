@@ -306,94 +306,25 @@ export function PaymentMethodModal({
     console.log(`🚀 HANDLESELECT FUNCTION ENTRY POINT`);
     console.log(`🚀 ========================================`);
     console.log(`🔥 HANDLESELECT FUNCTION CALLED - Method: ${method}, Order ID: ${orderInfo.id}`);
-    console.log(`🔍 Function entry debug:`, {
-      method: method,
-      methodType: typeof method,
-      orderForPayment: orderForPayment,
-      orderInfoId: orderInfo.id,
-      orderForPaymentFullObject: JSON.stringify(orderForPayment, null, 2),
-      timestamp: new Date().toISOString()
-    });
 
     // EARLY VALIDATION: Check if orderInfo exists and has an ID
     if (!orderInfo || !orderInfo.id) {
       console.error(`❌ CRITICAL ERROR: orderInfo is missing or has no ID`);
-      console.error(`🔍 Debug info:`, {
-        orderInfo: orderInfo,
-        orderInfoType: typeof orderInfo,
-        hasId: 'id' in (orderInfo || {}),
-        id: orderInfo?.id,
-        idType: typeof orderInfo?.id
-      });
       alert('Lỗi: Không tìm thấy thông tin đơn hàng để thanh toán');
       return;
     }
 
     console.log(`✅ VALIDATION PASSED: orderInfo is valid`);
-
     setSelectedPaymentMethod(method);
 
-    console.log(`🔄 Payment method selected: ${method} for order ${orderInfo?.id}`);
-
-    // CRITICAL: Update order status to 'paid' immediately when payment method is selected
-    console.log(`🔍 CHECKING IF ORDER ID EXISTS: ${orderInfo?.id}`);
-    if (orderInfo?.id) {
-      try {
-        console.log(`🚀 STARTING updateOrderStatus call for order ${orderInfo.id} with payment method: ${method}`);
-        console.log(`📋 Order details before updateOrderStatus call:`, {
-          orderId: orderInfo.id,
-          currentStatus: orderInfo.status,
-          paymentMethod: method,
-          timestamp: new Date().toISOString()
-        });
-
-        console.log(`🔥 MAKING API CALL NOW: PUT /api/orders/${orderInfo.id}/status`);
-
-        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'paid'
-          }),
-        });
-
-        console.log(`🔍 API Response received:`, {
-          status: statusResponse.status,
-          statusText: statusResponse.statusText,
-          ok: statusResponse.ok,
-          url: statusResponse.url
-        });
-
-        if (statusResponse.ok) {
-          const data = await statusResponse.json();
-          console.log(`✅ Order status updated successfully:`, data);
-
-          // CRITICAL: Set showEInvoice to true AFTER successful payment
-          console.log(`🔥 SETTING showEInvoice = true AFTER SUCCESSFUL PAYMENT`);
-          setShowEInvoice(true);
-          console.log(`🔍 DEBUG: showEInvoice state after setting:`, true);
-        } else {
-          const errorText = await statusResponse.text();
-          console.error(`❌ updateOrderStatus failed for order ${orderInfo.id}:`, errorText);
-        }
-      } catch (error) {
-        console.error(`❌ Error calling updateOrderStatus for order ${orderInfo.id}:`, error);
-        console.error(`🔍 Error details:`, {
-          errorType: error?.constructor?.name,
-          errorMessage: error?.message,
-          errorStack: error?.stack
-        });
-      }
-    }
-
     if (method === "cash") {
+      console.log(`💰 CASH PAYMENT SELECTED - showing cash input form`);
       // Reset cash amount input when showing cash payment
       setCashAmountInput("");
       setAmountReceived("");
-      // Show cash payment input form
+      // Show cash payment input form ONLY - do NOT update order status yet
       setShowCashPayment(true);
+      console.log(`🔍 DEBUG: showCashPayment set to true, waiting for user input`);
     } else if (method === "qrCode") {
       // Call CreateQRPos API for QR payment
       try {
@@ -569,19 +500,76 @@ export function PaymentMethodModal({
         setQrLoading(false);
       }
     } else {
-      // Lưu phương thức thanh toán và hiển thị E-Invoice modal
-      setSelectedPaymentMethod(method);
-      setShowEInvoice(true);
+      // For other payment methods (card, digital wallets), update order status first
+      console.log(`🚀 OTHER PAYMENT METHOD (${method}) - updating order status to 'paid' for order ${orderInfo.id}`);
+      
+      try {
+        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'paid'
+          }),
+        });
+
+        if (statusResponse.ok) {
+          const data = await statusResponse.json();
+          console.log(`✅ Order status updated to paid successfully:`, data);
+          
+          // Lưu phương thức thanh toán và hiển thị E-Invoice modal
+          setSelectedPaymentMethod(method);
+          setShowEInvoice(true);
+          console.log(`🔥 SHOWING E-INVOICE MODAL after successful ${method} payment`);
+        } else {
+          const errorText = await statusResponse.text();
+          console.error(`❌ Failed to update order status:`, errorText);
+          alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+        }
+      } catch (error) {
+        console.error(`❌ Error updating order status:`, error);
+        alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+      }
     }
   };
 
   const handleQRComplete = async () => {
-    setShowQRCode(false);
-    setQrCodeUrl("");
+    console.log(`🚀 QR PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
+    
+    try {
+      console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
+      
+      const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'paid'
+        }),
+      });
 
-    // Set payment method and show E-Invoice modal directly
-    setSelectedPaymentMethod("qrCode");
-    setShowEInvoice(true);
+      if (statusResponse.ok) {
+        const data = await statusResponse.json();
+        console.log(`✅ Order status updated to paid successfully:`, data);
+        
+        setShowQRCode(false);
+        setQrCodeUrl("");
+
+        // Set payment method and show E-Invoice modal directly
+        setSelectedPaymentMethod("qrCode");
+        setShowEInvoice(true);
+        console.log(`🔥 SHOWING E-INVOICE MODAL after successful QR payment`);
+      } else {
+        const errorText = await statusResponse.text();
+        console.error(`❌ Failed to update order status:`, errorText);
+        alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+      }
+    } catch (error) {
+      console.error(`❌ Error updating order status:`, error);
+      alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+    }
   };
 
   const handleBack = () => {
@@ -650,14 +638,44 @@ export function PaymentMethodModal({
       return; // Không thực hiện nếu chưa đủ tiền
     }
 
-    // Reset trạng thái và đóng form tiền mặt
-    setShowCashPayment(false);
-    setAmountReceived("");
-    setCashAmountInput("");
+    // NOW update order status to 'paid' when cash payment is completed
+    console.log(`🚀 CASH PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
+    
+    try {
+      console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
+      
+      const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'paid'
+        }),
+      });
 
-    // Lưu phương thức thanh toán và hiển thị E-Invoice modal
-    setSelectedPaymentMethod("cash");
-    setShowEInvoice(true);
+      if (statusResponse.ok) {
+        const data = await statusResponse.json();
+        console.log(`✅ Order status updated to paid successfully:`, data);
+        
+        // Reset trạng thái và đóng form tiền mặt
+        setShowCashPayment(false);
+        setAmountReceived("");
+        setCashAmountInput("");
+
+        // Lưu phương thức thanh toán và hiển thị E-Invoice modal
+        setSelectedPaymentMethod("cash");
+        setShowEInvoice(true);
+        console.log(`🔥 SHOWING E-INVOICE MODAL after successful cash payment`);
+      } else {
+        const errorText = await statusResponse.text();
+        console.error(`❌ Failed to update order status:`, errorText);
+        alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+      }
+    } catch (error) {
+      console.error(`❌ Error updating order status:`, error);
+      alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+    }
   };
 
   const handleEInvoiceComplete = async (eInvoiceData: any) => {
