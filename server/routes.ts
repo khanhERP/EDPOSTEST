@@ -1095,6 +1095,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
       let orderId: number | string = id;
       const isTemporaryId = id.startsWith('temp-');
 
+      console.log(`🔍 DEBUG: ID Processing:`, {
+        originalId: id,
+        isTemporaryId: isTemporaryId,
+        willParseToNumber: !isTemporaryId
+      });
+
       if (!isTemporaryId) {
         const parsedId = parseInt(id);
         if (isNaN(parsedId)) {
@@ -1102,6 +1108,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
           return res.status(400).json({ message: "Invalid order ID" });
         }
         orderId = parsedId;
+        console.log(`✅ ID converted to number: ${orderId}`);
+      } else {
+        console.log(`🟡 Keeping temporary ID as string: ${orderId}`);
       }
 
       console.log(`🚀 ABOUT TO CALL storage.updateOrderStatus(${orderId}, '${status}', tenantDb)`);
