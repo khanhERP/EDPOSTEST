@@ -662,7 +662,7 @@ export function PaymentMethodModal({
     setShowEInvoice(true);
   };
 
-  const handleEInvoiceConfirm = async (eInvoiceData: any) => {
+  const handleEInvoiceComplete = async (eInvoiceData: any) => {
     console.log("📧 E-Invoice confirmed from payment modal:", eInvoiceData);
 
     if (!orderInfo?.id) {
@@ -1589,15 +1589,17 @@ export function PaymentMethodModal({
         </div>
       </DialogContent>
 
-      {/* E-Invoice Modal */}
-      {showEInvoice && (
+      {/* E-Invoice Modal - CRITICAL: Always render when showEInvoice is true */}
+      {showEInvoice && selectedPaymentMethod && (
         <EInvoiceModal
           isOpen={showEInvoice}
           onClose={handleEInvoiceClose}
           onConfirm={handleEInvoiceComplete}
           total={(() => {
             // Debug current data to understand the issue
-            console.log("💰 Payment Modal EInvoice Total Debug:", {
+            console.log("🔥RENDERING E-INVOICE MODAL - Payment Modal EInvoice Total Debug:", {
+              showEInvoice: showEInvoice,
+              selectedPaymentMethod: selectedPaymentMethod,
               orderForPayment: orderForPayment,
               receipt: receipt,
               propTotal: total,
@@ -1639,10 +1641,10 @@ export function PaymentMethodModal({
               cartItems ||
               [];
             console.log(
-              "📦 Mapping cart items for payment modal using exact Order Details data:",
+              "📦 E-INVOICE MODAL: Mapping cart items for payment modal using exact Order Details data:",
               itemsToMap.length,
             );
-            console.log("📦 Payment Modal CartItems Debug:", {
+            console.log("📦 E-INVOICE MODAL: Payment Modal CartItems Debug:", {
               orderForPayment: orderForPayment,
               orderInfoItems: orderInfo?.items,
               receipt: receipt,
@@ -1657,36 +1659,37 @@ export function PaymentMethodModal({
                 ? products.find((p: any) => p.id === item.productId)
                 : null;
 
-              console.log(`📦 Mapping item ${index + 1}:`, {
+              console.log(`📦 E-INVOICE MODAL: Mapping item ${index + 1}:`, {
                 rawItem: item,
                 foundProduct: product,
                 productId: item.productId,
                 productName: item.productName,
                 unitPrice: item.unitPrice,
-                price: item.price
+                quantity: item.quantity,
+                total: item.total,
+                taxRate: product?.taxRate || item.taxRate || 0
               });
 
-              // Use correct field names from orderItems with better fallbacks
-              const mappedItem = {
-                id: item.productId || item.id || 0,
-                name:
-                  item.productName ||
-                  product?.name ||
-                  getProductName?.(item.productId) ||
-                  (item.productId ? `Product ${item.productId}` : `Item ${index + 1}`),
-                price: parseFloat(item.unitPrice || item.price || product?.price || "0"),
+              return {
+                id: item.productId || item.id,
+                name: item.productName || item.name,
+                price: parseFloat(item.unitPrice || item.price || "0"),
                 quantity: parseInt(item.quantity?.toString() || "1"),
-                sku: item.productSku || product?.sku || `SP${item.productId || item.id || index}`,
-                taxRate: product?.taxRate ? parseFloat(product.taxRate.toString()) : (item.taxRate || 0),
-                afterTaxPrice: product?.afterTaxPrice || null,
+                sku: product?.sku || item.sku || `ITEM${String(item.productId || item.id).padStart(3, "0")}`,
+                taxRate: parseFloat(product?.taxRate?.toString() || item.taxRate?.toString() || "0"),
               };
-
-              console.log(`📦 Final mapped item ${index + 1}:`, mappedItem);
-              return mappedItem;
             });
           })()}
         />
       )}
+
+      {/* Debug rendering states */}
+      {console.log("🔍 PAYMENT MODAL RENDER DEBUG:", {
+        showEInvoice: showEInvoice,
+        selectedPaymentMethod: selectedPaymentMethod,
+        shouldRenderEInvoice: showEInvoice && selectedPaymentMethod,
+        timestamp: new Date().toISOString()
+      })}
     </Dialog>
   );
 }
