@@ -59,6 +59,7 @@ export function ShoppingCart({
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false); // Added state for PaymentMethodModal
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -317,9 +318,9 @@ export function ShoppingCart({
         exactTotal,
         originalTotal: createdOrder.total
       });
-      
+
       setCurrentOrderForPayment(orderWithExactTotals);
-      
+
       // Add small delay to ensure state is updated before opening modal
       setTimeout(() => {
         console.log("🚀 Opening payment modal with order:", orderWithExactTotals.id);
@@ -358,19 +359,19 @@ export function ShoppingCart({
 
     // Close payment modal and handle the payment completion
     setShowPaymentModal(false);
-    
+
     if (data?.success && data?.completed) {
       console.log("✅ Payment completed successfully:", data);
-      
+
       // Clear cart after successful payment
       onClearCart();
-      
+
       // Show receipt if available
       if (data.receipt) {
         setSelectedReceipt(data.receipt);
         setShowReceiptModal(true);
       }
-      
+
       // Reset current order
       setCurrentOrderForPayment(null);
     } else if (data?.error) {
@@ -380,6 +381,65 @@ export function ShoppingCart({
         description: data.error,
         variant: "destructive",
       });
+    }
+  };
+
+  // This function is called from PaymentMethodModal
+  const processPaymentAndShowEInvoice = async (selectedMethod: string) => {
+    if (!currentOrderForPayment) {
+      console.error("❌ No order found for payment processing.");
+      toast({
+        title: "Lỗi",
+        description: "Không tìm thấy đơn hàng để xử lý thanh toán.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log(`💳 Step 3: Processing ${selectedMethod} payment`);
+
+      // Update order status to paid first
+      const response = await fetch(`/api/orders/${currentOrderForPayment.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          status: 'paid'
+        }),
+      });
+
+      console.log(`🔍 Step 3: Order status update response:`, {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText
+      });
+
+      // Continue to E-Invoice even if status update fails for temporary orders
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.warn(`⚠️ Step 3: Order status update failed, but continuing to E-Invoice:`, errorData);
+
+        // For temporary orders, this is expected - continue the flow
+        if (currentOrderForPayment.id.toString().startsWith('temp-')) {
+          console.log(`🟡 Step 3: Temporary order detected - continuing to E-Invoice despite status update failure`);
+        } else {
+          throw new Error(`Failed to update order status: ${errorData.message || 'Unknown error'}`);
+        }
+      } else {
+        console.log(`✅ Step 3: Order status updated successfully`);
+      }
+
+      console.log(`🔄 Step 3: Opening E-Invoice modal`);
+
+      // Close payment modal and open E-Invoice modal
+      setShowPaymentMethodModal(false);
+      setSelectedPaymentMethod(selectedMethod);
+      setShowEInvoiceModal(true);
+    } catch (error) {
+      console.error(`❌ Step 3: Payment method processing failed:`, error);
+      alert('Lỗi khi xử lý thanh toán. Vui lòng thử lại.');
     }
   };
 
@@ -666,7 +726,8 @@ export function ShoppingCart({
           console.log(
             "📄 Step 1 → Step 2: Receipt preview confirmed, showing payment methods",
           );
-          setShowPaymentMethodModal(true);
+          // Changed from setShowPaymentMethodModal to setShowPaymentModal
+          setShowPaymentModal(true);
         }}
         isPreview={true} // This is the preview modal - "Xem trước hóa đơn"
         cartItems={cart.map((item) => ({
@@ -711,7 +772,7 @@ export function ShoppingCart({
             setShowPaymentModal(false);
             setCurrentOrderForPayment(null); // Reset order when closing
           }}
-          onSelectMethod={handlePaymentMethodSelect}
+          onSelectMethod={processPaymentAndShowEInvoice} // Use the new combined handler
           total={total}
           cartItems={cart.map((item) => ({
             id: item.id,

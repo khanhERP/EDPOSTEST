@@ -1228,29 +1228,29 @@ export class DatabaseStorage implements IStorage {
     console.log(`  tenantDb: ${!!tenantDb}`);
     console.log(`}`);
 
-    // Handle temporary order IDs - return a mock order object to allow flow to continue
+    // Handle temporary order IDs - return a success response to continue flow
     if (typeof id === 'string' && id.startsWith('temp-')) {
-      console.log(`🟡 Temporary order ID detected: ${id} - creating mock order for flow continuation`);
+      console.log(`🟡 Temporary order ID detected: ${id} - allowing flow to continue to E-Invoice`);
 
-      // Return a mock order object that allows the flow to continue
+      // Return a success order object that allows the flow to continue to E-Invoice modal
       const mockOrder = {
-        id: id as any, // Keep the temp ID
+        id: id as any, // Keep the temp ID for reference
         orderNumber: `TEMP-${Date.now()}`,
         tableId: null,
         customerName: "Khách hàng",
         customerPhone: null,
         customerEmail: null,
         subtotal: "0.00",
-        tax: "0.00",
+        tax: "0.00", 
         total: "0.00",
         status: status,
-        paymentMethod: null,
+        paymentMethod: status === 'paid' ? 'cash' : null,
         paymentStatus: status === 'paid' ? 'paid' : 'pending',
-        einvoiceStatus: 0,
+        einvoiceStatus: 0, // Not published yet
         invoiceNumber: null,
         templateNumber: null,
         symbol: null,
-        notes: `Temporary order updated to ${status}`,
+        notes: `Temporary order - payment flow continuing to E-Invoice`,
         orderedAt: new Date(),
         paidAt: status === 'paid' ? new Date() : null,
         employeeId: null,
@@ -1259,7 +1259,13 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       };
 
-      console.log(`✅ Returning mock order for temporary ID:`, mockOrder);
+      console.log(`✅ Mock order created for temporary ID - flow will continue to E-Invoice:`, {
+        id: mockOrder.id,
+        status: mockOrder.status,
+        paymentMethod: mockOrder.paymentMethod,
+        allowsContinuation: true
+      });
+      
       return mockOrder;
     }
 
