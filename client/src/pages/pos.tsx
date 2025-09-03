@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { CategorySidebar } from "@/components/pos/category-sidebar";
@@ -34,6 +34,22 @@ export default function POS({ onLogout }: POSPageProps) {
     isProcessingCheckout,
     processCheckout
   } = usePOS();
+
+  // Expose clear active order function globally for WebSocket refresh
+  useEffect(() => {
+    (window as any).clearActiveOrder = () => {
+      console.log('🔄 POS: Clearing active order via global function');
+      clearCart();
+      // Switch to first order if multiple orders exist
+      if (orders.length > 1) {
+        switchOrder(orders[0].id);
+      }
+    };
+
+    return () => {
+      delete (window as any).clearActiveOrder;
+    };
+  }, [clearCart, orders, switchOrder]);
 
   const handleCheckout = async (paymentData: any) => {
     console.log("=== POS PAGE CHECKOUT DEBUG ===");
@@ -103,6 +119,11 @@ export default function POS({ onLogout }: POSPageProps) {
         console.log("✅ Receipt processed successfully");
         console.log("✅ Opening receipt modal with cartItems:", cartItemsBeforeCheckout.length, "items");
         setShowReceiptModal(true);
+        // Clear cart and close modal after successful checkout and receipt display
+        clearCart(); // Clear the cart after checkout
+        // The requirement to "tự đóng màn hóa đơn lại" is handled by the onClose prop, 
+        // but we also need to ensure the cart is cleared *after* checkout and receipt is shown.
+        // The `clearCart()` call here handles clearing the cart after successful checkout.
       } else {
         console.error("❌ Failed to process checkout - no receipt returned");
         alert("Lỗi thanh toán. Vui lòng thử lại.");
@@ -130,7 +151,7 @@ export default function POS({ onLogout }: POSPageProps) {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onOpenProductManager={() => setShowProductManagerModal(true)}
-          onAddToCart={addToCart}
+          onAddToCart={(product) => addToCart(product)}
         />
 
         {/* Product Grid */}

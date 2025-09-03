@@ -173,13 +173,31 @@ export function ReceiptModal({
           setTimeout(() => {
             printWindow.print();
 
-            // If this is an auto-close receipt, close this modal after printing starts
-            if (autoClose && !isPreview) {
-              setTimeout(() => {
-                console.log('🔄 Auto-closing receipt modal after print start');
-                onClose();
-              }, 2000);
-            }
+            // Auto-close receipt modal after printing and refresh data
+            setTimeout(() => {
+              console.log('🔄 Auto-closing receipt modal after print start and refreshing data');
+              
+              // Send refresh signal to update table status and clear cart
+              try {
+                const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                const ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                  ws.send(JSON.stringify({
+                    type: "refresh_data_after_print",
+                    action: "refresh_tables_and_clear_cart",
+                    timestamp: new Date().toISOString(),
+                  }));
+                  ws.close();
+                };
+              } catch (error) {
+                console.error("Failed to send refresh signal after print:", error);
+              }
+
+              // Close the receipt modal
+              onClose();
+            }, 2000);
           }, 500);
         };
 
@@ -188,6 +206,24 @@ export function ReceiptModal({
           if (printWindow.closed) {
             clearInterval(checkClosed);
             console.log("🖨️ Print window closed - print completed");
+            
+            // Also trigger refresh when print window is manually closed
+            try {
+              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
+
+              ws.onopen = () => {
+                ws.send(JSON.stringify({
+                  type: "refresh_data_after_print",
+                  action: "refresh_tables_and_clear_cart",
+                  timestamp: new Date().toISOString(),
+                }));
+                ws.close();
+              };
+            } catch (error) {
+              console.error("Failed to send refresh signal after print window closed:", error);
+            }
           }
         }, 500);
 

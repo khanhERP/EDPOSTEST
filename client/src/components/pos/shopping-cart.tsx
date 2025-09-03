@@ -134,102 +134,108 @@ export function ShoppingCart({
   });
 
   // WebSocket connection for broadcasting cart updates to customer display
+  // This useEffect is responsible for establishing and managing the WebSocket connection.
+  // It also handles broadcasting cart updates and listening for specific messages.
   useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-    let ws: WebSocket;
-    let isConnected = false;
-    let reconnectTimer: NodeJS.Timeout;
-
-    const connectWebSocket = () => {
+    if (typeof window !== 'undefined') {
       try {
-        ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-          console.log(
-            "Shopping Cart: WebSocket connected for customer display broadcasting",
-          );
-          isConnected = true;
-        };
-
-        ws.onerror = (error) => {
-          console.error("Shopping Cart: WebSocket error:", error);
-          isConnected = false;
-        };
-
-        ws.onclose = (event) => {
-          console.log("Shopping Cart: WebSocket disconnected");
-          isConnected = false;
-          // Auto-reconnect if not manually closed
-          if (event.code !== 1000) {
-            reconnectTimer = setTimeout(connectWebSocket, 1000);
-          }
-        };
-      } catch (error) {
-        console.error("Shopping Cart: Failed to create WebSocket:", error);
-        reconnectTimer = setTimeout(connectWebSocket, 1000);
-      }
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-      }
-      if (ws && isConnected) {
-        ws.close(1000, "Component unmounting");
-      }
-    };
-  }, []);
-
-  // Broadcast cart updates to customer display using existing connection
-  useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-    // Use a more efficient approach - create connection only when needed
-    const broadcastCartUpdate = () => {
-      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log("Broadcasting cart update to customer display:", cart);
-          const message = JSON.stringify({
-            type: "cart_update",
-            cart: cart,
-            subtotal,
-            tax,
-            total,
-            timestamp: new Date().toISOString(),
-          });
+          console.log('Shopping Cart: WebSocket connected for customer display broadcasting');
+          // Send initial cart state when connected
+          broadcastCartUpdate(cart);
+        };
 
-          ws.send(message);
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('Shopping Cart: Received WebSocket message:', data);
 
-          // Close connection immediately after sending
-          setTimeout(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.close(1000, "Broadcast complete");
+            // Handle cart update request
+            if (data.type === 'cart_update_request') {
+              broadcastCartUpdate(cart);
             }
-          }, 100);
+
+            // Handle refresh signal after print to clear cart
+            if (data.type === 'refresh_data_after_print' && data.action === 'refresh_tables_and_clear_cart') {
+              console.log('🔄 Clearing cart after print receipt');
+              onClearCart(); // Use the passed onClearCart prop to clear the cart state in the parent component
+
+              // Also clear any selected orders in POS
+              if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                (window as any).clearActiveOrder();
+              }
+            }
+          } catch (error) {
+            console.error('Shopping Cart: Error parsing WebSocket message:', error);
+          }
         };
 
         ws.onerror = (error) => {
-          console.error("Failed to broadcast cart update:", error);
+          console.error('Shopping Cart: WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+          console.log('Shopping Cart: WebSocket disconnected');
+        };
+
+        // Store the WebSocket reference for cleanup
+        (window as any).shoppingCartWS = ws;
+
+        return () => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.close();
+          }
         };
       } catch (error) {
-        console.error("Failed to create broadcast WebSocket:", error);
+        console.error('Shopping Cart: Failed to establish WebSocket connection:', error);
       }
-    };
+    }
+  }, [cart, onClearCart]); // Depend on onClearCart to ensure the latest function is used
 
-    // Debounce rapid cart updates to prevent too many WebSocket connections
-    const timeoutId = setTimeout(broadcastCartUpdate, 50);
+  // Broadcast cart updates to customer display using existing connection
+  // This useEffect is responsible for debouncing and broadcasting cart updates.
+  const broadcastCartUpdate = (currentCart: CartItem[]) => {
+    if (!window.shoppingCartWS || window.shoppingCartWS.readyState !== WebSocket.OPEN) {
+      console.warn("Shopping Cart: WebSocket not connected, cannot broadcast cart update.");
+      // Optionally try to reconnect or queue the message
+      return;
+    }
 
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [cart, subtotal, tax, total]);
+    const subtotal = currentCart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+    const tax = currentCart.reduce((sum, item) => {
+      if (item.taxRate && parseFloat(item.taxRate) > 0) {
+        const basePrice = parseFloat(item.price);
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          return sum + Math.floor((afterTaxPrice - basePrice) * item.quantity);
+        }
+      }
+      return sum;
+    }, 0);
+    const total = Math.round(subtotal + tax);
+
+    console.log("Broadcasting cart update to customer display:", currentCart);
+    const message = JSON.stringify({
+      type: "cart_update",
+      cart: currentCart,
+      subtotal,
+      tax,
+      total,
+      timestamp: new Date().toISOString(),
+    });
+
+    window.shoppingCartWS.send(message);
+  };
+
+  // Function to clear the cart, used by the WebSocket handler
+  const clearCart = () => {
+    onClearCart(); // Call the prop function passed from the parent
+  };
+
 
   const getPaymentMethods = () => {
     // Only return cash and bank transfer payment methods
@@ -337,10 +343,10 @@ export function ShoppingCart({
 
     console.log("🔍 CRITICAL DEBUG - Recalculated totals:");
     console.log("Original totals:", { subtotal, tax, total });
-    console.log("Recalculated totals:", { 
-      subtotal: recalculatedSubtotal, 
-      tax: recalculatedTax, 
-      total: recalculatedTotal 
+    console.log("Recalculated totals:", {
+      subtotal: recalculatedSubtotal,
+      tax: recalculatedTax,
+      total: recalculatedTotal
     });
 
     // Use recalculated values if they differ significantly
@@ -348,10 +354,10 @@ export function ShoppingCart({
     const finalTax = Math.abs(recalculatedTax - tax) > 1 ? recalculatedTax : tax;
     const finalTotal = Math.abs(recalculatedTotal - total) > 1 ? recalculatedTotal : total;
 
-    console.log("Final totals to use:", { 
-      finalSubtotal, 
-      finalTax, 
-      finalTotal 
+    console.log("Final totals to use:", {
+      finalSubtotal,
+      finalTax,
+      finalTotal
     });
 
     if (finalSubtotal === 0 || finalTotal === 0) {
@@ -491,51 +497,47 @@ export function ShoppingCart({
   // Handler for E-Invoice confirmation
   const handleEInvoiceConfirm = (invoiceData: any) => {
     console.log("🎯 POS: E-Invoice confirmed:", invoiceData);
-    
+
     // Close E-Invoice modal
     setShowEInvoiceModal(false);
-    
+
     if (invoiceData.success || invoiceData.publishedImmediately || invoiceData.publishLater) {
       console.log("✅ POS: E-Invoice processed successfully");
-      
+
       // Clear cart after successful E-invoice processing
       onClearCart();
-      
+
       // Reset states
       setPreviewReceipt(null);
       setOrderForPayment(null);
       setIsProcessingPayment(false);
-      
+
       // Show receipt modal with invoice data if available
       if (invoiceData.receipt || invoiceData.shouldShowReceipt) {
         console.log("📄 POS: Showing receipt modal after E-invoice");
         setSelectedReceipt(invoiceData.receipt || invoiceData);
         setShowReceiptModal(true);
       }
-      
+
       // Show success message
       toast({
         title: "Thành công",
-        description: invoiceData.publishLater ? 
-          "Hóa đơn điện tử đã được lưu để phát hành sau" : 
+        description: invoiceData.publishLater ?
+          "Hóa đơn điện tử đã được lưu để phát hành sau" :
           "Hóa đơn điện tử đã được phát hành thành công"
       });
-      
+
       console.log("🎉 POS: E-Invoice flow completed successfully");
     } else {
       console.error("❌ POS: E-Invoice processing failed:", invoiceData);
       setIsProcessingPayment(false);
-      
+
       toast({
         title: "Lỗi",
         description: "Có lỗi xảy ra khi xử lý hóa đơn điện tử",
         variant: "destructive"
       });
     }
-  };
-
-  const handleClearCart = () => {
-    onClearCart();
   };
 
   const canCheckout = cart.length > 0;
@@ -795,14 +797,14 @@ export function ShoppingCart({
               cartItemsCount: cart.length,
               hasValidOrderData: !!(orderForPayment && previewReceipt)
             });
-            
+
             // If we have valid order data, use it, otherwise use current cart calculation
             if (orderForPayment && previewReceipt) {
-              const finalTotal = orderForPayment?.exactTotal || 
-                                orderForPayment?.total || 
-                                previewReceipt?.exactTotal || 
+              const finalTotal = orderForPayment?.exactTotal ||
+                                orderForPayment?.total ||
+                                previewReceipt?.exactTotal ||
                                 previewReceipt?.total || 0;
-              
+
               console.log("💰 Shopping Cart: Using order/receipt total:", finalTotal);
               return finalTotal;
             } else {
@@ -811,7 +813,7 @@ export function ShoppingCart({
                 const itemTotal = parseFloat(item.total);
                 return sum + itemTotal;
               }, 0);
-              
+
               const cartTax = cart.reduce((sum, item) => {
                 if (item.taxRate && parseFloat(item.taxRate) > 0) {
                   const basePrice = parseFloat(item.price);
@@ -823,7 +825,7 @@ export function ShoppingCart({
                 }
                 return sum;
               }, 0);
-              
+
               const finalTotal = Math.round(cartTotal + cartTax);
               console.log("💰 Shopping Cart: Using calculated cart total:", finalTotal);
               return finalTotal;
@@ -910,12 +912,12 @@ export function ShoppingCart({
           onConfirm={handleEInvoiceConfirm}
           total={(() => {
             // Use the most accurate total available
-            const totalToUse = orderForPayment?.exactTotal || 
+            const totalToUse = orderForPayment?.exactTotal ||
                               orderForPayment?.total ||
                               previewReceipt?.exactTotal ||
                               previewReceipt?.total ||
                               total;
-            
+
             console.log("🔍 POS E-Invoice Modal - Total calculation debug:", {
               orderForPaymentExactTotal: orderForPayment?.exactTotal,
               orderForPaymentTotal: orderForPayment?.total,
@@ -924,13 +926,13 @@ export function ShoppingCart({
               fallbackTotal: total,
               finalTotalToUse: totalToUse
             });
-            
+
             return totalToUse;
           })()}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={(() => {
             // Use the most accurate cart items available
-            const itemsToUse = lastCartItems.length > 0 ? lastCartItems : 
+            const itemsToUse = lastCartItems.length > 0 ? lastCartItems :
                               orderForPayment?.items?.length > 0 ? orderForPayment.items.map((item) => ({
                                 id: item.id || item.productId,
                                 name: item.name || item.productName,
@@ -957,7 +959,7 @@ export function ShoppingCart({
               finalItemsToUseLength: itemsToUse.length,
               finalItemsToUse: itemsToUse
             });
-            
+
             return itemsToUse;
           })()}
           source="pos"

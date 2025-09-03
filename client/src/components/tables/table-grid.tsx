@@ -224,6 +224,69 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
 
+  // Setup WebSocket connection for real-time updates
+  useEffect(() => {
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log("Table Grid: WebSocket connected");
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("Table Grid: Received WebSocket message:", data);
+
+          if (data.type === "order_updated" || data.type === "order_status_changed") {
+            console.log("Table Grid: Refreshing data due to order update");
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+          }
+
+          // Handle refresh signal after print receipt
+          if (data.type === "refresh_data_after_print" && data.action === "refresh_tables_and_clear_cart") {
+            console.log("🔄 Table Grid: Refreshing table data after print receipt");
+
+            // Force refresh all table and order data
+            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+
+            // Force immediate refetch to update UI
+            queryClient.refetchQueries({ queryKey: ["/api/tables"] });
+            queryClient.refetchQueries({ queryKey: ["/api/orders"] });
+
+            toast({
+              title: "Đã làm mới",
+              description: "Dữ liệu trạng thái bàn đã được cập nhật",
+            });
+          }
+        } catch (error) {
+          console.error("Table Grid: Error parsing WebSocket message:", error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("Table Grid: WebSocket error:", error);
+      };
+
+      ws.onclose = () => {
+        console.log("Table Grid: WebSocket disconnected");
+      };
+
+      return () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
+      };
+    } catch (error) {
+      console.error("Table Grid: Failed to establish WebSocket connection:", error);
+    }
+  }, [queryClient, toast]);
+
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
       apiRequest("PUT", `/api/tables/${tableId}/status`, { status }),
