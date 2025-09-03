@@ -918,7 +918,7 @@ export function PaymentMethodModal({
       setSelectedPaymentMethod("");
       onClose();
 
-      // STEP 6: Pass complete success data to parent component with receipt
+      // STEP 6: Pass success data to parent component WITHOUT receipt to avoid duplicate popups
       console.log("✅ Step 6: Payment process completed successfully");
       
       // Show success toast
@@ -936,8 +936,7 @@ export function PaymentMethodModal({
         tableId: orderInfo.tableId,
         success: true,
         completed: true,
-        receipt: receiptData,
-        shouldShowReceipt: true,
+        shouldShowReceipt: false, // Prevent duplicate receipt popup
         paymentData: selectedPaymentMethod === "cash" ? {
           amountReceived: parseFloat(cashAmountInput || "0"),
           change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0)

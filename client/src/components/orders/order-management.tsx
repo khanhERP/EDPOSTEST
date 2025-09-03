@@ -129,26 +129,30 @@ export function OrderManagement() {
     onSuccess: async (result, variables) => {
       console.log('🎯 Order Management completePaymentMutation.onSuccess called');
 
-      // Force immediate refresh first
-      for (let i = 0; i < 3; i++) {
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
-        ]);
+      // Force immediate refresh
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
 
-        if (i < 2) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-      }
+      // Close all modals immediately
+      setOrderDetailsOpen(false);
+      setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      setSelectedOrder(null);
+      setOrderForPayment(null);
 
       toast({
         title: 'Thanh toán thành công',
-        description: 'Đơn hàng đã được thanh toán',
+        description: 'Đơn hàng đã được thanh toán thành công',
       });
 
-      // Dispatch immediate UI refresh events
+      // Dispatch UI refresh events
       if (typeof window !== 'undefined') {
         const events = [
           new CustomEvent('orderStatusUpdated', {
@@ -164,127 +168,11 @@ export function OrderManagement() {
               paymentMethod: variables.paymentMethod,
               timestamp: new Date().toISOString()
             }
-          }),
-          new CustomEvent('forceRefresh', {
-            detail: {
-              reason: 'payment_completed',
-              orderId: variables.orderId,
-              immediate: true
-            }
           })
         ];
 
         events.forEach(event => {
-          console.log("📡 Dispatching immediate UI refresh event:", event.type, event.detail);
           window.dispatchEvent(event);
-        });
-      }
-
-      // Fetch the completed order and its items for receipt
-      try {
-        const [completedOrder, orderItemsData] = await Promise.all([
-          queryClient.fetchQuery({
-            queryKey: ['/api/orders', variables.orderId],
-            queryFn: async () => {
-              const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
-              return response.json();
-            }
-          }),
-          queryClient.fetchQuery({
-            queryKey: ['/api/order-items', variables.orderId],
-            queryFn: async () => {
-              const response = await apiRequest('GET', `/api/order-items/${variables.orderId}`);
-              return response.json();
-            }
-          })
-        ]);
-
-        if (completedOrder && orderItemsData) {
-          console.log('✅ Order Management payment completed - preparing receipt data');
-
-          // Use EXACT same calculation logic as Order Details display
-          let subtotal = 0;
-          let totalTax = 0;
-
-          const processedItems = Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => {
-            const basePrice = Number(item.unitPrice || 0);
-            const quantity = Number(item.quantity || 0);
-            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-
-            // Calculate subtotal exactly as Order Details display
-            const itemSubtotal = basePrice * quantity;
-            subtotal += itemSubtotal;
-
-            // Tax = (after_tax_price - price) * quantity
-            let itemTax = 0;
-            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-              const afterTaxPrice = parseFloat(product.afterTaxPrice);
-              const price = parseFloat(product.price);
-              itemTax = (afterTaxPrice - price) * quantity;
-              totalTax += itemTax;
-            }
-
-            return {
-              id: item.id,
-              productId: item.productId,
-              productName: item.productName || getProductInfo(item.productId)?.name || 'Unknown Product',
-              quantity: item.quantity,
-              price: item.unitPrice,
-              total: item.total,
-              sku: item.productSku || `SP${item.productId}`,
-              taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
-            };
-          }) : [];
-
-          const finalTotal = subtotal + totalTax;
-
-          // Create comprehensive receipt object
-          const receiptData = {
-            ...completedOrder,
-            orderId: variables.orderId, // Include orderId for status tracking
-            transactionId: `TXN-${Date.now()}`,
-            items: processedItems,
-            subtotal: subtotal.toFixed(2),
-            tax: totalTax.toFixed(2),
-            total: finalTotal.toFixed(2),
-            paymentMethod: variables.paymentMethod || 'cash',
-            amountReceived: finalTotal.toFixed(2),
-            change: '0.00',
-            cashierName: 'Order Management',
-            createdAt: new Date().toISOString()
-          };
-
-          console.log('📄 Order Management receipt data prepared:', receiptData);
-
-          // Close all dialogs first
-          setOrderDetailsOpen(false);
-          setPaymentMethodsOpen(false);
-          setShowPaymentMethodModal(false);
-          setShowEInvoiceModal(false);
-          setShowReceiptPreview(false);
-          setPreviewReceipt(null);
-          setSelectedOrder(null);
-          setOrderForPayment(null);
-
-          // Show receipt modal - this will handle auto-print and auto-close
-          setSelectedReceipt(receiptData);
-          setShowReceiptModal(true);
-        }
-      } catch (error) {
-        console.error('Error fetching order details for receipt:', error);
-        // Still close all modals even if receipt fails
-        setOrderDetailsOpen(false);
-        setPaymentMethodsOpen(false);
-        setShowPaymentMethodModal(false);
-        setShowEInvoiceModal(false);
-        setShowReceiptPreview(false);
-        setPreviewReceipt(null);
-        setSelectedOrder(null);
-        setOrderForPayment(null);
-
-        toast({
-          title: 'Thanh toán thành công',
-          description: 'Đơn hàng đã được thanh toán. Hóa đơn sẽ được in tự động.',
         });
       }
     },
@@ -760,7 +648,7 @@ export function OrderManagement() {
       console.log('✅ Order Management: Payment completed successfully', data);
 
       try {
-        // Refresh data
+        // Force immediate refresh
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
           queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
@@ -768,18 +656,20 @@ export function OrderManagement() {
           queryClient.refetchQueries({ queryKey: ['/api/tables'] })
         ]);
 
-        console.log('✅ Order Management: Data refreshed after payment');
+        // Close all modals immediately
+        setShowPaymentMethodModal(false);
+        setOrderForPayment(null);
+        setOrderDetailsOpen(false);
+        setSelectedOrder(null);
 
         toast({
           title: 'Thành công',
-          description: data.publishLater
-            ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
-            : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
+          description: 'Đơn hàng đã được thanh toán thành công',
         });
 
-        // Show receipt if available  
-        if (data.receipt && data.shouldShowReceipt) {
-          console.log('📄 Order Management: Showing receipt modal after successful payment');
+        // Show receipt ONLY if explicitly requested and no receipt is currently showing
+        if (data.receipt && data.shouldShowReceipt && !showReceiptModal) {
+          console.log('📄 Order Management: Showing final receipt modal');
           setSelectedReceipt(data.receipt);
           setShowReceiptModal(true);
         }
@@ -787,12 +677,6 @@ export function OrderManagement() {
       } catch (error) {
         console.error('❌ Error refreshing data after payment:', error);
       }
-
-      // Close order details if open
-      setOrderDetailsOpen(false);
-      setSelectedOrder(null);
-      setShowPaymentMethodModal(false);
-      setOrderForPayment(null);
 
       return;
     }
@@ -806,21 +690,11 @@ export function OrderManagement() {
         variant: 'destructive',
       });
 
-      // Close payment modal but keep order details open for retry
       setShowPaymentMethodModal(false);
-
       return;
     }
 
-    // For E-Invoice method
-    if (method === "einvoice") {
-      console.log('📄 Order Management: Opening E-Invoice modal');
-      setShowPaymentMethodModal(false);
-      setShowEInvoiceModal(true);
-      return;
-    }
-
-    // For direct payment methods (cash, card, etc.)
+    // For direct payment methods (cash, card, etc.) - handle immediately
     if (!orderForPayment?.id) {
       console.error('❌ No order for payment found');
       toast({
@@ -847,16 +721,16 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
 
-      toast({
-        title: 'Thành công',
-        description: 'Đơn hàng đã được thanh toán thành công',
-      });
-
-      // Close all modals
+      // Close all modals immediately
       setShowPaymentMethodModal(false);
       setOrderForPayment(null);
       setOrderDetailsOpen(false);
       setSelectedOrder(null);
+
+      toast({
+        title: 'Thành công',
+        description: 'Đơn hàng đã được thanh toán thành công',
+      });
 
     } catch (error) {
       console.error('❌ Payment failed:', error);
