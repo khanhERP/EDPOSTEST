@@ -957,18 +957,6 @@ export function OrderManagement() {
         exactTotal: receiptPreview.exactTotal
       });
 
-      // Tạo order data đầy đủ cho payment flow
-      const orderForPaymentData = {
-        ...selectedOrder,
-        id: selectedOrder.id, // Đảm bảo có ID
-        orderItems: processedItems,
-        processedItems: processedItems,
-        calculatedSubtotal: calculatedSubtotal,
-        calculatedTax: calculatedTax,
-        calculatedTotal: finalTotal,
-        total: finalTotal // Override total với calculated value
-      };
-
       // Step 5: Close order details modal and show receipt preview
       try {
         setOrderDetailsOpen(false);
