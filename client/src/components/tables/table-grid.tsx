@@ -327,7 +327,89 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     } catch (error) {
       console.error("Table Grid: Failed to establish WebSocket connection:", error);
     }
-  }, [queryClient, toast]);
+  }, [queryClient, toast, refetchTables, refetchOrders]);
+
+  // Add event listeners for payment completion
+  useEffect(() => {
+    const handlePaymentCompleted = (event: CustomEvent) => {
+      console.log("💳 Table Grid: Payment completed event received:", event.detail);
+      
+      // Force immediate data refresh when payment is completed from any source
+      const refreshData = async () => {
+        console.log("🔄 Table Grid: Starting immediate refresh after payment completion");
+        
+        try {
+          // Clear all cached data completely
+          queryClient.clear();
+          
+          // Force fresh data fetch
+          await Promise.all([
+            refetchTables(),
+            refetchOrders()
+          ]);
+          
+          console.log("✅ Table Grid: Payment refresh completed successfully");
+          
+          toast({
+            title: "Đã cập nhật",
+            description: "Trạng thái bàn đã được làm mới sau thanh toán",
+          });
+          
+        } catch (error) {
+          console.error("❌ Table Grid: Error refreshing after payment:", error);
+        }
+      };
+      
+      // Execute refresh immediately
+      refreshData();
+    };
+
+    const handleOrderStatusUpdate = (event: CustomEvent) => {
+      console.log("📋 Table Grid: Order status updated:", event.detail);
+      
+      if (event.detail?.status === "paid") {
+        console.log("💳 Table Grid: Order marked as paid, refreshing table status");
+        
+        // Clear cache and refresh immediately for paid orders
+        queryClient.removeQueries({ queryKey: ["/api/tables"] });
+        queryClient.removeQueries({ queryKey: ["/api/orders"] });
+        
+        setTimeout(() => {
+          refetchTables();
+          refetchOrders();
+        }, 50);
+      }
+    };
+
+    const handleForceRefresh = (event: CustomEvent) => {
+      console.log("🔄 Table Grid: Force refresh requested:", event.detail);
+      
+      if (event.detail?.reason === "payment_completed") {
+        console.log("💰 Table Grid: Refreshing due to payment completion");
+        
+        // Clear all data and force fresh fetch
+        queryClient.clear();
+        
+        Promise.all([
+          refetchTables(),
+          refetchOrders()
+        ]).then(() => {
+          console.log("✅ Table Grid: Force refresh completed");
+        });
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
+    window.addEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
+    window.addEventListener('forceRefresh', handleForceRefresh as EventListener);
+
+    return () => {
+      window.removeEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
+      window.removeEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
+      window.removeEventListener('forceRefresh', handleForceRefresh as EventListener);
+    };
+  }, [queryClient, toast, refetchTables, refetchOrders]);
 
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
@@ -364,16 +446,79 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     onSuccess: async (data, variables) => {
       console.log("🎯 Table completePaymentMutation.onSuccess called");
 
-      // Invalidate queries first
+      // Force immediate data refresh with multiple strategies
+      console.log("🔄 Table: Starting comprehensive data refresh after payment success");
+      
+      // Strategy 1: Clear all cached data completely
+      queryClient.clear();
+      
+      // Strategy 2: Invalidate specific queries
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({
         queryKey: ["/api/order-items", variables.orderId],
-      }); // Invalidate items for the paid order
+      });
+
+      // Strategy 3: Force immediate fresh fetch
+      try {
+        await Promise.all([
+          refetchTables(),
+          refetchOrders()
+        ]);
+        console.log("✅ Table: Immediate refresh completed successfully");
+      } catch (refreshError) {
+        console.error("❌ Table: Error during immediate refresh:", refreshError);
+      }
+
+      // Strategy 4: Delayed refresh for consistency (backup)
+      setTimeout(async () => {
+        console.log("🔄 Table: Performing delayed backup refresh");
+        try {
+          await Promise.all([
+            refetchTables(),
+            refetchOrders()
+          ]);
+          console.log("✅ Table: Delayed backup refresh completed");
+        } catch (error) {
+          console.error("❌ Table: Error during delayed refresh:", error);
+        }
+      }, 500);
+
+      // Strategy 5: Dispatch custom events for cross-component coordination
+      if (typeof window !== 'undefined') {
+        const events = [
+          new CustomEvent('paymentCompleted', {
+            detail: { 
+              orderId: variables.orderId, 
+              paymentMethod: variables.paymentMethod,
+              timestamp: new Date().toISOString()
+            }
+          }),
+          new CustomEvent('orderStatusUpdated', {
+            detail: {
+              orderId: variables.orderId,
+              status: 'paid',
+              timestamp: new Date().toISOString()
+            }
+          }),
+          new CustomEvent('forceRefresh', {
+            detail: { 
+              reason: 'payment_completed', 
+              orderId: variables.orderId,
+              source: 'table-grid'
+            }
+          })
+        ];
+
+        events.forEach(event => {
+          console.log("📡 Table: Dispatching refresh event:", event.type);
+          window.dispatchEvent(event);
+        });
+      }
 
       toast({
         title: "Thanh toán thành công",
-        description: "Đơn hàng đã được thanh toán",
+        description: "Đơn hàng đã được thanh toán và dữ liệu đã được làm mới",
       });
 
       // Fetch the completed order and its items for receipt
@@ -2702,7 +2847,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               "🔴 Table: Closing final receipt modal and clearing all states",
             );
             
-            // Clear all modal states
+            // Clear all modal states first
             setShowReceiptModal(false);
             setSelectedReceipt(null);
             setOrderForPayment(null);
@@ -2714,47 +2859,102 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setSelectedOrder(null);
             setSelectedPaymentMethod("");
 
-            // Force immediate data refresh when receipt modal closes
-            console.log("🔄 Table: Forcing comprehensive data refresh after receipt modal close");
+            // ENHANCED: Multi-strategy data refresh when receipt modal closes
+            console.log("🔄 Table: Starting enhanced data refresh after receipt modal close");
             
-            // Clear all cached data first
-            queryClient.removeQueries({ queryKey: ["/api/tables"] });
-            queryClient.removeQueries({ queryKey: ["/api/orders"] });
-            queryClient.removeQueries({ queryKey: ["/api/order-items"] });
-            
-            // Force immediate refresh with fresh data
-            const refreshData = async () => {
+            const performComprehensiveRefresh = async () => {
               try {
-                console.log("🔄 Table: Starting immediate data refresh");
+                // Step 1: Clear all cached data completely
+                console.log("🧹 Table: Clearing all cached data");
+                queryClient.clear();
                 
-                // Invalidate and refetch with fresh data
-                queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-                queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                // Step 2: Remove specific queries 
+                queryClient.removeQueries({ queryKey: ["/api/tables"] });
+                queryClient.removeQueries({ queryKey: ["/api/orders"] });
+                queryClient.removeQueries({ queryKey: ["/api/order-items"] });
                 
+                // Step 3: Force fresh data fetch immediately
+                console.log("🔄 Table: Fetching fresh data (attempt 1)");
                 await Promise.all([
                   refetchTables(),
                   refetchOrders()
                 ]);
                 
-                console.log("✅ Table: Data refresh completed successfully");
+                // Step 4: Second refresh after a short delay for consistency
+                setTimeout(async () => {
+                  console.log("🔄 Table: Fetching fresh data (attempt 2)");
+                  try {
+                    await Promise.all([
+                      refetchTables(),
+                      refetchOrders()
+                    ]);
+                    console.log("✅ Table: All data refresh cycles completed");
+                  } catch (secondRefreshError) {
+                    console.error("❌ Table: Error in second refresh:", secondRefreshError);
+                  }
+                }, 1000);
+                
+                // Step 5: Send WebSocket signal for other components
+                try {
+                  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+                  const wsUrl = `${protocol}//${window.location.host}/ws`;
+                  const ws = new WebSocket(wsUrl);
+                  
+                  ws.onopen = () => {
+                    ws.send(JSON.stringify({
+                      type: "refresh_data_after_payment",
+                      action: "refresh_all_table_data",
+                      timestamp: new Date().toISOString(),
+                      source: "table-grid-receipt-close"
+                    }));
+                    ws.close();
+                  };
+                } catch (wsError) {
+                  console.error("❌ Table: WebSocket signal error:", wsError);
+                }
+                
+                // Step 6: Dispatch events for cross-component updates
+                if (typeof window !== 'undefined') {
+                  const refreshEvents = [
+                    new CustomEvent('tableDataRefreshed', {
+                      detail: { 
+                        source: 'receipt-modal-close',
+                        timestamp: new Date().toISOString()
+                      }
+                    }),
+                    new CustomEvent('forceRefresh', {
+                      detail: { 
+                        reason: 'receipt_modal_closed',
+                        immediate: true
+                      }
+                    })
+                  ];
+
+                  refreshEvents.forEach(event => {
+                    console.log("📡 Table: Dispatching refresh event:", event.type);
+                    window.dispatchEvent(event);
+                  });
+                }
+                
+                console.log("✅ Table: Comprehensive refresh completed successfully");
                 
                 toast({
                   title: "Đã làm mới",
-                  description: "Dữ liệu trạng thái bàn đã được cập nhật",
+                  description: "Dữ liệu trạng thái bàn đã được cập nhật hoàn toàn",
                 });
                 
               } catch (error) {
-                console.error("❌ Error during data refresh:", error);
+                console.error("❌ Table: Critical error during data refresh:", error);
                 toast({
                   title: "Cảnh báo", 
-                  description: "Có lỗi khi làm mới dữ liệu. Vui lòng tải lại trang.",
+                  description: "Có lỗi khi làm mới dữ liệu. Vui lòng tải lại trang để cập nhật.",
                   variant: "destructive",
                 });
               }
             };
             
-            // Execute refresh immediately
-            refreshData();
+            // Execute comprehensive refresh
+            performComprehensiveRefresh();
           }}
           receipt={selectedReceipt}
           cartItems={
