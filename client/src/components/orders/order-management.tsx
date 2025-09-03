@@ -138,15 +138,18 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
 
-      // Close all modals immediately
-      setOrderDetailsOpen(false);
-      setPaymentMethodsOpen(false);
-      setShowPaymentMethodModal(false);
-      setShowEInvoiceModal(false);
-      setShowReceiptPreview(false);
-      setPreviewReceipt(null);
-      setSelectedOrder(null);
-      setOrderForPayment(null);
+      // Don't close modals immediately to prevent white screen
+      // Use setTimeout to close modals after UI refresh
+      setTimeout(() => {
+        setOrderDetailsOpen(false);
+        setPaymentMethodsOpen(false);
+        setShowPaymentMethodModal(false);
+        setShowEInvoiceModal(false);
+        setShowReceiptPreview(false);
+        setPreviewReceipt(null);
+        setSelectedOrder(null);
+        setOrderForPayment(null);
+      }, 200);
 
       toast({
         title: 'Thanh toán thành công',
@@ -184,7 +187,10 @@ export function OrderManagement() {
         description: 'Không thể hoàn tất thanh toán',
         variant: "destructive",
       });
-      setOrderForPayment(null);
+      // Don't clear orderForPayment immediately to prevent white screen
+      setTimeout(() => {
+        setOrderForPayment(null);
+      }, 100);
     },
   });
 
@@ -1196,10 +1202,14 @@ export function OrderManagement() {
            customer.phone?.toLowerCase().includes(searchLower);
   }) || [];
 
-  if (ordersLoading) {
+  // Don't show loading screen if we already have some data to prevent white screen
+  const showLoadingScreen = ordersLoading && (!orders || orders.length === 0);
+  
+  if (showLoadingScreen) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        <span className="ml-2">Đang tải đơn hàng...</span>
       </div>
     );
   }
@@ -2594,26 +2604,35 @@ export function OrderManagement() {
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log('🔴 Order Management: Closing final receipt modal and clearing all states');
+          console.log('🔴 Order Management: Closing final receipt modal - keeping component alive');
+          
+          // Only close the receipt modal, don't clear everything
           setShowReceiptModal(false);
           setSelectedReceipt(null);
-          setOrderForPayment(null);
-          setShowPaymentMethodModal(false);
-          setShowEInvoiceModal(false);
-          setShowReceiptPreview(false);
-          setPreviewReceipt(null);
-          setOrderDetailsOpen(false);
-          setSelectedOrder(null);
-          setPaymentMethodsOpen(false);
-          setShowQRPayment(false);
-          setPointsPaymentOpen(false);
-          setMixedPaymentOpen(false);
+          
+          // Keep the component alive by not clearing core states immediately
+          // Use setTimeout to clear states after a delay to prevent white screen
+          setTimeout(() => {
+            setOrderForPayment(null);
+            setShowPaymentMethodModal(false);
+            setShowEInvoiceModal(false);
+            setShowReceiptPreview(false);
+            setPreviewReceipt(null);
+            setOrderDetailsOpen(false);
+            setSelectedOrder(null);
+            setPaymentMethodsOpen(false);
+            setShowQRPayment(false);
+            setPointsPaymentOpen(false);
+            setMixedPaymentOpen(false);
+            
+            console.log('✅ Order Management: Modal states cleared after delay');
+          }, 100);
 
           // Force refresh orders after successful payment
           queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
           queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
 
-          console.log('✅ Order Management: All states cleared and queries refreshed');
+          console.log('✅ Order Management: Receipt modal closed properly without breaking component');
         }}
         receipt={selectedReceipt}
         cartItems={selectedReceipt?.items?.map((item: any) => ({
