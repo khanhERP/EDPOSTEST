@@ -279,7 +279,7 @@ export function ShoppingCart({
       // Step 1: Show receipt preview modal first
       setPreviewReceipt(receiptPreviewData);
       setShowReceiptPreview(true);
-      
+
       console.log("🚀 Step 1: Opening receipt preview modal (Xem trước hóa đơn)");
 
     } catch (error) {
@@ -313,7 +313,8 @@ export function ShoppingCart({
           unitPrice: item.price.toString(),
           total: item.total.toString(),
           productSku: item.sku
-        }))
+        })),
+        orderedAt: new Date(), // Server will override with server time
       };
 
       console.log("📤 Step 2: Creating order with data:", orderData);

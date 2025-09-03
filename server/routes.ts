@@ -2802,6 +2802,28 @@ export async function registerRoutes(app: Express): Promise < Server > {
     }
   });
 
+  // Server time endpoint for consistent timestamps
+  app.get("/api/server-time", async (req: TenantRequest, res) => {
+    try {
+      const serverTime = {
+        timestamp: new Date().toISOString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        localTime: new Date().toLocaleString('vi-VN', { 
+          timeZone: 'Asia/Ho_Chi_Minh',
+          year: 'numeric',
+          month: '2-digit', 
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        })
+      };
+      res.json(serverTime);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get server time" });
+    }
+  });
+
   // Add new API endpoints with proper date filtering for sales chart report
   app.get(
     "/api/transactions/:startDate/:endDate/:salesMethod/:salesChannel/:analysisType/:concernType/:selectedEmployee",
