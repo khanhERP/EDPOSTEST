@@ -618,6 +618,17 @@ export function EInvoiceModal({
       console.log("✅ Prepared data for onConfirm after publish later");
       console.log("📄 Receipt data to pass:", receiptData);
 
+      // Prepare comprehensive invoice data
+      const completeInvoiceData = {
+        paymentMethod: selectedPaymentMethod,
+        originalPaymentMethod: selectedPaymentMethod,
+        publishLater: true,
+        receipt: receiptData,
+        customerName: formData.customerName,
+        taxCode: formData.taxCode,
+        showReceiptModal: true // Flag để parent component biết cần hiển thị receipt modal
+      };
+
       // Directly call onConfirm instead of showing print dialog
       onConfirm(completeInvoiceData);
     } catch (error) {
