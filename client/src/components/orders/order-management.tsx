@@ -1202,32 +1202,70 @@ export function OrderManagement() {
            customer.phone?.toLowerCase().includes(searchLower);
   }) || [];
 
-  // Don't show loading screen if we already have some data to prevent white screen
-  const showLoadingScreen = ordersLoading && (!orders || orders.length === 0);
-  
-  if (showLoadingScreen) {
+  // Always show content, even during loading to prevent white screen
+  if (ordersLoading && (!orders || orders.length === 0)) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-        <span className="ml-2">Đang tải đơn hàng...</span>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
+            <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
+          </div>
+          <Badge variant="secondary" className="text-lg px-4 py-2">
+            0 {t('orders.ordersInProgress')}
+          </Badge>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          <span className="ml-2">Đang tải đơn hàng...</span>
+        </div>
       </div>
     );
   }
 
-  const allOrders = orders ? (orders as Order[]).sort((a: Order, b: Order) =>
-    new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
-  ) : [];
+  // Safe order processing with error handling
+  const allOrders = React.useMemo(() => {
+    try {
+      if (!orders || !Array.isArray(orders)) {
+        console.warn('Order Management: Invalid orders data:', orders);
+        return [];
+      }
+      
+      return (orders as Order[])
+        .filter(order => order && order.id && order.orderedAt) // Filter out invalid orders
+        .sort((a: Order, b: Order) => {
+          try {
+            return new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime();
+          } catch (error) {
+            console.error('Error sorting orders:', error);
+            return 0;
+          }
+        });
+    } catch (error) {
+      console.error('Error processing orders:', error);
+      return [];
+    }
+  }, [orders]);
 
-  // Function to refresh data, including invalidating and refetching queries
+  // Function to refresh data with error handling
   const refreshData = React.useCallback(async () => {
-    console.log('🔄 refreshing data...');
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-      queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
-      queryClient.refetchQueries({ queryKey: ['/api/tables'] })
-    ]);
-    console.log('✅ data refreshed');
+    console.log('🔄 Order Management: Refreshing data...');
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
+      console.log('✅ Order Management: Data refreshed successfully');
+    } catch (error) {
+      console.error('❌ Order Management: Error refreshing data:', error);
+      // Try again after a delay
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      }, 1000);
+    }
   }, [queryClient]);
 
   // Refresh data when tab becomes active or component mounts
@@ -2603,16 +2641,55 @@ export function OrderManagement() {
       {/* Receipt Modal - Final receipt after payment */}
       <ReceiptModal
         isOpen={showReceiptModal}
-        onClose={() => {
-          console.log('🔴 Order Management: Closing final receipt modal - keeping component alive');
+        onClose={async () => {
+          console.log('🔴 Order Management: Closing final receipt modal safely');
           
-          // Only close the receipt modal, don't clear everything
-          setShowReceiptModal(false);
-          setSelectedReceipt(null);
-          
-          // Keep the component alive by not clearing core states immediately
-          // Use setTimeout to clear states after a delay to prevent white screen
-          setTimeout(() => {
+          try {
+            // Step 1: Close modal immediately
+            setShowReceiptModal(false);
+            setSelectedReceipt(null);
+            
+            // Step 2: Force data refresh before clearing states
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+              queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+              queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+              queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+            ]);
+            
+            // Step 3: Clear modal states gradually to prevent white screen
+            setTimeout(() => {
+              setOrderForPayment(null);
+              setShowPaymentMethodModal(false);
+              setShowEInvoiceModal(false);
+            }, 50);
+            
+            setTimeout(() => {
+              setShowReceiptPreview(false);
+              setPreviewReceipt(null);
+              setOrderDetailsOpen(false);
+            }, 100);
+            
+            setTimeout(() => {
+              setSelectedOrder(null);
+              setPaymentMethodsOpen(false);
+              setShowQRPayment(false);
+              setPointsPaymentOpen(false);
+              setMixedPaymentOpen(false);
+            }, 150);
+            
+            // Step 4: Send global refresh signal
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('orderManagementRefresh', {
+                detail: { source: 'receipt_modal_close', timestamp: new Date().toISOString() }
+              }));
+            }
+
+            console.log('✅ Order Management: Receipt modal closed safely with gradual state clearing');
+            
+          } catch (error) {
+            console.error('❌ Error during receipt modal close:', error);
+            // Fallback: just clear states without refresh
             setOrderForPayment(null);
             setShowPaymentMethodModal(false);
             setShowEInvoiceModal(false);
@@ -2624,15 +2701,7 @@ export function OrderManagement() {
             setShowQRPayment(false);
             setPointsPaymentOpen(false);
             setMixedPaymentOpen(false);
-            
-            console.log('✅ Order Management: Modal states cleared after delay');
-          }, 100);
-
-          // Force refresh orders after successful payment
-          queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-
-          console.log('✅ Order Management: Receipt modal closed properly without breaking component');
+          }
         }}
         receipt={selectedReceipt}
         cartItems={selectedReceipt?.items?.map((item: any) => ({
