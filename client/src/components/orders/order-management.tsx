@@ -634,11 +634,150 @@ export function OrderManagement() {
     }
   };
 
-  const handlePaymentClick = (order: Order) => {
+  const handlePaymentClick = async (order: Order) => {
     console.log('🎯 Payment button clicked for order:', order.id, order.orderNumber);
-    setSelectedOrder(order);
-    setOrderForPayment(order);
-    setOrderDetailsOpen(true);
+    
+    try {
+      // Step 1: Fetch order items for calculation
+      console.log('📦 Fetching order items for order:', order.id);
+      const orderItemsResponse = await apiRequest('GET', `/api/order-items/${order.id}`);
+      
+      if (!orderItemsResponse.ok) {
+        throw new Error('Failed to fetch order items');
+      }
+      
+      const orderItemsData = await orderItemsResponse.json();
+      console.log('📦 Order items fetched:', orderItemsData.length, 'items');
+      
+      if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
+        toast({
+          title: 'Lỗi',
+          description: 'Không tìm thấy món ăn trong đơn hàng này',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Step 2: Calculate totals using EXACT same logic as Order Details display
+      let calculatedSubtotal = 0;
+      let calculatedTax = 0;
+
+      console.log('💰 Calculating totals for', orderItemsData.length, 'items');
+      console.log('📦 Products available:', Array.isArray(products) ? products.length : 0);
+
+      const processedItems = orderItemsData.map((item: any) => {
+        const unitPrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+        console.log(`📊 Processing item ${item.id}:`, {
+          productId: item.productId,
+          productName: item.productName,
+          unitPrice,
+          quantity,
+          productFound: !!product
+        });
+
+        // Subtotal = unitPrice * quantity
+        const itemSubtotal = unitPrice * quantity;
+        calculatedSubtotal += itemSubtotal;
+
+        // Tax calculation from afterTaxPrice if available
+        let itemTax = 0;
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const originalPrice = parseFloat(product.price);
+          itemTax = (afterTaxPrice - originalPrice) * quantity;
+          calculatedTax += itemTax;
+          console.log(`💸 Tax calculated for ${item.productName}:`, {
+            afterTaxPrice,
+            originalPrice,
+            taxPerUnit: afterTaxPrice - originalPrice,
+            quantity,
+            itemTax
+          });
+        }
+
+        return {
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName || 'Unknown Product',
+          quantity: quantity,
+          unitPrice: unitPrice,
+          price: unitPrice,
+          total: itemSubtotal,
+          sku: item.productSku || product?.sku || `SP${item.productId}`,
+          taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
+          afterTaxPrice: product?.afterTaxPrice || null
+        };
+      });
+
+      const finalTotal = calculatedSubtotal + calculatedTax;
+
+      console.log('💰 Final calculation results:', {
+        subtotal: calculatedSubtotal,
+        tax: calculatedTax,
+        finalTotal: finalTotal,
+        itemsProcessed: processedItems.length
+      });
+
+      // Step 3: Create comprehensive order data for payment
+      const orderForPaymentData = {
+        ...order,
+        id: order.id,
+        orderItems: processedItems,
+        processedItems: processedItems,
+        calculatedSubtotal: calculatedSubtotal,
+        calculatedTax: calculatedTax,
+        calculatedTotal: finalTotal,
+        total: finalTotal
+      };
+
+      // Step 4: Create receipt preview data
+      const receiptPreview = {
+        id: order.id,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        tableId: order.tableId,
+        customerCount: order.customerCount,
+        customerName: order.customerName,
+        items: processedItems,
+        orderItems: processedItems,
+        subtotal: calculatedSubtotal.toFixed(2),
+        tax: calculatedTax.toFixed(2),
+        total: finalTotal.toFixed(2),
+        paymentMethod: 'pending',
+        amountReceived: finalTotal.toFixed(2),
+        change: '0.00',
+        cashierName: 'Order Management',
+        createdAt: new Date().toISOString(),
+        transactionId: `TXN-PREVIEW-${Date.now()}`,
+        calculatedSubtotal: calculatedSubtotal,
+        calculatedTax: calculatedTax,
+        calculatedTotal: finalTotal
+      };
+
+      console.log('✅ Payment data prepared:', {
+        orderId: orderForPaymentData.id,
+        calculatedTotal: orderForPaymentData.calculatedTotal,
+        itemsCount: processedItems.length,
+        receiptTotal: receiptPreview.total
+      });
+
+      // Step 5: Set states and open payment modal directly
+      setSelectedOrder(order);
+      setOrderForPayment(orderForPaymentData);
+      setPreviewReceipt(receiptPreview);
+      setShowPaymentMethodModal(true);
+      
+    } catch (error) {
+      console.error('❌ Error preparing payment data:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể chuẩn bị dữ liệu thanh toán. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handlePaymentMethodSelect = async (method: string, data?: any) => {
@@ -2042,14 +2181,15 @@ export function OrderManagement() {
           console.log('🔴 Payment Method Modal closed');
           setShowPaymentMethodModal(false);
           setOrderForPayment(null);
+          setPreviewReceipt(null);
         }}
         onSelectMethod={(method, data) => {
           console.log('🎯 Order Management payment method selected:', method, data);
           console.log('🔍 Current orderForPayment state:', {
             orderForPayment: !!orderForPayment,
             orderForPaymentId: orderForPayment?.id,
-            selectedOrder: !!selectedOrder,
-            selectedOrderId: selectedOrder?.id
+            calculatedTotal: orderForPayment?.calculatedTotal,
+            itemsCount: orderForPayment?.processedItems?.length || 0
           });
 
           setShowPaymentMethodModal(false);
@@ -2062,6 +2202,7 @@ export function OrderManagement() {
             setOrderForPayment(null);
             setOrderDetailsOpen(false);
             setSelectedOrder(null);
+            setPreviewReceipt(null);
 
             // Show receipt if provided
             if (data.receipt) {
@@ -2102,23 +2243,28 @@ export function OrderManagement() {
             setSelectedReceipt(data.receipt);
             setShowReceiptModal(true);
             setOrderForPayment(null);
+            setPreviewReceipt(null);
           } else {
             // For other payment methods, proceed with payment completion
             console.log('💳 Processing payment for order:', {
               orderId: orderForPayment?.id,
-              paymentMethod: method.nameKey || method
+              paymentMethod: method.nameKey || method,
+              calculatedTotal: orderForPayment?.calculatedTotal
             });
 
-            if (orderForPayment?.id) {
+            if (orderForPayment?.id && orderForPayment?.calculatedTotal > 0) {
               completePaymentMutation.mutate({
                 orderId: orderForPayment.id,
                 paymentMethod: method.nameKey || method,
               });
             } else {
-              console.error('❌ No valid order ID found for payment');
+              console.error('❌ Invalid order data for payment:', {
+                orderId: orderForPayment?.id,
+                calculatedTotal: orderForPayment?.calculatedTotal
+              });
               toast({
                 title: 'Lỗi',
-                description: 'Không tìm thấy ID đơn hàng để thanh toán',
+                description: 'Dữ liệu đơn hàng không hợp lệ để thanh toán',
                 variant: 'destructive',
               });
             }
@@ -2135,6 +2281,9 @@ export function OrderManagement() {
           taxRate: item.taxRate,
           afterTaxPrice: item.afterTaxPrice
         })) || []}
+        orderForPayment={orderForPayment}
+        products={products}
+        receipt={previewReceipt}
       />
 
       {/* E-Invoice Modal */}
