@@ -320,14 +320,42 @@ export function ShoppingCart({
       return;
     }
 
-    console.log("🔍 CRITICAL DEBUG - Cart validation before proceeding:");
-    console.log("Cart length:", cart.length);
-    console.log("Subtotal:", subtotal);
-    console.log("Tax:", tax);
-    console.log("Total:", total);
+    // CRITICAL FIX: Recalculate totals from cart to ensure they are correct
+    const recalculatedSubtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+    const recalculatedTax = cart.reduce((sum, item) => {
+      if (item.taxRate && parseFloat(item.taxRate) > 0) {
+        const basePrice = parseFloat(item.price);
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          const taxPerItem = afterTaxPrice - basePrice;
+          return sum + Math.floor(taxPerItem * item.quantity);
+        }
+      }
+      return sum;
+    }, 0);
+    const recalculatedTotal = Math.round(recalculatedSubtotal + recalculatedTax);
 
-    if (subtotal === 0 || total === 0) {
-      console.error("❌ CRITICAL ERROR: Subtotal or total is 0, cannot proceed with checkout");
+    console.log("🔍 CRITICAL DEBUG - Recalculated totals:");
+    console.log("Original totals:", { subtotal, tax, total });
+    console.log("Recalculated totals:", { 
+      subtotal: recalculatedSubtotal, 
+      tax: recalculatedTax, 
+      total: recalculatedTotal 
+    });
+
+    // Use recalculated values if they differ significantly
+    const finalSubtotal = Math.abs(recalculatedSubtotal - subtotal) > 1 ? recalculatedSubtotal : subtotal;
+    const finalTax = Math.abs(recalculatedTax - tax) > 1 ? recalculatedTax : tax;
+    const finalTotal = Math.abs(recalculatedTotal - total) > 1 ? recalculatedTotal : total;
+
+    console.log("Final totals to use:", { 
+      finalSubtotal, 
+      finalTax, 
+      finalTotal 
+    });
+
+    if (finalSubtotal === 0 || finalTotal === 0) {
+      console.error("❌ CRITICAL ERROR: Final totals are still 0, cannot proceed with checkout");
       alert("Lỗi: Tổng tiền không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
       return;
     }
@@ -354,7 +382,7 @@ export function ShoppingCart({
       return;
     }
 
-    // Step 2: Create receipt preview data with current calculated totals
+    // Step 2: Create receipt preview data with CORRECTED calculated totals
     const receiptPreview = {
       id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
@@ -373,12 +401,12 @@ export function ShoppingCart({
         taxRate: item.taxRate,
         afterTaxPrice: item.afterTaxPrice
       })),
-      subtotal: subtotal.toString(),
-      tax: tax.toString(),
-      total: total.toString(),
-      exactSubtotal: subtotal,
-      exactTax: tax,
-      exactTotal: total,
+      subtotal: finalSubtotal.toString(),
+      tax: finalTax.toString(),
+      total: finalTotal.toString(),
+      exactSubtotal: finalSubtotal,
+      exactTax: finalTax,
+      exactTotal: finalTotal,
       status: "pending",
       paymentStatus: "pending",
       orderedAt: new Date().toISOString(),
@@ -390,10 +418,10 @@ export function ShoppingCart({
     console.log("📋 POS: Receipt preview total verification:", {
       exactTotal: receiptPreview.exactTotal,
       stringTotal: receiptPreview.total,
-      calculatedTotal: total
+      calculatedTotal: finalTotal
     });
 
-    // Step 3: Prepare order data for payment
+    // Step 3: Prepare order data for payment with CORRECTED totals
     const orderForPaymentData = {
       id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
@@ -414,12 +442,12 @@ export function ShoppingCart({
         taxRate: item.taxRate,
         afterTaxPrice: item.afterTaxPrice
       })),
-      subtotal: subtotal,
-      tax: tax,
-      total: total,
-      exactSubtotal: subtotal,
-      exactTax: tax,
-      exactTotal: total,
+      subtotal: finalSubtotal,
+      tax: finalTax,
+      total: finalTotal,
+      exactSubtotal: finalSubtotal,
+      exactTax: finalTax,
+      exactTotal: finalTotal,
       orderedAt: new Date().toISOString()
     };
 
@@ -428,7 +456,7 @@ export function ShoppingCart({
     console.log("📦 POS: Order for payment total verification:", {
       exactTotal: orderForPaymentData.exactTotal,
       total: orderForPaymentData.total,
-      calculatedTotal: total
+      calculatedTotal: finalTotal
     });
 
     // Step 4: Set all data and show receipt preview modal
@@ -764,29 +792,42 @@ export function ShoppingCart({
               orderTotal: orderForPayment?.total,
               previewTotal: previewReceipt?.exactTotal,
               fallbackTotal: total,
+              cartItemsCount: cart.length,
               hasValidOrderData: !!(orderForPayment && previewReceipt)
             });
             
-            // CRITICAL: Ensure we have valid data before proceeding
-            if (!orderForPayment || !previewReceipt) {
-              console.error("❌ CRITICAL ERROR: Missing order or receipt data for Payment Modal");
-              return 0;
+            // If we have valid order data, use it, otherwise use current cart calculation
+            if (orderForPayment && previewReceipt) {
+              const finalTotal = orderForPayment?.exactTotal || 
+                                orderForPayment?.total || 
+                                previewReceipt?.exactTotal || 
+                                previewReceipt?.total || 0;
+              
+              console.log("💰 Shopping Cart: Using order/receipt total:", finalTotal);
+              return finalTotal;
+            } else {
+              // Fallback: Calculate from current cart
+              const cartTotal = cart.reduce((sum, item) => {
+                const itemTotal = parseFloat(item.total);
+                return sum + itemTotal;
+              }, 0);
+              
+              const cartTax = cart.reduce((sum, item) => {
+                if (item.taxRate && parseFloat(item.taxRate) > 0) {
+                  const basePrice = parseFloat(item.price);
+                  if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                    const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                    const taxPerItem = afterTaxPrice - basePrice;
+                    return sum + Math.floor(taxPerItem * item.quantity);
+                  }
+                }
+                return sum;
+              }, 0);
+              
+              const finalTotal = Math.round(cartTotal + cartTax);
+              console.log("💰 Shopping Cart: Using calculated cart total:", finalTotal);
+              return finalTotal;
             }
-            
-            // Priority order: orderForPayment first, then previewReceipt, then calculated total
-            const finalTotal = orderForPayment?.exactTotal || 
-                              orderForPayment?.total || 
-                              previewReceipt?.exactTotal || 
-                              previewReceipt?.total || 
-                              total || 0;
-            
-            console.log("💰 Shopping Cart: VALIDATED Final total for Payment Modal:", finalTotal);
-            
-            if (finalTotal === 0) {
-              console.error("❌ CRITICAL ERROR: Final total is 0 for Payment Modal");
-            }
-            
-            return finalTotal;
           })()}
           orderForPayment={orderForPayment}
           products={products}
@@ -796,42 +837,48 @@ export function ShoppingCart({
               orderForPaymentItems: orderForPayment?.items?.length || 0,
               previewReceiptItems: previewReceipt?.items?.length || 0,
               currentCartItems: cart?.length || 0,
+              lastCartItems: lastCartItems?.length || 0,
               hasValidOrderData: !!(orderForPayment && previewReceipt)
             });
 
-            // CRITICAL: Ensure we have valid data before proceeding
-            if (!orderForPayment || !previewReceipt) {
-              console.error("❌ CRITICAL ERROR: Missing order or receipt data for cart items mapping");
-              return [];
+            // If we have stored cart items from checkout process, use them first
+            if (lastCartItems && lastCartItems.length > 0) {
+              console.log("📦 Shopping Cart: Using lastCartItems (most accurate):", lastCartItems);
+              return lastCartItems;
             }
 
-            // Priority order: orderForPayment items first, then previewReceipt items, then current cart
-            const itemsSource = orderForPayment?.items || 
-                               previewReceipt?.items || 
-                               cart;
-
-            if (!itemsSource || itemsSource.length === 0) {
-              console.error("❌ CRITICAL ERROR: No items found for Payment Modal after validation");
-              return [];
+            // If we have valid order data, use it
+            if (orderForPayment?.items && orderForPayment.items.length > 0) {
+              const mappedItems = orderForPayment.items.map(item => ({
+                id: item.id || item.productId,
+                name: item.name || item.productName,
+                price: typeof (item.price || item.unitPrice) === 'string' ? parseFloat(item.price || item.unitPrice) : (item.price || item.unitPrice),
+                quantity: item.quantity,
+                sku: item.sku || `FOOD${String(item.id || item.productId).padStart(5, '0')}`,
+                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
+                afterTaxPrice: item.afterTaxPrice
+              }));
+              console.log("📦 Shopping Cart: Using orderForPayment items:", mappedItems);
+              return mappedItems;
             }
 
-            const mappedItems = itemsSource.map(item => ({
-              id: item.id || item.productId,
-              name: item.name || item.productName,
-              price: typeof (item.price || item.unitPrice) === 'string' ? parseFloat(item.price || item.unitPrice) : (item.price || item.unitPrice),
-              quantity: item.quantity,
-              sku: item.sku || `FOOD${String(item.id || item.productId).padStart(5, '0')}`,
-              taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
-              afterTaxPrice: item.afterTaxPrice
-            }));
-
-            console.log("📦 Shopping Cart: VALIDATED Mapped items for Payment Modal:", mappedItems.length);
-            
-            if (mappedItems.length === 0) {
-              console.error("❌ CRITICAL ERROR: Mapped items count is 0 for Payment Modal");
+            // Fallback to current cart
+            if (cart && cart.length > 0) {
+              const mappedItems = cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                quantity: item.quantity,
+                sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
+                afterTaxPrice: item.afterTaxPrice
+              }));
+              console.log("📦 Shopping Cart: Using current cart as fallback:", mappedItems);
+              return mappedItems;
             }
-            
-            return mappedItems;
+
+            console.error("❌ CRITICAL ERROR: No valid items found for Payment Modal");
+            return [];
           })()}
         />
       )}
@@ -861,17 +908,58 @@ export function ShoppingCart({
             setIsProcessingPayment(false);
           }}
           onConfirm={handleEInvoiceConfirm}
-          total={orderForPayment?.exactTotal || total}
+          total={(() => {
+            // Use the most accurate total available
+            const totalToUse = orderForPayment?.exactTotal || 
+                              orderForPayment?.total ||
+                              previewReceipt?.exactTotal ||
+                              previewReceipt?.total ||
+                              total;
+            
+            console.log("🔍 POS E-Invoice Modal - Total calculation debug:", {
+              orderForPaymentExactTotal: orderForPayment?.exactTotal,
+              orderForPaymentTotal: orderForPayment?.total,
+              previewReceiptExactTotal: previewReceipt?.exactTotal,
+              previewReceiptTotal: previewReceipt?.total,
+              fallbackTotal: total,
+              finalTotalToUse: totalToUse
+            });
+            
+            return totalToUse;
+          })()}
           selectedPaymentMethod={selectedPaymentMethod}
-          cartItems={lastCartItems.length > 0 ? lastCartItems : cart.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-            quantity: item.quantity,
-            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
-            afterTaxPrice: item.afterTaxPrice
-          }))}
+          cartItems={(() => {
+            // Use the most accurate cart items available
+            const itemsToUse = lastCartItems.length > 0 ? lastCartItems : 
+                              orderForPayment?.items?.length > 0 ? orderForPayment.items.map((item) => ({
+                                id: item.id || item.productId,
+                                name: item.name || item.productName,
+                                price: typeof (item.price || item.unitPrice) === 'string' ? parseFloat(item.price || item.unitPrice) : (item.price || item.unitPrice),
+                                quantity: item.quantity,
+                                sku: item.sku || `FOOD${String(item.id || item.productId).padStart(5, "0")}`,
+                                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
+                                afterTaxPrice: item.afterTaxPrice
+                              })) :
+                              cart.map((item) => ({
+                                id: item.id,
+                                name: item.name,
+                                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                                quantity: item.quantity,
+                                sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+                                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
+                                afterTaxPrice: item.afterTaxPrice
+                              }));
+
+            console.log("🔍 POS E-Invoice Modal - Cart items calculation debug:", {
+              lastCartItemsLength: lastCartItems.length,
+              orderForPaymentItemsLength: orderForPayment?.items?.length || 0,
+              currentCartLength: cart.length,
+              finalItemsToUseLength: itemsToUse.length,
+              finalItemsToUse: itemsToUse
+            });
+            
+            return itemsToUse;
+          })()}
           source="pos"
         />
       )}
