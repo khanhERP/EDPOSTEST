@@ -1792,7 +1792,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         {table.status === "occupied" && activeOrder
                           ? getOrderStatusBadge(activeOrder.status).label
                           : statusConfig.label}
-                      </CardContent>
+                      </Badge>
+                    </div>
                     </div>
 
                     {/* Order Info */}
