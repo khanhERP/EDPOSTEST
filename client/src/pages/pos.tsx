@@ -181,55 +181,64 @@ export default function POS({ onLogout }: POSPageProps) {
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log("🔴 POS: Closing receipt modal and forcing complete cart reset");
+          console.log("🔴 POS: Receipt modal closed - EXECUTING ULTIMATE RESET");
+
+          // Step 1: Close modal immediately
           setShowReceiptModal(false);
-          
-          // Force clear cart immediately - multiple calls to ensure it works
+
+          // Step 2: IMMEDIATE multiple cart clears
           clearCart();
           setLastCartItems([]);
-          
-          // Force re-render by clearing all related states
-          setTimeout(() => {
-            clearCart();
-            setLastCartItems([]);
-            
-            // Send clear signal to ensure all components are notified
-            try {
-              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-              const wsUrl = `${protocol}//${window.location.host}/ws`;
-              const ws = new WebSocket(wsUrl);
+          clearCart();
+          setLastCartItems([]);
+          clearCart();
 
-              ws.onopen = () => {
-                // Send multiple signals to ensure cart is cleared everywhere
-                ws.send(JSON.stringify({
-                  type: "popup_close",
-                  success: true,
-                  action: 'receipt_modal_closed',
-                  timestamp: new Date().toISOString()
-                }));
-                
-                ws.send(JSON.stringify({
-                  type: "receipt_modal_closed",
-                  success: true,
-                  action: 'receipt_modal_closed',
-                  timestamp: new Date().toISOString()
-                }));
-                
-                ws.send(JSON.stringify({
-                  type: "cart_update",
-                  cart: [],
-                  subtotal: 0,
-                  tax: 0,
-                  total: 0,
-                  timestamp: new Date().toISOString()
-                }));
-                
-                ws.close();
-              };
-            } catch (error) {
-              console.error("Failed to send popup close signal:", error);
-            }
-          }, 50);
+          // Step 3: Send WebSocket signals IMMEDIATELY
+          try {
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+              // Send comprehensive clear signals
+              const signals = [
+                { type: "popup_close", success: true, action: 'receipt_modal_closed' },
+                { type: "receipt_modal_closed", success: true, action: 'receipt_modal_closed' },
+                { type: "force_cart_clear", success: true },
+                { type: "cart_update", cart: [], subtotal: 0, tax: 0, total: 0 },
+                { type: "refresh_data_after_print", action: 'refresh_tables_and_clear_cart' }
+              ];
+
+              signals.forEach((signal, index) => {
+                setTimeout(() => {
+                  ws.send(JSON.stringify({
+                    ...signal,
+                    timestamp: new Date().toISOString(),
+                    source: 'pos_receipt_close'
+                  }));
+                }, index * 50);
+              });
+
+              setTimeout(() => ws.close(), 300);
+            };
+          } catch (error) {
+            console.error("Failed to send WebSocket signals:", error);
+          }
+
+          // Step 4: Aggressive delayed clearing
+          const clearDelays = [10, 25, 50, 100, 150, 250, 400, 600];
+          clearDelays.forEach((delay, index) => {
+            setTimeout(() => {
+              console.log(`🧹 POS: Ultimate clear attempt ${index + 1} (${delay}ms)`);
+              clearCart();
+              setLastCartItems([]);
+
+              // Global clear function
+              if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                (window as any).clearActiveOrder();
+              }
+            }, delay);
+          });
         }}
         receipt={lastReceipt}
         cartItems={lastCartItems}

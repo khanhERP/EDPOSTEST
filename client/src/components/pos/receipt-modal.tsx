@@ -109,23 +109,36 @@ export function ReceiptModal({
   }
 
   const handlePrint = () => {
-    // Send popup close signal before printing to trigger cart clear
+    // Send comprehensive signals before printing to ensure full refresh
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        ws.send(JSON.stringify({
-          type: "popup_close",
-          success: true,
-          action: 'print_receipt_requested',
-          timestamp: new Date().toISOString()
-        }));
-        ws.close();
+        // Send multiple signals to ensure all components refresh
+        const signals = [
+          { type: "popup_close", success: true, action: 'print_receipt_requested' },
+          { type: "receipt_modal_closed", success: true, action: 'print_receipt_requested' },
+          { type: "refresh_data_after_print", action: 'refresh_tables_and_clear_cart' },
+          { type: "force_cart_clear", success: true },
+          { type: "cart_update", cart: [], subtotal: 0, tax: 0, total: 0 }
+        ];
+        
+        signals.forEach((signal, index) => {
+          setTimeout(() => {
+            ws.send(JSON.stringify({
+              ...signal,
+              timestamp: new Date().toISOString(),
+              source: 'receipt_print'
+            }));
+          }, index * 50);
+        });
+        
+        setTimeout(() => ws.close(), 300);
       };
     } catch (error) {
-      console.error("Failed to send popup close signal:", error);
+      console.error("Failed to send print signals:", error);
     }
 
     const printContent = document.getElementById('receipt-content');
@@ -413,7 +426,44 @@ export function ReceiptModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        console.log("🔴 Receipt Modal: Dialog closing via onOpenChange");
+        
+        // Send immediate WebSocket signals when dialog closes
+        try {
+          const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+          const wsUrl = `${protocol}//${window.location.host}/ws`;
+          const ws = new WebSocket(wsUrl);
+
+          ws.onopen = () => {
+            // Send comprehensive close signals
+            const closeSignals = [
+              { type: "popup_close", success: true, action: 'receipt_modal_closed' },
+              { type: "receipt_modal_closed", success: true, action: 'receipt_modal_closed' },
+              { type: "force_cart_clear", success: true },
+              { type: "refresh_data_after_print", action: 'refresh_tables_and_clear_cart' }
+            ];
+            
+            closeSignals.forEach((signal, index) => {
+              setTimeout(() => {
+                ws.send(JSON.stringify({
+                  ...signal,
+                  timestamp: new Date().toISOString(),
+                  source: 'receipt_modal_close'
+                }));
+              }, index * 30);
+            });
+            
+            setTimeout(() => ws.close(), 200);
+          };
+        } catch (error) {
+          console.error("Failed to send receipt close signals:", error);
+        }
+        
+        onClose();
+      }
+    }}>
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>

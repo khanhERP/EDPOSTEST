@@ -163,40 +163,32 @@ export function ShoppingCart({
             if (data.type === 'popup_close' && data.success) {
               console.log('🧹 Shopping Cart: Receipt modal closed via popup_close, FORCE CLEARING CART');
               
-              // Immediate cart clear - multiple calls
+              // Immediate force clear - multiple synchronous calls
               onClearCart();
               setLastCartItems([]);
               setSelectedReceipt(null);
               setPreviewReceipt(null);
               setOrderForPayment(null);
+              broadcastCartUpdate([]);
               
-              // Force immediate state reset with multiple delays
-              setTimeout(() => {
-                console.log('🧹 Shopping Cart: First delayed clear (50ms)');
-                onClearCart();
-                setLastCartItems([]);
-                broadcastCartUpdate([]);
-                
-                // Also clear any selected orders in POS
-                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                  (window as any).clearActiveOrder();
-                }
-              }, 50);
-              
-              setTimeout(() => {
-                console.log('🧹 Shopping Cart: Second delayed clear (100ms)');
-                onClearCart();
-                setLastCartItems([]);
-                broadcastCartUpdate([]);
-              }, 100);
-              
-              // Final clear after longer delay to ensure it sticks
-              setTimeout(() => {
-                console.log('🧹 Shopping Cart: Final delayed clear (200ms)');
-                onClearCart();
-                setLastCartItems([]);
-                broadcastCartUpdate([]);
-              }, 200);
+              // Aggressive clearing with shorter intervals
+              const clearIntervals = [25, 50, 75, 100, 150, 200, 300];
+              clearIntervals.forEach((delay, index) => {
+                setTimeout(() => {
+                  console.log(`🧹 Shopping Cart: Aggressive clear attempt ${index + 1} (${delay}ms)`);
+                  onClearCart();
+                  setLastCartItems([]);
+                  setSelectedReceipt(null);
+                  setPreviewReceipt(null);
+                  setOrderForPayment(null);
+                  broadcastCartUpdate([]);
+                  
+                  // Also clear any selected orders in POS
+                  if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                    (window as any).clearActiveOrder();
+                  }
+                }, delay);
+              });
             }
 
             // Handle refresh signal after print to clear cart
