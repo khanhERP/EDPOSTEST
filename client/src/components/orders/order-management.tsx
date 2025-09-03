@@ -968,133 +968,66 @@ export function OrderManagement() {
     new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
   ) : [];
 
-  // Add event listeners for auto-refresh
+  // Function to refresh data, including invalidating and refetching queries
+  const refreshData = React.useCallback(async () => {
+    console.log('🔄 refreshing data...');
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+      queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+      queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+    ]);
+    console.log('✅ data refreshed');
+  }, [queryClient]);
+
+  // Refresh data when tab becomes active or component mounts
   useEffect(() => {
-    const interval = setInterval(async () => {
-      // Force refetch every 3 seconds for immediate updates
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
-        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
-      ]);
-    }, 3000); // Reduced to 3 seconds for faster updates
+    refreshData();
+  }, [refreshData]);
 
-    // Listen for manual refresh events
-    const handleOrderStatusUpdate = async (event: CustomEvent) => {
-      console.log(`🔄 Order Management: Received orderStatusUpdated event:`, event.detail);
+  // Set up periodic refresh
+  useEffect(() => {
+    const interval = setInterval(refreshData, 3000); // Refresh every 3 seconds
+    return () => clearInterval(interval);
+  }, [refreshData]);
 
-      // Force immediate refresh with refetch multiple times to ensure update
-      for (let i = 0; i < 3; i++) {
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
-        ]);
-
-        if (i < 2) {
-          await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms between retries
-        }
-      }
-
-      console.log(`✅ Order Management: Immediate refresh completed after status update`);
+  // Listen for payment completion events from payment modal
+  useEffect(() => {
+    const handleOrderStatusUpdate = (event: CustomEvent) => {
+      console.log("🔄 Order Management: Received order status update event:", event.detail);
+      // Force immediate refresh when order status is updated
+      setTimeout(() => {
+        refreshData();
+      }, 100);
     };
 
-    const handlePaymentComplete = async (event: CustomEvent) => {
-      console.log(`💳 Order Management: Received paymentCompleted event:`, event.detail);
-
-      // Force immediate refresh with refetch multiple times to ensure update
-      for (let i = 0; i < 3; i++) {
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
-        ]);
-
-        if (i < 2) {
-          await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms between retries
-        }
-      }
-
-      console.log(`✅ Order Management: Immediate refresh completed after payment`);
+    const handlePaymentCompleted = (event: CustomEvent) => {
+      console.log("💳 Order Management: Received payment completed event:", event.detail);
+      // Force immediate refresh when payment is completed
+      setTimeout(() => {
+        refreshData();
+      }, 100);
     };
 
-    const handleRefreshOrders = async (event?: CustomEvent) => {
-      console.log(`🔄 Order Management: Manual refresh orders triggered`, event?.detail);
-
-      if (event?.detail?.immediate) {
-        // Force immediate refetch multiple times for immediate updates
-        for (let i = 0; i < 2; i++) {
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-            queryClient.refetchQueries({ queryKey: ['/api/orders'] })
-          ]);
-
-          if (i < 1) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-        }
-      } else {
-        await queryClient.refetchQueries({ queryKey: ['/api/orders'] });
+    const handleRefreshOrders = (event: CustomEvent) => {
+      console.log("🔄 Order Management: Received refresh orders event:", event.detail);
+      if (event.detail?.immediate) {
+        refreshData();
       }
-    };
-
-    const handleRefreshTables = async (event?: CustomEvent) => {
-      console.log(`🔄 Order Management: Manual refresh tables triggered`, event?.detail);
-
-      if (event?.detail?.immediate) {
-        // Force immediate refetch multiple times for immediate updates
-        for (let i = 0; i < 2; i++) {
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-            queryClient.refetchQueries({ queryKey: ['/api/tables'] })
-          ]);
-
-          if (i < 1) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-        }
-      } else {
-        await queryClient.refetchQueries({ queryKey: ['/api/tables'] });
-      }
-    };
-
-    const handleForceRefresh = async (event: CustomEvent) => {
-      console.log(`🔄 Order Management: Force refresh triggered:`, event.detail);
-
-      // Force complete UI refresh with multiple attempts
-      for (let i = 0; i < 3; i++) {
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
-        ]);
-
-        if (i < 2) {
-          await new Promise(resolve => setTimeout(resolve, 300)); // Wait 300ms between retries
-        }
-      }
-
-      console.log(`✅ Order Management: Force refresh completed`);
     };
 
     // Add event listeners
     window.addEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
-    window.addEventListener('paymentCompleted', handlePaymentComplete as EventListener);
+    window.addEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
     window.addEventListener('refreshOrders', handleRefreshOrders as EventListener);
-    window.addEventListener('refreshTables', handleRefreshTables as EventListener);
-    window.addEventListener('forceRefresh', handleForceRefresh as EventListener);
 
+    // Cleanup event listeners
     return () => {
-      clearInterval(interval);
       window.removeEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
-      window.removeEventListener('paymentCompleted', handlePaymentComplete as EventListener);
+      window.removeEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
       window.removeEventListener('refreshOrders', handleRefreshOrders as EventListener);
-      window.removeEventListener('refreshTables', handleRefreshTables as EventListener);
-      window.removeEventListener('forceRefresh', handleForceRefresh as EventListener);
     };
-  }, [queryClient]);
+  }, [refreshData]);
 
 
   return (
@@ -2199,7 +2132,7 @@ export function OrderManagement() {
           price: item.price,
           quantity: item.quantity,
           sku: item.sku,
-          taxRate: item.taxRate || 0,
+          taxRate: item.taxRate,
           afterTaxPrice: item.afterTaxPrice
         })) || []}
       />

@@ -753,32 +753,84 @@ export function PaymentMethodModal({
           paymentMethod: selectedPaymentMethod
         });
 
-        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'paid'
-          }),
-        });
-
-        console.log(`🔍 API Response status: ${statusResponse.status} ${statusResponse.statusText}`);
-
-        if (!statusResponse.ok) {
-          const errorText = await statusResponse.text();
-          console.error("❌ Step 1 FAILED: Order status update failed:", errorText);
-          
-          // Show error toast but don't stop the process completely
-          toast({
-            title: "Cảnh báo",
-            description: "Không thể cập nhật trạng thái đơn hàng, nhưng hóa đơn đã được tạo",
-            variant: "destructive",
+        try {
+          const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: 'paid'
+            }),
           });
-        } else {
-          statusResult = await statusResponse.json();
-          console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
-          console.log(`🎯 Order status changed: ${orderInfo.status} → 'paid'`);
+
+          console.log(`🔍 API Response status: ${statusResponse.status} ${statusResponse.statusText}`);
+
+          if (!statusResponse.ok) {
+            const errorText = await statusResponse.text();
+            console.error("❌ Step 1 FAILED: Order status update failed:", errorText);
+            throw new Error(`Failed to update order status: ${errorText}`);
+          } else {
+            statusResult = await statusResponse.json();
+            console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
+            console.log(`🎯 Order status changed: ${orderInfo.status} → 'paid'`);
+
+            // Force immediate UI refresh after successful status update
+            if (typeof window !== 'undefined') {
+              console.log("🔄 Dispatching immediate order status update events");
+              
+              const events = [
+                new CustomEvent('orderStatusUpdated', {
+                  detail: {
+                    orderId: orderInfo.id,
+                    status: 'paid',
+                    previousStatus: orderInfo.status,
+                    tableId: orderInfo.tableId,
+                    paymentMethod: selectedPaymentMethod,
+                    timestamp: new Date().toISOString()
+                  }
+                }),
+                new CustomEvent('refreshOrders', {
+                  detail: {
+                    immediate: true,
+                    orderId: orderInfo.id,
+                    newStatus: 'paid'
+                  }
+                }),
+                new CustomEvent('refreshTables', {
+                  detail: {
+                    immediate: true,
+                    tableId: orderInfo.tableId,
+                    orderId: orderInfo.id
+                  }
+                }),
+                new CustomEvent('paymentCompleted', {
+                  detail: {
+                    orderId: orderInfo.id,
+                    tableId: orderInfo.tableId,
+                    paymentMethod: selectedPaymentMethod,
+                    timestamp: new Date().toISOString()
+                  }
+                }),
+                new CustomEvent('tableStatusUpdate', {
+                  detail: {
+                    tableId: orderInfo.tableId,
+                    checkForRelease: true,
+                    orderId: orderInfo.id,
+                    immediate: true
+                  }
+                })
+              ];
+
+              events.forEach(event => {
+                console.log("📡 Dispatching immediate UI refresh event:", event.type, event.detail);
+                window.dispatchEvent(event);
+              });
+            }
+          }
+        } catch (statusError) {
+          console.error("❌ Error in status update:", statusError);
+          throw statusError;
         }
       } else {
         console.log("🔄 Step 1 SKIPPED: Temporary order detected, proceeding without database update");
@@ -928,6 +980,20 @@ export function PaymentMethodModal({
           ? "Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau"
           : "Đơn hàng đã được thanh toán và hóa đơn điện tử đã được tạo",
       });
+
+      // Force one more refresh after a short delay to ensure UI is updated
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          console.log("🔄 Final UI refresh after payment completion");
+          window.dispatchEvent(new CustomEvent('forceRefresh', {
+            detail: {
+              reason: 'payment_completed_final',
+              orderId: orderInfo.id,
+              tableId: orderInfo.tableId
+            }
+          }));
+        }
+      }, 500);
 
       onSelectMethod("paymentCompleted", {
         ...eInvoiceData,
