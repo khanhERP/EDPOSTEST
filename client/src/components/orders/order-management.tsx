@@ -1440,17 +1440,83 @@ export function OrderManagement() {
                       onClick={() => {
                         console.log('🎯 Order Management: Direct payment flow for order:', selectedOrder?.id);
                         
-                        if (!selectedOrder) {
+                        if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
                           toast({
                             title: 'Lỗi',
-                            description: 'Không tìm thấy đơn hàng để thanh toán',
+                            description: 'Không tìm thấy đơn hàng hoặc món ăn để thanh toán',
                             variant: 'destructive',
                           });
                           return;
                         }
 
+                        // Calculate exact totals using same logic as displayed
+                        let calculatedSubtotal = 0;
+                        let calculatedTax = 0;
+
+                        const processedItems = orderItems.map((item: any) => {
+                          const basePrice = Number(item.unitPrice || 0);
+                          const quantity = Number(item.quantity || 0);
+                          const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+                          // Calculate subtotal exactly as Order Details display
+                          const itemSubtotal = basePrice * quantity;
+                          calculatedSubtotal += itemSubtotal;
+
+                          // Tax = (after_tax_price - price) * quantity
+                          let itemTax = 0;
+                          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                            const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                            const price = parseFloat(product.price);
+                            itemTax = (afterTaxPrice - price) * quantity;
+                            calculatedTax += itemTax;
+                          }
+
+                          return {
+                            id: item.id,
+                            productId: item.productId,
+                            productName: item.productName || getProductInfo(item.productId)?.name || 'Unknown Product',
+                            quantity: item.quantity,
+                            unitPrice: item.unitPrice,
+                            total: item.total,
+                            price: basePrice,
+                            sku: item.productSku || `SP${item.productId}`,
+                            taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
+                            afterTaxPrice: product?.afterTaxPrice || null
+                          };
+                        });
+
+                        const calculatedTotal = calculatedSubtotal + calculatedTax;
+
+                        console.log('💰 Payment preparation - calculated amounts:', {
+                          subtotal: calculatedSubtotal,
+                          tax: calculatedTax,
+                          total: calculatedTotal,
+                          itemsCount: processedItems.length
+                        });
+
+                        // Prepare complete order data for payment
+                        const completeOrderForPayment = {
+                          ...selectedOrder,
+                          items: processedItems,
+                          orderItems: processedItems,
+                          processedItems: processedItems,
+                          calculatedSubtotal: calculatedSubtotal,
+                          calculatedTax: calculatedTax,
+                          calculatedTotal: calculatedTotal,
+                          exactSubtotal: calculatedSubtotal,
+                          exactTax: calculatedTax,
+                          exactTotal: calculatedTotal
+                        };
+
+                        console.log('💾 Setting complete order for payment:', {
+                          orderId: completeOrderForPayment.id,
+                          orderNumber: completeOrderForPayment.orderNumber,
+                          itemsCount: completeOrderForPayment.items?.length || 0,
+                          calculatedTotal: completeOrderForPayment.calculatedTotal
+                        });
+
                         // Set order for payment and show payment method modal directly
-                        setOrderForPayment(selectedOrder);
+                        setOrderForPayment(completeOrderForPayment);
                         setOrderDetailsOpen(false);
                         setShowPaymentMethodModal(true);
                       }}
@@ -2044,6 +2110,48 @@ export function OrderManagement() {
 
           setShowPaymentMethodModal(false);
 
+          // Handle different payment completion scenarios
+          if (method === "paymentCompleted" && data?.success) {
+            console.log('✅ Payment completed successfully from payment modal');
+            
+            // Close all modals
+            setOrderForPayment(null);
+            setOrderDetailsOpen(false);
+            setSelectedOrder(null);
+            
+            // Show receipt if provided
+            if (data.receipt) {
+              setSelectedReceipt(data.receipt);
+              setShowReceiptModal(true);
+            }
+            
+            // Force UI refresh
+            queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+            
+            toast({
+              title: 'Thành công',
+              description: 'Đơn hàng đã được thanh toán thành công',
+            });
+            
+            return;
+          }
+
+          if (method === "paymentError" && data?.error) {
+            console.error('❌ Payment failed from payment modal:', data.error);
+            
+            // Close modals but don't clear order data in case user wants to retry
+            setShowPaymentMethodModal(false);
+            
+            toast({
+              title: 'Lỗi thanh toán',
+              description: data.error || 'Không thể hoàn tất thanh toán',
+              variant: 'destructive',
+            });
+            
+            return;
+          }
+
           // If payment method returns e-invoice data (like from "phát hành sau"), handle it
           if (data && data.receipt) {
             console.log('📄 Order Management: Payment method returned receipt data, showing receipt');
@@ -2054,13 +2162,13 @@ export function OrderManagement() {
             // For other payment methods, proceed with payment completion
             console.log('💳 Processing payment for order:', {
               orderId: orderForPayment?.id,
-              paymentMethod: method.nameKey
+              paymentMethod: method.nameKey || method
             });
 
             if (orderForPayment?.id) {
               completePaymentMutation.mutate({
                 orderId: orderForPayment.id,
-                paymentMethod: method.nameKey,
+                paymentMethod: method.nameKey || method,
               });
             } else {
               console.error('❌ No valid order ID found for payment');
