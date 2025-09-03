@@ -204,17 +204,26 @@ export function DashboardOverview() {
         } : null
       });
 
-      // Calculate revenue from each source
+      // Calculate revenue from each source using formula: total - discount - tax
       const orderRevenue = completedOrders.reduce((sum: number, order: any) => {
-        return sum + Number(order.total || 0);
+        const total = Number(order.total || 0);
+        const discount = Number(order.discount || 0);
+        const tax = Number(order.tax || 0);
+        return sum + (total - discount - tax);
       }, 0);
 
       const transactionRevenue = completedTransactions.reduce((sum: number, tx: any) => {
-        return sum + Number(tx.total || tx.amount || 0);
+        const total = Number(tx.total || tx.amount || 0);
+        const discount = Number(tx.discount || 0);
+        const tax = Number(tx.tax || 0);
+        return sum + (total - discount - tax);
       }, 0);
 
       const invoiceRevenue = publishedInvoices.reduce((sum: number, invoice: any) => {
-        return sum + Number(invoice.total || 0);
+        const total = Number(invoice.total || 0);
+        const discount = Number(invoice.discount || 0);
+        const tax = Number(invoice.tax || 0);
+        return sum + (total - discount - tax);
       }, 0);
 
       // Total revenue from all sources
