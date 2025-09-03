@@ -2146,85 +2146,16 @@ export function OrderManagement() {
             setOrderForPayment(null);
           }}
           onConfirm={handleEInvoiceConfirm}
-          total={(() => {
-            if (!orderForPayment) return 0;
-
-            // Use pre-calculated total if available
-            if (orderForPayment.calculatedTotal) {
-              console.log('💰 E-invoice using pre-calculated total:', orderForPayment.calculatedTotal);
-              return Math.round(orderForPayment.calculatedTotal);
-            }
-
-            // Fallback calculation using EXACT same logic as Order Details display
-            const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
-            console.log("💰 E-invoice fallback calculation from items:", itemsToCalculate.length);
-
-            if (!Array.isArray(itemsToCalculate) || itemsToCalculate.length === 0) {
-              return Math.round(Number(orderForPayment.total || 0));
-            }
-
-            let itemsSubtotal = 0;
-            let itemsTax = 0;
-
-            if (Array.isArray(products)) {
-              itemsToCalculate.forEach((item: any) => {
-                const product = products.find((p: any) => p.id === item.productId);
-                const basePrice = Number(item.unitPrice || 0);
-                const quantity = item.quantity;
-
-                // Calculate subtotal exactly as Order Details display
-                itemsSubtotal += basePrice * quantity;
-
-                // Tax = (after_tax_price - price) * quantity
-                if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                  const price = parseFloat(product.price);
-                  itemsTax += (afterTaxPrice - price) * quantity;
-                }
-              });
-            }
-
-            const calculatedTotal = Math.round(itemsSubtotal + itemsTax);
-            console.log("💰 E-invoice fallback calculation result:", {
-              itemsSubtotal,
-              itemsTax,
-              calculatedTotal
-            });
-
-            return calculatedTotal > 0 ? calculatedTotal : Math.round(Number(orderForPayment.total || 0));
-          })()}
-          cartItems={(() => {
-            // Use processed items if available
-            if (orderForPayment?.processedItems) {
-              console.log('📦 Using processed items for E-invoice modal:', orderForPayment.processedItems.length);
-              return orderForPayment.processedItems.map((item: any) => ({
-                id: item.productId,
-                name: item.productName,
-                price: item.price,
-                quantity: item.quantity,
-                sku: item.sku,
-                taxRate: item.taxRate,
-                afterTaxPrice: item.afterTaxPrice
-              }));
-            }
-
-            // Fallback to orderItems
-            const itemsToMap = orderForPayment?.orderItems || orderItems || [];
-            console.log("📦 Mapping cart items for E-invoice modal:", itemsToMap.length);
-
-            return itemsToMap.map((item: any) => {
-              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-              return {
-                id: item.productId,
-                name: item.productName || getProductInfo(item.productId)?.name || 'Unknown Product',
-                price: parseFloat(item.unitPrice || '0'),
-                quantity: item.quantity,
-                sku: item.productSku || `SP${item.productId}`,
-                taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
-                afterTaxPrice: product?.afterTaxPrice || null
-              };
-            });
-          })()}
+          total={orderForPayment?.calculatedTotal ? Math.round(orderForPayment.calculatedTotal) : 0}
+          cartItems={orderForPayment?.processedItems?.map((item: any) => ({
+            id: item.productId,
+            name: item.productName,
+            price: item.price,
+            quantity: item.quantity,
+            sku: item.sku,
+            taxRate: item.taxRate,
+            afterTaxPrice: item.afterTaxPrice
+          })) || []}
           source="order-management"
           orderId={orderForPayment.id}
         />
