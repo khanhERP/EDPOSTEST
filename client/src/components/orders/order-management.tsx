@@ -820,7 +820,10 @@ export function OrderManagement() {
         subtotal: calculatedSubtotal.toFixed(2),
         tax: calculatedTax.toFixed(2),
         total: finalTotal.toFixed(2),
-        paymentMethod: 'pending',
+        exactSubtotal: calculatedSubtotal,
+        exactTax: calculatedTax,
+        exactTotal: finalTotal,
+        paymentMethod: 'preview',
         amountReceived: finalTotal.toFixed(2),
         change: '0.00',
         cashierName: 'Order Management',
@@ -835,14 +838,18 @@ export function OrderManagement() {
         orderId: orderForPaymentData.id,
         calculatedTotal: orderForPaymentData.calculatedTotal,
         itemsCount: processedItems.length,
-        receiptTotal: receiptPreview.total
+        receiptTotal: receiptPreview.total,
+        receiptExactTotal: receiptPreview.exactTotal
       });
 
-      // Step 5: Set states and open payment modal directly
+      // Step 5: Close order details modal and show receipt preview
+      setOrderDetailsOpen(false);
       setSelectedOrder(order);
       setOrderForPayment(orderForPaymentData);
       setPreviewReceipt(receiptPreview);
-      setShowPaymentMethodModal(true);
+      setShowReceiptPreview(true);
+      
+      console.log('🚀 Order Management: Hiển thị receipt preview modal');
       
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
