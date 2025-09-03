@@ -365,6 +365,20 @@ export function DashboardOverview() {
     }
   };
 
+  // Get all current orders to check active ones (not date-filtered)
+  const { data: allCurrentOrders = [] } = useQuery({
+    queryKey: ["/api/orders"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/orders");
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        return [];
+      }
+    },
+  });
+
   const stats = getDashboardStats();
 
   const formatCurrency = (amount: number) => {
@@ -397,20 +411,6 @@ export function DashboardOverview() {
       return dateStr || "";
     }
   };
-
-  // Get all current orders to check active ones (not date-filtered)
-  const { data: allCurrentOrders } = useQuery({
-    queryKey: ["/api/orders"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/orders");
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return await response.json();
-      } catch (error) {
-        return [];
-      }
-    },
-  });
 
   // Show loading state
   if (invoicesLoading || ordersLoading || transactionsLoading) {
