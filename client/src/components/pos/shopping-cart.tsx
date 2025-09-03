@@ -407,15 +407,21 @@ export function ShoppingCart({
     console.log("🚀 POS: Showing receipt preview modal with proper data");
     console.log("📦 POS: orderForPayment data:", {
       id: orderForPaymentData.id,
-      total: orderForPaymentData.exactTotal,
+      total: orderForPaymentData.total,
+      exactTotal: orderForPaymentData.exactTotal,
       itemsCount: orderForPaymentData.items.length,
-      items: orderForPaymentData.items
+      items: orderForPaymentData.items,
+      subtotal: orderForPaymentData.subtotal,
+      tax: orderForPaymentData.tax
     });
     console.log("📄 POS: previewReceipt data:", {
       id: receiptPreview.id,
-      total: receiptPreview.exactTotal,
+      total: receiptPreview.total,
+      exactTotal: receiptPreview.exactTotal,
       itemsCount: receiptPreview.items.length,
-      items: receiptPreview.items
+      items: receiptPreview.items,
+      subtotal: receiptPreview.subtotal,
+      tax: receiptPreview.tax
     });
   };
 
@@ -712,19 +718,60 @@ export function ShoppingCart({
           setOrderForPayment(null);
         }}
         onSelectMethod={handlePaymentMethodSelect}
-        total={orderForPayment?.exactTotal || orderForPayment?.total || total || 0}
+        total={(() => {
+          console.log("🔍 Shopping Cart: Payment Modal Total Debug:", {
+            showPaymentModal: showPaymentModal,
+            orderForPayment: orderForPayment,
+            previewReceipt: previewReceipt,
+            orderExactTotal: orderForPayment?.exactTotal,
+            orderTotal: orderForPayment?.total,
+            previewTotal: previewReceipt?.exactTotal,
+            fallbackTotal: total
+          });
+          
+          // Priority order: orderForPayment first, then previewReceipt, then calculated total
+          const finalTotal = orderForPayment?.exactTotal || 
+                            orderForPayment?.total || 
+                            previewReceipt?.exactTotal || 
+                            previewReceipt?.total || 
+                            total || 0;
+          
+          console.log("💰 Shopping Cart: Final total for Payment Modal:", finalTotal);
+          return finalTotal;
+        })()}
         orderForPayment={orderForPayment}
         products={products}
         receipt={previewReceipt}
-        cartItems={orderForPayment?.items || previewReceipt?.items || cart.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-          quantity: item.quantity,
-          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
-          afterTaxPrice: item.afterTaxPrice
-        }))}
+        cartItems={(() => {
+          console.log("📦 Shopping Cart: Cart Items Debug for Payment Modal:", {
+            orderForPaymentItems: orderForPayment?.items?.length || 0,
+            previewReceiptItems: previewReceipt?.items?.length || 0,
+            currentCartItems: cart?.length || 0
+          });
+
+          // Priority order: orderForPayment items first, then previewReceipt items, then current cart
+          const itemsSource = orderForPayment?.items || 
+                             previewReceipt?.items || 
+                             cart;
+
+          if (!itemsSource || itemsSource.length === 0) {
+            console.warn("⚠️ Shopping Cart: No items found for Payment Modal");
+            return [];
+          }
+
+          const mappedItems = itemsSource.map(item => ({
+            id: item.id || item.productId,
+            name: item.name || item.productName,
+            price: typeof (item.price || item.unitPrice) === 'string' ? parseFloat(item.price || item.unitPrice) : (item.price || item.unitPrice),
+            quantity: item.quantity,
+            sku: item.sku || `FOOD${String(item.id || item.productId).padStart(5, '0')}`,
+            taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
+            afterTaxPrice: item.afterTaxPrice
+          }));
+
+          console.log("📦 Shopping Cart: Mapped items for Payment Modal:", mappedItems.length);
+          return mappedItems;
+        })()}
       />
 
       {/* Final Receipt Modal - Shows after successful payment */}
