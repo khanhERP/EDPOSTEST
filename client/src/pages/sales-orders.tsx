@@ -143,8 +143,29 @@ export default function SalesOrders() {
     retryDelay: 1000,
   });
 
-  const isLoading = invoicesLoading || ordersLoading;
-  const hasError = invoicesError || ordersError;
+  // Query transactions by date range
+  const { data: transactions = [], isLoading: transactionsLoading, error: transactionsError } = useQuery({
+    queryKey: ["/api/transactions", startDate, endDate, currentPage, itemsPerPage],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", `/api/transactions/${startDate}/${endDate}?page=${currentPage}&limit=${itemsPerPage}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Sales Orders - Transactions loaded by date:', data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching transactions by date:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+  });
+
+  const isLoading = invoicesLoading || ordersLoading || transactionsLoading;
+  const hasError = invoicesError || ordersError || transactionsError;
 
   // Query invoice items for selected invoice
   const { data: invoiceItems = [] } = useQuery({
@@ -195,8 +216,10 @@ export default function SalesOrders() {
       return response.json();
     },
     onSuccess: () => {
-      // Refresh invoices list
+      // Refresh all data sources
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       setIsEditing(false);
       setEditableInvoice(null);
       // Update selected invoice with new data
@@ -255,9 +278,10 @@ export default function SalesOrders() {
       // Clear selections
       setSelectedOrderIds(new Set());
 
-      // Refresh data
+      // Refresh all data sources
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
 
       // Update selected invoice if it was cancelled
       if (selectedInvoice) {
@@ -354,6 +378,7 @@ export default function SalesOrders() {
             // Refresh data to ensure consistency
             queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
             queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
 
             console.log('✅ Invoice/Order updated successfully with published status');
 
@@ -450,9 +475,10 @@ export default function SalesOrders() {
       // 1. Đóng dialog xác nhận
       setShowCancelDialog(false);
 
-      // 2. Refresh danh sách hóa đơn và đơn hàng
+      // 2. Refresh danh sách hóa đơn, đơn hàng và giao dịch
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
 
       // 3. Cập nhật trạng thái của selectedInvoice nếu đang hiển thị
       if (selectedInvoice && selectedInvoice.id === item.id && selectedInvoice.type === item.type) {
@@ -580,7 +606,7 @@ export default function SalesOrders() {
     );
   };
 
-  // Combine invoices and orders data with safe array checks
+  // Combine invoices, orders and transactions data with safe array checks
   const combinedData = [
     ...(Array.isArray(invoices) ? invoices.map((invoice: Invoice) => ({
       ...invoice,
@@ -605,14 +631,36 @@ export default function SalesOrders() {
       customerName: order.customerName || 'Khách hàng lẻ',
       invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
       // Map order fields to invoice-like fields for consistency
-      customerPhone: '',
-      customerAddress: '',
-      customerTaxCode: '',
+      customerPhone: order.customerPhone || '',
+      customerAddress: order.customerAddress || '',
+      customerTaxCode: order.customerTaxCode || '',
       symbol: order.symbol || order.templateNumber || '',
       invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
       tradeNumber: order.orderNumber || '',
       invoiceDate: order.orderedAt,
       einvoiceStatus: order.einvoiceStatus || 0
+    })) : []),
+    ...(Array.isArray(transactions) ? transactions.map((transaction: any) => ({
+      ...transaction,
+      type: 'transaction' as const,
+      date: transaction.createdAt || transaction.transactionDate,
+      displayNumber: transaction.invoiceNumber || transaction.receiptNumber || `TXN-${String(transaction.id).padStart(13, '0')}`,
+      displayStatus: transaction.status === 'completed' ? 1 : transaction.status === 'pending' ? 2 : transaction.status === 'cancelled' ? 3 : 1,
+      customerName: transaction.customerName || 'Khách hàng lẻ',
+      invoiceStatus: transaction.status === 'completed' ? 1 : transaction.status === 'pending' ? 2 : transaction.status === 'cancelled' ? 3 : 1,
+      // Map transaction fields to invoice-like fields for consistency
+      customerPhone: transaction.customerPhone || '',
+      customerAddress: transaction.customerAddress || '',
+      customerTaxCode: transaction.customerTaxCode || '',
+      symbol: transaction.symbol || transaction.templateNumber || '',
+      invoiceNumber: transaction.invoiceNumber || `TXN-${String(transaction.id).padStart(8, '0')}`,
+      tradeNumber: transaction.invoiceNumber || transaction.receiptNumber || '',
+      invoiceDate: transaction.createdAt || transaction.transactionDate,
+      subtotal: transaction.subtotal || transaction.amount || '0',
+      tax: transaction.tax || '0',
+      total: transaction.total || transaction.amount || '0',
+      einvoiceStatus: transaction.einvoiceStatus || 0,
+      paymentMethod: transaction.paymentMethod || 1
     })) : [])
   ];
 
@@ -1034,6 +1082,7 @@ export default function SalesOrders() {
                     <Button onClick={() => {
                       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
                       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
                     }}>
                       Thử lại
                     </Button>

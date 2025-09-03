@@ -648,6 +648,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const limit = parseInt(req.query.limit as string) || 20;
 
       const tenantDb = await getTenantDatabase(req);
+      // Use storage instead of direct db queries
       const allInvoices = await storage.getInvoices(tenantDb);
 
       // Filter by date range
@@ -4327,7 +4328,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       console.log("Creating order from invoice data:", JSON.stringify(invoiceData, null, 2));
 
       // Validate required fields
-      if (!invoiceData.total || !invoiceData.customerName || !invoiceData.items) {
+      if (!invoiceData.total || !invoiceData.customerName) {
         return res.status(400).json({
           error: "Missing required fields",
           details: "total, customerName and items are required",
