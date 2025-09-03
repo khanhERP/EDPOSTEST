@@ -184,7 +184,7 @@ export function ReceiptModal({
             // Auto-close receipt modal after printing and refresh data
             setTimeout(() => {
               console.log('🔄 Auto-closing receipt modal after print start and refreshing data');
-              
+
               // Send refresh signal to update table status and clear cart
               try {
                 const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -214,7 +214,7 @@ export function ReceiptModal({
           if (printWindow.closed) {
             clearInterval(checkClosed);
             console.log("🖨️ Print window closed - print completed");
-            
+
             // Also trigger refresh when print window is manually closed
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -723,13 +723,23 @@ export function ReceiptModal({
               </Button>
             </div>
           ) : (
-            <div className="flex justify-center space-x-3">
+            <div className="flex space-x-3">
               <Button
                 onClick={handlePrint}
-                className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <Printer className="mr-2" size={16} />
-                {t("pos.printReceipt")}
+                <Printer className="w-4 h-4 mr-2" />
+                In hóa đơn
+              </Button>
+              <Button
+                onClick={() => {
+                  console.log("🔴 Receipt Modal: Close button clicked, clearing cart");
+                  onClose();
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                Đóng
               </Button>
             </div>
           )}
