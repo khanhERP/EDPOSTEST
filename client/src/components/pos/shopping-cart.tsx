@@ -1098,6 +1098,7 @@ export function ShoppingCart({
             setIsProcessingPayment(false);
           }}
           onConfirm={handleEInvoiceConfirm}
+          onClearCart={onClearCart} // Pass onClearCart function
           total={(() => {
             // Use the most accurate total available
             const totalToUse = orderForPayment?.exactTotal ||

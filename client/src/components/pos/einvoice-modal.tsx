@@ -52,6 +52,7 @@ interface EInvoiceModalProps {
   source?: "pos" | "table"; // Thêm prop để phân biệt nguồn gọi
   orderId?: number; // Thêm orderId để tự xử lý cập nhật trạng thái
   selectedPaymentMethod?: string; // Thêm prop để nhận phương thức thanh toán
+  onClearCart?: () => void; // Thêm prop để xóa giỏ hàng
 }
 
 export function EInvoiceModal({
@@ -63,6 +64,7 @@ export function EInvoiceModal({
   source = "pos", // Default là 'pos' để tương thích ngược
   orderId, // Thêm orderId prop
   selectedPaymentMethod = "", // Thêm selectedPaymentMethod prop
+  onClearCart, // Thêm onClearCart prop
 }: EInvoiceModalProps) {
   // Debug log to track cart items data flow
   console.log("🔍 EInvoiceModal Props Analysis:");
@@ -1184,13 +1186,29 @@ export function EInvoiceModal({
 
   const handleCancel = () => {
     setIsPublishing(false); // Reset loading state
+    
+    // Xóa giỏ hàng khi đóng modal hóa đơn điện tử
+    if (onClearCart && source === "pos") {
+      console.log("🧹 E-Invoice Modal: Clearing cart on modal close");
+      onClearCart();
+    }
+    
     onClose();
   };
 
 
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        // Khi modal đóng, xóa giỏ hàng
+        if (onClearCart && source === "pos") {
+          console.log("🧹 E-Invoice Modal: Clearing cart on dialog close");
+          onClearCart();
+        }
+        onClose();
+      }
+    }}>
       <DialogContent className="max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg">
