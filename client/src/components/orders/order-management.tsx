@@ -2047,27 +2047,26 @@ export function OrderManagement() {
                           exactTotal: receiptPreview.exactTotal
                         });
 
-                        // Tạo order data đầy đủ cho payment flow
-                        const orderForPaymentData = {
-                          ...selectedOrder,
-                          id: selectedOrder.id, // Đảm bảo có ID
-                          orderItems: processedItems,
-                          processedItems: processedItems,
-                          calculatedSubtotal: calculatedSubtotal,
-                          calculatedTax: calculatedTax,
-                          calculatedTotal: finalTotal,
-                          total: finalTotal // Override total với calculated value
-                        };
-
                         console.log('✅ Thiết lập dữ liệu để hiển thị preview:', {
                           receiptTotal: receiptPreview.total,
                           receiptExactTotal: receiptPreview.exactTotal,
-                          orderTotal: orderForPaymentData.calculatedTotal,
-                          orderId: orderForPaymentData.id
+                          orderTotal: finalTotal,
+                          orderId: selectedOrder.id
                         });
 
                         // Step 5: Close order details modal and show receipt preview
                         try {
+                          const orderForPaymentData = {
+                            ...selectedOrder,
+                            id: selectedOrder.id,
+                            orderItems: processedItems,
+                            processedItems: processedItems,
+                            calculatedSubtotal: calculatedSubtotal,
+                            calculatedTax: calculatedTax,
+                            calculatedTotal: finalTotal,
+                            total: finalTotal
+                          };
+
                           setOrderDetailsOpen(false);
                           setSelectedOrder(selectedOrder);
                           setOrderForPayment(orderForPaymentData);
