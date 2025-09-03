@@ -76,29 +76,10 @@ export function ReceiptModal({
     }
   }, [isOpen, receipt, isPreview, cartItems, total, onConfirm]);
 
-  // Auto-print effect for all final receipts (not preview) - ALWAYS CALL THIS HOOK
-  useEffect(() => {
-    if (isOpen && !isPreview && receipt) {
-      console.log('🖨️ Auto-printing final receipt when modal opens');
-
-      // Auto-print immediately when final receipt modal opens
-      const printTimer = setTimeout(() => {
-        handlePrint();
-
-        // Auto-close only if autoClose is true
-        if (autoClose) {
-          const closeTimer = setTimeout(() => {
-            console.log('🔄 Auto-closing receipt modal after print');
-            onClose();
-          }, 3000); // Close after 3 seconds
-
-          return () => clearTimeout(closeTimer);
-        }
-      }, 500); // Print after 500ms
-
-      return () => clearTimeout(printTimer);
-    }
-  }, [isOpen, isPreview, receipt, autoClose, onClose]);
+  // Remove auto-print - only print when user clicks the print button
+  // useEffect(() => {
+  //   // Auto-print effect removed - user must click print button
+  // }, []);
 
   // Don't render if modal is not open - BUT HOOKS MUST STILL BE CALLED ABOVE
   if (!isOpen) {
