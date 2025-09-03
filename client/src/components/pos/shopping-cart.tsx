@@ -942,80 +942,56 @@ export function ShoppingCart({
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log('🔴 Shopping Cart: Receipt modal closed - FORCE CLEARING CART');
-          
-          // Step 1: Close modal immediately
+          console.log('🔴 Shopping Cart: Closing receipt modal and forcing complete cart reset');
           setShowReceiptModal(false);
           
-          // Step 2: Force clear all cart-related states immediately
+          // Force clear cart immediately - multiple attempts
           onClearCart();
+          
+          // Reset all states immediately
           setSelectedReceipt(null);
           setPreviewReceipt(null);
           setOrderForPayment(null);
           setLastCartItems([]);
           
-          // Step 3: Force re-render and clear multiple times to ensure it sticks
+          // Force multiple cart clears to ensure it works
           setTimeout(() => {
-            console.log('🧹 Shopping Cart: Executing delayed cart clear (50ms)');
             onClearCart();
-            setLastCartItems([]);
             broadcastCartUpdate([]);
             
-            // Trigger global cart clear
+            // Also trigger global cart clear
             if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
               (window as any).clearActiveOrder();
             }
           }, 50);
           
-          // Step 4: Final cleanup after longer delay
+          // Final clear after delay
           setTimeout(() => {
-            console.log('🧹 Shopping Cart: Final cart clear (200ms)');
             onClearCart();
-            setLastCartItems([]);
             broadcastCartUpdate([]);
           }, 200);
           
-          // Step 5: Send WebSocket signals for complete system reset
-          setTimeout(() => {
-            console.log('📡 Shopping Cart: Sending WebSocket clear signals');
-            try {
-              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-              const wsUrl = `${protocol}//${window.location.host}/ws`;
-              const ws = new WebSocket(wsUrl);
+          // Send WebSocket signal to ensure all displays are updated
+          try {
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            const ws = new WebSocket(wsUrl);
 
-              ws.onopen = () => {
-                // Send multiple clear signals
-                ws.send(JSON.stringify({
-                  type: "receipt_modal_closed",
-                  success: true,
-                  action: 'receipt_modal_closed',
-                  timestamp: new Date().toISOString()
-                }));
-                
-                ws.send(JSON.stringify({
-                  type: "cart_update",
-                  cart: [],
-                  subtotal: 0,
-                  tax: 0,
-                  total: 0,
-                  timestamp: new Date().toISOString()
-                }));
-                
-                ws.send(JSON.stringify({
-                  type: "force_cart_clear",
-                  success: true,
-                  timestamp: new Date().toISOString()
-                }));
-                
-                ws.close();
-              };
-            } catch (error) {
-              console.error("Failed to send WebSocket clear signals:", error);
-            }
-          }, 100);
+            ws.onopen = () => {
+              ws.send(JSON.stringify({
+                type: "receipt_modal_closed",
+                success: true,
+                action: 'receipt_modal_closed',
+                timestamp: new Date().toISOString()
+              }));
+              ws.close();
+            };
+          } catch (error) {
+            console.error("Failed to send receipt modal close signal:", error);
+          }
         }}
         receipt={selectedReceipt}
-        cartItems={lastCartItems.length > 0 ? lastCartItems : cart.map((item) => ({
+        cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
