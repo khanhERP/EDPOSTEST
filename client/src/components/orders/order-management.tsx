@@ -879,13 +879,44 @@ export function OrderManagement() {
       };
 
       // Step 4: Create receipt preview data with validation
+      // Kiểm tra tổng tiền hợp lệ trước khi tạo receipt
+      if (finalTotal <= 0 || isNaN(finalTotal)) {
+        console.error('❌ Tổng tiền không hợp lệ:', finalTotal);
+        toast({
+          title: 'Lỗi',
+          description: 'Tổng tiền đơn hàng không hợp lệ. Vui lòng kiểm tra lại.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Kiểm tra items hợp lệ
+      if (!processedItems || processedItems.length === 0) {
+        console.error('❌ Không có items để tạo receipt preview');
+        toast({
+          title: 'Lỗi',
+          description: 'Không có món ăn trong đơn hàng để thanh toán.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      console.log('✅ Creating receiptPreview with:', {
+        itemsCount: processedItems.length,
+        calculatedSubtotal,
+        calculatedTax: Math.abs(calculatedTax),
+        finalTotal,
+        firstItem: processedItems[0]
+      });
+
+      // Tạo receipt preview data với định dạng đúng và validation
       const receiptPreview = {
-        id: order.id,
-        orderId: order.id,
-        orderNumber: order.orderNumber || `ORD-${order.id}`,
-        tableId: order.tableId,
-        customerCount: order.customerCount || 1,
-        customerName: order.customerName || 'Khách hàng',
+        id: selectedOrder.id,
+        orderId: selectedOrder.id,
+        orderNumber: selectedOrder.orderNumber || `ORD-${selectedOrder.id}`,
+        tableId: selectedOrder.tableId,
+        customerCount: selectedOrder.customerCount || 1,
+        customerName: selectedOrder.customerName || 'Khách hàng',
         items: processedItems,
         orderItems: processedItems,
         subtotal: calculatedSubtotal.toString(),
@@ -905,24 +936,38 @@ export function OrderManagement() {
         calculatedTotal: finalTotal
       };
 
-      // Validate receipt preview data
-      if (!receiptPreview.items || receiptPreview.items.length === 0) {
-        console.error('❌ Receipt preview has no items');
+      // Validate receipt preview data thoroughly
+      if (!receiptPreview.items || !Array.isArray(receiptPreview.items) || receiptPreview.items.length === 0) {
+        console.error('❌ Receipt preview validation failed - invalid items:', {
+          hasItems: !!receiptPreview.items,
+          isArray: Array.isArray(receiptPreview.items),
+          length: receiptPreview.items?.length || 0
+        });
         toast({
           title: 'Lỗi',
-          description: 'Không thể tạo xem trước hóa đơn',
+          description: 'Không thể tạo xem trước hóa đơn - dữ liệu món ăn không hợp lệ',
           variant: 'destructive',
         });
         return;
       }
 
-      console.log('✅ Payment data prepared successfully:', {
-        orderId: orderForPaymentData.id,
-        calculatedTotal: orderForPaymentData.calculatedTotal,
-        itemsCount: processedItems.length,
-        receiptTotal: receiptPreview.total,
-        receiptExactTotal: receiptPreview.exactTotal
+      console.log('✅ Receipt preview validation passed:', {
+        itemsCount: receiptPreview.items.length,
+        total: receiptPreview.total,
+        exactTotal: receiptPreview.exactTotal
       });
+
+      // Tạo order data đầy đủ cho payment flow
+      const orderForPaymentData = {
+        ...selectedOrder,
+        id: selectedOrder.id, // Đảm bảo có ID
+        orderItems: processedItems,
+        processedItems: processedItems,
+        calculatedSubtotal: calculatedSubtotal,
+        calculatedTax: calculatedTax,
+        calculatedTotal: finalTotal,
+        total: finalTotal // Override total với calculated value
+      };
 
       // Step 5: Close order details modal and show receipt preview
       try {
@@ -1716,7 +1761,7 @@ export function OrderManagement() {
                                 // Calculate tax based on afterTaxPrice if available, otherwise use taxRate
                                 if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                                   const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                  const price = parseFloat(product.price);
+                                  const price = parseFloat(product.price || item.unitPrice); // Use unitPrice if product.price is missing
                                   const itemTax = (afterTaxPrice - price) * Number(item.quantity || 0);
                                   return (
                                     <div className="text-xs text-green-600">
@@ -1724,6 +1769,7 @@ export function OrderManagement() {
                                     </div>
                                   );
                                 } else {
+                                  // Handle cases where afterTaxPrice is not available
                                   return (
                                     <div className="text-xs text-gray-500">
                                       Thuế: {formatCurrency(0)}
@@ -1794,7 +1840,7 @@ export function OrderManagement() {
                               product.afterTaxPrice !== "" &&
                               product.afterTaxPrice !== "0.00") {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const originalPrice = parseFloat(product.price || basePrice);
+                            const originalPrice = parseFloat(product.price || basePrice); // Use basePrice if product.price is missing
                             const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
                             const itemTax = taxPerUnit * quantity;
                             orderDetailsTax += itemTax;
@@ -1934,7 +1980,26 @@ export function OrderManagement() {
                           return;
                         }
 
-                        // Tạo receipt preview data với định dạng đúng
+                        // Kiểm tra items hợp lệ
+                        if (!processedItems || processedItems.length === 0) {
+                          console.error('❌ Không có items để tạo receipt preview');
+                          toast({
+                            title: 'Lỗi',
+                            description: 'Không có món ăn trong đơn hàng để thanh toán.',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+
+                        console.log('✅ Creating receiptPreview with:', {
+                          itemsCount: processedItems.length,
+                          calculatedSubtotal,
+                          calculatedTax: Math.abs(calculatedTax),
+                          finalTotal,
+                          firstItem: processedItems[0]
+                        });
+
+                        // Tạo receipt preview data với định dạng đúng và validation
                         const receiptPreview = {
                           id: selectedOrder.id,
                           orderId: selectedOrder.id,
@@ -1960,6 +2025,27 @@ export function OrderManagement() {
                           calculatedTax: Math.abs(calculatedTax),
                           calculatedTotal: finalTotal
                         };
+
+                        // Validate receipt preview data thoroughly
+                        if (!receiptPreview.items || !Array.isArray(receiptPreview.items) || receiptPreview.items.length === 0) {
+                          console.error('❌ Receipt preview validation failed - invalid items:', {
+                            hasItems: !!receiptPreview.items,
+                            isArray: Array.isArray(receiptPreview.items),
+                            length: receiptPreview.items?.length || 0
+                          });
+                          toast({
+                            title: 'Lỗi',
+                            description: 'Không thể tạo xem trước hóa đơn - dữ liệu món ăn không hợp lệ',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+
+                        console.log('✅ Receipt preview validation passed:', {
+                          itemsCount: receiptPreview.items.length,
+                          total: receiptPreview.total,
+                          exactTotal: receiptPreview.exactTotal
+                        });
 
                         // Tạo order data đầy đủ cho payment flow
                         const orderForPaymentData = {
@@ -2461,7 +2547,7 @@ export function OrderManagement() {
                   {t('common.cancel')}
                 </Button>
                 <Button
-                  onClick={() => setMixedPaymentOpen(true)}
+                  onClick={() => setMixedPaymentOpen(true)} // This should probably trigger the payment directly
                   className="bg-orange-600 hover:bg-orange-700"
                 >
                   {t('orders.mixedPaymentTitle')}
