@@ -1096,32 +1096,15 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.get("/api/orders", async (req: TenantRequest, res) => {
     try {
       const { tableId, status } = req.query;
-      console.log(`📋 GET /api/orders called with params:`, { tableId, status });
-      
       const tenantDb = await getTenantDatabase(req);
       const orders = await storage.getOrders(
         tableId ? parseInt(tableId as string) : undefined,
         status as string,
         tenantDb,
       );
-      
-      console.log(`✅ Orders fetched successfully:`, {
-        count: orders?.length || 0,
-        firstFew: orders?.slice(0, 3)?.map(o => ({
-          id: o.id,
-          orderNumber: o.orderNumber,
-          status: o.status,
-          tableId: o.tableId
-        })) || []
-      });
-      
-      // Ensure we always return an array
-      const safeOrders = Array.isArray(orders) ? orders : [];
-      res.json(safeOrders);
+      res.json(orders);
     } catch (error) {
-      console.error("❌ Error fetching orders:", error);
-      // Return empty array instead of error to prevent UI crashes
-      res.json([]);
+      res.status(500).json({ message: "Failed to fetch orders" });
     }
   });
 
@@ -1330,17 +1313,6 @@ export async function registerRoutes(app: Express): Promise < Server > {
       console.log(`🚀 ========================================`);
       console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
 
-      // Validate inputs first
-      if (!id) {
-        console.error(`❌ Missing order ID`);
-        return res.status(400).json({ message: "Order ID is required" });
-      }
-
-      if (!status || typeof status !== 'string') {
-        console.error(`❌ Invalid status:`, status);
-        return res.status(400).json({ message: "Valid status is required" });
-      }
-
       // Get tenant database first
       const tenantDb = await getTenantDatabase(req);
 
@@ -1350,9 +1322,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!isTemporaryId) {
         const parsedId = parseInt(id);
-        if (isNaN(parsedId) || parsedId <= 0) {
+        if (isNaN(parsedId)) {
           console.error(`❌ Invalid order ID: ${id}`);
-          return res.status(400).json({ message: "Invalid order ID format" });
+          return res.status(400).json({ message: "Invalid order ID" });
         }
         orderId = parsedId;
         console.log(`✅ ID converted to number: ${orderId}`);
@@ -1368,6 +1340,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
           success: true,
           temporary: true
         });
+      }
+
+      if (!status) {
+        console.error(`❌ Missing status in request body, received:`, req.body);
+        return res.status(400).json({ message: "Status is required" });
       }
 
       // Get the current order to log its current state
@@ -1555,30 +1532,21 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       console.log('Fetching order items from storage...');
       const items = await storage.getOrderItems(orderId, tenantDb);
-      console.log(`Found ${items?.length || 0} order items for order ${orderId}`);
+      console.log(`Found ${items.length} order items:`, items);
 
-      // Ensure we always return an array
-      const safeItems = Array.isArray(items) ? items : [];
-      
-      // Validate each item has required fields
-      const validatedItems = safeItems.map(item => ({
-        ...item,
-        unitPrice: item.unitPrice || '0.00',
-        total: item.total || '0.00',
-        quantity: item.quantity || 0,
-        productName: item.productName || 'Unknown Product',
-        productSku: item.productSku || `ITEM${item.productId || 'UNKNOWN'}`
-      }));
-
-      res.json(validatedItems);
+      res.json(items);
     } catch (error) {
       console.error('=== GET ORDER ITEMS ERROR ===');
-      console.error("Error type:", error?.constructor?.name);
-      console.error("Error message:", error?.message);
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
       console.error("Order ID:", req.params.orderId);
 
-      // Return empty array instead of error to prevent UI crashes
-      res.json([]);
+      res.status(500).json({
+        message: "Failed to fetch order items",
+        details: error.message,
+        timestamp: new Date().toISOString(),
+      });
     }
   });
 

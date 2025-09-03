@@ -320,212 +320,78 @@ export function ShoppingCart({
       return;
     }
 
-    // Validate cart has valid items before proceeding
-    const validCartItems = cart.filter(item => 
-      item && 
-      item.id && 
-      item.name && 
-      parseFloat(item.price) > 0 && 
-      parseInt(item.quantity.toString()) > 0
-    );
-
-    if (validCartItems.length === 0) {
-      console.error("❌ CRITICAL ERROR: No valid items in cart");
-      alert("Lỗi: Không có sản phẩm hợp lệ trong giỏ hàng.");
-      return;
-    }
-
-    if (validCartItems.length !== cart.length) {
-      console.warn("⚠️ WARNING: Some invalid items filtered out", {
-        original: cart.length,
-        valid: validCartItems.length
-      });
-    }
-
-    // Recalculate totals from actual cart data to ensure accuracy
-    const recalculatedSubtotal = validCartItems.reduce((sum, item) => {
-      const itemPrice = parseFloat(item.price);
-      const itemQuantity = parseInt(item.quantity.toString());
-      const itemSubtotal = itemPrice * itemQuantity;
-      console.log(`Item ${item.name}: ${itemPrice} x ${itemQuantity} = ${itemSubtotal}`);
-      return sum + itemSubtotal;
-    }, 0);
-
-    const recalculatedTax = validCartItems.reduce((sum, item) => {
-      if (item.taxRate && parseFloat(item.taxRate) > 0) {
-        const basePrice = parseFloat(item.price);
-        const itemQuantity = parseInt(item.quantity.toString());
-
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          const taxPerUnit = afterTaxPrice - basePrice;
-          const itemTax = Math.floor(taxPerUnit * itemQuantity);
-          console.log(`Tax for ${item.name}: (${afterTaxPrice} - ${basePrice}) x ${itemQuantity} = ${itemTax}`);
-          return sum + itemTax;
-        }
-      }
-      return sum;
-    }, 0);
-
-    const recalculatedTotal = Math.round(recalculatedSubtotal + recalculatedTax);
-
-    console.log("🔍 RECALCULATED TOTALS:");
-    console.log("Subtotal:", recalculatedSubtotal);
-    console.log("Tax:", recalculatedTax);
-    console.log("Total:", recalculatedTotal);
-
-    if (recalculatedSubtotal === 0 || recalculatedTotal === 0) {
-      console.error("❌ CRITICAL ERROR: Recalculated totals are 0, cannot proceed with checkout");
-      alert("Lỗi: Tổng tiền không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
-      return;
-    }
-
-    // Step 1: Use validated cart items with proper structure for E-invoice
-    const cartItemsForEInvoice = validCartItems.map(item => ({
+    // Step 1: Use current cart items with proper structure for E-invoice
+    const cartItemsForEInvoice = cart.map(item => ({
       id: item.id,
       name: item.name,
-      price: parseFloat(item.price),
-      quantity: parseInt(item.quantity.toString()),
+      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+      quantity: item.quantity,
       sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-      taxRate: parseFloat(item.taxRate || "0"),
+      taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 0),
       afterTaxPrice: item.afterTaxPrice
     }));
 
-    console.log("✅ VALIDATED Cart items prepared for E-invoice:", cartItemsForEInvoice);
-    console.log("✅ VALIDATED Cart items count for E-invoice:", cartItemsForEInvoice.length);
+    console.log("✅ Cart items prepared for E-invoice:", cartItemsForEInvoice);
 
-    // Double check all items have valid data
-    const hasValidItems = cartItemsForEInvoice.every(item => 
-      item.id > 0 && 
-      item.name && 
-      item.price > 0 && 
-      item.quantity > 0
-    );
-    
-    if (!hasValidItems) {
-      console.error("❌ CRITICAL ERROR: Some cart items have invalid price or quantity after validation");
-      alert("Lỗi: Có sản phẩm trong giỏ hàng có giá hoặc số lượng không hợp lệ.");
-      return;
-    }
-
-    // Step 2: Create receipt preview data with VALIDATED totals
+    // Step 2: Create receipt preview data with current calculated totals
     const receiptPreview = {
-      id: `receipt-${Date.now()}`,
+      id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
       customerName: "Khách hàng lẻ",
       tableId: null,
-      items: cartItemsForEInvoice.map(item => {
-        const itemSubtotal = item.price * item.quantity;
-        let itemTax = 0;
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          itemTax = Math.floor((afterTaxPrice - item.price) * item.quantity);
-        }
-        const itemTotal = itemSubtotal + itemTax;
-        
-        return {
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price.toString(),
-          total: itemTotal.toString(),
-          productSku: item.sku,
-          price: item.price.toString(),
-          sku: item.sku,
-          taxRate: item.taxRate,
-          afterTaxPrice: item.afterTaxPrice
-        };
-      }),
-      subtotal: recalculatedSubtotal.toString(),
-      tax: recalculatedTax.toString(),
-      total: recalculatedTotal.toString(),
-      exactSubtotal: recalculatedSubtotal,
-      exactTax: recalculatedTax,
-      exactTotal: recalculatedTotal,
-      calculatedTotal: recalculatedTotal, // Add this for easier access
+      items: cartItemsForEInvoice.map(item => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price.toString(),
+        total: (item.price * item.quantity).toString(),
+        productSku: item.sku,
+        price: item.price.toString(),
+        sku: item.sku,
+        taxRate: item.taxRate
+      })),
+      subtotal: subtotal.toString(),
+      tax: tax.toString(),
+      total: total.toString(),
+      exactSubtotal: subtotal,
+      exactTax: tax,
+      exactTotal: total,
       status: "pending",
       paymentStatus: "pending",
       orderedAt: new Date().toISOString(),
       timestamp: new Date().toISOString()
     };
 
-    console.log("📋 POS: VALIDATED Receipt preview data prepared:", receiptPreview);
-    console.log("📋 POS: VALIDATED Receipt preview total verification:", {
-      exactTotal: receiptPreview.exactTotal,
-      calculatedTotal: receiptPreview.calculatedTotal,
-      stringTotal: receiptPreview.total,
-      recalculatedTotal: recalculatedTotal
-    });
+    console.log("📋 POS: Receipt preview data prepared:", receiptPreview);
 
-    // Step 3: Prepare order data for payment with VALIDATED data
+    // Step 3: Prepare order data for payment
     const orderForPaymentData = {
-      id: `order-${Date.now()}`,
+      id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
       tableId: null,
       customerName: "Khách hàng lẻ",
       status: "pending",
       paymentStatus: "pending",
-      items: cartItemsForEInvoice.map(item => {
-        const itemSubtotal = item.price * item.quantity;
-        let itemTax = 0;
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          itemTax = Math.floor((afterTaxPrice - item.price) * item.quantity);
-        }
-        const itemTotal = itemSubtotal + itemTax;
-        
-        return {
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price.toString(),
-          total: itemTotal.toString(),
-          productSku: item.sku,
-          price: item.price.toString(),
-          sku: item.sku,
-          taxRate: item.taxRate,
-          afterTaxPrice: item.afterTaxPrice
-        };
-      }),
-      subtotal: recalculatedSubtotal,
-      tax: recalculatedTax,
-      total: recalculatedTotal,
-      exactSubtotal: recalculatedSubtotal,
-      exactTax: recalculatedTax,
-      exactTotal: recalculatedTotal,
-      calculatedTotal: recalculatedTotal, // Add this for easier access
-      cartItemsForEInvoice: cartItemsForEInvoice, // Store original cart items for E-invoice
+      items: cartItemsForEInvoice,
+      subtotal: subtotal,
+      tax: tax,
+      total: total,
+      exactSubtotal: subtotal,
+      exactTax: tax,
+      exactTotal: total,
       orderedAt: new Date().toISOString()
     };
 
-    console.log("📦 POS: VALIDATED Order for payment prepared:", orderForPaymentData);
-    console.log("📦 POS: VALIDATED Order for payment total verification:", {
-      exactTotal: orderForPaymentData.exactTotal,
-      calculatedTotal: orderForPaymentData.calculatedTotal,
-      total: orderForPaymentData.total,
-      recalculatedTotal: recalculatedTotal
-    });
+    console.log("📦 POS: Order for payment prepared:", orderForPaymentData);
 
-    // Step 4: VALIDATE data before setting state
-    if (recalculatedTotal <= 0 || cartItemsForEInvoice.length === 0) {
-      console.error("❌ FINAL VALIDATION FAILED:", {
-        total: recalculatedTotal,
-        itemsCount: cartItemsForEInvoice.length
-      });
-      alert("Lỗi: Dữ liệu thanh toán không hợp lệ. Vui lòng thử lại.");
-      return;
-    }
-
-    // Step 5: Set all VALIDATED data and show receipt preview modal
+    // Step 4: Set all data and show receipt preview modal
     setLastCartItems([...cartItemsForEInvoice]);
     setOrderForPayment(orderForPaymentData);
     setPreviewReceipt(receiptPreview);
     setShowReceiptPreview(true);
 
-    console.log("🚀 POS: Showing receipt preview modal with VALIDATED data");
-    console.log("🚀 POS: Final validation - Total:", recalculatedTotal, "Items:", cartItemsForEInvoice.length);
+    console.log("🚀 POS: Showing receipt preview modal with proper data");
   };
 
   // Handler for E-Invoice confirmation
@@ -813,123 +679,20 @@ export function ShoppingCart({
       />
 
       {/* Payment Method Modal - Shows after receipt preview confirmation */}
-      {showPaymentModal && orderForPayment && previewReceipt && (
-        <PaymentMethodModal
-          isOpen={showPaymentModal}
-          onClose={() => {
-            console.log("🔄 Closing Payment Method Modal");
-            setShowPaymentModal(false);
-            setPreviewReceipt(null);
-            setOrderForPayment(null);
-          }}
-          onSelectMethod={handlePaymentMethodSelect}
-          total={(() => {
-            console.log("🔍 Shopping Cart: Payment Modal Total Debug (VALIDATED):", {
-              showPaymentModal: showPaymentModal,
-              orderForPayment: !!orderForPayment,
-              previewReceipt: !!previewReceipt,
-              orderCalculatedTotal: orderForPayment?.calculatedTotal,
-              orderExactTotal: orderForPayment?.exactTotal,
-              previewCalculatedTotal: previewReceipt?.calculatedTotal,
-              previewExactTotal: previewReceipt?.exactTotal,
-              fallbackTotal: total,
-              hasValidOrderData: !!(orderForPayment && previewReceipt)
-            });
-            
-            // CRITICAL: Ensure we have valid data before proceeding
-            if (!orderForPayment || !previewReceipt) {
-              console.error("❌ CRITICAL ERROR: Missing order or receipt data for Payment Modal");
-              return 0;
-            }
-            
-            // Priority order: use calculatedTotal first for accuracy
-            const finalTotal = orderForPayment?.calculatedTotal || 
-                              orderForPayment?.exactTotal || 
-                              orderForPayment?.total || 
-                              previewReceipt?.calculatedTotal ||
-                              previewReceipt?.exactTotal || 
-                              previewReceipt?.total || 
-                              total || 0;
-            
-            console.log("💰 Shopping Cart: VALIDATED Final total for Payment Modal:", finalTotal);
-            
-            if (finalTotal === 0) {
-              console.error("❌ CRITICAL ERROR: Final total is 0 for Payment Modal");
-              console.error("❌ All total sources:", {
-                orderCalculatedTotal: orderForPayment?.calculatedTotal,
-                orderExactTotal: orderForPayment?.exactTotal,
-                orderTotal: orderForPayment?.total,
-                previewCalculatedTotal: previewReceipt?.calculatedTotal,
-                previewExactTotal: previewReceipt?.exactTotal,
-                previewTotal: previewReceipt?.total,
-                fallbackTotal: total
-              });
-            }
-            
-            return finalTotal;
-          })()}
-          orderForPayment={orderForPayment}
-          products={products}
-          receipt={previewReceipt}
-          cartItems={(() => {
-            console.log("📦 Shopping Cart: Cart Items Debug for Payment Modal (VALIDATED):", {
-              orderForPaymentItems: orderForPayment?.items?.length || 0,
-              orderCartItemsForEInvoice: orderForPayment?.cartItemsForEInvoice?.length || 0,
-              previewReceiptItems: previewReceipt?.items?.length || 0,
-              currentCartItems: cart?.length || 0,
-              hasValidOrderData: !!(orderForPayment && previewReceipt)
-            });
-
-            // CRITICAL: Ensure we have valid data before proceeding
-            if (!orderForPayment || !previewReceipt) {
-              console.error("❌ CRITICAL ERROR: Missing order or receipt data for cart items mapping");
-              return [];
-            }
-
-            // Priority: Use cartItemsForEInvoice first (most accurate), then items, then fallback to cart
-            const itemsSource = orderForPayment?.cartItemsForEInvoice ||
-                               orderForPayment?.items || 
-                               previewReceipt?.items || 
-                               validCartItems;
-
-            if (!itemsSource || itemsSource.length === 0) {
-              console.error("❌ CRITICAL ERROR: No items found for Payment Modal after validation");
-              console.error("❌ All item sources:", {
-                orderCartItemsForEInvoice: orderForPayment?.cartItemsForEInvoice?.length || 0,
-                orderItems: orderForPayment?.items?.length || 0,
-                previewItems: previewReceipt?.items?.length || 0,
-                currentCart: validCartItems?.length || 0
-              });
-              return [];
-            }
-
-            // Use the stored cartItemsForEInvoice if available (most accurate)
-            if (orderForPayment?.cartItemsForEInvoice && orderForPayment.cartItemsForEInvoice.length > 0) {
-              console.log("✅ Using cartItemsForEInvoice (most accurate data)");
-              return orderForPayment.cartItemsForEInvoice;
-            }
-
-            // Fallback to mapping other item sources
-            const mappedItems = itemsSource.map(item => ({
-              id: item.id || item.productId,
-              name: item.name || item.productName,
-              price: typeof (item.price || item.unitPrice) === 'string' ? parseFloat(item.price || item.unitPrice) : (item.price || item.unitPrice),
-              quantity: item.quantity,
-              sku: item.sku || `FOOD${String(item.id || item.productId).padStart(5, '0')}`,
-              taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
-              afterTaxPrice: item.afterTaxPrice
-            }));
-
-            console.log("📦 Shopping Cart: VALIDATED Mapped items for Payment Modal:", mappedItems.length);
-            
-            if (mappedItems.length === 0) {
-              console.error("❌ CRITICAL ERROR: Mapped items count is 0 for Payment Modal");
-            }
-            
-            return mappedItems;
-          })()}
-        />
-      )}
+      <PaymentMethodModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setPreviewReceipt(null);
+          setOrderForPayment(null);
+        }}
+        onSelectMethod={handlePaymentMethodSelect}
+        total={orderForPayment?.exactTotal || orderForPayment?.total || 0}
+        orderForPayment={orderForPayment}
+        products={products}
+        receipt={previewReceipt}
+        cartItems={previewReceipt?.items || []}
+      />
 
       {/* Final Receipt Modal - Shows after successful payment */}
       <ReceiptModal
@@ -956,52 +719,17 @@ export function ShoppingCart({
             setIsProcessingPayment(false);
           }}
           onConfirm={handleEInvoiceConfirm}
-          total={(() => {
-            // Use the most accurate total source
-            const finalTotal = orderForPayment?.calculatedTotal || 
-                              orderForPayment?.exactTotal || 
-                              orderForPayment?.total ||
-                              previewReceipt?.calculatedTotal ||
-                              previewReceipt?.exactTotal ||
-                              total;
-            
-            console.log("💰 E-Invoice Modal: Total being passed:", finalTotal);
-            console.log("💰 E-Invoice Modal: Total sources:", {
-              orderCalculatedTotal: orderForPayment?.calculatedTotal,
-              orderExactTotal: orderForPayment?.exactTotal,
-              orderTotal: orderForPayment?.total,
-              previewCalculatedTotal: previewReceipt?.calculatedTotal,
-              previewExactTotal: previewReceipt?.exactTotal,
-              fallbackTotal: total
-            });
-            
-            return finalTotal;
-          })()}
+          total={orderForPayment?.exactTotal || total}
           selectedPaymentMethod={selectedPaymentMethod}
-          cartItems={(() => {
-            // Use the most accurate cart items source
-            const finalCartItems = orderForPayment?.cartItemsForEInvoice ||
-                                  lastCartItems ||
-                                  cart.map((item) => ({
-                                    id: item.id,
-                                    name: item.name,
-                                    price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                                    quantity: item.quantity,
-                                    sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-                                    taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
-                                    afterTaxPrice: item.afterTaxPrice
-                                  }));
-            
-            console.log("📦 E-Invoice Modal: Cart items being passed:", finalCartItems);
-            console.log("📦 E-Invoice Modal: Cart items count:", finalCartItems?.length || 0);
-            console.log("📦 E-Invoice Modal: Cart items sources:", {
-              orderCartItemsForEInvoice: orderForPayment?.cartItemsForEInvoice?.length || 0,
-              lastCartItems: lastCartItems?.length || 0,
-              currentCart: cart?.length || 0
-            });
-            
-            return finalCartItems;
-          })()}
+          cartItems={lastCartItems.length > 0 ? lastCartItems : cart.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+            quantity: item.quantity,
+            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+            taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
+            afterTaxPrice: item.afterTaxPrice
+          }))}
           source="pos"
         />
       )}

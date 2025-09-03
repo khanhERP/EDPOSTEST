@@ -67,14 +67,11 @@ export function EInvoiceModal({
   // Debug log to track cart items data flow
   console.log("🔍 EInvoiceModal Props Analysis:");
   console.log("- isOpen:", isOpen);
-  console.log("- source:", source);
-  console.log("- orderId:", orderId);
   console.log("- total:", total);
   console.log("- cartItems received:", cartItems);
   console.log("- cartItems type:", typeof cartItems);
   console.log("- cartItems is array:", Array.isArray(cartItems));
   console.log("- cartItems length:", cartItems?.length || 0);
-  console.log("- selectedPaymentMethod:", selectedPaymentMethod);
   const [formData, setFormData] = useState({
     invoiceProvider: "",
     invoiceTemplate: "",
@@ -401,97 +398,52 @@ export function EInvoiceModal({
 
       // Debug log current cart items
       console.log("=== PHÁT HÀNH SAU - KIỂM TRA DỮ LIỆU ===");
-      console.log("Source:", source);
-      console.log("Order ID:", orderId);
       console.log("cartItems received:", cartItems);
-      console.log("cartItems type:", typeof cartItems);
-      console.log("cartItems is array:", Array.isArray(cartItems));
       console.log("cartItems length:", cartItems?.length || 0);
       console.log("cartItems detailed:", JSON.stringify(cartItems, null, 2));
       console.log("total amount:", total);
 
-      // Enhanced validation for cart items
+      // Validate cart items first
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-        console.error("❌ No valid cart items found for later publishing:", {
-          source,
-          orderId,
-          cartItems,
-          isArray: Array.isArray(cartItems),
-          length: cartItems?.length,
-          total: total,
-        });
-        
-        const sourceText = source === "table" ? "đơn hàng" : "giỏ hàng";
+        console.error("❌ No valid cart items found for later publishing");
         toast({
           title: "Lỗi",
-          description: `Không có sản phẩm nào trong ${sourceText} để lưu thông tin hóa đơn điện tử. Vui lòng kiểm tra lại dữ liệu đơn hàng.`,
+          description: "Không có sản phẩm nào trong giỏ hàng để lưu thông tin.",
           variant: "destructive",
         });
         return;
       }
 
-      // Validate each cart item
-      const invalidItems = cartItems.filter(item => {
-        const isValid = item && 
-          item.id && 
-          item.name && 
-          item.price !== undefined && 
-          item.price !== null && 
-          item.quantity !== undefined && 
-          item.quantity !== null && 
-          item.quantity > 0;
-        
-        if (!isValid) {
-          console.log("❌ Invalid item found:", item);
-        }
-        return !isValid;
-      });
-
-      if (invalidItems.length > 0) {
-        console.error("❌ Found invalid cart items:", invalidItems);
-        toast({
-          title: "Lỗi",
-          description: `Có ${invalidItems.length} sản phẩm thiếu thông tin cần thiết để tạo hóa đơn điện tử.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Validate total amount
-      if (!total || total <= 0) {
-        console.error("❌ Invalid total amount:", total);
-        toast({
-          title: "Lỗi",
-          description: "Tổng tiền không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Calculate subtotal and tax with proper type conversion and afterTaxPrice logic
+      // Calculate subtotal and tax with proper type conversion
       const calculatedSubtotal = cartItems.reduce((sum, item) => {
-        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-        const itemSubtotal = itemPrice * itemQuantity;
-        console.log(`💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemSubtotal}`);
-        return sum + itemSubtotal;
+        const itemPrice =
+          typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity =
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity;
+        console.log(
+          `💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemPrice * itemQuantity}`,
+        );
+        return sum + itemPrice * itemQuantity;
       }, 0);
 
       const calculatedTax = cartItems.reduce((sum, item) => {
-        if (item.taxRate && parseFloat(item.taxRate) > 0) {
-          const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-          const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-
-          // Use afterTaxPrice formula: tax = (afterTaxPrice - price) * quantity
-          if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-            const afterTaxPrice = parseFloat(item.afterTaxPrice);
-            const taxPerUnit = afterTaxPrice - itemPrice;
-            const itemTax = Math.floor(taxPerUnit * itemQuantity);
-            console.log(`💰 Tax calculation: ${item.name} - After tax: ${afterTaxPrice}, Base: ${itemPrice}, Tax per unit: ${taxPerUnit}, Total tax: ${itemTax}`);
-            return sum + itemTax;
-          }
-        }
-        return sum;
+        const itemPrice =
+          typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity =
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity;
+        const itemTaxRate =
+          typeof item.taxRate === "string"
+            ? parseFloat(item.taxRate || "0")
+            : item.taxRate || 0;
+        const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
+        console.log(
+          `💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`,
+        );
+        return sum + itemTax;
       }, 0);
 
       console.log(
@@ -732,8 +684,6 @@ export function EInvoiceModal({
     try {
       // Debug log current cart items
       console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
-      console.log("Source:", source);
-      console.log("Order ID:", orderId);
       console.log("cartItems received:", cartItems);
       console.log("cartItems length:", cartItems?.length || 0);
       console.log("cartItems detailed:", JSON.stringify(cartItems, null, 2));
@@ -764,40 +714,23 @@ export function EInvoiceModal({
       console.log("CartItems type:", typeof cartItems);
       console.log("CartItems is array:", Array.isArray(cartItems));
       console.log("CartItems length:", cartItems?.length);
-      console.log("Total amount:", total);
 
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found:", {
-          source,
-          orderId,
           cartItems,
           isArray: Array.isArray(cartItems),
           length: cartItems?.length,
           total: total,
         });
-        
-        const sourceText = source === "table" ? "quản lý bàn" : "màn hình bán hàng";
-        const errorDetails = `
-Nguồn: ${sourceText}
-${orderId ? `ID đơn hàng: ${orderId}` : ''}
-Số sản phẩm: ${cartItems?.length || 0}
-Tổng tiền: ${total.toLocaleString("vi-VN", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })} ₫`;
-        
         alert(
-          `Không có sản phẩm nào trong đơn hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:${errorDetails}\n\nVui lòng thử lại từ ${sourceText}.`,
-        );
-        return;
-      }
-
-      // Validate total amount
-      if (!total || total <= 0) {
-        console.error("❌ Invalid total amount for e-invoice:", total);
-        alert(
-          "Tổng tiền không hợp lệ để tạo hóa đơn điện tử.\n\nTổng tiền hiện tại: " +
-          (total || 0).toLocaleString("vi-VN") + " ₫\n\nVui lòng kiểm tra lại giỏ hàng và thử lại."
+          "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " +
+            (cartItems?.length || 0) +
+            "\n- Tổng tiền: " +
+            total.toLocaleString("vi-VN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) +
+            " ₫\n\nVui lòng thử lại từ màn hình bán hàng.",
         );
         return;
       }
@@ -880,17 +813,9 @@ Tổng tiền: ${total.toLocaleString("vi-VN", {
           return typeof item.taxRate === "number" ? item.taxRate : 0;
         })();
 
-        // Calculate amounts using afterTaxPrice logic
+        // Calculate amounts
         const itemSubtotal = itemPrice * itemQuantity;
-        let itemTax = 0;
-        
-        // Use afterTaxPrice formula: tax = (afterTaxPrice - price) * quantity
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && itemTaxRate > 0) {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          const taxPerUnit = afterTaxPrice - itemPrice;
-          itemTax = Math.floor(taxPerUnit * itemQuantity);
-        }
-        
+        const itemTax = (itemSubtotal * itemTaxRate) / 100;
         const itemTotal = itemSubtotal + itemTax;
 
         cartSubtotal += itemSubtotal;
