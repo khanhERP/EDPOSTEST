@@ -378,6 +378,14 @@ export function EInvoiceModal({
   };
 
   const handlePublishLater = async () => {
+    // Prevent duplicate calls
+    if (isPublishing) {
+      console.log("⚠️ Already processing publish later, skipping duplicate call");
+      return;
+    }
+
+    setIsPublishing(true);
+    
     try {
       console.log(
         "🟡 PHÁT HÀNH SAU - Lưu thông tin hóa đơn vào bảng invoices và invoice_items",
@@ -641,7 +649,8 @@ export function EInvoiceModal({
         title: "Lỗi",
         description: errorMessage,
       });
-      return;
+    } finally {
+      setIsPublishing(false); // Always reset loading state
     }
   };
 
@@ -1158,6 +1167,7 @@ export function EInvoiceModal({
   };
 
   const handleCancel = () => {
+    setIsPublishing(false); // Reset loading state
     onClose();
   };
 
@@ -1417,8 +1427,17 @@ export function EInvoiceModal({
               className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
               disabled={isPublishing}
             >
-              <span className="mr-2">⏳</span>
-              Phát hành sau
+              {isPublishing ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">⏳</span>
+                  Phát hành sau
+                </>
+              )}
             </Button>
             <Button variant="outline" onClick={handleCancel} className="flex-1">
               <span className="mr-2">❌</span>
