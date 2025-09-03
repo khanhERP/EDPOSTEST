@@ -1383,16 +1383,48 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          // Calculate total using same logic as table display
-                          const orderTotal = Number(order.total || 0);
+                          // Try to get real-time calculated total from order items
+                          const orderItemsQuery = queryClient.getQueryData(['/api/order-items', order.id]);
                           
-                          // If order has valid total, use it
-                          if (orderTotal > 0) {
-                            return formatCurrency(orderTotal);
+                          if (orderItemsQuery && Array.isArray(orderItemsQuery) && orderItemsQuery.length > 0) {
+                            // Calculate from actual items
+                            let calculatedTotal = 0;
+                            
+                            orderItemsQuery.forEach((item: any) => {
+                              const unitPrice = Number(item.unitPrice || 0);
+                              const quantity = Number(item.quantity || 0);
+                              const product = Array.isArray(products) 
+                                ? products.find((p: any) => p.id === item.productId) 
+                                : null;
+
+                              // Base subtotal
+                              let itemTotal = unitPrice * quantity;
+
+                              // Add tax if afterTaxPrice exists
+                              if (product?.afterTaxPrice && 
+                                  product.afterTaxPrice !== null && 
+                                  product.afterTaxPrice !== "") {
+                                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+                                itemTotal = (unitPrice + taxPerUnit) * quantity;
+                              }
+
+                              calculatedTotal += itemTotal;
+                            });
+
+                            console.log(`💰 Order ${order.orderNumber} calculated from items:`, {
+                              orderId: order.id,
+                              itemsCount: orderItemsQuery.length,
+                              calculatedTotal: calculatedTotal,
+                              storedTotal: Number(order.total || 0)
+                            });
+
+                            return formatCurrency(calculatedTotal);
                           }
                           
-                          // Otherwise return 0
-                          return formatCurrency(0);
+                          // Fallback to stored total if no items found
+                          const orderTotal = Number(order.total || 0);
+                          return formatCurrency(orderTotal);
                         })()}
                       </span>
                     </div>
