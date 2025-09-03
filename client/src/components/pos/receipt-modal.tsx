@@ -109,16 +109,24 @@ export function ReceiptModal({
   }
 
   const handlePrint = () => {
-    // Send popup close signal before printing
-    fetch('/api/popup/close', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        success: true,
-        action: 'print_receipt_requested',
-        timestamp: new Date().toISOString()
-      }),
-    }).catch(console.error);
+    // Send popup close signal before printing to trigger cart clear
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: "popup_close",
+          success: true,
+          action: 'print_receipt_requested',
+          timestamp: new Date().toISOString()
+        }));
+        ws.close();
+      };
+    } catch (error) {
+      console.error("Failed to send popup close signal:", error);
+    }
 
     const printContent = document.getElementById('receipt-content');
     if (printContent) {

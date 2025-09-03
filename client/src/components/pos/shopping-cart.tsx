@@ -159,15 +159,37 @@ export function ShoppingCart({
               broadcastCartUpdate(cart);
             }
 
+            // Handle popup close signal (when receipt modal is closed)
+            if (data.type === 'popup_close' && data.success) {
+              console.log('🔄 Shopping Cart: Receipt modal closed, clearing cart');
+              
+              // Clear cart immediately
+              setTimeout(() => {
+                onClearCart();
+                
+                // Also clear any selected orders in POS
+                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                  (window as any).clearActiveOrder();
+                }
+              }, 100);
+            }
+
             // Handle refresh signal after print to clear cart
             if (data.type === 'refresh_data_after_print' && data.action === 'refresh_tables_and_clear_cart') {
-              console.log('🔄 Clearing cart after print receipt');
-              onClearCart(); // Use the passed onClearCart prop to clear the cart state in the parent component
-
-              // Also clear any selected orders in POS
-              if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                (window as any).clearActiveOrder();
-              }
+              console.log('🔄 Shopping Cart: Clearing cart after print receipt');
+              
+              // Clear cart with immediate effect
+              setTimeout(() => {
+                onClearCart();
+                
+                // Also clear any selected orders in POS
+                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                  (window as any).clearActiveOrder();
+                }
+                
+                // Force broadcast empty cart to customer display
+                broadcastCartUpdate([]);
+              }, 200);
             }
           } catch (error) {
             console.error('Shopping Cart: Error parsing WebSocket message:', error);

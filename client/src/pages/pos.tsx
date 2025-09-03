@@ -181,8 +181,32 @@ export default function POS({ onLogout }: POSPageProps) {
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log("🔴 Closing receipt modal");
+          console.log("🔴 POS: Closing receipt modal and clearing cart");
           setShowReceiptModal(false);
+          
+          // Clear cart when receipt modal closes
+          setTimeout(() => {
+            clearCart();
+            
+            // Send popup close signal via WebSocket to trigger other components to refresh
+            try {
+              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
+
+              ws.onopen = () => {
+                ws.send(JSON.stringify({
+                  type: "popup_close",
+                  success: true,
+                  action: 'receipt_modal_closed',
+                  timestamp: new Date().toISOString()
+                }));
+                ws.close();
+              };
+            } catch (error) {
+              console.error("Failed to send popup close signal:", error);
+            }
+          }, 100);
         }}
         receipt={lastReceipt}
         cartItems={lastCartItems}
