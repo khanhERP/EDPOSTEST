@@ -1689,7 +1689,7 @@ export function OrderManagement() {
                           return;
                         }
 
-                        // Tạo receipt preview data
+                        // Tạo receipt preview data với định dạng đúng
                         const receiptPreview = {
                           id: selectedOrder.id,
                           orderId: selectedOrder.id,
@@ -1699,11 +1699,14 @@ export function OrderManagement() {
                           customerName: selectedOrder.customerName,
                           items: processedItems,
                           orderItems: processedItems,
-                          subtotal: calculatedSubtotal.toFixed(2),
-                          tax: calculatedTax.toFixed(2),
-                          total: finalTotal.toFixed(2),
-                          paymentMethod: 'pending',
-                          amountReceived: finalTotal.toFixed(2),
+                          subtotal: calculatedSubtotal.toString(),
+                          tax: calculatedTax.toString(),
+                          total: finalTotal.toString(),
+                          exactSubtotal: calculatedSubtotal,
+                          exactTax: calculatedTax,
+                          exactTotal: finalTotal,
+                          paymentMethod: 'preview',
+                          amountReceived: finalTotal.toString(),
                           change: '0.00',
                           cashierName: 'Order Management',
                           createdAt: new Date().toISOString(),
@@ -1722,19 +1725,24 @@ export function OrderManagement() {
                           calculatedSubtotal: calculatedSubtotal,
                           calculatedTax: calculatedTax,
                           calculatedTotal: finalTotal,
+                          exactSubtotal: calculatedSubtotal,
+                          exactTax: calculatedTax,
+                          exactTotal: finalTotal,
                           total: finalTotal // Override total với calculated value
                         };
 
                         console.log('✅ Thiết lập dữ liệu để hiển thị preview:', {
                           receiptTotal: receiptPreview.total,
+                          receiptExactTotal: receiptPreview.exactTotal,
                           orderTotal: orderForPaymentData.calculatedTotal,
                           orderId: orderForPaymentData.id
                         });
 
-                        // Set states và hiển thị preview
+                        // Set states và hiển thị preview ngay lập tức
                         setPreviewReceipt(receiptPreview);
                         setOrderForPayment(orderForPaymentData);
-                        setShouldOpenReceiptPreview(true);
+                        setShowReceiptPreview(true);
+                        console.log('🚀 Order Management: Đang hiển thị receipt preview modal');
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
