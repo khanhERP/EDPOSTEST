@@ -414,36 +414,41 @@ export function EInvoiceModal({
         return;
       }
 
-      // Calculate subtotal and tax with proper type conversion
+      // Validate total amount
+      if (!total || total <= 0) {
+        console.error("❌ Invalid total amount:", total);
+        toast({
+          title: "Lỗi",
+          description: "Tổng tiền không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Calculate subtotal and tax with proper type conversion and afterTaxPrice logic
       const calculatedSubtotal = cartItems.reduce((sum, item) => {
-        const itemPrice =
-          typeof item.price === "string" ? parseFloat(item.price) : item.price;
-        const itemQuantity =
-          typeof item.quantity === "string"
-            ? parseInt(item.quantity)
-            : item.quantity;
-        console.log(
-          `💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemPrice * itemQuantity}`,
-        );
-        return sum + itemPrice * itemQuantity;
+        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
+        const itemSubtotal = itemPrice * itemQuantity;
+        console.log(`💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemSubtotal}`);
+        return sum + itemSubtotal;
       }, 0);
 
       const calculatedTax = cartItems.reduce((sum, item) => {
-        const itemPrice =
-          typeof item.price === "string" ? parseFloat(item.price) : item.price;
-        const itemQuantity =
-          typeof item.quantity === "string"
-            ? parseInt(item.quantity)
-            : item.quantity;
-        const itemTaxRate =
-          typeof item.taxRate === "string"
-            ? parseFloat(item.taxRate || "0")
-            : item.taxRate || 0;
-        const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
-        console.log(
-          `💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`,
-        );
-        return sum + itemTax;
+        if (item.taxRate && parseFloat(item.taxRate) > 0) {
+          const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+          const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
+
+          // Use afterTaxPrice formula: tax = (afterTaxPrice - price) * quantity
+          if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+            const afterTaxPrice = parseFloat(item.afterTaxPrice);
+            const taxPerUnit = afterTaxPrice - itemPrice;
+            const itemTax = Math.floor(taxPerUnit * itemQuantity);
+            console.log(`💰 Tax calculation: ${item.name} - After tax: ${afterTaxPrice}, Base: ${itemPrice}, Tax per unit: ${taxPerUnit}, Total tax: ${itemTax}`);
+            return sum + itemTax;
+          }
+        }
+        return sum;
       }, 0);
 
       console.log(
@@ -714,6 +719,7 @@ export function EInvoiceModal({
       console.log("CartItems type:", typeof cartItems);
       console.log("CartItems is array:", Array.isArray(cartItems));
       console.log("CartItems length:", cartItems?.length);
+      console.log("Total amount:", total);
 
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found:", {
@@ -731,6 +737,16 @@ export function EInvoiceModal({
               maximumFractionDigits: 2,
             }) +
             " ₫\n\nVui lòng thử lại từ màn hình bán hàng.",
+        );
+        return;
+      }
+
+      // Validate total amount
+      if (!total || total <= 0) {
+        console.error("❌ Invalid total amount for e-invoice:", total);
+        alert(
+          "Tổng tiền không hợp lệ để tạo hóa đơn điện tử.\n\nTổng tiền hiện tại: " +
+          (total || 0).toLocaleString("vi-VN") + " ₫\n\nVui lòng kiểm tra lại giỏ hàng và thử lại."
         );
         return;
       }
@@ -813,9 +829,17 @@ export function EInvoiceModal({
           return typeof item.taxRate === "number" ? item.taxRate : 0;
         })();
 
-        // Calculate amounts
+        // Calculate amounts using afterTaxPrice logic
         const itemSubtotal = itemPrice * itemQuantity;
-        const itemTax = (itemSubtotal * itemTaxRate) / 100;
+        let itemTax = 0;
+        
+        // Use afterTaxPrice formula: tax = (afterTaxPrice - price) * quantity
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && itemTaxRate > 0) {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          const taxPerUnit = afterTaxPrice - itemPrice;
+          itemTax = Math.floor(taxPerUnit * itemQuantity);
+        }
+        
         const itemTotal = itemSubtotal + itemTax;
 
         cartSubtotal += itemSubtotal;
