@@ -2132,7 +2132,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       ) {
                         const afterTaxPrice = parseFloat(product.afterTaxPrice);
                         // Tax per unit = afterTaxPrice - basePrice
-                        const taxPerUnit = afterTaxPrice - basePrice;
+                        const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
                         const itemTax = Math.floor(taxPerUnit * quantity);
                         totalTax += itemTax;
 
@@ -2176,13 +2176,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Thuế:</span>
                         <span className="font-medium">
-                          {Math.floor(totalTax).toLocaleString("vi-VN")} ₫
+                          {Math.abs(Math.floor(totalTax)).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                       <div className="flex justify-between text-lg font-bold border-t pt-2">
                         <span>{t("orders.totalAmount")}:</span>
                         <span className="text-green-600">
-                          {Math.floor(grandTotal).toLocaleString("vi-VN")} ₫
+                          {Math.floor(subtotal + Math.abs(totalTax)).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>
