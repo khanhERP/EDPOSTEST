@@ -97,7 +97,7 @@ export default function SalesOrders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
-  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  
 
 
 
@@ -1494,18 +1494,89 @@ export default function SalesOrders() {
                                                   <Button 
                                                     size="sm" 
                                                     variant="outline" 
-                                                    className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                                                    className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
                                                     onClick={() => {
                                                       if (selectedInvoice) {
-                                                        console.log('Opening E-invoice modal for invoice:', selectedInvoice?.id);
-                                                        console.log('Selected invoice data:', selectedInvoice);
-                                                        setShowEInvoiceModal(true);
+                                                        // Tạo nội dung in hóa đơn
+                                                        const printContent = `
+                                                          <!DOCTYPE html>
+                                                          <html>
+                                                            <head>
+                                                              <title>Hóa đơn ${selectedInvoice.displayNumber}</title>
+                                                              <style>
+                                                                body { font-family: Arial, sans-serif; margin: 20px; }
+                                                                .header { text-align: center; margin-bottom: 20px; }
+                                                                .invoice-details { margin-bottom: 20px; }
+                                                                .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                                                                .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                                                                .items-table th { background-color: #f2f2f2; }
+                                                                .total-section { text-align: right; margin-top: 20px; }
+                                                              </style>
+                                                            </head>
+                                                            <body>
+                                                              <div class="header">
+                                                                <h1>HÓA ĐƠN BÁN HÀNG</h1>
+                                                                <p>Số: ${selectedInvoice.displayNumber}</p>
+                                                                <p>Ngày: ${formatDate(selectedInvoice.date)}</p>
+                                                              </div>
+                                                              <div class="invoice-details">
+                                                                <p><strong>Khách hàng:</strong> ${selectedInvoice.customerName}</p>
+                                                                <p><strong>Điện thoại:</strong> ${selectedInvoice.customerPhone || '-'}</p>
+                                                                <p><strong>Địa chỉ:</strong> ${selectedInvoice.customerAddress || '-'}</p>
+                                                              </div>
+                                                              <table class="items-table">
+                                                                <thead>
+                                                                  <tr>
+                                                                    <th>STT</th>
+                                                                    <th>Tên hàng hóa</th>
+                                                                    <th>Đơn vị tính</th>
+                                                                    <th>Số lượng</th>
+                                                                    <th>Đơn giá</th>
+                                                                    <th>Thành tiền</th>
+                                                                  </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                  ${(() => {
+                                                                    const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+                                                                    if (!items || items.length === 0) return '<tr><td colspan="6">Không có sản phẩm</td></tr>';
+                                                                    return items.map((item: any, index: number) => `
+                                                                      <tr>
+                                                                        <td>${index + 1}</td>
+                                                                        <td>${item.productName}</td>
+                                                                        <td>Cái</td>
+                                                                        <td>${item.quantity}</td>
+                                                                        <td>${formatCurrency(item.unitPrice)}</td>
+                                                                        <td>${formatCurrency(item.total)}</td>
+                                                                      </tr>
+                                                                    `).join('');
+                                                                  })()}
+                                                                </tbody>
+                                                              </table>
+                                                              <div class="total-section">
+                                                                <p><strong>Thành tiền:</strong> ${formatCurrency(selectedInvoice.subtotal)} ₫</p>
+                                                                <p><strong>Thuế GTGT:</strong> ${formatCurrency(selectedInvoice.tax)} ₫</p>
+                                                                <p><strong>Tổng cộng:</strong> ${formatCurrency(selectedInvoice.total)} ₫</p>
+                                                              </div>
+                                                            </body>
+                                                          </html>
+                                                        `;
+                                                        
+                                                        // Mở cửa sổ in
+                                                        const printWindow = window.open('', '_blank');
+                                                        if (printWindow) {
+                                                          printWindow.document.write(printContent);
+                                                          printWindow.document.close();
+                                                          printWindow.focus();
+                                                          printWindow.print();
+                                                          printWindow.close();
+                                                        } else {
+                                                          alert('Không thể mở cửa sổ in. Vui lòng kiểm tra popup blocker.');
+                                                        }
                                                       }
                                                     }}
-                                                    disabled={selectedInvoice?.einvoiceStatus !== 0}
                                                   >
-                                                    <Mail className="w-4 h-4" />
-                                                    Phát hành
+                                                    <Printer className="w-4 h-4" />
+                                                    In hóa đơn
                                                   </Button>
                                                 </>
                                               ) : (
@@ -1649,107 +1720,7 @@ export default function SalesOrders() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* E-Invoice Modal */}
-      {selectedInvoice && showEInvoiceModal && (
-        <EInvoiceModal
-          isOpen={showEInvoiceModal}
-          onClose={() => setShowEInvoiceModal(false)}
-          onConfirm={async (result) => { // Renamed invoiceResult to result for consistency
-            console.log('E-invoice published successfully:', result);
-
-            if (result.success && selectedInvoice) {
-              try {
-                // Determine the correct API endpoint based on item type
-                const updateEndpoint = getItemType(selectedInvoice) === 'order' 
-                  ? `/api/orders/${selectedInvoice.id}`
-                  : `/api/invoices/${selectedInvoice.id}`;
-
-                // Prepare update data with all required fields from API response
-                const updateData = {
-                  einvoiceStatus: result.einvoiceStatus || 1, // Đã phát hành
-                  invoiceStatus: result.invoiceStatus || 1, // Hoàn thành
-                  status: result.status || 'published',
-                  invoiceNumber: result.invoiceNumber || null,
-                  symbol: result.symbol || selectedInvoice.symbol,
-                  templateNumber: result.templateNumber || selectedInvoice.templateNumber
-                };
-
-                // For orders, also update tradeNumber
-                if (getItemType(selectedInvoice) === 'order') {
-                  updateData.tradeNumber = result.invoiceNumber || selectedInvoice.tradeNumber;
-                } else {
-                  // For invoices, update tradeNumber as well
-                  updateData.tradeNumber = result.invoiceNumber || selectedInvoice.tradeNumber;
-                }
-
-                console.log('🔄 Updating item with data:', updateData);
-
-                // Update invoice/order with published status and invoice details
-                const updateResponse = await apiRequest("PUT", updateEndpoint, updateData);
-
-                if (updateResponse.ok) {
-                  // Update local state
-                  setSelectedInvoice({
-                    ...selectedInvoice,
-                    einvoiceStatus: 1,
-                    invoiceStatus: 1,
-                    status: 'published',
-                    invoiceNumber: result.invoiceNumber || selectedInvoice.invoiceNumber,
-                    symbol: updateData.symbol,
-                    templateNumber: updateData.templateNumber,
-                    tradeNumber: updateData.tradeNumber
-                  });
-
-                  // Refresh data to ensure consistency
-                  queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-
-                  console.log('✅ Invoice/Order updated successfully with published status');
-
-                  alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.invoiceNumber || 'N/A'}\nKý hiệu: ${updateData.symbol || 'N/A'}`);
-                } else {
-                  const errorText = await updateResponse.text();
-                  console.error('❌ Failed to update invoice/order:', errorText);
-                  alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái trong hệ thống');
-                }
-              } catch (error) {
-                console.error('❌ Error updating invoice/order after publish:', error);
-                alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái');
-              }
-            } else {
-              alert(`Lỗi phát hành hóa đơn: ${result.message || 'Không xác định'}`);
-            }
-
-            setShowEInvoiceModal(false);
-          }}
-          total={(() => {
-            if (!selectedInvoice) return 0;
-
-            // Calculate total including tax
-            const subtotal = parseFloat(selectedInvoice.subtotal || '0');
-            const tax = parseFloat(selectedInvoice.tax || '0');
-            return Math.round(subtotal + tax);
-          })()}
-          cartItems={(() => {
-            // Get items for this invoice/order
-            const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
-
-            if (!items || items.length === 0) {
-              return [];
-            }
-
-            return items.map((item: any) => ({
-              id: item.id,
-              name: item.productName,
-              price: parseFloat(item.unitPrice || '0'),
-              quantity: item.quantity,
-              sku: `SP${String(item.productId).padStart(3, '0')}`,
-              taxRate: parseFloat(item.taxRate || '10') // Default to 10% if not specified
-            }));
-          })()}
-          selectedPaymentMethod="cash"
-        />
-      )}
+      
 
       {/* Publish Invoice Dialog */}
       {selectedInvoice && (
