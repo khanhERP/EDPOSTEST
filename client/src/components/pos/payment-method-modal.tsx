@@ -757,6 +757,7 @@ export function PaymentMethodModal({
       console.log("🔄 Step 3: Creating receipt data for printing");
       const receiptData = {
         ...orderInfo,
+        orderId: orderInfo.id, // Include orderId for status tracking
         transactionId: `ORDER-${orderInfo.id}`,
         items: orderInfo.items || [],
         subtotal: orderInfo.subtotal || "0",

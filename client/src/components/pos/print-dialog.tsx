@@ -13,6 +13,7 @@ interface PrintDialogProps {
   onClose: () => void;
   receiptData: {
     transactionId: string;
+    orderId?: number | string; // Add orderId to track the order for status updates
     items: Array<{
       id: number;
       productName: string;
@@ -58,6 +59,39 @@ export function PrintDialog({
     setIsPrinting(true);
 
     try {
+      // First, ensure order status is updated to 'paid' before printing
+      if (receiptData.orderId && receiptData.orderId !== 'temp-order') {
+        console.log('🖨️ Print Dialog: Updating order status to paid before printing for order:', receiptData.orderId);
+        
+        try {
+          const statusResponse = await fetch(`/api/orders/${receiptData.orderId}/status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: 'paid' }),
+          });
+
+          if (statusResponse.ok) {
+            console.log('✅ Print Dialog: Order status updated to paid successfully');
+            
+            // Dispatch events to refresh UI
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('refreshOrders', { detail: { immediate: true } }));
+              window.dispatchEvent(new CustomEvent('refreshTables', { detail: { immediate: true } }));
+              window.dispatchEvent(new CustomEvent('paymentCompleted', { 
+                detail: { orderId: receiptData.orderId } 
+              }));
+            }
+          } else {
+            console.warn('⚠️ Print Dialog: Could not update order status, but proceeding with print');
+          }
+        } catch (statusError) {
+          console.error('❌ Print Dialog: Error updating order status:', statusError);
+          // Continue with printing even if status update fails
+        }
+      }
+
       // Create a new window for printing
       const printWindow = window.open('', '_blank', 'width=800,height=600');
 

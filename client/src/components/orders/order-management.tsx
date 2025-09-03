@@ -195,6 +195,7 @@ export function OrderManagement() {
           // Create comprehensive receipt object
           const receiptData = {
             ...completedOrder,
+            orderId: variables.orderId, // Include orderId for status tracking
             transactionId: `TXN-${Date.now()}`,
             items: processedItems,
             subtotal: subtotal.toFixed(2),
