@@ -65,8 +65,8 @@ export function OrderManagement() {
       if (currentActiveOrders.length > 0) {
         console.log(`📦 Order Management: Found ${currentActiveOrders.length} active orders, triggering order items refetch`);
         // Force refetch allOrderItems
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/all-order-items"] 
+        queryClient.invalidateQueries({
+          queryKey: ["/api/all-order-items"]
         });
       }
     }
@@ -855,6 +855,17 @@ export function OrderManagement() {
         itemsProcessed: processedItems.length
       });
 
+      // Validate calculated total
+      if (finalTotal <= 0 || isNaN(finalTotal)) {
+        console.error('❌ Invalid calculated total:', finalTotal);
+        toast({
+          title: 'Lỗi',
+          description: 'Không thể tính toán tổng tiền đơn hàng. Vui lòng kiểm tra lại.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Step 3: Create comprehensive order data for payment
       const orderForPaymentData = {
         ...order,
@@ -867,21 +878,21 @@ export function OrderManagement() {
         total: finalTotal
       };
 
-      // Step 4: Create receipt preview data
+      // Step 4: Create receipt preview data with validation
       const receiptPreview = {
         id: order.id,
         orderId: order.id,
-        orderNumber: order.orderNumber,
+        orderNumber: order.orderNumber || `ORD-${order.id}`,
         tableId: order.tableId,
-        customerCount: order.customerCount,
-        customerName: order.customerName,
+        customerCount: order.customerCount || 1,
+        customerName: order.customerName || 'Khách hàng',
         items: processedItems,
         orderItems: processedItems,
         subtotal: calculatedSubtotal.toString(),
-        tax: calculatedTax.toString(),
+        tax: Math.abs(calculatedTax).toString(),
         total: finalTotal.toString(),
         exactSubtotal: calculatedSubtotal,
-        exactTax: calculatedTax,
+        exactTax: Math.abs(calculatedTax),
         exactTotal: finalTotal,
         paymentMethod: 'preview',
         amountReceived: finalTotal.toString(),
@@ -890,11 +901,22 @@ export function OrderManagement() {
         createdAt: new Date().toISOString(),
         transactionId: `TXN-PREVIEW-${Date.now()}`,
         calculatedSubtotal: calculatedSubtotal,
-        calculatedTax: calculatedTax,
+        calculatedTax: Math.abs(calculatedTax),
         calculatedTotal: finalTotal
       };
 
-      console.log('✅ Payment data prepared:', {
+      // Validate receipt preview data
+      if (!receiptPreview.items || receiptPreview.items.length === 0) {
+        console.error('❌ Receipt preview has no items');
+        toast({
+          title: 'Lỗi',
+          description: 'Không thể tạo xem trước hóa đơn',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      console.log('✅ Payment data prepared successfully:', {
         orderId: orderForPaymentData.id,
         calculatedTotal: orderForPaymentData.calculatedTotal,
         itemsCount: processedItems.length,
@@ -903,13 +925,26 @@ export function OrderManagement() {
       });
 
       // Step 5: Close order details modal and show receipt preview
-      setOrderDetailsOpen(false);
-      setSelectedOrder(order);
-      setOrderForPayment(orderForPaymentData);
-      setPreviewReceipt(receiptPreview);
-      setShowReceiptPreview(true);
+      try {
+        setOrderDetailsOpen(false);
+        setSelectedOrder(order);
+        setOrderForPayment(orderForPaymentData);
+        setPreviewReceipt(receiptPreview);
 
-      console.log('🚀 Order Management: Hiển thị receipt preview modal');
+        // Use setTimeout to ensure state is set before showing modal
+        setTimeout(() => {
+          setShowReceiptPreview(true);
+          console.log('🚀 Order Management: Receipt preview modal should now be visible');
+        }, 100);
+
+      } catch (stateError) {
+        console.error('❌ Error setting modal states:', stateError);
+        toast({
+          title: 'Lỗi',
+          description: 'Không thể hiển thị xem trước hóa đơn',
+          variant: 'destructive',
+        });
+      }
 
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
@@ -921,7 +956,7 @@ export function OrderManagement() {
     }
   };
 
-  const handlePaymentMethodSelect = async (method: string, data?: any) => {
+  const handlePaymentMethodSelect = async (method: any, data?: any) => {
     console.log("🎯 Order Management payment method selected:", method, data);
 
     if (method === "paymentCompleted" && data?.success) {
@@ -1453,9 +1488,9 @@ export function OrderManagement() {
 
                               // Apply tax if afterTaxPrice is available
                               const product = products?.find(p => p.id === item.productId);
-                              if (product && 
-                                  product.afterTaxPrice && 
-                                  product.afterTaxPrice !== "" && 
+                              if (product &&
+                                  product.afterTaxPrice &&
+                                  product.afterTaxPrice !== "" &&
                                   product.afterTaxPrice !== null) {
                                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                                 const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
@@ -1754,8 +1789,8 @@ export function OrderManagement() {
                           orderDetailsSubtotal += itemSubtotal;
 
                           // Tax calculation with proper validation
-                          if (product?.afterTaxPrice && 
-                              product.afterTaxPrice !== null && 
+                          if (product?.afterTaxPrice &&
+                              product.afterTaxPrice !== null &&
                               product.afterTaxPrice !== "" &&
                               product.afterTaxPrice !== "0.00") {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
@@ -1763,7 +1798,7 @@ export function OrderManagement() {
                             const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
                             const itemTax = taxPerUnit * quantity;
                             orderDetailsTax += itemTax;
-                            
+
                             console.log(`💸 Tax calculated for ${item.productName}:`, {
                               afterTaxPrice,
                               originalPrice,
@@ -1889,7 +1924,7 @@ export function OrderManagement() {
                         });
 
                         // Kiểm tra tổng tiền hợp lệ
-                        if (finalTotal <= 0) {
+                        if (finalTotal <= 0 || isNaN(finalTotal)) {
                           console.error('❌ Tổng tiền không hợp lệ:', finalTotal);
                           toast({
                             title: 'Lỗi',
@@ -1903,17 +1938,17 @@ export function OrderManagement() {
                         const receiptPreview = {
                           id: selectedOrder.id,
                           orderId: selectedOrder.id,
-                          orderNumber: selectedOrder.orderNumber,
+                          orderNumber: selectedOrder.orderNumber || `ORD-${selectedOrder.id}`,
                           tableId: selectedOrder.tableId,
-                          customerCount: selectedOrder.customerCount,
-                          customerName: selectedOrder.customerName,
+                          customerCount: selectedOrder.customerCount || 1,
+                          customerName: selectedOrder.customerName || 'Khách hàng',
                           items: processedItems,
                           orderItems: processedItems,
                           subtotal: calculatedSubtotal.toString(),
-                          tax: calculatedTax.toString(),
+                          tax: Math.abs(calculatedTax).toString(),
                           total: finalTotal.toString(),
                           exactSubtotal: calculatedSubtotal,
-                          exactTax: calculatedTax,
+                          exactTax: Math.abs(calculatedTax),
                           exactTotal: finalTotal,
                           paymentMethod: 'preview',
                           amountReceived: finalTotal.toString(),
@@ -1922,7 +1957,7 @@ export function OrderManagement() {
                           createdAt: new Date().toISOString(),
                           transactionId: `TXN-PREVIEW-${Date.now()}`,
                           calculatedSubtotal: calculatedSubtotal,
-                          calculatedTax: calculatedTax,
+                          calculatedTax: Math.abs(calculatedTax),
                           calculatedTotal: finalTotal
                         };
 
@@ -1945,11 +1980,27 @@ export function OrderManagement() {
                           orderId: orderForPaymentData.id
                         });
 
-                        // Set states và hiển thị preview ngay lập tức
-                        setPreviewReceipt(receiptPreview);
-                        setOrderForPayment(orderForPaymentData);
-                        setShowReceiptPreview(true);
-                        console.log('🚀 Order Management: Đang hiển thị receipt preview modal');
+                        // Step 5: Close order details modal and show receipt preview
+                        try {
+                          setOrderDetailsOpen(false);
+                          setSelectedOrder(selectedOrder);
+                          setOrderForPayment(orderForPaymentData);
+                          setPreviewReceipt(receiptPreview);
+
+                          // Use setTimeout to ensure state is set before showing modal
+                          setTimeout(() => {
+                            setShowReceiptPreview(true);
+                            console.log('🚀 Order Management: Receipt preview modal should now be visible');
+                          }, 100);
+
+                        } catch (stateError) {
+                          console.error('❌ Error setting modal states:', stateError);
+                          toast({
+                            title: 'Lỗi',
+                            description: 'Không thể hiển thị xem trước hóa đơn',
+                            variant: 'destructive',
+                          });
+                        }
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
