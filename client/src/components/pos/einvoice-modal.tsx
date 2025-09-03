@@ -1167,7 +1167,7 @@ export function EInvoiceModal({
         // Return comprehensive result for parent component to handle updates
         const publishResult = {
           success: true,
-          invoiceNumber: receiptDataToConfirm.invoiceNumber,
+          invoiceNumber: result.data?.invoiceNo || null,
           symbol: selectedTemplate.symbol || null,
           templateNumber: selectedTemplate.templateNumber || null,
           einvoiceStatus: 1, // Đã phát hành
@@ -1180,7 +1180,7 @@ export function EInvoiceModal({
         console.log(
           "📧 Step 4: E-Invoice published, now showing print dialog",
         );
-
+        
         // Show print dialog instead of directly returning
         setReceiptDataForPrint(receiptDataToConfirm);
         setShowPrintDialog(true);
@@ -1205,10 +1205,10 @@ export function EInvoiceModal({
   const handlePrintDialogClose = () => {
     setShowPrintDialog(false);
     setReceiptDataForPrint(null);
-
+    
     // Now close e-invoice modal and complete the flow
     onClose();
-
+    
     // Return appropriate data based on whether it was published or saved for later
     if (receiptDataForPrint?.invoiceNumber) {
       // Was published immediately
@@ -1238,13 +1238,6 @@ export function EInvoiceModal({
       onConfirm(completeInvoiceData);
     }
   };
-
-  // Ẩn hoàn toàn e-invoice modal  
-  return null;
-
-  if (!isOpen) {
-    return null;
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
