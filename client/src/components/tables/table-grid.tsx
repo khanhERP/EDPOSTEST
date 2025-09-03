@@ -228,110 +228,71 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
 
-  // Setup WebSocket connection for real-time updates
+  // Listen for custom events to refresh data
   useEffect(() => {
-    try {
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      const ws = new WebSocket(wsUrl);
+    const handleRefreshData = (event: CustomEvent) => {
+      console.log("🔄 Table Grid: Received refresh data event:", event.detail);
 
-      ws.onopen = () => {
-        console.log("Table Grid: WebSocket connected");
-      };
+      // Clear cache and refetch fresh data
+      queryClient.removeQueries({ queryKey: ["/api/tables"] });
+      queryClient.removeQueries({ queryKey: ["/api/orders"] });
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log("Table Grid: Received WebSocket message:", data);
+      // Refresh data
+      refetchTables();
+      refetchOrders();
 
-          if (data.type === "order_updated" || data.type === "order_status_changed") {
-            console.log("Table Grid: Refreshing data due to order update");
-            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-          }
+      console.log("✅ Table Grid: Data refreshed successfully");
+    };
 
-          // Handle popup close signal - force immediate refresh
-          if (data.type === "popup_close" && data.success) {
-            console.log("🔄 Table Grid: Popup closed, forcing immediate data refresh");
-            
-            // Clear ALL cache completely
-            queryClient.clear();
-            
-            // Force immediate refresh with Promise.all to ensure both complete
-            Promise.all([
-              refetchTables(),
-              refetchOrders()
-            ]).then(() => {
-              console.log("✅ Table Grid: All data refreshed successfully");
-              
-              // Force a second refresh after a short delay to ensure consistency
-              setTimeout(() => {
-                Promise.all([
-                  refetchTables(),
-                  refetchOrders()
-                ]);
-                console.log("✅ Table Grid: Second refresh completed");
-              }, 200);
-            }).catch((error) => {
-              console.error("❌ Table Grid: Error during data refresh:", error);
-            });
-          }
-        } catch (error) {
-          console.error("Table Grid: Error parsing WebSocket message:", error);
-        }
-      };
+    const handleOrderUpdated = (event: CustomEvent) => {
+      console.log("📋 Table Grid: Order updated event:", event.detail);
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+    };
 
-      ws.onerror = (error) => {
-        console.error("Table Grid: WebSocket error:", error);
-      };
+    // Add event listeners
+    window.addEventListener('refreshTableData', handleRefreshData as EventListener);
+    window.addEventListener('orderUpdated', handleOrderUpdated as EventListener);
 
-      ws.onclose = () => {
-        console.log("Table Grid: WebSocket disconnected");
-      };
-
-      return () => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.close();
-        }
-      };
-    } catch (error) {
-      console.error("Table Grid: Failed to establish WebSocket connection:", error);
-    }
-  }, [queryClient, toast, refetchTables, refetchOrders]);
+    return () => {
+      window.removeEventListener('refreshTableData', handleRefreshData as EventListener);
+      window.removeEventListener('orderUpdated', handleOrderUpdated as EventListener);
+    };
+  }, [queryClient, refetchTables, refetchOrders]);
 
   // Add event listeners for payment completion
   useEffect(() => {
     const handlePaymentCompleted = (event: CustomEvent) => {
       console.log("💳 Table Grid: Payment completed event received:", event.detail);
-      
+
       // Force immediate data refresh when payment is completed from any source
       const refreshData = async () => {
         console.log("🔄 Table Grid: Starting aggressive refresh after payment completion");
-        
+
         try {
           // Clear all cached data completely
           queryClient.clear();
           queryClient.removeQueries();
-          
+
           // Force fresh data fetch multiple times
           for (let i = 0; i < 3; i++) {
             await Promise.all([
               refetchTables(),
               refetchOrders()
             ]);
-            
+
             if (i < 2) {
               await new Promise(resolve => setTimeout(resolve, 100));
             }
           }
-          
+
           console.log("✅ Table Grid: Aggressive payment refresh completed");
-          
+
           toast({
             title: "Đã cập nhật",
             description: "Trạng thái bàn đã được làm mới sau thanh toán",
           });
-          
+
         } catch (error) {
           console.error("❌ Table Grid: Error refreshing after payment:", error);
           // Fallback: force page reload if refresh fails
@@ -340,21 +301,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           }, 1000);
         }
       };
-      
+
       // Execute refresh immediately
       refreshData();
     };
 
     const handleOrderStatusUpdate = (event: CustomEvent) => {
       console.log("📋 Table Grid: Order status updated:", event.detail);
-      
+
       if (event.detail?.status === "paid") {
         console.log("💳 Table Grid: Order marked as paid, refreshing table status");
-        
+
         // Clear cache and refresh immediately for paid orders
         queryClient.removeQueries({ queryKey: ["/api/tables"] });
         queryClient.removeQueries({ queryKey: ["/api/orders"] });
-        
+
         setTimeout(() => {
           refetchTables();
           refetchOrders();
@@ -364,13 +325,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     const handleForceRefresh = (event: CustomEvent) => {
       console.log("🔄 Table Grid: Force refresh requested:", event.detail);
-      
+
       if (event.detail?.reason === "payment_completed") {
         console.log("💰 Table Grid: Refreshing due to payment completion");
-        
+
         // Clear all data and force fresh fetch
         queryClient.clear();
-        
+
         Promise.all([
           refetchTables(),
           refetchOrders()
@@ -429,10 +390,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       // Force immediate data refresh with multiple strategies
       console.log("🔄 Table: Starting comprehensive data refresh after payment success");
-      
+
       // Strategy 1: Clear all cached data completely
       queryClient.clear();
-      
+
       // Strategy 2: Invalidate specific queries
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
@@ -469,8 +430,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       if (typeof window !== 'undefined') {
         const events = [
           new CustomEvent('paymentCompleted', {
-            detail: { 
-              orderId: variables.orderId, 
+            detail: {
+              orderId: variables.orderId,
               paymentMethod: variables.paymentMethod,
               timestamp: new Date().toISOString()
             }
@@ -483,8 +444,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             }
           }),
           new CustomEvent('forceRefresh', {
-            detail: { 
-              reason: 'payment_completed', 
+            detail: {
+              reason: 'payment_completed',
               orderId: variables.orderId,
               source: 'table-grid'
             }
@@ -1545,7 +1506,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           const quantity = Number(item.quantity || 0);
           const product = products.find((p: any) => p.id === item.productId);
 
-          // Calculate subtotal exactly as Order Details
+          // Calculate subtotal based on base price without tax
           subtotal += basePrice * quantity;
 
           // Use EXACT same tax calculation logic as Order Details
@@ -2548,9 +2509,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   (p: any) => p.id === item.productId,
                                 )
                               : null;
-                            return product?.taxRate
-                              ? parseFloat(product.taxRate)
-                              : 10;
+                            return product?.taxRate ? parseFloat(product.taxRate) : 10;
                           })(),
                         }));
 
@@ -2825,7 +2784,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           isOpen={showReceiptModal}
           onClose={() => {
             console.log("🔴 Table: Receipt modal closing, clearing states and sending refresh signal");
-            
+
             // Clear all modal states
             setShowReceiptModal(false);
             setSelectedReceipt(null);
@@ -2842,16 +2801,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             queryClient.removeQueries({ queryKey: ["/api/tables"] });
             queryClient.removeQueries({ queryKey: ["/api/orders"] });
             queryClient.removeQueries({ queryKey: ["/api/order-items"] });
-            
+
             refetchTables();
             refetchOrders();
-            
+
             // Send popup close signal for other components
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
               const ws = new WebSocket(wsUrl);
-              
+
               ws.onopen = () => {
                 ws.send(JSON.stringify({
                   type: "popup_close",
@@ -2864,12 +2823,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             } catch (error) {
               console.error("❌ Table: Failed to send refresh signal:", error);
             }
-            
+
             toast({
               title: "Đã làm mới",
               description: "Dữ liệu trạng thái bàn đã được cập nhật",
             });
-            
+
             console.log("✅ Table: Receipt modal closed and refresh signal sent");
           }}
           receipt={selectedReceipt}

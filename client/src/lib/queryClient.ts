@@ -51,7 +51,7 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
+      refetchInterval: 5000, // Refetch every 5 seconds
       refetchOnWindowFocus: true, // Always refetch when window focus
       staleTime: 0, // Data is always stale, always refetch
       gcTime: 0, // No garbage collection time, immediate cleanup

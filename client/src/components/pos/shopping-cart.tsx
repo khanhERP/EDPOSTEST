@@ -133,114 +133,44 @@ export function ShoppingCart({
     },
   });
 
-  // WebSocket connection for broadcasting cart updates to customer display
-  // This useEffect is responsible for establishing and managing the WebSocket connection.
-  // It also handles broadcasting cart updates and listening for specific messages.
+  // Listen for custom events to manage cart state
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-        const ws = new WebSocket(wsUrl);
+    const handleClearCart = (event: CustomEvent) => {
+      console.log('🔄 Shopping Cart: Received clear cart event:', event.detail);
 
-        ws.onopen = () => {
-          console.log('Shopping Cart: WebSocket connected for customer display broadcasting');
-          // Send initial cart state when connected
-          broadcastCartUpdate(cart);
-        };
+      // Clear cart immediately
+      onClearCart();
 
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            console.log('Shopping Cart: Received WebSocket message:', data);
-
-            // Handle cart update request
-            if (data.type === 'cart_update_request') {
-              broadcastCartUpdate(cart);
-            }
-
-            // Handle popup close signal - force complete refresh
-            if (data.type === 'popup_close' && data.success) {
-              console.log('🔄 Shopping Cart: Popup closed, forcing complete refresh');
-              
-              // Clear cart immediately
-              onClearCart();
-              
-              // Clear any active orders in POS
-              if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                (window as any).clearActiveOrder();
-              }
-              
-              // Force page refresh to ensure all data is updated
-              setTimeout(() => {
-                window.location.reload();
-              }, 100);
-              
-              // Broadcast empty cart to customer display
-              broadcastCartUpdate([]);
-              
-              console.log('✅ Shopping Cart: Complete refresh initiated');
-            }
-          } catch (error) {
-            console.error('Shopping Cart: Error parsing WebSocket message:', error);
-          }
-        };
-
-        ws.onerror = (error) => {
-          console.error('Shopping Cart: WebSocket error:', error);
-        };
-
-        ws.onclose = () => {
-          console.log('Shopping Cart: WebSocket disconnected');
-        };
-
-        // Store the WebSocket reference for cleanup
-        (window as any).shoppingCartWS = ws;
-
-        return () => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.close();
-          }
-        };
-      } catch (error) {
-        console.error('Shopping Cart: Failed to establish WebSocket connection:', error);
+      // Clear any active orders in POS
+      if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+        (window as any).clearActiveOrder();
       }
-    }
-  }, [cart, onClearCart]); // Depend on onClearCart to ensure the latest function is used
+
+      console.log('✅ Shopping Cart: Cart cleared successfully');
+    };
+
+    const handleCartUpdate = (event: CustomEvent) => {
+      console.log('🔄 Shopping Cart: Received cart update request:', event.detail);
+      // Could trigger a cart sync or update if needed
+    };
+
+    // Add event listeners
+    window.addEventListener('clearCart', handleClearCart as EventListener);
+    window.addEventListener('cartUpdateRequest', handleCartUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('clearCart', handleClearCart as EventListener);
+      window.removeEventListener('cartUpdateRequest', handleCartUpdate as EventListener);
+    };
+  }, [onClearCart]);
 
   // Broadcast cart updates to customer display using existing connection
   // This useEffect is responsible for debouncing and broadcasting cart updates.
   const broadcastCartUpdate = (currentCart: CartItem[]) => {
-    if (!window.shoppingCartWS || window.shoppingCartWS.readyState !== WebSocket.OPEN) {
-      console.warn("Shopping Cart: WebSocket not connected, cannot broadcast cart update.");
-      // Optionally try to reconnect or queue the message
-      return;
-    }
-
-    const subtotal = currentCart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-    const tax = currentCart.reduce((sum, item) => {
-      if (item.taxRate && parseFloat(item.taxRate) > 0) {
-        const basePrice = parseFloat(item.price);
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          return sum + Math.floor((afterTaxPrice - basePrice) * item.quantity);
-        }
-      }
-      return sum;
-    }, 0);
-    const total = Math.round(subtotal + tax);
-
-    console.log("Broadcasting cart update to customer display:", currentCart);
-    const message = JSON.stringify({
-      type: "cart_update",
-      cart: currentCart,
-      subtotal,
-      tax,
-      total,
-      timestamp: new Date().toISOString(),
-    });
-
-    window.shoppingCartWS.send(message);
+    // This function is no longer needed as WebSocket is removed.
+    // If customer display synchronization is required via other means (e.g., polling, SSE, or another event system),
+    // this logic would need to be reimplemented there.
+    console.log("Customer display update would happen here if WebSocket was active.");
   };
 
   // Function to clear the cart, used by the WebSocket handler
@@ -902,7 +832,7 @@ export function ShoppingCart({
         isOpen={showReceiptModal}
         onClose={() => {
           console.log('🔄 Shopping Cart: Receipt modal closing, clearing cart and sending refresh signal');
-          
+
           // Close modal and clear states
           setShowReceiptModal(false);
           setSelectedReceipt(null);
@@ -910,18 +840,18 @@ export function ShoppingCart({
           setOrderForPayment(null);
           setPreviewReceipt(null);
           setIsProcessingPayment(false);
-          
+
           // Clear cart
           onClearCart();
-          
+
           // Clear any active orders
           if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
             (window as any).clearActiveOrder();
           }
-          
+
           // Broadcast empty cart
           broadcastCartUpdate([]);
-          
+
           // Send popup close signal to refresh other components
           try {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -940,7 +870,7 @@ export function ShoppingCart({
           } catch (error) {
             console.error('❌ Shopping Cart: Failed to send refresh signal:', error);
           }
-          
+
           console.log('✅ Shopping Cart: Receipt modal closed and refresh signal sent');
         }}
         receipt={selectedReceipt}
