@@ -2056,7 +2056,7 @@ export function OrderManagement() {
 
                         // Step 5: Close order details modal and show receipt preview
                         try {
-                          const orderForPaymentData = {
+                          const paymentOrderData = {
                             ...selectedOrder,
                             id: selectedOrder.id,
                             orderItems: processedItems,
@@ -2069,7 +2069,7 @@ export function OrderManagement() {
 
                           setOrderDetailsOpen(false);
                           setSelectedOrder(selectedOrder);
-                          setOrderForPayment(orderForPaymentData);
+                          setOrderForPayment(paymentOrderData);
                           setPreviewReceipt(receiptPreview);
 
                           // Use setTimeout to ensure state is set before showing modal
