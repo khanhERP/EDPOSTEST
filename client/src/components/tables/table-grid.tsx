@@ -2520,11 +2520,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
               });
 
-              // Show receipt if available
-              if (data.receipt && data.shouldShowReceipt) {
+              // Always show receipt modal after successful payment - prioritize receipt display
+              if (data.receipt) {
                 console.log('📄 Table: Showing receipt modal after successful payment');
                 setSelectedReceipt(data.receipt);
                 setShowReceiptModal(true);
+              } else {
+                console.warn('⚠️ Table: No receipt data found after payment completion');
               }
 
             } catch (error) {

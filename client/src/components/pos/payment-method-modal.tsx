@@ -778,7 +778,7 @@ export function PaymentMethodModal({
             // Force immediate UI refresh after successful status update
             if (typeof window !== 'undefined') {
               console.log("🔄 Dispatching immediate order status update events");
-              
+
               const events = [
                 new CustomEvent('orderStatusUpdated', {
                   detail: {
@@ -972,11 +972,11 @@ export function PaymentMethodModal({
 
       // STEP 6: Pass success data to parent component WITHOUT receipt to avoid duplicate popups
       console.log("✅ Step 6: Payment process completed successfully");
-      
+
       // Show success toast
       toast({
         title: "Thành công",
-        description: eInvoiceData.publishLater 
+        description: eInvoiceData.publishLater
           ? "Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau"
           : "Đơn hàng đã được thanh toán và hóa đơn điện tử đã được tạo",
       });
@@ -995,7 +995,7 @@ export function PaymentMethodModal({
         }
       }, 500);
 
-      onSelectMethod("paymentCompleted", {
+      onSelectMethod('paymentCompleted', {
         ...eInvoiceData,
         originalPaymentMethod: selectedPaymentMethod,
         orderId: orderInfo.id,

@@ -605,6 +605,7 @@ export function EInvoiceModal({
 
       // Prepare comprehensive invoice data với receipt để hiển thị modal in
       const completeInvoiceData = {
+        success: true, // Add success flag
         ...invoiceData,
         paymentMethod: selectedPaymentMethod, // Use original payment method
         originalPaymentMethod: selectedPaymentMethod,
@@ -613,6 +614,9 @@ export function EInvoiceModal({
         customerName: formData.customerName,
         taxCode: formData.taxCode,
         showReceiptModal: true, // Flag để parent component biết cần hiển thị receipt modal
+        shouldShowReceipt: true, // Additional flag for receipt display
+        einvoiceStatus: 0, // 0 = Chưa phát hành (for publish later)
+        status: 'draft' // Draft status for publish later
       };
 
       console.log("✅ Prepared data for onConfirm after publish later");
@@ -1172,7 +1176,9 @@ export function EInvoiceModal({
           invoiceStatus: 1, // Hoàn thành
           status: 'published',
           receipt: receiptDataToConfirm,
-          publishedImmediately: true
+          publishedImmediately: true,
+          showReceiptModal: true, // Ensure receipt modal is shown
+          shouldShowReceipt: true // Additional flag for receipt display
         };
 
         console.log(
