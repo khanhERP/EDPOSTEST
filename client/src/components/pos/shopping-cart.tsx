@@ -133,6 +133,85 @@ export function ShoppingCart({
     },
   });
 
+  // Add WebSocket listener for data refresh
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    let reconnectTimer: NodeJS.Timeout | null = null;
+    let shouldReconnect = true;
+
+    const connectWebSocket = () => {
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('📡 Shopping Cart: WebSocket connected for refresh signals');
+          // Register as shopping cart client
+          ws?.send(JSON.stringify({
+            type: 'register_shopping_cart',
+            timestamp: new Date().toISOString()
+          }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('📩 Shopping Cart: Received WebSocket message:', data);
+
+            if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'force_refresh') {
+              console.log('🔄 Shopping Cart: Refreshing data due to WebSocket signal');
+              
+              // Clear cart if payment was successful
+              if (data.type === 'popup_close' && data.success) {
+                console.log('🔄 Shopping Cart: Clearing cart due to successful payment');
+                onClearCart();
+                
+                // Clear any active orders
+                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                  (window as any).clearActiveOrder();
+                }
+              }
+            }
+          } catch (error) {
+            console.error('❌ Shopping Cart: Error processing WebSocket message:', error);
+          }
+        };
+
+        ws.onclose = () => {
+          console.log('📡 Shopping Cart: WebSocket disconnected, attempting reconnect...');
+          if (shouldReconnect) {
+            reconnectTimer = setTimeout(connectWebSocket, 2000);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('❌ Shopping Cart: WebSocket error:', error);
+        };
+      } catch (error) {
+        console.error('❌ Shopping Cart: Failed to connect WebSocket:', error);
+        if (shouldReconnect) {
+          reconnectTimer = setTimeout(connectWebSocket, 2000);
+        }
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      console.log('🔗 Shopping Cart: Cleaning up WebSocket connection');
+      shouldReconnect = false;
+      
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [onClearCart]);
+
   // Listen for custom events to manage cart state
   useEffect(() => {
     const handleClearCart = (event: CustomEvent) => {
