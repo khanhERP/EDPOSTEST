@@ -1562,9 +1562,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         change: "0.00",
         cashierName: order.employeeName || "System User",
         createdAt: order.orderedAt || new Date().toISOString(),
-        customerName: order.customerName,
-        customerTaxCode: null,
-        invoiceNumber: null,
         tableNumber: getTableInfo(order.tableId)?.tableNumber || "N/A",
       };
 
@@ -1672,9 +1669,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           change: "0.00",
           cashierName: order.employeeName || "System User",
           createdAt: order.orderedAt || new Date().toISOString(),
-          customerName: order.customerName,
-          customerTaxCode: null,
-          invoiceNumber: null,
           tableNumber: getTableInfo(order.tableId)?.tableNumber || "N/A",
         };
 
@@ -1779,75 +1773,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           className={`font-medium ${Number(activeOrder.total) <= 0 ? "text-gray-400" : "text-gray-900"}`}
                         >
                           {(() => {
-                            // Get order items for this specific order
-                            const currentOrderItems = allOrderItems?.get(activeOrder.id) || [];
-
-                            // If we don't have order items loaded or it's empty, use the stored total
-                            if (!currentOrderItems || currentOrderItems.length === 0) {
-                              const rawTotal = activeOrder.total;
-                              const orderTotal = Number(rawTotal || 0);
-
-                              console.log(
-                                `💰 Table ${table.tableNumber} - Order ${activeOrder.id} using stored total:`,
-                                {
-                                  rawTotal,
-                                  orderTotal,
-                                  hasItems: false,
-                                }
-                              );
-
-                              if (orderTotal <= 0) {
-                                return "0";
-                              }
-
-                              return Math.floor(orderTotal).toLocaleString("vi-VN");
-                            }
-
-                            // Recalculate using same logic as Order Details and Shopping Cart
-                            let subtotal = 0;
-                            let totalTax = 0;
-
-                            currentOrderItems.forEach((item: any) => {
-                              const basePrice = Number(item.unitPrice || 0);
-                              const quantity = Number(item.quantity || 0);
-                              const product = Array.isArray(products)
-                                ? products.find((p: any) => p.id === item.productId)
-                                : null;
-
-                              // Calculate subtotal (base price without tax)
-                              subtotal += basePrice * quantity;
-
-                              // Only calculate tax if afterTaxPrice exists in database
-                              if (
-                                product?.afterTaxPrice &&
-                                product.afterTaxPrice !== null &&
-                                product.afterTaxPrice !== ""
-                              ) {
-                                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-                                totalTax += Math.floor(taxPerUnit * quantity);
-                              }
-                              // No tax calculation if no afterTaxPrice in database
-                            });
-
-                            const grandTotal = subtotal + Math.abs(totalTax);
+                            // Always use the stored total from database for display consistency
+                            const storedTotal = Number(activeOrder.total || 0);
 
                             console.log(
-                              `💰 Table ${table.tableNumber} - Order ${activeOrder.id} recalculated total:`,
+                              `💰 Table ${table.tableNumber} using stored total:`,
                               {
-                                subtotal,
-                                totalTax,
-                                grandTotal,
-                                itemsCount: currentOrderItems.length,
-                                storedTotal: Number(activeOrder.total || 0),
+                                orderId: activeOrder.id,
+                                storedTotal: storedTotal,
+                                orderNumber: activeOrder.orderNumber
                               }
                             );
 
-                            if (grandTotal <= 0) {
+                            if (storedTotal <= 0) {
                               return "0";
                             }
 
-                            return Math.floor(grandTotal).toLocaleString("vi-VN");
+                            return Math.floor(storedTotal).toLocaleString("vi-VN");
                           })()}{" "}
                           ₫
                         </div>

@@ -1382,7 +1382,18 @@ export function OrderManagement() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
-                        {formatCurrency(Number(order.total))}
+                        {(() => {
+                          // Calculate total using same logic as table display
+                          const orderTotal = Number(order.total || 0);
+                          
+                          // If order has valid total, use it
+                          if (orderTotal > 0) {
+                            return formatCurrency(orderTotal);
+                          }
+                          
+                          // Otherwise return 0
+                          return formatCurrency(0);
+                        })()}
                       </span>
                     </div>
 
@@ -1629,26 +1640,59 @@ export function OrderManagement() {
                       let orderDetailsSubtotal = 0;
                       let orderDetailsTax = 0;
 
+                      console.log('🔍 Order Summary Calculation:', {
+                        orderItems: orderItems?.length || 0,
+                        products: products?.length || 0,
+                        selectedOrderId: selectedOrder?.id
+                      });
+
                       if (Array.isArray(orderItems) && Array.isArray(products)) {
                         orderItems.forEach((item: any) => {
                           const basePrice = Number(item.unitPrice || 0);
                           const quantity = Number(item.quantity || 0);
                           const product = products.find((p: any) => p.id === item.productId);
 
+                          console.log(`📊 Processing item ${item.id}:`, {
+                            productId: item.productId,
+                            basePrice,
+                            quantity,
+                            productFound: !!product,
+                            productAfterTaxPrice: product?.afterTaxPrice
+                          });
+
                           // Calculate subtotal exactly as Order Details display
-                          orderDetailsSubtotal += basePrice * quantity;
+                          const itemSubtotal = basePrice * quantity;
+                          orderDetailsSubtotal += itemSubtotal;
 
                           // Tax calculation with proper validation
-                          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                          if (product?.afterTaxPrice && 
+                              product.afterTaxPrice !== null && 
+                              product.afterTaxPrice !== "" &&
+                              product.afterTaxPrice !== "0.00") {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
                             const originalPrice = parseFloat(product.price || basePrice);
                             const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
-                            orderDetailsTax += taxPerUnit * quantity;
+                            const itemTax = taxPerUnit * quantity;
+                            orderDetailsTax += itemTax;
+                            
+                            console.log(`💸 Tax calculated for ${item.productName}:`, {
+                              afterTaxPrice,
+                              originalPrice,
+                              taxPerUnit,
+                              quantity,
+                              itemTax
+                            });
                           }
                         });
                       }
 
                       const finalTotal = orderDetailsSubtotal + Math.abs(orderDetailsTax);
+
+                      console.log('💰 Order Summary Final Calculation:', {
+                        subtotal: orderDetailsSubtotal,
+                        tax: orderDetailsTax,
+                        finalTotal: finalTotal
+                      });
 
                       return (
                         <>
@@ -1658,7 +1702,7 @@ export function OrderManagement() {
                           </div>
                           <div className="flex justify-between">
                             <span>{t('orders.tax')}</span>
-                            <span>{formatCurrency(orderDetailsTax)}</span>
+                            <span>{formatCurrency(Math.abs(orderDetailsTax))}</span>
                           </div>
                           <Separator />
                           <div className="flex justify-between font-medium">
