@@ -506,7 +506,7 @@ export function OrderManagement() {
         const finalTotal = calculatedSubtotal + calculatedTax;
 
         receiptData = {
-          transactionId: invoiceData.invoiceNumber || `TXN-${Date.now()}`,
+          transactionId: invoiceData.invoiceNumber || `TXN-PREVIEW-${Date.now()}`,
           items: currentOrderItems.map((item: any) => ({
             id: item.id,
             productId: item.productId || item.id,
@@ -793,9 +793,27 @@ export function OrderManagement() {
       console.log('💰 Final calculation results:', {
         subtotal: calculatedSubtotal,
         tax: calculatedTax,
+        absTax: Math.abs(calculatedTax),
         finalTotal: finalTotal,
-        itemsProcessed: processedItems.length
+        itemsProcessed: processedItems.length,
+        orderItemsData: orderItemsData.length,
+        productsAvailable: Array.isArray(products) ? products.length : 0
       });
+
+      // CRITICAL CHECK: Verify calculated values are valid
+      if (calculatedSubtotal === 0 && finalTotal === 0) {
+        console.error('❌ CALCULATION ERROR: All calculated values are 0!', {
+          orderItemsData: orderItemsData,
+          products: Array.isArray(products) ? products.slice(0, 3) : null,
+          processedItems: processedItems
+        });
+        toast({
+          title: 'Lỗi tính toán',
+          description: 'Không thể tính toán tổng tiền đơn hàng. Vui lòng kiểm tra dữ liệu sản phẩm.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       // Step 3: Create comprehensive order data for payment
       const orderForPaymentData = {
@@ -1226,14 +1244,14 @@ export function OrderManagement() {
       try {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
-        
+
         console.log('🔗 Order Management: Attempting WebSocket connection to:', wsUrl);
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
           console.log('🔗 Order Management: WebSocket connected successfully');
           isConnected = true;
-          
+
           // Clear any pending reconnect timer
           if (reconnectTimer) {
             clearTimeout(reconnectTimer);
@@ -1272,7 +1290,7 @@ export function OrderManagement() {
         ws.onclose = (event) => {
           console.log('🔗 Order Management: WebSocket disconnected', { code: event.code, reason: event.reason });
           isConnected = false;
-          
+
           // Only attempt reconnect if not manually closed and component is still mounted
           if (shouldReconnect && event.code !== 1000) {
             console.log('🔄 Order Management: Scheduling reconnect in 3 seconds...');
@@ -1288,7 +1306,7 @@ export function OrderManagement() {
         ws.onerror = (error) => {
           console.error('❌ Order Management: WebSocket error:', error);
           isConnected = false;
-          
+
           // Close the connection to trigger onclose event
           if (ws && ws.readyState === WebSocket.CONNECTING) {
             ws.close();
@@ -1297,7 +1315,7 @@ export function OrderManagement() {
 
       } catch (error) {
         console.error('❌ Error creating WebSocket connection:', error);
-        
+
         // Retry connection after delay if component is still mounted
         if (shouldReconnect) {
           reconnectTimer = setTimeout(() => {
@@ -1316,12 +1334,12 @@ export function OrderManagement() {
     return () => {
       console.log('🔗 Order Management: Cleaning up WebSocket connection');
       shouldReconnect = false;
-      
+
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
       }
-      
+
       if (ws) {
         if (isConnected) {
           ws.close(1000, 'Component unmounting');
@@ -1447,12 +1465,12 @@ export function OrderManagement() {
                         {(() => {
                           // Calculate total using same logic as table display
                           const orderTotal = Number(order.total || 0);
-                          
+
                           // If order has valid total, use it
                           if (orderTotal > 0) {
                             return formatCurrency(orderTotal);
                           }
-                          
+
                           // Otherwise return 0
                           return formatCurrency(0);
                         })()}
@@ -1736,7 +1754,7 @@ export function OrderManagement() {
                             const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
                             const itemTax = taxPerUnit * quantity;
                             orderDetailsTax += itemTax;
-                            
+
                             console.log(`💸 Tax calculated for ${item.productName}:`, {
                               afterTaxPrice,
                               originalPrice,
