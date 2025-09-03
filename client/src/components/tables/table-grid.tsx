@@ -2782,10 +2782,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       {showReceiptModal && selectedReceipt && (
         <ReceiptModal
           isOpen={showReceiptModal}
-          onClose={() => {
-            console.log("🔴 Table: Receipt modal closing, clearing states and sending refresh signal");
+          onClose={async () => {
+            console.log("🔴 Table: Receipt modal closing, clearing states and forcing complete data refresh");
 
-            // Clear all modal states
+            // Clear all modal states immediately
             setShowReceiptModal(false);
             setSelectedReceipt(null);
             setOrderForPayment(null);
@@ -2797,39 +2797,128 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setSelectedOrder(null);
             setSelectedPaymentMethod("");
 
-            // Clear cache and refresh data
-            queryClient.removeQueries({ queryKey: ["/api/tables"] });
-            queryClient.removeQueries({ queryKey: ["/api/orders"] });
-            queryClient.removeQueries({ queryKey: ["/api/order-items"] });
-
-            refetchTables();
-            refetchOrders();
-
-            // Send popup close signal for other components
+            // Force aggressive data refresh - multiple strategies for reliability
             try {
-              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-              const wsUrl = `${protocol}//${window.location.host}/ws`;
-              const ws = new WebSocket(wsUrl);
+              console.log("🔄 Table: Starting comprehensive data refresh after invoice modal close");
 
-              ws.onopen = () => {
-                ws.send(JSON.stringify({
-                  type: "popup_close",
-                  success: true,
-                  source: "table-grid",
-                  timestamp: new Date().toISOString()
-                }));
-                ws.close();
-              };
+              // Strategy 1: Clear ALL cache completely
+              queryClient.clear();
+              queryClient.removeQueries();
+
+              // Strategy 2: Force multiple fresh fetches with delays for reliability
+              const refreshAttempts = 3;
+              for (let i = 0; i < refreshAttempts; i++) {
+                console.log(`🔄 Table: Refresh attempt ${i + 1}/${refreshAttempts}`);
+
+                await Promise.all([
+                  refetchTables(),
+                  refetchOrders()
+                ]);
+
+                // Add delay between attempts except the last one
+                if (i < refreshAttempts - 1) {
+                  await new Promise(resolve => setTimeout(resolve, 200));
+                }
+              }
+
+              console.log("✅ Table: All refresh attempts completed");
+
+              // Strategy 3: Dispatch global refresh events for cross-component coordination
+              const refreshEvents = [
+                new CustomEvent('refreshTableData', {
+                  detail: {
+                    reason: 'invoice_modal_closed',
+                    source: 'table-grid',
+                    timestamp: new Date().toISOString()
+                  }
+                }),
+                new CustomEvent('forceRefresh', {
+                  detail: {
+                    reason: 'invoice_modal_closed',
+                    source: 'table-grid',
+                    timestamp: new Date().toISOString()
+                  }
+                }),
+                new CustomEvent('orderStatusUpdated', {
+                  detail: {
+                    action: 'data_refresh',
+                    source: 'table-grid',
+                    timestamp: new Date().toISOString()
+                  }
+                })
+              ];
+
+              refreshEvents.forEach(event => {
+                console.log(`📡 Table: Dispatching ${event.type} event`);
+                window.dispatchEvent(event);
+              });
+
+              // Strategy 4: WebSocket signal to other components/tabs
+              try {
+                const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                const ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                  const refreshSignal = {
+                    type: "popup_close",
+                    success: true,
+                    source: "table-grid-invoice",
+                    reason: "invoice_modal_closed",
+                    refresh_needed: true,
+                    timestamp: new Date().toISOString()
+                  };
+
+                  console.log("📡 Table: Sending WebSocket refresh signal:", refreshSignal);
+                  ws.send(JSON.stringify(refreshSignal));
+                  
+                  setTimeout(() => ws.close(), 100);
+                };
+
+                ws.onerror = (error) => {
+                  console.warn("⚠️ Table: WebSocket error (non-critical):", error);
+                };
+              } catch (wsError) {
+                console.warn("⚠️ Table: WebSocket signal failed (non-critical):", wsError);
+              }
+
+              // Strategy 5: Final verification refresh after a delay
+              setTimeout(async () => {
+                console.log("🔄 Table: Final verification refresh");
+                try {
+                  await Promise.all([
+                    refetchTables(),
+                    refetchOrders()
+                  ]);
+                  console.log("✅ Table: Final verification refresh completed");
+                } catch (error) {
+                  console.error("❌ Table: Final verification refresh failed:", error);
+                  // As last resort, reload the page
+                  console.log("🔄 Table: Attempting page reload as last resort");
+                  window.location.reload();
+                }
+              }, 1000);
+
+              toast({
+                title: "Đã làm mới",
+                description: "Dữ liệu trạng thái bàn đã được cập nhật hoàn toàn",
+              });
+
+              console.log("✅ Table: Receipt modal closed and comprehensive refresh completed");
+
             } catch (error) {
-              console.error("❌ Table: Failed to send refresh signal:", error);
+              console.error("❌ Table: Critical error during data refresh:", error);
+              
+              // Final fallback: force page reload
+              toast({
+                title: "Đang làm mới",
+                description: "Làm mới trang để cập nhật dữ liệu mới nhất...",
+              });
+              
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
             }
-
-            toast({
-              title: "Đã làm mới",
-              description: "Dữ liệu trạng thái bàn đã được cập nhật",
-            });
-
-            console.log("✅ Table: Receipt modal closed and refresh signal sent");
           }}
           receipt={selectedReceipt}
           cartItems={
