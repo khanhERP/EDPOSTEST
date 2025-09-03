@@ -71,34 +71,12 @@ export function DashboardOverview() {
     queryKey: ["/api/transactions"],
   });
 
-  // Query invoices - same as sales-orders page
-  const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
-    queryKey: ["/api/invoices"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/invoices");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Dashboard - Invoices loaded:", data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Dashboard - Error fetching invoices:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Query orders - same as sales-orders page
+  // Query orders by date range - same as sales-orders page
   const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
       try {
-        const response = await fetch("/api/orders");
+        const response = await fetch(`/api/orders/date-range/${startDate}/${endDate}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -107,6 +85,50 @@ export function DashboardOverview() {
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Dashboard - Error fetching orders:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Query transactions by date range - same as sales-orders page
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ["/api/transactions", startDate, endDate],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/transactions/${startDate}/${endDate}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Dashboard - Transactions loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Dashboard - Error fetching transactions:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Query invoices by date range - same as sales-orders page
+  const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
+    queryKey: ["/api/invoices/date-range", startDate, endDate],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/invoices/date-range/${startDate}/${endDate}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Dashboard - Invoices loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Dashboard - Error fetching invoices:', error);
         return [];
       }
     },
@@ -126,13 +148,15 @@ export function DashboardOverview() {
     queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
     queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
     queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/orders/date-range"] });
     queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/invoices/date-range"] });
   };
 
   const getDashboardStats = () => {
     try {
       // Add proper loading and error checks
-      if (invoicesLoading || ordersLoading) {
+      if (invoicesLoading || ordersLoading || transactionsLoading) {
         return {
           periodRevenue: 0,
           periodOrderCount: 0,
@@ -147,10 +171,7 @@ export function DashboardOverview() {
         };
       }
 
-      if (
-        !tables ||
-        !Array.isArray(tables)
-      )
+      if (!tables || !Array.isArray(tables)) {
         return {
           periodRevenue: 0,
           periodOrderCount: 0,
@@ -163,34 +184,19 @@ export function DashboardOverview() {
           peakHour: 12,
           totalTables: 0,
         };
+      }
 
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999); // Include the entire end date
-
-      // Combine invoices and orders data - same logic as sales-orders page
+      // Data is already filtered by date range from API calls
+      // Combine orders, transactions, and invoices - same logic as sales-orders page
       const combinedData = [
-        ...(Array.isArray(invoices) ? invoices.map((invoice: Invoice) => ({
-          ...invoice,
-          type: 'invoice' as const,
-          date: invoice.invoiceDate,
-          displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
-          displayStatus: invoice.invoiceStatus || 1,
-          customerName: invoice.customerName || 'Khách hàng lẻ',
-          customerPhone: invoice.customerPhone || '',
-          customerAddress: invoice.customerAddress || '',
-          customerTaxCode: invoice.customerTaxCode || '',
-          symbol: invoice.symbol || 'C11DTD',
-          einvoiceStatus: invoice.einvoiceStatus || 0
-        })) : []),
-        ...(Array.isArray(orders) ? orders.map((order: Order) => ({
+        ...(Array.isArray(orders) ? orders.filter((order: any) => order.status === 'paid').map((order: Order) => ({
           ...order,
           type: 'order' as const,
           date: order.orderedAt,
           displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
-          displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+          displayStatus: 1, // paid orders
           customerName: order.customerName || 'Khách hàng lẻ',
-          invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+          invoiceStatus: 1,
           customerPhone: '',
           customerAddress: '',
           customerTaxCode: '',
@@ -199,86 +205,71 @@ export function DashboardOverview() {
           tradeNumber: order.orderNumber || '',
           invoiceDate: order.orderedAt,
           einvoiceStatus: order.einvoiceStatus || 0
+        })) : []),
+        ...(Array.isArray(transactions) ? transactions.filter((tx: any) => tx.status === 'completed' || !tx.status).map((transaction: any) => ({
+          ...transaction,
+          type: 'transaction' as const,
+          date: transaction.createdAt,
+          displayNumber: transaction.transactionId || `TXN-${String(transaction.id).padStart(13, '0')}`,
+          displayStatus: 1, // completed transactions
+          customerName: transaction.customerName || 'Khách hàng lẻ',
+          invoiceStatus: 1,
+          customerPhone: '',
+          customerAddress: '',
+          customerTaxCode: '',
+          symbol: 'C11DTD',
+          invoiceNumber: transaction.transactionId || `TXN-${String(transaction.id).padStart(8, '0')}`,
+          tradeNumber: transaction.transactionId || '',
+          invoiceDate: transaction.createdAt,
+          einvoiceStatus: 0
+        })) : []),
+        ...(Array.isArray(invoices) ? invoices.filter((invoice: any) => invoice.invoiceStatus === 1).map((invoice: Invoice) => ({
+          ...invoice,
+          type: 'invoice' as const,
+          date: invoice.invoiceDate,
+          displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
+          displayStatus: 1, // published invoices
+          customerName: invoice.customerName || 'Khách hàng lẻ',
+          customerPhone: invoice.customerPhone || '',
+          customerAddress: invoice.customerAddress || '',
+          customerTaxCode: invoice.customerTaxCode || '',
+          symbol: invoice.symbol || 'C11DTD',
+          einvoiceStatus: invoice.einvoiceStatus || 0
         })) : [])
       ];
 
-      // Filter completed items within date range - enhanced logic to show more data
-      const filteredCompletedItems = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
-        try {
-          if (!item || !item.date) return false;
-
-          const itemDate = new Date(item.date);
-          if (isNaN(itemDate.getTime())) return false;
-
-          const dateMatch = itemDate >= start && itemDate <= end;
-
-          // Include more order statuses and invoice statuses to show real data
-          const isCompleted = (item.type === 'invoice' && (item.invoiceStatus === 1 || item.status === 'paid' || item.status === 'completed')) ||
-                            (item.type === 'order' && (item.status === 'paid' || item.status === 'completed' || item.status === 'confirmed' || item.status === 'served'));
-
-          return dateMatch && isCompleted;
-        } catch (error) {
-          console.error('Error filtering item:', item, error);
-          return false;
-        }
-      }) : [];
-
-      // If no completed items found, include pending/draft items for display
-      let itemsToAnalyze = filteredCompletedItems;
-      if (filteredCompletedItems.length === 0) {
-        itemsToAnalyze = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
-          try {
-            if (!item || !item.date) return false;
-            const itemDate = new Date(item.date);
-            if (isNaN(itemDate.getTime())) return false;
-            return itemDate >= start && itemDate <= end;
-          } catch (error) {
-            return false;
-          }
-        }) : [];
-      }
-
-      console.log("Dashboard Debug (Combined Data):", {
+      console.log("Dashboard Debug (Date-Filtered Data):", {
+        totalTransactions: transactions.length,
         totalInvoices: invoices.length,
         totalOrders: orders.length,
         combinedDataLength: combinedData.length,
         startDate,
         endDate,
-        filteredCompletedItems: filteredCompletedItems.length,
-        itemsToAnalyze: itemsToAnalyze.length,
-        periodRevenue,
-        monthRevenue,
-        sampleItems: itemsToAnalyze.slice(0, 3).map((item: any) => ({
+        sampleItems: combinedData.slice(0, 3).map((item: any) => ({
           id: item.id,
           type: item.type,
           total: item.total,
           subtotal: item.subtotal,
           tax: item.tax,
-          discount: item.discount,
-          calculatedRevenue: (Number(item.subtotal || 0) - Number(item.discount || 0))
+          date: item.date
         })),
       });
 
-      // Period revenue: Use exact same calculation as Order Details
-      // Revenue = Subtotal (base price without tax)
-      const periodRevenue = itemsToAnalyze.reduce(
+      // Period revenue: Use total amount from all completed transactions/orders/invoices
+      const periodRevenue = combinedData.reduce(
         (total: number, item: any) => {
-          // Use subtotal (pre-tax amount) as revenue, same as Order Details display
-          const itemSubtotal = Number(item.subtotal || 0);
-          const itemDiscount = Number(item.discount || 0);
-          // Revenue = Subtotal - Discount (excluding tax from revenue calculation)
-          const itemRevenue = itemSubtotal - itemDiscount;
-          return total + itemRevenue;
+          const itemTotal = Number(item.total || 0);
+          return total + itemTotal;
         },
         0,
       );
 
       // Order count: count of items in the filtered period
-      const periodOrderCount = itemsToAnalyze.length;
+      const periodOrderCount = combinedData.length;
 
       // Customer count: count unique customers from items
       const uniqueCustomers = new Set();
-      itemsToAnalyze.forEach((item: any) => {
+      combinedData.forEach((item: any) => {
         if (item.customerId) {
           uniqueCustomers.add(item.customerId);
         } else if (item.customerName && item.customerName !== 'Khách hàng lẻ') {
@@ -290,15 +281,17 @@ export function DashboardOverview() {
       });
       const periodCustomerCount = uniqueCustomers.size;
 
-      // Daily average for the period
+      // Calculate days difference for average
+      const start = new Date(startDate);
+      const end = new Date(endDate);
       const daysDiff = Math.max(
         1,
         Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
       );
       const dailyAverageRevenue = periodRevenue / daysDiff;
 
-      // Active orders (pending/in-progress orders only)
-      const activeOrders = Array.isArray(orders) ? orders.filter((order: any) => 
+      // Active orders (pending/in-progress orders only from all orders, not date-filtered)
+      const activeOrders = Array.isArray(allCurrentOrders) ? allCurrentOrders.filter((order: any) => 
         order.status === 'pending' || order.status === 'in_progress' || order.status === 'confirmed' || order.status === 'preparing' || order.status === 'ready' || order.status === 'served'
       ).length : 0;
 
@@ -306,23 +299,16 @@ export function DashboardOverview() {
         (table: TableType) => table.status === "occupied",
       ) : [];
 
-      // Month revenue: Use subtotal-based calculation for consistency with Order Details
-      const monthRevenue = itemsToAnalyze.reduce(
-        (total: number, item: any) => {
-          const itemSubtotal = Number(item.subtotal || 0);
-          const itemDiscount = Number(item.discount || 0);
-          return total + (itemSubtotal - itemDiscount);
-        },
-        0,
-      );
+      // Month revenue: same as period revenue for the selected date range
+      const monthRevenue = periodRevenue;
 
       // Average order value
       const averageOrderValue =
         periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
-      // Peak hours analysis from items in period
+      // Peak hours analysis from combined data
       const hourlyItems: { [key: number]: number } = {};
-      itemsToAnalyze.forEach((item: any) => {
+      combinedData.forEach((item: any) => {
         const itemDate = new Date(item.date);
         if (!isNaN(itemDate.getTime())) {
           const hour = itemDate.getHours();
@@ -400,8 +386,22 @@ export function DashboardOverview() {
     }
   };
 
+  // Get all current orders to check active ones (not date-filtered)
+  const { data: allCurrentOrders } = useQuery({
+    queryKey: ["/api/orders"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/orders");
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        return [];
+      }
+    },
+  });
+
   // Show loading state
-  if (invoicesLoading || ordersLoading) {
+  if (invoicesLoading || ordersLoading || transactionsLoading) {
     return (
       <div className="flex justify-center py-8">
         <div className="text-gray-500">{t("reports.loading")}</div>
