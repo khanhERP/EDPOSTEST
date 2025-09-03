@@ -628,14 +628,18 @@ export function EInvoiceModal({
         showReceiptModal: true, // Flag để parent component biết cần hiển thị receipt modal
         shouldShowReceipt: true, // Additional flag for receipt display
         einvoiceStatus: 0, // 0 = Chưa phát hành (for publish later)
-        status: 'draft' // Draft status for publish later
+        status: 'draft', // Draft status for publish later
+        cartItems: cartItems, // Include cart items for receipt
+        total: (typeof total === "number" && !isNaN(total)
+          ? total
+          : calculatedSubtotal + calculatedTax), // Include total
+        subtotal: calculatedSubtotal,
+        tax: calculatedTax
       };
 
       console.log("✅ Prepared data for onConfirm after publish later");
       console.log("📄 Receipt data to pass:", receiptData);
-
-      // Close E-Invoice modal first
-      console.log("🔄 Step 4: Closing E-Invoice modal after publish later");
+      console.log("📦 Complete invoice data:", completeInvoiceData);
 
       // Call onConfirm to pass data to parent and trigger receipt modal
       onConfirm(completeInvoiceData);
@@ -1138,7 +1142,6 @@ export function EInvoiceModal({
 
         console.log("✅ Prepared comprehensive invoice result:", invoiceResult);
 
-        // --- CHANGE START ---
         // Return comprehensive result for parent component to handle updates
         const publishResult = {
           success: true,
@@ -1151,16 +1154,20 @@ export function EInvoiceModal({
           receipt: receiptData,
           publishedImmediately: true,
           showReceiptModal: true, // Ensure receipt modal is shown
-          shouldShowReceipt: true // Additional flag for receipt display
+          shouldShowReceipt: true, // Additional flag for receipt display
+          paymentMethod: selectedPaymentMethod, // Include payment method
+          originalPaymentMethod: selectedPaymentMethod,
+          cartItems: cartItems, // Include cart items
+          total: cartTotal // Include calculated total
         };
 
         console.log(
           "📧 Step 4: E-Invoice published, now calling onConfirm with receipt data",
         );
+        console.log("📄 Publish result being sent:", publishResult);
 
-        // Directly call onConfirm instead of showing print dialog
+        // Call onConfirm to trigger receipt modal display
         onConfirm(publishResult);
-        // --- CHANGE END ---
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",

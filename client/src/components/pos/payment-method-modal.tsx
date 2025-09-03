@@ -140,6 +140,11 @@ export function PaymentMethodModal({
   const amountInputRef = useRef<HTMLInputElement>(null);
   const { listenForPaymentSuccess, removePaymentListener } = usePopupSignal();
 
+  // CRITICAL: Add state for receipt modal and its data
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptDataForModal, setReceiptDataForModal] = useState<any>(null);
+
+
   // Load payment methods from settings
   const getPaymentMethods = () => {
     const savedPaymentMethods = localStorage.getItem("paymentMethods");
@@ -727,316 +732,64 @@ export function PaymentMethodModal({
     }
   };
 
-  const handleEInvoiceComplete = async (eInvoiceData: any) => {
-    console.log("📧 E-Invoice confirmed from payment modal:", eInvoiceData);
+  // CRITICAL: Update handleEInvoiceComplete to correctly set receipt data and trigger receipt modal
+  const handleEInvoiceComplete = (invoiceData: any) => {
+    console.log("🎯 E-Invoice completed:", invoiceData);
+    console.log("📄 Invoice data received:", JSON.stringify(invoiceData, null, 2));
 
-    if (!orderInfo?.id) {
-      console.error("❌ No order ID found for payment update");
-      return;
+    // Always close the E-Invoice modal first
+    setShowEInvoice(false);
+
+    // Check if this is from publish later or immediate publish
+    if (invoiceData.publishLater) {
+      console.log("⏳ E-Invoice publish later completed");
+
+      // For publish later, receipt data should be in invoiceData.receipt
+      if (invoiceData.receipt) {
+        console.log("📄 Setting receipt from publish later:", invoiceData.receipt);
+        setReceiptDataForModal(invoiceData.receipt); // Set data for receipt modal
+
+        // Force show receipt modal after a small delay
+        setTimeout(() => {
+          setShowReceiptModal(true);
+          console.log("📄 Receipt modal should now be visible");
+        }, 100);
+      } else {
+        console.log("❌ No receipt data found in publish later response");
+      }
+    } else if (invoiceData.publishedImmediately || invoiceData.success) {
+      console.log("✅ E-Invoice published immediately");
+
+      // For immediate publish, receipt data should be in invoiceData.receipt
+      if (invoiceData.receipt) {
+        console.log("📄 Setting receipt from immediate publish:", invoiceData.receipt);
+        setReceiptDataForModal(invoiceData.receipt); // Set data for receipt modal
+
+        // Force show receipt modal after a small delay
+        setTimeout(() => {
+          setShowReceiptModal(true);
+          console.log("📄 Receipt modal should now be visible");
+        }, 100);
+      } else {
+        console.log("❌ No receipt data found in immediate publish response");
+      }
     }
 
-    try {
-      console.log("🔄 Step 1: Starting payment process for order:", orderInfo.id);
-
-      // Check if this is a real order or temporary order
-      const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
-      let statusResult = null;
-
-      if (!isTemporaryOrder) {
-        // STEP 1: Update order status to 'paid' using the dedicated status endpoint (only for real orders)
-        console.log("📤 Step 1: Updating order status to 'paid' for real order");
-        console.log(`🔍 Order details before update:`, {
-          orderId: orderInfo.id,
-          currentStatus: orderInfo.status,
-          tableId: orderInfo.tableId,
-          total: orderInfo.total,
-          paymentMethod: selectedPaymentMethod
-        });
-
-        try {
-          const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              status: 'paid'
-            }),
-          });
-
-          console.log(`🔍 API Response status: ${statusResponse.status} ${statusResponse.statusText}`);
-
-          if (!statusResponse.ok) {
-            const errorText = await statusResponse.text();
-            console.error("❌ Step 1 FAILED: Order status update failed:", errorText);
-            throw new Error(`Failed to update order status: ${errorText}`);
-          } else {
-            statusResult = await statusResponse.json();
-            console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
-            console.log(`🎯 Order status changed: ${orderInfo.status} → 'paid'`);
-
-            // Force immediate UI refresh after successful status update
-            if (typeof window !== 'undefined') {
-              console.log("🔄 Dispatching immediate order status update events");
-
-              const events = [
-                new CustomEvent('orderStatusUpdated', {
-                  detail: {
-                    orderId: orderInfo.id,
-                    status: 'paid',
-                    previousStatus: orderInfo.status,
-                    tableId: orderInfo.tableId,
-                    paymentMethod: selectedPaymentMethod,
-                    timestamp: new Date().toISOString()
-                  }
-                }),
-                new CustomEvent('refreshOrders', {
-                  detail: {
-                    immediate: true,
-                    orderId: orderInfo.id,
-                    newStatus: 'paid'
-                  }
-                }),
-                new CustomEvent('refreshTables', {
-                  detail: {
-                    immediate: true,
-                    tableId: orderInfo.tableId,
-                    orderId: orderInfo.id
-                  }
-                }),
-                new CustomEvent('paymentCompleted', {
-                  detail: {
-                    orderId: orderInfo.id,
-                    tableId: orderInfo.tableId,
-                    paymentMethod: selectedPaymentMethod,
-                    timestamp: new Date().toISOString()
-                  }
-                }),
-                new CustomEvent('tableStatusUpdate', {
-                  detail: {
-                    tableId: orderInfo.tableId,
-                    checkForRelease: true,
-                    orderId: orderInfo.id,
-                    immediate: true
-                  }
-                })
-              ];
-
-              events.forEach(event => {
-                console.log("📡 Dispatching immediate UI refresh event:", event.type, event.detail);
-                window.dispatchEvent(event);
-              });
-            }
-          }
-        } catch (statusError) {
-          console.error("❌ Error in status update:", statusError);
-          throw statusError;
-        }
-      } else {
-        console.log("🔄 Step 1 SKIPPED: Temporary order detected, proceeding without database update");
-        statusResult = { id: orderInfo.id, status: 'paid', tableId: orderInfo.tableId };
-      }
-
-      // STEP 2: Update order with payment details (only for real orders)
-      if (!isTemporaryOrder) {
-        console.log("📤 Step 2: Adding payment details to real order");
-        const paymentData: any = {
-          paymentMethod: selectedPaymentMethod,
-          paidAt: new Date().toISOString(),
-          einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
-        };
-
-        // Add cash payment specific data if applicable
-        if (selectedPaymentMethod === "cash" && cashAmountInput) {
-          const orderTotal = receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0;
-          paymentData.amountReceived = parseFloat(cashAmountInput).toFixed(2);
-          paymentData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
-        }
-
-        const paymentResponse = await fetch(`/api/orders/${orderInfo.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(paymentData),
-        });
-
-        if (!paymentResponse.ok) {
-          const errorText = await paymentResponse.text();
-          console.error("❌ Step 2 FAILED: Payment details update failed:", errorText);
-          // Don't throw here as the status was already updated successfully
-        } else {
-          const paymentResult = await paymentResponse.json();
-          console.log("✅ Step 2 SUCCESS: Payment details added:", paymentResult);
-        }
-      } else {
-        console.log("🔄 Step 2 SKIPPED: Temporary order detected, no payment details update needed");
-      }
-
-      // STEP 3: Create receipt data for printing
-      console.log("🔄 Step 3: Creating receipt data for printing");
-      const receiptData = {
-        ...orderInfo,
-        orderId: orderInfo.id, // Include orderId for status tracking
-        transactionId: `ORDER-${orderInfo.id}`,
-        items: orderInfo.items || [],
-        subtotal: orderInfo.subtotal || "0",
-        tax: orderInfo.tax || "0",
-        total: orderInfo.total || "0",
-        exactSubtotal: orderInfo.exactSubtotal || 0,
-        exactTax: orderInfo.exactTax || 0,
-        exactTotal: orderInfo.exactTotal || 0,
-        paymentMethod: selectedPaymentMethod,
-        cashierName: eInvoiceData.cashierName || "System User",
-        createdAt: new Date().toISOString(),
-        paidAt: new Date().toISOString(),
-        einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
-        amountReceived: selectedPaymentMethod === "cash" && cashAmountInput ? parseFloat(cashAmountInput) : null,
-        change: selectedPaymentMethod === "cash" && cashAmountInput ?
-          parseFloat(cashAmountInput) - (orderInfo.exactTotal || orderInfo.total || 0) : null
-      };
-
-      // STEP 4: Force immediate UI refresh after successful status update (only for real orders)
-      if (!isTemporaryOrder && typeof window !== 'undefined') {
-        console.log("🔄 Step 4: Dispatching UI refresh events for real order");
-
-        // Dispatch immediate UI refresh events
-        const events = [
-          new CustomEvent('orderStatusUpdated', {
-            detail: {
-              orderId: orderInfo.id,
-              status: 'paid',
-              previousStatus: orderInfo.status,
-              tableId: orderInfo.tableId,
-              paymentMethod: selectedPaymentMethod,
-              timestamp: new Date().toISOString()
-            }
-          }),
-          new CustomEvent('refreshOrders', {
-            detail: {
-              immediate: true,
-              orderId: orderInfo.id,
-              newStatus: 'paid'
-            }
-          }),
-          new CustomEvent('refreshTables', {
-            detail: {
-              immediate: true,
-              tableId: orderInfo.tableId,
-              orderId: orderInfo.id
-            }
-          }),
-          new CustomEvent('paymentCompleted', {
-            detail: {
-              orderId: orderInfo.id,
-              tableId: orderInfo.tableId,
-              paymentMethod: selectedPaymentMethod,
-              timestamp: new Date().toISOString()
-            }
-          }),
-          new CustomEvent('tableStatusUpdate', {
-            detail: {
-              tableId: orderInfo.tableId,
-              checkForRelease: true,
-              orderId: orderInfo.id,
-              immediate: true
-            }
-          })
-        ];
-
-        events.forEach(event => {
-          console.log("📡 Dispatching immediate UI refresh event:", event.type, event.detail);
-          window.dispatchEvent(event);
-        });
-
-        // Also trigger a manual page refresh after a short delay if needed
-        setTimeout(() => {
-          console.log("🔄 Manual UI refresh trigger");
-          window.dispatchEvent(new CustomEvent('forceRefresh', {
-            detail: {
-              reason: 'payment_completed',
-              orderId: orderInfo.id,
-              tableId: orderInfo.tableId
-            }
-          }));
-        }, 500);
-      } else if (isTemporaryOrder) {
-        console.log("🔄 Step 4 SKIPPED: Temporary order detected, no UI refresh events needed");
-      }
-
-      // STEP 5: Close all modals and complete payment flow
-      console.log("🔄 Step 5: Closing all modals and completing payment flow");
-      setShowEInvoice(false);
-      setSelectedPaymentMethod("");
-      onClose();
-
-      // STEP 6: Pass success data to parent component WITHOUT receipt to avoid duplicate popups
-      console.log("✅ Step 6: Payment process completed successfully");
-
-      // Show success toast
-      toast({
-        title: "Thành công",
-        description: eInvoiceData.publishLater
-          ? "Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau"
-          : "Đơn hàng đã được thanh toán và hóa đơn điện tử đã được tạo",
+    // Handle order completion for table orders
+    if (source === "table" && orderId && (invoiceData.publishedImmediately || invoiceData.success)) {
+      console.log("🔄 Completing table order payment after E-Invoice publish");
+      completePaymentMutation.mutate({
+        orderId: orderId,
+        paymentMethod: invoiceData.originalPaymentMethod || selectedPaymentMethod,
       });
+    }
 
-      // Force one more refresh after a short delay to ensure UI is updated
-      setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          console.log("🔄 Final UI refresh after payment completion");
-          window.dispatchEvent(new CustomEvent('forceRefresh', {
-            detail: {
-              reason: 'payment_completed_final',
-              orderId: orderInfo.id,
-              tableId: orderInfo.tableId
-            }
-          }));
-        }
-      }, 500);
+    // Reset payment method selection
+    setSelectedPaymentMethod("");
 
-      onSelectMethod('paymentCompleted', {
-        ...eInvoiceData,
-        originalPaymentMethod: selectedPaymentMethod,
-        orderId: orderInfo.id,
-        tableId: orderInfo.tableId,
-        success: true,
-        completed: true,
-        shouldShowReceipt: false, // Prevent duplicate receipt popup
-        paymentData: selectedPaymentMethod === "cash" ? {
-          amountReceived: parseFloat(cashAmountInput || "0"),
-          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0)
-        } : null
-      });
-
-    } catch (error) {
-      console.error("❌ ERROR in payment process:", error);
-
-      // Show error toast
-      toast({
-        title: "Lỗi thanh toán",
-        description: "Có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại.",
-        variant: "destructive",
-      });
-
-      // Close modals to prevent getting stuck
-      setShowEInvoice(false);
-      setSelectedPaymentMethod("");
-      onClose();
-
-      // Pass error data to parent component
-      onSelectMethod("paymentError", {
-        ...eInvoiceData,
-        originalPaymentMethod: selectedPaymentMethod,
-        orderId: orderInfo?.id,
-        tableId: orderInfo?.tableId,
-        success: false,
-        error: error.message || "Lỗi không xác định",
-        paymentData: selectedPaymentMethod === "cash" ? {
-          amountReceived: parseFloat(cashAmountInput || "0"),
-          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0)
-        } : null
-      });
+    // Call onComplete if provided
+    if (onComplete) {
+      onComplete(invoiceData);
     }
   };
 
@@ -1850,11 +1603,26 @@ export function PaymentMethodModal({
         />
       )}
 
+      {/* CRITICAL: Render Receipt Modal here */}
+      {showReceiptModal && receiptDataForModal && (
+        <ReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => {
+            setShowReceiptModal(false);
+            setReceiptDataForModal(null); // Clear data after closing
+            onClose(); // Close the payment modal as well
+          }}
+          receipt={receiptDataForModal}
+        />
+      )}
+
       {/* Debug rendering states */}
       {console.log("🔍 PAYMENT MODAL RENDER DEBUG:", {
         showEInvoice: showEInvoice,
         selectedPaymentMethod: selectedPaymentMethod,
         shouldRenderEInvoice: showEInvoice && selectedPaymentMethod,
+        showReceiptModal: showReceiptModal,
+        receiptDataForModal: receiptDataForModal,
         timestamp: new Date().toISOString()
       })}
     </Dialog>
