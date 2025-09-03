@@ -392,6 +392,10 @@ export function EInvoiceModal({
       );
       console.log("🟡 Source:", source, "OrderId:", orderId);
 
+      // Close modal immediately to prevent re-rendering
+      console.log("🔄 Step 1: Closing E-Invoice modal immediately to prevent duplicate calls");
+      onClose();
+
       // Debug log current cart items
       console.log("=== PHÁT HÀNH SAU - KIỂM TRA DỮ LIỆU ===");
       console.log("cartItems received:", cartItems);
@@ -636,8 +640,6 @@ export function EInvoiceModal({
       // Call onConfirm to pass data to parent and trigger receipt modal
       onConfirm(completeInvoiceData);
 
-      // Force close this modal to prevent re-rendering
-      onClose();
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 

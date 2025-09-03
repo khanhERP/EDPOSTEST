@@ -648,7 +648,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const limit = parseInt(req.query.limit as string) || 20;
 
       const tenantDb = await getTenantDatabase(req);
-      
+
       // Filter by date range using direct database query
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -1103,16 +1103,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
       let orderData;
       if (!order) {
         console.log("No order object provided, creating default POS order");
-        
+
         // Calculate totals from items
         let subtotal = 0;
         let tax = 0;
-        
+
         if (items && Array.isArray(items)) {
           for (const item of items) {
             const itemSubtotal = parseFloat(item.unitPrice || '0') * (item.quantity || 0);
             subtotal += itemSubtotal;
-            
+
             // Get product to calculate tax
             try {
               const [product] = await db
@@ -1120,7 +1120,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
                 .from(products)
                 .where(eq(products.id, item.productId))
                 .limit(1);
-              
+
               if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                 const basePrice = parseFloat(product.price);
@@ -1132,9 +1132,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
             }
           }
         }
-        
+
         const total = subtotal + tax;
-        
+
         orderData = {
           orderNumber: `ORD-${Date.now()}`,
           tableId: null,
@@ -1151,12 +1151,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
           orderedAt: new Date(),
           salesChannel: "pos"
         };
-        
+
         console.log("Created default order:", orderData);
       } else {
         orderData = insertOrderSchema.parse(order);
       }
-      
+
       const itemsData = items.map((item: any) =>
         insertOrderItemSchema.parse(item),
       );
@@ -1187,6 +1187,80 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
       res.status(500).json({
         message: "Failed to create order",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.put("/api/orders/:id", async (req: TenantRequest, res) => {
+    console.log("=== PUT ORDER API CALLED ===");
+    const orderId = req.params.id;
+    console.log("Raw Order ID:", orderId);
+    console.log("Update data:", JSON.stringify(req.body, null, 2));
+
+    try {
+      const orderIdNum = parseInt(orderId);
+      if (isNaN(orderIdNum)) {
+        return res.status(400).json({ error: "Invalid order ID" });
+      }
+
+      // Get current order to check status
+      const currentOrder = await req.db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, orderIdNum))
+        .limit(1);
+
+      if (currentOrder.length === 0) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      console.log("📋 Current order state:", {
+        id: currentOrder[0].id,
+        orderNumber: currentOrder[0].orderNumber,
+        tableId: currentOrder[0].tableId,
+        currentStatus: currentOrder[0].status,
+        paymentMethod: currentOrder[0].paymentMethod,
+      });
+
+      console.log("=== UPDATING ORDER ===");
+      console.log("Order ID:", orderIdNum);
+      console.log("Update data:", req.body);
+
+      // Map einvoiceStatus field if present
+      const updateData = { ...req.body };
+      if (updateData.einvoiceStatus !== undefined) {
+        console.log("Mapped einvoiceStatus field:", updateData.einvoiceStatus);
+      }
+
+      // Convert paidAt string to Date object if present
+      if (updateData.paidAt && typeof updateData.paidAt === 'string') {
+        updateData.paidAt = new Date(updateData.paidAt);
+        console.log("Converted paidAt to Date object:", updateData.paidAt);
+      }
+
+      // Add updatedAt timestamp
+      updateData.updatedAt = new Date();
+
+      console.log(
+        "Final mapped data to update:",
+        JSON.stringify(updateData, (key, value) => 
+          value instanceof Date ? value.toISOString() : value, 2),
+      );
+
+      const result = await req.db
+        .update(orders)
+        .set(updateData)
+        .where(eq(orders.id, orderIdNum))
+        .returning();
+
+      console.log("✅ PUT Order updated successfully:", result[0]);
+
+      res.json(result[0]);
+    } catch (error) {
+      console.error("❌ PUT Order API error:", error);
+      res.status(500).json({
+        message: "Failed to update order",
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -2808,10 +2882,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const serverTime = {
         timestamp: new Date().toISOString(),
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        localTime: new Date().toLocaleString('vi-VN', { 
+        localTime: new Date().toLocaleString('vi-VN', {
           timeZone: 'Asia/Ho_Chi_Minh',
           year: 'numeric',
-          month: '2-digit', 
+          month: '2-digit',
           day: '2-digit',
           hour: '2-digit',
           minute: '2-digit',
@@ -3917,7 +3991,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         updateTimestamp: new Date().toISOString()
       });
     } catch (error) {
-      console.error(`❌ PUT Order API error:`, error);
+      console.error("❌ PUT Order API error:", error);
       if (error instanceof z.ZodError) {
         return res
           .status(400)

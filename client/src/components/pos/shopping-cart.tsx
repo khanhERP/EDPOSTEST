@@ -510,36 +510,50 @@ export function ShoppingCart({
     onCheckout(paymentData);
   };
 
-  const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log(
-      "📧 Shopping cart: Step 4: E-Invoice processing completed:",
-      eInvoiceData,
-    );
+  const handleEInvoiceConfirm = async (eInvoiceData: any) => {
+    console.log("🎯 Step 5: E-invoice confirmed, processing final steps");
+    console.log("📄 E-invoice data received:", eInvoiceData);
 
+    // Close E-Invoice modal immediately
     setShowEInvoiceModal(false);
 
-    // Auto clear cart after E-Invoice completion (both publish now and publish later)
-    console.log(
-      "🧹 Shopping cart: Auto clearing cart after E-Invoice completion",
-    );
-    onClearCart();
+    try {
+      // Step 5: Handle cart clearing and receipt display
+      // Auto clear cart after E-Invoice completion (both publish now and publish later)
+      console.log(
+        "🧹 Shopping cart: Auto clearing cart after E-Invoice completion",
+      );
+      onClearCart();
 
-    // Step 5: Show final receipt modal if receipt data exists
-    if (eInvoiceData.receipt) {
-      console.log(
-        "📄 Shopping cart: Step 5: Showing final receipt modal (not preview)",
-      );
-      setSelectedReceipt(eInvoiceData.receipt);
-      setShowReceiptModal(true);
-    } else {
-      console.log(
-        "✅ Shopping cart: E-invoice completed successfully, cart cleared",
-      );
+      // Step 5: Show final receipt modal if receipt data exists
+      if (eInvoiceData.receipt) {
+        console.log(
+          "📄 Shopping cart: Step 5: Showing final receipt modal (not preview)",
+        );
+        setSelectedReceipt(eInvoiceData.receipt);
+        setShowReceiptModal(true);
+      } else {
+        console.log(
+          "✅ Shopping cart: E-invoice completed successfully, cart cleared",
+        );
+        toast({
+          title: "Thành công",
+          description: "Hóa đơn đã được xử lý thành công",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Step 5: Error during final E-invoice confirmation:", error);
       toast({
-        title: "Thành công",
-        description: "Hóa đơn đã được xử lý thành công",
-        variant: "default",
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi khi xác nhận hóa đơn điện tử.",
+        variant: "destructive",
       });
+    } finally {
+      // Reset state after processing is complete
+      setCurrentOrderForPayment(null);
+      setSelectedPaymentMethod("");
+      // We don't reset isProcessingPayment here as it's handled by the calling modal
     }
   };
 
