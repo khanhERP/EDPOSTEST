@@ -181,40 +181,57 @@ export default function POS({ onLogout }: POSPageProps) {
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log("🔴 POS: Closing receipt modal and forcing complete cart reset");
+          console.log("🔴 POS: Receipt modal closed - EXECUTING COMPLETE CART RESET");
+
+          // Step 1: Close modal immediately
           setShowReceiptModal(false);
-          
-          // Force clear cart immediately - multiple calls to ensure it works
+
+          // Step 2: Clear cart multiple times immediately
           clearCart();
           setLastCartItems([]);
-          
-          // Force re-render by clearing all related states
+
+          // Step 3: Force state reset with multiple delays to ensure it works
           setTimeout(() => {
+            console.log('🧹 POS: First delayed cart clear (50ms)');
             clearCart();
             setLastCartItems([]);
-            
-            // Send clear signal to ensure all components are notified
+          }, 50);
+
+          setTimeout(() => {
+            console.log('🧹 POS: Second delayed cart clear (100ms)');
+            clearCart();
+            setLastCartItems([]);
+          }, 100);
+
+          setTimeout(() => {
+            console.log('🧹 POS: Final delayed cart clear (200ms)');
+            clearCart();
+            setLastCartItems([]);
+
+            // Send comprehensive WebSocket signals
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
               const ws = new WebSocket(wsUrl);
 
               ws.onopen = () => {
-                // Send multiple signals to ensure cart is cleared everywhere
+                console.log('📡 POS: Sending comprehensive clear signals via WebSocket');
+
+                // Send all possible clear signals
                 ws.send(JSON.stringify({
                   type: "popup_close",
                   success: true,
                   action: 'receipt_modal_closed',
                   timestamp: new Date().toISOString()
                 }));
-                
+
                 ws.send(JSON.stringify({
                   type: "receipt_modal_closed",
                   success: true,
                   action: 'receipt_modal_closed',
                   timestamp: new Date().toISOString()
                 }));
-                
+
                 ws.send(JSON.stringify({
                   type: "cart_update",
                   cart: [],
@@ -223,13 +240,19 @@ export default function POS({ onLogout }: POSPageProps) {
                   total: 0,
                   timestamp: new Date().toISOString()
                 }));
-                
+
+                ws.send(JSON.stringify({
+                  type: "force_cart_clear",
+                  success: true,
+                  timestamp: new Date().toISOString()
+                }));
+
                 ws.close();
               };
             } catch (error) {
-              console.error("Failed to send popup close signal:", error);
+              console.error("Failed to send WebSocket clear signals:", error);
             }
-          }, 50);
+          }, 200);
         }}
         receipt={lastReceipt}
         cartItems={lastCartItems}

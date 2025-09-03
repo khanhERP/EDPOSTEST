@@ -942,56 +942,80 @@ export function ShoppingCart({
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log('🔴 Shopping Cart: Closing receipt modal and forcing complete cart reset');
+          console.log('🔴 Shopping Cart: Receipt modal closed - FORCE CLEARING CART');
+          
+          // Step 1: Close modal immediately
           setShowReceiptModal(false);
           
-          // Force clear cart immediately - multiple attempts
+          // Step 2: Force clear all cart-related states immediately
           onClearCart();
-          
-          // Reset all states immediately
           setSelectedReceipt(null);
           setPreviewReceipt(null);
           setOrderForPayment(null);
           setLastCartItems([]);
           
-          // Force multiple cart clears to ensure it works
+          // Step 3: Force re-render and clear multiple times to ensure it sticks
           setTimeout(() => {
+            console.log('🧹 Shopping Cart: Executing delayed cart clear (50ms)');
             onClearCart();
+            setLastCartItems([]);
             broadcastCartUpdate([]);
             
-            // Also trigger global cart clear
+            // Trigger global cart clear
             if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
               (window as any).clearActiveOrder();
             }
           }, 50);
           
-          // Final clear after delay
+          // Step 4: Final cleanup after longer delay
           setTimeout(() => {
+            console.log('🧹 Shopping Cart: Final cart clear (200ms)');
             onClearCart();
+            setLastCartItems([]);
             broadcastCartUpdate([]);
           }, 200);
           
-          // Send WebSocket signal to ensure all displays are updated
-          try {
-            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            const ws = new WebSocket(wsUrl);
+          // Step 5: Send WebSocket signals for complete system reset
+          setTimeout(() => {
+            console.log('📡 Shopping Cart: Sending WebSocket clear signals');
+            try {
+              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
 
-            ws.onopen = () => {
-              ws.send(JSON.stringify({
-                type: "receipt_modal_closed",
-                success: true,
-                action: 'receipt_modal_closed',
-                timestamp: new Date().toISOString()
-              }));
-              ws.close();
-            };
-          } catch (error) {
-            console.error("Failed to send receipt modal close signal:", error);
-          }
+              ws.onopen = () => {
+                // Send multiple clear signals
+                ws.send(JSON.stringify({
+                  type: "receipt_modal_closed",
+                  success: true,
+                  action: 'receipt_modal_closed',
+                  timestamp: new Date().toISOString()
+                }));
+                
+                ws.send(JSON.stringify({
+                  type: "cart_update",
+                  cart: [],
+                  subtotal: 0,
+                  tax: 0,
+                  total: 0,
+                  timestamp: new Date().toISOString()
+                }));
+                
+                ws.send(JSON.stringify({
+                  type: "force_cart_clear",
+                  success: true,
+                  timestamp: new Date().toISOString()
+                }));
+                
+                ws.close();
+              };
+            } catch (error) {
+              console.error("Failed to send WebSocket clear signals:", error);
+            }
+          }, 100);
         }}
         receipt={selectedReceipt}
-        cartItems={cart.map((item) => ({
+        cartItems={lastCartItems.length > 0 ? lastCartItems : cart.map((item) => ({
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
