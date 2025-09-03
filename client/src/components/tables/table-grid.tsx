@@ -2799,51 +2799,77 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
             // Force aggressive data refresh - multiple strategies for reliability
             try {
-              console.log("🔄 Table: Starting comprehensive data refresh after invoice modal close");
+              console.log("🔄 Table: Starting comprehensive data refresh after receipt modal close");
 
               // Strategy 1: Clear ALL cache completely
               queryClient.clear();
               queryClient.removeQueries();
 
               // Strategy 2: Force multiple fresh fetches with delays for reliability
-              const refreshAttempts = 3;
+              const refreshAttempts = 5; // Increased attempts
               for (let i = 0; i < refreshAttempts; i++) {
                 console.log(`🔄 Table: Refresh attempt ${i + 1}/${refreshAttempts}`);
 
-                await Promise.all([
-                  refetchTables(),
-                  refetchOrders()
-                ]);
+                try {
+                  await Promise.all([
+                    queryClient.refetchQueries({ queryKey: ["/api/tables"], type: 'active' }),
+                    queryClient.refetchQueries({ queryKey: ["/api/orders"], type: 'active' }),
+                    refetchTables(),
+                    refetchOrders()
+                  ]);
+                  console.log(`✅ Table: Refresh attempt ${i + 1} completed successfully`);
+                } catch (refreshError) {
+                  console.error(`❌ Table: Refresh attempt ${i + 1} failed:`, refreshError);
+                }
 
                 // Add delay between attempts except the last one
                 if (i < refreshAttempts - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 200));
+                  await new Promise(resolve => setTimeout(resolve, 300));
                 }
               }
 
               console.log("✅ Table: All refresh attempts completed");
 
-              // Strategy 3: Dispatch global refresh events for cross-component coordination
+              // Strategy 3: Force invalidate and refetch with no cache
+              queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+              
+              // Strategy 4: Set query data to force re-render
+              queryClient.setQueryData(["/api/tables"], undefined);
+              queryClient.setQueryData(["/api/orders"], undefined);
+
+              // Strategy 5: Dispatch global refresh events for cross-component coordination
               const refreshEvents = [
                 new CustomEvent('refreshTableData', {
                   detail: {
-                    reason: 'invoice_modal_closed',
+                    reason: 'receipt_modal_closed',
                     source: 'table-grid',
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    forceRefresh: true
                   }
                 }),
                 new CustomEvent('forceRefresh', {
                   detail: {
-                    reason: 'invoice_modal_closed',
+                    reason: 'receipt_modal_closed',
                     source: 'table-grid',
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    forceRefresh: true
                   }
                 }),
                 new CustomEvent('orderStatusUpdated', {
                   detail: {
                     action: 'data_refresh',
                     source: 'table-grid',
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    forceRefresh: true
+                  }
+                }),
+                new CustomEvent('paymentCompleted', {
+                  detail: {
+                    action: 'modal_closed',
+                    source: 'table-grid',
+                    timestamp: new Date().toISOString(),
+                    forceRefresh: true
                   }
                 })
               ];
@@ -2853,7 +2879,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 window.dispatchEvent(event);
               });
 
-              // Strategy 4: WebSocket signal to other components/tabs
+              // Strategy 6: WebSocket signal to other components/tabs
               try {
                 const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
                 const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -2863,9 +2889,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   const refreshSignal = {
                     type: "popup_close",
                     success: true,
-                    source: "table-grid-invoice",
-                    reason: "invoice_modal_closed",
+                    source: "table-grid-receipt",
+                    reason: "receipt_modal_closed",
                     refresh_needed: true,
+                    force_refresh: true,
                     timestamp: new Date().toISOString()
                   };
 
@@ -2882,29 +2909,40 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 console.warn("⚠️ Table: WebSocket signal failed (non-critical):", wsError);
               }
 
-              // Strategy 5: Final verification refresh after a delay
-              setTimeout(async () => {
-                console.log("🔄 Table: Final verification refresh");
-                try {
-                  await Promise.all([
-                    refetchTables(),
-                    refetchOrders()
-                  ]);
-                  console.log("✅ Table: Final verification refresh completed");
-                } catch (error) {
-                  console.error("❌ Table: Final verification refresh failed:", error);
-                  // As last resort, reload the page
-                  console.log("🔄 Table: Attempting page reload as last resort");
-                  window.location.reload();
-                }
-              }, 1000);
+              // Strategy 7: Multiple delayed verification refreshes
+              const delayedRefreshes = [500, 1000, 2000];
+              delayedRefreshes.forEach((delay, index) => {
+                setTimeout(async () => {
+                  console.log(`🔄 Table: Delayed verification refresh ${index + 1} (${delay}ms)`);
+                  try {
+                    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                    
+                    await Promise.all([
+                      refetchTables(),
+                      refetchOrders()
+                    ]);
+                    console.log(`✅ Table: Delayed verification refresh ${index + 1} completed`);
+                  } catch (error) {
+                    console.error(`❌ Table: Delayed verification refresh ${index + 1} failed:`, error);
+                    
+                    // If all delayed refreshes fail, try page reload as last resort
+                    if (index === delayedRefreshes.length - 1) {
+                      console.log("🔄 Table: All refreshes failed, attempting page reload as last resort");
+                      setTimeout(() => {
+                        window.location.reload();
+                      }, 1000);
+                    }
+                  }
+                }, delay);
+              });
 
               toast({
                 title: "Đã làm mới",
                 description: "Dữ liệu trạng thái bàn đã được cập nhật hoàn toàn",
               });
 
-              console.log("✅ Table: Receipt modal closed and comprehensive refresh completed");
+              console.log("✅ Table: Receipt modal closed and comprehensive refresh initiated");
 
             } catch (error) {
               console.error("❌ Table: Critical error during data refresh:", error);
