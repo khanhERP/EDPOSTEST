@@ -1135,7 +1135,7 @@ export function EInvoiceModal({
 
         console.log("✅ Prepared comprehensive invoice result:", invoiceResult);
 
-        // Return comprehensive result for parent component to handle updates
+        // Create the final result object for onConfirm
         const publishResult = {
           success: true,
           invoiceNumber: receiptData.invoiceNumber,
