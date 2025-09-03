@@ -428,21 +428,24 @@ export function ReceiptModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) {
-        console.log("🔴 Receipt Modal: Dialog closing via onOpenChange");
+        console.log("🔴 Receipt Modal: Dialog closing via onOpenChange - ENHANCED REFRESH");
         
-        // Send immediate WebSocket signals when dialog closes
+        // Send immediate and comprehensive WebSocket signals when dialog closes
         try {
           const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
           const wsUrl = `${protocol}//${window.location.host}/ws`;
           const ws = new WebSocket(wsUrl);
 
           ws.onopen = () => {
-            // Send comprehensive close signals
+            // Send comprehensive close signals with enhanced data refresh
             const closeSignals = [
               { type: "popup_close", success: true, action: 'receipt_modal_closed' },
               { type: "receipt_modal_closed", success: true, action: 'receipt_modal_closed' },
               { type: "force_cart_clear", success: true },
-              { type: "refresh_data_after_print", action: 'refresh_tables_and_clear_cart' }
+              { type: "refresh_data_after_print", action: 'refresh_tables_and_clear_cart' },
+              { type: "force_table_grid_refresh", action: 'ultimate_refresh' },
+              { type: "order_updated", success: true },
+              { type: "order_status_changed", success: true }
             ];
             
             closeSignals.forEach((signal, index) => {
@@ -450,15 +453,31 @@ export function ReceiptModal({
                 ws.send(JSON.stringify({
                   ...signal,
                   timestamp: new Date().toISOString(),
-                  source: 'receipt_modal_close'
+                  source: 'receipt_modal_close_enhanced'
                 }));
-              }, index * 30);
+              }, index * 25);
             });
             
-            setTimeout(() => ws.close(), 200);
+            setTimeout(() => ws.close(), 250);
+          };
+
+          ws.onerror = (error) => {
+            console.error("WebSocket error during close signal:", error);
           };
         } catch (error) {
           console.error("Failed to send receipt close signals:", error);
+        }
+        
+        // Additional direct refresh attempt via window event
+        try {
+          window.dispatchEvent(new CustomEvent('forceTableRefresh', {
+            detail: { 
+              action: 'receipt_modal_closed',
+              timestamp: new Date().toISOString()
+            }
+          }));
+        } catch (eventError) {
+          console.error("Failed to dispatch custom refresh event:", eventError);
         }
         
         onClose();

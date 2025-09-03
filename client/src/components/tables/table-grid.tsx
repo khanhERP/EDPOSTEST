@@ -224,6 +224,29 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
 
+  // Add custom event listener for force refresh
+  useEffect(() => {
+    const handleForceRefresh = (event: CustomEvent) => {
+      console.log('🔄 Table Grid: Custom force refresh event received:', event.detail);
+      
+      // Ultimate refresh - clear everything and refetch
+      queryClient.clear();
+      queryClient.removeQueries();
+      
+      setTimeout(() => {
+        refetchTables();
+        refetchOrders();
+        console.log('✅ Table Grid: Custom event refresh completed');
+      }, 100);
+    };
+
+    window.addEventListener('forceTableRefresh', handleForceRefresh as EventListener);
+    
+    return () => {
+      window.removeEventListener('forceTableRefresh', handleForceRefresh as EventListener);
+    };
+  }, [queryClient, refetchTables, refetchOrders]);
+
   // Setup WebSocket connection for real-time updates
   useEffect(() => {
     try {
@@ -250,32 +273,77 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             if (data.type === 'popup_close' && data.success) {
               console.log('🔄 Table Grid: Receipt modal closed, refreshing data');
 
-              // Clear cache first
-              queryClient.removeQueries({ queryKey: ["/api/tables"] });
-              queryClient.removeQueries({ queryKey: ["/api/orders"] });
+              // Clear all cache immediately and completely
+              queryClient.clear();
+              queryClient.removeQueries();
 
-              // Force refresh table and order data with multiple attempts
-              setTimeout(() => {
-                refetchTables();
-                refetchOrders();
-              }, 100);
+              // Force refresh with multiple attempts
+              const refreshAttempts = [50, 150, 300, 500, 800];
+              refreshAttempts.forEach((delay, index) => {
+                setTimeout(() => {
+                  console.log(`🔄 Table Grid: Refresh attempt ${index + 1} (${delay}ms)`);
+                  refetchTables();
+                  refetchOrders();
+                }, delay);
+              });
 
+              // Show success message after final attempt
               setTimeout(() => {
-                refetchTables();
-                refetchOrders();
-              }, 300);
+                toast({
+                  title: "Đã làm mới",
+                  description: "Dữ liệu trạng thái bàn đã được cập nhật",
+                });
+              }, 900);
             }
 
             // Handle receipt modal closed signal specifically
             if (data.type === 'receipt_modal_closed' || (data.action && data.action === 'receipt_modal_closed')) {
-              console.log('🔄 Table Grid: Receipt modal closed signal received, force refreshing');
+              console.log('🔄 Table Grid: Receipt modal closed signal received, ULTIMATE force refreshing');
 
-              // Clear all cached data immediately
-              queryClient.removeQueries({ queryKey: ["/api/tables"] });
-              queryClient.removeQueries({ queryKey: ["/api/orders"] });
-              queryClient.removeQueries({ queryKey: ["/api/order-items"] });
+              // ULTIMATE CACHE CLEAR - clear everything
+              queryClient.clear();
+              queryClient.removeQueries();
+              queryClient.invalidateQueries();
 
-              // Multiple refresh attempts with different timings
+              // Force immediate refresh without cache
+              const forceRefresh = async () => {
+                try {
+                  // Use direct API calls to bypass cache completely
+                  const [tablesResponse, ordersResponse] = await Promise.all([
+                    fetch('/api/tables', { 
+                      cache: 'no-store',
+                      headers: { 'Cache-Control': 'no-cache' }
+                    }),
+                    fetch('/api/orders', { 
+                      cache: 'no-store',
+                      headers: { 'Cache-Control': 'no-cache' }
+                    })
+                  ]);
+
+                  const [freshTables, freshOrders] = await Promise.all([
+                    tablesResponse.json(),
+                    ordersResponse.json()
+                  ]);
+
+                  // Force update query cache with fresh data
+                  queryClient.setQueryData(["/api/tables"], freshTables);
+                  queryClient.setQueryData(["/api/orders"], freshOrders);
+
+                  console.log('✅ Table Grid: Force refresh completed with fresh data');
+                  console.log('📊 Fresh tables count:', freshTables?.length || 0);
+                  console.log('📊 Fresh orders count:', freshOrders?.length || 0);
+
+                } catch (error) {
+                  console.error('❌ Error during force refresh:', error);
+                }
+              };
+
+              // Execute force refresh immediately and with delays
+              forceRefresh();
+              setTimeout(forceRefresh, 100);
+              setTimeout(forceRefresh, 300);
+              
+              // Also use regular refetch as backup
               setTimeout(() => {
                 refetchTables();
                 refetchOrders();
@@ -284,12 +352,40 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               setTimeout(() => {
                 refetchTables();
                 refetchOrders();
+              }, 200);
 
+              setTimeout(() => {
+                refetchTables();
+                refetchOrders();
+                
                 toast({
                   title: "Đã làm mới",
-                  description: "Dữ liệu trạng thái bàn đã được cập nhật",
+                  description: "Dữ liệu trạng thái bàn đã được cập nhật hoàn toàn",
                 });
-              }, 200);
+              }, 400);
+            }
+
+            // Handle force refresh data signals
+            if (data.type === 'refresh_data_after_print' || data.action === 'refresh_tables_and_clear_cart') {
+              console.log('🔄 Table Grid: Force refresh after print signal received');
+
+              // Complete cache invalidation
+              queryClient.clear();
+              queryClient.removeQueries();
+
+              // Multiple aggressive refresh attempts
+              const refreshDelays = [0, 50, 150, 300, 500, 700, 1000];
+              refreshDelays.forEach((delay, index) => {
+                setTimeout(() => {
+                  console.log(`🔄 Table Grid: Aggressive refresh ${index + 1} (${delay}ms)`);
+                  refetchTables();
+                  refetchOrders();
+
+                  // Also invalidate to force fresh data
+                  queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                }, delay);
+              });
             }
         } catch (error) {
           console.error("Table Grid: Error parsing WebSocket message:", error);
