@@ -67,10 +67,6 @@ export function DashboardOverview() {
   );
   const queryClient = useQueryClient();
 
-  const { data: transactions } = useQuery({
-    queryKey: ["/api/transactions"],
-  });
-
   // Query orders by date range - same as sales-orders page
   const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ["/api/orders/date-range", startDate, endDate],
