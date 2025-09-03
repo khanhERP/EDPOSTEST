@@ -57,6 +57,12 @@ export function initializeWebSocketServer(server: Server) {
         } else if (data.type === 'register_table_grid') {
           console.log('✅ Table Grid client registered');
           (ws as any).clientType = 'table_grid';
+        } else if (data.type === 'register_table_management') {
+          console.log('✅ Table Management client registered');
+          (ws as any).clientType = 'table_management';
+        } else if (data.type === 'register_pos') {
+          console.log('✅ POS client registered');
+          (ws as any).clientType = 'pos';
         } else if (data.type === 'cart_update') {
           // Broadcast cart update to all connected clients (customer displays)
           console.log('📡 Broadcasting cart update to customer displays');
@@ -97,7 +103,7 @@ export function initializeWebSocketServer(server: Server) {
           clients.forEach(client => {
             if (client.readyState === client.OPEN && client !== ws) {
               const clientType = (client as any).clientType;
-              if (clientType === 'table_grid' || clientType === 'order_management') {
+              if (clientType === 'table_grid' || clientType === 'order_management' || clientType === 'table_management' || clientType === 'pos') {
                 client.send(JSON.stringify({
                   type: data.type,
                   source: data.source || 'unknown',

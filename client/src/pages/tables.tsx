@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { TableGrid } from "@/components/tables/table-grid";
@@ -9,19 +9,90 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Utensils, Settings, ClipboardList, ShoppingCart } from "lucide-react";
 import { Link } from "wouter";
 import { useTranslation } from "@/lib/i18n";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function TablesPage() {
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  // Add WebSocket listener for data refresh
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+
+    const connectWebSocket = () => {
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('📡 Tables: WebSocket connected for refresh signals');
+          // Register as table management client
+          ws?.send(JSON.stringify({
+            type: 'register_table_management',
+            timestamp: new Date().toISOString()
+          }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('📩 Tables: Received WebSocket message:', data);
+
+            if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'force_refresh') {
+              console.log('🔄 Tables: Refreshing data due to WebSocket signal');
+
+              // Clear cache and force refresh
+              queryClient.clear();
+              queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+
+              // Dispatch custom events for TableGrid component
+              window.dispatchEvent(new CustomEvent('refreshTableData', {
+                detail: {
+                  source: 'tables_websocket',
+                  reason: data.type,
+                  timestamp: new Date().toISOString()
+                }
+              }));
+            }
+          } catch (error) {
+            console.error('❌ Tables: Error processing WebSocket message:', error);
+          }
+        };
+
+        ws.onclose = () => {
+          console.log('📡 Tables: WebSocket disconnected, attempting reconnect...');
+          setTimeout(connectWebSocket, 2000);
+        };
+
+        ws.onerror = (error) => {
+          console.error('❌ Tables: WebSocket error:', error);
+        };
+      } catch (error) {
+        console.error('❌ Tables: Failed to connect WebSocket:', error);
+        setTimeout(connectWebSocket, 2000);
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [queryClient]);
 
   return (
     <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
       <POSHeader />
-      
+
       {/* Right Sidebar */}
       <RightSidebar />
-      
+
       <div className="main-content pt-16 px-6">
         <div className="max-w-5xl mx-auto py-8">
           {/* Page Header */}

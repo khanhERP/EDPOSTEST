@@ -7,6 +7,7 @@ import { ShoppingCart } from "@/components/pos/shopping-cart";
 import { ReceiptModal } from "@/components/pos/receipt-modal";
 import { ProductManagerModal } from "@/components/pos/product-manager-modal";
 import { usePOS } from "@/hooks/use-pos";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface POSPageProps {
   onLogout?: () => void;
@@ -18,6 +19,7 @@ export default function POS({ onLogout }: POSPageProps) {
   const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [lastCartItems, setLastCartItems] = useState<any[]>([]);
+  const queryClient = useQueryClient();
 
   const {
     cart,
@@ -34,6 +36,76 @@ export default function POS({ onLogout }: POSPageProps) {
     isProcessingCheckout,
     processCheckout
   } = usePOS();
+
+  // Add WebSocket listener for data refresh
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+
+    const connectWebSocket = () => {
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('📡 POS: WebSocket connected for refresh signals');
+          // Register as POS client
+          ws?.send(JSON.stringify({
+            type: 'register_pos',
+            timestamp: new Date().toISOString()
+          }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('📩 POS: Received WebSocket message:', data);
+
+            if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'force_refresh') {
+              console.log('🔄 POS: Refreshing data due to WebSocket signal');
+              
+              // Clear cache and force refresh
+              queryClient.clear();
+              queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+              
+              // Clear active order if needed
+              if (data.type === 'popup_close' && data.success) {
+                console.log('🔄 POS: Clearing active order due to successful payment');
+                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                  (window as any).clearActiveOrder();
+                }
+              }
+            }
+          } catch (error) {
+            console.error('❌ POS: Error processing WebSocket message:', error);
+          }
+        };
+
+        ws.onclose = () => {
+          console.log('📡 POS: WebSocket disconnected, attempting reconnect...');
+          setTimeout(connectWebSocket, 2000);
+        };
+
+        ws.onerror = (error) => {
+          console.error('❌ POS: WebSocket error:', error);
+        };
+      } catch (error) {
+        console.error('❌ POS: Failed to connect WebSocket:', error);
+        setTimeout(connectWebSocket, 2000);
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [queryClient]);
 
   // Expose clear active order function globally for WebSocket refresh
   useEffect(() => {
