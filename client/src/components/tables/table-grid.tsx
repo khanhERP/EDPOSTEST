@@ -1824,13 +1824,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                 product.afterTaxPrice !== ""
                               ) {
                                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                const taxPerUnit = afterTaxPrice - basePrice;
+                                const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
                                 totalTax += Math.floor(taxPerUnit * quantity);
                               }
                               // No tax calculation if no afterTaxPrice in database
                             });
 
-                            const grandTotal = subtotal + totalTax;
+                            const grandTotal = subtotal + Math.abs(totalTax);
 
                             console.log(
                               `💰 Table ${table.tableNumber} - Order ${activeOrder.id} recalculated total:`,
