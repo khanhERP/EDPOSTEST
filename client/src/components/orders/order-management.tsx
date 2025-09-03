@@ -1202,28 +1202,7 @@ export function OrderManagement() {
            customer.phone?.toLowerCase().includes(searchLower);
   }) || [];
 
-  // Always show content, even during loading to prevent white screen
-  if (ordersLoading && (!orders || orders.length === 0)) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
-            <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
-          </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            0 {t('orders.ordersInProgress')}
-          </Badge>
-        </div>
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-          <span className="ml-2">Đang tải đơn hàng...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Safe order processing with error handling
+  // Safe order processing with error handling - MOVE ALL HOOKS BEFORE CONDITIONAL RETURNS
   const allOrders = React.useMemo(() => {
     try {
       if (!orders || !Array.isArray(orders)) {
@@ -1445,6 +1424,26 @@ export function OrderManagement() {
     };
   }, [refreshData]);
 
+  // CONDITIONAL RENDER AFTER ALL HOOKS - Show loading state only if really needed
+  if (ordersLoading && (!orders || orders.length === 0)) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
+            <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
+          </div>
+          <Badge variant="secondary" className="text-lg px-4 py-2">
+            0 {t('orders.ordersInProgress')}
+          </Badge>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          <span className="ml-2">Đang tải đơn hàng...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
