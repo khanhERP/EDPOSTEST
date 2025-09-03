@@ -320,40 +320,14 @@ export function ShoppingCart({
       return;
     }
 
-    // Recalculate totals from actual cart data to ensure accuracy
-    const recalculatedSubtotal = cart.reduce((sum, item) => {
-      const itemPrice = parseFloat(item.price);
-      const itemQuantity = parseInt(item.quantity.toString());
-      const itemSubtotal = itemPrice * itemQuantity;
-      console.log(`Item ${item.name}: ${itemPrice} x ${itemQuantity} = ${itemSubtotal}`);
-      return sum + itemSubtotal;
-    }, 0);
+    console.log("🔍 CRITICAL DEBUG - Cart validation before proceeding:");
+    console.log("Cart length:", cart.length);
+    console.log("Subtotal:", subtotal);
+    console.log("Tax:", tax);
+    console.log("Total:", total);
 
-    const recalculatedTax = cart.reduce((sum, item) => {
-      if (item.taxRate && parseFloat(item.taxRate) > 0) {
-        const basePrice = parseFloat(item.price);
-        const itemQuantity = parseInt(item.quantity.toString());
-
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          const taxPerUnit = afterTaxPrice - basePrice;
-          const itemTax = Math.floor(taxPerUnit * itemQuantity);
-          console.log(`Tax for ${item.name}: (${afterTaxPrice} - ${basePrice}) x ${itemQuantity} = ${itemTax}`);
-          return sum + itemTax;
-        }
-      }
-      return sum;
-    }, 0);
-
-    const recalculatedTotal = Math.round(recalculatedSubtotal + recalculatedTax);
-
-    console.log("🔍 RECALCULATED TOTALS:");
-    console.log("Subtotal:", recalculatedSubtotal);
-    console.log("Tax:", recalculatedTax);
-    console.log("Total:", recalculatedTotal);
-
-    if (recalculatedSubtotal === 0 || recalculatedTotal === 0) {
-      console.error("❌ CRITICAL ERROR: Recalculated totals are 0, cannot proceed with checkout");
+    if (subtotal === 0 || total === 0) {
+      console.error("❌ CRITICAL ERROR: Subtotal or total is 0, cannot proceed with checkout");
       alert("Lỗi: Tổng tiền không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
       return;
     }
@@ -362,10 +336,10 @@ export function ShoppingCart({
     const cartItemsForEInvoice = cart.map(item => ({
       id: item.id,
       name: item.name,
-      price: parseFloat(item.price),
-      quantity: parseInt(item.quantity.toString()),
+      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+      quantity: item.quantity,
       sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-      taxRate: parseFloat(item.taxRate || "0"),
+      taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 0),
       afterTaxPrice: item.afterTaxPrice
     }));
 
@@ -380,41 +354,31 @@ export function ShoppingCart({
       return;
     }
 
-    // Step 2: Create receipt preview data with recalculated totals
+    // Step 2: Create receipt preview data with current calculated totals
     const receiptPreview = {
       id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
       customerName: "Khách hàng lẻ",
       tableId: null,
-      items: cartItemsForEInvoice.map(item => {
-        const itemSubtotal = item.price * item.quantity;
-        let itemTax = 0;
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          itemTax = Math.floor((afterTaxPrice - item.price) * item.quantity);
-        }
-        const itemTotal = itemSubtotal + itemTax;
-        
-        return {
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price.toString(),
-          total: itemTotal.toString(),
-          productSku: item.sku,
-          price: item.price.toString(),
-          sku: item.sku,
-          taxRate: item.taxRate,
-          afterTaxPrice: item.afterTaxPrice
-        };
-      }),
-      subtotal: recalculatedSubtotal.toString(),
-      tax: recalculatedTax.toString(),
-      total: recalculatedTotal.toString(),
-      exactSubtotal: recalculatedSubtotal,
-      exactTax: recalculatedTax,
-      exactTotal: recalculatedTotal,
+      items: cartItemsForEInvoice.map(item => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price.toString(),
+        total: (item.price * item.quantity).toString(),
+        productSku: item.sku,
+        price: item.price.toString(),
+        sku: item.sku,
+        taxRate: item.taxRate,
+        afterTaxPrice: item.afterTaxPrice
+      })),
+      subtotal: subtotal.toString(),
+      tax: tax.toString(),
+      total: total.toString(),
+      exactSubtotal: subtotal,
+      exactTax: tax,
+      exactTotal: total,
       status: "pending",
       paymentStatus: "pending",
       orderedAt: new Date().toISOString(),
@@ -422,10 +386,11 @@ export function ShoppingCart({
     };
 
     console.log("📋 POS: Receipt preview data prepared:", receiptPreview);
+    console.log("📋 POS: Receipt preview items count:", receiptPreview.items.length);
     console.log("📋 POS: Receipt preview total verification:", {
       exactTotal: receiptPreview.exactTotal,
       stringTotal: receiptPreview.total,
-      recalculatedTotal: recalculatedTotal
+      calculatedTotal: total
     });
 
     // Step 3: Prepare order data for payment
@@ -436,43 +401,34 @@ export function ShoppingCart({
       customerName: "Khách hàng lẻ",
       status: "pending",
       paymentStatus: "pending",
-      items: cartItemsForEInvoice.map(item => {
-        const itemSubtotal = item.price * item.quantity;
-        let itemTax = 0;
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          itemTax = Math.floor((afterTaxPrice - item.price) * item.quantity);
-        }
-        const itemTotal = itemSubtotal + itemTax;
-        
-        return {
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price.toString(),
-          total: itemTotal.toString(),
-          productSku: item.sku,
-          price: item.price.toString(),
-          sku: item.sku,
-          taxRate: item.taxRate,
-          afterTaxPrice: item.afterTaxPrice
-        };
-      }),
-      subtotal: recalculatedSubtotal,
-      tax: recalculatedTax,
-      total: recalculatedTotal,
-      exactSubtotal: recalculatedSubtotal,
-      exactTax: recalculatedTax,
-      exactTotal: recalculatedTotal,
+      items: cartItemsForEInvoice.map(item => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price.toString(),
+        total: (item.price * item.quantity).toString(),
+        productSku: item.sku,
+        price: item.price.toString(),
+        sku: item.sku,
+        taxRate: item.taxRate,
+        afterTaxPrice: item.afterTaxPrice
+      })),
+      subtotal: subtotal,
+      tax: tax,
+      total: total,
+      exactSubtotal: subtotal,
+      exactTax: tax,
+      exactTotal: total,
       orderedAt: new Date().toISOString()
     };
 
     console.log("📦 POS: Order for payment prepared:", orderForPaymentData);
+    console.log("📦 POS: Order for payment items count:", orderForPaymentData.items.length);
     console.log("📦 POS: Order for payment total verification:", {
       exactTotal: orderForPaymentData.exactTotal,
       total: orderForPaymentData.total,
-      recalculatedTotal: recalculatedTotal
+      calculatedTotal: total
     });
 
     // Step 4: Set all data and show receipt preview modal
@@ -481,7 +437,27 @@ export function ShoppingCart({
     setPreviewReceipt(receiptPreview);
     setShowReceiptPreview(true);
 
-    console.log("🚀 POS: Showing receipt preview modal with RECALCULATED data");
+    console.log("🚀 POS: Showing receipt preview modal with VALIDATED data");
+    console.log("📦 POS: orderForPayment FINAL verification:", {
+      id: orderForPaymentData.id,
+      total: orderForPaymentData.total,
+      exactTotal: orderForPaymentData.exactTotal,
+      itemsCount: orderForPaymentData.items.length,
+      hasValidItems: orderForPaymentData.items.length > 0,
+      items: orderForPaymentData.items,
+      subtotal: orderForPaymentData.subtotal,
+      tax: orderForPaymentData.tax
+    });
+    console.log("📄 POS: previewReceipt FINAL verification:", {
+      id: receiptPreview.id,
+      total: receiptPreview.total,
+      exactTotal: receiptPreview.exactTotal,
+      itemsCount: receiptPreview.items.length,
+      hasValidItems: receiptPreview.items.length > 0,
+      items: receiptPreview.items,
+      subtotal: receiptPreview.subtotal,
+      tax: receiptPreview.tax
+    });
   };
 
   // Handler for E-Invoice confirmation

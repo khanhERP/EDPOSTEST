@@ -54,24 +54,6 @@ export function OrderManagement() {
     }
   }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
 
-  // Trigger allOrderItems refetch when orders data changes
-  useEffect(() => {
-    if (orders && Array.isArray(orders)) {
-      console.log("📦 Order Management: Orders data changed, checking if need to refetch order items");
-      const currentActiveOrders = orders.filter(
-        (order: any) => !["paid", "cancelled"].includes(order.status)
-      );
-
-      if (currentActiveOrders.length > 0) {
-        console.log(`📦 Order Management: Found ${currentActiveOrders.length} active orders, triggering order items refetch`);
-        // Force refetch allOrderItems
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/all-order-items"] 
-        });
-      }
-    }
-  }, [orders, queryClient]);
-
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
     refetchInterval: 2000, // Faster polling - every 2 seconds
@@ -93,46 +75,6 @@ export function OrderManagement() {
     onError: (error) => {
       console.error(`❌ DEBUG: Orders query onError:`, error);
     }
-  });
-
-  // Get all active orders for preloading items
-  const activeOrders = Array.isArray(orders) ? orders.filter(
-    (order: any) => !["paid", "cancelled"].includes(order.status)
-  ) : [];
-
-  // Preload all order items for fast total calculation
-  const { data: allOrderItems } = useQuery({
-    queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
-    enabled: true, // Always enabled to preload data
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    queryFn: async () => {
-      const itemsMap = new Map();
-
-      // Only fetch if we have active orders
-      if (activeOrders.length === 0) {
-        console.log("📦 Order Management: No active orders to fetch items for");
-        return itemsMap;
-      }
-
-      console.log("📦 Order Management: Preloading order items for", activeOrders.length, "active orders");
-
-      for (const order of activeOrders) {
-        try {
-          const response = await apiRequest("GET", `/api/order-items/${order.id}`);
-          const items = await response.json();
-          itemsMap.set(order.id, Array.isArray(items) ? items : []);
-          console.log(`✅ Order Management: Loaded ${Array.isArray(items) ? items.length : 0} items for order ${order.id}`);
-        } catch (error) {
-          console.error(`❌ Error fetching items for order ${order.id}:`, error);
-          itemsMap.set(order.id, []);
-        }
-      }
-
-      console.log("📦 Order Management: Preloading completed for", itemsMap.size, "orders");
-      return itemsMap;
-    },
   });
 
   const { data: tables } = useQuery({
@@ -1441,47 +1383,16 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          // Use preloaded order items for fast calculation
-                          let calculatedTotal = 0;
-                          if (allOrderItems && allOrderItems.has(order.id)) {
-                            const orderItems = allOrderItems.get(order.id) || [];
-
-                            calculatedTotal = orderItems.reduce((total: number, item: any) => {
-                              const quantity = item.quantity || 0;
-                              const unitPrice = parseFloat(item.unitPrice || "0");
-                              let itemTotal = unitPrice * quantity;
-
-                              // Apply tax if afterTaxPrice is available
-                              const product = products?.find(p => p.id === item.productId);
-                              if (product && 
-                                  product.afterTaxPrice && 
-                                  product.afterTaxPrice !== "" && 
-                                  product.afterTaxPrice !== null) {
-                                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-                                itemTotal = (unitPrice + taxPerUnit) * quantity;
-                              }
-
-                              return total + itemTotal;
-                            }, 0);
-
-                            console.log(
-                              `💰 Order Management ${order.orderNumber} calculated total from preloaded items:`,
-                              {
-                                orderId: order.id,
-                                itemsCount: orderItems.length,
-                                calculatedTotal: calculatedTotal,
-                                orderNumber: order.orderNumber
-                              }
-                            );
+                          // Calculate total using same logic as table display
+                          const orderTotal = Number(order.total || 0);
+                          
+                          // If order has valid total, use it
+                          if (orderTotal > 0) {
+                            return formatCurrency(orderTotal);
                           }
-
-                          if (calculatedTotal <= 0) {
-                            // Fallback to stored total if no calculated total
-                            calculatedTotal = Number(order.total || 0);
-                          }
-
-                          return formatCurrency(calculatedTotal);
+                          
+                          // Otherwise return 0
+                          return formatCurrency(0);
                         })()}
                       </span>
                     </div>
