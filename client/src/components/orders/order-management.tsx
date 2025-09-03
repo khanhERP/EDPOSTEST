@@ -54,13 +54,6 @@ export function OrderManagement() {
     }
   }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
 
-  // Get active orders safely after orders are loaded
-  const activeOrders = React.useMemo(() => {
-    return Array.isArray(orders) ? orders.filter(
-      (order: any) => !["paid", "cancelled"].includes(order.status)
-    ) : [];
-  }, [orders]);
-
   // Trigger allOrderItems refetch when orders data changes
   useEffect(() => {
     if (orders && Array.isArray(orders)) {
@@ -141,6 +134,13 @@ export function OrderManagement() {
       return itemsMap;
     },
   });
+
+  // Get active orders safely after orders are loaded
+  const activeOrders = React.useMemo(() => {
+    return Array.isArray(orders) ? orders.filter(
+      (order: any) => !["paid", "cancelled"].includes(order.status)
+    ) : [];
+  }, [orders]);
 
   const { data: tables } = useQuery({
     queryKey: ['/api/tables'],
