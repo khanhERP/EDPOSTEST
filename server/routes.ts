@@ -1078,28 +1078,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       // Get tenant database first
       const tenantDb = await getTenantDatabase(req);
 
-      // Enhanced request logging
-      console.log(`🔍 Request details: {`);
-      console.log(`  method: '${req.method}',`);
-      console.log(`  url: '${req.url}',`);
-      console.log(`  originalUrl: '${req.originalUrl}',`);
-      console.log(`  params: ${JSON.stringify(req.params)},`);
-      console.log(`  body: ${JSON.stringify(req.body)},`);
-      console.log(`  headers: '${req.get('Content-Type')}',`);
-      console.log(`  userAgent: '${req.get('User-Agent')}',`);
-      console.log(`  tenantDbExists: ${!!tenantDb},`);
-      console.log(`  timestamp: '${new Date().toISOString()}'`);
-      console.log(`}`);
-
       // Handle both numeric IDs and temporary string IDs
       let orderId: number | string = id;
       const isTemporaryId = id.startsWith('temp-');
-
-      console.log(`🔍 DEBUG: ID Processing:`, {
-        originalId: id,
-        isTemporaryId: isTemporaryId,
-        willParseToNumber: !isTemporaryId
-      });
 
       if (!isTemporaryId) {
         const parsedId = parseInt(id);
@@ -1111,41 +1092,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
         console.log(`✅ ID converted to number: ${orderId}`);
       } else {
         console.log(`🟡 Keeping temporary ID as string: ${orderId}`);
-      }
-
-      console.log(`🚀 ABOUT TO CALL storage.updateOrderStatus(${orderId}, '${status}', tenantDb)`);
-      console.log(`🔍 Function call parameters: {`);
-      console.log(`  orderId: ${orderId},`);
-      console.log(`  orderIdType: '${typeof orderId}',`);
-      console.log(`  isTemporaryId: ${isTemporaryId},`);
-      console.log(`  status: '${status}',`);
-      console.log(`  statusType: '${typeof status}',`);
-      console.log(`  tenantDb: ${!!tenantDb}`);
-      console.log(`}`);
-
-      // Add validation debug info
-      console.log(`🔍 DEBUG: API Request validation: {`);
-      console.log(`  originalId: '${id}',`);
-      console.log(`  processedId: ${orderId},`);
-      console.log(`  isTemporaryId: ${isTemporaryId},`);
-      console.log(`  requestedStatus: '${status}',`);
-      console.log(`  statusType: '${typeof status}',`);
-      console.log(`  isValidStatus: ${!!status},`);
-      console.log(`  tenantDbType: '${typeof tenantDb}'`);
-      console.log(`}`);
-
-      // Test database connection before proceeding
-      try {
-        const testResult = await tenantDb.execute(sql`SELECT 1 as test`);
-        console.log(`🔍 DEBUG: Database connection test successful:`, testResult.rows[0]);
-      } catch (dbError) {
-        console.error(`❌ DEBUG: Database connection test failed:`, dbError);
-        return res.status(500).json({ message: "Database connection failed", error: dbError.message });
-      }
-
-      if (isNaN(orderId as number) && !isTemporaryId) {
-        console.error(`❌ Invalid order ID: ${id}`);
-        return res.status(400).json({ message: "Invalid order ID" });
+        // For temporary IDs, just return success without database update
+        return res.json({
+          id: orderId,
+          status: status,
+          updated: true,
+          previousStatus: 'served',
+          updateTimestamp: new Date().toISOString(),
+          success: true,
+          temporary: true
+        });
       }
 
       if (!status) {
@@ -1153,190 +1109,117 @@ export async function registerRoutes(app: Express): Promise < Server > {
         return res.status(400).json({ message: "Status is required" });
       }
 
-      // Skip database query for temporary order IDs
-      let currentOrder = null;
-      if (!isTemporaryId) {
-        // First get the current order to log its current state
-        const [foundOrder] = await db
-          .select()
-          .from(orders)
-          .where(eq(orders.id, orderId as number)); // Cast to number for query
+      // Get the current order to log its current state
+      const [foundOrder] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, orderId as number));
 
-        if (!foundOrder) {
-          console.error(`❌ Order not found for ID: ${id}`);
-          return res.status(404).json({ message: "Order not found" });
-        }
-        currentOrder = foundOrder;
-      } else {
-        console.log(`🟡 Skipping database query for temporary order ID: ${id}`);
-        // Create mock current order for temporary ID
-        currentOrder = {
-          id: orderId,
-          orderNumber: `TEMP-${Date.now()}`,
-          status: 'pending',
-          tableId: null
-        };
+      if (!foundOrder) {
+        console.error(`❌ Order not found for ID: ${id}`);
+        return res.status(404).json({ message: "Order not found" });
       }
 
       console.log(`📊 API: Current order state before update:`, {
-        orderId: currentOrder.id,
-        orderNumber: currentOrder.orderNumber,
-        tableId: currentOrder.tableId,
-        currentStatus: currentOrder.status,
+        orderId: foundOrder.id,
+        orderNumber: foundOrder.orderNumber,
+        tableId: foundOrder.tableId,
+        currentStatus: foundOrder.status,
         requestedStatus: status,
         timestamp: new Date().toISOString()
       });
 
-      console.log(`🔍 DEBUG: About to call storage.updateOrderStatus with:`, {
-        id: orderId,
+      // Direct database update for better reliability
+      console.log(`🔄 Performing direct database update for order ${orderId} to status ${status}`);
+      
+      const updateData: any = {
         status: status,
-        tenantDb: !!tenantDb
-      });
+        updatedAt: new Date().toISOString()
+      };
 
-      // Add timing measurement
-      const startTime = Date.now();
-      console.log(`⏱️ DEBUG: Starting storage.updateOrderStatus call at:`, new Date().toISOString());
-
-      // Update order status using storage layer
-      let order;
-      try {
-        console.log(`🚀 CALLING storage.updateOrderStatus(${orderId}, '${status}', tenantDb)`);
-        console.log(`🔍 BEFORE CALL: Current thread state:`, {
-          processId: process.pid,
-          timestamp: new Date().toISOString(),
-          memoryUsage: process.memoryUsage(),
-          nodeVersion: process.version
-        });
-
-        order = await storage.updateOrderStatus(orderId, status, tenantDb);
-
-        const endTime = Date.now();
-        console.log(`✅ STORAGE CALL COMPLETED: storage.updateOrderStatus returned after ${endTime - startTime}ms`);
-        console.log(`🔍 AFTER CALL: storage.updateOrderStatus result:`, {
-          orderReturned: !!order,
-          orderData: order ? {
-            id: order.id,
-            orderNumber: order.orderNumber,
-            status: order.status,
-            paidAt: order.paidAt,
-            updateTimestamp: order.updatedAt
-          } : null
-        });
-      } catch (storageError) {
-        const endTime = Date.now();
-        console.error(`❌ STORAGE CALL FAILED: storage.updateOrderStatus failed after ${endTime - startTime}ms:`, {
-          error: storageError,
-          errorMessage: storageError instanceof Error ? storageError.message : String(storageError),
-          errorStack: storageError instanceof Error ? storageError.stack : 'No stack trace',
-          orderId: orderId,
-          requestedStatus: status
-        });
-        throw storageError;
+      // Add paidAt timestamp if status is 'paid'
+      if (status === 'paid') {
+        updateData.paidAt = new Date().toISOString();
       }
 
-      console.log(`🔍 DEBUG: storage.updateOrderStatus returned:`, {
-        orderExists: !!order,
-        orderData: order ? {
-          id: order.id,
-          orderNumber: order.orderNumber,
-          status: order.status,
-          tableId: order.tableId,
-          paidAt: order.paidAt,
-          updatedAt: order.updatedAt
-        } : null,
-        returnType: typeof order
-      });
+      const [updatedOrder] = await db
+        .update(orders)
+        .set(updateData)
+        .where(eq(orders.id, orderId as number))
+        .returning();
 
-      if (!order) {
-        console.error(`❌ API: Order update failed for ID: ${id}`);
-        console.log(`🔍 DEBUG: Investigating why order update failed...`);
-
-        // Check if order exists at all
-        const [checkOrder] = await db
-          .select()
-          .from(orders)
-          .where(eq(orders.id, orderId as number)); // Cast to number for query if not temporary
-
-        console.log(`🔍 DEBUG: Order existence check:`, {
-          orderExists: !!checkOrder,
-          orderData: checkOrder ? {
-            id: checkOrder.id,
-            orderNumber: checkOrder.orderNumber,
-            currentStatus: checkOrder.status,
-            tableId: checkOrder.tableId
-          } : null
-        });
-
+      if (!updatedOrder) {
+        console.error(`❌ Failed to update order ${orderId} to status ${status}`);
         return res.status(500).json({
           message: "Failed to update order status",
           orderId: id,
-          requestedStatus: status,
-          debug: {
-            orderExists: !!checkOrder,
-            orderCurrentStatus: checkOrder?.status
-          }
+          requestedStatus: status
         });
       }
 
       console.log(`✅ API: Order status updated successfully:`, {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        tableId: order.tableId,
-        previousStatus: currentOrder.status,
-        newStatus: order.status,
-        paymentMethod: order.paymentMethod,
-        paidAt: order.paidAt,
-        einvoiceStatus: order.einvoiceStatus,
+        orderId: updatedOrder.id,
+        orderNumber: updatedOrder.orderNumber,
+        tableId: updatedOrder.tableId,
+        previousStatus: foundOrder.status,
+        newStatus: updatedOrder.status,
+        paidAt: updatedOrder.paidAt,
         timestamp: new Date().toISOString()
       });
 
-      // If status was updated to 'paid', also check and log table status
-      if (status === 'paid' && order.tableId) {
+      // If status was updated to 'paid', check if table should be released
+      if (status === 'paid' && updatedOrder.tableId) {
         try {
-          const [tableAfterUpdate] = await db
+          // Check if there are any other unpaid orders on this table
+          const unpaidOrders = await db
             .select()
-            .from(tables)
-            .where(eq(tables.id, order.tableId));
-
-          console.log(`📋 API: Table status after order payment:`, {
-            tableId: order.tableId,
-            tableNumber: tableAfterUpdate?.tableNumber,
-            tableStatus: tableAfterUpdate?.status,
-            timestamp: new Date().toISOString()
-          });
-
-          // Log all remaining orders on this table for debugging
-          const remainingOrders = await db
-            .select({
-              id: orders.id,
-              orderNumber: orders.orderNumber,
-              status: orders.status
-            })
             .from(orders)
-            .where(eq(orders.tableId, order.tableId));
+            .where(
+              and(
+                eq(orders.tableId, updatedOrder.tableId),
+                ne(orders.status, 'paid'),
+                ne(orders.status, 'cancelled')
+              )
+            );
 
-          console.log(`📋 API: All orders on table ${order.tableId}:`, {
-            tableId: order.tableId,
-            totalOrders: remainingOrders.length,
-            orders: remainingOrders.map(o => ({
+          console.log(`📋 Checking table ${updatedOrder.tableId} for other unpaid orders:`, {
+            tableId: updatedOrder.tableId,
+            unpaidOrdersCount: unpaidOrders.length,
+            unpaidOrders: unpaidOrders.map(o => ({
               id: o.id,
               orderNumber: o.orderNumber,
               status: o.status
             }))
           });
-        } catch (tableCheckError) {
-          console.error(`❌ API: Error checking table status:`, tableCheckError);
+
+          // If no unpaid orders remain, release the table
+          if (unpaidOrders.length === 0) {
+            await db
+              .update(tables)
+              .set({ 
+                status: 'available',
+                updatedAt: new Date().toISOString()
+              })
+              .where(eq(tables.id, updatedOrder.tableId));
+
+            console.log(`✅ Table ${updatedOrder.tableId} released to available status`);
+          }
+
+        } catch (tableUpdateError) {
+          console.error(`❌ Error updating table status:`, tableUpdateError);
+          // Don't fail the order update if table update fails
         }
       }
 
       // Send comprehensive response data
       res.json({
-        ...order,
+        ...updatedOrder,
         updated: true,
-        previousStatus: currentOrder.status,
+        previousStatus: foundOrder.status,
         updateTimestamp: new Date().toISOString(),
         success: true
       });
+
     } catch (error) {
       console.error(`❌ Error updating order status via API:`, error);
       res.status(500).json({
