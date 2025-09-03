@@ -159,111 +159,22 @@ export function ShoppingCart({
               broadcastCartUpdate(cart);
             }
 
-            // Handle popup close signal (when receipt modal is closed)
+            // Handle popup close signal - simple refresh and clear cart
             if (data.type === 'popup_close' && data.success) {
-              console.log('🔄 Shopping Cart: Receipt modal closed, performing comprehensive cart clear');
+              console.log('🔄 Shopping Cart: Popup closed, clearing cart and refreshing data');
               
-              // Step 1: Clear cart immediately with multiple attempts
-              const clearCartSequence = async () => {
-                try {
-                  // First clear attempt
-                  console.log('🔄 Shopping Cart: Starting cart clear sequence 1');
-                  onClearCart();
-                  
-                  // Also clear any selected orders in POS
-                  if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                    (window as any).clearActiveOrder();
-                  }
-                  
-                  // Force broadcast empty cart to customer display
-                  broadcastCartUpdate([]);
-                  
-                  // Second clear attempt after delay for consistency
-                  setTimeout(() => {
-                    console.log('🔄 Shopping Cart: Starting cart clear sequence 2');
-                    onClearCart();
-                    
-                    // Clear any remaining order states
-                    if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                      (window as any).clearActiveOrder();
-                    }
-                    
-                    // Final broadcast to ensure customer display is cleared
-                    broadcastCartUpdate([]);
-                    
-                    console.log('✅ Shopping Cart: Cart clearing completed successfully');
-                  }, 300);
-                  
-                } catch (error) {
-                  console.error('❌ Shopping Cart: Error during cart clear sequence:', error);
-                  // Fallback clear attempt
-                  setTimeout(() => {
-                    onClearCart();
-                    broadcastCartUpdate([]);
-                  }, 500);
-                }
-              };
+              // Clear cart immediately
+              onClearCart();
               
-              // Start the clear sequence immediately
-              clearCartSequence();
-            }
-
-            // Handle refresh signal after print to clear cart
-            if (data.type === 'refresh_data_after_print' && data.action === 'refresh_tables_and_clear_cart') {
-              console.log('🔄 Shopping Cart: Clearing cart after print receipt with enhanced mechanism');
+              // Clear any active orders in POS
+              if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                (window as any).clearActiveOrder();
+              }
               
-              // Enhanced cart clearing with multiple validation steps
-              const enhancedCartClear = async () => {
-                try {
-                  console.log('🔄 Shopping Cart: Starting enhanced cart clear after print');
-                  
-                  // Step 1: Clear cart state
-                  onClearCart();
-                  
-                  // Step 2: Clear any selected orders in POS
-                  if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                    (window as any).clearActiveOrder();
-                  }
-                  
-                  // Step 3: Force broadcast empty cart to customer display
-                  broadcastCartUpdate([]);
-                  
-                  // Step 4: Additional validation and cleanup after delay
-                  setTimeout(() => {
-                    console.log('🔄 Shopping Cart: Performing final cart validation and cleanup');
-                    
-                    // Final clear to ensure no cart items remain
-                    onClearCart();
-                    
-                    // Final broadcast to customer display
-                    broadcastCartUpdate([]);
-                    
-                    // Dispatch custom event for other components
-                    if (typeof window !== 'undefined') {
-                      window.dispatchEvent(new CustomEvent('cartCleared', {
-                        detail: { 
-                          source: 'shopping-cart-after-print',
-                          timestamp: new Date().toISOString(),
-                          action: 'refresh_tables_and_clear_cart'
-                        }
-                      }));
-                    }
-                    
-                    console.log('✅ Shopping Cart: Enhanced cart clear completed successfully');
-                  }, 400);
-                  
-                } catch (error) {
-                  console.error('❌ Shopping Cart: Error during enhanced cart clear:', error);
-                  // Emergency fallback
-                  setTimeout(() => {
-                    onClearCart();
-                    broadcastCartUpdate([]);
-                  }, 600);
-                }
-              };
+              // Broadcast empty cart to customer display
+              broadcastCartUpdate([]);
               
-              // Start enhanced clear sequence
-              enhancedCartClear();
+              console.log('✅ Shopping Cart: Cart cleared successfully');
             }
           } catch (error) {
             console.error('Shopping Cart: Error parsing WebSocket message:', error);
@@ -985,72 +896,47 @@ export function ShoppingCart({
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log('🔄 Shopping Cart: Final receipt modal closing, ensuring cart is cleared');
+          console.log('🔄 Shopping Cart: Receipt modal closing, clearing cart and sending refresh signal');
           
-          // Close modal first
+          // Close modal and clear states
           setShowReceiptModal(false);
+          setSelectedReceipt(null);
+          setLastCartItems([]);
+          setOrderForPayment(null);
+          setPreviewReceipt(null);
+          setIsProcessingPayment(false);
           
-          // Comprehensive cart clearing when final receipt modal closes
-          setTimeout(() => {
-            console.log('🔄 Shopping Cart: Performing final cart clear on receipt modal close');
-            
-            // Clear cart multiple times to ensure it's completely cleared
-            onClearCart();
-            
-            // Clear any active orders
-            if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-              (window as any).clearActiveOrder();
-            }
-            
-            // Reset all states
-            setSelectedReceipt(null);
-            setLastCartItems([]);
-            setOrderForPayment(null);
-            setPreviewReceipt(null);
-            setIsProcessingPayment(false);
-            
-            // Force broadcast empty cart to customer display
-            broadcastCartUpdate([]);
-            
-            // Send WebSocket signal to trigger refresh in other components
-            try {
-              const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-              const wsUrl = `${protocol}//${window.location.host}/ws`;
-              const ws = new WebSocket(wsUrl);
+          // Clear cart
+          onClearCart();
+          
+          // Clear any active orders
+          if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+            (window as any).clearActiveOrder();
+          }
+          
+          // Broadcast empty cart
+          broadcastCartUpdate([]);
+          
+          // Send popup close signal to refresh other components
+          try {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            const ws = new WebSocket(wsUrl);
 
-              ws.onopen = () => {
-                ws.send(JSON.stringify({
-                  type: 'refresh_data_after_print',
-                  action: 'refresh_tables_and_clear_cart',
-                  source: 'shopping-cart-receipt-modal-close',
-                  timestamp: new Date().toISOString()
-                }));
-                
-                // Also send popup close signal
-                ws.send(JSON.stringify({
-                  type: 'popup_close',
-                  success: true,
-                  action: 'final_receipt_modal_closed',
-                  source: 'shopping-cart',
-                  timestamp: new Date().toISOString()
-                }));
-                
-                ws.close();
-              };
-            } catch (error) {
-              console.error('❌ Shopping Cart: Failed to send WebSocket signal:', error);
-            }
-            
-            // Final validation after additional delay
-            setTimeout(() => {
-              console.log('🔄 Shopping Cart: Final validation - ensuring cart is completely cleared');
-              onClearCart();
-              broadcastCartUpdate([]);
-              
-              console.log('✅ Shopping Cart: Final receipt modal close sequence completed');
-            }, 300);
-            
-          }, 100);
+            ws.onopen = () => {
+              ws.send(JSON.stringify({
+                type: 'popup_close',
+                success: true,
+                source: 'shopping-cart',
+                timestamp: new Date().toISOString()
+              }));
+              ws.close();
+            };
+          } catch (error) {
+            console.error('❌ Shopping Cart: Failed to send refresh signal:', error);
+          }
+          
+          console.log('✅ Shopping Cart: Receipt modal closed and refresh signal sent');
         }}
         receipt={selectedReceipt}
         cartItems={cart.map((item) => ({

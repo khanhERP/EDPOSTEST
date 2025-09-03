@@ -250,61 +250,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
           }
 
-          // Handle popup close signal (when receipt modal is closed)
+          // Handle popup close signal - simple refresh data
           if (data.type === "popup_close" && data.success) {
-            console.log("🔄 Table Grid: Receipt modal closed, refreshing data");
+            console.log("🔄 Table Grid: Popup closed, refreshing table data");
             
-            // Force refresh table and order data
-            setTimeout(() => {
-              refetchTables();
-              refetchOrders();
-            }, 100);
-          }
-
-          // Handle refresh signal after print receipt
-          if (data.type === "refresh_data_after_print" && data.action === "refresh_tables_and_clear_cart") {
-            console.log("🔄 Table Grid: Refreshing table data after print receipt");
-
-            // Clear all cached data first for immediate refresh
+            // Clear cache and refetch fresh data
             queryClient.removeQueries({ queryKey: ["/api/tables"] });
             queryClient.removeQueries({ queryKey: ["/api/orders"] });
-            queryClient.removeQueries({ queryKey: ["/api/order-items"] });
-
-            // Invalidate queries to force fresh fetch
-            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-
-            // Force immediate refetch with fresh data
-            Promise.all([
-              refetchTables(),
-              refetchOrders()
-            ]).then(() => {
-              console.log("✅ Table Grid: Data refreshed successfully after print");
-              
-              toast({
-                title: "Đã làm mới",
-                description: "Dữ liệu trạng thái bàn đã được cập nhật",
-              });
-            }).catch((error) => {
-              console.error("❌ Error refreshing table data:", error);
-            });
-          }
-
-          // Handle popup close signal to refresh data
-          if (data.type === "popup_close" && data.success) {
-            console.log("🔄 Table Grid: Receipt modal closed, forcing data refresh");
             
-            // Clear cache and invalidate queries
-            queryClient.removeQueries({ queryKey: ["/api/tables"] });
-            queryClient.removeQueries({ queryKey: ["/api/orders"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-
-            // Force refresh
-            setTimeout(() => {
-              refetchTables();
-              refetchOrders();
-            }, 200);
+            // Refresh data
+            refetchTables();
+            refetchOrders();
+            
+            console.log("✅ Table Grid: Data refreshed successfully");
           }
         } catch (error) {
           console.error("Table Grid: Error parsing WebSocket message:", error);
@@ -2843,11 +2801,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         <ReceiptModal
           isOpen={showReceiptModal}
           onClose={() => {
-            console.log(
-              "🔴 Table: Closing final receipt modal and clearing all states",
-            );
+            console.log("🔴 Table: Receipt modal closing, clearing states and sending refresh signal");
             
-            // Clear all modal states first
+            // Clear all modal states
             setShowReceiptModal(false);
             setSelectedReceipt(null);
             setOrderForPayment(null);
@@ -2859,102 +2815,39 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setSelectedOrder(null);
             setSelectedPaymentMethod("");
 
-            // ENHANCED: Multi-strategy data refresh when receipt modal closes
-            console.log("🔄 Table: Starting enhanced data refresh after receipt modal close");
+            // Clear cache and refresh data
+            queryClient.removeQueries({ queryKey: ["/api/tables"] });
+            queryClient.removeQueries({ queryKey: ["/api/orders"] });
+            queryClient.removeQueries({ queryKey: ["/api/order-items"] });
             
-            const performComprehensiveRefresh = async () => {
-              try {
-                // Step 1: Clear all cached data completely
-                console.log("🧹 Table: Clearing all cached data");
-                queryClient.clear();
-                
-                // Step 2: Remove specific queries 
-                queryClient.removeQueries({ queryKey: ["/api/tables"] });
-                queryClient.removeQueries({ queryKey: ["/api/orders"] });
-                queryClient.removeQueries({ queryKey: ["/api/order-items"] });
-                
-                // Step 3: Force fresh data fetch immediately
-                console.log("🔄 Table: Fetching fresh data (attempt 1)");
-                await Promise.all([
-                  refetchTables(),
-                  refetchOrders()
-                ]);
-                
-                // Step 4: Second refresh after a short delay for consistency
-                setTimeout(async () => {
-                  console.log("🔄 Table: Fetching fresh data (attempt 2)");
-                  try {
-                    await Promise.all([
-                      refetchTables(),
-                      refetchOrders()
-                    ]);
-                    console.log("✅ Table: All data refresh cycles completed");
-                  } catch (secondRefreshError) {
-                    console.error("❌ Table: Error in second refresh:", secondRefreshError);
-                  }
-                }, 1000);
-                
-                // Step 5: Send WebSocket signal for other components
-                try {
-                  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-                  const wsUrl = `${protocol}//${window.location.host}/ws`;
-                  const ws = new WebSocket(wsUrl);
-                  
-                  ws.onopen = () => {
-                    ws.send(JSON.stringify({
-                      type: "refresh_data_after_payment",
-                      action: "refresh_all_table_data",
-                      timestamp: new Date().toISOString(),
-                      source: "table-grid-receipt-close"
-                    }));
-                    ws.close();
-                  };
-                } catch (wsError) {
-                  console.error("❌ Table: WebSocket signal error:", wsError);
-                }
-                
-                // Step 6: Dispatch events for cross-component updates
-                if (typeof window !== 'undefined') {
-                  const refreshEvents = [
-                    new CustomEvent('tableDataRefreshed', {
-                      detail: { 
-                        source: 'receipt-modal-close',
-                        timestamp: new Date().toISOString()
-                      }
-                    }),
-                    new CustomEvent('forceRefresh', {
-                      detail: { 
-                        reason: 'receipt_modal_closed',
-                        immediate: true
-                      }
-                    })
-                  ];
-
-                  refreshEvents.forEach(event => {
-                    console.log("📡 Table: Dispatching refresh event:", event.type);
-                    window.dispatchEvent(event);
-                  });
-                }
-                
-                console.log("✅ Table: Comprehensive refresh completed successfully");
-                
-                toast({
-                  title: "Đã làm mới",
-                  description: "Dữ liệu trạng thái bàn đã được cập nhật hoàn toàn",
-                });
-                
-              } catch (error) {
-                console.error("❌ Table: Critical error during data refresh:", error);
-                toast({
-                  title: "Cảnh báo", 
-                  description: "Có lỗi khi làm mới dữ liệu. Vui lòng tải lại trang để cập nhật.",
-                  variant: "destructive",
-                });
-              }
-            };
+            refetchTables();
+            refetchOrders();
             
-            // Execute comprehensive refresh
-            performComprehensiveRefresh();
+            // Send popup close signal for other components
+            try {
+              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
+              
+              ws.onopen = () => {
+                ws.send(JSON.stringify({
+                  type: "popup_close",
+                  success: true,
+                  source: "table-grid",
+                  timestamp: new Date().toISOString()
+                }));
+                ws.close();
+              };
+            } catch (error) {
+              console.error("❌ Table: Failed to send refresh signal:", error);
+            }
+            
+            toast({
+              title: "Đã làm mới",
+              description: "Dữ liệu trạng thái bàn đã được cập nhật",
+            });
+            
+            console.log("✅ Table: Receipt modal closed and refresh signal sent");
           }}
           receipt={selectedReceipt}
           cartItems={
