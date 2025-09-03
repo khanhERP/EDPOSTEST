@@ -1216,20 +1216,39 @@ export function OrderManagement() {
   // WebSocket connection for real-time updates
   useEffect(() => {
     let ws: WebSocket | null = null;
+    let reconnectTimer: NodeJS.Timeout | null = null;
+    let isConnected = false;
+    let shouldReconnect = true;
 
     const connectWebSocket = () => {
+      if (!shouldReconnect) return;
+
       try {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}`;
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+        
+        console.log('🔗 Order Management: Attempting WebSocket connection to:', wsUrl);
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log('🔗 Order Management: WebSocket connected');
+          console.log('🔗 Order Management: WebSocket connected successfully');
+          isConnected = true;
+          
+          // Clear any pending reconnect timer
+          if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+          }
+
           // Send registration message
-          ws?.send(JSON.stringify({
-            type: 'register_order_management',
-            timestamp: new Date().toISOString()
-          }));
+          try {
+            ws?.send(JSON.stringify({
+              type: 'register_order_management',
+              timestamp: new Date().toISOString()
+            }));
+          } catch (error) {
+            console.error('❌ Error sending registration message:', error);
+          }
         };
 
         ws.onmessage = (event) => {
@@ -1239,7 +1258,9 @@ export function OrderManagement() {
 
             if (data.type === 'order_created' ||
                 data.type === 'order_updated' ||
-                data.type === 'table_status_changed') {
+                data.type === 'table_status_changed' ||
+                data.type === 'orderStatusUpdated' ||
+                data.type === 'paymentCompleted') {
               console.log('🔄 Order Management: Refreshing orders due to WebSocket update');
               refreshData();
             }
@@ -1248,25 +1269,66 @@ export function OrderManagement() {
           }
         };
 
-        ws.onclose = () => {
-          console.log('🔗 Order Management: WebSocket disconnected, attempting reconnect...');
-          setTimeout(connectWebSocket, 3000);
+        ws.onclose = (event) => {
+          console.log('🔗 Order Management: WebSocket disconnected', { code: event.code, reason: event.reason });
+          isConnected = false;
+          
+          // Only attempt reconnect if not manually closed and component is still mounted
+          if (shouldReconnect && event.code !== 1000) {
+            console.log('🔄 Order Management: Scheduling reconnect in 3 seconds...');
+            reconnectTimer = setTimeout(() => {
+              if (shouldReconnect) {
+                console.log('🔄 Order Management: Attempting to reconnect...');
+                connectWebSocket();
+              }
+            }, 3000);
+          }
         };
 
         ws.onerror = (error) => {
           console.error('❌ Order Management: WebSocket error:', error);
+          isConnected = false;
+          
+          // Close the connection to trigger onclose event
+          if (ws && ws.readyState === WebSocket.CONNECTING) {
+            ws.close();
+          }
         };
+
       } catch (error) {
         console.error('❌ Error creating WebSocket connection:', error);
-        setTimeout(connectWebSocket, 5000);
+        
+        // Retry connection after delay if component is still mounted
+        if (shouldReconnect) {
+          reconnectTimer = setTimeout(() => {
+            if (shouldReconnect) {
+              connectWebSocket();
+            }
+          }, 5000);
+        }
       }
     };
 
+    // Start initial connection
     connectWebSocket();
 
+    // Cleanup function
     return () => {
+      console.log('🔗 Order Management: Cleaning up WebSocket connection');
+      shouldReconnect = false;
+      
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+      
       if (ws) {
-        ws.close();
+        if (isConnected) {
+          ws.close(1000, 'Component unmounting');
+        } else {
+          ws.close();
+        }
+        ws = null;
       }
     };
   }, [refreshData]);

@@ -12,15 +12,36 @@ export function initializeWebSocketServer(server: Server) {
   }
 
   try {
-    wss = new WebSocketServer({ server, path: '/ws' });
+    wss = new WebSocketServer({ 
+      server, 
+      path: '/ws',
+      perMessageDeflate: false,
+      maxPayload: 16 * 1024 // 16KB
+    });
+    console.log('✅ WebSocket server created successfully on path /ws');
   } catch (error) {
     console.error('Failed to create WebSocket server:', error);
     return;
   }
 
-  wss.on('connection', (ws) => {
-    console.log('Client connected');
+  wss.on('connection', (ws, request) => {
+    console.log('📡 Client connected to WebSocket:', {
+      url: request.url,
+      origin: request.headers.origin,
+      userAgent: request.headers['user-agent']?.substring(0, 50) + '...'
+    });
+    
     clients.add(ws);
+
+    // Send initial ping to confirm connection
+    try {
+      ws.send(JSON.stringify({ 
+        type: 'connection_established', 
+        timestamp: new Date().toISOString() 
+      }));
+    } catch (error) {
+      console.error('❌ Error sending connection confirmation:', error);
+    }
 
     ws.on('message', (message) => {
       try {
@@ -30,6 +51,9 @@ export function initializeWebSocketServer(server: Server) {
         // Handle different message types
         if (data.type === 'ping') {
           ws.send(JSON.stringify({ type: 'pong' }));
+        } else if (data.type === 'register_order_management') {
+          console.log('✅ Order Management client registered');
+          (ws as any).clientType = 'order_management';
         } else if (data.type === 'cart_update') {
           // Broadcast cart update to all connected clients (customer displays)
           console.log('📡 Broadcasting cart update to customer displays');
@@ -70,14 +94,25 @@ export function initializeWebSocketServer(server: Server) {
       }
     });
 
-    ws.on('close', () => {
-      console.log('Client disconnected');
+    ws.on('close', (code, reason) => {
+      console.log('📡 Client disconnected:', {
+        code,
+        reason: reason.toString(),
+        clientType: (ws as any).clientType || 'unknown'
+      });
       clients.delete(ws);
     });
 
     ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      console.error('❌ WebSocket error:', {
+        error: error.message,
+        clientType: (ws as any).clientType || 'unknown'
+      });
       clients.delete(ws);
+    });
+
+    ws.on('pong', () => {
+      console.log('🏓 Pong received from client');
     });
   });
 
