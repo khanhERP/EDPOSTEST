@@ -415,7 +415,7 @@ export function EInvoiceModal({
       if (!total || total <= 0) {
         console.error("❌ Invalid total amount for later publishing:", total);
         toast({
-          title: "Lỗi", 
+          title: "Lỗi",
           description: "Tổng tiền không hợp lệ để lưu hóa đơn.",
           variant: "destructive",
         });
