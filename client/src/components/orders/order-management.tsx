@@ -701,6 +701,54 @@ export function OrderManagement() {
   const handlePaymentMethodSelect = async (method: any, data?: any) => {
     console.log("🎯 Order Management payment method selected:", method, data);
     
+    if (method === "paymentCompleted" && data?.success) {
+      console.log('✅ Payment completed successfully from payment modal');
+      
+      // Force immediate UI refresh
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
+
+      // Dispatch immediate refresh events
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('forceRefresh', { 
+          detail: { reason: 'payment_completed', orderId: data.orderId } 
+        }));
+      }
+      
+      // Close all modals
+      setOrderForPayment(null);
+      setOrderDetailsOpen(false);
+      setSelectedOrder(null);
+      setShowPaymentMethodModal(false);
+      
+      // Show receipt if provided
+      if (data.receipt) {
+        setSelectedReceipt(data.receipt);
+        setShowReceiptModal(true);
+      }
+      
+      return;
+    }
+
+    if (method === "paymentError" && data?.error) {
+      console.error('❌ Payment failed from payment modal:', data.error);
+      
+      // Close modals but don't clear order data in case user wants to retry
+      setShowPaymentMethodModal(false);
+      
+      toast({
+        title: 'Lỗi thanh toán',
+        description: data.error || 'Không thể hoàn tất thanh toán',
+        variant: 'destructive',
+      });
+      
+      return;
+    }
+    
     if (!orderForPayment?.id) {
       console.error('❌ No order for payment found');
       toast({

@@ -768,12 +768,18 @@ export function PaymentMethodModal({
         if (!statusResponse.ok) {
           const errorText = await statusResponse.text();
           console.error("❌ Step 1 FAILED: Order status update failed:", errorText);
-          throw new Error(`Failed to update order status to paid: ${errorText}`);
+          
+          // Show error toast but don't stop the process completely
+          toast({
+            title: "Cảnh báo",
+            description: "Không thể cập nhật trạng thái đơn hàng, nhưng hóa đơn đã được tạo",
+            variant: "destructive",
+          });
+        } else {
+          statusResult = await statusResponse.json();
+          console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
+          console.log(`🎯 Order status changed: ${orderInfo.status} → 'paid'`);
         }
-
-        statusResult = await statusResponse.json();
-        console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
-        console.log(`🎯 Order status changed: ${orderInfo.status} → 'paid'`);
       } else {
         console.log("🔄 Step 1 SKIPPED: Temporary order detected, proceeding without database update");
         statusResult = { id: orderInfo.id, status: 'paid', tableId: orderInfo.tableId };
@@ -914,6 +920,15 @@ export function PaymentMethodModal({
 
       // STEP 6: Pass complete success data to parent component with receipt
       console.log("✅ Step 6: Payment process completed successfully");
+      
+      // Show success toast
+      toast({
+        title: "Thành công",
+        description: eInvoiceData.publishLater 
+          ? "Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau"
+          : "Đơn hàng đã được thanh toán và hóa đơn điện tử đã được tạo",
+      });
+
       onSelectMethod("paymentCompleted", {
         ...eInvoiceData,
         originalPaymentMethod: selectedPaymentMethod,
@@ -932,6 +947,13 @@ export function PaymentMethodModal({
     } catch (error) {
       console.error("❌ ERROR in payment process:", error);
 
+      // Show error toast
+      toast({
+        title: "Lỗi thanh toán",
+        description: "Có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+
       // Close modals to prevent getting stuck
       setShowEInvoice(false);
       setSelectedPaymentMethod("");
@@ -944,7 +966,7 @@ export function PaymentMethodModal({
         orderId: orderInfo?.id,
         tableId: orderInfo?.tableId,
         success: false,
-        error: error.message,
+        error: error.message || "Lỗi không xác định",
         paymentData: selectedPaymentMethod === "cash" ? {
           amountReceived: parseFloat(cashAmountInput || "0"),
           change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0)
