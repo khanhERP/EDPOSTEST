@@ -82,9 +82,12 @@ export default function SalesOrders() {
   useEffect(() => {
     const handleNewOrder = () => {
       console.log('📱 Sales Orders: New order detected, refreshing data...');
+      // Force immediate refresh with all date ranges
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/date-range"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/date-range"] });
     };
 
     const handleOrderUpdate = () => {
@@ -92,17 +95,34 @@ export default function SalesOrders() {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/date-range"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/date-range"] });
+    };
+
+    const handleRefreshOrders = () => {
+      console.log('🔄 Sales Orders: Manual refresh triggered...');
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/date-range"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/date-range"] });
     };
 
     // Listen for order creation and update events
     window.addEventListener('newOrderCreated', handleNewOrder);
     window.addEventListener('orderStatusUpdated', handleOrderUpdate);
     window.addEventListener('paymentCompleted', handleOrderUpdate);
+    window.addEventListener('refreshOrders', handleRefreshOrders);
+    window.addEventListener('invoiceCreated', handleNewOrder);
+    window.addEventListener('receiptCreated', handleNewOrder);
 
     return () => {
       window.removeEventListener('newOrderCreated', handleNewOrder);
       window.removeEventListener('orderStatusUpdated', handleOrderUpdate);
       window.removeEventListener('paymentCompleted', handleOrderUpdate);
+      window.removeEventListener('refreshOrders', handleRefreshOrders);
+      window.removeEventListener('invoiceCreated', handleNewOrder);
+      window.removeEventListener('receiptCreated', handleNewOrder);
     };
   }, [queryClient]);
   const [startDate, setStartDate] = useState(() => {
@@ -148,6 +168,8 @@ export default function SalesOrders() {
     },
     retry: 3,
     retryDelay: 1000,
+    staleTime: 5000, // Cache for only 5 seconds
+    refetchInterval: 10000, // Auto-refresh every 10 seconds
   });
 
   // Query orders by date range
@@ -169,6 +191,8 @@ export default function SalesOrders() {
     },
     retry: 3,
     retryDelay: 1000,
+    staleTime: 5000, // Cache for only 5 seconds
+    refetchInterval: 10000, // Auto-refresh every 10 seconds
   });
 
   // Query transactions by date range
@@ -709,10 +733,26 @@ export default function SalesOrders() {
       return false;
     }
   }).sort((a: any, b: any) => {
-    // Sort by date in descending order (newest first)
-    const dateA = new Date(a.date || a.orderedAt || a.invoiceDate || a.createdAt);
-    const dateB = new Date(b.date || b.orderedAt || b.invoiceDate || b.createdAt);
-    return dateB.getTime() - dateA.getTime();
+    // Sort by multiple criteria for newest orders first
+    // 1. First sort by creation timestamp (newest first)
+    const createdAtA = new Date(a.createdAt || a.date || a.orderedAt || a.invoiceDate);
+    const createdAtB = new Date(b.createdAt || b.date || b.orderedAt || b.invoiceDate);
+    
+    if (createdAtA.getTime() !== createdAtB.getTime()) {
+      return createdAtB.getTime() - createdAtA.getTime();
+    }
+    
+    // 2. If creation times are equal, sort by ID (newer ID first)
+    if (a.id !== b.id) {
+      return b.id - a.id;
+    }
+    
+    // 3. If IDs are equal, prioritize orders over invoices
+    if (a.type !== b.type) {
+      return a.type === 'order' ? -1 : 1;
+    }
+    
+    return 0;
   }) : [];
 
   const formatCurrency = (amount: string | number | undefined | null): string => {
