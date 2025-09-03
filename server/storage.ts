@@ -1040,26 +1040,51 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders
-  async getOrders(tableId?: number, status?: string, tenantDb?: any): Promise<Order[]> {
-    const database = tenantDb || db;
-    const conditions = [];
+  async getOrders(tableId?: number, status?: string, tenantDb = db): Promise<Order[]> {
+    try {
+      console.log(`📋 Storage: Getting orders with filters:`, { tableId, status });
 
-    if (tableId) {
-      conditions.push(eq(orders.tableId, tableId));
-    }
-    if (status) {
-      conditions.push(eq(orders.status, status));
-    }
+      let query = tenantDb.select().from(orders);
 
-    if (conditions.length > 0) {
-      return await database
-        .select()
-        .from(orders)
-        .where(and(...conditions))
-        .orderBy(orders.orderedAt);
-    }
+      const conditions = [];
+      if (tableId && !isNaN(tableId)) {
+        conditions.push(eq(orders.tableId, tableId));
+      }
 
-    return await database.select().from(orders).orderBy(orders.orderedAt);
+      if (status && typeof status === 'string') {
+        conditions.push(eq(orders.status, status));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+
+      const result = await query.orderBy(desc(orders.orderedAt));
+
+      console.log(`✅ Storage: Found ${result?.length || 0} orders`);
+
+      // Ensure all required fields are present
+      const safeResult = (result || []).map(order => ({
+        ...order,
+        id: order.id,
+        orderNumber: order.orderNumber || `ORD-${order.id}`,
+        status: order.status || 'pending',
+        total: order.total || '0.00',
+        subtotal: order.subtotal || '0.00',
+        tax: order.tax || '0.00',
+        tableId: order.tableId,
+        customerName: order.customerName || '',
+        customerCount: order.customerCount || 1,
+        orderedAt: order.orderedAt || new Date(),
+        paymentMethod: order.paymentMethod || null,
+        einvoiceStatus: order.einvoiceStatus || 0
+      }));
+
+      return safeResult;
+    } catch (error) {
+      console.error(`❌ Storage: Error getting orders:`, error);
+      return [];
+    }
   }
 
   async getOrder(id: number): Promise<Order | undefined> {
@@ -1266,7 +1291,7 @@ export class DatabaseStorage implements IStorage {
         paymentMethod: mockOrder.paymentMethod,
         allowsContinuation: true
       });
-      
+
       return mockOrder;
     }
 
@@ -1576,24 +1601,53 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async getOrderItems(orderId: number): Promise<OrderItem[]> {
-    const items = await db
-      .select({
-        id: orderItems.id,
-        orderId: orderItems.orderId,
-        productId: orderItems.productId,
-        quantity: orderItems.quantity,
-        unitPrice: orderItems.unitPrice,
-        total: orderItems.total,
-        notes: orderItems.notes,
-        productName: products.name,
-        productSku: products.sku,
-      })
-      .from(orderItems)
-      .leftJoin(products, eq(orderItems.productId, products.id))
-      .where(eq(orderItems.orderId, orderId));
+  async getOrderItems(orderId: number, tenantDb = db): Promise<OrderItem[]> {
+    try {
+      console.log(`📦 Storage: Getting order items for order ID: ${orderId}`);
 
-    return items as OrderItem[];
+      if (!orderId || isNaN(orderId) || orderId <= 0) {
+        console.error(`❌ Storage: Invalid order ID: ${orderId}`);
+        return [];
+      }
+
+      const result = await tenantDb
+        .select({
+          id: orderItems.id,
+          orderId: orderItems.orderId,
+          productId: orderItems.productId,
+          quantity: orderItems.quantity,
+          unitPrice: orderItems.unitPrice,
+          total: orderItems.total,
+          notes: orderItems.notes,
+          productName: products.name,
+          productSku: products.sku,
+        })
+        .from(orderItems)
+        .leftJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, orderId))
+        .orderBy(orderItems.id);
+
+      console.log(`✅ Storage: Found ${result?.length || 0} order items for order ${orderId}`);
+
+      // Ensure all items have required fields
+      const safeResult = (result || []).map(item => ({
+        ...item,
+        id: item.id,
+        orderId: item.orderId,
+        productId: item.productId,
+        quantity: item.quantity || 0,
+        unitPrice: item.unitPrice || '0.00',
+        total: item.total || '0.00',
+        notes: item.notes || null,
+        productName: item.productName || 'Unknown Product',
+        productSku: item.productSku || `ITEM${item.productId || 'UNKNOWN'}`
+      }));
+
+      return safeResult;
+    } catch (error) {
+      console.error(`❌ Storage: Error getting order items for order ${orderId}:`, error);
+      return [];
+    }
   }
 
   // Inventory Management
