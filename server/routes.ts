@@ -648,24 +648,29 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const limit = parseInt(req.query.limit as string) || 20;
 
       const tenantDb = await getTenantDatabase(req);
-      // Use storage instead of direct db queries
-      const allInvoices = await storage.getInvoices(tenantDb);
-
-      // Filter by date range
+      
+      // Filter by date range using direct database query
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setUTCHours(23, 59, 59, 999);
 
-      const filteredInvoices = allInvoices.filter((invoice) => {
-        const invoiceDate = new Date(invoice.invoiceDate);
-        return invoiceDate >= start && invoiceDate <= end;
-      });
+      const allInvoices = await db
+        .select()
+        .from(invoices)
+        .where(
+          and(
+            gte(invoices.invoiceDate, start),
+            lte(invoices.invoiceDate, end)
+          )
+        )
+        .orderBy(desc(invoices.createdAt));
 
       // Paginate results
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
-      const paginatedInvoices = filteredInvoices.slice(startIndex, endIndex);
+      const paginatedInvoices = allInvoices.slice(startIndex, endIndex);
 
+      console.log('Invoices by date range loaded:', paginatedInvoices.length);
       res.json(paginatedInvoices);
     } catch (error) {
       console.error("Error fetching invoices by date range:", error);
