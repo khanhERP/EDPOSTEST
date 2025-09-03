@@ -1134,12 +1134,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
       
       const updateData: any = {
         status: status,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date()
       };
 
       // Add paidAt timestamp if status is 'paid'
       if (status === 'paid') {
-        updateData.paidAt = new Date().toISOString();
+        updateData.paidAt = new Date();
       }
 
       const [updatedOrder] = await db
