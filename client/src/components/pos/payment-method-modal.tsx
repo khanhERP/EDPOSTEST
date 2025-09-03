@@ -741,39 +741,40 @@ export function PaymentMethodModal({
     // Always close the E-Invoice modal first
     setShowEInvoice(false);
 
-    // Check if this is from publish later or immediate publish
-    if (invoiceData.publishLater) {
-      console.log("⏳ E-Invoice publish later completed");
+    // Check if we have valid receipt data
+    if (invoiceData.receipt) {
+      console.log("📄 Valid receipt data found:", invoiceData.receipt);
+      
+      // Set receipt data for modal
+      setReceiptDataForModal(invoiceData.receipt);
 
-      // For publish later, receipt data should be in invoiceData.receipt
-      if (invoiceData.receipt) {
-        console.log("📄 Setting receipt from publish later:", invoiceData.receipt);
-        setReceiptDataForModal(invoiceData.receipt); // Set data for receipt modal
-
-        // Force show receipt modal after a small delay
-        setTimeout(() => {
-          setShowReceiptModal(true);
-          console.log("📄 Receipt modal should now be visible");
-        }, 100);
-      } else {
-        console.log("❌ No receipt data found in publish later response");
+      // Show success message based on action type
+      if (invoiceData.publishLater) {
+        console.log("⏳ E-Invoice publish later completed - showing receipt");
+        toast({
+          title: "Thành công",
+          description: "Hóa đơn đã được lưu để phát hành sau. Đang hiển thị hóa đơn để in...",
+        });
+      } else if (invoiceData.publishedImmediately || invoiceData.success) {
+        console.log("✅ E-Invoice published immediately - showing receipt");
+        toast({
+          title: "Thành công", 
+          description: "Hóa đơn điện tử đã được phát hành thành công!",
+        });
       }
-    } else if (invoiceData.publishedImmediately || invoiceData.success) {
-      console.log("✅ E-Invoice published immediately");
 
-      // For immediate publish, receipt data should be in invoiceData.receipt
-      if (invoiceData.receipt) {
-        console.log("📄 Setting receipt from immediate publish:", invoiceData.receipt);
-        setReceiptDataForModal(invoiceData.receipt); // Set data for receipt modal
-
-        // Force show receipt modal after a small delay
-        setTimeout(() => {
-          setShowReceiptModal(true);
-          console.log("📄 Receipt modal should now be visible");
-        }, 100);
-      } else {
-        console.log("❌ No receipt data found in immediate publish response");
-      }
+      // Force show receipt modal after a small delay
+      setTimeout(() => {
+        console.log("📄 Showing receipt modal");
+        setShowReceiptModal(true);
+      }, 200);
+    } else {
+      console.error("❌ No receipt data found in E-Invoice response");
+      toast({
+        title: "Cảnh báo",
+        description: "Hóa đơn đã được xử lý nhưng không thể hiển thị để in. Vui lòng kiểm tra trong danh sách hóa đơn.",
+        variant: "destructive",
+      });
     }
 
     // Handle order completion for table orders

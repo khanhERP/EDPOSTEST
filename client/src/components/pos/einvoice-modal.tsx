@@ -392,11 +392,7 @@ export function EInvoiceModal({
       );
       console.log("🟡 Source:", source, "OrderId:", orderId);
 
-      // Close modal immediately to prevent re-rendering
-      console.log("🔄 Step 1: Closing E-Invoice modal immediately to prevent duplicate calls");
-      onClose();
-
-      // Debug log current cart items
+      // Debug log current cart items BEFORE any processing
       console.log("=== PHÁT HÀNH SAU - KIỂM TRA DỮ LIỆU ===");
       console.log("cartItems received:", cartItems);
       console.log("cartItems length:", cartItems?.length || 0);
@@ -411,6 +407,19 @@ export function EInvoiceModal({
           description: "Không có sản phẩm nào trong giỏ hàng để lưu thông tin.",
           variant: "destructive",
         });
+        setIsPublishing(false);
+        return;
+      }
+
+      // Validate total amount
+      if (!total || total <= 0) {
+        console.error("❌ Invalid total amount for later publishing:", total);
+        toast({
+          title: "Lỗi", 
+          description: "Tổng tiền không hợp lệ để lưu hóa đơn.",
+          variant: "destructive",
+        });
+        setIsPublishing(false);
         return;
       }
 
@@ -581,6 +590,7 @@ export function EInvoiceModal({
           : calculatedSubtotal + calculatedTax
         ).toFixed(2),
         paymentMethod: "einvoice",
+        originalPaymentMethod: selectedPaymentMethod, // Add original payment method
         amountReceived: (typeof total === "number" && !isNaN(total)
           ? total
           : calculatedSubtotal + calculatedTax
@@ -588,25 +598,11 @@ export function EInvoiceModal({
         change: "0.00",
         cashierName: "System User",
         createdAt: new Date().toISOString(),
+        customerName: formData.customerName,
+        customerTaxCode: formData.taxCode,
       };
 
-      // Prepare the invoice data to be returned
-      const invoiceData = {
-        ...formData,
-        cartItems: cartItems,
-        total: total,
-        paymentMethod: "einvoice",
-        source: source || "pos",
-        invoiceId: savedInvoice.invoice?.id,
-        publishLater: true, // Flag to indicate this is for later publishing
-        receipt: receiptData, // Truyền receipt data thực sự
-      };
-
-      console.log(
-        "🟡 Prepared invoice data for later publishing:",
-        invoiceData,
-      );
-      console.log("📄 Receipt data created:", receiptData);
+      console.log("📄 Receipt data created for publish later:", receiptData);
 
       // Show success message
       toast({
@@ -618,7 +614,6 @@ export function EInvoiceModal({
       // Prepare comprehensive invoice data với receipt để hiển thị modal in
       const completeInvoiceData = {
         success: true, // Add success flag
-        ...invoiceData,
         paymentMethod: selectedPaymentMethod, // Use original payment method
         originalPaymentMethod: selectedPaymentMethod,
         publishLater: true,
@@ -634,15 +629,24 @@ export function EInvoiceModal({
           ? total
           : calculatedSubtotal + calculatedTax), // Include total
         subtotal: calculatedSubtotal,
-        tax: calculatedTax
+        tax: calculatedTax,
+        invoiceId: savedInvoice.invoice?.id,
+        source: source || "pos",
+        orderId: orderId
       };
 
       console.log("✅ Prepared data for onConfirm after publish later");
       console.log("📄 Receipt data to pass:", receiptData);
       console.log("📦 Complete invoice data:", completeInvoiceData);
 
-      // Call onConfirm to pass data to parent and trigger receipt modal
-      onConfirm(completeInvoiceData);
+      // Close modal BEFORE calling onConfirm to prevent state conflicts
+      onClose();
+
+      // Small delay to ensure modal is closed before showing receipt
+      setTimeout(() => {
+        console.log("🔄 Calling onConfirm to trigger receipt modal display");
+        onConfirm(completeInvoiceData);
+      }, 100);
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
