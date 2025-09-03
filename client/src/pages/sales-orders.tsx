@@ -101,19 +101,20 @@ export default function SalesOrders() {
 
 
 
-  // Query invoices
+  // Query invoices by date range
   const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
-    queryKey: ["/api/invoices", currentPage, itemsPerPage],
+    queryKey: ["/api/invoices/date-range", startDate, endDate, currentPage, itemsPerPage],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/invoices?page=${currentPage}&limit=${itemsPerPage}`);
+        const response = await apiRequest("GET", `/api/invoices/date-range/${startDate}/${endDate}?page=${currentPage}&limit=${itemsPerPage}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log('Sales Orders - Invoices loaded by date:', data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Error fetching invoices:', error);
+        console.error('Error fetching invoices by date:', error);
         return [];
       }
     },
@@ -121,19 +122,20 @@ export default function SalesOrders() {
     retryDelay: 1000,
   });
 
-  // Query orders
+  // Query orders by date range
   const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
-    queryKey: ["/api/orders", currentPage, itemsPerPage],
+    queryKey: ["/api/orders/date-range", startDate, endDate, currentPage, itemsPerPage],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/orders?page=${currentPage}&limit=${itemsPerPage}`);
+        const response = await apiRequest("GET", `/api/orders/date-range/${startDate}/${endDate}?page=${currentPage}&limit=${itemsPerPage}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log('Sales Orders - Orders loaded by date:', data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error('Error fetching orders by date:', error);
         return [];
       }
     },
@@ -616,16 +618,8 @@ export default function SalesOrders() {
 
   const filteredInvoices = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
     try {
-      if (!item || !item.date) return false;
+      if (!item) return false;
 
-      const itemDate = new Date(item.date);
-      if (isNaN(itemDate.getTime())) return false;
-
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
-      const dateMatch = itemDate >= start && itemDate <= end;
       const customerMatch = !customerSearch || 
         (item.customerName && item.customerName.toLowerCase().includes(customerSearch.toLowerCase()));
       const orderMatch = !orderNumberSearch || 
@@ -633,7 +627,7 @@ export default function SalesOrders() {
       const customerCodeMatch = !customerCodeSearch || 
         (item.customerTaxCode && item.customerTaxCode.toLowerCase().includes(customerCodeSearch.toLowerCase()));
 
-      return dateMatch && customerMatch && orderMatch && customerCodeMatch;
+      return customerMatch && orderMatch && customerCodeMatch;
     } catch (error) {
       console.error('Error filtering item:', item, error);
       return false;

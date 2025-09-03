@@ -612,29 +612,31 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.get("/api/orders/date-range/:startDate/:endDate", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
       const tenantDb = await getTenantDatabase(req);
+      const allOrders = await storage.getOrders(undefined, undefined, tenantDb);
 
+      // Filter by date range
       const start = new Date(startDate);
-      start.setUTCHours(0, 0, 0, 0);
-
       const end = new Date(endDate);
       end.setUTCHours(23, 59, 59, 999);
 
-      const filteredOrders = await db.select().from(orders)
-        .where(
-          and(
-            gte(orders.orderedAt, start),
-            lte(orders.orderedAt, end)
-          )
-        )
-        .orderBy(desc(orders.orderedAt));
+      const filteredOrders = allOrders.filter((order) => {
+        const orderDate = new Date(order.orderedAt);
+        return orderDate >= start && orderDate <= end;
+      });
 
-      // Always return an array, even if empty
-      res.json(filteredOrders || []);
+      // Paginate results
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+      res.json(paginatedOrders);
     } catch (error) {
       console.error("Error fetching orders by date range:", error);
-      // Return empty array instead of error for reports
-      res.json([]);
+      res.status(500).json({ error: "Failed to fetch orders" });
     }
   });
 
@@ -642,29 +644,31 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.get("/api/invoices/date-range/:startDate/:endDate", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
       const tenantDb = await getTenantDatabase(req);
+      const allInvoices = await storage.getInvoices(tenantDb);
 
+      // Filter by date range
       const start = new Date(startDate);
-      start.setUTCHours(0, 0, 0, 0);
-
       const end = new Date(endDate);
       end.setUTCHours(23, 59, 59, 999);
 
-      const filteredInvoices = await db.select().from(invoices)
-        .where(
-          and(
-            gte(invoices.invoiceDate, start),
-            lte(invoices.invoiceDate, end)
-          )
-        )
-        .orderBy(desc(invoices.invoiceDate));
+      const filteredInvoices = allInvoices.filter((invoice) => {
+        const invoiceDate = new Date(invoice.invoiceDate);
+        return invoiceDate >= start && invoiceDate <= end;
+      });
 
-      // Always return an array, even if empty
-      res.json(filteredInvoices || []);
+      // Paginate results
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedInvoices = filteredInvoices.slice(startIndex, endIndex);
+
+      res.json(paginatedInvoices);
     } catch (error) {
       console.error("Error fetching invoices by date range:", error);
-      // Return empty array instead of error for reports
-      res.json([]);
+      res.status(500).json({ error: "Failed to fetch invoices" });
     }
   });
 
@@ -1191,7 +1195,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Direct database update for better reliability
       console.log(`🔄 Performing direct database update for order ${orderId} to status ${status}`);
-      
+
       const updateData: any = {
         status: status,
         updatedAt: new Date()
@@ -1256,7 +1260,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           if (unpaidOrders.length === 0) {
             await db
               .update(tables)
-              .set({ 
+              .set({
                 status: 'available',
                 updatedAt: new Date().toISOString()
               })
@@ -3762,7 +3766,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const isTemporaryId = rawId.startsWith('temp-');
       if (isTemporaryId) {
         console.log(`🟡 Temporary order ID detected: ${rawId} - returning success for flow continuation`);
-        
+
         // Return a mock success response to allow E-Invoice flow to continue
         const mockOrder = {
           id: rawId,
