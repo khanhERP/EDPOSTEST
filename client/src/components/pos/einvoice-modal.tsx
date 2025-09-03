@@ -385,7 +385,7 @@ export function EInvoiceModal({
     }
 
     setIsPublishing(true);
-    
+
     try {
       console.log(
         "🟡 PHÁT HÀNH SAU - Lưu thông tin hóa đơn vào bảng invoices và invoice_items",
@@ -630,8 +630,14 @@ export function EInvoiceModal({
       console.log("✅ Prepared data for onConfirm after publish later");
       console.log("📄 Receipt data to pass:", receiptData);
 
-      // Directly call onConfirm instead of showing print dialog
+      // Close E-Invoice modal first
+      console.log("🔄 Step 4: Closing E-Invoice modal after publish later");
+
+      // Call onConfirm to pass data to parent and trigger receipt modal
       onConfirm(completeInvoiceData);
+
+      // Force close this modal to prevent re-rendering
+      onClose();
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 
