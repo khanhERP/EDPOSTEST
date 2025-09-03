@@ -54,6 +54,9 @@ export function initializeWebSocketServer(server: Server) {
         } else if (data.type === 'register_order_management') {
           console.log('✅ Order Management client registered');
           (ws as any).clientType = 'order_management';
+        } else if (data.type === 'register_table_grid') {
+          console.log('✅ Table Grid client registered');
+          (ws as any).clientType = 'table_grid';
         } else if (data.type === 'cart_update') {
           // Broadcast cart update to all connected clients (customer displays)
           console.log('📡 Broadcasting cart update to customer displays');
@@ -88,6 +91,23 @@ export function initializeWebSocketServer(server: Server) {
           console.log('👥 Customer display connected');
           // Mark this connection as customer display if needed
           (ws as any).isCustomerDisplay = true;
+        } else if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'order_status_update' || data.type === 'force_refresh') {
+          // Broadcast data refresh signals to all connected table grids and order management clients
+          console.log(`📡 Broadcasting ${data.type} to all clients`);
+          clients.forEach(client => {
+            if (client.readyState === client.OPEN && client !== ws) {
+              const clientType = (client as any).clientType;
+              if (clientType === 'table_grid' || clientType === 'order_management') {
+                client.send(JSON.stringify({
+                  type: data.type,
+                  source: data.source || 'unknown',
+                  reason: data.reason || 'data_refresh',
+                  success: data.success !== undefined ? data.success : true,
+                  timestamp: data.timestamp || new Date().toISOString()
+                }));
+              }
+            }
+          });
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);

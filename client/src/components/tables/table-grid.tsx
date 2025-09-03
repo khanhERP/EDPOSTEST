@@ -265,7 +265,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     const handlePaymentCompleted = (event: CustomEvent) => {
       console.log("💳 Table Grid: Payment completed event received:", event.detail);
 
-      // Force immediate data refresh when payment is completed from any source
+      // Force immediate data refresh with multiple strategies
       const refreshData = async () => {
         console.log("🔄 Table Grid: Starting aggressive refresh after payment completion");
 
@@ -895,11 +895,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         remainingItems.forEach((item: any) => {
           const basePrice = Number(item.unitPrice || 0);
           const quantity = Number(item.quantity || 0);
-
-          // Calculate subtotal
-          newSubtotal += basePrice * quantity;
-
-          // Only calculate tax if afterTaxPrice exists in database
           const product = Array.isArray(products)
             ? products.find((p: any) => p.id === item.productId)
             : null;
@@ -1451,10 +1446,40 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       setSelectedPaymentMethod("");
       setSelectedReceipt(null);
 
+      // Send WebSocket signal for data refresh
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        const ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify({
+            type: 'popup_close',
+            success: true,
+            source: 'table_grid_receipt_confirm',
+            timestamp: new Date().toISOString()
+          }));
+
+          setTimeout(() => ws.close(), 100);
+        };
+      } catch (error) {
+        console.warn("⚠️ Table Grid: Could not send WebSocket signal:", error);
+      }
+
+      // Dispatch custom event as backup
+      window.dispatchEvent(new CustomEvent('forceDataRefresh', {
+        detail: {
+          source: 'table_grid_receipt_confirm',
+          reason: 'payment_completed',
+          timestamp: new Date().toISOString()
+        }
+      }));
+
       toast({
         title: "Thành công",
         description: "Thanh toán đã được hoàn thành",
       });
+
     } catch (error) {
       console.error("❌ Error completing payment from table:", error);
       toast({
@@ -1506,7 +1531,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           const quantity = Number(item.quantity || 0);
           const product = products.find((p: any) => p.id === item.productId);
 
-          // Calculate subtotal based on base price without tax
+          // Calculate subtotal (base price without tax)
           subtotal += basePrice * quantity;
 
           // Use EXACT same tax calculation logic as Order Details
@@ -2264,7 +2289,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         product.afterTaxPrice !== null &&
                         product.afterTaxPrice !== ""
                       ) {
-                        const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                        const afterTaxPrice = parseFloat(
+                          product.afterTaxPrice,
+                        );
                         // Tax per unit = afterTaxPrice - basePrice
                         const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
                         const itemTax = Math.floor(taxPerUnit * quantity);
@@ -2833,7 +2860,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               // Strategy 3: Force invalidate and refetch with no cache
               queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
               queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-              
+
               // Strategy 4: Set query data to force re-render
               queryClient.setQueryData(["/api/tables"], undefined);
               queryClient.setQueryData(["/api/orders"], undefined);
@@ -2898,7 +2925,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                   console.log("📡 Table: Sending WebSocket refresh signal:", refreshSignal);
                   ws.send(JSON.stringify(refreshSignal));
-                  
+
                   setTimeout(() => ws.close(), 100);
                 };
 
@@ -2917,7 +2944,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   try {
                     queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
                     queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-                    
+
                     await Promise.all([
                       refetchTables(),
                       refetchOrders()
@@ -2925,7 +2952,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     console.log(`✅ Table: Delayed verification refresh ${index + 1} completed`);
                   } catch (error) {
                     console.error(`❌ Table: Delayed verification refresh ${index + 1} failed:`, error);
-                    
+
                     // If all delayed refreshes fail, try page reload as last resort
                     if (index === delayedRefreshes.length - 1) {
                       console.log("🔄 Table: All refreshes failed, attempting page reload as last resort");
@@ -2946,13 +2973,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
             } catch (error) {
               console.error("❌ Table: Critical error during data refresh:", error);
-              
+
               // Final fallback: force page reload
               toast({
                 title: "Đang làm mới",
                 description: "Làm mới trang để cập nhật dữ liệu mới nhất...",
               });
-              
+
               setTimeout(() => {
                 window.location.reload();
               }, 1500);
