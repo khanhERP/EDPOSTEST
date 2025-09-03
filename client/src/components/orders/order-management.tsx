@@ -20,6 +20,8 @@ import type { Order, Table, Product, OrderItem } from "@shared/schema";
 
 export function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderForEInvoice, setSelectedOrderForEInvoice] = useState<Order | null>(null); // State to hold order for E-invoice
+  const [orderItemsForEInvoice, setOrderItemsForEInvoice] = useState<any[]>([]); // State to hold cart items for E-invoice
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [orderForPayment, setOrderForPayment] = useState<Order | null>(null);
@@ -121,7 +123,7 @@ export function OrderManagement() {
 
       for (const order of activeOrders) {
         try {
-          const response = await apiRequest("GET", `/api/order-items/${order.id}`);
+          const response = await apiRequest('GET', `/api/order-items/${order.id}`);
           const items = await response.json();
           itemsMap.set(order.id, Array.isArray(items) ? items : []);
           console.log(`✅ Order Management: Loaded ${Array.isArray(items) ? items.length : 0} items for order ${order.id}`);
@@ -182,6 +184,55 @@ export function OrderManagement() {
       toast({
         title: t('common.error'),
         description: t('orders.orderStatusUpdateFailed'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to update order with E-invoice details
+  const updateOrderMutation = useMutation({
+    mutationFn: ({ orderId, updateData }: { orderId: number; updateData: any }) =>
+      apiRequest('PUT', `/api/orders/${orderId}`, updateData),
+    onSuccess: async (data, variables) => {
+      console.log(`✅ Order ${variables.orderId} updated with E-invoice data:`, data);
+      // Invalidate queries to refresh data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+      ]);
+
+      // If order was marked as paid, trigger payment completed events
+      if (variables.updateData?.status === 'paid') {
+        console.log('🚀 Triggering payment completion events for order', variables.orderId);
+        if (typeof window !== 'undefined') {
+          const events = [
+            new CustomEvent('orderStatusUpdated', {
+              detail: {
+                orderId: variables.orderId,
+                status: 'paid',
+                timestamp: new Date().toISOString()
+              }
+            }),
+            new CustomEvent('paymentCompleted', {
+              detail: {
+                orderId: variables.orderId,
+                paymentMethod: variables.updateData.paymentMethod || 'einvoice',
+                timestamp: new Date().toISOString()
+              }
+            })
+          ];
+
+          events.forEach(event => {
+            window.dispatchEvent(event);
+          });
+        }
+      }
+    },
+    onError: (error, variables) => {
+      console.error(`❌ Error updating order ${variables.orderId} with E-invoice data:`, error);
+      toast({
+        title: t('common.error'),
+        description: `Không thể cập nhật thông tin hóa đơn cho đơn hàng ${variables.orderId}`,
         variant: "destructive",
       });
     },
@@ -500,135 +551,154 @@ export function OrderManagement() {
     }
   };
 
-  // Handle E-invoice confirmation and complete payment
-  const handleEInvoiceConfirm = async (invoiceData: any) => {
-    console.log('🎯 Order Management handleEInvoiceConfirm called with data:', invoiceData);
+  // Helper function to convert order items to cart format for E-Invoice
+  const convertOrderItemsToCartFormat = (orderItems: any[], order: any) => {
+    console.log("🔄 Converting order items to cart format:", { orderItems, order });
 
-    if (!orderForPayment) {
-      console.error('❌ No order for payment found');
-      toast({
-        title: 'Lỗi',
-        description: 'Không tìm thấy đơn hàng để thanh toán',
-        variant: 'destructive',
-      });
-      return;
+    if (!orderItems || !Array.isArray(orderItems)) {
+      console.warn("⚠️ No valid order items to convert");
+      return [];
     }
 
-    try {
-      // Use centralized payment completion function
-      await completeOrderPayment(orderForPayment.id, {
-        paymentMethod: invoiceData.originalPaymentMethod || 'einvoice',
-        einvoiceStatus: invoiceData.publishLater ? 0 : 1,
-        invoiceNumber: invoiceData.invoiceNumber,
-        symbol: invoiceData.symbol,
-        templateNumber: invoiceData.templateNumber
-      });
+    return orderItems.map(item => {
+      // Get product info from products list if available
+      const product = products?.find(p => p.id === item.productId);
 
+      return {
+        id: item.productId || item.id,
+        name: item.productName || product?.name || "Sản phẩm",
+        price: parseFloat(item.unitPrice || item.price || "0"),
+        quantity: parseInt(item.quantity || "1"),
+        sku: item.productSku || product?.sku || `ITEM${String(item.productId || item.id).padStart(3, "0")}`,
+        taxRate: parseFloat(product?.taxRate || "0"),
+        afterTaxPrice: product?.afterTaxPrice || null,
+        total: parseFloat(item.total || "0")
+      };
+    });
+  };
+
+  // Handler for E-Invoice confirmation from modal
+  const handleEInvoiceConfirm = (invoiceData: any) => {
+    console.log("🎯 Order Management: E-Invoice confirmed:", invoiceData);
+
+    // Close modals
+    setShowEInvoiceModal(false);
+
+    if (invoiceData.success || invoiceData.publishedImmediately || invoiceData.publishLater) {
+      console.log("✅ Order Management: E-Invoice processed successfully");
+
+      // Show success message
       toast({
-        title: 'Thành công',
-        description: invoiceData.publishLater
-          ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
-          : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
+        title: "Thành công",
+        description: invoiceData.publishLater ?
+          "Hóa đơn điện tử đã được lưu để phát hành sau" :
+          "Hóa đơn điện tử đã được phát hành thành công"
       });
 
-      // Close e-invoice modal first
-      setShowEInvoiceModal(false);
+      // If order was successfully processed via E-invoice, update order status
+      if (selectedOrderForEInvoice) {
+        const updateData: any = {
+          einvoiceStatus: invoiceData.publishLater ? 0 : 1, // 0 = draft, 1 = published
+        };
 
-      // Always create and show receipt modal after e-invoice processing
-      let receiptData = invoiceData.receipt;
-
-      // If no receipt data provided, create it from current order data
-      if (!receiptData && orderForPayment) {
-        console.log('📄 Creating receipt data from order payment data');
-
-        // Calculate totals using same logic as payment flow
-        let calculatedSubtotal = 0;
-        let calculatedTax = 0;
-
-        const currentOrderItems = orderForPayment?.processedItems || orderForPayment?.orderItems || [];
-
-        if (Array.isArray(currentOrderItems) && Array.isArray(products)) {
-          currentOrderItems.forEach((item: any) => {
-            const basePrice = Number(item.unitPrice || item.price || 0);
-            const quantity = Number(item.quantity || 0);
-            const product = products.find((p: any) => p.id === item.productId);
-
-            // Calculate subtotal exactly as Order Details
-            calculatedSubtotal += basePrice * quantity;
-
-            // Use EXACT same tax calculation logic
-            if (
-              product?.afterTaxPrice &&
-              product.afterTaxPrice !== null &&
-              product.afterTaxPrice !== ""
-            ) {
-              const afterTaxPrice = parseFloat(product.afterTaxPrice);
-              const taxPerUnit = afterTaxPrice - basePrice;
-              calculatedTax += taxPerUnit * quantity;
-            }
-          });
+        // If published immediately, also mark as paid
+        if (invoiceData.publishedImmediately) {
+          updateData.status = "paid";
+          updateData.paymentMethod = invoiceData.originalPaymentMethod || "cash";
+          updateData.paidAt = new Date().toISOString();
         }
 
-        const finalTotal = calculatedSubtotal + calculatedTax;
+        // Add invoice details if available
+        if (invoiceData.invoiceNumber) {
+          updateData.invoiceNumber = invoiceData.invoiceNumber;
+        }
+        if (invoiceData.symbol) {
+          updateData.symbol = invoiceData.symbol;
+        }
+        if (invoiceData.templateNumber) {
+          updateData.templateNumber = invoiceData.templateNumber;
+        }
 
-        receiptData = {
-          transactionId: invoiceData.invoiceNumber || `TXN-${Date.now()}`,
-          items: currentOrderItems.map((item: any) => ({
-            id: item.id,
-            productId: item.productId || item.id,
-            productName: item.productName || item.name,
-            quantity: item.quantity,
-            price: item.unitPrice || item.price,
-            total: item.total,
-            sku: item.productSku || item.sku || `SP${item.productId}`,
-            taxRate: (() => {
-              const product = Array.isArray(products)
-                ? products.find((p: any) => p.id === item.productId)
-                : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })(),
-          })),
-          subtotal: calculatedSubtotal.toString(),
-          tax: calculatedTax.toString(),
-          total: finalTotal.toString(),
-          paymentMethod: "einvoice",
-          originalPaymentMethod: invoiceData.originalPaymentMethod,
-          amountReceived: finalTotal.toString(),
-          change: "0.00",
-          cashierName: "Order Management",
-          createdAt: new Date().toISOString(),
-          customerName: invoiceData.customerName || orderForPayment.customerName,
-          customerTaxCode: invoiceData.taxCode,
-          invoiceNumber: invoiceData.invoiceNumber,
-        };
+        console.log("🔄 Updating order with E-invoice data:", updateData);
+
+        updateOrderMutation.mutate({
+          orderId: selectedOrderForEInvoice.id,
+          updateData: updateData
+        });
       }
 
-      console.log('📄 Order Management: Showing receipt modal with data:', {
-        hasReceipt: !!receiptData,
-        receiptTotal: receiptData?.total,
-        invoiceNumber: receiptData?.invoiceNumber
+      // Show receipt modal if available
+      if (invoiceData.receipt || invoiceData.shouldShowReceipt) {
+        console.log("📄 Order Management: Showing receipt modal after E-invoice");
+        setSelectedReceipt(invoiceData.receipt || invoiceData);
+        setShowReceiptModal(true);
+      }
+
+      console.log("🎉 Order Management: E-Invoice flow completed successfully");
+    } else {
+      console.error("❌ Order Management: E-Invoice processing failed:", invoiceData);
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi xử lý hóa đơn điện tử",
+        variant: "destructive"
       });
+    }
 
-      // Show receipt modal for printing
-      setSelectedReceipt(receiptData);
-      setShowReceiptModal(true);
+    // Reset selected order after processing
+    setSelectedOrder(null);
+    setSelectedOrderForEInvoice(null);
+  };
 
-      // Clear order states
-      setOrderForPayment(null);
-      setOrderDetailsOpen(false);
-      setSelectedOrder(null);
+  // Handler for E-Invoice button click to prepare data
+  const handleEInvoiceClick = async (order: any) => {
+    console.log("🧾 E-Invoice button clicked for order:", order);
+
+    try {
+      setSelectedOrderForEInvoice(order);
+
+      // Fetch order items for this order
+      const orderItemsResponse = await fetch(`/api/order-items/${order.id}`);
+      if (!orderItemsResponse.ok) {
+        throw new Error(`Failed to fetch order items: ${orderItemsResponse.status}`);
+      }
+
+      const orderItems = await orderItemsResponse.json();
+      console.log("📦 Fetched order items for E-invoice:", orderItems);
+
+      // Validate order items
+      if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+        throw new Error("Không có sản phẩm nào trong đơn hàng");
+      }
+
+      // Convert order items to cart format with proper product mapping
+      const cartItems = convertOrderItemsToCartFormat(orderItems, order);
+
+      console.log("🛒 Converted cart items for E-invoice:", cartItems);
+
+      // Validate cart items
+      if (cartItems.length === 0) {
+        throw new Error("Không thể chuyển đổi dữ liệu sản phẩm");
+      }
+
+      // Store the cart items for the modal
+      setOrderItemsForEInvoice(cartItems);
+
+      // Open E-Invoice modal with validated data
+      setShowEInvoiceModal(true);
 
     } catch (error) {
-      console.error('❌ Error during payment completion:', error);
-      toast({
-        title: 'Lỗi',
-        description: 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
-        variant: 'destructive',
-      });
+      console.error("❌ Error preparing E-invoice data:", error);
 
-      // Reset states
-      setOrderForPayment(null);
-      setShowEInvoiceModal(false);
+      let errorMessage = "Không thể tải thông tin đơn hàng cho hóa đơn điện tử";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      toast({
+        title: "Lỗi",
+        description: errorMessage,
+        variant: "destructive"
+      });
     }
   };
 
@@ -944,7 +1014,7 @@ export function OrderManagement() {
       setSelectedOrder(order);
       setOrderForPayment(orderForPaymentData);
       setPreviewReceipt(receiptPreview);
-      
+
       console.log('🚀 Order Management: States set, showing receipt preview modal');
       setShowReceiptPreview(true);
 
@@ -2472,26 +2542,21 @@ export function OrderManagement() {
       />
 
       {/* E-Invoice Modal */}
-      {showEInvoiceModal && orderForPayment && (
+      {showEInvoiceModal && selectedOrderForEInvoice && (
         <EInvoiceModal
           isOpen={showEInvoiceModal}
           onClose={() => {
+            console.log("🔴 Order Management: Closing E-invoice modal");
             setShowEInvoiceModal(false);
-            setOrderForPayment(null);
+            setSelectedOrderForEInvoice(null);
+            setOrderItemsForEInvoice([]);
           }}
           onConfirm={handleEInvoiceConfirm}
-          total={orderForPayment?.calculatedTotal ? Math.round(orderForPayment.calculatedTotal) : 0}
-          cartItems={orderForPayment?.processedItems?.map((item: any) => ({
-            id: item.productId,
-            name: item.productName,
-            price: item.price,
-            quantity: item.quantity,
-            sku: item.sku,
-            taxRate: item.taxRate,
-            afterTaxPrice: item.afterTaxPrice
-          })) || []}
-          source="order-management"
-          orderId={orderForPayment.id}
+          total={parseFloat(selectedOrderForEInvoice.total || "0")}
+          cartItems={orderItemsForEInvoice || []}
+          source="table"
+          orderId={selectedOrderForEInvoice.id}
+          selectedPaymentMethod={selectedOrderForEInvoice.paymentMethod || "cash"}
         />
       )}
 

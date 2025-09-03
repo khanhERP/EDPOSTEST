@@ -67,11 +67,14 @@ export function EInvoiceModal({
   // Debug log to track cart items data flow
   console.log("🔍 EInvoiceModal Props Analysis:");
   console.log("- isOpen:", isOpen);
+  console.log("- source:", source);
+  console.log("- orderId:", orderId);
   console.log("- total:", total);
   console.log("- cartItems received:", cartItems);
   console.log("- cartItems type:", typeof cartItems);
   console.log("- cartItems is array:", Array.isArray(cartItems));
   console.log("- cartItems length:", cartItems?.length || 0);
+  console.log("- selectedPaymentMethod:", selectedPaymentMethod);
   const [formData, setFormData] = useState({
     invoiceProvider: "",
     invoiceTemplate: "",
@@ -405,10 +408,19 @@ export function EInvoiceModal({
 
       // Validate cart items first
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-        console.error("❌ No valid cart items found for later publishing");
+        console.error("❌ No valid cart items found for later publishing:", {
+          source,
+          orderId,
+          cartItems,
+          isArray: Array.isArray(cartItems),
+          length: cartItems?.length,
+          total: total,
+        });
+        
+        const sourceText = source === "table" ? "đơn hàng" : "giỏ hàng";
         toast({
           title: "Lỗi",
-          description: "Không có sản phẩm nào trong giỏ hàng để lưu thông tin.",
+          description: `Không có sản phẩm nào trong ${sourceText} để lưu thông tin hóa đơn điện tử.`,
           variant: "destructive",
         });
         return;
@@ -689,6 +701,8 @@ export function EInvoiceModal({
     try {
       // Debug log current cart items
       console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
+      console.log("Source:", source);
+      console.log("Order ID:", orderId);
       console.log("cartItems received:", cartItems);
       console.log("cartItems length:", cartItems?.length || 0);
       console.log("cartItems detailed:", JSON.stringify(cartItems, null, 2));
@@ -723,20 +737,26 @@ export function EInvoiceModal({
 
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found:", {
+          source,
+          orderId,
           cartItems,
           isArray: Array.isArray(cartItems),
           length: cartItems?.length,
           total: total,
         });
+        
+        const sourceText = source === "table" ? "quản lý bàn" : "màn hình bán hàng";
+        const errorDetails = `
+Nguồn: ${sourceText}
+${orderId ? `ID đơn hàng: ${orderId}` : ''}
+Số sản phẩm: ${cartItems?.length || 0}
+Tổng tiền: ${total.toLocaleString("vi-VN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} ₫`;
+        
         alert(
-          "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " +
-            (cartItems?.length || 0) +
-            "\n- Tổng tiền: " +
-            total.toLocaleString("vi-VN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }) +
-            " ₫\n\nVui lòng thử lại từ màn hình bán hàng.",
+          `Không có sản phẩm nào trong đơn hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:${errorDetails}\n\nVui lòng thử lại từ ${sourceText}.`,
         );
         return;
       }
