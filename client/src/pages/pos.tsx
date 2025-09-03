@@ -181,41 +181,55 @@ export default function POS({ onLogout }: POSPageProps) {
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log("🔴 POS: Closing receipt modal and clearing cart");
+          console.log("🔴 POS: Closing receipt modal and forcing complete cart reset");
           setShowReceiptModal(false);
           
-          // Clear cart immediately when receipt modal closes
+          // Force clear cart immediately - multiple calls to ensure it works
           clearCart();
+          setLastCartItems([]);
           
-          // Send multiple signals to ensure cart is cleared everywhere
-          try {
-            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            const ws = new WebSocket(wsUrl);
+          // Force re-render by clearing all related states
+          setTimeout(() => {
+            clearCart();
+            setLastCartItems([]);
+            
+            // Send clear signal to ensure all components are notified
+            try {
+              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
 
-            ws.onopen = () => {
-              // Send popup close signal
-              ws.send(JSON.stringify({
-                type: "popup_close",
-                success: true,
-                action: 'receipt_modal_closed',
-                timestamp: new Date().toISOString()
-              }));
-              
-              // Send specific receipt modal closed signal
-              setTimeout(() => {
+              ws.onopen = () => {
+                // Send multiple signals to ensure cart is cleared everywhere
+                ws.send(JSON.stringify({
+                  type: "popup_close",
+                  success: true,
+                  action: 'receipt_modal_closed',
+                  timestamp: new Date().toISOString()
+                }));
+                
                 ws.send(JSON.stringify({
                   type: "receipt_modal_closed",
                   success: true,
                   action: 'receipt_modal_closed',
                   timestamp: new Date().toISOString()
                 }));
+                
+                ws.send(JSON.stringify({
+                  type: "cart_update",
+                  cart: [],
+                  subtotal: 0,
+                  tax: 0,
+                  total: 0,
+                  timestamp: new Date().toISOString()
+                }));
+                
                 ws.close();
-              }, 100);
-            };
-          } catch (error) {
-            console.error("Failed to send popup close signal:", error);
-          }
+              };
+            } catch (error) {
+              console.error("Failed to send popup close signal:", error);
+            }
+          }, 50);
         }}
         receipt={lastReceipt}
         cartItems={lastCartItems}

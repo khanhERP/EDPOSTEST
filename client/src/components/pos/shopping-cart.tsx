@@ -324,18 +324,24 @@ export function ShoppingCart({
       // Close payment modal
       setShowPaymentModal(false);
 
-      // Clear cart after successful payment
+      // Clear cart immediately after successful payment
       onClearCart();
 
-      // Reset states
+      // Reset all states
       setPreviewReceipt(null);
       setOrderForPayment(null);
+      setLastCartItems([]);
 
       // Show final receipt if needed
       if (data.shouldShowReceipt !== false) {
         console.log("📋 POS: Showing final receipt modal");
         setShowReceiptModal(true);
       }
+
+      // Force immediate cart update broadcast
+      setTimeout(() => {
+        broadcastCartUpdate([]);
+      }, 50);
 
       console.log('🎉 POS: Payment flow completed successfully');
     } else if (method === "paymentError") {
@@ -926,7 +932,24 @@ export function ShoppingCart({
       {/* Final Receipt Modal - Shows after successful payment */}
       <ReceiptModal
         isOpen={showReceiptModal}
-        onClose={() => setShowReceiptModal(false)}
+        onClose={() => {
+          console.log('🔴 Shopping Cart: Closing receipt modal and forcing cart clear');
+          setShowReceiptModal(false);
+          
+          // Force clear cart immediately
+          onClearCart();
+          
+          // Reset all states
+          setSelectedReceipt(null);
+          setPreviewReceipt(null);
+          setOrderForPayment(null);
+          setLastCartItems([]);
+          
+          // Force broadcast empty cart immediately
+          setTimeout(() => {
+            broadcastCartUpdate([]);
+          }, 50);
+        }}
         receipt={selectedReceipt}
         cartItems={cart.map((item) => ({
           id: item.id,
