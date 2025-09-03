@@ -97,7 +97,7 @@ export default function SalesOrders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
-  
+
 
 
 
@@ -1382,7 +1382,6 @@ export default function SalesOrders() {
                                               <div className="grid grid-cols-2 gap-4 text-sm">
                                                 <div className="space-y-2">
                                                   {(() => {
-                                                    // Calculate totals from items with actual tax rates
                                                     const subtotal = parseFloat(selectedInvoice.subtotal || '0');
                                                     const tax = parseFloat(selectedInvoice.tax || '0');
                                                     const discount = 0; 
@@ -1494,6 +1493,20 @@ export default function SalesOrders() {
                                                   <Button 
                                                     size="sm" 
                                                     variant="outline" 
+                                                    className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                                                    onClick={() => {
+                                                      if (selectedInvoice && selectedInvoice.einvoiceStatus === 0) {
+                                                        setShowPublishDialog(true);
+                                                      }
+                                                    }}
+                                                    disabled={selectedInvoice?.einvoiceStatus !== 0}
+                                                  >
+                                                    <Mail className="w-4 h-4" />
+                                                    {selectedInvoice?.einvoiceStatus === 0 ? 'Phát hành HĐ điện tử' : 'Đã phát hành'}
+                                                  </Button>
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
                                                     className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
                                                     onClick={() => {
                                                       if (selectedInvoice) {
@@ -1560,7 +1573,7 @@ export default function SalesOrders() {
                                                             </body>
                                                           </html>
                                                         `;
-                                                        
+
                                                         // Mở cửa sổ in
                                                         const printWindow = window.open('', '_blank');
                                                         if (printWindow) {
@@ -1585,11 +1598,15 @@ export default function SalesOrders() {
                                                     size="sm" 
                                                     variant="outline" 
                                                     className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
-                                                    onClick={handleSaveInvoice}
-                                                    disabled={updateInvoiceMutation.isPending}
+                                                    onClick={() => {
+                                                      if (selectedInvoice && selectedInvoice.einvoiceStatus === 0) {
+                                                        setShowPublishDialog(true);
+                                                      }
+                                                    }}
+                                                    disabled={selectedInvoice?.einvoiceStatus !== 0}
                                                   >
-                                                    <Package className="w-4 h-4" />
-                                                    {updateInvoiceMutation.isPending ? 'Đang lưu...' : 'Lưu'}
+                                                    <Mail className="w-4 h-4" />
+                                                    {selectedInvoice?.einvoiceStatus === 0 ? 'Phát hành HĐ điện tử' : 'Đã phát hành'}
                                                   </Button>
                                                   <Button 
                                                     size="sm" 
@@ -1720,7 +1737,7 @@ export default function SalesOrders() {
         </AlertDialogContent>
       </AlertDialog>
 
-      
+
 
       {/* Publish Invoice Dialog */}
       {selectedInvoice && (
@@ -1935,7 +1952,7 @@ export default function SalesOrders() {
                           // Use actual tax rate from item or default to 10%
                           const taxRate = parseFloat(item.taxRate || '10'); 
                           const itemSubtotal = basePrice * quantity;
-                          
+
                           let totalTax = 0;
 
                           // Calculate tax based on product's actual tax configuration

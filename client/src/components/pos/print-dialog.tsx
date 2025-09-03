@@ -53,9 +53,6 @@ export function PrintDialog({
     phone: "02-1234-5678"
   }
 }: PrintDialogProps) {
-  // Ẩn hoàn toàn dialog in hóa đơn
-  return null;
-  
   const [isPrinting, setIsPrinting] = useState(false);
 
   const handlePrint = async () => {
@@ -65,7 +62,7 @@ export function PrintDialog({
       // First, ensure order status is updated to 'paid' before printing
       if (receiptData.orderId && receiptData.orderId !== 'temp-order') {
         console.log('🖨️ Print Dialog: Updating order status to paid before printing for order:', receiptData.orderId);
-        
+
         try {
           const statusResponse = await fetch(`/api/orders/${receiptData.orderId}/status`, {
             method: 'PUT',
@@ -77,7 +74,7 @@ export function PrintDialog({
 
           if (statusResponse.ok) {
             console.log('✅ Print Dialog: Order status updated to paid successfully');
-            
+
             // Dispatch events to refresh UI
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('refreshOrders', { detail: { immediate: true } }));
@@ -225,9 +222,9 @@ export function PrintDialog({
               const total = parseFloat(receiptData.total || "0");
               const subtotal = parseFloat(receiptData.subtotal || "0");
               const actualTax = total - subtotal;
-              
+
               if (subtotal === 0 || actualTax <= 0) return "0.0";
-              
+
               const taxRate = (actualTax / subtotal) * 100;
               return taxRate.toFixed(1);
             })()}%):</span>
@@ -370,9 +367,9 @@ export function PrintDialog({
                 const total = parseFloat(receiptData.total || "0");
                 const subtotal = parseFloat(receiptData.subtotal || "0");
                 const actualTax = total - subtotal;
-                
+
                 if (subtotal === 0 || actualTax <= 0) return "0.0";
-                
+
                 const taxRate = (actualTax / subtotal) * 100;
                 return taxRate.toFixed(1);
               })()}%):</span>
@@ -432,13 +429,13 @@ export function PrintDialog({
               variant="outline"
               onClick={() => {
                 console.log('🔒 Print Dialog: Đóng popup - không in bill, ngăn hiển thị popup khác');
-                
+
                 // Set flag to prevent any further popups
                 if (typeof window !== 'undefined') {
                   window.sessionStorage.setItem('preventPrintPopup', 'true');
                   window.sessionStorage.setItem('userClosedPrint', 'true');
                 }
-                
+
                 // Send message to parent to stop any popup flows
                 try {
                   fetch('/api/popup/close', {
@@ -456,7 +453,7 @@ export function PrintDialog({
                 } catch (error) {
                   console.error('Error sending close signal:', error);
                 }
-                
+
                 // Close immediately
                 onClose();
               }}
