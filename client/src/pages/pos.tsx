@@ -184,29 +184,38 @@ export default function POS({ onLogout }: POSPageProps) {
           console.log("🔴 POS: Closing receipt modal and clearing cart");
           setShowReceiptModal(false);
           
-          // Clear cart when receipt modal closes
-          setTimeout(() => {
-            clearCart();
-            
-            // Send popup close signal via WebSocket to trigger other components to refresh
-            try {
-              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-              const wsUrl = `${protocol}//${window.location.host}/ws`;
-              const ws = new WebSocket(wsUrl);
+          // Clear cart immediately when receipt modal closes
+          clearCart();
+          
+          // Send multiple signals to ensure cart is cleared everywhere
+          try {
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            const ws = new WebSocket(wsUrl);
 
-              ws.onopen = () => {
+            ws.onopen = () => {
+              // Send popup close signal
+              ws.send(JSON.stringify({
+                type: "popup_close",
+                success: true,
+                action: 'receipt_modal_closed',
+                timestamp: new Date().toISOString()
+              }));
+              
+              // Send specific receipt modal closed signal
+              setTimeout(() => {
                 ws.send(JSON.stringify({
-                  type: "popup_close",
+                  type: "receipt_modal_closed",
                   success: true,
                   action: 'receipt_modal_closed',
                   timestamp: new Date().toISOString()
                 }));
                 ws.close();
-              };
-            } catch (error) {
-              console.error("Failed to send popup close signal:", error);
-            }
-          }, 100);
+              }, 100);
+            };
+          } catch (error) {
+            console.error("Failed to send popup close signal:", error);
+          }
         }}
         receipt={lastReceipt}
         cartItems={lastCartItems}

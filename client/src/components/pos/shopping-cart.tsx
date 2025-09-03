@@ -161,35 +161,51 @@ export function ShoppingCart({
 
             // Handle popup close signal (when receipt modal is closed)
             if (data.type === 'popup_close' && data.success) {
-              console.log('🔄 Shopping Cart: Receipt modal closed, clearing cart');
+              console.log('🔄 Shopping Cart: Receipt modal closed, clearing cart immediately');
               
-              // Clear cart immediately
+              // Clear cart immediately without timeout
+              onClearCart();
+              
+              // Also clear any selected orders in POS
+              if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                (window as any).clearActiveOrder();
+              }
+              
+              // Force broadcast empty cart immediately
               setTimeout(() => {
-                onClearCart();
-                
-                // Also clear any selected orders in POS
-                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                  (window as any).clearActiveOrder();
-                }
-              }, 100);
+                broadcastCartUpdate([]);
+              }, 50);
             }
 
             // Handle refresh signal after print to clear cart
             if (data.type === 'refresh_data_after_print' && data.action === 'refresh_tables_and_clear_cart') {
               console.log('🔄 Shopping Cart: Clearing cart after print receipt');
               
-              // Clear cart with immediate effect
+              // Clear cart immediately
+              onClearCart();
+              
+              // Also clear any selected orders in POS
+              if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                (window as any).clearActiveOrder();
+              }
+              
+              // Force broadcast empty cart immediately
               setTimeout(() => {
-                onClearCart();
-                
-                // Also clear any selected orders in POS
-                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                  (window as any).clearActiveOrder();
-                }
-                
-                // Force broadcast empty cart to customer display
                 broadcastCartUpdate([]);
-              }, 200);
+              }, 50);
+            }
+
+            // Handle receipt modal closed signal specifically for cart clearing
+            if (data.type === 'receipt_modal_closed' || (data.action && data.action === 'receipt_modal_closed')) {
+              console.log('🔄 Shopping Cart: Receipt modal closed signal received, clearing cart');
+              
+              // Clear cart immediately
+              onClearCart();
+              
+              // Force broadcast empty cart
+              setTimeout(() => {
+                broadcastCartUpdate([]);
+              }, 50);
             }
           } catch (error) {
             console.error('Shopping Cart: Error parsing WebSocket message:', error);
@@ -216,7 +232,7 @@ export function ShoppingCart({
         console.error('Shopping Cart: Failed to establish WebSocket connection:', error);
       }
     }
-  }, [cart, onClearCart]); // Depend on onClearCart to ensure the latest function is used
+  }, [onClearCart]); // Remove cart dependency to avoid reconnection on every cart change
 
   // Broadcast cart updates to customer display using existing connection
   // This useEffect is responsible for debouncing and broadcasting cart updates.
