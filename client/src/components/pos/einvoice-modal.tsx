@@ -643,7 +643,28 @@ export function EInvoiceModal({
 
       // Call onConfirm immediately without closing modal first
       console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
-      onConfirm(completeInvoiceData);
+      // Send success signal before calling onConfirm
+        try {
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = `${protocol}//${window.location.host}/ws`;
+          const ws = new WebSocket(wsUrl);
+
+          ws.onopen = () => {
+            console.log('🔄 E-Invoice Modal: Sending success signal for publish later');
+            ws.send(JSON.stringify({
+              type: 'popup_close',
+              success: true,
+              source: 'einvoice_publish_later_success',
+              timestamp: new Date().toISOString()
+            }));
+            ws.close();
+          };
+        } catch (error) {
+          console.error('❌ E-Invoice Modal: Failed to send success signal:', error);
+        }
+
+        // Call onConfirm to trigger receipt modal display
+        onConfirm(completeInvoiceData);
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
