@@ -753,57 +753,74 @@ export function OrderManagement() {
     setOrderDetailsOpen(true);
   };
 
-  const handlePaymentMethodSelect = async (method: any, data?: any) => {
+  const handlePaymentMethodSelect = async (method: string, data?: any) => {
     console.log("🎯 Order Management payment method selected:", method, data);
-    
-    if (method === "paymentCompleted" && data?.success) {
-      console.log('✅ Payment completed successfully from payment modal');
-      
-      // Force immediate UI refresh
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
-        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
-      ]);
 
-      // Dispatch immediate refresh events
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('forceRefresh', { 
-          detail: { reason: 'payment_completed', orderId: data.orderId } 
-        }));
+    if (method === "paymentCompleted" && data?.success) {
+      console.log('✅ Order Management: Payment completed successfully', data);
+
+      try {
+        // Refresh data
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+        ]);
+
+        console.log('✅ Order Management: Data refreshed after payment');
+
+        toast({
+          title: 'Thành công',
+          description: data.publishLater
+            ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
+            : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
+        });
+
+        // Show receipt if available  
+        if (data.receipt && data.shouldShowReceipt) {
+          console.log('📄 Order Management: Showing receipt modal after successful payment');
+          setSelectedReceipt(data.receipt);
+          setShowReceiptModal(true);
+        }
+
+      } catch (error) {
+        console.error('❌ Error refreshing data after payment:', error);
       }
-      
-      // Close all modals
-      setOrderForPayment(null);
+
+      // Close order details if open
       setOrderDetailsOpen(false);
       setSelectedOrder(null);
       setShowPaymentMethodModal(false);
-      
-      // Show receipt if provided
-      if (data.receipt) {
-        setSelectedReceipt(data.receipt);
-        setShowReceiptModal(true);
-      }
+      setOrderForPayment(null);
       
       return;
     }
 
-    if (method === "paymentError" && data?.error) {
-      console.error('❌ Payment failed from payment modal:', data.error);
-      
-      // Close modals but don't clear order data in case user wants to retry
-      setShowPaymentMethodModal(false);
-      
+    if (method === "paymentError" && data) {
+      console.error("❌ Order Management: Payment failed", data);
+
       toast({
-        title: 'Lỗi thanh toán',
+        title: 'Lỗi',
         description: data.error || 'Không thể hoàn tất thanh toán',
         variant: 'destructive',
       });
       
+      // Close payment modal but keep order details open for retry
+      setShowPaymentMethodModal(false);
+      
       return;
     }
-    
+
+    // For E-Invoice method
+    if (method === "einvoice") {
+      console.log('📄 Order Management: Opening E-Invoice modal');
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(true);
+      return;
+    }
+
+    // For direct payment methods (cash, card, etc.)
     if (!orderForPayment?.id) {
       console.error('❌ No order for payment found');
       toast({
@@ -815,16 +832,14 @@ export function OrderManagement() {
     }
 
     try {
-      console.log('🎯 Starting payment completion for order:', orderForPayment.id);
+      console.log('💳 Order Management: Processing direct payment for order:', orderForPayment.id);
       
-      // Use the centralized payment completion function
+      // Use centralized payment completion
       await completeOrderPayment(orderForPayment.id, {
-        paymentMethod: method.nameKey || method,
+        paymentMethod: typeof method === 'string' ? method : method.nameKey,
       });
 
-      // Force immediate UI refresh after successful payment
-      console.log('🔄 Forcing immediate UI refresh after payment completion');
-      
+      // Force immediate UI refresh
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
         queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
@@ -832,25 +847,16 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
 
-      // Dispatch immediate refresh events
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('forceRefresh', { 
-          detail: { reason: 'payment_method_selected', orderId: orderForPayment.id } 
-        }));
-      }
-
       toast({
         title: 'Thành công',
         description: 'Đơn hàng đã được thanh toán thành công',
       });
 
-      // Close all modals after a short delay to allow UI refresh
-      setTimeout(() => {
-        setShowPaymentMethodModal(false);
-        setOrderForPayment(null);
-        setOrderDetailsOpen(false);
-        setSelectedOrder(null);
-      }, 100);
+      // Close all modals
+      setShowPaymentMethodModal(false);
+      setOrderForPayment(null);
+      setOrderDetailsOpen(false);
+      setSelectedOrder(null);
 
     } catch (error) {
       console.error('❌ Payment failed:', error);
@@ -1574,20 +1580,21 @@ export function OrderManagement() {
                   <div className="flex gap-2 pt-4">
                     <Button
                       onClick={() => {
-                        console.log('🎯 Order Management: Direct payment flow for order:', selectedOrder?.id);
+                        console.log('🎯 Order Management: Tạo xem trước hóa đơn - sử dụng exact Order Details values');
                         
                         if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
+                          console.error('❌ Thiếu dữ liệu đơn hàng cho xem trước');
                           toast({
                             title: 'Lỗi',
-                            description: 'Không tìm thấy đơn hàng hoặc món ăn để thanh toán',
+                            description: 'Không thể tạo xem trước hóa đơn. Vui lòng thử lại.',
                             variant: 'destructive',
                           });
                           return;
                         }
 
-                        // Calculate exact totals using same logic as displayed
-                        let calculatedSubtotal = 0;
-                        let calculatedTax = 0;
+                        // Sử dụng exact same calculation logic như Order Details display
+                        let exactSubtotal = 0;
+                        let exactTax = 0;
 
                         const processedItems = orderItems.map((item: any) => {
                           const basePrice = Number(item.unitPrice || 0);
@@ -1596,7 +1603,7 @@ export function OrderManagement() {
 
                           // Calculate subtotal exactly as Order Details display
                           const itemSubtotal = basePrice * quantity;
-                          calculatedSubtotal += itemSubtotal;
+                          exactSubtotal += itemSubtotal;
 
                           // Tax = (after_tax_price - price) * quantity
                           let itemTax = 0;
@@ -1604,7 +1611,7 @@ export function OrderManagement() {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
                             const price = parseFloat(product.price);
                             itemTax = (afterTaxPrice - price) * quantity;
-                            calculatedTax += itemTax;
+                            exactTax += itemTax;
                           }
 
                           return {
@@ -1616,45 +1623,62 @@ export function OrderManagement() {
                             total: item.total,
                             price: basePrice,
                             sku: item.productSku || `SP${item.productId}`,
-                            taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
-                            afterTaxPrice: product?.afterTaxPrice || null
+                            taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
                           };
                         });
 
-                        const calculatedTotal = calculatedSubtotal + calculatedTax;
+                        const exactTotal = exactSubtotal + exactTax;
 
-                        console.log('💰 Payment preparation - calculated amounts:', {
-                          subtotal: calculatedSubtotal,
-                          tax: calculatedTax,
-                          total: calculatedTotal,
+                        console.log('💰 Order Management: Tạo receipt preview với exact values:', {
+                          subtotal: exactSubtotal,
+                          tax: exactTax,
+                          total: exactTotal,
                           itemsCount: processedItems.length
                         });
 
-                        // Prepare complete order data for payment
+                        // Tạo receipt preview data giống như table-grid
+                        const receiptPreview = {
+                          id: selectedOrder.id,
+                          orderNumber: selectedOrder.orderNumber,
+                          tableId: selectedOrder.tableId,
+                          customerCount: selectedOrder.customerCount,
+                          customerName: selectedOrder.customerName,
+                          items: processedItems,
+                          orderItems: processedItems,
+                          subtotal: exactSubtotal.toFixed(2),
+                          tax: exactTax.toFixed(2), 
+                          total: exactTotal.toFixed(2),
+                          paymentMethod: 'pending',
+                          amountReceived: exactTotal.toFixed(2),
+                          change: '0.00',
+                          cashierName: 'Order Management',
+                          createdAt: new Date().toISOString(),
+                          transactionId: `TXN-PREVIEW-${Date.now()}`,
+                          exactSubtotal: exactSubtotal,
+                          exactTax: exactTax,
+                          exactTotal: exactTotal
+                        };
+
+                        console.log('📄 Order Management: Hiển thị receipt preview để xác nhận trước khi thanh toán');
+
+                        // Prepare complete order data cho payment flow
                         const completeOrderForPayment = {
                           ...selectedOrder,
                           items: processedItems,
                           orderItems: processedItems,
                           processedItems: processedItems,
-                          calculatedSubtotal: calculatedSubtotal,
-                          calculatedTax: calculatedTax,
-                          calculatedTotal: calculatedTotal,
-                          exactSubtotal: calculatedSubtotal,
-                          exactTax: calculatedTax,
-                          exactTotal: calculatedTotal
+                          calculatedSubtotal: exactSubtotal,
+                          calculatedTax: exactTax,  
+                          calculatedTotal: exactTotal,
+                          exactSubtotal: exactSubtotal,
+                          exactTax: exactTax,
+                          exactTotal: exactTotal
                         };
 
-                        console.log('💾 Setting complete order for payment:', {
-                          orderId: completeOrderForPayment.id,
-                          orderNumber: completeOrderForPayment.orderNumber,
-                          itemsCount: completeOrderForPayment.items?.length || 0,
-                          calculatedTotal: completeOrderForPayment.calculatedTotal
-                        });
-
-                        // Set order for payment and show payment method modal directly
+                        // Set data và show preview modal
                         setOrderForPayment(completeOrderForPayment);
-                        setOrderDetailsOpen(false);
-                        setShowPaymentMethodModal(true);
+                        setPreviewReceipt(receiptPreview);
+                        setShouldOpenReceiptPreview(true);
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
