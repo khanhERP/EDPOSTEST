@@ -349,7 +349,8 @@ export function ShoppingCart({
         productSku: item.sku,
         price: item.price.toString(),
         sku: item.sku,
-        taxRate: item.taxRate
+        taxRate: item.taxRate,
+        afterTaxPrice: item.afterTaxPrice
       })),
       subtotal: subtotal.toString(),
       tax: tax.toString(),
@@ -373,7 +374,19 @@ export function ShoppingCart({
       customerName: "Khách hàng lẻ",
       status: "pending",
       paymentStatus: "pending",
-      items: cartItemsForEInvoice,
+      items: cartItemsForEInvoice.map(item => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price.toString(),
+        total: (item.price * item.quantity).toString(),
+        productSku: item.sku,
+        price: item.price.toString(),
+        sku: item.sku,
+        taxRate: item.taxRate,
+        afterTaxPrice: item.afterTaxPrice
+      })),
       subtotal: subtotal,
       tax: tax,
       total: total,
@@ -392,6 +405,18 @@ export function ShoppingCart({
     setShowReceiptPreview(true);
 
     console.log("🚀 POS: Showing receipt preview modal with proper data");
+    console.log("📦 POS: orderForPayment data:", {
+      id: orderForPaymentData.id,
+      total: orderForPaymentData.exactTotal,
+      itemsCount: orderForPaymentData.items.length,
+      items: orderForPaymentData.items
+    });
+    console.log("📄 POS: previewReceipt data:", {
+      id: receiptPreview.id,
+      total: receiptPreview.exactTotal,
+      itemsCount: receiptPreview.items.length,
+      items: receiptPreview.items
+    });
   };
 
   // Handler for E-Invoice confirmation
@@ -687,11 +712,19 @@ export function ShoppingCart({
           setOrderForPayment(null);
         }}
         onSelectMethod={handlePaymentMethodSelect}
-        total={orderForPayment?.exactTotal || orderForPayment?.total || 0}
+        total={orderForPayment?.exactTotal || orderForPayment?.total || total || 0}
         orderForPayment={orderForPayment}
         products={products}
         receipt={previewReceipt}
-        cartItems={previewReceipt?.items || []}
+        cartItems={orderForPayment?.items || previewReceipt?.items || cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+          quantity: item.quantity,
+          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
+          afterTaxPrice: item.afterTaxPrice
+        }))}
       />
 
       {/* Final Receipt Modal - Shows after successful payment */}
