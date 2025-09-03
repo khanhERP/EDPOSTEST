@@ -1301,14 +1301,82 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       // Close E-invoice modal first
       setShowEInvoiceModal(false);
-      setOrderForPayment(null);
 
-      // Always show receipt modal after invoice processing
-      if (invoiceData.receipt) {
-        console.log("📄 Showing receipt modal after E-invoice processing");
-        setSelectedReceipt(invoiceData.receipt);
-        setShowReceiptModal(true);
+      // Prepare proper receipt data using exact same calculation as Order Details
+      let subtotal = 0;
+      let totalTax = 0;
+
+      const currentOrderItems = orderForPayment?.orderItems || orderItems || [];
+
+      if (Array.isArray(currentOrderItems) && Array.isArray(products)) {
+        currentOrderItems.forEach((item: any) => {
+          const basePrice = Number(item.unitPrice || 0);
+          const quantity = Number(item.quantity || 0);
+          const product = products.find((p: any) => p.id === item.productId);
+
+          // Calculate subtotal exactly as Order Details
+          subtotal += basePrice * quantity;
+
+          // Use EXACT same tax calculation logic as Order Details
+          if (
+            product?.afterTaxPrice &&
+            product.afterTaxPrice !== null &&
+            product.afterTaxPrice !== ""
+          ) {
+            const afterTaxPrice = parseFloat(product.afterTaxPrice);
+            const taxPerUnit = afterTaxPrice - basePrice;
+            totalTax += taxPerUnit * quantity;
+          }
+        });
       }
+
+      const finalTotal = subtotal + totalTax;
+
+      // Create proper receipt data with calculated values
+      const receiptData = {
+        ...orderForPayment,
+        transactionId: `TXN-${Date.now()}`,
+        items: currentOrderItems.map((item: any) => ({
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName || getProductName(item.productId),
+          quantity: item.quantity,
+          price: item.unitPrice,
+          total: item.total,
+          sku: item.productSku || `SP${item.productId}`,
+          taxRate: (() => {
+            const product = Array.isArray(products)
+              ? products.find((p: any) => p.id === item.productId)
+              : null;
+            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+          })(),
+        })),
+        subtotal: subtotal.toString(),
+        tax: totalTax.toString(),
+        total: finalTotal.toString(),
+        paymentMethod: "einvoice",
+        amountReceived: finalTotal.toString(),
+        change: "0.00",
+        cashierName: "Table Service",
+        createdAt: new Date().toISOString(),
+        customerName: invoiceData.customerName || orderForPayment.customerName,
+        customerTaxCode: invoiceData.taxCode,
+        invoiceNumber: invoiceData.invoiceNumber,
+        tableNumber: getTableInfo(orderForPayment.tableId)?.tableNumber || "N/A",
+      };
+
+      console.log("📄 Table: Showing receipt modal after E-invoice with proper data");
+      console.log("💰 Receipt data:", {
+        itemsCount: receiptData.items.length,
+        subtotal: receiptData.subtotal,
+        tax: receiptData.tax,
+        total: receiptData.total,
+      });
+
+      // Clear order for payment and show receipt
+      setOrderForPayment(null);
+      setSelectedReceipt(receiptData);
+      setShowReceiptModal(true);
     } catch (error) {
       console.error("❌ Error completing payment from table:", error);
       toast({
