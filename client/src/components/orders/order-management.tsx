@@ -474,7 +474,7 @@ export function OrderManagement() {
       // If no receipt data provided, create it from current order data
       if (!receiptData && orderForPayment) {
         console.log('📄 Creating receipt data from order payment data');
-        
+
         // Calculate totals using same logic as payment flow
         let calculatedSubtotal = 0;
         let calculatedTax = 0;
@@ -711,19 +711,19 @@ export function OrderManagement() {
 
   const handlePaymentClick = async (order: Order) => {
     console.log('🎯 Payment button clicked for order:', order.id, order.orderNumber);
-    
+
     try {
       // Step 1: Fetch order items for calculation
       console.log('📦 Fetching order items for order:', order.id);
       const orderItemsResponse = await apiRequest('GET', `/api/order-items/${order.id}`);
-      
+
       if (!orderItemsResponse.ok) {
         throw new Error('Failed to fetch order items');
       }
-      
+
       const orderItemsData = await orderItemsResponse.json();
       console.log('📦 Order items fetched:', orderItemsData.length, 'items');
-      
+
       if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
         toast({
           title: 'Lỗi',
@@ -761,13 +761,14 @@ export function OrderManagement() {
         let itemTax = 0;
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const originalPrice = parseFloat(product.price);
-          itemTax = (afterTaxPrice - originalPrice) * quantity;
+          const originalPrice = parseFloat(product.price || unitPrice);
+          const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
+          itemTax = taxPerUnit * quantity;
           calculatedTax += itemTax;
           console.log(`💸 Tax calculated for ${item.productName}:`, {
             afterTaxPrice,
             originalPrice,
-            taxPerUnit: afterTaxPrice - originalPrice,
+            taxPerUnit,
             quantity,
             itemTax
           });
@@ -787,7 +788,7 @@ export function OrderManagement() {
         };
       });
 
-      const finalTotal = calculatedSubtotal + calculatedTax;
+      const finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
 
       console.log('💰 Final calculation results:', {
         subtotal: calculatedSubtotal,
@@ -818,14 +819,14 @@ export function OrderManagement() {
         customerName: order.customerName,
         items: processedItems,
         orderItems: processedItems,
-        subtotal: calculatedSubtotal.toFixed(2),
-        tax: calculatedTax.toFixed(2),
-        total: finalTotal.toFixed(2),
+        subtotal: calculatedSubtotal.toString(),
+        tax: calculatedTax.toString(),
+        total: finalTotal.toString(),
         exactSubtotal: calculatedSubtotal,
         exactTax: calculatedTax,
         exactTotal: finalTotal,
         paymentMethod: 'preview',
-        amountReceived: finalTotal.toFixed(2),
+        amountReceived: finalTotal.toString(),
         change: '0.00',
         cashierName: 'Order Management',
         createdAt: new Date().toISOString(),
@@ -849,9 +850,9 @@ export function OrderManagement() {
       setOrderForPayment(orderForPaymentData);
       setPreviewReceipt(receiptPreview);
       setShowReceiptPreview(true);
-      
+
       console.log('🚀 Order Management: Hiển thị receipt preview modal');
-      
+
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
       toast({
@@ -1215,13 +1216,13 @@ export function OrderManagement() {
   // WebSocket connection for real-time updates
   useEffect(() => {
     let ws: WebSocket | null = null;
-    
+
     const connectWebSocket = () => {
       try {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${wsProtocol}//${window.location.host}`;
         ws = new WebSocket(wsUrl);
-        
+
         ws.onopen = () => {
           console.log('🔗 Order Management: WebSocket connected');
           // Send registration message
@@ -1230,14 +1231,14 @@ export function OrderManagement() {
             timestamp: new Date().toISOString()
           }));
         };
-        
+
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
             console.log('📨 Order Management: WebSocket message received:', data);
-            
-            if (data.type === 'order_created' || 
-                data.type === 'order_updated' || 
+
+            if (data.type === 'order_created' ||
+                data.type === 'order_updated' ||
                 data.type === 'table_status_changed') {
               console.log('🔄 Order Management: Refreshing orders due to WebSocket update');
               refreshData();
@@ -1246,12 +1247,12 @@ export function OrderManagement() {
             console.error('❌ Error parsing WebSocket message:', error);
           }
         };
-        
+
         ws.onclose = () => {
           console.log('🔗 Order Management: WebSocket disconnected, attempting reconnect...');
           setTimeout(connectWebSocket, 3000);
         };
-        
+
         ws.onerror = (error) => {
           console.error('❌ Order Management: WebSocket error:', error);
         };
@@ -1260,9 +1261,9 @@ export function OrderManagement() {
         setTimeout(connectWebSocket, 5000);
       }
     };
-    
+
     connectWebSocket();
-    
+
     return () => {
       if (ws) {
         ws.close();
@@ -1637,16 +1638,17 @@ export function OrderManagement() {
                           // Calculate subtotal exactly as Order Details display
                           orderDetailsSubtotal += basePrice * quantity;
 
-                          // Tax = (after_tax_price - price) * quantity
+                          // Tax calculation with proper validation
                           if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const price = parseFloat(product.price);
-                            orderDetailsTax += (afterTaxPrice - price) * quantity;
+                            const originalPrice = parseFloat(product.price || basePrice);
+                            const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
+                            orderDetailsTax += taxPerUnit * quantity;
                           }
                         });
                       }
 
-                      const finalTotal = orderDetailsSubtotal + orderDetailsTax;
+                      const finalTotal = orderDetailsSubtotal + Math.abs(orderDetailsTax);
 
                       return (
                         <>
@@ -1717,13 +1719,14 @@ export function OrderManagement() {
                           let itemTax = 0;
                           if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const originalPrice = parseFloat(product.price);
-                            itemTax = (afterTaxPrice - originalPrice) * quantity;
+                            const originalPrice = parseFloat(product.price || unitPrice);
+                            const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
+                            itemTax = taxPerUnit * quantity;
                             calculatedTax += itemTax;
                             console.log(`💸 Tax calculated for ${item.productName}:`, {
                               afterTaxPrice,
                               originalPrice,
-                              taxPerUnit: afterTaxPrice - originalPrice,
+                              taxPerUnit,
                               quantity,
                               itemTax
                             });
@@ -1743,7 +1746,7 @@ export function OrderManagement() {
                           };
                         });
 
-                        const finalTotal = calculatedSubtotal + calculatedTax;
+                        const finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
 
                         console.log('💰 Kết quả tính toán cuối:', {
                           subtotal: calculatedSubtotal,
@@ -1799,9 +1802,6 @@ export function OrderManagement() {
                           calculatedSubtotal: calculatedSubtotal,
                           calculatedTax: calculatedTax,
                           calculatedTotal: finalTotal,
-                          exactSubtotal: calculatedSubtotal,
-                          exactTax: calculatedTax,
-                          exactTotal: finalTotal,
                           total: finalTotal // Override total với calculated value
                         };
 
