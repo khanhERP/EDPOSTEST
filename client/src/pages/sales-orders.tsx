@@ -688,9 +688,14 @@ export default function SalesOrders() {
 
   const calculateTotals = () => {
     const totals = filteredInvoices.reduce((acc, item) => {
+      const total = parseFloat(item.total || '0');
+      const discount = parseFloat(item.discount || '0');
+      const tax = parseFloat(item.tax || '0');
+      const revenue = total - discount - tax; // Apply new formula: total - discount - tax
+      
       acc.subtotal += parseFloat(item.subtotal || '0');
-      acc.tax += parseFloat(item.tax || '0');
-      acc.total += parseFloat(item.total || '0');
+      acc.tax += tax;
+      acc.total += revenue; // Use calculated revenue instead of raw total
       return acc;
     }, { subtotal: 0, tax: 0, total: 0 });
 
@@ -775,10 +780,10 @@ export default function SalesOrders() {
       const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
       const customerName = item.customerName || 'Khách lẻ';
       const subtotal = parseFloat(item.subtotal || '0');
-      const discount = 0;
+      const discount = parseFloat(item.discount || '0');
       const tax = parseFloat(item.tax || '0');
       const total = parseFloat(item.total || '0');
-      const paid = total;
+      const paid = total - discount - tax; // Use revenue calculation for paid amount
       const employeeCode = item.employeeId || 'NV0001';
       const employeeName = 'Phạm Vân Duy';
       const symbol = item.symbol || '';
@@ -1193,7 +1198,7 @@ export default function SalesOrders() {
                                   </td>
                                   <td className="px-3 py-3 text-right">
                                     <div className="text-sm font-medium">
-                                      {formatCurrency(paid)}
+                                      {formatCurrency(total - discount - tax)}
                                     </div>
                                   </td>
                                   <td className="px-3 py-3">
@@ -1685,17 +1690,23 @@ export default function SalesOrders() {
 
                 {/* Totals */}
                 <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded">
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="font-medium">Tổng tiền hàng:</span>
                       <div className="font-bold text-blue-600">{formatCurrency(totals.subtotal)}</div>
                     </div>
                     <div>
-                      <span className="font-medium">Tổng thuế:</span>
-                      <div className="font-bold text-orange-600">{formatCurrency(totals.tax)}</div>
+                      <span className="font-medium">Tổng giảm giá:</span>
+                      <div className="font-bold text-orange-600">{formatCurrency(
+                        filteredInvoices.reduce((sum, item) => sum + parseFloat(item.discount || '0'), 0)
+                      )}</div>
                     </div>
                     <div>
-                      <span className="font-medium">Tổng cộng:</span>
+                      <span className="font-medium">Tổng thuế:</span>
+                      <div className="font-bold text-purple-600">{formatCurrency(totals.tax)}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium">Tổng doanh thu:</span>
                       <div className="font-bold text-green-600">{formatCurrency(totals.total)}</div>
                     </div>
                   </div>
