@@ -1094,7 +1094,64 @@ export async function registerRoutes(app: Express): Promise < Server > {
         JSON.stringify({ order, items }, null, 2),
       );
 
-      const orderData = insertOrderSchema.parse(order);
+      // If no order object is provided, create a default one for POS orders
+      let orderData;
+      if (!order) {
+        console.log("No order object provided, creating default POS order");
+        
+        // Calculate totals from items
+        let subtotal = 0;
+        let tax = 0;
+        
+        if (items && Array.isArray(items)) {
+          for (const item of items) {
+            const itemSubtotal = parseFloat(item.unitPrice || '0') * (item.quantity || 0);
+            subtotal += itemSubtotal;
+            
+            // Get product to calculate tax
+            try {
+              const [product] = await db
+                .select()
+                .from(products)
+                .where(eq(products.id, item.productId))
+                .limit(1);
+              
+              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                const basePrice = parseFloat(product.price);
+                const taxPerUnit = afterTaxPrice - basePrice;
+                tax += taxPerUnit * (item.quantity || 0);
+              }
+            } catch (productError) {
+              console.warn("Could not fetch product for tax calculation:", item.productId);
+            }
+          }
+        }
+        
+        const total = subtotal + tax;
+        
+        orderData = {
+          orderNumber: `ORD-${Date.now()}`,
+          tableId: null,
+          employeeId: null,
+          status: "pending",
+          customerName: "Khách hàng",
+          customerCount: 1,
+          subtotal: subtotal.toFixed(2),
+          tax: tax.toFixed(2),
+          total: total.toFixed(2),
+          paymentMethod: null,
+          paymentStatus: "pending",
+          notes: "POS Order",
+          orderedAt: new Date(),
+          salesChannel: "pos"
+        };
+        
+        console.log("Created default order:", orderData);
+      } else {
+        orderData = insertOrderSchema.parse(order);
+      }
+      
       const itemsData = items.map((item: any) =>
         insertOrderItemSchema.parse(item),
       );
