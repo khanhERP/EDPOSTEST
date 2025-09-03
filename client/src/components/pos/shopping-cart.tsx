@@ -310,116 +310,53 @@ export function ShoppingCart({
   };
 
   const handleCheckout = async () => {
-    console.log("=== POS CHECKOUT STARTED - Following Order Management Flow ===");
+    console.log("=== POS CHECKOUT STARTED ===");
     console.log("Cart before checkout:", cart);
     console.log("Cart length:", cart.length);
+    console.log("Current totals:", { subtotal, tax, total });
 
     if (cart.length === 0) {
       alert("Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.");
       return;
     }
 
-    // Step 1: Prepare cart items with proper data types and validation
-    const cartItemsBeforeCheckout = cart.map(item => {
-      // Ensure price is a number
-      let itemPrice = item.price;
-      if (typeof itemPrice === 'string') {
-        itemPrice = parseFloat(itemPrice);
-      }
-      if (isNaN(itemPrice) || itemPrice <= 0) {
-        itemPrice = 0;
-      }
+    // Step 1: Use current cart items with proper structure for E-invoice
+    const cartItemsForEInvoice = cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+      quantity: item.quantity,
+      sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+      taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 0),
+      afterTaxPrice: item.afterTaxPrice
+    }));
 
-      // Ensure quantity is a positive integer
-      let itemQuantity = item.quantity;
-      if (typeof itemQuantity === 'string') {
-        itemQuantity = parseInt(itemQuantity);
-      }
-      if (isNaN(itemQuantity) || itemQuantity <= 0) {
-        itemQuantity = 1;
-      }
+    console.log("✅ Cart items prepared for E-invoice:", cartItemsForEInvoice);
 
-      // Ensure taxRate is a number
-      let itemTaxRate = item.taxRate;
-      if (typeof itemTaxRate === 'string') {
-        itemTaxRate = parseFloat(itemTaxRate);
-      }
-      if (isNaN(itemTaxRate)) {
-        itemTaxRate = 10; // Default 10%
-      }
-
-      return {
-        id: item.id,
-        name: item.name || `Product ${item.id}`,
-        price: itemPrice,
-        quantity: itemQuantity,
-        sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
-        taxRate: itemTaxRate
-      };
-    });
-
-    console.log("✅ Processed cart items:", cartItemsBeforeCheckout);
-
-    // Validate processed items
-    const invalidItems = cartItemsBeforeCheckout.filter(item => 
-      !item.id || !item.name || item.price <= 0 || item.quantity <= 0
-    );
-
-    if (invalidItems.length > 0) {
-      console.error("❌ Invalid items found after processing:", invalidItems);
-      alert("Có sản phẩm không hợp lệ trong giỏ hàng. Vui lòng kiểm tra lại.");
-      return;
-    }
-
-    // Step 2: Calculate totals exactly like order management
-    let calculatedSubtotal = 0;
-    let calculatedTax = 0;
-
-    cartItemsBeforeCheckout.forEach(item => {
-      const itemSubtotal = item.price * item.quantity;
-      calculatedSubtotal += itemSubtotal;
-
-      // Calculate tax using afterTaxPrice if available from products data
-      const product = products?.find(p => p.id === item.id);
-      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-        const afterTaxPrice = parseFloat(product.afterTaxPrice);
-        const taxPerUnit = afterTaxPrice - item.price;
-        calculatedTax += Math.floor(taxPerUnit * item.quantity);
-      } else if (item.taxRate && item.taxRate > 0) {
-        // Fallback to taxRate calculation
-        const taxPerUnit = item.price * (item.taxRate / 100);
-        calculatedTax += Math.floor(taxPerUnit * item.quantity);
-      }
-    });
-
-    const calculatedTotal = calculatedSubtotal + calculatedTax;
-
-    console.log("💰 POS: Calculated totals:", {
-      subtotal: calculatedSubtotal,
-      tax: calculatedTax,
-      total: calculatedTotal
-    });
-
-    // Step 3: Create receipt preview data exactly like order management
+    // Step 2: Create receipt preview data with current calculated totals
     const receiptPreview = {
       id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
       customerName: "Khách hàng lẻ",
       tableId: null,
-      items: cartItemsBeforeCheckout.map(item => ({
+      items: cartItemsForEInvoice.map(item => ({
+        id: item.id,
         productId: item.id,
         productName: item.name,
         quantity: item.quantity,
         unitPrice: item.price.toString(),
         total: (item.price * item.quantity).toString(),
-        productSku: item.sku
+        productSku: item.sku,
+        price: item.price.toString(),
+        sku: item.sku,
+        taxRate: item.taxRate
       })),
-      subtotal: calculatedSubtotal.toString(),
-      tax: calculatedTax.toString(),
-      total: calculatedTotal.toString(),
-      exactSubtotal: calculatedSubtotal,
-      exactTax: calculatedTax,
-      exactTotal: calculatedTotal,
+      subtotal: subtotal.toString(),
+      tax: tax.toString(),
+      total: total.toString(),
+      exactSubtotal: subtotal,
+      exactTax: tax,
+      exactTotal: total,
       status: "pending",
       paymentStatus: "pending",
       orderedAt: new Date().toISOString(),
@@ -428,7 +365,7 @@ export function ShoppingCart({
 
     console.log("📋 POS: Receipt preview data prepared:", receiptPreview);
 
-    // Step 4: Prepare order data for payment (temporary order for POS)
+    // Step 3: Prepare order data for payment
     const orderForPaymentData = {
       id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
@@ -436,25 +373,71 @@ export function ShoppingCart({
       customerName: "Khách hàng lẻ",
       status: "pending",
       paymentStatus: "pending",
-      items: cartItemsBeforeCheckout,
-      subtotal: calculatedSubtotal,
-      tax: calculatedTax,
-      total: calculatedTotal,
-      exactSubtotal: calculatedSubtotal,
-      exactTax: calculatedTax,
-      exactTotal: calculatedTotal,
+      items: cartItemsForEInvoice,
+      subtotal: subtotal,
+      tax: tax,
+      total: total,
+      exactSubtotal: subtotal,
+      exactTax: tax,
+      exactTotal: total,
       orderedAt: new Date().toISOString()
     };
 
     console.log("📦 POS: Order for payment prepared:", orderForPaymentData);
 
-    // Step 5: Set all data and show receipt preview modal (following order management flow)
-    setLastCartItems([...cartItemsBeforeCheckout]);
+    // Step 4: Set all data and show receipt preview modal
+    setLastCartItems([...cartItemsForEInvoice]);
     setOrderForPayment(orderForPaymentData);
     setPreviewReceipt(receiptPreview);
     setShowReceiptPreview(true);
 
-    console.log("🚀 POS: Showing receipt preview modal exactly like order management");
+    console.log("🚀 POS: Showing receipt preview modal with proper data");
+  };
+
+  // Handler for E-Invoice confirmation
+  const handleEInvoiceConfirm = (invoiceData: any) => {
+    console.log("🎯 POS: E-Invoice confirmed:", invoiceData);
+    
+    // Close E-Invoice modal
+    setShowEInvoiceModal(false);
+    
+    if (invoiceData.success || invoiceData.publishedImmediately || invoiceData.publishLater) {
+      console.log("✅ POS: E-Invoice processed successfully");
+      
+      // Clear cart after successful E-invoice processing
+      onClearCart();
+      
+      // Reset states
+      setPreviewReceipt(null);
+      setOrderForPayment(null);
+      setIsProcessingPayment(false);
+      
+      // Show receipt modal with invoice data if available
+      if (invoiceData.receipt || invoiceData.shouldShowReceipt) {
+        console.log("📄 POS: Showing receipt modal after E-invoice");
+        setSelectedReceipt(invoiceData.receipt || invoiceData);
+        setShowReceiptModal(true);
+      }
+      
+      // Show success message
+      toast({
+        title: "Thành công",
+        description: invoiceData.publishLater ? 
+          "Hóa đơn điện tử đã được lưu để phát hành sau" : 
+          "Hóa đơn điện tử đã được phát hành thành công"
+      });
+      
+      console.log("🎉 POS: E-Invoice flow completed successfully");
+    } else {
+      console.error("❌ POS: E-Invoice processing failed:", invoiceData);
+      setIsProcessingPayment(false);
+      
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi xử lý hóa đơn điện tử",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleClearCart = () => {
@@ -726,26 +709,28 @@ export function ShoppingCart({
         }))}
       />
 
-      {/* Step 4: E-Invoice Modal for invoice processing */}
+      {/* E-Invoice Modal for invoice processing */}
       {showEInvoiceModal && (
         <EInvoiceModal
           isOpen={showEInvoiceModal}
           onClose={() => {
-            console.log("🔴 Step 4: Closing E-invoice modal");
+            console.log("🔴 POS: Closing E-invoice modal");
             setShowEInvoiceModal(false);
-            setIsProcessingPayment(false); // Reset processing flag
+            setIsProcessingPayment(false);
           }}
           onConfirm={handleEInvoiceConfirm}
-          total={total}
+          total={orderForPayment?.exactTotal || total}
           selectedPaymentMethod={selectedPaymentMethod}
-          cartItems={cart.map((item) => ({
+          cartItems={lastCartItems.length > 0 ? lastCartItems : cart.map((item) => ({
             id: item.id,
             name: item.name,
-            price: parseFloat(item.price),
+            price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
             quantity: item.quantity,
             sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: parseFloat(item.taxRate || "0"),
+            taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
+            afterTaxPrice: item.afterTaxPrice
           }))}
+          source="pos"
         />
       )}
     </aside>
