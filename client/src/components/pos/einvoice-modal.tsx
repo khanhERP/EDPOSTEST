@@ -585,16 +585,10 @@ export function EInvoiceModal({
         })),
         subtotal: calculatedSubtotal.toFixed(2),
         tax: calculatedTax.toFixed(2),
-        total: (typeof total === "number" && !isNaN(total)
-          ? total
-          : calculatedSubtotal + calculatedTax
-        ).toFixed(2),
+        total: total.toFixed(2),
         paymentMethod: "einvoice",
         originalPaymentMethod: selectedPaymentMethod, // Add original payment method
-        amountReceived: (typeof total === "number" && !isNaN(total)
-          ? total
-          : calculatedSubtotal + calculatedTax
-        ).toFixed(2),
+        amountReceived: total.toFixed(2),
         change: "0.00",
         cashierName: "System User",
         createdAt: new Date().toISOString(),
@@ -627,9 +621,7 @@ export function EInvoiceModal({
         einvoiceStatus: 0, // 0 = Chưa phát hành (for publish later)
         status: 'draft', // Draft status for publish later
         cartItems: cartItems, // Include cart items for receipt
-        total: (typeof total === "number" && !isNaN(total)
-          ? total
-          : calculatedSubtotal + calculatedTax), // Include total
+        total: total, // Include total
         subtotal: calculatedSubtotal,
         tax: calculatedTax,
         invoiceId: savedInvoice.invoice?.id,
@@ -643,28 +635,7 @@ export function EInvoiceModal({
 
       // Call onConfirm immediately without closing modal first
       console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
-      // Send success signal before calling onConfirm
-        try {
-          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          const wsUrl = `${protocol}//${window.location.host}/ws`;
-          const ws = new WebSocket(wsUrl);
-
-          ws.onopen = () => {
-            console.log('🔄 E-Invoice Modal: Sending success signal for publish later');
-            ws.send(JSON.stringify({
-              type: 'popup_close',
-              success: true,
-              source: 'einvoice_publish_later_success',
-              timestamp: new Date().toISOString()
-            }));
-            ws.close();
-          };
-        } catch (error) {
-          console.error('❌ E-Invoice Modal: Failed to send success signal:', error);
-        }
-
-        // Call onConfirm to trigger receipt modal display
-        onConfirm(completeInvoiceData);
+      onConfirm(completeInvoiceData);
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
@@ -1129,9 +1100,9 @@ export function EInvoiceModal({
           }),
           subtotal: calculatedSubtotal.toFixed(2),
           tax: calculatedTax.toFixed(2),
-          total: cartTotal.toFixed(2),
+          total: total.toFixed(2),
           paymentMethod: "einvoice",
-          amountReceived: cartTotal.toFixed(2),
+          amountReceived: total.toFixed(2),
           change: "0.00",
           cashierName: "System User",
           createdAt: new Date().toISOString(),
@@ -1180,7 +1151,7 @@ export function EInvoiceModal({
           paymentMethod: selectedPaymentMethod, // Include payment method
           originalPaymentMethod: selectedPaymentMethod,
           cartItems: cartItems, // Include cart items
-          total: cartTotal // Include calculated total
+          total: total // Include calculated total
         };
 
         console.log(
