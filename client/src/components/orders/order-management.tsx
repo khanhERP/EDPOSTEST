@@ -1548,7 +1548,7 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          // Use preloaded order items for fast calculation
+                          // Use preloaded order items for fast total calculation
                           let calculatedTotal = 0;
                           if (allOrderItems && allOrderItems.has(order.id)) {
                             const orderItems = allOrderItems.get(order.id) || [];
@@ -2546,17 +2546,39 @@ export function OrderManagement() {
         <EInvoiceModal
           isOpen={showEInvoiceModal}
           onClose={() => {
-            console.log("🔴 Order Management: Closing E-invoice modal");
+            console.log("🔴 Order Management: Closing E-Invoice modal");
             setShowEInvoiceModal(false);
             setSelectedOrderForEInvoice(null);
             setOrderItemsForEInvoice([]);
           }}
           onConfirm={handleEInvoiceConfirm}
-          total={parseFloat(selectedOrderForEInvoice.total || "0")}
-          cartItems={orderItemsForEInvoice || []}
+          total={(() => {
+            if (orderForPayment?.calculatedTotal) {
+              return orderForPayment.calculatedTotal;
+            }
+            if (selectedOrderForEInvoice && orderItemsForEInvoice.length > 0) {
+              // Calculate total from orderItemsForEInvoice với tax
+              return orderItemsForEInvoice.reduce((sum, item) => {
+                const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+                const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+                let itemTotal = itemPrice * itemQuantity;
+
+                // Apply tax if available
+                if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                  const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                  const taxPerUnit = Math.max(0, afterTaxPrice - itemPrice);
+                  itemTotal = (itemPrice + taxPerUnit) * itemQuantity;
+                }
+
+                return sum + itemTotal;
+              }, 0);
+            }
+            return 0;
+          })()}
+          cartItems={orderItemsForEInvoice}
           source="table"
-          orderId={selectedOrderForEInvoice.id}
-          selectedPaymentMethod={selectedOrderForEInvoice.paymentMethod || "cash"}
+          orderId={selectedOrderForEInvoice?.id}
+          selectedPaymentMethod={selectedOrderForEInvoice ? "cash" : ""}
         />
       )}
 
