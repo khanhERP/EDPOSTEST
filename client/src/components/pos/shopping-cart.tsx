@@ -60,6 +60,7 @@ export function ShoppingCart({
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false); // Added state for PaymentMethodModal
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // Flag to prevent duplicate processing
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -436,6 +437,14 @@ export function ShoppingCart({
       return;
     }
 
+    // Prevent duplicate processing
+    if (isProcessingPayment) {
+      console.log("⚠️ Payment already being processed, skipping duplicate call");
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
     try {
       console.log(`💳 Step 3: Processing ${selectedMethod} payment`);
 
@@ -479,7 +488,13 @@ export function ShoppingCart({
       setShowEInvoiceModal(true);
     } catch (error) {
       console.error(`❌ Step 3: Payment method processing failed:`, error);
-      alert('Lỗi khi xử lý thanh toán. Vui lòng thử lại.');
+      toast({
+        title: "Lỗi thanh toán",
+        description: "Không thể xử lý thanh toán. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingPayment(false); // Always reset flag
     }
   };
 
@@ -805,6 +820,7 @@ export function ShoppingCart({
             console.log("🔴 Step 2: Closing payment method modal");
             setShowPaymentModal(false);
             setCurrentOrderForPayment(null); // Reset order when closing
+            setIsProcessingPayment(false); // Reset processing flag
           }}
           onSelectMethod={processPaymentAndShowEInvoice} // Use the new combined handler
           total={total}
@@ -828,6 +844,7 @@ export function ShoppingCart({
           onClose={() => {
             console.log("🔴 Step 4: Closing E-invoice modal");
             setShowEInvoiceModal(false);
+            setIsProcessingPayment(false); // Reset processing flag
           }}
           onConfirm={handleEInvoiceConfirm}
           total={total}
