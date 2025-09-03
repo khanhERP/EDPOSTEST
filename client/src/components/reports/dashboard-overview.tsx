@@ -167,114 +167,98 @@ export function DashboardOverview() {
         };
       }
 
-      if (!tables || !Array.isArray(tables)) {
-        return {
-          periodRevenue: 0,
-          periodOrderCount: 0,
-          periodCustomerCount: 0,
-          dailyAverageRevenue: 0,
-          activeOrders: 0,
-          occupiedTables: 0,
-          monthRevenue: 0,
-          averageOrderValue: 0,
-          peakHour: 12,
-          totalTables: 0,
-        };
-      }
+      // Ensure we have valid arrays
+      const validOrders = Array.isArray(orders) ? orders : [];
+      const validTransactions = Array.isArray(transactions) ? transactions : [];
+      const validInvoices = Array.isArray(invoices) ? invoices : [];
+      const validTables = Array.isArray(tables) ? tables : [];
 
-      // Data is already filtered by date range from API calls
-      // Combine orders, transactions, and invoices - same logic as sales-orders page
-      const combinedData = [
-        ...(Array.isArray(orders) ? orders.filter((order: any) => order.status === 'paid').map((order: Order) => ({
-          ...order,
-          type: 'order' as const,
-          date: order.orderedAt,
-          displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
-          displayStatus: 1, // paid orders
-          customerName: order.customerName || 'Khách hàng lẻ',
-          invoiceStatus: 1,
-          customerPhone: '',
-          customerAddress: '',
-          customerTaxCode: '',
-          symbol: 'C11DTD',
-          invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
-          tradeNumber: order.orderNumber || '',
-          invoiceDate: order.orderedAt,
-          einvoiceStatus: order.einvoiceStatus || 0
-        })) : []),
-        ...(Array.isArray(transactions) ? transactions.filter((tx: any) => tx.status === 'completed' || !tx.status).map((transaction: any) => ({
-          ...transaction,
-          type: 'transaction' as const,
-          date: transaction.createdAt,
-          displayNumber: transaction.transactionId || `TXN-${String(transaction.id).padStart(13, '0')}`,
-          displayStatus: 1, // completed transactions
-          customerName: transaction.customerName || 'Khách hàng lẻ',
-          invoiceStatus: 1,
-          customerPhone: '',
-          customerAddress: '',
-          customerTaxCode: '',
-          symbol: 'C11DTD',
-          invoiceNumber: transaction.transactionId || `TXN-${String(transaction.id).padStart(8, '0')}`,
-          tradeNumber: transaction.transactionId || '',
-          invoiceDate: transaction.createdAt,
-          einvoiceStatus: 0
-        })) : []),
-        ...(Array.isArray(invoices) ? invoices.filter((invoice: any) => invoice.invoiceStatus === 1).map((invoice: Invoice) => ({
-          ...invoice,
-          type: 'invoice' as const,
-          date: invoice.invoiceDate,
-          displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
-          displayStatus: 1, // published invoices
-          customerName: invoice.customerName || 'Khách hàng lẻ',
-          customerPhone: invoice.customerPhone || '',
-          customerAddress: invoice.customerAddress || '',
-          customerTaxCode: invoice.customerTaxCode || '',
-          symbol: invoice.symbol || 'C11DTD',
-          einvoiceStatus: invoice.einvoiceStatus || 0
-        })) : [])
-      ];
-
-      console.log("Dashboard Debug (Date-Filtered Data):", {
-        totalTransactions: transactions.length,
-        totalInvoices: invoices.length,
-        totalOrders: orders.length,
-        combinedDataLength: combinedData.length,
-        startDate,
-        endDate,
-        sampleItems: combinedData.slice(0, 3).map((item: any) => ({
-          id: item.id,
-          type: item.type,
-          total: item.total,
-          subtotal: item.subtotal,
-          tax: item.tax,
-          date: item.date
-        })),
-      });
-
-      // Period revenue: Use total amount from all completed transactions/orders/invoices
-      const periodRevenue = combinedData.reduce(
-        (total: number, item: any) => {
-          const itemTotal = Number(item.total || 0);
-          return total + itemTotal;
-        },
-        0,
+      // Filter completed/paid items only - data is already filtered by date range from API
+      const completedOrders = validOrders.filter((order: any) => order.status === 'paid');
+      const completedTransactions = validTransactions.filter((tx: any) => 
+        tx.status === 'completed' || tx.status === 'paid' || !tx.status
+      );
+      const publishedInvoices = validInvoices.filter((invoice: any) => 
+        invoice.invoiceStatus === 1 || invoice.status === 'published'
       );
 
-      // Order count: count of items in the filtered period
-      const periodOrderCount = combinedData.length;
+      console.log("Dashboard Debug - Raw Data:", {
+        totalOrders: validOrders.length,
+        completedOrders: completedOrders.length,
+        totalTransactions: validTransactions.length,
+        completedTransactions: completedTransactions.length,
+        totalInvoices: validInvoices.length,
+        publishedInvoices: publishedInvoices.length,
+        dateRange: `${startDate} to ${endDate}`,
+        sampleCompletedOrder: completedOrders[0] ? {
+          id: completedOrders[0].id,
+          total: completedOrders[0].total,
+          status: completedOrders[0].status,
+          date: completedOrders[0].orderedAt || completedOrders[0].createdAt
+        } : null,
+        sampleInvoice: publishedInvoices[0] ? {
+          id: publishedInvoices[0].id,
+          total: publishedInvoices[0].total,
+          status: publishedInvoices[0].invoiceStatus,
+          date: publishedInvoices[0].invoiceDate
+        } : null
+      });
 
-      // Customer count: count unique customers from items
+      // Calculate revenue from each source
+      const orderRevenue = completedOrders.reduce((sum: number, order: any) => {
+        return sum + Number(order.total || 0);
+      }, 0);
+
+      const transactionRevenue = completedTransactions.reduce((sum: number, tx: any) => {
+        return sum + Number(tx.total || tx.amount || 0);
+      }, 0);
+
+      const invoiceRevenue = publishedInvoices.reduce((sum: number, invoice: any) => {
+        return sum + Number(invoice.total || 0);
+      }, 0);
+
+      // Total revenue from all sources
+      const periodRevenue = orderRevenue + transactionRevenue + invoiceRevenue;
+
+      // Total count from all sources
+      const periodOrderCount = completedOrders.length + completedTransactions.length + publishedInvoices.length;
+
+      // Count unique customers
       const uniqueCustomers = new Set();
-      combinedData.forEach((item: any) => {
-        if (item.customerId) {
-          uniqueCustomers.add(item.customerId);
-        } else if (item.customerName && item.customerName !== 'Khách hàng lẻ') {
-          uniqueCustomers.add(item.customerName);
+      
+      // Add customers from orders
+      completedOrders.forEach((order: any) => {
+        if (order.customerId) {
+          uniqueCustomers.add(order.customerId);
+        } else if (order.customerName && order.customerName !== 'Khách hàng lẻ') {
+          uniqueCustomers.add(order.customerName);
         } else {
-          // If no customer info, count as unique customer per item
-          uniqueCustomers.add(`${item.type}_${item.id}`);
+          uniqueCustomers.add(`order_${order.id}`);
         }
       });
+
+      // Add customers from transactions
+      completedTransactions.forEach((tx: any) => {
+        if (tx.customerId) {
+          uniqueCustomers.add(tx.customerId);
+        } else if (tx.customerName && tx.customerName !== 'Khách hàng lẻ') {
+          uniqueCustomers.add(tx.customerName);
+        } else {
+          uniqueCustomers.add(`transaction_${tx.id}`);
+        }
+      });
+
+      // Add customers from invoices
+      publishedInvoices.forEach((invoice: any) => {
+        if (invoice.customerId) {
+          uniqueCustomers.add(invoice.customerId);
+        } else if (invoice.customerName && invoice.customerName !== 'Khách hàng lẻ') {
+          uniqueCustomers.add(invoice.customerName);
+        } else {
+          uniqueCustomers.add(`invoice_${invoice.id}`);
+        }
+      });
+
       const periodCustomerCount = uniqueCustomers.size;
 
       // Calculate days difference for average
@@ -286,26 +270,46 @@ export function DashboardOverview() {
       );
       const dailyAverageRevenue = periodRevenue / daysDiff;
 
-      // Active orders (pending/in-progress orders only from all orders, not date-filtered)
+      // Active orders (pending/in-progress orders only from all current orders, not date-filtered)
       const activeOrders = Array.isArray(allCurrentOrders) ? allCurrentOrders.filter((order: any) => 
-        order.status === 'pending' || order.status === 'in_progress' || order.status === 'confirmed' || order.status === 'preparing' || order.status === 'ready' || order.status === 'served'
+        order.status === 'pending' || order.status === 'in_progress' || order.status === 'confirmed' || 
+        order.status === 'preparing' || order.status === 'ready' || order.status === 'served'
       ).length : 0;
 
-      const occupiedTables = Array.isArray(tables) ? tables.filter(
+      const occupiedTables = validTables.filter(
         (table: TableType) => table.status === "occupied",
-      ) : [];
+      );
 
       // Month revenue: same as period revenue for the selected date range
       const monthRevenue = periodRevenue;
 
       // Average order value
-      const averageOrderValue =
-        periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
+      const averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
-      // Peak hours analysis from combined data
+      // Peak hours analysis from all completed items
       const hourlyItems: { [key: number]: number } = {};
-      combinedData.forEach((item: any) => {
-        const itemDate = new Date(item.date);
+      
+      // Analyze orders
+      completedOrders.forEach((order: any) => {
+        const itemDate = new Date(order.orderedAt || order.createdAt);
+        if (!isNaN(itemDate.getTime())) {
+          const hour = itemDate.getHours();
+          hourlyItems[hour] = (hourlyItems[hour] || 0) + 1;
+        }
+      });
+
+      // Analyze transactions
+      completedTransactions.forEach((tx: any) => {
+        const itemDate = new Date(tx.createdAt);
+        if (!isNaN(itemDate.getTime())) {
+          const hour = itemDate.getHours();
+          hourlyItems[hour] = (hourlyItems[hour] || 0) + 1;
+        }
+      });
+
+      // Analyze invoices
+      publishedInvoices.forEach((invoice: any) => {
+        const itemDate = new Date(invoice.invoiceDate || invoice.createdAt);
         if (!isNaN(itemDate.getTime())) {
           const hour = itemDate.getHours();
           hourlyItems[hour] = (hourlyItems[hour] || 0) + 1;
@@ -314,24 +318,36 @@ export function DashboardOverview() {
 
       const peakHour = Object.keys(hourlyItems).reduce(
         (peak, hour) =>
-          hourlyItems[parseInt(hour)] > hourlyItems[parseInt(peak)]
+          hourlyItems[parseInt(hour)] > (hourlyItems[parseInt(peak)] || 0)
             ? hour
             : peak,
         "12",
       );
 
-      return {
+      const finalStats = {
         periodRevenue,
         periodOrderCount,
         periodCustomerCount,
         dailyAverageRevenue,
-        activeOrders: activeOrders,
+        activeOrders,
         occupiedTables: occupiedTables.length,
         monthRevenue,
         averageOrderValue,
         peakHour: parseInt(peakHour),
-        totalTables: Array.isArray(tables) ? tables.length : 0,
+        totalTables: validTables.length,
       };
+
+      console.log("Dashboard Debug - Final Stats:", {
+        orderRevenue,
+        transactionRevenue,
+        invoiceRevenue,
+        periodRevenue,
+        periodOrderCount,
+        periodCustomerCount,
+        dateRange: `${startDate} to ${endDate}`
+      });
+
+      return finalStats;
     } catch (error) {
       console.error("Error in getDashboardStats:", error);
       return {
