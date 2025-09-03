@@ -54,6 +54,13 @@ export function OrderManagement() {
     }
   }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
 
+  // Get active orders safely after orders are loaded
+  const activeOrders = React.useMemo(() => {
+    return Array.isArray(orders) ? orders.filter(
+      (order: any) => !["paid", "cancelled"].includes(order.status)
+    ) : [];
+  }, [orders]);
+
   // Trigger allOrderItems refetch when orders data changes
   useEffect(() => {
     if (orders && Array.isArray(orders)) {
@@ -95,20 +102,20 @@ export function OrderManagement() {
     }
   });
 
-  // Get all active orders for preloading items
-  const activeOrders = Array.isArray(orders) ? orders.filter(
-    (order: any) => !["paid", "cancelled"].includes(order.status)
-  ) : [];
-
   // Preload all order items for fast total calculation
   const { data: allOrderItems } = useQuery({
-    queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
-    enabled: true, // Always enabled to preload data
+    queryKey: ["/api/all-order-items", orders ? orders.filter((order: any) => !["paid", "cancelled"].includes(order.status)).map((o: any) => o.id).join(",") : ""],
+    enabled: Boolean(orders), // Only enabled when orders data is available
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     queryFn: async () => {
       const itemsMap = new Map();
+
+      // Get active orders safely
+      const activeOrders = Array.isArray(orders) ? orders.filter(
+        (order: any) => !["paid", "cancelled"].includes(order.status)
+      ) : [];
 
       // Only fetch if we have active orders
       if (activeOrders.length === 0) {
