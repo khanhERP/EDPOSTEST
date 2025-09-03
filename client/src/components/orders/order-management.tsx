@@ -137,7 +137,7 @@ export function OrderManagement() {
           queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
           queryClient.refetchQueries({ queryKey: ['/api/tables'] })
         ]);
-        
+
         if (i < 2) {
           await new Promise(resolve => setTimeout(resolve, 200));
         }
@@ -281,7 +281,7 @@ export function OrderManagement() {
         setPreviewReceipt(null);
         setSelectedOrder(null);
         setOrderForPayment(null);
-        
+
         toast({
           title: 'Thanh toán thành công',
           description: 'Đơn hàng đã được thanh toán. Hóa đơn sẽ được in tự động.',
@@ -481,7 +481,7 @@ export function OrderManagement() {
           queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
           queryClient.refetchQueries({ queryKey: ['/api/tables'] })
         ]);
-        
+
         if (i < 4) {
           await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms between attempts
         }
@@ -793,7 +793,7 @@ export function OrderManagement() {
       setSelectedOrder(null);
       setShowPaymentMethodModal(false);
       setOrderForPayment(null);
-      
+
       return;
     }
 
@@ -805,10 +805,10 @@ export function OrderManagement() {
         description: data.error || 'Không thể hoàn tất thanh toán',
         variant: 'destructive',
       });
-      
+
       // Close payment modal but keep order details open for retry
       setShowPaymentMethodModal(false);
-      
+
       return;
     }
 
@@ -833,7 +833,7 @@ export function OrderManagement() {
 
     try {
       console.log('💳 Order Management: Processing direct payment for order:', orderForPayment.id);
-      
+
       // Use centralized payment completion
       await completeOrderPayment(orderForPayment.id, {
         paymentMethod: typeof method === 'string' ? method : method.nameKey,
@@ -1107,7 +1107,7 @@ export function OrderManagement() {
     // Listen for manual refresh events
     const handleOrderStatusUpdate = async (event: CustomEvent) => {
       console.log(`🔄 Order Management: Received orderStatusUpdated event:`, event.detail);
-      
+
       // Force immediate refresh with refetch multiple times to ensure update
       for (let i = 0; i < 3; i++) {
         await Promise.all([
@@ -1116,18 +1116,18 @@ export function OrderManagement() {
           queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
           queryClient.refetchQueries({ queryKey: ['/api/tables'] })
         ]);
-        
+
         if (i < 2) {
           await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms between retries
         }
       }
-      
+
       console.log(`✅ Order Management: Immediate refresh completed after status update`);
     };
 
     const handlePaymentComplete = async (event: CustomEvent) => {
       console.log(`💳 Order Management: Received paymentCompleted event:`, event.detail);
-      
+
       // Force immediate refresh with refetch multiple times to ensure update
       for (let i = 0; i < 3; i++) {
         await Promise.all([
@@ -1136,18 +1136,18 @@ export function OrderManagement() {
           queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
           queryClient.refetchQueries({ queryKey: ['/api/tables'] })
         ]);
-        
+
         if (i < 2) {
           await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms between retries
         }
       }
-      
+
       console.log(`✅ Order Management: Immediate refresh completed after payment`);
     };
 
     const handleRefreshOrders = async (event?: CustomEvent) => {
       console.log(`🔄 Order Management: Manual refresh orders triggered`, event?.detail);
-      
+
       if (event?.detail?.immediate) {
         // Force immediate refetch multiple times for immediate updates
         for (let i = 0; i < 2; i++) {
@@ -1155,7 +1155,7 @@ export function OrderManagement() {
             queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
             queryClient.refetchQueries({ queryKey: ['/api/orders'] })
           ]);
-          
+
           if (i < 1) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
@@ -1167,7 +1167,7 @@ export function OrderManagement() {
 
     const handleRefreshTables = async (event?: CustomEvent) => {
       console.log(`🔄 Order Management: Manual refresh tables triggered`, event?.detail);
-      
+
       if (event?.detail?.immediate) {
         // Force immediate refetch multiple times for immediate updates
         for (let i = 0; i < 2; i++) {
@@ -1175,7 +1175,7 @@ export function OrderManagement() {
             queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
             queryClient.refetchQueries({ queryKey: ['/api/tables'] })
           ]);
-          
+
           if (i < 1) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
@@ -1187,7 +1187,7 @@ export function OrderManagement() {
 
     const handleForceRefresh = async (event: CustomEvent) => {
       console.log(`🔄 Order Management: Force refresh triggered:`, event.detail);
-      
+
       // Force complete UI refresh with multiple attempts
       for (let i = 0; i < 3; i++) {
         await Promise.all([
@@ -1196,12 +1196,12 @@ export function OrderManagement() {
           queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
           queryClient.refetchQueries({ queryKey: ['/api/tables'] })
         ]);
-        
+
         if (i < 2) {
           await new Promise(resolve => setTimeout(resolve, 300)); // Wait 300ms between retries
         }
       }
-      
+
       console.log(`✅ Order Management: Force refresh completed`);
     };
 
@@ -1581,7 +1581,7 @@ export function OrderManagement() {
                     <Button
                       onClick={() => {
                         console.log('🎯 Order Management: Tạo xem trước hóa đơn - sử dụng exact Order Details values');
-                        
+
                         if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
                           console.error('❌ Thiếu dữ liệu đơn hàng cho xem trước');
                           toast({
@@ -1717,17 +1717,6 @@ export function OrderManagement() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Payment Method Modal */}
-      <PaymentMethodModal
-        isOpen={paymentModalOpen}
-        onClose={() => {
-          setPaymentModalOpen(false);
-          setOrderForPayment(null);
-        }}
-        onSelectMethod={handlePaymentMethodSelect}
-        total={orderForPayment?.total || 0}
-      />
 
       {/* Payment Methods Dialog */}
       <Dialog open={paymentMethodsOpen} onOpenChange={setPaymentMethodsOpen}>
@@ -2273,42 +2262,42 @@ export function OrderManagement() {
           // Handle different payment completion scenarios
           if (method === "paymentCompleted" && data?.success) {
             console.log('✅ Payment completed successfully from payment modal');
-            
+
             // Close all modals
             setOrderForPayment(null);
             setOrderDetailsOpen(false);
             setSelectedOrder(null);
-            
+
             // Show receipt if provided
             if (data.receipt) {
               setSelectedReceipt(data.receipt);
               setShowReceiptModal(true);
             }
-            
+
             // Force UI refresh
             queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
             queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-            
+
             toast({
               title: 'Thành công',
               description: 'Đơn hàng đã được thanh toán thành công',
             });
-            
+
             return;
           }
 
           if (method === "paymentError" && data?.error) {
             console.error('❌ Payment failed from payment modal:', data.error);
-            
+
             // Close modals but don't clear order data in case user wants to retry
             setShowPaymentMethodModal(false);
-            
+
             toast({
               title: 'Lỗi thanh toán',
               description: data.error || 'Không thể hoàn tất thanh toán',
               variant: 'destructive',
             });
-            
+
             return;
           }
 
@@ -2533,11 +2522,11 @@ export function OrderManagement() {
           setShowQRPayment(false);
           setPointsPaymentOpen(false);
           setMixedPaymentOpen(false);
-          
+
           // Force refresh orders after successful payment
           queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
           queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-          
+
           console.log('✅ Order Management: All states cleared and queries refreshed');
         }}
         receipt={selectedReceipt}
