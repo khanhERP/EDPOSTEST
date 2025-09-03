@@ -639,13 +639,14 @@ export function EInvoiceModal({
       console.log("📄 Receipt data to pass:", receiptData);
       console.log("📦 Complete invoice data:", completeInvoiceData);
 
-      // Close modal BEFORE calling onConfirm to prevent state conflicts
-      onClose();
+      // Call onConfirm FIRST to pass data, then close modal
+      console.log("🔄 Calling onConfirm to trigger receipt modal display");
+      onConfirm(completeInvoiceData);
 
-      // Small delay to ensure modal is closed before showing receipt
+      // Small delay to ensure data is processed before closing
       setTimeout(() => {
-        console.log("🔄 Calling onConfirm to trigger receipt modal display");
-        onConfirm(completeInvoiceData);
+        console.log("🔄 Closing EInvoice modal after data passed");
+        onClose();
       }, 100);
 
     } catch (error) {
