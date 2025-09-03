@@ -464,18 +464,20 @@ export function OrderManagement() {
           : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
       });
 
-      // Close all modals first
+      // Close e-invoice modal first
       setShowEInvoiceModal(false);
-      setOrderForPayment(null);
-      setOrderDetailsOpen(false);
-      setSelectedOrder(null);
 
-      // Show receipt if available - this will auto-close after printing
+      // Show receipt modal immediately with the receipt data
       if (invoiceData.receipt) {
-        console.log('📄 Showing receipt modal after successful payment');
+        console.log('📄 Showing receipt modal immediately after e-invoice processing');
         setSelectedReceipt(invoiceData.receipt);
         setShowReceiptModal(true);
       }
+
+      // Close other modals after showing receipt
+      setOrderForPayment(null);
+      setOrderDetailsOpen(false);
+      setSelectedOrder(null);
 
     } catch (error) {
       console.error('❌ Error during payment completion:', error);

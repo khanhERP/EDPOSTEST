@@ -21,7 +21,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
-import { PrintDialog } from "./print-dialog";
+
 
 // E-invoice software providers mapping
 const EINVOICE_PROVIDERS = [
@@ -87,8 +87,7 @@ export function EInvoiceModal({
   const [isPublishing, setIsPublishing] = useState(false);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [activeInputField, setActiveInputField] = useState<string | null>(null);
-  const [showPrintDialog, setShowPrintDialog] = useState(false);
-  const [receiptDataForPrint, setReceiptDataForPrint] = useState<any>(null);
+  
 
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -616,12 +615,22 @@ export function EInvoiceModal({
         showReceiptModal: true, // Flag để parent component biết cần hiển thị receipt modal
       };
 
-      console.log("✅ Prepared data for print dialog after publish later");
-      console.log("📄 Receipt data to display:", receiptData);
+      console.log("✅ Prepared data for onConfirm after publish later");
+      console.log("📄 Receipt data to pass:", receiptData);
 
-      // Show print dialog instead of directly returning
-      setReceiptDataForPrint(receiptData);
-      setShowPrintDialog(true);
+      // Prepare comprehensive invoice data
+      const completeInvoiceData = {
+        paymentMethod: selectedPaymentMethod,
+        originalPaymentMethod: selectedPaymentMethod,
+        publishLater: true,
+        receipt: receiptData,
+        customerName: formData.customerName,
+        taxCode: formData.taxCode,
+        showReceiptModal: true // Flag để parent component biết cần hiển thị receipt modal
+      };
+
+      // Directly call onConfirm instead of showing print dialog
+      onConfirm(completeInvoiceData);
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 
@@ -1178,12 +1187,11 @@ export function EInvoiceModal({
         };
 
         console.log(
-          "📧 Step 4: E-Invoice published, now showing print dialog",
+          "📧 Step 4: E-Invoice published, now calling onConfirm with receipt data",
         );
 
-        // Show print dialog instead of directly returning
-        setReceiptDataForPrint(receiptDataToConfirm);
-        setShowPrintDialog(true);
+        // Directly call onConfirm instead of showing print dialog
+        onConfirm(publishResult);
         // --- CHANGE END ---
       } else {
         throw new Error(
@@ -1202,42 +1210,7 @@ export function EInvoiceModal({
     onClose();
   };
 
-  const handlePrintDialogClose = () => {
-    setShowPrintDialog(false);
-    setReceiptDataForPrint(null);
-
-    // Now close e-invoice modal and complete the flow
-    onClose();
-
-    // Return appropriate data based on whether it was published or saved for later
-    if (receiptDataForPrint?.invoiceNumber) {
-      // Was published immediately
-      const publishResult = {
-        success: true,
-        invoiceNumber: receiptDataForPrint.invoiceNumber,
-        symbol: null,
-        templateNumber: null,
-        einvoiceStatus: 1, // Đã phát hành
-        invoiceStatus: 1, // Hoàn thành
-        status: 'published',
-        receipt: receiptDataForPrint,
-        publishedImmediately: true
-      };
-      onConfirm(publishResult);
-    } else {
-      // Was saved for later publishing
-      const completeInvoiceData = {
-        paymentMethod: selectedPaymentMethod,
-        originalPaymentMethod: selectedPaymentMethod,
-        publishLater: true,
-        receipt: receiptDataForPrint,
-        customerName: formData.customerName,
-        taxCode: formData.taxCode,
-        showReceiptModal: false // Don't show receipt modal again
-      };
-      onConfirm(completeInvoiceData);
-    }
-  };
+  
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -1504,14 +1477,7 @@ export function EInvoiceModal({
         </div>
       </DialogContent>
 
-      {/* Print Dialog - hiển thị sau khi xử lý hóa đơn điện tử */}
-      {showPrintDialog && receiptDataForPrint && (
-        <PrintDialog
-          isOpen={showPrintDialog}
-          onClose={handlePrintDialogClose}
-          receiptData={receiptDataForPrint}
-        />
-      )}
+      
     </Dialog>
   );
 }
