@@ -2054,19 +2054,20 @@ export function OrderManagement() {
                           orderId: selectedOrder.id
                         });
 
-                        // Step 5: Close order details modal and show receipt preview
-                        try {
-                          const paymentOrderData = {
-                            ...selectedOrder,
-                            id: selectedOrder.id,
-                            orderItems: processedItems,
-                            processedItems: processedItems,
-                            calculatedSubtotal: calculatedSubtotal,
-                            calculatedTax: calculatedTax,
-                            calculatedTotal: finalTotal,
-                            total: finalTotal
-                          };
+                        // Step 5: Create payment order data and show receipt preview
+                        const paymentOrderData = {
+                          ...selectedOrder,
+                          id: selectedOrder.id,
+                          orderItems: processedItems,
+                          processedItems: processedItems,
+                          calculatedSubtotal: calculatedSubtotal,
+                          calculatedTax: calculatedTax,
+                          calculatedTotal: finalTotal,
+                          total: finalTotal
+                        };
 
+                        // Close order details modal and show receipt preview
+                        try {
                           setOrderDetailsOpen(false);
                           setSelectedOrder(selectedOrder);
                           setOrderForPayment(paymentOrderData);
