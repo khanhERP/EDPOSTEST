@@ -98,6 +98,9 @@ export function ReceiptModal({
     }
   }, [isOpen, isPreview, autoClose, receipt, onClose]);
 
+  // Ẩn hoàn toàn receipt modal - chỉ dùng print dialog
+  return null;
+  
   // Don't render if modal is not open - BUT HOOKS MUST STILL BE CALLED ABOVE
   if (!isOpen) {
     console.log("❌ Receipt Modal: Modal is closed");
