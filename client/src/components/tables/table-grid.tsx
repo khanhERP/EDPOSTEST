@@ -246,22 +246,39 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
           }
 
+          // Handle popup close signal (when receipt modal is closed)
+          if (data.type === "popup_close" && data.success) {
+            console.log("🔄 Table Grid: Receipt modal closed, refreshing data");
+            
+            // Force refresh table and order data
+            setTimeout(() => {
+              refetchTables();
+              refetchOrders();
+            }, 100);
+          }
+
           // Handle refresh signal after print receipt
           if (data.type === "refresh_data_after_print" && data.action === "refresh_tables_and_clear_cart") {
             console.log("🔄 Table Grid: Refreshing table data after print receipt");
 
-            // Force refresh all table and order data
-            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+            // Clear all cached data first for immediate refresh
+            queryClient.removeQueries({ queryKey: ["/api/tables"] });
+            queryClient.removeQueries({ queryKey: ["/api/orders"] });
+            queryClient.removeQueries({ queryKey: ["/api/order-items"] });
 
-            // Force immediate refetch to update UI
-            queryClient.refetchQueries({ queryKey: ["/api/tables"] });
-            queryClient.refetchQueries({ queryKey: ["/api/orders"] });
-
-            toast({
-              title: "Đã làm mới",
-              description: "Dữ liệu trạng thái bàn đã được cập nhật",
+            // Force immediate refetch with fresh data
+            Promise.all([
+              refetchTables(),
+              refetchOrders()
+            ]).then(() => {
+              console.log("✅ Table Grid: Data refreshed successfully after print");
+              
+              toast({
+                title: "Đã làm mới",
+                description: "Dữ liệu trạng thái bàn đã được cập nhật",
+              });
+            }).catch((error) => {
+              console.error("❌ Error refreshing table data:", error);
             });
           }
         } catch (error) {
@@ -2659,6 +2676,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             console.log(
               "🔴 Table: Closing final receipt modal and clearing all states",
             );
+            
+            // Clear all modal states
             setShowReceiptModal(false);
             setSelectedReceipt(null);
             setOrderForPayment(null);
@@ -2668,7 +2687,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setPreviewReceipt(null);
             setOrderDetailsOpen(false);
             setSelectedOrder(null);
-            setSelectedPaymentMethod(""); // Clear selected payment method
+            setSelectedPaymentMethod("");
+
+            // Force immediate data refresh when receipt modal closes
+            console.log("🔄 Table: Forcing data refresh after receipt modal close");
+            setTimeout(() => {
+              queryClient.removeQueries({ queryKey: ["/api/tables"] });
+              queryClient.removeQueries({ queryKey: ["/api/orders"] });
+              refetchTables();
+              refetchOrders();
+              
+              toast({
+                title: "Đã cập nhật",
+                description: "Dữ liệu trạng thái bàn đã được làm mới",
+              });
+            }, 200);
           }}
           receipt={selectedReceipt}
           cartItems={
