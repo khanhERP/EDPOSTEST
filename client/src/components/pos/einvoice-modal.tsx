@@ -600,6 +600,8 @@ export function EInvoiceModal({
         createdAt: new Date().toISOString(),
         customerName: formData.customerName,
         customerTaxCode: formData.taxCode,
+        invoiceId: savedInvoice.invoice?.id,
+        invoiceNumber: savedInvoice.invoice?.invoiceNumber,
       };
 
       console.log("📄 Receipt data created for publish later:", receiptData);
@@ -635,18 +637,13 @@ export function EInvoiceModal({
         orderId: orderId
       };
 
-      console.log("✅ Prepared data for onConfirm after publish later");
-      console.log("📄 Receipt data to pass:", receiptData);
-      console.log("📦 Complete invoice data:", completeInvoiceData);
+      console.log("✅ PUBLISH LATER: Prepared data for onConfirm");
+      console.log("📄 PUBLISH LATER: Receipt data to pass:", receiptData);
+      console.log("📦 PUBLISH LATER: Complete invoice data:", completeInvoiceData);
 
-      // Close modal BEFORE calling onConfirm to prevent state conflicts
-      onClose();
-
-      // Small delay to ensure modal is closed before showing receipt
-      setTimeout(() => {
-        console.log("🔄 Calling onConfirm to trigger receipt modal display");
-        onConfirm(completeInvoiceData);
-      }, 100);
+      // Call onConfirm immediately without closing modal first
+      console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
+      onConfirm(completeInvoiceData);
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);

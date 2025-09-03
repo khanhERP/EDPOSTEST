@@ -735,7 +735,7 @@ export function PaymentMethodModal({
 
   // CRITICAL: Update handleEInvoiceComplete to correctly set receipt data and trigger receipt modal
   const handleEInvoiceComplete = (invoiceData: any) => {
-    console.log("🎯 E-Invoice completed:", invoiceData);
+    console.log("🎯 Payment Modal E-Invoice completed:", invoiceData);
     console.log("📄 Invoice data received:", JSON.stringify(invoiceData, null, 2));
 
     // Always close the E-Invoice modal first
@@ -743,56 +743,57 @@ export function PaymentMethodModal({
 
     // Check if we have valid receipt data
     if (invoiceData.receipt) {
-      console.log("📄 Valid receipt data found:", invoiceData.receipt);
+      console.log("📄 Valid receipt data found, setting for receipt modal:", invoiceData.receipt);
       
       // Set receipt data for modal
       setReceiptDataForModal(invoiceData.receipt);
 
       // Show success message based on action type
       if (invoiceData.publishLater) {
-        console.log("⏳ E-Invoice publish later completed - showing receipt");
+        console.log("⏳ E-Invoice publish later completed - will show receipt");
         toast({
           title: "Thành công",
           description: "Hóa đơn đã được lưu để phát hành sau. Đang hiển thị hóa đơn để in...",
         });
       } else if (invoiceData.publishedImmediately || invoiceData.success) {
-        console.log("✅ E-Invoice published immediately - showing receipt");
+        console.log("✅ E-Invoice published immediately - will show receipt");
         toast({
           title: "Thành công", 
           description: "Hóa đơn điện tử đã được phát hành thành công!",
         });
       }
 
-      // Force show receipt modal after a small delay
+      // Force show receipt modal after a small delay to ensure state is updated
       setTimeout(() => {
-        console.log("📄 Showing receipt modal");
+        console.log("📄 FORCE SHOWING RECEIPT MODAL");
         setShowReceiptModal(true);
-      }, 200);
+      }, 300);
+
     } else {
       console.error("❌ No receipt data found in E-Invoice response");
-      toast({
-        title: "Cảnh báo",
-        description: "Hóa đơn đã được xử lý nhưng không thể hiển thị để in. Vui lòng kiểm tra trong danh sách hóa đơn.",
-        variant: "destructive",
-      });
-    }
-
-    // Handle order completion for table orders
-    if (source === "table" && orderId && (invoiceData.publishedImmediately || invoiceData.success)) {
-      console.log("🔄 Completing table order payment after E-Invoice publish");
-      completePaymentMutation.mutate({
-        orderId: orderId,
-        paymentMethod: invoiceData.originalPaymentMethod || selectedPaymentMethod,
-      });
+      
+      // Even if no receipt data, still show success and close payment flow
+      if (invoiceData.success || invoiceData.publishLater || invoiceData.publishedImmediately) {
+        toast({
+          title: "Thành công",
+          description: invoiceData.publishLater ? 
+            "Hóa đơn đã được lưu để phát hành sau" : 
+            "Hóa đơn điện tử đã được phát hành thành công",
+        });
+        
+        // Close the entire payment modal after successful processing
+        onClose();
+      } else {
+        toast({
+          title: "Cảnh báo",
+          description: "Hóa đơn đã được xử lý nhưng không thể hiển thị để in. Vui lòng kiểm tra trong danh sách hóa đơn.",
+          variant: "destructive",
+        });
+      }
     }
 
     // Reset payment method selection
     setSelectedPaymentMethod("");
-
-    // Call onComplete if provided
-    if (onComplete) {
-      onComplete(invoiceData);
-    }
   };
 
   const handleEInvoiceClose = () => {
