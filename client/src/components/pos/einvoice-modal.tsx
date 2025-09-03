@@ -622,7 +622,7 @@ export function EInvoiceModal({
         status: 'draft', // Draft status for publish later
         cartItems: cartItems, // Include cart items for receipt
         total: total, // Include total
-        subtotal: calculatedSubtotal,
+        subtotal: total - calculatedTax, // Calculate from total - tax
         tax: calculatedTax,
         invoiceId: savedInvoice.invoice?.id,
         source: source || "pos",
@@ -1098,8 +1098,8 @@ export function EInvoiceModal({
               taxRate: itemTaxRate,
             };
           }),
-          subtotal: calculatedSubtotal.toFixed(2),
-          tax: calculatedTax.toFixed(2),
+          subtotal: cartSubtotal.toFixed(2),
+          tax: cartTaxAmount.toFixed(2),
           total: total.toFixed(2),
           paymentMethod: "einvoice",
           amountReceived: total.toFixed(2),
