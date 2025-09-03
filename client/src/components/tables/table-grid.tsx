@@ -76,6 +76,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     gcTime: 0, // Remove from cache immediately after unmount
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    refetchInterval: false, // Don't auto-refetch on interval
+    networkMode: 'always', // Always try to fetch
   });
 
   const { data: orders, refetch: refetchOrders } = useQuery({
@@ -84,6 +86,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     gcTime: 0, // Remove from cache immediately after unmount
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    refetchInterval: false, // Don't auto-refetch on interval
+    networkMode: 'always', // Always try to fetch
   });
 
   // Get all active orders' items for proper total calculation
@@ -266,6 +270,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             queryClient.removeQueries({ queryKey: ["/api/orders"] });
             queryClient.removeQueries({ queryKey: ["/api/order-items"] });
 
+            // Invalidate queries to force fresh fetch
+            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+
             // Force immediate refetch with fresh data
             Promise.all([
               refetchTables(),
@@ -280,6 +288,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             }).catch((error) => {
               console.error("❌ Error refreshing table data:", error);
             });
+          }
+
+          // Handle popup close signal to refresh data
+          if (data.type === "popup_close" && data.success) {
+            console.log("🔄 Table Grid: Receipt modal closed, forcing data refresh");
+            
+            // Clear cache and invalidate queries
+            queryClient.removeQueries({ queryKey: ["/api/tables"] });
+            queryClient.removeQueries({ queryKey: ["/api/orders"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+
+            // Force refresh
+            setTimeout(() => {
+              refetchTables();
+              refetchOrders();
+            }, 200);
           }
         } catch (error) {
           console.error("Table Grid: Error parsing WebSocket message:", error);
@@ -2693,42 +2718,42 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             console.log("🔄 Table: Forcing comprehensive data refresh after receipt modal close");
             
             // Clear all cached data first
-            queryClient.clear();
+            queryClient.removeQueries({ queryKey: ["/api/tables"] });
+            queryClient.removeQueries({ queryKey: ["/api/orders"] });
+            queryClient.removeQueries({ queryKey: ["/api/order-items"] });
             
-            // Force immediate refresh multiple times to ensure data consistency
+            // Force immediate refresh with fresh data
             const refreshData = async () => {
               try {
-                console.log("🔄 Table: Starting data refresh cycle 1");
+                console.log("🔄 Table: Starting immediate data refresh");
+                
+                // Invalidate and refetch with fresh data
+                queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                
                 await Promise.all([
                   refetchTables(),
                   refetchOrders()
                 ]);
                 
-                // Second refresh after a short delay for consistency
-                setTimeout(async () => {
-                  console.log("🔄 Table: Starting data refresh cycle 2");
-                  await Promise.all([
-                    refetchTables(),
-                    refetchOrders()
-                  ]);
-                  
-                  toast({
-                    title: "Đã cập nhật",
-                    description: "Dữ liệu trạng thái bàn đã được làm mới",
-                  });
-                }, 500);
+                console.log("✅ Table: Data refresh completed successfully");
+                
+                toast({
+                  title: "Đã làm mới",
+                  description: "Dữ liệu trạng thái bàn đã được cập nhật",
+                });
                 
               } catch (error) {
                 console.error("❌ Error during data refresh:", error);
                 toast({
-                  title: "Cảnh báo",
+                  title: "Cảnh báo", 
                   description: "Có lỗi khi làm mới dữ liệu. Vui lòng tải lại trang.",
                   variant: "destructive",
                 });
               }
             };
             
-            // Start immediate refresh
+            // Execute refresh immediately
             refreshData();
           }}
           receipt={selectedReceipt}
