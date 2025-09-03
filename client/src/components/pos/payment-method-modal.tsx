@@ -1510,7 +1510,7 @@ export function PaymentMethodModal({
       </DialogContent>
 
       {/* E-Invoice Modal - CRITICAL: Always render when showEInvoice is true */}
-      {showEInvoice && selectedPaymentMethod && (
+      {showEInvoice && (
         <EInvoiceModal
           isOpen={showEInvoice}
           onClose={handleEInvoiceClose}

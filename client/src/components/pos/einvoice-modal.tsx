@@ -1190,10 +1190,10 @@ export function EInvoiceModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-screen overflow-y-auto [&>button]:hidden">
+      <DialogContent className="max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg">
-            {t("einvoice.title")}
+            Thông tin nhà cung cấp hóa đơn điện tử
           </DialogTitle>
         </DialogHeader>
 
@@ -1206,7 +1206,7 @@ export function EInvoiceModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="invoiceProvider">
-                  {t("einvoice.providerUnit")}
+                  Đơn vị HĐĐT
                 </Label>
                 <Select
                   value={formData.invoiceProvider}
@@ -1215,7 +1215,7 @@ export function EInvoiceModal({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t("einvoice.selectProvider")} />
+                    <SelectValue placeholder="Chọn đơn vị HĐĐT" />
                   </SelectTrigger>
                   <SelectContent>
                     {EINVOICE_PROVIDERS.map((provider) => (
@@ -1228,7 +1228,7 @@ export function EInvoiceModal({
               </div>
               <div>
                 <Label htmlFor="invoiceTemplate">
-                  {t("einvoice.invoiceTemplate")}
+                  Mẫu số Hóa đơn GTGT
                 </Label>
                 <Select
                   value={formData.selectedTemplateId}
@@ -1237,7 +1237,7 @@ export function EInvoiceModal({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t("einvoice.selectTemplate")} />
+                    <SelectValue placeholder="Chọn mẫu số hóa đơn" />
                   </SelectTrigger>
                   <SelectContent>
                     {invoiceTemplates.map((template) => (
@@ -1257,11 +1257,11 @@ export function EInvoiceModal({
           {/* Customer Information */}
           <div>
             <h3 className="text-base font-medium mb-4">
-              {t("einvoice.customerInfo")}
+              Thông tin khách hàng
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="taxCode">{t("einvoice.taxCode")}</Label>
+                <Label htmlFor="taxCode">Mã số thuế</Label>
                 <div className="flex gap-2">
                   <Input
                     id="taxCode"
@@ -1290,14 +1290,14 @@ export function EInvoiceModal({
                         Đang tải...
                       </>
                     ) : (
-                      t("einvoice.getInfo")
+                      "Lấy thông tin"
                     )}
                   </Button>
                 </div>
               </div>
               <div>
                 <Label htmlFor="customerName">
-                  {t("einvoice.companyName")}
+                  Tên đơn vị
                 </Label>
                 <Input
                   id="customerName"
@@ -1315,7 +1315,7 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="address">{t("einvoice.address")}</Label>
+                <Label htmlFor="address">Địa chỉ</Label>
                 <Input
                   id="address"
                   ref={(el) => {
@@ -1330,7 +1330,7 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="phoneNumber">{t("einvoice.idNumber")}</Label>
+                <Label htmlFor="phoneNumber">Số CMND/CCCD</Label>
                 <Input
                   id="phoneNumber"
                   ref={(el) => {
@@ -1348,7 +1348,7 @@ export function EInvoiceModal({
               </div>
 
               <div>
-                <Label htmlFor="email">{t("einvoice.email")}</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -1369,7 +1369,7 @@ export function EInvoiceModal({
           {/* Total Amount Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="font-medium">{t("einvoice.totalAmount")}</span>
+              <span className="font-medium">Tổng tiền hóa đơn:</span>
               <span className="text-lg font-bold text-blue-600">
                 {Math.floor(total).toLocaleString("vi-VN")} ₫
               </span>
@@ -1428,12 +1428,12 @@ export function EInvoiceModal({
               {isPublishing ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  {t("einvoice.publishing")}
+                  Đang phát hành...
                 </>
               ) : (
                 <>
                   <span className="mr-2">✅</span>
-                  {t("einvoice.publish")}
+                  Phát hành
                 </>
               )}
             </Button>
@@ -1456,7 +1456,7 @@ export function EInvoiceModal({
             </Button>
             <Button variant="outline" onClick={handleCancel} className="flex-1">
               <span className="mr-2">❌</span>
-              {t("einvoice.cancel")}
+              Hủy bỏ
             </Button>
           </div>
         </div>
