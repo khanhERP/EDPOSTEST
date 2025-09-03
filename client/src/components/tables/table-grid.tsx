@@ -1794,7 +1794,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           : statusConfig.label}
                       </Badge>
                     </div>
-                    </div>
 
                     {/* Order Info */}
                     {activeOrder && (
