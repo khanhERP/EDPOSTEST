@@ -102,6 +102,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     price: "가격",
     stock: "재고",
     loading: "로딩 중...",
+    deleteorder: "주문 삭제",
   },
   en: {
     title: "Table Management",
@@ -207,6 +208,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     price: "Price",
     stock: "Stock",
     loading: "Loading...",
+    deleteorder: "Delete Order",
   },
   vi: {
     title: "Quản lý bàn",
@@ -309,6 +311,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     pricePlaceholder: "Nhập giá",
     stockPlaceholder: "Nhập số lượng tồn kho",
     selectCategory: "Chọn danh mục",
+    deleteOrder: "Xóa đơn hàng",
     categoryRequired: "Danh mục là bắt buộc",
     productType: "Loại sản phẩm",
     selectProductType: "Chọn loại sản phẩm",
