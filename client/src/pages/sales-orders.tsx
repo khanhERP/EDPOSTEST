@@ -77,6 +77,34 @@ interface Order {
 export default function SalesOrders() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  // Auto-refresh when new orders are created
+  useEffect(() => {
+    const handleNewOrder = () => {
+      console.log('📱 Sales Orders: New order detected, refreshing data...');
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+    };
+
+    const handleOrderUpdate = () => {
+      console.log('🔄 Sales Orders: Order updated, refreshing data...');
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+    };
+
+    // Listen for order creation and update events
+    window.addEventListener('newOrderCreated', handleNewOrder);
+    window.addEventListener('orderStatusUpdated', handleOrderUpdate);
+    window.addEventListener('paymentCompleted', handleOrderUpdate);
+
+    return () => {
+      window.removeEventListener('newOrderCreated', handleNewOrder);
+      window.removeEventListener('orderStatusUpdated', handleOrderUpdate);
+      window.removeEventListener('paymentCompleted', handleOrderUpdate);
+    };
+  }, [queryClient]);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -680,6 +708,11 @@ export default function SalesOrders() {
       console.error('Error filtering item:', item, error);
       return false;
     }
+  }).sort((a: any, b: any) => {
+    // Sort by date in descending order (newest first)
+    const dateA = new Date(a.date || a.orderedAt || a.invoiceDate || a.createdAt);
+    const dateB = new Date(b.date || b.orderedAt || b.invoiceDate || b.createdAt);
+    return dateB.getTime() - dateA.getTime();
   }) : [];
 
   const formatCurrency = (amount: string | number | undefined | null): string => {
