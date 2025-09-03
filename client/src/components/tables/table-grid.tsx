@@ -224,29 +224,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
 
-  // Simplified refresh logic
-  const forceRefreshData = () => {
-    console.log('🔄 Table Grid: Force refreshing data');
-    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-    refetchTables();
-    refetchOrders();
-  };
-
-  // Add custom event listener for force refresh
-  useEffect(() => {
-    const handleForceRefresh = (event: CustomEvent) => {
-      console.log('🔄 Table Grid: Custom force refresh event received:', event.detail);
-      forceRefreshData();
-    };
-
-    window.addEventListener('forceTableRefresh', handleForceRefresh as EventListener);
-    
-    return () => {
-      window.removeEventListener('forceTableRefresh', handleForceRefresh as EventListener);
-    };
-  }, [queryClient, refetchTables, refetchOrders]);
-
   // Setup WebSocket connection for real-time updates
   useEffect(() => {
     try {
@@ -263,27 +240,46 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           const data = JSON.parse(event.data);
           console.log("Table Grid: Received WebSocket message:", data);
 
-          // Handle all data refresh signals with simplified logic
-          if (data.type === "order_updated" || 
-              data.type === "order_status_changed" ||
-              data.type === "popup_close" ||
-              data.type === "receipt_modal_closed" ||
-              data.type === "refresh_data_after_print" ||
-              data.action === "refresh_tables_and_clear_cart" ||
-              data.action === "receipt_modal_closed") {
+          if (data.type === "order_updated" || data.type === "order_status_changed") {
+            console.log("Table Grid: Refreshing data due to order update");
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+          }
+
+          // Handle popup close signal (when receipt modal is closed)
+          if (data.type === "popup_close" && data.success) {
+            console.log("🔄 Table Grid: Receipt modal closed, refreshing data");
             
-            console.log('🔄 Table Grid: Refreshing data due to:', data.type || data.action);
-            
-            // Simple but effective refresh
-            forceRefreshData();
-            
-            // Show success message after refresh
+            // Force refresh table and order data
             setTimeout(() => {
+              refetchTables();
+              refetchOrders();
+            }, 100);
+          }
+
+          // Handle refresh signal after print receipt
+          if (data.type === "refresh_data_after_print" && data.action === "refresh_tables_and_clear_cart") {
+            console.log("🔄 Table Grid: Refreshing table data after print receipt");
+
+            // Clear all cached data first for immediate refresh
+            queryClient.removeQueries({ queryKey: ["/api/tables"] });
+            queryClient.removeQueries({ queryKey: ["/api/orders"] });
+            queryClient.removeQueries({ queryKey: ["/api/order-items"] });
+
+            // Force immediate refetch with fresh data
+            Promise.all([
+              refetchTables(),
+              refetchOrders()
+            ]).then(() => {
+              console.log("✅ Table Grid: Data refreshed successfully after print");
+              
               toast({
                 title: "Đã làm mới",
                 description: "Dữ liệu trạng thái bàn đã được cập nhật",
               });
-            }, 500);
+            }).catch((error) => {
+              console.error("❌ Error refreshing table data:", error);
+            });
           }
         } catch (error) {
           console.error("Table Grid: Error parsing WebSocket message:", error);
@@ -1778,17 +1774,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Trạng thái bàn</h3>
-        <Button
-          onClick={forceRefreshData}
-          variant="outline"
-          size="sm"
-          className="ml-auto"
-        >
-          🔄 Làm mới
-        </Button>
-      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {Array.isArray(tables) &&
           tables.map((table: Table) => {
@@ -2513,6 +2498,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
         }}
+        receipt={previewReceipt}
         onConfirm={() => {
           console.log(
             "📄 Table: Receipt preview confirmed, starting payment flow",
@@ -2690,7 +2676,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             console.log(
               "🔴 Table: Closing final receipt modal and clearing all states",
             );
-
+            
             // Clear all modal states
             setShowReceiptModal(false);
             setSelectedReceipt(null);
@@ -2710,7 +2696,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               queryClient.removeQueries({ queryKey: ["/api/orders"] });
               refetchTables();
               refetchOrders();
-
+              
               toast({
                 title: "Đã cập nhật",
                 description: "Dữ liệu trạng thái bàn đã được làm mới",

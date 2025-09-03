@@ -109,36 +109,23 @@ export function ReceiptModal({
   }
 
   const handlePrint = () => {
-    // Send comprehensive signals before printing to ensure full refresh
+    // Send popup close signal before printing to trigger cart clear
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        // Send multiple signals to ensure all components refresh
-        const signals = [
-          { type: "popup_close", success: true, action: 'print_receipt_requested' },
-          { type: "receipt_modal_closed", success: true, action: 'print_receipt_requested' },
-          { type: "refresh_data_after_print", action: 'refresh_tables_and_clear_cart' },
-          { type: "force_cart_clear", success: true },
-          { type: "cart_update", cart: [], subtotal: 0, tax: 0, total: 0 }
-        ];
-        
-        signals.forEach((signal, index) => {
-          setTimeout(() => {
-            ws.send(JSON.stringify({
-              ...signal,
-              timestamp: new Date().toISOString(),
-              source: 'receipt_print'
-            }));
-          }, index * 50);
-        });
-        
-        setTimeout(() => ws.close(), 300);
+        ws.send(JSON.stringify({
+          type: "popup_close",
+          success: true,
+          action: 'print_receipt_requested',
+          timestamp: new Date().toISOString()
+        }));
+        ws.close();
       };
     } catch (error) {
-      console.error("Failed to send print signals:", error);
+      console.error("Failed to send popup close signal:", error);
     }
 
     const printContent = document.getElementById('receipt-content');
@@ -197,7 +184,7 @@ export function ReceiptModal({
             // Auto-close receipt modal after printing and refresh data
             setTimeout(() => {
               console.log('🔄 Auto-closing receipt modal after print start and refreshing data');
-
+              
               // Send refresh signal to update table status and clear cart
               try {
                 const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -227,7 +214,7 @@ export function ReceiptModal({
           if (printWindow.closed) {
             clearInterval(checkClosed);
             console.log("🖨️ Print window closed - print completed");
-
+            
             // Also trigger refresh when print window is manually closed
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -426,63 +413,7 @@ export function ReceiptModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        console.log("🔴 Receipt Modal: Dialog closing via onOpenChange - ENHANCED REFRESH");
-        
-        // Send immediate and comprehensive WebSocket signals when dialog closes
-        try {
-          const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-          const wsUrl = `${protocol}//${window.location.host}/ws`;
-          const ws = new WebSocket(wsUrl);
-
-          ws.onopen = () => {
-            // Send comprehensive close signals with enhanced data refresh
-            const closeSignals = [
-              { type: "popup_close", success: true, action: 'receipt_modal_closed' },
-              { type: "receipt_modal_closed", success: true, action: 'receipt_modal_closed' },
-              { type: "force_cart_clear", success: true },
-              { type: "refresh_data_after_print", action: 'refresh_tables_and_clear_cart' },
-              { type: "force_table_grid_refresh", action: 'ultimate_refresh' },
-              { type: "order_updated", success: true },
-              { type: "order_status_changed", success: true }
-            ];
-            
-            closeSignals.forEach((signal, index) => {
-              setTimeout(() => {
-                ws.send(JSON.stringify({
-                  ...signal,
-                  timestamp: new Date().toISOString(),
-                  source: 'receipt_modal_close_enhanced'
-                }));
-              }, index * 25);
-            });
-            
-            setTimeout(() => ws.close(), 250);
-          };
-
-          ws.onerror = (error) => {
-            console.error("WebSocket error during close signal:", error);
-          };
-        } catch (error) {
-          console.error("Failed to send receipt close signals:", error);
-        }
-        
-        // Additional direct refresh attempt via window event
-        try {
-          window.dispatchEvent(new CustomEvent('forceTableRefresh', {
-            detail: { 
-              action: 'receipt_modal_closed',
-              timestamp: new Date().toISOString()
-            }
-          }));
-        } catch (eventError) {
-          console.error("Failed to dispatch custom refresh event:", eventError);
-        }
-        
-        onClose();
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -792,23 +723,13 @@ export function ReceiptModal({
               </Button>
             </div>
           ) : (
-            <div className="flex space-x-3">
+            <div className="flex justify-center space-x-3">
               <Button
                 onClick={handlePrint}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
               >
-                <Printer className="w-4 h-4 mr-2" />
-                In hóa đơn
-              </Button>
-              <Button
-                onClick={() => {
-                  console.log("🔴 Receipt Modal: Close button clicked, clearing cart");
-                  onClose();
-                }}
-                variant="outline"
-                className="flex-1"
-              >
-                Đóng
+                <Printer className="mr-2" size={16} />
+                {t("pos.printReceipt")}
               </Button>
             </div>
           )}
