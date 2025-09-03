@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -40,9 +41,6 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 
 export function OrderReport() {
@@ -62,19 +60,51 @@ export function OrderReport() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState("all");
 
-  const { data: orders } = useQuery({
-    queryKey: ["/api/orders"],
+  // Query orders by date range
+  const { data: orders = [] } = useQuery({
+    queryKey: ["/api/orders/date-range", startDate, endDate],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/orders/date-range/${startDate}/${endDate}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        return [];
+      }
+    },
   });
 
-  const { data: products } = useQuery({
+  // Query transactions by date range
+  const { data: transactions = [] } = useQuery({
+    queryKey: ["/api/transactions", startDate, endDate],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/transactions/${startDate}/${endDate}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        return [];
+      }
+    },
+  });
+
+  const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
   });
 
-  const { data: employees } = useQuery({
+  const { data: employees = [] } = useQuery({
     queryKey: ["/api/employees"],
   });
 
@@ -82,13 +112,6 @@ export function OrderReport() {
     if (!orders || !Array.isArray(orders)) return [];
 
     const filteredOrders = orders.filter((order: any) => {
-      const orderDate = new Date(order.orderedAt || order.created_at);
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
-      const dateMatch = orderDate >= start && orderDate <= end;
-
       const statusMatch =
         orderStatus === "all" ||
         (orderStatus === "draft" && order.status === "pending") ||
@@ -105,7 +128,7 @@ export function OrderReport() {
         (order.customerPhone &&
           order.customerPhone.includes(customerSearch));
 
-      return dateMatch && statusMatch && customerMatch;
+      return statusMatch && customerMatch;
     });
 
     return filteredOrders;
@@ -116,20 +139,22 @@ export function OrderReport() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      return date.toLocaleDateString("vi-VN");
+    } catch (error) {
+      return dateStr;
+    }
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      pending: { label: t("reports.draft"), variant: "secondary" as const },
-      confirmed: { label: t("reports.confirmed"), variant: "default" as const },
-      preparing: { label: t("reports.delivering"), variant: "outline" as const },
-      served: { label: t("orders.status.served"), variant: "default" as const },
-      paid: { label: t("reports.completed"), variant: "default" as const },
+      pending: { label: "Nháp", variant: "secondary" as const },
+      confirmed: { label: "Đã xác nhận", variant: "default" as const },
+      preparing: { label: "Đang giao", variant: "outline" as const },
+      served: { label: "Đã phục vụ", variant: "default" as const },
+      paid: { label: "Hoàn thành", variant: "default" as const },
     };
     return statusMap[status as keyof typeof statusMap] || { label: status, variant: "secondary" as const };
   };
@@ -141,45 +166,21 @@ export function OrderReport() {
         product: any;
         quantity: number;
         value: number;
-        orders: Set<number>;
       };
     } = {};
 
     if (!products || !Array.isArray(products)) return [];
 
-    // For each filtered order, estimate product sales based on order total
-    // In a real system, this would come from order_items table
-    filteredOrders.forEach((order: any) => {
-      const orderTotal = Number(order.total);
-
-      // Simulate order items by distributing order total among available products
-      // In a real system, this would come from order_items table
-      const randomProductsCount = Math.min(Math.floor(Math.random() * 3) + 1, products.length);
-      const selectedProducts = products
-        .sort(() => 0.5 - Math.random())
-        .slice(0, randomProductsCount);
-
-      const avgValuePerProduct = orderTotal / selectedProducts.length;
-
-      selectedProducts.forEach((product: any) => {
-        const productId = product.id.toString();
-        if (!productStats[productId]) {
-          productStats[productId] = {
-            product,
-            quantity: 0,
-            value: 0,
-            orders: new Set(),
-          };
-        }
-
-        const quantity = Math.floor(Math.random() * 3) + 1;
-        productStats[productId].quantity += quantity;
-        productStats[productId].value += avgValuePerProduct;
-        productStats[productId].orders.add(order.id);
-      });
+    // Initialize with 0 values for all products
+    products.forEach((product: any) => {
+      productStats[product.id.toString()] = {
+        product,
+        quantity: 0,
+        value: 0,
+      };
     });
 
-    return Object.values(productStats).filter(stat => stat.quantity > 0);
+    return Object.values(productStats);
   };
 
   const getChartData = () => {
@@ -190,12 +191,12 @@ export function OrderReport() {
       const dailyData: { [date: string]: { orders: number; value: number } } = {};
 
       filteredOrders.forEach((order: any) => {
-        const date = new Date(order.orderedAt || order.created_at).toISOString().split('T')[0];
+        const date = new Date(order.orderedAt).toISOString().split('T')[0];
         if (!dailyData[date]) {
           dailyData[date] = { orders: 0, value: 0 };
         }
         dailyData[date].orders += 1;
-        dailyData[date].value += Number(order.total);
+        dailyData[date].value += Number(order.total || 0);
       });
 
       return Object.entries(dailyData).map(([date, data]) => ({
@@ -204,13 +205,8 @@ export function OrderReport() {
         value: data.value,
       }));
     } else {
-      // Product quantity chart
-      const productData = getProductData();
-      return productData.slice(0, 10).map(item => ({
-        name: item.product.name,
-        quantity: item.quantity,
-        value: item.value,
-      }));
+      // Product quantity chart - return empty data for now since we don't have order items
+      return [];
     }
   };
 
@@ -222,34 +218,22 @@ export function OrderReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            {t("reports.orderReportByTransaction")}
+            Báo cáo đơn hàng theo giao dịch
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            Từ ngày: {formatDate(startDate)} - Đến ngày: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">
-                  {t("reports.orderCode")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orderTime")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.customer")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orderQuantity")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orderValue")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orderStatus")}
-                </TableHead>
+                <TableHead className="text-center">Mã đơn hàng</TableHead>
+                <TableHead className="text-center">Thời gian đặt</TableHead>
+                <TableHead className="text-center">Khách hàng</TableHead>
+                <TableHead className="text-center">Số lượng</TableHead>
+                <TableHead className="text-center">Giá trị đơn hàng</TableHead>
+                <TableHead className="text-center">Trạng thái</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -262,7 +246,7 @@ export function OrderReport() {
                         {order.orderNumber || `ORD-${order.id}`}
                       </TableCell>
                       <TableCell className="text-center">
-                        {new Date(order.orderedAt || order.created_at).toLocaleString("vi-VN")}
+                        {new Date(order.orderedAt).toLocaleString("vi-VN")}
                       </TableCell>
                       <TableCell className="text-center">
                         {order.customerName || "Khách lẻ"}
@@ -271,7 +255,7 @@ export function OrderReport() {
                         {order.customerCount || 1}
                       </TableCell>
                       <TableCell className="text-right text-green-600">
-                        {formatCurrency(Number(order.total))}
+                        {formatCurrency(Number(order.total || 0))}
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant={statusConfig.variant}>
@@ -284,7 +268,7 @@ export function OrderReport() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-gray-500 italic">
-                    {t("reports.noReportData")}
+                    {t("tables.noReportData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -303,26 +287,20 @@ export function OrderReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
-            {t("reports.orderReportByProduct")}
+            Báo cáo đơn hàng theo sản phẩm
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            Từ ngày: {formatDate(startDate)} - Đến ngày: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">
-                  {t("reports.productCode")}
-                </TableHead>
-                <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">
-                  {t("reports.quantity")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.totalAmount")}
-                </TableHead>
+                <TableHead className="text-center">Mã sản phẩm</TableHead>
+                <TableHead>Tên sản phẩm</TableHead>
+                <TableHead className="text-center">Số lượng</TableHead>
+                <TableHead className="text-center">Tổng tiền</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -342,7 +320,7 @@ export function OrderReport() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-gray-500 italic">
-                    {t("reports.noReportData")}
+                    {t("tables.noReportData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -355,44 +333,17 @@ export function OrderReport() {
 
   const chartConfig = {
     orders: {
-      label: t("reports.orders"),
+      label: "Đơn hàng",
       color: "#10b981",
     },
     value: {
-      label: t("reports.totalAmount"),
+      label: "Tổng tiền",
       color: "#3b82f6",
     },
     quantity: {
-      label: t("reports.quantity"),
+      label: "Số lượng",
       color: "#f59e0b",
     },
-  };
-
-  // Modified fetchOrderData function to use real data from API
-  const fetchOrderData = async () => {
-    try {
-      const response = await fetch('/api/orders');
-      if (!response.ok) throw new Error('Failed to fetch orders');
-      const orders = await response.json();
-
-      // Get table data to map table names
-      const tablesResponse = await fetch('/api/tables');
-      const tables = await tablesResponse.json();
-      const tableMap = new Map(tables.map((t: any) => [t.id, t.tableNumber]));
-
-      return orders.map((order: any) => ({
-        id: order.id,
-        orderNumber: order.orderNumber,
-        customerName: order.customerName || 'Khách lẻ',
-        tableNumber: tableMap.get(order.tableId) || 'Unknown',
-        total: parseFloat(order.total),
-        status: order.status,
-        createdAt: order.orderedAt,
-      }));
-    } catch (error) {
-      console.error('Error fetching order data:', error);
-      return [];
-    }
   };
 
   return (
@@ -402,10 +353,10 @@ export function OrderReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            {t("reports.purchaseTab")}
+            Báo cáo đơn hàng
           </CardTitle>
           <CardDescription>
-            {t("reports.orderReportDescription")}
+            Phân tích chi tiết các đơn hàng
           </CardDescription>
         </CardHeader>
       </Card>
@@ -416,48 +367,44 @@ export function OrderReport() {
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {/* Concern Type */}
             <div>
-              <Label>{t("reports.orderConcernType")}</Label>
+              <Label>Loại báo cáo</Label>
               <Select value={concernType} onValueChange={setConcernType}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="transaction">
-                    {t("reports.transactionConcern")}
-                  </SelectItem>
-                  <SelectItem value="product">
-                    {t("reports.productConcern")}
-                  </SelectItem>
+                  <SelectItem value="transaction">Theo giao dịch</SelectItem>
+                  <SelectItem value="product">Theo sản phẩm</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Order Status */}
             <div>
-              <Label>{t("reports.status")}</Label>
+              <Label>Trạng thái</Label>
               <Select value={orderStatus} onValueChange={setOrderStatus}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="draft">{t("reports.draft")}</SelectItem>
-                  <SelectItem value="confirmed">{t("reports.confirmed")}</SelectItem>
-                  <SelectItem value="delivering">{t("reports.delivering")}</SelectItem>
-                  <SelectItem value="completed">{t("reports.completed")}</SelectItem>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="draft">Nháp</SelectItem>
+                  <SelectItem value="confirmed">Đã xác nhận</SelectItem>
+                  <SelectItem value="delivering">Đang giao</SelectItem>
+                  <SelectItem value="completed">Hoàn thành</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Product Group */}
             <div>
-              <Label>{t("reports.productGroup")}</Label>
+              <Label>Nhóm sản phẩm</Label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("reports.productGroup")} />
+                  <SelectValue placeholder="Nhóm sản phẩm" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
+                  <SelectItem value="all">Tất cả</SelectItem>
                   {categories &&
                     Array.isArray(categories) &&
                     categories.map((category: any) => (
@@ -471,13 +418,13 @@ export function OrderReport() {
 
             {/* Employee */}
             <div>
-              <Label>{t("reports.employee")}</Label>
+              <Label>Nhân viên</Label>
               <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("reports.employee")} />
+                  <SelectValue placeholder="Nhân viên" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
+                  <SelectItem value="all">Tất cả</SelectItem>
                   {employees &&
                     Array.isArray(employees) &&
                     employees.map((employee: any) => (
@@ -493,7 +440,7 @@ export function OrderReport() {
           {/* Date Range */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
-              <Label>{t("reports.startDate")}</Label>
+              <Label>Ngày bắt đầu</Label>
               <Input
                 type="date"
                 value={startDate}
@@ -501,7 +448,7 @@ export function OrderReport() {
               />
             </div>
             <div>
-              <Label>{t("reports.endDate")}</Label>
+              <Label>Ngày kết thúc</Label>
               <Input
                 type="date"
                 value={endDate}
@@ -513,11 +460,11 @@ export function OrderReport() {
           {/* Search Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>{t("reports.customerSearch")}</Label>
+              <Label>Tìm kiếm khách hàng</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder={t("reports.customerSearchPlaceholder")}
+                  placeholder="Tìm theo tên hoặc số điện thoại..."
                   value={customerSearch}
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   className="pl-10"
@@ -525,11 +472,11 @@ export function OrderReport() {
               </div>
             </div>
             <div>
-              <Label>{t("reports.productSearch")}</Label>
+              <Label>Tìm kiếm sản phẩm</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder={t("reports.productSearchPlaceholder")}
+                  placeholder="Tìm theo tên sản phẩm..."
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
                   className="pl-10"
@@ -549,20 +496,19 @@ export function OrderReport() {
             </div>
             <div>
               <div className="text-white/90 text-sm font-normal">
-                {t("reports.chartView")}
+                {t("tables.chartView")}
               </div>
               <div className="text-white font-semibold">
-                {concernType === "transaction" ? t("reports.transactionConcern") : t("reports.productConcern")}
+                {concernType === "transaction" ? "Theo giao dịch" : "Theo sản phẩm"}
               </div>
             </div>
           </CardTitle>
           <CardDescription className="text-blue-100 mt-2">
-            {t("reports.visualRepresentation")} - {t("reports.fromDate")}: {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
+            {t("tables.visualRepresentation")} - Từ {formatDate(startDate)} đến {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
           <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
-            {/* Background decoration */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-indigo-50/20 rounded-xl"></div>
             <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-gray-500">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -683,13 +629,13 @@ export function OrderReport() {
                 <div className="flex items-center gap-3 px-4 py-2 bg-green-50 rounded-lg border border-green-200">
                   <div className="w-4 h-4 rounded bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-sm"></div>
                   <span className="text-sm font-medium text-green-800">
-                    {t("reports.orders")}
+                    Đơn hàng
                   </span>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="w-4 h-4 rounded bg-gradient-to-b from-blue-400 to-blue-600 shadow-sm"></div>
                   <span className="text-sm font-medium text-blue-800">
-                    {t("reports.totalAmount")}
+                    Tổng tiền
                   </span>
                 </div>
               </>
@@ -697,7 +643,7 @@ export function OrderReport() {
               <div className="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-lg border border-amber-200">
                 <div className="w-4 h-4 rounded bg-gradient-to-b from-amber-400 to-amber-600 shadow-sm"></div>
                 <span className="text-sm font-medium text-amber-800">
-                  {t("reports.quantity")}
+                  Số lượng
                 </span>
               </div>
             )}

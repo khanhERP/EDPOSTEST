@@ -608,6 +608,66 @@ export async function registerRoutes(app: Express): Promise < Server > {
     }
   });
 
+  // Get orders by date range
+  app.get("/api/orders/date-range/:startDate/:endDate", async (req: TenantRequest, res) => {
+    try {
+      const { startDate, endDate } = req.params;
+      const tenantDb = await getTenantDatabase(req);
+
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      const filteredOrders = await db.select().from(orders)
+        .where(
+          and(
+            gte(orders.orderedAt, start),
+            lte(orders.orderedAt, end)
+          )
+        )
+        .orderBy(desc(orders.orderedAt));
+
+      // Always return an array, even if empty
+      res.json(filteredOrders || []);
+    } catch (error) {
+      console.error("Error fetching orders by date range:", error);
+      // Return empty array instead of error for reports
+      res.json([]);
+    }
+  });
+
+  // Get invoices by date range
+  app.get("/api/invoices/date-range/:startDate/:endDate", async (req: TenantRequest, res) => {
+    try {
+      const { startDate, endDate } = req.params;
+      const tenantDb = await getTenantDatabase(req);
+
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      const filteredInvoices = await db.select().from(invoices)
+        .where(
+          and(
+            gte(invoices.invoiceDate, start),
+            lte(invoices.invoiceDate, end)
+          )
+        )
+        .orderBy(desc(invoices.invoiceDate));
+
+      // Always return an array, even if empty
+      res.json(filteredInvoices || []);
+    } catch (error) {
+      console.error("Error fetching invoices by date range:", error);
+      // Return empty array instead of error for reports
+      res.json([]);
+    }
+  });
+
 
   app.get("/api/transactions/:transactionId", async (req: TenantRequest, res) => {
     try {

@@ -26,21 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Calendar, DollarSign, Users, RefreshCw, Filter } from "lucide-react";
-import type { Transaction } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
 import { Button } from "@/components/ui/button";
 
 export function SalesReport() {
@@ -54,12 +40,12 @@ export function SalesReport() {
     new Date().toISOString().split("T")[0],
   );
 
-  // Query orders - same as dashboard-overview
-  const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
-    queryKey: ["/api/orders"],
+  // Query orders by date range
+  const { data: orders = [], isLoading: ordersLoading, error: ordersError, refetch: refetchOrders } = useQuery({
+    queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
       try {
-        const response = await fetch("/api/orders");
+        const response = await fetch(`/api/orders/date-range/${startDate}/${endDate}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -74,12 +60,32 @@ export function SalesReport() {
     retryDelay: 1000,
   });
 
-  // Query invoices - same as dashboard-overview
-  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
-    queryKey: ["/api/invoices"],
+  // Query transactions by date range
+  const { data: transactions = [], isLoading: transactionsLoading, refetch: refetchTransactions } = useQuery({
+    queryKey: ["/api/transactions", startDate, endDate],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/invoices`);
+        const response = await fetch(`/api/transactions/${startDate}/${endDate}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+  });
+
+  // Query invoices by date range
+  const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery({
+    queryKey: ["/api/invoices/date-range", startDate, endDate],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/invoices/date-range/${startDate}/${endDate}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -95,7 +101,7 @@ export function SalesReport() {
   });
 
   const getSalesData = () => {
-    // Default return structure
+    // Default return structure for empty data
     const defaultData = {
       dailySales: [],
       paymentMethods: [],
@@ -107,132 +113,56 @@ export function SalesReport() {
     };
 
     try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
-      // Combine invoices and orders data - same logic as dashboard-overview
+      // Combine all data sources - only paid/completed items
       const combinedData = [
-        ...(Array.isArray(invoices) ? invoices.map((invoice: any) => ({
-          ...invoice,
-          type: 'invoice' as const,
-          date: invoice.invoiceDate,
-          displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
-          displayStatus: invoice.invoiceStatus || 1,
-          customerName: invoice.customerName || 'Khách hàng lẻ',
-          customerPhone: invoice.customerPhone || '',
-          customerAddress: invoice.customerAddress || '',
-          customerTaxCode: invoice.customerTaxCode || '',
-          symbol: invoice.symbol || 'C11DTD',
-          einvoiceStatus: invoice.einvoiceStatus || 0
-        })) : []),
-        ...(Array.isArray(orders) ? orders.map((order: any) => ({
-          ...order,
-          type: 'order' as const,
-          date: order.orderedAt,
-          displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
-          displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-          customerName: order.customerName || 'Khách hàng lẻ',
-          invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-          customerPhone: '',
-          customerAddress: '',
-          customerTaxCode: '',
-          symbol: 'C11DTD',
-          einvoiceStatus: order.einvoiceStatus || 0
-        })) : [])
+        ...orders.filter((order: any) => order.status === 'paid'),
+        ...transactions.filter((tx: any) => tx.status === 'completed' || !tx.status),
+        ...invoices.filter((invoice: any) => invoice.invoiceStatus === 1)
       ];
 
-      // Filter completed items within date range - same logic as dashboard-overview
-      const filteredCompletedItems = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
-        try {
-          if (!item || !item.date) return false;
+      if (combinedData.length === 0) {
+        return defaultData;
+      }
 
-          const itemDate = new Date(item.date);
-          if (isNaN(itemDate.getTime())) return false;
-
-          const dateMatch = itemDate >= start && itemDate <= end;
-
-          // Only include completed/paid items
-          const isCompleted = (item.type === 'invoice' && item.invoiceStatus === 1) ||
-                            (item.type === 'order' && (item.status === 'paid' || item.status === 'completed'));
-
-          return dateMatch && isCompleted;
-        } catch (error) {
-          console.error('Error filtering item:', item, error);
-          return false;
-        }
-      }) : [];
-
-      console.log("Sales Report Debug (Combined Data):", {
-        totalInvoices: invoices.length,
-        totalOrders: orders.length,
-        combinedDataLength: combinedData.length,
-        startDate,
-        endDate,
-        filteredCompletedItems: filteredCompletedItems.length,
-        sampleItems: filteredCompletedItems.slice(0, 5).map((item: any) => ({
-          id: item.id,
-          type: item.type,
-          displayStatus: item.displayStatus,
-          date: item.date,
-          total: item.total
-        })),
-      });
-
-      // Daily sales breakdown with tax subtraction
+      // Daily sales breakdown
       const dailySales: {
         [date: string]: { revenue: number; orders: number; customers: number };
       } = {};
 
-      filteredCompletedItems.forEach((item: any) => {
+      combinedData.forEach((item: any) => {
         try {
-          const itemDate = new Date(item.date);
-
+          const itemDate = new Date(item.orderedAt || item.createdAt || item.invoiceDate);
           if (isNaN(itemDate.getTime())) return;
 
-          const year = itemDate.getFullYear();
-          const month = (itemDate.getMonth() + 1).toString().padStart(2, "0");
-          const day = itemDate.getDate().toString().padStart(2, "0");
-          const date = `${year}-${month}-${day}`;
+          const dateStr = itemDate.toISOString().split('T')[0];
 
-          if (!dailySales[date]) {
-            dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
+          if (!dailySales[dateStr]) {
+            dailySales[dateStr] = { revenue: 0, orders: 0, customers: 0 };
           }
 
-          // Revenue calculation: Total Amount - Discount - Tax (using actual tax from database, default to 0)
           const itemTotal = Number(item.total || 0);
-          const discount = Number(item.discount || 0);
-          // Use actual tax from database, default to 0 if not available
-          const actualTax = Number(item.tax || 0);
-          // Revenue = Total Amount - Discount - Actual Tax
-          const itemRevenue = itemTotal - discount - actualTax;
-          dailySales[date].revenue += itemRevenue;
-          dailySales[date].orders += 1;
+          const itemTax = Number(item.tax || 0);
+          const revenue = itemTotal - itemTax; // Revenue without tax
 
-          // Count unique customers per day
-          if (item.customerId) {
-            dailySales[date].customers += 1;
-          } else {
-            dailySales[date].customers += 1; // Count walk-in customers
-          }
+          dailySales[dateStr].revenue += revenue;
+          dailySales[dateStr].orders += 1;
+          dailySales[dateStr].customers += 1;
         } catch (error) {
           console.warn("Error processing item for daily sales:", error);
         }
       });
 
-      // Payment method breakdown with tax subtraction
+      // Payment method breakdown
       const paymentMethods: {
         [method: string]: { count: number; revenue: number };
       } = {};
 
-      filteredCompletedItems.forEach((item: any) => {
+      combinedData.forEach((item: any) => {
         try {
-          // Handle both string and numeric payment methods
-          let method = item.paymentMethod;
+          let method = item.paymentMethod || "cash";
           if (typeof method === 'number') {
             method = method.toString();
           }
-          method = method || "cash";
 
           if (!paymentMethods[method]) {
             paymentMethods[method] = { count: 0, revenue: 0 };
@@ -240,34 +170,27 @@ export function SalesReport() {
 
           paymentMethods[method].count += 1;
 
-          // Revenue calculation: Total Amount - Discount - Tax (using actual tax from database, default to 0)
           const itemTotal = Number(item.total || 0);
-          const discount = Number(item.discount || 0);
-          // Use actual tax from database, default to 0 if not available
-          const actualTax = Number(item.tax || 0);
-          // Revenue = Total Amount - Discount - Actual Tax
-          const itemRevenue = itemTotal - discount - actualTax;
-          paymentMethods[method].revenue += itemRevenue;
+          const itemTax = Number(item.tax || 0);
+          const revenue = itemTotal - itemTax;
+
+          paymentMethods[method].revenue += revenue;
         } catch (error) {
           console.warn("Error processing item for payment methods:", error);
         }
       });
 
-      // Hourly breakdown with actual tax from database (default to 0)
+      // Hourly breakdown
       const hourlySales: { [hour: number]: number } = {};
-      filteredCompletedItems.forEach((item: any) => {
+      combinedData.forEach((item: any) => {
         try {
-          const itemDate = new Date(item.date);
-
+          const itemDate = new Date(item.orderedAt || item.createdAt || item.invoiceDate);
           if (isNaN(itemDate.getTime())) return;
 
           const hour = itemDate.getHours();
           const itemTotal = Number(item.total || 0);
-          const discount = Number(item.discount || 0);
-          // Use actual tax from database, default to 0 if not available
-          const actualTax = Number(item.tax || 0);
-          // Revenue = Total Amount - Discount - Actual Tax
-          const revenue = itemTotal - discount - actualTax;
+          const itemTax = Number(item.tax || 0);
+          const revenue = itemTotal - itemTax;
 
           if (!isNaN(revenue) && revenue > 0) {
             hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
@@ -277,51 +200,23 @@ export function SalesReport() {
         }
       });
 
-      // Calculate totals with actual tax from database (default to 0)
-      const totalRevenue = filteredCompletedItems.reduce(
-        (total: number, item: any) => {
-          const itemTotal = Number(item.total || 0);
-          const discount = Number(item.discount || 0);
-          // Use actual tax from database, default to 0 if not available
-          const actualTax = Number(item.tax || 0);
-          // Revenue = Total Amount - Discount - Actual Tax
-          const itemRevenue = itemTotal - discount - actualTax;
-          return total + itemRevenue;
-        },
-        0,
-      );
+      // Calculate totals
+      const totalRevenue = combinedData.reduce((total: number, item: any) => {
+        const itemTotal = Number(item.total || 0);
+        const itemTax = Number(item.tax || 0);
+        return total + (itemTotal - itemTax);
+      }, 0);
 
-      const totalOrders = filteredCompletedItems.length;
-
-      // Count unique customers EXACTLY like dashboard does
-      const uniqueCustomers = new Set();
-      filteredCompletedItems.forEach((item: any) => {
-        if (item.customerId) {
-          uniqueCustomers.add(item.customerId);
-        } else {
-          // If no customer ID, count as unique customer per item
-          uniqueCustomers.add(`item_${item.id}`);
-        }
-      });
-      const totalCustomers = uniqueCustomers.size;
-
+      const totalOrders = combinedData.length;
+      const totalCustomers = new Set(combinedData.map((item: any) => 
+        item.customerId || item.customerName || `item_${item.id}`
+      )).size;
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       const paymentMethodsArray = Object.entries(paymentMethods).map(([method, data]) => ({
         method,
         ...data,
       }));
-
-      console.log("Payment Methods Debug:", {
-        totalItems: filteredCompletedItems.length,
-        paymentMethodsRaw: paymentMethods,
-        paymentMethodsArray,
-        sampleItems: filteredCompletedItems.slice(0, 3).map((item: any) => ({
-          id: item.id,
-          paymentMethod: item.paymentMethod,
-          total: item.total
-        }))
-      });
 
       return {
         dailySales: Object.entries(dailySales)
@@ -364,10 +259,8 @@ export function SalesReport() {
       case "week":
         const lastWeekEnd = new Date(today);
         lastWeekEnd.setDate(today.getDate() - 1);
-
         const lastWeekStart = new Date(today);
         lastWeekStart.setDate(today.getDate() - 7);
-
         setStartDate(formatDate(lastWeekStart));
         setEndDate(formatDate(lastWeekEnd));
         break;
@@ -375,10 +268,8 @@ export function SalesReport() {
       case "month":
         const lastMonth = new Date(today);
         lastMonth.setMonth(today.getMonth() - 1);
-
         const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
         const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
-
         setStartDate(formatDate(lastMonthStart));
         setEndDate(formatDate(lastMonthEnd));
         break;
@@ -386,13 +277,10 @@ export function SalesReport() {
       case "thisWeek":
         const currentDayOfWeek = today.getDay();
         const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
-
         const thisWeekMonday = new Date(today);
         thisWeekMonday.setDate(today.getDate() - daysToMonday);
-
         const thisWeekSunday = new Date(thisWeekMonday);
         thisWeekSunday.setDate(thisWeekMonday.getDate() + 6);
-
         setStartDate(formatDate(thisWeekMonday));
         setEndDate(formatDate(thisWeekSunday));
         break;
@@ -400,15 +288,11 @@ export function SalesReport() {
       case "thisMonth":
         const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
         const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
         setStartDate(formatDate(thisMonthStart));
         setEndDate(formatDate(thisMonthEnd));
         break;
 
       case "custom":
-        const customToday = formatDate(today);
-        setStartDate(customToday);
-        setEndDate(customToday);
         break;
 
       default:
@@ -427,11 +311,7 @@ export function SalesReport() {
     try {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
-
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
+      return date.toLocaleDateString("vi-VN");
     } catch (error) {
       return dateStr;
     }
@@ -466,12 +346,14 @@ export function SalesReport() {
   };
 
   const handleRefresh = () => {
-    refetch();
+    refetchOrders();
+    refetchTransactions();
+    refetchInvoices();
   };
 
   const salesData = getSalesData();
   const hasError = !!ordersError;
-  const isLoading = ordersLoading || invoicesLoading;
+  const isLoading = ordersLoading || transactionsLoading || invoicesLoading;
 
   const peakHour = salesData && Object.keys(salesData.hourlySales).length > 0
     ? Object.entries(salesData.hourlySales).reduce(
@@ -499,9 +381,9 @@ export function SalesReport() {
           <p className="text-sm text-gray-600 mb-4">
             {ordersError?.message || "Không thể tải dữ liệu đơn hàng"}
           </p>
-          <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+          <Button onClick={handleRefresh} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
-            {t("reports.refresh")}
+            {t("tables.refresh")}
           </Button>
         </div>
       </CardContent>
@@ -517,10 +399,10 @@ export function SalesReport() {
             <div>
               <CardTitle className="text-xl font-bold text-green-700 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                {t('reports.salesAnalysis')}
+                {t('tables.salesAnalysis')}
               </CardTitle>
               <CardDescription className="text-gray-600">
-                {t('reports.analyzeRevenue')}
+                {t('tables.analyzeRevenue')}
               </CardDescription>
             </div>
 
@@ -532,12 +414,12 @@ export function SalesReport() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="today">{t("reports.toDay")}</SelectItem>
+                    <SelectItem value="today">{t("tables.toDay")}</SelectItem>
                     <SelectItem value="thisWeek">Tuần này</SelectItem>
                     <SelectItem value="week">Tuần trước</SelectItem>
                     <SelectItem value="thisMonth">Tháng này</SelectItem>
                     <SelectItem value="month">Tháng trước</SelectItem>
-                    <SelectItem value="custom">{t("reports.custom")}</SelectItem>
+                    <SelectItem value="custom">{t("tables.custom")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -546,7 +428,7 @@ export function SalesReport() {
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex items-center gap-2">
                     <Label htmlFor="startDate" className="text-sm whitespace-nowrap">
-                      {t('reports.startDate')}:
+                      {t('tables.startDate')}:
                     </Label>
                     <Input
                       id="startDate"
@@ -558,7 +440,7 @@ export function SalesReport() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Label htmlFor="endDate" className="text-sm whitespace-nowrap">
-                      {t('reports.endDate')}:
+                      {t('tables.endDate')}:
                     </Label>
                     <Input
                       id="endDate"
@@ -575,11 +457,11 @@ export function SalesReport() {
                 onClick={handleRefresh}
                 variant="outline"
                 size="sm"
-                disabled={ordersLoading}
+                disabled={isLoading}
                 className="flex items-center gap-2"
               >
-                <RefreshCw className={`w-4 h-4 ${ordersLoading ? 'animate-spin' : ''}`} />
-                {t("reports.refresh")}
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                {t("tables.refresh")}
               </Button>
             </div>
           </div>
@@ -600,7 +482,7 @@ export function SalesReport() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {t("reports.totalRevenue")}
+                      {t("tables.totalRevenue")}
                     </p>
                     <p className="text-2xl font-bold text-green-600">
                       {formatCurrency(salesData?.totalRevenue || 0)}
@@ -616,7 +498,7 @@ export function SalesReport() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {t("reports.totalOrders")}
+                      {t("tables.totalOrders")}
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
                       {salesData?.totalOrders || 0}
@@ -631,7 +513,7 @@ export function SalesReport() {
               <CardContent className="p-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {t("reports.averageOrderValue")}
+                    {t("tables.averageOrderValue")}
                   </p>
                   <p className="text-2xl font-bold text-purple-600">
                     {formatCurrency(salesData?.averageOrderValue || 0)}
@@ -644,13 +526,13 @@ export function SalesReport() {
               <CardContent className="p-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {t("reports.totalCustomers")}
+                    {t("tables.totalCustomers")}
                   </p>
                   <p className="text-2xl font-bold text-orange-600">
                     {salesData?.totalCustomers || 0}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {t("reports.peakHour")}: {peakHour}{t("reports.hour")}
+                    {t("tables.peakHour")}: {peakHour}{t("tables.hour")}
                   </p>
                 </div>
               </CardContent>
@@ -664,17 +546,17 @@ export function SalesReport() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="w-5 h-5" />
-                  {t("reports.dailySales")}
+                  {t("tables.dailySales")}
                 </CardTitle>
-                <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+                <CardDescription>{t("tables.analyzeRevenue")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="max-h-96 overflow-y-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="sticky top-0 bg-white">{t("common.date")}</TableHead>
-                        <TableHead className="sticky top-0 bg-white">{t("reports.revenue")}</TableHead>
+                        <TableHead className="sticky top-0 bg-white">Ngày</TableHead>
+                        <TableHead className="sticky top-0 bg-white">{t("tables.revenue")}</TableHead>
                         <TableHead className="sticky top-0 bg-white">Tổng đơn hàng</TableHead>
                         <TableHead className="sticky top-0 bg-white">Tổng khách hàng</TableHead>
                       </TableRow>
@@ -687,18 +569,14 @@ export function SalesReport() {
                             <TableCell className="font-medium text-green-600">
                               {formatCurrency(day.revenue)}
                             </TableCell>
-                            <TableCell>
-                              {day.orders}
-                            </TableCell>
-                            <TableCell>
-                              {day.customers}
-                            </TableCell>
+                            <TableCell>{day.orders}</TableCell>
+                            <TableCell>{day.customers}</TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center text-gray-500 py-8">
-                            {t("reports.noSalesData")}
+                            {t("tables.noSalesData")}
                           </TableCell>
                         </TableRow>
                       )}
@@ -713,10 +591,10 @@ export function SalesReport() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
-                  {t("reports.paymentMethods")}
+                  {t("tables.paymentMethods")}
                 </CardTitle>
                 <CardDescription>
-                  {t("reports.analyzeRevenue")}
+                  {t("tables.analyzeRevenue")}
                   {salesData?.paymentMethods && salesData.paymentMethods.length > 0 && (
                     <span className="ml-2 text-blue-600 font-medium">
                       ({salesData.paymentMethods.length} phương thức • {salesData.totalOrders} đơn hàng)
@@ -789,8 +667,8 @@ export function SalesReport() {
                   ) : (
                     <div className="text-center text-gray-500 py-8">
                       <div className="bg-gray-50 rounded-lg p-6">
-                        <p className="text-gray-600 mb-2">{t("reports.noPaymentData")}</p>
-                        <p className="text-sm text-gray-500">{t("reports.noPaymentDataDescription")}</p>
+                        <p className="text-gray-600 mb-2">{t("tables.noPaymentData")}</p>
+                        <p className="text-sm text-gray-500">{t("tables.noPaymentDataDescription")}</p>
                       </div>
                     </div>
                   )}
