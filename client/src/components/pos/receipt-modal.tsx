@@ -36,51 +36,69 @@ export function ReceiptModal({
   onConfirm,
   autoClose = false,
 }: ReceiptModalProps) {
+  // ALL HOOKS MUST BE AT THE TOP LEVEL - NEVER CONDITIONAL
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const { t } = useTranslation();
 
-  console.log("=== RECEIPT MODAL RENDERED ===");
-  console.log(
-    "Receipt Modal Mode:",
-    isPreview ? "PREVIEW (Step 1)" : "FINAL RECEIPT (Step 5)",
-  );
-  console.log("Receipt Modal isOpen:", isOpen);
-  console.log("Receipt Modal isPreview:", isPreview);
-  console.log("Receipt Modal cartItems received:", cartItems);
-  console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
-  console.log("Receipt Modal total:", total);
-  console.log("Receipt Modal receipt:", receipt);
-
-  // Query store settings to get dynamic address
+  // Query store settings to get dynamic address - ALWAYS CALL THIS HOOK
   const { data: storeSettings } = useQuery({
     queryKey: ["/api/store-settings"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/store-settings");
       return response.json();
     },
+    enabled: isOpen, // Only fetch when modal is open
   });
 
-  // Log receipt modal state for debugging
+  // Log receipt modal state for debugging - ALWAYS CALL THIS HOOK
   useEffect(() => {
-    console.log("🔍 Receipt Modal state:", {
-      isOpen,
-      hasReceipt: !!receipt,
-      isPreview,
-    });
-  }, [isOpen, receipt, isPreview]);
+    if (isOpen) {
+      console.log("=== RECEIPT MODAL RENDERED ===");
+      console.log(
+        "Receipt Modal Mode:",
+        isPreview ? "PREVIEW (Step 1)" : "FINAL RECEIPT (Step 5)",
+      );
+      console.log("Receipt Modal isOpen:", isOpen);
+      console.log("Receipt Modal isPreview:", isPreview);
+      console.log("Receipt Modal cartItems received:", cartItems);
+      console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
+      console.log("Receipt Modal total:", total);
+      console.log("Receipt Modal receipt:", receipt);
+      console.log("🔍 ReceiptModal Props Debug:", {
+        isOpen,
+        isPreview,
+        receipt,
+        cartItems: cartItems?.length || 0,
+        onConfirm: !!onConfirm
+      });
+    }
+  }, [isOpen, receipt, isPreview, cartItems, total, onConfirm]);
 
-  // Debug: Log all props
-  console.log("🔍 ReceiptModal Props Debug:", {
-    isOpen,
-    isPreview,
-    receipt,
-    cartItems: cartItems?.length || 0,
-    onConfirm: !!onConfirm
-  });
+  // Auto-print and auto-close effect for final receipts - ALWAYS CALL THIS HOOK
+  useEffect(() => {
+    if (isOpen && !isPreview && autoClose && receipt) {
+      console.log('🖨️ Auto-printing final receipt and will auto-close');
 
-  // Don't render if modal is not open
+      // Auto-print after a short delay
+      const printTimer = setTimeout(() => {
+        handlePrint();
+
+        // Auto-close after printing
+        const closeTimer = setTimeout(() => {
+          console.log('🔄 Auto-closing receipt modal after print');
+          onClose();
+        }, 3000); // Close after 3 seconds
+
+        return () => clearTimeout(closeTimer);
+      }, 1000); // Print after 1 second
+
+      return () => clearTimeout(printTimer);
+    }
+  }, [isOpen, isPreview, autoClose, receipt, onClose]);
+
+  // Don't render if modal is not open - BUT HOOKS MUST STILL BE CALLED ABOVE
   if (!isOpen) {
     console.log("❌ Receipt Modal: Modal is closed");
     return null;
@@ -106,29 +124,6 @@ export function ReceiptModal({
       </Dialog>
     );
   }
-
-  // Auto-print and auto-close effect for final receipts
-  useEffect(() => {
-    if (isOpen && !isPreview && autoClose && receipt) {
-      console.log('🖨️ Auto-printing final receipt and will auto-close');
-
-      // Auto-print after a short delay
-      const printTimer = setTimeout(() => {
-        handlePrint();
-
-        // Auto-close after printing
-        const closeTimer = setTimeout(() => {
-          console.log('🔄 Auto-closing receipt modal after print');
-          onClose();
-        }, 3000); // Close after 3 seconds
-
-        return () => clearTimeout(closeTimer);
-      }, 1000); // Print after 1 second
-
-      return () => clearTimeout(printTimer);
-    }
-  }, [isOpen, isPreview, autoClose, receipt, onClose]);
-
 
   const handlePrint = () => {
     // Send popup close signal before printing
@@ -395,11 +390,9 @@ export function ReceiptModal({
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEInvoice
-              ? t("pos.eInvoice")
-              : isPreview
-                ? t("pos.receiptPreview")
-                : t("pos.receipt")}
+            {isPreview
+              ? t("pos.receiptPreview")
+              : t("pos.receipt")}
           </DialogTitle>
         </DialogHeader>
 
@@ -438,16 +431,16 @@ export function ReceiptModal({
                 <span>{t("pos.cashier")}</span>
                 <span>{receipt.cashierName}</span>
               </div>
-              {isEInvoice && customerName && (
+              {receipt?.customerName && (
                 <div className="flex justify-between text-sm">
                   <span>Khách hàng:</span>
-                  <span>{customerName}</span>
+                  <span>{receipt.customerName}</span>
                 </div>
               )}
-              {isEInvoice && customerTaxCode && (
+              {receipt?.customerTaxCode && (
                 <div className="flex justify-between text-sm">
                   <span>Mã số thuế:</span>
-                  <span>{customerTaxCode}</span>
+                  <span>{receipt.customerTaxCode}</span>
                 </div>
               )}
               {receipt.paymentMethod === "einvoice" && (
