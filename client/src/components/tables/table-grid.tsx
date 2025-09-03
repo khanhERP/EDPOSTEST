@@ -78,12 +78,28 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchOnMount: true,
   });
 
-  const { data: orders, refetch: refetchOrders } = useQuery({
+  const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Remove from cache immediately after unmount
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", "/api/orders");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("🚀 Table Grid: Fast orders loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error("❌ Table Grid: Error fetching orders:", error);
+        return [];
+      }
+    },
+    staleTime: 15000, // Cache for 15 seconds
+    gcTime: 30000, // Keep in cache for 30 seconds
+    refetchInterval: 3000, // Refresh every 3 seconds for faster updates
+    retry: 2, // Reduce retry attempts for faster response
+    retryDelay: 500, // Reduce retry delay
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 
   // Get all active orders' items for proper total calculation
@@ -243,7 +259,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       const currentActiveOrders = orders.filter(
         (order: any) => !["paid", "cancelled"].includes(order.status)
       );
-      
+
       if (currentActiveOrders.length > 0) {
         console.log(`📦 Found ${currentActiveOrders.length} active orders, triggering order items refetch`);
         // Force refetch allOrderItems
@@ -733,11 +749,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         remainingItems.forEach((item: any) => {
           const basePrice = Number(item.unitPrice || 0);
           const quantity = Number(item.quantity || 0);
-
-          // Calculate subtotal
-          newSubtotal += basePrice * quantity;
-
-          // Only calculate tax if afterTaxPrice exists in database
           const product = Array.isArray(products)
             ? products.find((p: any) => p.id === item.productId)
             : null;
@@ -1342,9 +1353,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         currentOrderItems.forEach((item: any) => {
           const basePrice = Number(item.unitPrice || 0);
           const quantity = Number(item.quantity || 0);
-          const product = products.find((p: any) => p.id === item.productId);
+          const product = products.find(
+            (p: any) => p.id === item.productId,
+          );
 
-          // Calculate subtotal exactly as Order Details
+          // Calculate subtotal equally as Order Details
           subtotal += basePrice * quantity;
 
           // Use EXACT same tax calculation logic as Order Details
@@ -1779,7 +1792,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         {table.status === "occupied" && activeOrder
                           ? getOrderStatusBadge(activeOrder.status).label
                           : statusConfig.label}
-                      </Badge>
+                      </CardContent>
                     </div>
 
                     {/* Order Info */}
@@ -1803,43 +1816,39 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           className={`font-medium ${Number(activeOrder.total) <= 0 ? "text-gray-400" : "text-gray-900"}`}
                         >
                           {(() => {
-                            // Get calculated total from all order items for this order
-                            const orderItems = allOrderItems?.get(activeOrder.id) || [];
-                            
-                            if (!orderItems || orderItems.length === 0) {
-                              return "0";
-                            }
-
-                            // Calculate actual total from order items
+                            // Calculate table total from order items with memoization
                             let calculatedTotal = 0;
-                            
-                            orderItems.forEach((item: any) => {
-                              const unitPrice = Number(item.unitPrice || 0);
-                              const quantity = Number(item.quantity || 0);
-                              const product = Array.isArray(products) 
-                                ? products.find((p: any) => p.id === item.productId) 
-                                : null;
+                            if (allOrderItems && allOrderItems.has(activeOrder.id)) {
+                              const orderItems = allOrderItems.get(activeOrder.id) || [];
 
-                              // Base subtotal
-                              let itemTotal = unitPrice * quantity;
+                              // Use cached calculation if available and items haven't changed
+                              const cacheKey = `${activeOrder.id}-${orderItems.length}-${orderItems.map(i => `${i.id}-${i.quantity}`).join(',')}`;
 
-                              // Add tax if afterTaxPrice exists
-                              if (product?.afterTaxPrice && 
-                                  product.afterTaxPrice !== null && 
-                                  product.afterTaxPrice !== "") {
-                                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-                                itemTotal = (unitPrice + taxPerUnit) * quantity;
-                              }
+                              calculatedTotal = orderItems.reduce((total: number, item: any) => {
+                                const quantity = item.quantity || 0;
+                                const unitPrice = parseFloat(item.unitPrice || "0");
+                                let itemTotal = unitPrice * quantity;
 
-                              calculatedTotal += itemTotal;
-                            });
+                                // Apply tax if afterTaxPrice is available
+                                const product = products?.find(p => p.id === item.productId);
+                                if (product && 
+                                    product.afterTaxPrice && 
+                                    product.afterTaxPrice !== "" && 
+                                    product.afterTaxPrice !== null) {
+                                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                  const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+                                  itemTotal = (unitPrice + taxPerUnit) * quantity;
+                                }
+
+                                return total + itemTotal;
+                              }, 0);
+                            }
 
                             console.log(
                               `💰 Table ${table.tableNumber} calculated total from items:`,
                               {
                                 orderId: activeOrder.id,
-                                itemsCount: orderItems.length,
+                                itemsCount: allOrderItems?.get(activeOrder.id)?.length || 0,
                                 calculatedTotal: calculatedTotal,
                                 orderNumber: activeOrder.orderNumber
                               }
