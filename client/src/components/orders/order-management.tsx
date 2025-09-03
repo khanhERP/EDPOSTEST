@@ -45,6 +45,30 @@ export function OrderManagement() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
+  // Orders query - MUST be declared first before any usage
+  const { data: orders, isLoading: ordersLoading } = useQuery({
+    queryKey: ['/api/orders'],
+    refetchInterval: 2000, // Faster polling - every 2 seconds
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchIntervalInBackground: true, // Continue refetching in background
+    staleTime: 0, // Always consider data fresh to force immediate updates
+    onSuccess: (data) => {
+      console.log(`🔍 DEBUG: Orders query onSuccess called:`, {
+        ordersCount: data?.length || 0,
+        timestamp: new Date().toISOString(),
+        firstFewOrders: data?.slice(0, 3)?.map((o: any) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          tableId: o.tableId
+        }))
+      });
+    },
+    onError: (error) => {
+      console.error(`❌ DEBUG: Orders query onError:`, error);
+    }
+  });
+
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
     if (shouldOpenReceiptPreview && previewReceipt && orderForPayment) {
@@ -71,29 +95,6 @@ export function OrderManagement() {
       }
     }
   }, [orders, queryClient]);
-
-  const { data: orders, isLoading: ordersLoading } = useQuery({
-    queryKey: ['/api/orders'],
-    refetchInterval: 2000, // Faster polling - every 2 seconds
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchIntervalInBackground: true, // Continue refetching in background
-    staleTime: 0, // Always consider data fresh to force immediate updates
-    onSuccess: (data) => {
-      console.log(`🔍 DEBUG: Orders query onSuccess called:`, {
-        ordersCount: data?.length || 0,
-        timestamp: new Date().toISOString(),
-        firstFewOrders: data?.slice(0, 3)?.map((o: any) => ({
-          id: o.id,
-          orderNumber: o.orderNumber,
-          status: o.status,
-          tableId: o.tableId
-        }))
-      });
-    },
-    onError: (error) => {
-      console.error(`❌ DEBUG: Orders query onError:`, error);
-    }
-  });
 
   // Preload all order items for fast total calculation
   const { data: allOrderItems } = useQuery({
