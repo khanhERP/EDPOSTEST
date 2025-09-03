@@ -733,26 +733,11 @@ export default function SalesOrders() {
       return false;
     }
   }).sort((a: any, b: any) => {
-    // Sort by multiple criteria for newest orders first
-    // 1. First sort by creation timestamp (newest first)
+    // Sort by creation date only (newest first)
     const createdAtA = new Date(a.createdAt || a.date || a.orderedAt || a.invoiceDate);
     const createdAtB = new Date(b.createdAt || b.date || b.orderedAt || b.invoiceDate);
     
-    if (createdAtA.getTime() !== createdAtB.getTime()) {
-      return createdAtB.getTime() - createdAtA.getTime();
-    }
-    
-    // 2. If creation times are equal, sort by ID (newer ID first)
-    if (a.id !== b.id) {
-      return b.id - a.id;
-    }
-    
-    // 3. If IDs are equal, prioritize orders over invoices
-    if (a.type !== b.type) {
-      return a.type === 'order' ? -1 : 1;
-    }
-    
-    return 0;
+    return createdAtB.getTime() - createdAtA.getTime();
   }) : [];
 
   const formatCurrency = (amount: string | number | undefined | null): string => {
