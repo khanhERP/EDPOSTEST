@@ -1580,104 +1580,140 @@ export function OrderManagement() {
                   <div className="flex gap-2 pt-4">
                     <Button
                       onClick={() => {
-                        console.log('🎯 Order Management: Tạo xem trước hóa đơn - sử dụng exact Order Details values');
+                        console.log('🎯 Order Management: Bắt đầu thanh toán - kiểm tra dữ liệu');
 
-                        if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
-                          console.error('❌ Thiếu dữ liệu đơn hàng cho xem trước');
+                        if (!selectedOrder || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+                          console.error('❌ Thiếu dữ liệu đơn hàng:', {
+                            selectedOrder: !!selectedOrder,
+                            orderItems: orderItems?.length || 0,
+                            orderItemsArray: Array.isArray(orderItems)
+                          });
                           toast({
                             title: 'Lỗi',
-                            description: 'Không thể tạo xem trước hóa đơn. Vui lòng thử lại.',
+                            description: 'Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.',
                             variant: 'destructive',
                           });
                           return;
                         }
 
-                        // Sử dụng exact same calculation logic như Order Details display
-                        let exactSubtotal = 0;
-                        let exactTax = 0;
+                        // Tính toán chính xác giống như hiển thị Order Details
+                        let calculatedSubtotal = 0;
+                        let calculatedTax = 0;
+
+                        console.log('💰 Tính toán từ orderItems:', orderItems.length, 'items');
+                        console.log('📦 Products available:', Array.isArray(products) ? products.length : 0);
 
                         const processedItems = orderItems.map((item: any) => {
-                          const basePrice = Number(item.unitPrice || 0);
+                          const unitPrice = Number(item.unitPrice || 0);
                           const quantity = Number(item.quantity || 0);
                           const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
 
-                          // Calculate subtotal exactly as Order Details display
-                          const itemSubtotal = basePrice * quantity;
-                          exactSubtotal += itemSubtotal;
+                          console.log(`📊 Processing item ${item.id}:`, {
+                            productId: item.productId,
+                            unitPrice,
+                            quantity,
+                            productFound: !!product
+                          });
 
-                          // Tax = (after_tax_price - price) * quantity
+                          // Subtotal = unitPrice * quantity
+                          const itemSubtotal = unitPrice * quantity;
+                          calculatedSubtotal += itemSubtotal;
+
+                          // Tính thuế từ afterTaxPrice nếu có
                           let itemTax = 0;
                           if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const price = parseFloat(product.price);
-                            itemTax = (afterTaxPrice - price) * quantity;
-                            exactTax += itemTax;
+                            const originalPrice = parseFloat(product.price);
+                            itemTax = (afterTaxPrice - originalPrice) * quantity;
+                            calculatedTax += itemTax;
+                            console.log(`💸 Tax calculated for ${item.productName}:`, {
+                              afterTaxPrice,
+                              originalPrice,
+                              taxPerUnit: afterTaxPrice - originalPrice,
+                              quantity,
+                              itemTax
+                            });
                           }
 
                           return {
                             id: item.id,
                             productId: item.productId,
-                            productName: item.productName || getProductInfo(item.productId)?.name || 'Unknown Product',
-                            quantity: item.quantity,
-                            unitPrice: item.unitPrice,
-                            total: item.total,
-                            price: basePrice,
-                            sku: item.productSku || `SP${item.productId}`,
-                            taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
+                            productName: item.productName || product?.name || 'Unknown Product',
+                            quantity: quantity,
+                            unitPrice: unitPrice,
+                            price: unitPrice,
+                            total: itemSubtotal,
+                            sku: item.productSku || product?.sku || `SP${item.productId}`,
+                            taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
+                            afterTaxPrice: product?.afterTaxPrice || null
                           };
                         });
 
-                        const exactTotal = exactSubtotal + exactTax;
+                        const finalTotal = calculatedSubtotal + calculatedTax;
 
-                        console.log('💰 Order Management: Tạo receipt preview với exact values:', {
-                          subtotal: exactSubtotal,
-                          tax: exactTax,
-                          total: exactTotal,
-                          itemsCount: processedItems.length
+                        console.log('💰 Kết quả tính toán cuối:', {
+                          subtotal: calculatedSubtotal,
+                          tax: calculatedTax,
+                          finalTotal: finalTotal,
+                          itemsProcessed: processedItems.length
                         });
 
-                        // Tạo receipt preview data giống như table-grid
+                        // Kiểm tra tổng tiền hợp lệ
+                        if (finalTotal <= 0) {
+                          console.error('❌ Tổng tiền không hợp lệ:', finalTotal);
+                          toast({
+                            title: 'Lỗi',
+                            description: 'Tổng tiền đơn hàng không hợp lệ. Vui lòng kiểm tra lại.',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+
+                        // Tạo receipt preview data
                         const receiptPreview = {
                           id: selectedOrder.id,
+                          orderId: selectedOrder.id,
                           orderNumber: selectedOrder.orderNumber,
                           tableId: selectedOrder.tableId,
                           customerCount: selectedOrder.customerCount,
                           customerName: selectedOrder.customerName,
                           items: processedItems,
                           orderItems: processedItems,
-                          subtotal: exactSubtotal.toFixed(2),
-                          tax: exactTax.toFixed(2), 
-                          total: exactTotal.toFixed(2),
+                          subtotal: calculatedSubtotal.toFixed(2),
+                          tax: calculatedTax.toFixed(2),
+                          total: finalTotal.toFixed(2),
                           paymentMethod: 'pending',
-                          amountReceived: exactTotal.toFixed(2),
+                          amountReceived: finalTotal.toFixed(2),
                           change: '0.00',
                           cashierName: 'Order Management',
                           createdAt: new Date().toISOString(),
                           transactionId: `TXN-PREVIEW-${Date.now()}`,
-                          exactSubtotal: exactSubtotal,
-                          exactTax: exactTax,
-                          exactTotal: exactTotal
+                          calculatedSubtotal: calculatedSubtotal,
+                          calculatedTax: calculatedTax,
+                          calculatedTotal: finalTotal
                         };
 
-                        console.log('📄 Order Management: Hiển thị receipt preview để xác nhận trước khi thanh toán');
-
-                        // Prepare complete order data cho payment flow
-                        const completeOrderForPayment = {
+                        // Tạo order data đầy đủ cho payment flow
+                        const orderForPaymentData = {
                           ...selectedOrder,
-                          items: processedItems,
+                          id: selectedOrder.id, // Đảm bảo có ID
                           orderItems: processedItems,
                           processedItems: processedItems,
-                          calculatedSubtotal: exactSubtotal,
-                          calculatedTax: exactTax,  
-                          calculatedTotal: exactTotal,
-                          exactSubtotal: exactSubtotal,
-                          exactTax: exactTax,
-                          exactTotal: exactTotal
+                          calculatedSubtotal: calculatedSubtotal,
+                          calculatedTax: calculatedTax,
+                          calculatedTotal: finalTotal,
+                          total: finalTotal // Override total với calculated value
                         };
 
-                        // Set data và show preview modal
-                        setOrderForPayment(completeOrderForPayment);
+                        console.log('✅ Thiết lập dữ liệu để hiển thị preview:', {
+                          receiptTotal: receiptPreview.total,
+                          orderTotal: orderForPaymentData.calculatedTotal,
+                          orderId: orderForPaymentData.id
+                        });
+
+                        // Set states và hiển thị preview
                         setPreviewReceipt(receiptPreview);
+                        setOrderForPayment(orderForPaymentData);
                         setShouldOpenReceiptPreview(true);
                       }}
                       disabled={completePaymentMutation.isPending}
@@ -2151,93 +2187,45 @@ export function OrderManagement() {
       </Dialog>
 
       {/* Receipt Modal - Step 1: "Xem trước hóa đơn" */}
-      {(() => {
-        console.log('🔍 DEBUG: Receipt Modal props before render:', {
-          showReceiptPreview: showReceiptPreview,
-          previewReceiptExists: !!previewReceipt,
-          combinedIsOpen: showReceiptPreview && !!previewReceipt,
-          previewReceiptData: previewReceipt ? {
-            id: previewReceipt.id,
-            orderNumber: previewReceipt.orderNumber,
-            total: previewReceipt.total,
-            itemsCount: previewReceipt.items?.length || 0
-          } : null,
-          timestamp: new Date().toISOString()
-        });
-        return null;
-      })()}
       <ReceiptModal
-        isOpen={showReceiptPreview}
+        isOpen={showReceiptPreview && !!previewReceipt}
         onClose={() => {
           console.log("🔴 Order Management: Closing receipt preview modal");
-          console.log("🔍 DEBUG: Modal close - current states:", {
-            showReceiptPreview: showReceiptPreview,
-            previewReceipt: !!previewReceipt,
-            orderForPayment: !!orderForPayment
-          });
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
-          setOrderForPayment(null); // Clear orderForPayment when closing preview
         }}
         onConfirm={() => {
           console.log("📄 Order Management: Receipt preview confirmed, starting payment flow");
 
-          if (!previewReceipt) {
-            console.error('❌ No preview receipt data available');
+          if (!previewReceipt || !orderForPayment) {
+            console.error('❌ Missing preview data for payment flow');
+            toast({
+              title: 'Lỗi',
+              description: 'Không thể tiếp tục thanh toán. Vui lòng thử lại.',
+              variant: 'destructive',
+            });
             return;
           }
 
-          // Prepare complete order data for payment flow with order ID
-          const completeOrderForPayment = {
-            ...selectedOrder,
-            id: selectedOrder?.id, // Ensure order ID is explicitly set
-            orderItems: previewReceipt.orderItems || orderItems || [],
-          };
-
-          console.log('💾 Setting order for payment with complete data including ID:', {
-            orderId: completeOrderForPayment.id,
-            orderNumber: completeOrderForPayment.orderNumber,
-            hasOrderItems: !!(completeOrderForPayment.orderItems?.length)
+          console.log('💳 Opening payment method modal with order:', {
+            orderId: orderForPayment.id,
+            calculatedTotal: orderForPayment.calculatedTotal
           });
-
-          setOrderForPayment(completeOrderForPayment);
 
           // Close preview and show payment method modal
           setShowReceiptPreview(false);
           setShowPaymentMethodModal(true);
         }}
         isPreview={true}
-        cartItems={(() => {
-          console.log('🔍 DEBUG: Building cartItems for Receipt Preview Modal');
-          console.log('previewReceipt:', previewReceipt);
-          console.log('previewReceipt?.items:', previewReceipt?.items);
-
-          if (!previewReceipt?.items || !Array.isArray(previewReceipt.items)) {
-            console.log('❌ No valid preview receipt items found');
-            return [];
-          }
-
-          const mappedItems = previewReceipt.items.map((item: any) => {
-            console.log('🔍 Mapping preview item:', item);
-            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            return {
-              id: item.productId || item.id,
-              name: item.productName || item.name,
-              price: parseFloat(item.price || item.unitPrice || '0'),
-              quantity: item.quantity,
-              sku: item.sku || `SP${item.productId}`,
-              taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
-            };
-          });
-
-          console.log('✅ Mapped cartItems for preview:', mappedItems);
-          return mappedItems;
-        })()}
-        total={(() => {
-          const total = previewReceipt ? parseFloat(previewReceipt.total) : 0;
-          console.log('💰 Receipt Preview Modal total:', total);
-          return total;
-        })()}
+        cartItems={previewReceipt?.items?.map((item: any) => ({
+          id: item.productId || item.id,
+          name: item.productName || item.name,
+          price: parseFloat(item.price || item.unitPrice || '0'),
+          quantity: item.quantity,
+          sku: item.sku || `SP${item.productId}`,
+          taxRate: parseFloat(item.taxRate || '0')
+        })) || []}
+        total={previewReceipt ? parseFloat(previewReceipt.total || '0') : 0}
       />
 
       {/* Payment Method Modal */}
@@ -2329,86 +2317,17 @@ export function OrderManagement() {
             }
           }
         }}
-        total={(() => {
-          if (!orderForPayment) return 0;
-
-          // Use pre-calculated total if available
-          if (orderForPayment.calculatedTotal) {
-            console.log('💰 Payment Modal using pre-calculated total:', orderForPayment.calculatedTotal);
-            return Math.round(orderForPayment.calculatedTotal);
-          }
-
-          // Fallback calculation using EXACT same logic as Order Details display
-          const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
-          console.log('💰 Payment Modal fallback calculation from items:', itemsToCalculate.length);
-
-          if (!Array.isArray(itemsToCalculate) || itemsToCalculate.length === 0) {
-            return Math.round(Number(orderForPayment.total || 0));
-          }
-
-          let itemsSubtotal = 0;
-          let itemsTax = 0;
-
-          if (Array.isArray(products)) {
-            itemsToCalculate.forEach((item: any) => {
-              const product = products.find((p: any) => p.id === item.productId);
-              const basePrice = Number(item.unitPrice || 0);
-              const quantity = item.quantity;
-
-              // Calculate subtotal exactly as Order Details display
-              itemsSubtotal += basePrice * quantity;
-
-              // Tax = (after_tax_price - price) * quantity
-              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                const price = parseFloat(product.price);
-                itemsTax += (afterTaxPrice - price) * quantity;
-              }
-            });
-          }
-
-          const calculatedTotal = Math.round(itemsSubtotal + itemsTax);
-          console.log('💰 Payment Modal fallback calculation result:', {
-            itemsSubtotal,
-            itemsTax,
-            calculatedTotal
-          });
-
-          return calculatedTotal > 0 ? calculatedTotal : Math.round(Number(orderForPayment.total || 0));
-        })()}
+        total={orderForPayment?.calculatedTotal ? Math.round(orderForPayment.calculatedTotal) : 0}
         onShowEInvoice={() => setShowEInvoiceModal(true)}
-        cartItems={(() => {
-          // Use processed items if available
-          if (orderForPayment?.processedItems) {
-            console.log('📦 Using processed items for Payment Modal:', orderForPayment.processedItems.length);
-            return orderForPayment.processedItems.map((item: any) => ({
-              id: item.productId,
-              name: item.productName,
-              price: item.price,
-              quantity: item.quantity,
-              sku: item.sku,
-              taxRate: item.taxRate,
-              afterTaxPrice: item.afterTaxPrice
-            }));
-          }
-
-          // Fallback to orderItems
-          const itemsToMap = orderForPayment?.orderItems || orderItems || [];
-          console.log("📦 Mapping cart items for Payment Modal:", itemsToMap.length);
-
-          return itemsToMap.map((item: any) => {
-            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            return {
-              id: item.productId,
-              name: item.productName || getProductInfo(item.productId)?.name || 'Unknown Product',
-              price: parseFloat(item.unitPrice || '0'),
-              quantity: item.quantity,
-              sku: item.productSku || `SP${item.productId}`,
-              taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
-              afterTaxPrice: product?.afterTaxPrice || null
-            };
-          });
-        })()}
+        cartItems={orderForPayment?.processedItems?.map((item: any) => ({
+          id: item.productId,
+          name: item.productName,
+          price: item.price,
+          quantity: item.quantity,
+          sku: item.sku,
+          taxRate: item.taxRate || 0,
+          afterTaxPrice: item.afterTaxPrice
+        })) || []}
       />
 
       {/* E-Invoice Modal */}
