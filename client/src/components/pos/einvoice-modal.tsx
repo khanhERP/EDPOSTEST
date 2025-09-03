@@ -402,34 +402,60 @@ export function EInvoiceModal({
         return;
       }
 
-      // Calculate subtotal and tax with proper type conversion
+      // Calculate subtotal and tax with proper type conversion and validation
       const calculatedSubtotal = cartItems.reduce((sum, item) => {
-        const itemPrice =
-          typeof item.price === "string" ? parseFloat(item.price) : item.price;
-        const itemQuantity =
-          typeof item.quantity === "string"
-            ? parseInt(item.quantity)
-            : item.quantity;
+        const itemPrice = (() => {
+          if (typeof item.price === "string") {
+            const parsed = parseFloat(item.price);
+            return isNaN(parsed) ? 0 : parsed;
+          }
+          return typeof item.price === "number" ? item.price : 0;
+        })();
+        
+        const itemQuantity = (() => {
+          if (typeof item.quantity === "string") {
+            const parsed = parseInt(item.quantity);
+            return isNaN(parsed) ? 1 : Math.max(1, parsed);
+          }
+          return typeof item.quantity === "number" ? Math.max(1, item.quantity) : 1;
+        })();
+        
+        const itemSubtotal = itemPrice * itemQuantity;
         console.log(
-          `💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemPrice * itemQuantity}`,
+          `💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemSubtotal}`,
         );
-        return sum + itemPrice * itemQuantity;
+        return sum + itemSubtotal;
       }, 0);
 
       const calculatedTax = cartItems.reduce((sum, item) => {
-        const itemPrice =
-          typeof item.price === "string" ? parseFloat(item.price) : item.price;
-        const itemQuantity =
-          typeof item.quantity === "string"
-            ? parseInt(item.quantity)
-            : item.quantity;
-        const itemTaxRate =
-          typeof item.taxRate === "string"
-            ? parseFloat(item.taxRate || "0")
-            : item.taxRate || 0;
-        const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
+        const itemPrice = (() => {
+          if (typeof item.price === "string") {
+            const parsed = parseFloat(item.price);
+            return isNaN(parsed) ? 0 : parsed;
+          }
+          return typeof item.price === "number" ? item.price : 0;
+        })();
+        
+        const itemQuantity = (() => {
+          if (typeof item.quantity === "string") {
+            const parsed = parseInt(item.quantity);
+            return isNaN(parsed) ? 1 : Math.max(1, parsed);
+          }
+          return typeof item.quantity === "number" ? Math.max(1, item.quantity) : 1;
+        })();
+        
+        const itemTaxRate = (() => {
+          if (typeof item.taxRate === "string") {
+            const parsed = parseFloat(item.taxRate || "0");
+            return isNaN(parsed) ? 0 : parsed;
+          }
+          return typeof item.taxRate === "number" ? item.taxRate : 0;
+        })();
+        
+        const itemSubtotal = itemPrice * itemQuantity;
+        const itemTax = (itemSubtotal * itemTaxRate) / 100;
         console.log(
-          `💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`,
+          `💰 Tax calculation: ${item.name} - Subtotal: ${itemSubtotal}, Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`,
         );
         return sum + itemTax;
       }, 0);
@@ -603,27 +629,33 @@ export function EInvoiceModal({
           "Thông tin hóa đơn điện tử đã được lưu. Đang hiển thị màn hình in hóa đơn...",
       });
 
-      // Prepare comprehensive invoice data với receipt để hiển thị modal in
+      // Show success message and close modal
+      toast({
+        title: "Thành công",
+        description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau. Bạn có thể in hóa đơn từ màn hình quản lý đơn hàng.",
+      });
+
+      // Prepare data for onConfirm but don't auto-show receipt
       const completeInvoiceData = {
-        success: true, // Add success flag
+        success: true,
         ...invoiceData,
-        paymentMethod: selectedPaymentMethod, // Use original payment method
+        paymentMethod: selectedPaymentMethod,
         originalPaymentMethod: selectedPaymentMethod,
         publishLater: true,
-        receipt: receiptData, // Receipt data để hiển thị modal in
         customerName: formData.customerName,
         taxCode: formData.taxCode,
-        showReceiptModal: true, // Flag để parent component biết cần hiển thị receipt modal
-        shouldShowReceipt: true, // Additional flag for receipt display
         einvoiceStatus: 0, // 0 = Chưa phát hành (for publish later)
-        status: 'draft' // Draft status for publish later
+        status: 'draft', // Draft status for publish later
+        autoShowReceipt: false, // Don't auto-show receipt
       };
 
-      console.log("✅ Prepared data for onConfirm after publish later");
-      console.log("📄 Receipt data to pass:", receiptData);
+      console.log("✅ Prepared data for onConfirm after publish later - NO auto receipt");
 
-      // Directly call onConfirm instead of showing print dialog
+      // Call onConfirm but don't auto-show receipt
       onConfirm(completeInvoiceData);
+      
+      // Close the modal
+      onClose();
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 
@@ -1166,27 +1198,34 @@ export function EInvoiceModal({
           customerTaxCode: formData.taxCode,
         };
 
-        // Return comprehensive result for parent component to handle updates
+        // Show success message and close modal
+        toast({
+          title: "Thành công", 
+          description: `Hóa đơn điện tử đã được phát hành thành công! Số hóa đơn: ${result.data?.invoiceNo || "N/A"}. Bạn có thể in hóa đơn từ màn hình quản lý đơn hàng.`,
+        });
+
+        // Return result for parent component without auto-showing receipt
         const publishResult = {
           success: true,
-          invoiceNumber: receiptDataToConfirm.invoiceNumber,
+          invoiceNumber: result.data?.invoiceNo || null,
           symbol: selectedTemplate.symbol || null,
           templateNumber: selectedTemplate.templateNumber || null,
           einvoiceStatus: 1, // Đã phát hành
           invoiceStatus: 1, // Hoàn thành
           status: 'published',
-          receipt: receiptDataToConfirm,
           publishedImmediately: true,
-          showReceiptModal: true, // Ensure receipt modal is shown
-          shouldShowReceipt: true // Additional flag for receipt display
+          autoShowReceipt: false, // Don't auto-show receipt
         };
 
         console.log(
-          "📧 Step 4: E-Invoice published, now calling onConfirm with receipt data",
+          "📧 Step 4: E-Invoice published, calling onConfirm WITHOUT auto receipt",
         );
 
-        // Directly call onConfirm instead of showing print dialog
+        // Call onConfirm but don't auto-show receipt
         onConfirm(publishResult);
+        
+        // Close the modal
+        onClose();
         // --- CHANGE END ---
       } else {
         throw new Error(

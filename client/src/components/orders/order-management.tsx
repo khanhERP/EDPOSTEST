@@ -460,96 +460,17 @@ export function OrderManagement() {
       toast({
         title: 'Thành công',
         description: invoiceData.publishLater
-          ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
-          : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
+          ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau. Có thể in hóa đơn từ nút "In hóa đơn".'
+          : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành. Có thể in hóa đơn từ nút "In hóa đơn".',
       });
 
-      // Close e-invoice modal first
+      // Close e-invoice modal and clear states
       setShowEInvoiceModal(false);
-
-      // Always create and show receipt modal after e-invoice processing
-      let receiptData = invoiceData.receipt;
-
-      // If no receipt data provided, create it from current order data
-      if (!receiptData && orderForPayment) {
-        console.log('📄 Creating receipt data from order payment data');
-        
-        // Calculate totals using same logic as payment flow
-        let calculatedSubtotal = 0;
-        let calculatedTax = 0;
-
-        const currentOrderItems = orderForPayment?.processedItems || orderForPayment?.orderItems || [];
-
-        if (Array.isArray(currentOrderItems) && Array.isArray(products)) {
-          currentOrderItems.forEach((item: any) => {
-            const basePrice = Number(item.unitPrice || item.price || 0);
-            const quantity = Number(item.quantity || 0);
-            const product = products.find((p: any) => p.id === item.productId);
-
-            // Calculate subtotal exactly as Order Details
-            calculatedSubtotal += basePrice * quantity;
-
-            // Use EXACT same tax calculation logic
-            if (
-              product?.afterTaxPrice &&
-              product.afterTaxPrice !== null &&
-              product.afterTaxPrice !== ""
-            ) {
-              const afterTaxPrice = parseFloat(product.afterTaxPrice);
-              const taxPerUnit = afterTaxPrice - basePrice;
-              calculatedTax += taxPerUnit * quantity;
-            }
-          });
-        }
-
-        const finalTotal = calculatedSubtotal + calculatedTax;
-
-        receiptData = {
-          transactionId: invoiceData.invoiceNumber || `TXN-${Date.now()}`,
-          items: currentOrderItems.map((item: any) => ({
-            id: item.id,
-            productId: item.productId || item.id,
-            productName: item.productName || item.name,
-            quantity: item.quantity,
-            price: item.unitPrice || item.price,
-            total: item.total,
-            sku: item.productSku || item.sku || `SP${item.productId}`,
-            taxRate: (() => {
-              const product = Array.isArray(products)
-                ? products.find((p: any) => p.id === item.productId)
-                : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })(),
-          })),
-          subtotal: calculatedSubtotal.toString(),
-          tax: calculatedTax.toString(),
-          total: finalTotal.toString(),
-          paymentMethod: "einvoice",
-          originalPaymentMethod: invoiceData.originalPaymentMethod,
-          amountReceived: finalTotal.toString(),
-          change: "0.00",
-          cashierName: "Order Management",
-          createdAt: new Date().toISOString(),
-          customerName: invoiceData.customerName || orderForPayment.customerName,
-          customerTaxCode: invoiceData.taxCode,
-          invoiceNumber: invoiceData.invoiceNumber,
-        };
-      }
-
-      console.log('📄 Order Management: Showing receipt modal with data:', {
-        hasReceipt: !!receiptData,
-        receiptTotal: receiptData?.total,
-        invoiceNumber: receiptData?.invoiceNumber
-      });
-
-      // Show receipt modal for printing
-      setSelectedReceipt(receiptData);
-      setShowReceiptModal(true);
-
-      // Clear order states
       setOrderForPayment(null);
       setOrderDetailsOpen(false);
       setSelectedOrder(null);
+
+      // DON'T auto-show receipt modal - user must click "In hóa đơn" button
 
     } catch (error) {
       console.error('❌ Error during payment completion:', error);
@@ -1389,9 +1310,96 @@ export function OrderManagement() {
                         </Button>
                       )}
 
-                      {(order.status === 'paid' || order.status === 'cancelled') && (
+                      {order.status === 'paid' && (
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            console.log('🖨️ Print button clicked for paid order:', order.id);
+                            
+                            try {
+                              // Fetch order items for receipt
+                              const orderItemsResponse = await apiRequest('GET', `/api/order-items/${order.id}`);
+                              const orderItemsData = await orderItemsResponse.json();
+                              
+                              if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
+                                toast({
+                                  title: 'Lỗi',
+                                  description: 'Không tìm thấy thông tin món ăn trong đơn hàng',
+                                  variant: 'destructive',
+                                });
+                                return;
+                              }
+
+                              // Calculate totals using same logic
+                              let calculatedSubtotal = 0;
+                              let calculatedTax = 0;
+
+                              orderItemsData.forEach((item: any) => {
+                                const basePrice = Number(item.unitPrice || 0);
+                                const quantity = Number(item.quantity || 0);
+                                const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+                                calculatedSubtotal += basePrice * quantity;
+
+                                if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                  const taxPerUnit = afterTaxPrice - basePrice;
+                                  calculatedTax += taxPerUnit * quantity;
+                                }
+                              });
+
+                              const finalTotal = calculatedSubtotal + calculatedTax;
+
+                              // Create receipt data
+                              const receiptData = {
+                                transactionId: order.invoiceNumber || `TXN-${order.id}`,
+                                items: orderItemsData.map((item: any) => ({
+                                  id: item.id,
+                                  productId: item.productId,
+                                  productName: item.productName,
+                                  quantity: item.quantity,
+                                  price: item.unitPrice,
+                                  total: item.total,
+                                  sku: item.productSku || `SP${item.productId}`,
+                                  taxRate: (() => {
+                                    const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+                                    return product?.taxRate ? parseFloat(product.taxRate) : 10;
+                                  })(),
+                                })),
+                                subtotal: calculatedSubtotal.toString(),
+                                tax: calculatedTax.toString(),
+                                total: finalTotal.toString(),
+                                paymentMethod: order.paymentMethod || "cash",
+                                amountReceived: finalTotal.toString(),
+                                change: "0.00",
+                                cashierName: "Order Management",
+                                createdAt: order.paidAt || order.orderedAt,
+                                customerName: order.customerName,
+                                invoiceNumber: order.invoiceNumber,
+                              };
+
+                              console.log('📄 Showing receipt for paid order:', receiptData);
+                              setSelectedReceipt(receiptData);
+                              setShowReceiptModal(true);
+
+                            } catch (error) {
+                              console.error('❌ Error creating receipt:', error);
+                              toast({
+                                title: 'Lỗi',
+                                description: 'Không thể tạo hóa đơn in. Vui lòng thử lại.',
+                                variant: 'destructive',
+                              });
+                            }
+                          }}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        >
+                          🖨️ In hóa đơn
+                        </Button>
+                      )}
+
+                      {order.status === 'cancelled' && (
                         <Badge variant="outline" className="flex-1 justify-center">
-                          {order.status === 'paid' ? t('orders.status.completed') : t('orders.status.cancelled')}
+                          {t('orders.status.cancelled')}
                         </Badge>
                       )}
                     </div>
