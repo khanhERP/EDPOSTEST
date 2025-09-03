@@ -401,12 +401,16 @@ export function EInvoiceModal({
 
       // Debug log current cart items
       console.log("=== PHÁT HÀNH SAU - KIỂM TRA DỮ LIỆU ===");
+      console.log("Source:", source);
+      console.log("Order ID:", orderId);
       console.log("cartItems received:", cartItems);
+      console.log("cartItems type:", typeof cartItems);
+      console.log("cartItems is array:", Array.isArray(cartItems));
       console.log("cartItems length:", cartItems?.length || 0);
       console.log("cartItems detailed:", JSON.stringify(cartItems, null, 2));
       console.log("total amount:", total);
 
-      // Validate cart items first
+      // Enhanced validation for cart items
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found for later publishing:", {
           source,
@@ -420,7 +424,34 @@ export function EInvoiceModal({
         const sourceText = source === "table" ? "đơn hàng" : "giỏ hàng";
         toast({
           title: "Lỗi",
-          description: `Không có sản phẩm nào trong ${sourceText} để lưu thông tin hóa đơn điện tử.`,
+          description: `Không có sản phẩm nào trong ${sourceText} để lưu thông tin hóa đơn điện tử. Vui lòng kiểm tra lại dữ liệu đơn hàng.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate each cart item
+      const invalidItems = cartItems.filter(item => {
+        const isValid = item && 
+          item.id && 
+          item.name && 
+          item.price !== undefined && 
+          item.price !== null && 
+          item.quantity !== undefined && 
+          item.quantity !== null && 
+          item.quantity > 0;
+        
+        if (!isValid) {
+          console.log("❌ Invalid item found:", item);
+        }
+        return !isValid;
+      });
+
+      if (invalidItems.length > 0) {
+        console.error("❌ Found invalid cart items:", invalidItems);
+        toast({
+          title: "Lỗi",
+          description: `Có ${invalidItems.length} sản phẩm thiếu thông tin cần thiết để tạo hóa đơn điện tử.`,
           variant: "destructive",
         });
         return;

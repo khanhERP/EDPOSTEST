@@ -553,28 +553,78 @@ export function OrderManagement() {
 
   // Helper function to convert order items to cart format for E-Invoice
   const convertOrderItemsToCartFormat = (orderItems: any[], order: any) => {
-    console.log("🔄 Converting order items to cart format:", { orderItems, order });
+    console.log("🔄 Converting order items to cart format:", { 
+      orderItemsCount: orderItems?.length || 0, 
+      orderData: order?.id 
+    });
 
     if (!orderItems || !Array.isArray(orderItems)) {
       console.warn("⚠️ No valid order items to convert");
       return [];
     }
 
-    return orderItems.map(item => {
+    const convertedItems = orderItems.map((item, index) => {
       // Get product info from products list if available
-      const product = products?.find(p => p.id === item.productId);
+      const product = Array.isArray(products) ? products.find(p => p.id === item.productId) : null;
+      
+      // Validate and convert data types
+      const itemPrice = (() => {
+        if (item.unitPrice !== undefined && item.unitPrice !== null) {
+          return parseFloat(item.unitPrice);
+        }
+        if (item.price !== undefined && item.price !== null) {
+          return parseFloat(item.price);
+        }
+        if (product?.price) {
+          return parseFloat(product.price);
+        }
+        return 0;
+      })();
 
-      return {
-        id: item.productId || item.id,
-        name: item.productName || product?.name || "Sản phẩm",
-        price: parseFloat(item.unitPrice || item.price || "0"),
-        quantity: parseInt(item.quantity || "1"),
-        sku: item.productSku || product?.sku || `ITEM${String(item.productId || item.id).padStart(3, "0")}`,
-        taxRate: parseFloat(product?.taxRate || "0"),
+      const itemQuantity = (() => {
+        if (item.quantity !== undefined && item.quantity !== null) {
+          return parseInt(item.quantity);
+        }
+        return 1;
+      })();
+
+      const itemTaxRate = (() => {
+        if (product?.taxRate) {
+          return parseFloat(product.taxRate);
+        }
+        return 0;
+      })();
+
+      console.log(`📦 Converting item ${index + 1}:`, {
+        productId: item.productId,
+        productName: item.productName,
+        price: itemPrice,
+        quantity: itemQuantity,
+        taxRate: itemTaxRate,
+        hasProduct: !!product
+      });
+
+      const convertedItem = {
+        id: item.productId || item.id || index + 1,
+        name: item.productName || product?.name || `Sản phẩm ${index + 1}`,
+        price: itemPrice,
+        quantity: itemQuantity,
+        sku: item.productSku || product?.sku || `ITEM${String(item.productId || item.id || index + 1).padStart(3, "0")}`,
+        taxRate: itemTaxRate,
         afterTaxPrice: product?.afterTaxPrice || null,
-        total: parseFloat(item.total || "0")
+        total: itemPrice * itemQuantity
       };
+
+      return convertedItem;
+    }).filter(item => item.price > 0 && item.quantity > 0); // Filter out invalid items
+
+    console.log("✅ Conversion completed:", {
+      originalCount: orderItems.length,
+      convertedCount: convertedItems.length,
+      validItems: convertedItems.length
     });
+
+    return convertedItems;
   };
 
   // Handler for E-Invoice confirmation from modal
@@ -656,32 +706,102 @@ export function OrderManagement() {
     try {
       setSelectedOrderForEInvoice(order);
 
-      // Fetch order items for this order
-      const orderItemsResponse = await fetch(`/api/order-items/${order.id}`);
-      if (!orderItemsResponse.ok) {
-        throw new Error(`Failed to fetch order items: ${orderItemsResponse.status}`);
+      // First check if we have preloaded order items
+      let orderItems = [];
+      if (allOrderItems && allOrderItems.has(order.id)) {
+        orderItems = allOrderItems.get(order.id) || [];
+        console.log("📦 Using preloaded order items for E-invoice:", orderItems.length, "items");
+      } else {
+        // Fallback: Fetch order items for this order
+        console.log("📦 Fetching order items from API for order:", order.id);
+        const orderItemsResponse = await fetch(`/api/order-items/${order.id}`);
+        if (!orderItemsResponse.ok) {
+          throw new Error(`Failed to fetch order items: ${orderItemsResponse.status}`);
+        }
+
+        orderItems = await orderItemsResponse.json();
+        console.log("📦 Fetched order items from API:", orderItems);
       }
 
-      const orderItems = await orderItemsResponse.json();
-      console.log("📦 Fetched order items for E-invoice:", orderItems);
+      // Validate order items with detailed logging
+      console.log("🔍 Validating order items:", {
+        orderItems,
+        isArray: Array.isArray(orderItems),
+        length: orderItems?.length || 0,
+        orderId: order.id
+      });
 
-      // Validate order items
       if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
-        throw new Error("Không có sản phẩm nào trong đơn hàng");
+        console.error("❌ No valid order items found:", {
+          orderItems,
+          orderId: order.id,
+          orderNumber: order.orderNumber
+        });
+        throw new Error("Không có sản phẩm nào trong đơn hàng này");
+      }
+
+      // Calculate total from order items to validate
+      let calculatedTotal = 0;
+      orderItems.forEach((item: any) => {
+        const quantity = item.quantity || 0;
+        const unitPrice = parseFloat(item.unitPrice || "0");
+        let itemTotal = unitPrice * quantity;
+
+        // Apply tax if afterTaxPrice is available
+        const product = products?.find(p => p.id === item.productId);
+        if (product?.afterTaxPrice && 
+            product.afterTaxPrice !== null && 
+            product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+          itemTotal = (unitPrice + taxPerUnit) * quantity;
+        }
+
+        calculatedTotal += itemTotal;
+      });
+
+      console.log("💰 Calculated total for E-invoice:", calculatedTotal);
+
+      // Validate calculated total
+      if (calculatedTotal <= 0) {
+        throw new Error("Tổng tiền đơn hàng không hợp lệ");
       }
 
       // Convert order items to cart format with proper product mapping
       const cartItems = convertOrderItemsToCartFormat(orderItems, order);
 
-      console.log("🛒 Converted cart items for E-invoice:", cartItems);
+      console.log("🛒 Converted cart items for E-invoice:", {
+        originalItems: orderItems.length,
+        convertedItems: cartItems.length,
+        cartItems: cartItems
+      });
 
       // Validate cart items
       if (cartItems.length === 0) {
         throw new Error("Không thể chuyển đổi dữ liệu sản phẩm");
       }
 
+      // Validate each cart item has required data
+      const invalidItems = cartItems.filter(item => 
+        !item.id || !item.name || 
+        item.price === undefined || item.price === null ||
+        item.quantity === undefined || item.quantity === null ||
+        item.quantity <= 0
+      );
+
+      if (invalidItems.length > 0) {
+        console.error("❌ Invalid cart items found:", invalidItems);
+        throw new Error(`Có ${invalidItems.length} sản phẩm thiếu thông tin cần thiết`);
+      }
+
       // Store the cart items for the modal
       setOrderItemsForEInvoice(cartItems);
+
+      console.log("✅ E-Invoice data prepared successfully:", {
+        orderId: order.id,
+        cartItemsCount: cartItems.length,
+        calculatedTotal: calculatedTotal
+      });
 
       // Open E-Invoice modal with validated data
       setShowEInvoiceModal(true);
