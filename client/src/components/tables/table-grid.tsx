@@ -224,20 +224,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
 
+  // Simplified refresh logic
+  const forceRefreshData = () => {
+    console.log('🔄 Table Grid: Force refreshing data');
+    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+    refetchTables();
+    refetchOrders();
+  };
+
   // Add custom event listener for force refresh
   useEffect(() => {
     const handleForceRefresh = (event: CustomEvent) => {
       console.log('🔄 Table Grid: Custom force refresh event received:', event.detail);
-      
-      // Ultimate refresh - clear everything and refetch
-      queryClient.clear();
-      queryClient.removeQueries();
-      
-      setTimeout(() => {
-        refetchTables();
-        refetchOrders();
-        console.log('✅ Table Grid: Custom event refresh completed');
-      }, 100);
+      forceRefreshData();
     };
 
     window.addEventListener('forceTableRefresh', handleForceRefresh as EventListener);
@@ -263,130 +263,28 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           const data = JSON.parse(event.data);
           console.log("Table Grid: Received WebSocket message:", data);
 
-          if (data.type === "order_updated" || data.type === "order_status_changed") {
-            console.log("Table Grid: Refreshing data due to order update");
-            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+          // Handle all data refresh signals with simplified logic
+          if (data.type === "order_updated" || 
+              data.type === "order_status_changed" ||
+              data.type === "popup_close" ||
+              data.type === "receipt_modal_closed" ||
+              data.type === "refresh_data_after_print" ||
+              data.action === "refresh_tables_and_clear_cart" ||
+              data.action === "receipt_modal_closed") {
+            
+            console.log('🔄 Table Grid: Refreshing data due to:', data.type || data.action);
+            
+            // Simple but effective refresh
+            forceRefreshData();
+            
+            // Show success message after refresh
+            setTimeout(() => {
+              toast({
+                title: "Đã làm mới",
+                description: "Dữ liệu trạng thái bàn đã được cập nhật",
+              });
+            }, 500);
           }
-
-          // Handle popup close signal (when receipt modal is closed)
-            if (data.type === 'popup_close' && data.success) {
-              console.log('🔄 Table Grid: Receipt modal closed, refreshing data');
-
-              // Clear all cache immediately and completely
-              queryClient.clear();
-              queryClient.removeQueries();
-
-              // Force refresh with multiple attempts
-              const refreshAttempts = [50, 150, 300, 500, 800];
-              refreshAttempts.forEach((delay, index) => {
-                setTimeout(() => {
-                  console.log(`🔄 Table Grid: Refresh attempt ${index + 1} (${delay}ms)`);
-                  refetchTables();
-                  refetchOrders();
-                }, delay);
-              });
-
-              // Show success message after final attempt
-              setTimeout(() => {
-                toast({
-                  title: "Đã làm mới",
-                  description: "Dữ liệu trạng thái bàn đã được cập nhật",
-                });
-              }, 900);
-            }
-
-            // Handle receipt modal closed signal specifically
-            if (data.type === 'receipt_modal_closed' || (data.action && data.action === 'receipt_modal_closed')) {
-              console.log('🔄 Table Grid: Receipt modal closed signal received, ULTIMATE force refreshing');
-
-              // ULTIMATE CACHE CLEAR - clear everything
-              queryClient.clear();
-              queryClient.removeQueries();
-              queryClient.invalidateQueries();
-
-              // Force immediate refresh without cache
-              const forceRefresh = async () => {
-                try {
-                  // Use direct API calls to bypass cache completely
-                  const [tablesResponse, ordersResponse] = await Promise.all([
-                    fetch('/api/tables', { 
-                      cache: 'no-store',
-                      headers: { 'Cache-Control': 'no-cache' }
-                    }),
-                    fetch('/api/orders', { 
-                      cache: 'no-store',
-                      headers: { 'Cache-Control': 'no-cache' }
-                    })
-                  ]);
-
-                  const [freshTables, freshOrders] = await Promise.all([
-                    tablesResponse.json(),
-                    ordersResponse.json()
-                  ]);
-
-                  // Force update query cache with fresh data
-                  queryClient.setQueryData(["/api/tables"], freshTables);
-                  queryClient.setQueryData(["/api/orders"], freshOrders);
-
-                  console.log('✅ Table Grid: Force refresh completed with fresh data');
-                  console.log('📊 Fresh tables count:', freshTables?.length || 0);
-                  console.log('📊 Fresh orders count:', freshOrders?.length || 0);
-
-                } catch (error) {
-                  console.error('❌ Error during force refresh:', error);
-                }
-              };
-
-              // Execute force refresh immediately and with delays
-              forceRefresh();
-              setTimeout(forceRefresh, 100);
-              setTimeout(forceRefresh, 300);
-              
-              // Also use regular refetch as backup
-              setTimeout(() => {
-                refetchTables();
-                refetchOrders();
-              }, 50);
-
-              setTimeout(() => {
-                refetchTables();
-                refetchOrders();
-              }, 200);
-
-              setTimeout(() => {
-                refetchTables();
-                refetchOrders();
-                
-                toast({
-                  title: "Đã làm mới",
-                  description: "Dữ liệu trạng thái bàn đã được cập nhật hoàn toàn",
-                });
-              }, 400);
-            }
-
-            // Handle force refresh data signals
-            if (data.type === 'refresh_data_after_print' || data.action === 'refresh_tables_and_clear_cart') {
-              console.log('🔄 Table Grid: Force refresh after print signal received');
-
-              // Complete cache invalidation
-              queryClient.clear();
-              queryClient.removeQueries();
-
-              // Multiple aggressive refresh attempts
-              const refreshDelays = [0, 50, 150, 300, 500, 700, 1000];
-              refreshDelays.forEach((delay, index) => {
-                setTimeout(() => {
-                  console.log(`🔄 Table Grid: Aggressive refresh ${index + 1} (${delay}ms)`);
-                  refetchTables();
-                  refetchOrders();
-
-                  // Also invalidate to force fresh data
-                  queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-                }, delay);
-              });
-            }
         } catch (error) {
           console.error("Table Grid: Error parsing WebSocket message:", error);
         }
@@ -1880,6 +1778,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   return (
     <>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Trạng thái bàn</h3>
+        <Button
+          onClick={forceRefreshData}
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+        >
+          🔄 Làm mới
+        </Button>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {Array.isArray(tables) &&
           tables.map((table: Table) => {
