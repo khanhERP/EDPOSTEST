@@ -2095,7 +2095,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               {/* Tax and Total Summary */}
               <div className="space-y-2">
                 {(() => {
-                  // Use same tax calculation logic as shopping cart
+                  // Use same tax calculation logic as shopping cart and other components
                   let subtotal = 0;
                   let totalTax = 0;
 
@@ -2110,9 +2110,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       const product = products.find(
                         (p: any) => p.id === item.productId,
                       );
-                      const itemTaxRate = product?.taxRate
-                        ? parseFloat(product.taxRate)
-                        : 0;
+
+                      console.log(`🔍 Table Grid - Tax calculation for item ${item.id}:`, {
+                        productId: item.productId,
+                        productName: item.productName,
+                        basePrice,
+                        quantity,
+                        productFound: !!product,
+                        afterTaxPrice: product?.afterTaxPrice,
+                        taxRate: product?.taxRate
+                      });
 
                       // Calculate subtotal (base price without tax)
                       subtotal += basePrice * quantity;
@@ -2124,14 +2131,37 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         product.afterTaxPrice !== ""
                       ) {
                         const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                        // Tax per unit = afterTaxPrice - basePrice
                         const taxPerUnit = afterTaxPrice - basePrice;
-                        totalTax += taxPerUnit * quantity;
+                        const itemTax = Math.floor(taxPerUnit * quantity);
+                        totalTax += itemTax;
+
+                        console.log(`💰 Table Grid - Tax calculated:`, {
+                          afterTaxPrice,
+                          basePrice,
+                          taxPerUnit,
+                          quantity,
+                          itemTax,
+                          runningTotalTax: totalTax
+                        });
+                      } else {
+                        console.log(`⚪ Table Grid - No tax (no afterTaxPrice):`, {
+                          productName: item.productName,
+                          afterTaxPrice: product?.afterTaxPrice
+                        });
                       }
                       // No tax calculation if no afterTaxPrice in database
                     });
                   }
 
                   const grandTotal = subtotal + totalTax;
+
+                  console.log(`📊 Table Grid - Final totals:`, {
+                    subtotal,
+                    totalTax,
+                    grandTotal,
+                    itemsCount: orderItems?.length
+                  });
 
                   return (
                     <>
@@ -2208,7 +2238,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             product.afterTaxPrice,
                           );
                           const taxPerUnit = afterTaxPrice - basePrice;
-                          orderDetailsTax += taxPerUnit * quantity;
+                          orderDetailsTax += Math.floor(taxPerUnit * quantity);
                         }
 
                         return {
@@ -2234,14 +2264,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         cashierName: "Table Service",
                         paymentMethod: "preview", // Placeholder method
                         items: processedItems,
-                        subtotal: orderDetailsSubtotal.toString(),
-                        tax: orderDetailsTax.toString(),
-                        total: (
+                        subtotal: Math.floor(orderDetailsSubtotal).toString(),
+                        tax: Math.floor(orderDetailsTax).toString(),
+                        total: Math.floor(
                           orderDetailsSubtotal + orderDetailsTax
                         ).toString(),
-                        exactTotal: orderDetailsSubtotal + orderDetailsTax,
-                        exactSubtotal: orderDetailsSubtotal,
-                        exactTax: orderDetailsTax,
+                        exactTotal: Math.floor(orderDetailsSubtotal + orderDetailsTax),
+                        exactSubtotal: Math.floor(orderDetailsSubtotal),
+                        exactTax: Math.floor(orderDetailsTax),
                         orderItems: orderItems, // Keep original order items for payment flow
                       };
 
