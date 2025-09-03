@@ -20,6 +20,7 @@ import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import { EInvoiceModal } from "./einvoice-modal";
 import { usePopupSignal } from "@/hooks/use-popup-signal";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
+import { useToast } from "@/components/ui/use-toast"; // Assuming toast is available
 
 // Helper function for API requests (assuming it exists and handles headers, etc.)
 // If not, you'll need to implement it or use fetch directly like in the original code.
@@ -120,6 +121,7 @@ export function PaymentMethodModal({
   }
 
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [showEInvoice, setShowEInvoice] = useState(false);
@@ -502,20 +504,20 @@ export function PaymentMethodModal({
     } else {
       // Check if this is a real order or temporary order
       const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
-      
+
       if (isTemporaryOrder) {
         console.log(`🔄 TEMPORARY ORDER DETECTED - proceeding directly to E-Invoice for ${method} payment on order ${orderInfo.id}`);
-        
+
         // For temporary orders (POS direct payments), skip database update and go directly to E-Invoice
         setSelectedPaymentMethod(method);
         setShowEInvoice(true);
         console.log(`🔥 SHOWING E-INVOICE MODAL for temporary order with ${method} payment`);
         return;
       }
-      
+
       // For other payment methods (card, digital wallets) on real orders, update order status first
       console.log(`🚀 REAL ORDER OTHER PAYMENT METHOD (${method}) - updating order status to 'paid' for order ${orderInfo.id}`);
-      
+
       try {
         const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
           method: 'PUT',
@@ -530,7 +532,7 @@ export function PaymentMethodModal({
         if (statusResponse.ok) {
           const data = await statusResponse.json();
           console.log(`✅ Order status updated to paid successfully:`, data);
-          
+
           // Lưu phương thức thanh toán và hiển thị E-Invoice modal
           setSelectedPaymentMethod(method);
           setShowEInvoice(true);
@@ -549,13 +551,13 @@ export function PaymentMethodModal({
 
   const handleQRComplete = async () => {
     console.log(`🚀 QR PAYMENT COMPLETE - checking order type for order ${orderInfo.id}`);
-    
+
     // Check if this is a real order or temporary order
     const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
-    
+
     if (isTemporaryOrder) {
       console.log(`🔄 TEMPORARY ORDER DETECTED - proceeding directly to E-Invoice for order ${orderInfo.id}`);
-      
+
       // For temporary orders (POS direct payments), skip database update and go directly to E-Invoice
       setShowQRCode(false);
       setQrCodeUrl("");
@@ -564,13 +566,13 @@ export function PaymentMethodModal({
       console.log(`🔥 SHOWING E-INVOICE MODAL for temporary order`);
       return;
     }
-    
+
     // For real orders, update order status to 'paid'
     console.log(`🚀 REAL ORDER QR PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
-    
+
     try {
       console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
-      
+
       const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
         method: 'PUT',
         headers: {
@@ -584,7 +586,7 @@ export function PaymentMethodModal({
       if (statusResponse.ok) {
         const data = await statusResponse.json();
         console.log(`✅ Order status updated to paid successfully:`, data);
-        
+
         setShowQRCode(false);
         setQrCodeUrl("");
 
@@ -671,10 +673,10 @@ export function PaymentMethodModal({
 
     // Check if this is a real order or temporary order
     const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
-    
+
     if (isTemporaryOrder) {
       console.log(`🔄 TEMPORARY ORDER DETECTED - proceeding directly to E-Invoice for order ${orderInfo.id}`);
-      
+
       // For temporary orders (POS direct payments), skip database update and go directly to E-Invoice
       setShowCashPayment(false);
       setAmountReceived("");
@@ -687,10 +689,10 @@ export function PaymentMethodModal({
 
     // For real orders, update order status to 'paid' when cash payment is completed
     console.log(`🚀 REAL ORDER CASH PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
-    
+
     try {
       console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
-      
+
       const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
         method: 'PUT',
         headers: {
@@ -704,7 +706,7 @@ export function PaymentMethodModal({
       if (statusResponse.ok) {
         const data = await statusResponse.json();
         console.log(`✅ Order status updated to paid successfully:`, data);
-        
+
         // Reset trạng thái và đóng form tiền mặt
         setShowCashPayment(false);
         setAmountReceived("");
@@ -739,7 +741,7 @@ export function PaymentMethodModal({
       // Check if this is a real order or temporary order
       const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
       let statusResult = null;
-      
+
       if (!isTemporaryOrder) {
         // STEP 1: Update order status to 'paid' using the dedicated status endpoint (only for real orders)
         console.log("📤 Step 1: Updating order status to 'paid' for real order");

@@ -56,9 +56,9 @@ export function OrderManagement() {
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
-    refetchInterval: 10000, // Refetch every 10 seconds for faster updates
+    refetchInterval: 5000, // Refetch every 5 seconds for faster updates
     refetchOnWindowFocus: true, // Refetch when window regains focus
-    staleTime: 1000, // Consider data stale after 1 second for immediate updates
+    staleTime: 0, // Always consider data fresh to force immediate updates
     onSuccess: (data) => {
       console.log(`🔍 DEBUG: Orders query onSuccess called:`, {
         ordersCount: data?.length || 0,
@@ -427,25 +427,56 @@ export function OrderManagement() {
       // Step 3: Refresh UI and trigger events
       console.log('📋 Step 3: Refreshing UI and triggering events');
 
+      // Force immediate refresh with multiple attempts
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
         queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-        queryClient.refetchQueries({ queryKey: ['/api/orders'] })
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
+
+      // Force another refresh after a short delay to ensure UI updates
+      setTimeout(async () => {
+        await Promise.all([
+          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+        ]);
+        console.log('🔄 Secondary refresh completed');
+      }, 500);
 
       // Dispatch events for real-time updates
       if (typeof window !== 'undefined') {
         const events = [
-          new CustomEvent('refreshOrders'),
+          new CustomEvent('orderStatusUpdated', {
+            detail: {
+              orderId,
+              status: 'paid',
+              previousStatus: updatedOrder.previousStatus || 'served',
+              tableId: updatedOrder.tableId,
+              timestamp: new Date().toISOString()
+            }
+          }),
+          new CustomEvent('refreshOrders', {
+            detail: { immediate: true, orderId, newStatus: 'paid' }
+          }),
+          new CustomEvent('refreshTables', {
+            detail: { immediate: true, tableId: updatedOrder.tableId }
+          }),
           new CustomEvent('paymentCompleted', {
             detail: { orderId, tableId: updatedOrder.tableId }
           }),
           new CustomEvent('tableStatusUpdate', {
             detail: { tableId: updatedOrder.tableId, checkForRelease: true }
+          }),
+          new CustomEvent('forceRefresh', {
+            detail: { reason: 'payment_completed', orderId }
           })
         ];
 
-        events.forEach(event => window.dispatchEvent(event));
+        events.forEach(event => {
+          console.log("📡 Dispatching event:", event.type, event.detail);
+          window.dispatchEvent(event);
+        });
       }
 
       console.log('✅ Step 3 COMPLETED: UI refreshed and events dispatched');
@@ -688,16 +719,35 @@ export function OrderManagement() {
         paymentMethod: method.nameKey || method,
       });
 
+      // Force immediate UI refresh after successful payment
+      console.log('🔄 Forcing immediate UI refresh after payment completion');
+      
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
+
+      // Dispatch immediate refresh events
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('forceRefresh', { 
+          detail: { reason: 'payment_method_selected', orderId: orderForPayment.id } 
+        }));
+      }
+
       toast({
         title: 'Thành công',
         description: 'Đơn hàng đã được thanh toán thành công',
       });
 
-      // Close all modals
-      setShowPaymentMethodModal(false);
-      setOrderForPayment(null);
-      setOrderDetailsOpen(false);
-      setSelectedOrder(null);
+      // Close all modals after a short delay to allow UI refresh
+      setTimeout(() => {
+        setShowPaymentMethodModal(false);
+        setOrderForPayment(null);
+        setOrderDetailsOpen(false);
+        setSelectedOrder(null);
+      }, 100);
 
     } catch (error) {
       console.error('❌ Payment failed:', error);
@@ -940,7 +990,7 @@ export function OrderManagement() {
     const interval = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-    }, 15000);
+    }, 5000); // Reduced interval for faster updates
 
     // Listen for manual refresh events
     const handleOrderStatusUpdate = async (event: CustomEvent) => {
