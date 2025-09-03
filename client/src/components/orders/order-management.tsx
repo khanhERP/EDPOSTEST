@@ -56,8 +56,9 @@ export function OrderManagement() {
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
-    refetchInterval: 5000, // Refetch every 5 seconds for faster updates
+    refetchInterval: 2000, // Faster polling - every 2 seconds
     refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchIntervalInBackground: true, // Continue refetching in background
     staleTime: 0, // Always consider data fresh to force immediate updates
     onSuccess: (data) => {
       console.log(`🔍 DEBUG: Orders query onSuccess called:`, {
@@ -1211,6 +1212,64 @@ export function OrderManagement() {
     return () => clearInterval(interval);
   }, [refreshData]);
 
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    
+    const connectWebSocket = () => {
+      try {
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}`;
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+          console.log('🔗 Order Management: WebSocket connected');
+          // Send registration message
+          ws?.send(JSON.stringify({
+            type: 'register_order_management',
+            timestamp: new Date().toISOString()
+          }));
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('📨 Order Management: WebSocket message received:', data);
+            
+            if (data.type === 'order_created' || 
+                data.type === 'order_updated' || 
+                data.type === 'table_status_changed') {
+              console.log('🔄 Order Management: Refreshing orders due to WebSocket update');
+              refreshData();
+            }
+          } catch (error) {
+            console.error('❌ Error parsing WebSocket message:', error);
+          }
+        };
+        
+        ws.onclose = () => {
+          console.log('🔗 Order Management: WebSocket disconnected, attempting reconnect...');
+          setTimeout(connectWebSocket, 3000);
+        };
+        
+        ws.onerror = (error) => {
+          console.error('❌ Order Management: WebSocket error:', error);
+        };
+      } catch (error) {
+        console.error('❌ Error creating WebSocket connection:', error);
+        setTimeout(connectWebSocket, 5000);
+      }
+    };
+    
+    connectWebSocket();
+    
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [refreshData]);
+
   // Listen for payment completion events from payment modal
   useEffect(() => {
     const handleOrderStatusUpdate = (event: CustomEvent) => {
@@ -1236,16 +1295,24 @@ export function OrderManagement() {
       }
     };
 
+    const handleNewOrderFromTable = (event: CustomEvent) => {
+      console.log("🆕 Order Management: New order created from table:", event.detail);
+      // Immediate refresh for new orders
+      refreshData();
+    };
+
     // Add event listeners
     window.addEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
     window.addEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
     window.addEventListener('refreshOrders', handleRefreshOrders as EventListener);
+    window.addEventListener('newOrderCreated', handleNewOrderFromTable as EventListener);
 
     // Cleanup event listeners
     return () => {
       window.removeEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
       window.removeEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
       window.removeEventListener('refreshOrders', handleRefreshOrders as EventListener);
+      window.removeEventListener('newOrderCreated', handleNewOrderFromTable as EventListener);
     };
   }, [refreshData]);
 
