@@ -20,7 +20,7 @@ import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import { EInvoiceModal } from "./einvoice-modal";
 import { usePopupSignal } from "@/hooks/use-popup-signal";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
-import { useToast } from "@/components/ui/use-toast"; // Assuming toast is available
+import { useToast } from "@/hooks/use-toast";
 
 // Helper function for API requests (assuming it exists and handles headers, etc.)
 // If not, you'll need to implement it or use fetch directly like in the original code.
