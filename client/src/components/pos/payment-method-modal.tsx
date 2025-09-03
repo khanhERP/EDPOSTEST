@@ -768,7 +768,7 @@ export function PaymentMethodModal({
         if (!statusResponse.ok) {
           const errorText = await statusResponse.text();
           console.error("❌ Step 1 FAILED: Order status update failed:", errorText);
-          
+
           // Show error toast but don't stop the process completely
           toast({
             title: "Cảnh báo",
@@ -920,11 +920,11 @@ export function PaymentMethodModal({
 
       // STEP 6: Pass success data to parent component WITHOUT receipt to avoid duplicate popups
       console.log("✅ Step 6: Payment process completed successfully");
-      
+
       // Show success toast
       toast({
         title: "Thành công",
-        description: eInvoiceData.publishLater 
+        description: eInvoiceData.publishLater
           ? "Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau"
           : "Đơn hàng đã được thanh toán và hóa đơn điện tử đã được tạo",
       });
@@ -1156,6 +1156,13 @@ export function PaymentMethodModal({
     qrCodeUrl,
     wasShowingQRCode,
   ]);
+
+  // Ẩn hoàn toàn payment method modal
+  return null;
+
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <Dialog

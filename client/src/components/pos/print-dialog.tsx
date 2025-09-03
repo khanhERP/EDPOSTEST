@@ -53,8 +53,6 @@ export function PrintDialog({
     phone: "02-1234-5678"
   }
 }: PrintDialogProps) {
-  // Ẩn hoàn toàn dialog in hóa đơn
-  return null;
   
   const [isPrinting, setIsPrinting] = useState(false);
 
