@@ -885,45 +885,14 @@ export function OrderManagement() {
         total: finalTotal
       };
 
-      // Step 4: Create receipt preview data with validation
-      // Kiểm tra tổng tiền hợp lệ trước khi tạo receipt
-      if (finalTotal <= 0 || isNaN(finalTotal)) {
-        console.error('❌ Tổng tiền không hợp lệ:', finalTotal);
-        toast({
-          title: 'Lỗi',
-          description: 'Tổng tiền đơn hàng không hợp lệ. Vui lòng kiểm tra lại.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Kiểm tra items hợp lệ
-      if (!processedItems || processedItems.length === 0) {
-        console.error('❌ Không có items để tạo receipt preview');
-        toast({
-          title: 'Lỗi',
-          description: 'Không có món ăn trong đơn hàng để thanh toán.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      console.log('✅ Creating receiptPreview with:', {
-        itemsCount: processedItems.length,
-        calculatedSubtotal,
-        calculatedTax: Math.abs(calculatedTax),
-        finalTotal,
-        firstItem: processedItems[0]
-      });
-
-      // Tạo receipt preview data với định dạng đúng và validation
+      // Step 4: Create receipt preview data với order đúng
       const receiptPreview = {
-        id: selectedOrder.id,
-        orderId: selectedOrder.id,
-        orderNumber: selectedOrder.orderNumber || `ORD-${selectedOrder.id}`,
-        tableId: selectedOrder.tableId,
-        customerCount: selectedOrder.customerCount || 1,
-        customerName: selectedOrder.customerName || 'Khách hàng',
+        id: order.id,
+        orderId: order.id,
+        orderNumber: order.orderNumber || `ORD-${order.id}`,
+        tableId: order.tableId,
+        customerCount: order.customerCount || 1,
+        customerName: order.customerName || 'Khách hàng',
         items: processedItems,
         orderItems: processedItems,
         subtotal: calculatedSubtotal.toString(),
@@ -961,30 +930,22 @@ export function OrderManagement() {
       console.log('✅ Receipt preview validation passed:', {
         itemsCount: receiptPreview.items.length,
         total: receiptPreview.total,
-        exactTotal: receiptPreview.exactTotal
+        exactTotal: receiptPreview.exactTotal,
+        orderData: {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          finalTotal
+        }
       });
 
-      // Step 5: Close order details modal and show receipt preview
-      try {
-        setOrderDetailsOpen(false);
-        setSelectedOrder(order);
-        setOrderForPayment(orderForPaymentData);
-        setPreviewReceipt(receiptPreview);
-
-        // Use setTimeout to ensure state is set before showing modal
-        setTimeout(() => {
-          setShowReceiptPreview(true);
-          console.log('🚀 Order Management: Receipt preview modal should now be visible');
-        }, 100);
-
-      } catch (stateError) {
-        console.error('❌ Error setting modal states:', stateError);
-        toast({
-          title: 'Lỗi',
-          description: 'Không thể hiển thị xem trước hóa đơn',
-          variant: 'destructive',
-        });
-      }
+      // Step 5: Set states and show receipt preview
+      setOrderDetailsOpen(false);
+      setSelectedOrder(order);
+      setOrderForPayment(orderForPaymentData);
+      setPreviewReceipt(receiptPreview);
+      
+      console.log('🚀 Order Management: States set, showing receipt preview modal');
+      setShowReceiptPreview(true);
 
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
@@ -1884,205 +1845,7 @@ export function OrderManagement() {
                 {selectedOrder.status !== 'paid' && selectedOrder.status !== 'cancelled' && (
                   <div className="flex gap-2 pt-4">
                     <Button
-                      onClick={() => {
-                        console.log('🎯 Order Management: Bắt đầu thanh toán - kiểm tra dữ liệu');
-
-                        if (!selectedOrder || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
-                          console.error('❌ Thiếu dữ liệu đơn hàng:', {
-                            selectedOrder: !!selectedOrder,
-                            orderItems: orderItems?.length || 0,
-                            orderItemsArray: Array.isArray(orderItems)
-                          });
-                          toast({
-                            title: 'Lỗi',
-                            description: 'Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.',
-                            variant: 'destructive',
-                          });
-                          return;
-                        }
-
-                        // Tính toán chính xác giống như hiển thị Order Details
-                        let calculatedSubtotal = 0;
-                        let calculatedTax = 0;
-
-                        console.log('💰 Tính toán từ orderItems:', orderItems.length, 'items');
-                        console.log('📦 Products available:', Array.isArray(products) ? products.length : 0);
-
-                        const processedItems = orderItems.map((item: any) => {
-                          const unitPrice = Number(item.unitPrice || 0);
-                          const quantity = Number(item.quantity || 0);
-                          const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-
-                          console.log(`📊 Processing item ${item.id}:`, {
-                            productId: item.productId,
-                            unitPrice,
-                            quantity,
-                            productFound: !!product
-                          });
-
-                          // Subtotal = unitPrice * quantity
-                          const itemSubtotal = unitPrice * quantity;
-                          calculatedSubtotal += itemSubtotal;
-
-                          // Tính thuế từ afterTaxPrice nếu có
-                          let itemTax = 0;
-                          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                            const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const originalPrice = parseFloat(product.price || unitPrice);
-                            const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
-                            itemTax = taxPerUnit * quantity;
-                            calculatedTax += itemTax;
-                            console.log(`💸 Tax calculated for ${item.productName}:`, {
-                              afterTaxPrice,
-                              originalPrice,
-                              taxPerUnit,
-                              quantity,
-                              itemTax
-                            });
-                          }
-
-                          return {
-                            id: item.id,
-                            productId: item.productId,
-                            productName: item.productName || product?.name || 'Unknown Product',
-                            quantity: quantity,
-                            unitPrice: unitPrice,
-                            price: unitPrice,
-                            total: itemSubtotal,
-                            sku: item.productSku || product?.sku || `SP${item.productId}`,
-                            taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
-                            afterTaxPrice: product?.afterTaxPrice || null
-                          };
-                        });
-
-                        const finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
-
-                        console.log('💰 Kết quả tính toán cuối:', {
-                          subtotal: calculatedSubtotal,
-                          tax: calculatedTax,
-                          finalTotal: finalTotal,
-                          itemsProcessed: processedItems.length
-                        });
-
-                        // Kiểm tra tổng tiền hợp lệ
-                        if (finalTotal <= 0 || isNaN(finalTotal)) {
-                          console.error('❌ Tổng tiền không hợp lệ:', finalTotal);
-                          toast({
-                            title: 'Lỗi',
-                            description: 'Tổng tiền đơn hàng không hợp lệ. Vui lòng kiểm tra lại.',
-                            variant: 'destructive',
-                          });
-                          return;
-                        }
-
-                        // Kiểm tra items hợp lệ
-                        if (!processedItems || processedItems.length === 0) {
-                          console.error('❌ Không có items để tạo receipt preview');
-                          toast({
-                            title: 'Lỗi',
-                            description: 'Không có món ăn trong đơn hàng để thanh toán.',
-                            variant: 'destructive',
-                          });
-                          return;
-                        }
-
-                        console.log('✅ Creating receiptPreview with:', {
-                          itemsCount: processedItems.length,
-                          calculatedSubtotal,
-                          calculatedTax: Math.abs(calculatedTax),
-                          finalTotal,
-                          firstItem: processedItems[0]
-                        });
-
-                        // Tạo receipt preview data với định dạng đúng và validation
-                        const receiptPreview = {
-                          id: selectedOrder.id,
-                          orderId: selectedOrder.id,
-                          orderNumber: selectedOrder.orderNumber || `ORD-${selectedOrder.id}`,
-                          tableId: selectedOrder.tableId,
-                          customerCount: selectedOrder.customerCount || 1,
-                          customerName: selectedOrder.customerName || 'Khách hàng',
-                          items: processedItems,
-                          orderItems: processedItems,
-                          subtotal: calculatedSubtotal.toString(),
-                          tax: Math.abs(calculatedTax).toString(),
-                          total: finalTotal.toString(),
-                          exactSubtotal: calculatedSubtotal,
-                          exactTax: Math.abs(calculatedTax),
-                          exactTotal: finalTotal,
-                          paymentMethod: 'preview',
-                          amountReceived: finalTotal.toString(),
-                          change: '0.00',
-                          cashierName: 'Order Management',
-                          createdAt: new Date().toISOString(),
-                          transactionId: `TXN-PREVIEW-${Date.now()}`,
-                          calculatedSubtotal: calculatedSubtotal,
-                          calculatedTax: Math.abs(calculatedTax),
-                          calculatedTotal: finalTotal
-                        };
-
-                        // Validate receipt preview data thoroughly
-                        if (!receiptPreview.items || !Array.isArray(receiptPreview.items) || receiptPreview.items.length === 0) {
-                          console.error('❌ Receipt preview validation failed - invalid items:', {
-                            hasItems: !!receiptPreview.items,
-                            isArray: Array.isArray(receiptPreview.items),
-                            length: receiptPreview.items?.length || 0
-                          });
-                          toast({
-                            title: 'Lỗi',
-                            description: 'Không thể tạo xem trước hóa đơn - dữ liệu món ăn không hợp lệ',
-                            variant: 'destructive',
-                          });
-                          return;
-                        }
-
-                        console.log('✅ Receipt preview validation passed:', {
-                          itemsCount: receiptPreview.items.length,
-                          total: receiptPreview.total,
-                          exactTotal: receiptPreview.exactTotal
-                        });
-
-                        console.log('✅ Thiết lập dữ liệu để hiển thị preview:', {
-                          receiptTotal: receiptPreview.total,
-                          receiptExactTotal: receiptPreview.exactTotal,
-                          orderTotal: finalTotal,
-                          orderId: selectedOrder.id
-                        });
-
-                        // Step 5: Create payment order data and show receipt preview
-                        const paymentOrderData = {
-                          ...selectedOrder,
-                          id: selectedOrder.id,
-                          orderItems: processedItems,
-                          processedItems: processedItems,
-                          calculatedSubtotal: calculatedSubtotal,
-                          calculatedTax: calculatedTax,
-                          calculatedTotal: finalTotal,
-                          total: finalTotal
-                        };
-
-                        // Close order details modal and show receipt preview
-                        try {
-                          setOrderDetailsOpen(false);
-                          setSelectedOrder(selectedOrder);
-                          setOrderForPayment(paymentOrderData);
-                          setPreviewReceipt(receiptPreview);
-
-                          // Use setTimeout to ensure state is set before showing modal
-                          setTimeout(() => {
-                            setShowReceiptPreview(true);
-                            console.log('🚀 Order Management: Receipt preview modal should now be visible');
-                          }, 100);
-
-                        } catch (stateError) {
-                          console.error('❌ Error setting modal states:', stateError);
-                          toast({
-                            title: 'Lỗi',
-                            description: 'Không thể hiển thị xem trước hóa đơn',
-                            variant: 'destructive',
-                          });
-                        }
-                      }}
+                      onClick={() => handlePaymentClick(selectedOrder)}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
                     >
