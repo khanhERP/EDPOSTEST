@@ -246,10 +246,56 @@ export function ShoppingCart({
       return;
     }
 
-    console.log("🔄 Creating order before payment...");
+    console.log("🔄 Step 1: Creating receipt preview...");
 
     try {
-      // Create order first before opening payment modal
+      // Step 1: Create receipt preview data first
+      const receiptPreviewData = {
+        transactionId: `PREVIEW-${Date.now()}`,
+        items: cart.map((item) => ({
+          id: item.id,
+          productId: item.id,
+          productName: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          total: item.total,
+          sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
+          taxRate: parseFloat(item.taxRate || "0"),
+        })),
+        subtotal: subtotal.toFixed(2),
+        tax: tax.toFixed(2),
+        total: total.toFixed(2),
+        exactSubtotal: subtotal,
+        exactTax: tax,
+        exactTotal: total,
+        paymentMethod: "preview",
+        cashierName: "System User",
+        createdAt: new Date().toISOString(),
+      };
+
+      console.log("📄 Step 1: Created receipt preview data:", receiptPreviewData);
+
+      // Step 1: Show receipt preview modal first
+      setPreviewReceipt(receiptPreviewData);
+      setShowReceiptPreview(true);
+      
+      console.log("🚀 Step 1: Opening receipt preview modal (Xem trước hóa đơn)");
+
+    } catch (error) {
+      console.error("❌ Failed to create receipt preview:", error);
+      toast({
+        title: t("common.error"),
+        description: "Không thể tạo xem trước hóa đơn. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReceiptPreviewConfirm = async () => {
+    console.log("📄 Step 1 → Step 2: Receipt preview confirmed, creating order...");
+
+    try {
+      // Step 2: Create order after receipt preview is confirmed
       const orderData = {
         orderNumber: `POS-${Date.now()}`,
         tableId: null, // POS orders don't need table
@@ -269,7 +315,7 @@ export function ShoppingCart({
         }))
       };
 
-      console.log("📤 Creating order with data:", orderData);
+      console.log("📤 Step 2: Creating order with data:", orderData);
 
       const response = await fetch("/api/orders", {
         method: "POST",
@@ -282,15 +328,7 @@ export function ShoppingCart({
       }
 
       const createdOrder = await response.json();
-      console.log("✅ Order created successfully:", createdOrder);
-      console.log("🔍 Created order details:", {
-        orderId: createdOrder?.id,
-        orderNumber: createdOrder?.orderNumber,
-        status: createdOrder?.status,
-        total: createdOrder?.total,
-        orderItems: createdOrder?.orderItems?.length || 0,
-        fullObject: JSON.stringify(createdOrder, null, 2)
-      });
+      console.log("✅ Step 2: Order created successfully:", createdOrder);
 
       // Store created order for payment with validation
       if (!createdOrder || !createdOrder.id) {
@@ -311,7 +349,7 @@ export function ShoppingCart({
         exactTotal
       };
 
-      console.log("💾 Setting currentOrderForPayment with exact totals:", {
+      console.log("💾 Step 2: Setting currentOrderForPayment with exact totals:", {
         orderId: orderWithExactTotals.id,
         exactSubtotal,
         exactTax,
@@ -321,15 +359,17 @@ export function ShoppingCart({
 
       setCurrentOrderForPayment(orderWithExactTotals);
 
-      // Add small delay to ensure state is updated before opening modal
+      // Step 2 → Step 3: Close receipt preview and open payment modal
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+
       setTimeout(() => {
-        console.log("🚀 Opening payment modal with order:", orderWithExactTotals.id);
-        console.log("🔍 currentOrderForPayment state before modal:", orderWithExactTotals);
+        console.log("🚀 Step 2 → Step 3: Opening payment modal with order:", orderWithExactTotals.id);
         setShowPaymentModal(true);
       }, 100);
 
     } catch (error) {
-      console.error("❌ Failed to create order:", error);
+      console.error("❌ Step 2 failed: Failed to create order:", error);
       toast({
         title: t("common.error"),
         description: "Không thể tạo đơn hàng. Vui lòng thử lại.",
@@ -722,13 +762,7 @@ export function ShoppingCart({
           setPreviewReceipt(null);
         }}
         receipt={previewReceipt}
-        onConfirm={() => {
-          console.log(
-            "📄 Step 1 → Step 2: Receipt preview confirmed, showing payment methods",
-          );
-          // Changed from setShowPaymentMethodModal to setShowPaymentModal
-          setShowPaymentModal(true);
-        }}
+        onConfirm={handleReceiptPreviewConfirm}
         isPreview={true} // This is the preview modal - "Xem trước hóa đơn"
         cartItems={cart.map((item) => ({
           id: item.id,
