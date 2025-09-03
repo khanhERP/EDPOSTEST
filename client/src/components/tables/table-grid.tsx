@@ -93,22 +93,34 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: allOrderItems } = useQuery({
     queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
-    enabled: activeOrders.length > 0,
+    enabled: true, // Always enabled to preload data
     staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     queryFn: async () => {
       const itemsMap = new Map();
+
+      // Only fetch if we have active orders
+      if (activeOrders.length === 0) {
+        console.log("📦 No active orders to fetch items for");
+        return itemsMap;
+      }
+
+      console.log("📦 Preloading order items for", activeOrders.length, "active orders");
 
       for (const order of activeOrders) {
         try {
           const response = await apiRequest("GET", `/api/order-items/${order.id}`);
           const items = await response.json();
           itemsMap.set(order.id, Array.isArray(items) ? items : []);
+          console.log(`✅ Loaded ${Array.isArray(items) ? items.length : 0} items for order ${order.id}`);
         } catch (error) {
-          console.error(`Error fetching items for order ${order.id}:`, error);
+          console.error(`❌ Error fetching items for order ${order.id}:`, error);
           itemsMap.set(order.id, []);
         }
       }
 
+      console.log("📦 Preloading completed for", itemsMap.size, "orders");
       return itemsMap;
     },
   });
@@ -223,6 +235,24 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       refetchOrderItems();
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
+
+  // Trigger allOrderItems refetch when orders data changes
+  useEffect(() => {
+    if (orders && Array.isArray(orders)) {
+      console.log("📦 Orders data changed, checking if need to refetch order items");
+      const currentActiveOrders = orders.filter(
+        (order: any) => !["paid", "cancelled"].includes(order.status)
+      );
+      
+      if (currentActiveOrders.length > 0) {
+        console.log(`📦 Found ${currentActiveOrders.length} active orders, triggering order items refetch`);
+        // Force refetch allOrderItems
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/all-order-items"] 
+        });
+      }
+    }
+  }, [orders, queryClient]);
 
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
