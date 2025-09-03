@@ -184,7 +184,7 @@ export function ReceiptModal({
             // Auto-close receipt modal after printing and refresh data
             setTimeout(() => {
               console.log('🔄 Auto-closing receipt modal after print start and refreshing data');
-              
+
               // Send refresh signal to update table status and clear cart
               try {
                 const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -214,7 +214,7 @@ export function ReceiptModal({
           if (printWindow.closed) {
             clearInterval(checkClosed);
             console.log("🖨️ Print window closed - print completed");
-            
+
             // Also trigger refresh when print window is manually closed
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";

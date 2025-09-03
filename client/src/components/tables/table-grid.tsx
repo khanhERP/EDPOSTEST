@@ -250,19 +250,31 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
           }
 
-          // Handle popup close signal - simple refresh data
+          // Handle popup close signal - force immediate refresh
           if (data.type === "popup_close" && data.success) {
-            console.log("🔄 Table Grid: Popup closed, refreshing table data");
+            console.log("🔄 Table Grid: Popup closed, forcing immediate data refresh");
             
-            // Clear cache and refetch fresh data
-            queryClient.removeQueries({ queryKey: ["/api/tables"] });
-            queryClient.removeQueries({ queryKey: ["/api/orders"] });
+            // Clear ALL cache completely
+            queryClient.clear();
             
-            // Refresh data
-            refetchTables();
-            refetchOrders();
-            
-            console.log("✅ Table Grid: Data refreshed successfully");
+            // Force immediate refresh with Promise.all to ensure both complete
+            Promise.all([
+              refetchTables(),
+              refetchOrders()
+            ]).then(() => {
+              console.log("✅ Table Grid: All data refreshed successfully");
+              
+              // Force a second refresh after a short delay to ensure consistency
+              setTimeout(() => {
+                Promise.all([
+                  refetchTables(),
+                  refetchOrders()
+                ]);
+                console.log("✅ Table Grid: Second refresh completed");
+              }, 200);
+            }).catch((error) => {
+              console.error("❌ Table Grid: Error during data refresh:", error);
+            });
           }
         } catch (error) {
           console.error("Table Grid: Error parsing WebSocket message:", error);
@@ -294,19 +306,26 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       
       // Force immediate data refresh when payment is completed from any source
       const refreshData = async () => {
-        console.log("🔄 Table Grid: Starting immediate refresh after payment completion");
+        console.log("🔄 Table Grid: Starting aggressive refresh after payment completion");
         
         try {
           // Clear all cached data completely
           queryClient.clear();
+          queryClient.removeQueries();
           
-          // Force fresh data fetch
-          await Promise.all([
-            refetchTables(),
-            refetchOrders()
-          ]);
+          // Force fresh data fetch multiple times
+          for (let i = 0; i < 3; i++) {
+            await Promise.all([
+              refetchTables(),
+              refetchOrders()
+            ]);
+            
+            if (i < 2) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+          }
           
-          console.log("✅ Table Grid: Payment refresh completed successfully");
+          console.log("✅ Table Grid: Aggressive payment refresh completed");
           
           toast({
             title: "Đã cập nhật",
@@ -315,6 +334,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           
         } catch (error) {
           console.error("❌ Table Grid: Error refreshing after payment:", error);
+          // Fallback: force page reload if refresh fails
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         }
       };
       

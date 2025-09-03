@@ -159,9 +159,9 @@ export function ShoppingCart({
               broadcastCartUpdate(cart);
             }
 
-            // Handle popup close signal - simple refresh and clear cart
+            // Handle popup close signal - force complete refresh
             if (data.type === 'popup_close' && data.success) {
-              console.log('🔄 Shopping Cart: Popup closed, clearing cart and refreshing data');
+              console.log('🔄 Shopping Cart: Popup closed, forcing complete refresh');
               
               // Clear cart immediately
               onClearCart();
@@ -171,10 +171,15 @@ export function ShoppingCart({
                 (window as any).clearActiveOrder();
               }
               
+              // Force page refresh to ensure all data is updated
+              setTimeout(() => {
+                window.location.reload();
+              }, 100);
+              
               // Broadcast empty cart to customer display
               broadcastCartUpdate([]);
               
-              console.log('✅ Shopping Cart: Cart cleared successfully');
+              console.log('✅ Shopping Cart: Complete refresh initiated');
             }
           } catch (error) {
             console.error('Shopping Cart: Error parsing WebSocket message:', error);
