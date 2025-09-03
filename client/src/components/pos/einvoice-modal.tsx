@@ -87,7 +87,7 @@ export function EInvoiceModal({
   const [isPublishing, setIsPublishing] = useState(false);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [activeInputField, setActiveInputField] = useState<string | null>(null);
-  
+
 
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -1122,60 +1122,16 @@ export function EInvoiceModal({
         console.log("✅ Prepared comprehensive invoice result:", invoiceResult);
 
         // --- CHANGE START ---
-        // Always show receipt after processing
-        const receiptDataToConfirm = {
-          transactionId: result.data?.invoiceNo || `TXN-${Date.now()}`,
-          items: cartItems.map((item) => {
-            const itemPrice =
-              typeof item.price === "string"
-                ? parseFloat(item.price)
-                : item.price;
-            const itemQuantity =
-              typeof item.quantity === "string"
-                ? parseInt(item.quantity)
-                : item.quantity;
-            const itemTaxRate =
-              typeof item.taxRate === "string"
-                ? parseFloat(item.taxRate || "0")
-                : item.taxRate || 0;
-            const itemSubtotal = itemPrice * itemQuantity;
-            const itemTax = (itemSubtotal * itemTaxRate) / 100;
-
-            return {
-              id: item.id,
-              productId: item.id,
-              productName: item.name,
-              price: itemPrice.toFixed(2),
-              quantity: itemQuantity,
-              total: (itemSubtotal + itemTax).toFixed(2),
-              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-              taxRate: itemTaxRate,
-            };
-          }),
-          subtotal: calculatedSubtotal.toFixed(2),
-          tax: calculatedTax.toFixed(2),
-          total: cartTotal.toFixed(2),
-          paymentMethod: "einvoice",
-          originalPaymentMethod: selectedPaymentMethod,
-          amountReceived: cartTotal.toFixed(2),
-          change: "0.00",
-          cashierName: "System User",
-          createdAt: new Date().toISOString(),
-          invoiceNumber: result.data?.invoiceNo || null,
-          customerName: formData.customerName,
-          customerTaxCode: formData.taxCode,
-        };
-
         // Return comprehensive result for parent component to handle updates
         const publishResult = {
           success: true,
-          invoiceNumber: receiptDataToConfirm.invoiceNumber,
+          invoiceNumber: receiptData.invoiceNumber,
           symbol: selectedTemplate.symbol || null,
           templateNumber: selectedTemplate.templateNumber || null,
           einvoiceStatus: 1, // Đã phát hành
           invoiceStatus: 1, // Hoàn thành
           status: 'published',
-          receipt: receiptDataToConfirm,
+          receipt: receiptData,
           publishedImmediately: true,
           showReceiptModal: true, // Ensure receipt modal is shown
           shouldShowReceipt: true // Additional flag for receipt display
@@ -1205,7 +1161,7 @@ export function EInvoiceModal({
     onClose();
   };
 
-  
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -1472,7 +1428,7 @@ export function EInvoiceModal({
         </div>
       </DialogContent>
 
-      
+
     </Dialog>
   );
 }
