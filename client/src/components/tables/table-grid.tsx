@@ -2690,18 +2690,46 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setSelectedPaymentMethod("");
 
             // Force immediate data refresh when receipt modal closes
-            console.log("🔄 Table: Forcing data refresh after receipt modal close");
-            setTimeout(() => {
-              queryClient.removeQueries({ queryKey: ["/api/tables"] });
-              queryClient.removeQueries({ queryKey: ["/api/orders"] });
-              refetchTables();
-              refetchOrders();
-              
-              toast({
-                title: "Đã cập nhật",
-                description: "Dữ liệu trạng thái bàn đã được làm mới",
-              });
-            }, 200);
+            console.log("🔄 Table: Forcing comprehensive data refresh after receipt modal close");
+            
+            // Clear all cached data first
+            queryClient.clear();
+            
+            // Force immediate refresh multiple times to ensure data consistency
+            const refreshData = async () => {
+              try {
+                console.log("🔄 Table: Starting data refresh cycle 1");
+                await Promise.all([
+                  refetchTables(),
+                  refetchOrders()
+                ]);
+                
+                // Second refresh after a short delay for consistency
+                setTimeout(async () => {
+                  console.log("🔄 Table: Starting data refresh cycle 2");
+                  await Promise.all([
+                    refetchTables(),
+                    refetchOrders()
+                  ]);
+                  
+                  toast({
+                    title: "Đã cập nhật",
+                    description: "Dữ liệu trạng thái bàn đã được làm mới",
+                  });
+                }, 500);
+                
+              } catch (error) {
+                console.error("❌ Error during data refresh:", error);
+                toast({
+                  title: "Cảnh báo",
+                  description: "Có lỗi khi làm mới dữ liệu. Vui lòng tải lại trang.",
+                  variant: "destructive",
+                });
+              }
+            };
+            
+            // Start immediate refresh
+            refreshData();
           }}
           receipt={selectedReceipt}
           cartItems={
