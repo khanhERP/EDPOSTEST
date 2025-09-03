@@ -18,34 +18,23 @@ import { useTranslation } from "@/lib/i18n";
 interface ReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
-  receipt: Receipt | null;
-  onConfirm?: () => void;
-  isPreview?: boolean;
-  cartItems?: Array<{
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
-    sku?: string;
-    taxRate?: number;
-  }>;
+  receipt?: Receipt | null;
+  cartItems?: any[];
   total?: number;
-  isEInvoice?: boolean;
-  customerName?: string;
-  customerTaxCode?: string;
+  isPreview?: boolean;
+  onConfirm?: () => void;
+  autoClose?: boolean;
 }
 
 export function ReceiptModal({
   isOpen,
   onClose,
   receipt,
-  onConfirm,
-  isPreview = false,
   cartItems = [],
-  total,
-  isEInvoice = false,
-  customerName,
-  customerTaxCode,
+  total = 0,
+  isPreview = false,
+  onConfirm,
+  autoClose = false,
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
@@ -118,9 +107,125 @@ export function ReceiptModal({
     );
   }
 
-  const handlePrint = async () => {
-    console.log("🖨️ Starting browser print process");
-    await handleBrowserPrint();
+  // Auto-print and auto-close effect for final receipts
+  useEffect(() => {
+    if (isOpen && !isPreview && autoClose && receipt) {
+      console.log('🖨️ Auto-printing final receipt and will auto-close');
+
+      // Auto-print after a short delay
+      const printTimer = setTimeout(() => {
+        handlePrint();
+
+        // Auto-close after printing
+        const closeTimer = setTimeout(() => {
+          console.log('🔄 Auto-closing receipt modal after print');
+          onClose();
+        }, 3000); // Close after 3 seconds
+
+        return () => clearTimeout(closeTimer);
+      }, 1000); // Print after 1 second
+
+      return () => clearTimeout(printTimer);
+    }
+  }, [isOpen, isPreview, autoClose, receipt, onClose]);
+
+
+  const handlePrint = () => {
+    // Send popup close signal before printing
+    fetch('/api/popup/close', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: true,
+        action: 'print_receipt_requested',
+        timestamp: new Date().toISOString()
+      }),
+    }).catch(console.error);
+
+    const printContent = document.getElementById('receipt-content');
+    if (printContent) {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Receipt</title>
+              <style>
+                body {
+                  font-family: 'Courier New', monospace;
+                  font-size: 12px;
+                  margin: 0;
+                  padding: 20px;
+                  background: white;
+                }
+                .receipt-container {
+                  width: 280px;
+                  margin: 0 auto;
+                }
+                .text-center { text-align: center; }
+                .text-right { text-align: right; }
+                .font-bold { font-weight: bold; }
+                .border-t { border-top: 1px solid #000; }
+                .border-b { border-bottom: 1px solid #000; }
+                .py-1 { padding: 2px 0; }
+                .py-2 { padding: 4px 0; }
+                .mb-2 { margin-bottom: 4px; }
+                .mb-4 { margin-bottom: 8px; }
+                .flex { display: flex; }
+                .justify-between { justify-content: space-between; }
+                .items-center { align-items: center; }
+                .space-y-1 > * + * { margin-top: 2px; }
+                .space-y-2 > * + * { margin-top: 4px; }
+                img { max-width: 100px; height: auto; }
+                @media print {
+                  body { margin: 0; padding: 0; }
+                  .receipt-container { width: 100%; }
+                }
+              </style>
+            </head>
+            <body>
+              ${printContent.innerHTML}
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+
+        // Wait for images to load then print
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+
+            // If this is an auto-close receipt, close this modal after printing starts
+            if (autoClose && !isPreview) {
+              setTimeout(() => {
+                console.log('🔄 Auto-closing receipt modal after print start');
+                onClose();
+              }, 2000);
+            }
+          }, 500);
+        };
+
+        // Monitor print completion
+        const checkClosed = setInterval(() => {
+          if (printWindow.closed) {
+            clearInterval(checkClosed);
+            console.log("🖨️ Print window closed - print completed");
+          }
+        }, 500);
+
+        // Force close print window after 10 seconds and clear interval after 15 seconds
+        setTimeout(() => {
+          if (!printWindow.closed) {
+            console.log("🖨️ Force closing print window after 10s timeout");
+            printWindow.close();
+          }
+        }, 10000);
+
+        setTimeout(() => {
+          clearInterval(checkClosed);
+        }, 15000);
+      }
+    }
   };
 
   const handleBrowserPrint = async () => {
@@ -515,16 +620,16 @@ export function ReceiptModal({
                       <div className="text-xs text-gray-600">
                         {item.quantity} x{" "}
                         {Math.floor(
-                          typeof item.price === "string" 
-                            ? parseFloat(item.price) 
+                          typeof item.price === "string"
+                            ? parseFloat(item.price)
                             : item.price
                         ).toLocaleString("vi-VN")} ₫
                       </div>
                     </div>
                     <div>
                       {Math.floor(
-                        (typeof item.price === "string" 
-                          ? parseFloat(item.price) 
+                        (typeof item.price === "string"
+                          ? parseFloat(item.price)
                           : item.price) * item.quantity
                       ).toLocaleString("vi-VN")} ₫
                     </div>
@@ -540,9 +645,9 @@ export function ReceiptModal({
                   const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
                   return sum + (price * item.quantity);
                 }, 0);
-                
+
                 const tax = Math.max(0, total - subtotal);
-                
+
                 return (
                   <>
                     <div className="flex justify-between text-sm">

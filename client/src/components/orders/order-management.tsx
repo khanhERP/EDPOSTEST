@@ -214,18 +214,30 @@ export function OrderManagement() {
           setPaymentMethodsOpen(false);
           setShowPaymentMethodModal(false);
           setShowEInvoiceModal(false);
+          setShowReceiptPreview(false);
+          setPreviewReceipt(null);
+          setSelectedOrder(null);
           setOrderForPayment(null);
 
-          // Show receipt modal
+          // Show receipt modal - this will handle auto-print and auto-close
           setSelectedReceipt(receiptData);
           setShowReceiptModal(true);
         }
       } catch (error) {
         console.error('Error fetching order details for receipt:', error);
+        // Still close all modals even if receipt fails
+        setOrderDetailsOpen(false);
+        setPaymentMethodsOpen(false);
+        setShowPaymentMethodModal(false);
+        setShowEInvoiceModal(false);
+        setShowReceiptPreview(false);
+        setPreviewReceipt(null);
+        setSelectedOrder(null);
+        setOrderForPayment(null);
+        
         toast({
-          title: 'Cảnh báo',
-          description: 'Thanh toán thành công nhưng không thể hiển thị hóa đơn',
-          variant: 'destructive',
+          title: 'Thanh toán thành công',
+          description: 'Đơn hàng đã được thanh toán. Hóa đơn sẽ được in tự động.',
         });
       }
     },
@@ -477,10 +489,13 @@ export function OrderManagement() {
           : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
       });
 
-      // Close modals and show receipt if available
+      // Close all modals first
       setShowEInvoiceModal(false);
       setOrderForPayment(null);
+      setOrderDetailsOpen(false);
+      setSelectedOrder(null);
 
+      // Show receipt if available - this will auto-close after printing
       if (invoiceData.receipt) {
         console.log('📄 Showing receipt modal after successful payment');
         setSelectedReceipt(invoiceData.receipt);
@@ -2480,6 +2495,16 @@ export function OrderManagement() {
           setPreviewReceipt(null);
           setOrderDetailsOpen(false);
           setSelectedOrder(null);
+          setPaymentMethodsOpen(false);
+          setShowQRPayment(false);
+          setPointsPaymentOpen(false);
+          setMixedPaymentOpen(false);
+          
+          // Force refresh orders after successful payment
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+          
+          console.log('✅ Order Management: All states cleared and queries refreshed');
         }}
         receipt={selectedReceipt}
         cartItems={selectedReceipt?.items?.map((item: any) => ({
@@ -2493,6 +2518,7 @@ export function OrderManagement() {
             return product?.taxRate ? parseFloat(product.taxRate) : 10;
           })()
         })) || []}
+        autoClose={true}
       />
     </div>
   );
