@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import QRCodeLib from "qrcode";
 import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import { EInvoiceModal } from "./einvoice-modal";
+import { ReceiptModal } from "./receipt-modal";
 import { usePopupSignal } from "@/hooks/use-popup-signal";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 import { useToast } from "@/hooks/use-toast";
