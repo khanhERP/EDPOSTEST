@@ -500,8 +500,21 @@ export function PaymentMethodModal({
         setQrLoading(false);
       }
     } else {
-      // For other payment methods (card, digital wallets), update order status first
-      console.log(`🚀 OTHER PAYMENT METHOD (${method}) - updating order status to 'paid' for order ${orderInfo.id}`);
+      // Check if this is a real order or temporary order
+      const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
+      
+      if (isTemporaryOrder) {
+        console.log(`🔄 TEMPORARY ORDER DETECTED - proceeding directly to E-Invoice for ${method} payment on order ${orderInfo.id}`);
+        
+        // For temporary orders (POS direct payments), skip database update and go directly to E-Invoice
+        setSelectedPaymentMethod(method);
+        setShowEInvoice(true);
+        console.log(`🔥 SHOWING E-INVOICE MODAL for temporary order with ${method} payment`);
+        return;
+      }
+      
+      // For other payment methods (card, digital wallets) on real orders, update order status first
+      console.log(`🚀 REAL ORDER OTHER PAYMENT METHOD (${method}) - updating order status to 'paid' for order ${orderInfo.id}`);
       
       try {
         const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
@@ -535,7 +548,25 @@ export function PaymentMethodModal({
   };
 
   const handleQRComplete = async () => {
-    console.log(`🚀 QR PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
+    console.log(`🚀 QR PAYMENT COMPLETE - checking order type for order ${orderInfo.id}`);
+    
+    // Check if this is a real order or temporary order
+    const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
+    
+    if (isTemporaryOrder) {
+      console.log(`🔄 TEMPORARY ORDER DETECTED - proceeding directly to E-Invoice for order ${orderInfo.id}`);
+      
+      // For temporary orders (POS direct payments), skip database update and go directly to E-Invoice
+      setShowQRCode(false);
+      setQrCodeUrl("");
+      setSelectedPaymentMethod("qrCode");
+      setShowEInvoice(true);
+      console.log(`🔥 SHOWING E-INVOICE MODAL for temporary order`);
+      return;
+    }
+    
+    // For real orders, update order status to 'paid'
+    console.log(`🚀 REAL ORDER QR PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
     
     try {
       console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
@@ -638,8 +669,24 @@ export function PaymentMethodModal({
       return; // Không thực hiện nếu chưa đủ tiền
     }
 
-    // NOW update order status to 'paid' when cash payment is completed
-    console.log(`🚀 CASH PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
+    // Check if this is a real order or temporary order
+    const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
+    
+    if (isTemporaryOrder) {
+      console.log(`🔄 TEMPORARY ORDER DETECTED - proceeding directly to E-Invoice for order ${orderInfo.id}`);
+      
+      // For temporary orders (POS direct payments), skip database update and go directly to E-Invoice
+      setShowCashPayment(false);
+      setAmountReceived("");
+      setCashAmountInput("");
+      setSelectedPaymentMethod("cash");
+      setShowEInvoice(true);
+      console.log(`🔥 SHOWING E-INVOICE MODAL for temporary order`);
+      return;
+    }
+
+    // For real orders, update order status to 'paid' when cash payment is completed
+    console.log(`🚀 REAL ORDER CASH PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
     
     try {
       console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
@@ -689,68 +736,81 @@ export function PaymentMethodModal({
     try {
       console.log("🔄 Step 1: Starting payment process for order:", orderInfo.id);
 
-      // STEP 1: Update order status to 'paid' using the dedicated status endpoint
-      console.log("📤 Step 1: Updating order status to 'paid'");
-      console.log(`🔍 Order details before update:`, {
-        orderId: orderInfo.id,
-        currentStatus: orderInfo.status,
-        tableId: orderInfo.tableId,
-        total: orderInfo.total,
-        paymentMethod: selectedPaymentMethod
-      });
+      // Check if this is a real order or temporary order
+      const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
+      let statusResult = null;
+      
+      if (!isTemporaryOrder) {
+        // STEP 1: Update order status to 'paid' using the dedicated status endpoint (only for real orders)
+        console.log("📤 Step 1: Updating order status to 'paid' for real order");
+        console.log(`🔍 Order details before update:`, {
+          orderId: orderInfo.id,
+          currentStatus: orderInfo.status,
+          tableId: orderInfo.tableId,
+          total: orderInfo.total,
+          paymentMethod: selectedPaymentMethod
+        });
 
-      const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'paid'
-        }),
-      });
+        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'paid'
+          }),
+        });
 
-      console.log(`🔍 API Response status: ${statusResponse.status} ${statusResponse.statusText}`);
+        console.log(`🔍 API Response status: ${statusResponse.status} ${statusResponse.statusText}`);
 
-      if (!statusResponse.ok) {
-        const errorText = await statusResponse.text();
-        console.error("❌ Step 1 FAILED: Order status update failed:", errorText);
-        throw new Error(`Failed to update order status to paid: ${errorText}`);
-      }
+        if (!statusResponse.ok) {
+          const errorText = await statusResponse.text();
+          console.error("❌ Step 1 FAILED: Order status update failed:", errorText);
+          throw new Error(`Failed to update order status to paid: ${errorText}`);
+        }
 
-      const statusResult = await statusResponse.json();
-      console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
-      console.log(`🎯 Order status changed: ${orderInfo.status} → 'paid'`);
-
-      // STEP 2: Update order with payment details
-      console.log("📤 Step 2: Adding payment details to order");
-      const paymentData: any = {
-        paymentMethod: selectedPaymentMethod,
-        paidAt: new Date().toISOString(),
-        einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
-      };
-
-      // Add cash payment specific data if applicable
-      if (selectedPaymentMethod === "cash" && cashAmountInput) {
-        const orderTotal = receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0;
-        paymentData.amountReceived = parseFloat(cashAmountInput).toFixed(2);
-        paymentData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
-      }
-
-      const paymentResponse = await fetch(`/api/orders/${orderInfo.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(paymentData),
-      });
-
-      if (!paymentResponse.ok) {
-        const errorText = await paymentResponse.text();
-        console.error("❌ Step 2 FAILED: Payment details update failed:", errorText);
-        // Don't throw here as the status was already updated successfully
+        statusResult = await statusResponse.json();
+        console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
+        console.log(`🎯 Order status changed: ${orderInfo.status} → 'paid'`);
       } else {
-        const paymentResult = await paymentResponse.json();
-        console.log("✅ Step 2 SUCCESS: Payment details added:", paymentResult);
+        console.log("🔄 Step 1 SKIPPED: Temporary order detected, proceeding without database update");
+        statusResult = { id: orderInfo.id, status: 'paid', tableId: orderInfo.tableId };
+      }
+
+      // STEP 2: Update order with payment details (only for real orders)
+      if (!isTemporaryOrder) {
+        console.log("📤 Step 2: Adding payment details to real order");
+        const paymentData: any = {
+          paymentMethod: selectedPaymentMethod,
+          paidAt: new Date().toISOString(),
+          einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
+        };
+
+        // Add cash payment specific data if applicable
+        if (selectedPaymentMethod === "cash" && cashAmountInput) {
+          const orderTotal = receipt?.exactTotal ?? orderInfo?.exactTotal ?? orderInfo?.total ?? total ?? 0;
+          paymentData.amountReceived = parseFloat(cashAmountInput).toFixed(2);
+          paymentData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
+        }
+
+        const paymentResponse = await fetch(`/api/orders/${orderInfo.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(paymentData),
+        });
+
+        if (!paymentResponse.ok) {
+          const errorText = await paymentResponse.text();
+          console.error("❌ Step 2 FAILED: Payment details update failed:", errorText);
+          // Don't throw here as the status was already updated successfully
+        } else {
+          const paymentResult = await paymentResponse.json();
+          console.log("✅ Step 2 SUCCESS: Payment details added:", paymentResult);
+        }
+      } else {
+        console.log("🔄 Step 2 SKIPPED: Temporary order detected, no payment details update needed");
       }
 
       // STEP 3: Create receipt data for printing
@@ -776,11 +836,10 @@ export function PaymentMethodModal({
           parseFloat(cashAmountInput) - (orderInfo.exactTotal || orderInfo.total || 0) : null
       };
 
-      // STEP 4: Force immediate UI refresh after successful status update
-      console.log("🔄 Step 4: Dispatching UI refresh events");
+      // STEP 4: Force immediate UI refresh after successful status update (only for real orders)
+      if (!isTemporaryOrder && typeof window !== 'undefined') {
+        console.log("🔄 Step 4: Dispatching UI refresh events for real order");
 
-      // Force immediate query refresh
-      if (typeof window !== 'undefined') {
         // Dispatch immediate UI refresh events
         const events = [
           new CustomEvent('orderStatusUpdated', {
@@ -841,6 +900,8 @@ export function PaymentMethodModal({
             }
           }));
         }, 500);
+      } else if (isTemporaryOrder) {
+        console.log("🔄 Step 4 SKIPPED: Temporary order detected, no UI refresh events needed");
       }
 
       // STEP 5: Close all modals and complete payment flow
