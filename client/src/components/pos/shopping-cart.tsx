@@ -161,58 +161,114 @@ export function ShoppingCart({
 
             // Handle popup close signal (when receipt modal is closed)
             if (data.type === 'popup_close' && data.success) {
-              console.log('🔄 Shopping Cart: Receipt modal closed, clearing cart immediately');
+              console.log('🧹 Shopping Cart: Receipt modal closed via popup_close, FORCE CLEARING CART');
               
-              // Clear cart immediately multiple times to ensure it works
+              // Immediate cart clear - multiple calls
               onClearCart();
+              setLastCartItems([]);
+              setSelectedReceipt(null);
+              setPreviewReceipt(null);
+              setOrderForPayment(null);
               
-              // Force immediate state reset
+              // Force immediate state reset with multiple delays
               setTimeout(() => {
+                console.log('🧹 Shopping Cart: First delayed clear (50ms)');
                 onClearCart();
+                setLastCartItems([]);
+                broadcastCartUpdate([]);
                 
                 // Also clear any selected orders in POS
                 if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
                   (window as any).clearActiveOrder();
                 }
-                
-                // Force broadcast empty cart immediately
-                broadcastCartUpdate([]);
               }, 50);
               
-              // Additional clear after a short delay to ensure it sticks
               setTimeout(() => {
+                console.log('🧹 Shopping Cart: Second delayed clear (100ms)');
                 onClearCart();
+                setLastCartItems([]);
+                broadcastCartUpdate([]);
+              }, 100);
+              
+              // Final clear after longer delay to ensure it sticks
+              setTimeout(() => {
+                console.log('🧹 Shopping Cart: Final delayed clear (200ms)');
+                onClearCart();
+                setLastCartItems([]);
                 broadcastCartUpdate([]);
               }, 200);
             }
 
             // Handle refresh signal after print to clear cart
             if (data.type === 'refresh_data_after_print' && data.action === 'refresh_tables_and_clear_cart') {
-              console.log('🔄 Shopping Cart: Clearing cart after print receipt');
+              console.log('🧹 Shopping Cart: Clearing cart after print receipt');
               
-              // Clear cart immediately
+              // Immediate cart clear - multiple calls
               onClearCart();
+              setLastCartItems([]);
+              setSelectedReceipt(null);
+              setPreviewReceipt(null);
+              setOrderForPayment(null);
               
               // Also clear any selected orders in POS
               if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
                 (window as any).clearActiveOrder();
               }
               
-              // Force broadcast empty cart immediately
+              // Force broadcast empty cart immediately with multiple delays
               setTimeout(() => {
+                onClearCart();
+                setLastCartItems([]);
                 broadcastCartUpdate([]);
               }, 50);
+              
+              setTimeout(() => {
+                onClearCart();
+                setLastCartItems([]);
+                broadcastCartUpdate([]);
+              }, 100);
             }
 
             // Handle receipt modal closed signal specifically for cart clearing
             if (data.type === 'receipt_modal_closed' || (data.action && data.action === 'receipt_modal_closed')) {
-              console.log('🔄 Shopping Cart: Receipt modal closed signal received, clearing cart');
+              console.log('🧹 Shopping Cart: Receipt modal closed signal received, FORCE CLEARING CART');
               
-              // Clear cart immediately
+              // Immediate cart clear - multiple calls
               onClearCart();
+              setLastCartItems([]);
+              setSelectedReceipt(null);
+              setPreviewReceipt(null);
+              setOrderForPayment(null);
+              
+              // Force broadcast empty cart with multiple delays
+              setTimeout(() => {
+                onClearCart();
+                setLastCartItems([]);
+                broadcastCartUpdate([]);
+              }, 50);
+              
+              setTimeout(() => {
+                onClearCart();
+                setLastCartItems([]);
+                broadcastCartUpdate([]);
+              }, 100);
+            }
+
+            // Handle any force cart clear signal
+            if (data.type === 'force_cart_clear') {
+              console.log('🧹 Shopping Cart: Force cart clear signal received');
+              
+              // Immediate cart clear - multiple calls
+              onClearCart();
+              setLastCartItems([]);
+              setSelectedReceipt(null);
+              setPreviewReceipt(null);
+              setOrderForPayment(null);
               
               // Force broadcast empty cart
               setTimeout(() => {
+                onClearCart();
+                setLastCartItems([]);
                 broadcastCartUpdate([]);
               }, 50);
             }
@@ -333,24 +389,35 @@ export function ShoppingCart({
       // Close payment modal
       setShowPaymentModal(false);
 
-      // Clear cart immediately after successful payment
+      // CRITICAL: Clear cart immediately after successful payment - multiple calls
       onClearCart();
-
-      // Reset all states
+      setLastCartItems([]);
+      setSelectedReceipt(null);
       setPreviewReceipt(null);
       setOrderForPayment(null);
-      setLastCartItems([]);
 
-      // Show final receipt if needed
-      if (data.shouldShowReceipt !== false) {
-        console.log("📋 POS: Showing final receipt modal");
-        setShowReceiptModal(true);
-      }
-
-      // Force immediate cart update broadcast
+      // Force immediate cart clearing with multiple delays
       setTimeout(() => {
+        console.log('🧹 Payment Complete: First delayed clear (50ms)');
+        onClearCart();
+        setLastCartItems([]);
         broadcastCartUpdate([]);
       }, 50);
+
+      setTimeout(() => {
+        console.log('🧹 Payment Complete: Second delayed clear (100ms)');
+        onClearCart();
+        setLastCartItems([]);
+        broadcastCartUpdate([]);
+      }, 100);
+
+      // Show final receipt if needed AFTER clearing cart
+      if (data.shouldShowReceipt !== false) {
+        console.log("📋 POS: Showing final receipt modal");
+        setTimeout(() => {
+          setShowReceiptModal(true);
+        }, 150); // Show receipt after cart is cleared
+      }
 
       console.log('🎉 POS: Payment flow completed successfully');
     } else if (method === "paymentError") {
@@ -942,56 +1009,84 @@ export function ShoppingCart({
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log('🔴 Shopping Cart: Closing receipt modal and forcing complete cart reset');
+          console.log('🔴 Shopping Cart: Receipt modal closed - EXECUTING ULTIMATE CART RESET');
+          
+          // Step 1: Close modal immediately
           setShowReceiptModal(false);
           
-          // Force clear cart immediately - multiple attempts
+          // Step 2: ULTIMATE FORCE CLEAR - clear everything immediately
+          console.log('🧹 Shopping Cart: ULTIMATE CLEAR - Clearing all states immediately');
           onClearCart();
-          
-          // Reset all states immediately
           setSelectedReceipt(null);
           setPreviewReceipt(null);
           setOrderForPayment(null);
           setLastCartItems([]);
           
-          // Force multiple cart clears to ensure it works
-          setTimeout(() => {
-            onClearCart();
-            broadcastCartUpdate([]);
-            
-            // Also trigger global cart clear
-            if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-              (window as any).clearActiveOrder();
-            }
-          }, 50);
+          // Step 3: Multiple delayed clears with increasing delays to ensure success
+          const delays = [25, 50, 100, 150, 200, 300, 500];
+          delays.forEach((delay, index) => {
+            setTimeout(() => {
+              console.log(`🧹 Shopping Cart: Ultimate clear attempt ${index + 1} (${delay}ms)`);
+              onClearCart();
+              setLastCartItems([]);
+              setSelectedReceipt(null);
+              setPreviewReceipt(null);
+              setOrderForPayment(null);
+              broadcastCartUpdate([]);
+              
+              // Also trigger global clear
+              if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                (window as any).clearActiveOrder();
+              }
+            }, delay);
+          });
           
-          // Final clear after delay
+          // Step 4: Send comprehensive WebSocket signals
           setTimeout(() => {
-            onClearCart();
-            broadcastCartUpdate([]);
-          }, 200);
-          
-          // Send WebSocket signal to ensure all displays are updated
-          try {
-            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            const ws = new WebSocket(wsUrl);
+            console.log('📡 Shopping Cart: Sending ULTIMATE WebSocket clear signals');
+            try {
+              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
 
-            ws.onopen = () => {
-              ws.send(JSON.stringify({
-                type: "receipt_modal_closed",
-                success: true,
-                action: 'receipt_modal_closed',
-                timestamp: new Date().toISOString()
-              }));
-              ws.close();
-            };
-          } catch (error) {
-            console.error("Failed to send receipt modal close signal:", error);
-          }
+              ws.onopen = () => {
+                // Send ALL possible clear signals
+                const clearSignals = [
+                  { type: "receipt_modal_closed", success: true, action: 'receipt_modal_closed' },
+                  { type: "popup_close", success: true, action: 'receipt_modal_closed' },
+                  { type: "force_cart_clear", success: true },
+                  { type: "cart_update", cart: [], subtotal: 0, tax: 0, total: 0 },
+                  { type: "refresh_data_after_print", action: 'refresh_tables_and_clear_cart' }
+                ];
+                
+                clearSignals.forEach((signal, index) => {
+                  setTimeout(() => {
+                    ws.send(JSON.stringify({
+                      ...signal,
+                      timestamp: new Date().toISOString(),
+                      attempt: index + 1
+                    }));
+                  }, index * 50);
+                });
+                
+                setTimeout(() => ws.close(), 500);
+              };
+            } catch (error) {
+              console.error("Failed to send WebSocket clear signals:", error);
+            }
+          }, 100);
+          
+          // Step 5: Final safety net - force page refresh if cart still not cleared
+          setTimeout(() => {
+            // Check if cart is still not empty after all attempts
+            if (cart && cart.length > 0) {
+              console.warn('⚠️ Shopping Cart: Cart still not empty after all clear attempts, forcing reload');
+              window.location.reload();
+            }
+          }, 1000);
         }}
         receipt={selectedReceipt}
-        cartItems={cart.map((item) => ({
+        cartItems={lastCartItems.length > 0 ? lastCartItems : cart.map((item) => ({
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
