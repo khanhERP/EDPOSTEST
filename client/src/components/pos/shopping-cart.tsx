@@ -16,6 +16,7 @@ import { ReceiptModal } from "./receipt-modal";
 import { EInvoiceModal } from "./einvoice-modal";
 import type { CartItem } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 interface ShoppingCartProps {
   cart: CartItem[];
@@ -61,6 +62,11 @@ export function ShoppingCart({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false); // Added state for PaymentMethodModal
   const [isProcessingPayment, setIsProcessingPayment] = useState(false); // Flag to prevent duplicate processing
+
+  // New state variables for order management flow
+  const [lastCartItems, setLastCartItems] = useState<CartItem[]>([]);
+  const [orderForPayment, setOrderForPayment] = useState(null);
+
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -114,6 +120,18 @@ export function ShoppingCart({
         return sum;
       }, 0);
   const calculateTotal = () => Math.round(calculateSubtotal() + calculateTax());
+
+  // Fetch products to calculate tax correctly based on afterTaxPrice
+  const { data: products } = useQuery<any[]>({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const response = await fetch("/api/products");
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+      return response.json();
+    },
+  });
 
   // WebSocket connection for broadcasting cart updates to customer display
   useEffect(() => {
@@ -237,324 +255,210 @@ export function ShoppingCart({
     return paymentMethods;
   };
 
-  const handleCheckout = async () => {
-    if (cart.length === 0) {
-      toast({
-        title: t("common.error"),
-        description: t("pos.emptyCart"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log("🔄 Step 1: Creating receipt preview...");
-
-    try {
-      // Step 1: Create receipt preview data first
-      const receiptPreviewData = {
-        transactionId: `PREVIEW-${Date.now()}`,
-        items: cart.map((item) => ({
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          total: item.total,
-          sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "0"),
-        })),
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
-        exactSubtotal: subtotal,
-        exactTax: tax,
-        exactTotal: total,
-        paymentMethod: "preview",
-        cashierName: "System User",
-        createdAt: new Date().toISOString(),
-      };
-
-      console.log("📄 Step 1: Created receipt preview data:", receiptPreviewData);
-
-      // Step 1: Show receipt preview modal first
-      setPreviewReceipt(receiptPreviewData);
-      setShowReceiptPreview(true);
-
-      console.log("🚀 Step 1: Opening receipt preview modal (Xem trước hóa đơn)");
-
-    } catch (error) {
-      console.error("❌ Failed to create receipt preview:", error);
-      toast({
-        title: t("common.error"),
-        description: "Không thể tạo xem trước hóa đơn. Vui lòng thử lại.",
-        variant: "destructive",
-      });
-    }
+  // Handler for when receipt preview is confirmed - move to payment method selection
+  const handleReceiptPreviewConfirm = () => {
+    console.log("🎯 POS: Receipt preview confirmed, showing payment method modal");
+    setShowReceiptPreview(false);
+    setShowPaymentModal(true);
   };
 
-  const handleReceiptPreviewConfirm = async () => {
-    console.log("📄 Step 1 → Step 2: Receipt preview confirmed, creating order...");
-
-    try {
-      // Step 2: Create order after receipt preview is confirmed
-      const orderData = {
-        orderNumber: `POS-${Date.now()}`,
-        tableId: null, // POS orders don't need table
-        customerName: "Walk-in Customer",
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
-        status: "pending",
-        paymentMethod: null,
-        items: cart.map(item => ({
-          productId: item.id,
-          productName: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price.toString(),
-          total: item.total.toString(),
-          productSku: item.sku
-        })),
-        orderedAt: new Date(), // Server will override with server time
-      };
-
-      console.log("📤 Step 2: Creating order with data:", orderData);
-
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create order");
-      }
-
-      const createdOrder = await response.json();
-      console.log("✅ Step 2: Order created successfully:", createdOrder);
-
-      // Store created order for payment with validation
-      if (!createdOrder || !createdOrder.id) {
-        console.error("❌ Created order is invalid:", createdOrder);
-        throw new Error("Created order doesn't have a valid ID");
-      }
-
-      // Calculate exact totals for the order
-      const exactSubtotal = subtotal;
-      const exactTax = tax; 
-      const exactTotal = total;
-
-      // Add exact calculations to created order
-      const orderWithExactTotals = {
-        ...createdOrder,
-        exactSubtotal,
-        exactTax,
-        exactTotal
-      };
-
-      console.log("💾 Step 2: Setting currentOrderForPayment with exact totals:", {
-        orderId: orderWithExactTotals.id,
-        exactSubtotal,
-        exactTax,
-        exactTotal,
-        originalTotal: createdOrder.total
-      });
-
-      setCurrentOrderForPayment(orderWithExactTotals);
-
-      // Step 2 → Step 3: Close receipt preview and open payment modal
-      setShowReceiptPreview(false);
-      setPreviewReceipt(null);
-
-      setTimeout(() => {
-        console.log("🚀 Step 2 → Step 3: Opening payment modal with order:", orderWithExactTotals.id);
-        setShowPaymentModal(true);
-      }, 100);
-
-    } catch (error) {
-      console.error("❌ Step 2 failed: Failed to create order:", error);
-      toast({
-        title: t("common.error"),
-        description: "Không thể tạo đơn hàng. Vui lòng thử lại.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleReceiptConfirm = () => {
-    console.log("📄 Receipt confirmed - closing modal (cart already cleared)");
-
-    // Close receipt modal
+  // Handler for when receipt preview is cancelled
+  const handleReceiptPreviewCancel = () => {
+    console.log("❌ POS: Receipt preview cancelled");
     setShowReceiptPreview(false);
     setPreviewReceipt(null);
-    setShowReceiptModal(false);
-    setSelectedReceipt(null);
-
-    console.log("✅ Receipt modal closed");
+    setOrderForPayment(null);
   };
 
-  const handlePaymentMethodSelect = (method: string, data?: any) => {
-    console.log(
-      "🎯 Shopping cart: Payment method selected:",
-      method,
-      data,
-    );
+  // Handler for payment method selection
+  const handlePaymentMethodSelect = async (method: string, data?: any) => {
+    console.log("🎯 POS: Payment method selected:", method, data);
 
-    // Close payment modal and handle the payment completion
-    setShowPaymentModal(false);
+    if (method === "paymentCompleted" && data?.success) {
+      console.log('✅ POS: Payment completed successfully', data);
 
-    if (data?.success && data?.completed) {
-      console.log("✅ Payment completed successfully:", data);
+      // Close payment modal
+      setShowPaymentModal(false);
 
       // Clear cart after successful payment
       onClearCart();
 
-      // Show receipt if available
-      if (data.receipt) {
-        setSelectedReceipt(data.receipt);
+      // Reset states
+      setPreviewReceipt(null);
+      setOrderForPayment(null);
+
+      // Show final receipt if needed
+      if (data.shouldShowReceipt !== false) {
+        console.log("📋 POS: Showing final receipt modal");
         setShowReceiptModal(true);
       }
 
-      // Reset current order
-      setCurrentOrderForPayment(null);
-    } else if (data?.error) {
-      console.error("❌ Payment failed:", data.error);
-      toast({
-        title: "Lỗi thanh toán",
-        description: data.error,
-        variant: "destructive",
-      });
+      console.log('🎉 POS: Payment flow completed successfully');
+    } else if (method === "paymentError") {
+      console.error('❌ POS: Payment failed', data);
+
+      // Close payment modal but keep cart
+      setShowPaymentModal(false);
+
+      // Reset states
+      setPreviewReceipt(null);
+      setOrderForPayment(null);
+    } else {
+      // For other method selections, close payment modal
+      setShowPaymentModal(false);
     }
   };
 
-  // This function is called from PaymentMethodModal
-  const processPaymentAndShowEInvoice = async (selectedMethod: string) => {
-    if (!currentOrderForPayment) {
-      console.error("❌ No order found for payment processing.");
-      toast({
-        title: "Lỗi",
-        description: "Không tìm thấy đơn hàng để xử lý thanh toán.",
-        variant: "destructive",
-      });
+  const handleCheckout = async () => {
+    console.log("=== POS CHECKOUT STARTED - Following Order Management Flow ===");
+    console.log("Cart before checkout:", cart);
+    console.log("Cart length:", cart.length);
+
+    if (cart.length === 0) {
+      alert("Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.");
       return;
     }
 
-    // Prevent duplicate processing
-    if (isProcessingPayment) {
-      console.log("⚠️ Payment already being processed, skipping duplicate call");
-      return;
-    }
-
-    setIsProcessingPayment(true);
-
-    try {
-      console.log(`💳 Step 3: Processing ${selectedMethod} payment`);
-
-      // Update order status to paid first
-      const response = await fetch(`/api/orders/${currentOrderForPayment.id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          status: 'paid'
-        }),
-      });
-
-      console.log(`🔍 Step 3: Order status update response:`, {
-        ok: response.ok,
-        status: response.status,
-        statusText: response.statusText
-      });
-
-      // Continue to E-Invoice even if status update fails for temporary orders
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.warn(`⚠️ Step 3: Order status update failed, but continuing to E-Invoice:`, errorData);
-
-        // For temporary orders, this is expected - continue the flow
-        if (currentOrderForPayment.id.toString().startsWith('temp-')) {
-          console.log(`🟡 Step 3: Temporary order detected - continuing to E-Invoice despite status update failure`);
-        } else {
-          throw new Error(`Failed to update order status: ${errorData.message || 'Unknown error'}`);
-        }
-      } else {
-        console.log(`✅ Step 3: Order status updated successfully`);
+    // Step 1: Prepare cart items with proper data types and validation
+    const cartItemsBeforeCheckout = cart.map(item => {
+      // Ensure price is a number
+      let itemPrice = item.price;
+      if (typeof itemPrice === 'string') {
+        itemPrice = parseFloat(itemPrice);
+      }
+      if (isNaN(itemPrice) || itemPrice <= 0) {
+        itemPrice = 0;
       }
 
-      console.log(`🔄 Step 3: Opening E-Invoice modal`);
+      // Ensure quantity is a positive integer
+      let itemQuantity = item.quantity;
+      if (typeof itemQuantity === 'string') {
+        itemQuantity = parseInt(itemQuantity);
+      }
+      if (isNaN(itemQuantity) || itemQuantity <= 0) {
+        itemQuantity = 1;
+      }
 
-      // Close payment modal and open E-Invoice modal
-      setShowPaymentMethodModal(false);
-      setSelectedPaymentMethod(selectedMethod);
-      setShowEInvoiceModal(true);
-    } catch (error) {
-      console.error(`❌ Step 3: Payment method processing failed:`, error);
-      toast({
-        title: "Lỗi thanh toán",
-        description: "Không thể xử lý thanh toán. Vui lòng thử lại.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessingPayment(false); // Always reset flag
+      // Ensure taxRate is a number
+      let itemTaxRate = item.taxRate;
+      if (typeof itemTaxRate === 'string') {
+        itemTaxRate = parseFloat(itemTaxRate);
+      }
+      if (isNaN(itemTaxRate)) {
+        itemTaxRate = 10; // Default 10%
+      }
+
+      return {
+        id: item.id,
+        name: item.name || `Product ${item.id}`,
+        price: itemPrice,
+        quantity: itemQuantity,
+        sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
+        taxRate: itemTaxRate
+      };
+    });
+
+    console.log("✅ Processed cart items:", cartItemsBeforeCheckout);
+
+    // Validate processed items
+    const invalidItems = cartItemsBeforeCheckout.filter(item => 
+      !item.id || !item.name || item.price <= 0 || item.quantity <= 0
+    );
+
+    if (invalidItems.length > 0) {
+      console.error("❌ Invalid items found after processing:", invalidItems);
+      alert("Có sản phẩm không hợp lệ trong giỏ hàng. Vui lòng kiểm tra lại.");
+      return;
     }
-  };
 
-  const handleCardPaymentMethodSelect = (method: string) => {
-    setSelectedCardMethod(method);
-    const paymentData = {
-      paymentMethod: "creditCard", // Explicitly set to creditCard
-      cardType: method,
-      amountReceived: total,
-      change: 0,
+    // Step 2: Calculate totals exactly like order management
+    let calculatedSubtotal = 0;
+    let calculatedTax = 0;
+
+    cartItemsBeforeCheckout.forEach(item => {
+      const itemSubtotal = item.price * item.quantity;
+      calculatedSubtotal += itemSubtotal;
+
+      // Calculate tax using afterTaxPrice if available from products data
+      const product = products?.find(p => p.id === item.id);
+      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        const afterTaxPrice = parseFloat(product.afterTaxPrice);
+        const taxPerUnit = afterTaxPrice - item.price;
+        calculatedTax += Math.floor(taxPerUnit * item.quantity);
+      } else if (item.taxRate && item.taxRate > 0) {
+        // Fallback to taxRate calculation
+        const taxPerUnit = item.price * (item.taxRate / 100);
+        calculatedTax += Math.floor(taxPerUnit * item.quantity);
+      }
+    });
+
+    const calculatedTotal = calculatedSubtotal + calculatedTax;
+
+    console.log("💰 POS: Calculated totals:", {
+      subtotal: calculatedSubtotal,
+      tax: calculatedTax,
+      total: calculatedTotal
+    });
+
+    // Step 3: Create receipt preview data exactly like order management
+    const receiptPreview = {
+      id: `temp-${Date.now()}`,
+      orderNumber: `POS-${Date.now()}`,
+      customerName: "Khách hàng lẻ",
+      tableId: null,
+      items: cartItemsBeforeCheckout.map(item => ({
+        productId: item.id,
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price.toString(),
+        total: (item.price * item.quantity).toString(),
+        productSku: item.sku
+      })),
+      subtotal: calculatedSubtotal.toString(),
+      tax: calculatedTax.toString(),
+      total: calculatedTotal.toString(),
+      exactSubtotal: calculatedSubtotal,
+      exactTax: calculatedTax,
+      exactTotal: calculatedTotal,
+      status: "pending",
+      paymentStatus: "pending",
+      orderedAt: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
-    onCheckout(paymentData);
+
+    console.log("📋 POS: Receipt preview data prepared:", receiptPreview);
+
+    // Step 4: Prepare order data for payment (temporary order for POS)
+    const orderForPaymentData = {
+      id: `temp-${Date.now()}`,
+      orderNumber: `POS-${Date.now()}`,
+      tableId: null,
+      customerName: "Khách hàng lẻ",
+      status: "pending",
+      paymentStatus: "pending",
+      items: cartItemsBeforeCheckout,
+      subtotal: calculatedSubtotal,
+      tax: calculatedTax,
+      total: calculatedTotal,
+      exactSubtotal: calculatedSubtotal,
+      exactTax: calculatedTax,
+      exactTotal: calculatedTotal,
+      orderedAt: new Date().toISOString()
+    };
+
+    console.log("📦 POS: Order for payment prepared:", orderForPaymentData);
+
+    // Step 5: Set all data and show receipt preview modal (following order management flow)
+    setLastCartItems([...cartItemsBeforeCheckout]);
+    setOrderForPayment(orderForPaymentData);
+    setPreviewReceipt(receiptPreview);
+    setShowReceiptPreview(true);
+
+    console.log("🚀 POS: Showing receipt preview modal exactly like order management");
   };
 
-  const handleEInvoiceConfirm = async (eInvoiceData: any) => {
-    console.log("🎯 Step 5: E-invoice confirmed, processing final steps");
-    console.log("📄 E-invoice data received:", eInvoiceData);
-
-    // Close E-Invoice modal immediately
-    setShowEInvoiceModal(false);
-
-    try {
-      // Step 5: Handle cart clearing and receipt display
-      // Auto clear cart after E-Invoice completion (both publish now and publish later)
-      console.log(
-        "🧹 Shopping cart: Auto clearing cart after E-Invoice completion",
-      );
-      onClearCart();
-
-      // Step 5: Show final receipt modal if receipt data exists
-      if (eInvoiceData.receipt) {
-        console.log(
-          "📄 Shopping cart: Step 5: Showing final receipt modal (not preview)",
-        );
-        setSelectedReceipt(eInvoiceData.receipt);
-        setShowReceiptModal(true);
-      } else {
-        console.log(
-          "✅ Shopping cart: E-invoice completed successfully, cart cleared",
-        );
-        toast({
-          title: "Thành công",
-          description: "Hóa đơn đã được xử lý thành công",
-          variant: "default",
-        });
-      }
-    } catch (error) {
-      console.error("❌ Step 5: Error during final E-invoice confirmation:", error);
-      toast({
-        title: "Lỗi",
-        description: "Đã xảy ra lỗi khi xác nhận hóa đơn điện tử.",
-        variant: "destructive",
-      });
-    } finally {
-      // Reset state after processing is complete
-      setCurrentOrderForPayment(null);
-      setSelectedPaymentMethod("");
-      // We don't reset isProcessingPayment here as it's handled by the calling modal
-    }
+  const handleClearCart = () => {
+    onClearCart();
   };
 
   const canCheckout = cart.length > 0;
@@ -772,51 +676,46 @@ export function ShoppingCart({
 
           <Button
             onClick={handleCheckout}
-            disabled={!canCheckout || isProcessing}
-            className="w-full btn-success flex items-center justify-center"
+            disabled={cart.length === 0 || isProcessing}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 text-lg"
           >
-            <CartIcon className="mr-2" size={16} />
-            {isProcessing ? "Processing..." : t("pos.checkout")}
+            {isProcessing ? t("tables.placing") : t("tables.completeSale")}
           </Button>
         </div>
       )}
 
-      {/* Step 1: Receipt Preview Modal - "Xem trước hóa đơn" */}
+      {/* Receipt Preview Modal - Shows first like order management */}
       <ReceiptModal
         isOpen={showReceiptPreview}
-        onClose={() => {
-          console.log(
-            "🔴 Step 1: Closing receipt preview modal (Xem trước hóa đơn)",
-          );
-          setShowReceiptPreview(false);
-          setPreviewReceipt(null);
-        }}
+        onClose={handleReceiptPreviewCancel}
         receipt={previewReceipt}
+        cartItems={previewReceipt?.items || []}
+        isPreview={true}
         onConfirm={handleReceiptPreviewConfirm}
-        isPreview={true} // This is the preview modal - "Xem trước hóa đơn"
-        cartItems={cart.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),
-          quantity: item.quantity,
-          sku: `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "0"),
-        }))}
+        onCancel={handleReceiptPreviewCancel}
       />
 
-      {/* Step 5: Final Receipt Modal - "Receipt" after all processing complete */}
+      {/* Payment Method Modal - Shows after receipt preview confirmation */}
+      <PaymentMethodModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setPreviewReceipt(null);
+          setOrderForPayment(null);
+        }}
+        onSelectMethod={handlePaymentMethodSelect}
+        total={orderForPayment?.exactTotal || orderForPayment?.total || 0}
+        orderForPayment={orderForPayment}
+        products={products}
+        receipt={previewReceipt}
+        cartItems={previewReceipt?.items || []}
+      />
+
+      {/* Final Receipt Modal - Shows after successful payment */}
       <ReceiptModal
         isOpen={showReceiptModal}
-        onClose={() => {
-          console.log(
-            "🔴 Step 5: Closing final receipt modal (Receipt) from shopping cart",
-          );
-          setShowReceiptModal(false);
-          setSelectedReceipt(null);
-        }}
+        onClose={() => setShowReceiptModal(false)}
         receipt={selectedReceipt}
-        onConfirm={handleReceiptConfirm}
-        isPreview={false} // This is the final receipt - "Receipt"
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
@@ -826,31 +725,6 @@ export function ShoppingCart({
           taxRate: parseFloat(item.taxRate || "0"),
         }))}
       />
-
-      {/* Step 2: Payment Method Selection Modal */}
-      {showPaymentModal && (
-        <PaymentMethodModal
-          isOpen={showPaymentModal}
-          onClose={() => {
-            console.log("🔴 Step 2: Closing payment method modal");
-            setShowPaymentModal(false);
-            setCurrentOrderForPayment(null); // Reset order when closing
-            setIsProcessingPayment(false); // Reset processing flag
-          }}
-          onSelectMethod={processPaymentAndShowEInvoice} // Use the new combined handler
-          total={total}
-          cartItems={cart.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: parseFloat(item.price),
-            quantity: item.quantity,
-            sku: String(item.id),
-            taxRate: parseFloat(item.taxRate || "0"),
-          }))}
-          orderForPayment={currentOrderForPayment} // ✅ Pass created order directly
-          products={[]} // Pass empty products array for now
-        />
-      )}
 
       {/* Step 4: E-Invoice Modal for invoice processing */}
       {showEInvoiceModal && (
