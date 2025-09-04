@@ -328,22 +328,17 @@ export function OrderDialog({
       
       const hasAnyChanges = hasNewItems || hasRemovedItems || hasCustomerNameChange || hasCustomerCountChange;
 
-      // Only block update if there are truly no changes at all
+      // Completely block update if there are no changes at all
       if (!hasAnyChanges) {
-        console.log('⚠️ Order Dialog: No changes detected, skipping database update to prevent duplicates');
+        console.log('⚠️ Order Dialog: No changes detected, blocking update completely');
 
         toast({
           title: "Không có thay đổi",
-          description: "Không có thay đổi nào để cập nhật",
-          variant: "default",
+          description: "Vui lòng thực hiện thay đổi trước khi cập nhật đơn hàng",
+          variant: "destructive",
         });
 
-        // Close dialog without API call
-        setCart([]);
-        setCustomerName("");
-        setCustomerCount(1);
-        setExistingItems([]);
-        onOpenChange(false);
+        // Do NOT close dialog, just return to prevent API call
         return;
       }
 
@@ -957,8 +952,17 @@ export function OrderDialog({
               {/* Action button */}
               <Button
                 onClick={handlePlaceOrder}
-                disabled={createOrderMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex-shrink-0"
+                disabled={
+                  createOrderMutation.isPending || 
+                  (mode === "edit" && existingOrder && (() => {
+                    const hasNewItems = cart.length > 0;
+                    const hasRemovedItems = existingItems.some(item => item.quantity === 0);
+                    const hasCustomerNameChange = (customerName || "") !== (existingOrder.customerName || "");
+                    const hasCustomerCountChange = customerCount !== (existingOrder.customerCount || 1);
+                    return !(hasNewItems || hasRemovedItems || hasCustomerNameChange || hasCustomerCountChange);
+                  })())
+                }
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 size="lg"
               >
                 {createOrderMutation.isPending
