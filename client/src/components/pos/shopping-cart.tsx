@@ -573,6 +573,7 @@ export function ShoppingCart({
         customerName: invoiceData.customerName || invoiceData.receipt.customerName,
         customerTaxCode: invoiceData.taxCode || invoiceData.receipt.customerTaxCode,
         paymentMethod: 'einvoice',
+        originalPaymentMethod: invoiceData.originalPaymentMethod || invoiceData.receipt.originalPaymentMethod,
         items: invoiceData.receipt.items || [],
         subtotal: invoiceData.receipt.subtotal || "0.00",
         tax: invoiceData.receipt.tax || "0.00",
@@ -601,11 +602,28 @@ export function ShoppingCart({
         });
       }
 
-      // Set receipt data and show receipt modal directly
-      setSelectedReceipt(receiptForDisplay);
-      setShowReceiptModal(true);
+      // Force close any existing modals first
+      setShowPaymentModal(false);
+      setShowReceiptPreview(false);
+      setShowPaymentMethodModal(false);
 
-      console.log("📄 POS: Receipt modal should now be visible with data:", receiptForDisplay);
+      // Use setTimeout to ensure state updates are processed
+      setTimeout(() => {
+        console.log("🔥 POS: Force showing receipt modal after delay");
+        setSelectedReceipt(receiptForDisplay);
+        setShowReceiptModal(true);
+        
+        // Double check after another short delay
+        setTimeout(() => {
+          console.log("🔍 POS: Receipt modal state check:", {
+            showReceiptModal,
+            selectedReceipt: !!receiptForDisplay,
+            receiptItems: receiptForDisplay.items?.length || 0
+          });
+        }, 100);
+      }, 50);
+
+      console.log("📄 POS: Receipt modal trigger initiated with data:", receiptForDisplay);
 
     } else {
       console.error("❌ POS: E-Invoice processing failed or cancelled");
