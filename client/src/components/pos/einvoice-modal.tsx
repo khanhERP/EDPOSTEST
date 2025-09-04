@@ -48,7 +48,6 @@ interface EInvoiceModalProps {
     quantity: number;
     sku?: string;
     taxRate?: number;
-    afterTaxPrice?: string | null; // Added for potential after-tax price calculation
   }>;
   source?: "pos" | "table"; // Thêm prop để phân biệt nguồn gọi
   orderId?: number; // Thêm orderId để tự xử lý cập nhật trạng thái
@@ -203,22 +202,18 @@ export function EInvoiceModal({
       );
       console.log("🔥 total when modal opens:", total);
 
-      // Set default template based on available templates
-      const defaultTemplate = invoiceTemplates.length > 0 ? invoiceTemplates[0].id.toString() : "";
-
       setFormData({
-        invoiceProvider: eInvoiceConnections.length > 0 ? eInvoiceConnections[0].softwareName : "EasyInvoice", // Use first available provider
+        invoiceProvider: "EasyInvoice", // Default provider
         invoiceTemplate: "1C25TYY", // Default template
-        selectedTemplateId: defaultTemplate,
+        selectedTemplateId: "",
         taxCode: "0123456789", // Default tax code
         customerName: "Khách hàng lẻ", // Default customer name
         address: "",
         phoneNumber: "",
         email: "",
       });
-
     }
-  }, [isOpen, eInvoiceConnections, invoiceTemplates]); // Add dependencies
+  }, [isOpen]); // Only reset when modal opens/closes
 
   // Separate effect for debugging cartItems changes without resetting form
   useEffect(() => {
@@ -391,20 +386,6 @@ export function EInvoiceModal({
 
     setIsPublishing(true);
 
-    // Validate required fields before proceeding
-    if (!formData.invoiceProvider || !formData.customerName) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
-        variant: "destructive",
-      });
-      setIsPublishing(false);
-      return;
-    }
-
-    // For publish later, template selection is optional
-    // Template can be selected when actually publishing the invoice
-
     try {
       console.log(
         "🟡 PHÁT HÀNH SAU - Lưu thông tin hóa đơn vào bảng invoices và invoice_items",
@@ -434,7 +415,7 @@ export function EInvoiceModal({
       if (!total || total <= 0) {
         console.error("❌ Invalid total amount for later publishing:", total);
         toast({
-          title: "Lỗi", 
+          title: "Lỗi",
           description: "Tổng tiền không hợp lệ để lưu hóa đơn.",
           variant: "destructive",
         });
@@ -442,216 +423,219 @@ export function EInvoiceModal({
         return;
       }
 
-      // Validate required customer information
-      if (!formData.customerName || formData.customerName.trim() === "") {
-        toast({
-          title: "Lỗi",
-          description: "Vui lòng nhập tên khách hàng.",
-          variant: "destructive",
-        });
-        setIsPublishing(false);
-        return;
-      }
+      // Calculate subtotal and tax with proper type conversion
+      const calculatedSubtotal = cartItems.reduce((sum, item) => {
+        const itemPrice =
+          typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity =
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity;
+        console.log(
+          `💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemPrice * itemQuantity}`,
+        );
+        return sum + itemPrice * itemQuantity;
+      }, 0);
 
-      // Lấy thông tin mẫu số hóa đơn được chọn (optional cho phát hành sau)
-      const selectedTemplate = formData.selectedTemplateId
-        ? invoiceTemplates.find(
-            (template) => template.id.toString() === formData.selectedTemplateId,
-          )
-        : null;
-
-      // Calculate subtotal and tax with proper type conversion and handling afterTaxPrice
-      let calculatedSubtotal = 0;
-      let calculatedTax = 0;
-
-      cartItems.forEach((item) => {
-        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-        const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : (item.taxRate || 0);
-
-        const itemSubtotal = itemPrice * itemQuantity;
-        calculatedSubtotal += itemSubtotal;
-
-        // Calculate tax based on afterTaxPrice if available, otherwise use taxRate
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          const taxPerUnit = afterTaxPrice - itemPrice;
-          calculatedTax += Math.floor(taxPerUnit * itemQuantity);
-        } else if (itemTaxRate > 0) {
-          calculatedTax += (itemSubtotal * itemTaxRate) / 100;
-        }
-      });
-
-      const grandTotal = calculatedSubtotal + calculatedTax;
+      const calculatedTax = cartItems.reduce((sum, item) => {
+        const itemPrice =
+          typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity =
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity;
+        const itemTaxRate =
+          typeof item.taxRate === "string"
+            ? parseFloat(item.taxRate || "0")
+            : item.taxRate || 0;
+        const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
+        console.log(
+          `💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`,
+        );
+        return sum + itemTax;
+      }, 0);
 
       console.log(
-        `💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${grandTotal}`,
+        `💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${total}`,
       );
 
+      // Lấy thông tin mẫu số hóa đơn được chọn
+      const selectedTemplate = invoiceTemplates.find(
+        (template) => template.id.toString() === formData.selectedTemplateId,
+      );
 
-      // Lưu hóa đơn vào database với trạng thái "chưa phát hành"
-        try {
-          console.log("💾 Saving unpublished invoice to database");
+      // Map phương thức thanh toán từ selectedPaymentMethod sang mã số
+      const paymentMethodCode = getPaymentMethodCode(selectedPaymentMethod);
 
-          const invoicePayload = {
-            invoiceNumber: `INV-${Date.now()}`, // Placeholder, will be updated later
-            templateNumber: selectedTemplate?.templateNumber || null,
-            symbol: selectedTemplate?.symbol || null,
-            customerName: formData.customerName,
-            customerTaxCode: formData.taxCode || null,
-            customerAddress: formData.address || null,
-            customerPhone: formData.phoneNumber || null, // Use phoneNumber from formData
-            customerEmail: formData.email || null,
-            subtotal: calculatedSubtotal.toFixed(2),
-            tax: calculatedTax.toFixed(2),
-            total: grandTotal.toFixed(2),
-            paymentMethod: getPaymentMethodCode(selectedPaymentMethod), // Use numeric code
-            invoiceDate: new Date(),
-            status: "draft",
-            einvoiceStatus: 0, // 0 = chưa phát hành
-            notes: `E-Invoice saved for later publishing - Template: ${selectedTemplate?.templateNumber || "Not selected"}`,
-            items: cartItems.map((item) => {
-              const itemPrice =
-                typeof item.price === "string"
-                  ? parseFloat(item.price)
-                  : item.price;
-              const itemQuantity =
-                typeof item.quantity === "string"
-                  ? parseInt(item.quantity)
-                  : item.quantity;
-              const itemTaxRate =
-                typeof item.taxRate === "string"
-                  ? parseFloat(item.taxRate || "0")
-                  : item.taxRate || 0;
-              const itemSubtotal = itemPrice * itemQuantity;
-              const itemTax = (itemSubtotal * itemTaxRate) / 100;
-
-              return {
-                productId: item.id,
-                productName: item.name,
-                quantity: itemQuantity,
-                unitPrice: itemPrice.toFixed(2),
-                total: (itemSubtotal + itemTax).toFixed(2),
-                taxRate: itemTaxRate.toFixed(2),
-              };
-            }),
-            orderId: orderId // Link to the order if available
-          };
-
-          console.log(
-            "💾 Saving unpublished invoice to database:",
-            invoicePayload,
-          );
-
-          const invoiceResponse = await fetch("/api/invoices", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(invoicePayload),
-          });
-
-          if (invoiceResponse.ok) {
-            const savedInvoice = await invoiceResponse.json();
-            console.log(
-              "✅ Unpublished invoice saved to database successfully:",
-              savedInvoice,
-            );
-          } else {
-            const errorText = await invoiceResponse.text();
-            console.error(
-              "❌ Failed to save unpublished invoice to database:",
-              errorText,
-            );
-            toast({
-              title: "Lỗi",
-              description: "Không thể lưu hóa đơn chưa phát hành. " + errorText,
-              variant: "destructive",
-            });
-          }
-        } catch (invoiceSaveError) {
-          console.error(
-            "❌ Error saving unpublished invoice to database:",
-            invoiceSaveError,
-          );
-          toast({
-            title: "Lỗi",
-            description: `Lỗi khi lưu hóa đơn chưa phát hành: ${invoiceSaveError}`,
-            variant: "destructive",
-          });
-        }
-
-      // Create enhanced receipt data for publish later
-      const receiptData = {
-        transactionId: `TXN-${Date.now()}`,
-        invoiceNumber: null, // No invoice number for publish later
-        createdAt: new Date().toISOString(),
-        cashierName: "POS Cashier",
-        paymentMethod: selectedPaymentMethod,
-        customerName: formData.customerName,
-        customerTaxCode: formData.taxCode,
+      // Chuẩn bị thông tin hóa đơn để lưu vào bảng invoices và invoice_items
+      const invoicePayload = {
+        invoiceNumber: null, // Chưa có số hóa đơn vì chưa phát hành
+        templateNumber: selectedTemplate?.templateNumber || null, // Mẫu số hóa đơn
+        symbol: selectedTemplate?.symbol || null, // Ký hiệu hóa đơn
+        customerName: formData.customerName || "Khách hàng",
+        customerTaxCode: formData.taxCode || null,
+        customerAddress: formData.address || null,
+        customerPhone: formData.phoneNumber || null,
+        customerEmail: formData.email || null,
+        subtotal: calculatedSubtotal.toFixed(2),
+        tax: calculatedTax.toFixed(2),
+        total: (typeof total === "number" && !isNaN(total)
+          ? total
+          : calculatedSubtotal + calculatedTax
+        ).toFixed(2),
+        paymentMethod: paymentMethodCode, // Sử dụng mã phương thức thanh toán thực tế
+        invoiceDate: new Date(),
+        status: "draft",
+        einvoiceStatus: 0, // 0 = Chưa phát hành
+        notes: `E-Invoice draft - MST: ${formData.taxCode || "N/A"}, Template: ${selectedTemplate?.name || "N/A"}, Đợi phát hành sau`,
         items: cartItems.map((item) => {
-          const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-          const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-          const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
+          const itemPrice =
+            typeof item.price === "string"
+              ? parseFloat(item.price)
+              : item.price;
+          const itemQuantity =
+            typeof item.quantity === "string"
+              ? parseInt(item.quantity)
+              : item.quantity;
+          const itemTaxRate =
+            typeof item.taxRate === "string"
+              ? parseFloat(item.taxRate || "0")
+              : item.taxRate || 0;
           const itemSubtotal = itemPrice * itemQuantity;
           const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
           return {
-            id: item.id,
             productId: item.id,
             productName: item.name,
-            price: itemPrice.toFixed(2),
             quantity: itemQuantity,
+            unitPrice: itemPrice.toFixed(2),
             total: (itemSubtotal + itemTax).toFixed(2),
-            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: itemTaxRate,
+            taxRate: itemTaxRate.toFixed(2),
           };
         }),
+      };
+
+      console.log(
+        "💾 Lưu hóa đơn vào bảng invoices và invoice_items:",
+        JSON.stringify(invoicePayload, null, 2),
+      );
+
+      // Lưu hóa đơn vào bảng invoices và invoice_items
+      const invoiceResponse = await fetch("/api/invoices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(invoicePayload),
+      });
+
+      if (!invoiceResponse.ok) {
+        const errorText = await invoiceResponse.text();
+        console.error(
+          "❌ Invoice save failed with status:",
+          invoiceResponse.status,
+        );
+        console.error("❌ Error response:", errorText);
+
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+
+        throw new Error(
+          `Lưu hóa đơn thất bại: ${errorData.error || errorData.details || errorText}`,
+        );
+      }
+
+      const savedInvoice = await invoiceResponse.json();
+      console.log(
+        "✅ Hóa đơn đã được lưu vào bảng invoices và invoice_items:",
+        savedInvoice,
+      );
+
+      // Tạo receipt data thực sự cho receipt modal
+      const receiptData = {
+        transactionId:
+          savedInvoice.invoice?.invoiceNumber || `TXN-${Date.now()}`,
+        items: cartItems.map((item) => ({
+          id: item.id,
+          productId: item.id,
+          productName: item.name,
+          price:
+            typeof item.price === "string" ? item.price : item.price.toString(),
+          quantity:
+            typeof item.quantity === "string"
+              ? parseInt(item.quantity)
+              : item.quantity,
+          total: (
+            (typeof item.price === "string"
+              ? parseFloat(item.price)
+              : item.price) *
+            (typeof item.quantity === "string"
+              ? parseInt(item.quantity)
+              : item.quantity)
+          ).toFixed(2),
+          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+          taxRate:
+            typeof item.taxRate === "string"
+              ? parseFloat(item.taxRate || "0")
+              : item.taxRate || 0,
+        })),
         subtotal: calculatedSubtotal.toFixed(2),
         tax: calculatedTax.toFixed(2),
-        total: grandTotal.toFixed(2),
-        amountReceived: grandTotal.toFixed(2),
+        total: total.toFixed(2),
+        paymentMethod: "einvoice",
+        originalPaymentMethod: selectedPaymentMethod, // Add original payment method
+        amountReceived: total.toFixed(2),
         change: "0.00",
-        orderId: orderId || `temp-${Date.now()}`
+        cashierName: "System User",
+        createdAt: new Date().toISOString(),
+        customerName: formData.customerName,
+        customerTaxCode: formData.taxCode,
+        invoiceId: savedInvoice.invoice?.id,
+        invoiceNumber: savedInvoice.invoice?.invoiceNumber,
       };
 
-      // Prepare comprehensive invoice data for onConfirm - ALWAYS VALID
+      console.log("📄 Receipt data created for publish later:", receiptData);
+
+      // Show success message
+      toast({
+        title: "Thành công",
+        description:
+          "Thông tin hóa đơn điện tử đã được lưu. Đang hiển thị màn hình in hóa đơn...",
+      });
+
+      // Prepare comprehensive invoice data với receipt để hiển thị modal in
       const completeInvoiceData = {
-        success: true,
-        publishLater: true,
-        einvoiceStatus: 0, // 0 = chưa phát hành
-        status: 'draft',
-        paymentMethod: selectedPaymentMethod,
+        success: true, // Add success flag
+        paymentMethod: selectedPaymentMethod, // Use original payment method
         originalPaymentMethod: selectedPaymentMethod,
+        publishLater: true,
+        receipt: receiptData, // Receipt data để hiển thị modal in
         customerName: formData.customerName,
         taxCode: formData.taxCode,
-        cartItems: cartItems,
-        total: grandTotal,
-        subtotal: calculatedSubtotal,
+        showReceiptModal: true, // Flag để parent component biết cần hiển thị receipt modal
+        shouldShowReceipt: true, // Additional flag for receipt display
+        einvoiceStatus: 0, // 0 = Chưa phát hành (for publish later)
+        status: 'draft', // Draft status for publish later
+        cartItems: cartItems, // Include cart items for receipt
+        total: total, // Include total
+        subtotal: total - calculatedTax, // Calculate from total - tax
         tax: calculatedTax,
-        orderId: orderId,
+        invoiceId: savedInvoice.invoice?.id,
         source: source || "pos",
-        receipt: receiptData
+        orderId: orderId
       };
 
-      console.log("✅ PUBLISH LATER: Data prepared for receipt modal:", completeInvoiceData);
+      console.log("✅ PUBLISH LATER: Prepared data for onConfirm");
+      console.log("📄 PUBLISH LATER: Receipt data to pass:", receiptData);
+      console.log("📦 PUBLISH LATER: Complete invoice data:", completeInvoiceData);
 
-      // ALWAYS call onConfirm to show receipt modal - NO CONDITIONS
-      console.log("📄 PUBLISH LATER: Calling onConfirm to show receipt modal");
-      console.log("📄 PUBLISH LATER: completeInvoiceData being passed:", JSON.stringify(completeInvoiceData, null, 2));
-      
-      // Call onConfirm first to trigger receipt modal
+      // Call onConfirm immediately without closing modal first
+      console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
       onConfirm(completeInvoiceData);
-      console.log("✅ PUBLISH LATER: onConfirm called - receipt modal should show");
-
-      // Close the E-Invoice modal after a longer delay to ensure receipt modal opens first
-      setTimeout(() => {
-        console.log("🔄 PUBLISH LATER: Closing E-Invoice modal after receipt modal should be open");
-        onClose();
-      }, 500);
-
-      console.log("--------------------------------------------------");
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
@@ -670,47 +654,26 @@ export function EInvoiceModal({
         title: "Lỗi",
         description: errorMessage,
       });
-
-      // Don't call onConfirm on error to prevent white screen
-      console.log("❌ PUBLISH LATER: Not calling onConfirm due to error");
     } finally {
       setIsPublishing(false); // Always reset loading state
     }
   };
 
   const handleConfirm = async () => {
-    // Prevent duplicate calls
-    if (isPublishing) {
-      console.log("⚠️ Already processing publish, skipping duplicate call");
-      return;
-    }
-
-    setIsPublishing(true);
-
     // Validate required fields
     if (!formData.invoiceProvider || !formData.customerName) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
-        variant: "destructive",
-      });
-      setIsPublishing(false);
+      alert(
+        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
+      );
       return;
     }
 
     if (!formData.selectedTemplateId) {
-      toast({
-        title: "Lỗi", 
-        description: "Vui lòng chọn mẫu số hóa đơn",
-        variant: "destructive",
-      });
-      setIsPublishing(false);
+      alert("Vui lòng chọn mẫu số hóa đơn");
       return;
     }
 
     setIsPublishing(true);
-
-    console.log("🚀 Starting E-Invoice publishing process...");
     try {
       // Debug log current cart items
       console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
@@ -732,23 +695,9 @@ export function EInvoiceModal({
       );
 
       if (!connectionInfo) {
-        toast({
-          title: "Lỗi kết nối",
-          description: `Không tìm thấy thông tin kết nối cho ${formData.invoiceProvider}. Vui lòng kiểm tra cấu hình trong Settings.`,
-          variant: "destructive",
-        });
-        setIsPublishing(false);
-        return;
-      }
-
-      // Validate connection info completeness
-      if (!connectionInfo.taxCode || !connectionInfo.loginId || !connectionInfo.password) {
-        toast({
-          title: "Lỗi cấu hình",
-          description: `Thông tin kết nối cho ${formData.invoiceProvider} không đầy đủ. Vui lòng kiểm tra Mã số thuế, Login ID và Password trong Settings.`,
-          variant: "destructive",
-        });
-        setIsPublishing(false);
+        alert(
+          `Không tìm thấy thông tin kết nối cho ${formData.invoiceProvider}. Vui lòng kiểm tra cấu hình trong Settings.`,
+        );
         return;
       }
 
@@ -766,12 +715,16 @@ export function EInvoiceModal({
           length: cartItems?.length,
           total: total,
         });
-        toast({
-          title: "Lỗi dữ liệu",
-          description: `Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử. Số sản phẩm: ${cartItems?.length || 0}, Tổng tiền: ${total.toLocaleString("vi-VN")} ₫`,
-          variant: "destructive",
-        });
-        setIsPublishing(false);
+        alert(
+          "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " +
+            (cartItems?.length || 0) +
+            "\n- Tổng tiền: " +
+            total.toLocaleString("vi-VN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) +
+            " ₫\n\nVui lòng thử lại từ màn hình bán hàng.",
+        );
         return;
       }
 
@@ -795,12 +748,9 @@ export function EInvoiceModal({
 
       if (invalidItems.length > 0) {
         console.error("❌ Invalid cart items found:", invalidItems);
-        toast({
-          title: "Lỗi dữ liệu sản phẩm",
-          description: `Có ${invalidItems.length} sản phẩm trong giỏ hàng thiếu thông tin. Vui lòng kiểm tra lại giỏ hàng.`,
-          variant: "destructive",
-        });
-        setIsPublishing(false);
+        alert(
+          `Có ${invalidItems.length} sản phẩm trong giỏ hàng thiếu thông tin:\n${invalidItems.map((item) => `- ${item?.name || "Không có tên"}`).join("\n")}\n\nVui lòng kiểm tra lại giỏ hàng.`,
+        );
         return;
       }
 
@@ -906,12 +856,7 @@ export function EInvoiceModal({
       );
 
       if (!selectedTemplate) {
-        toast({
-          title: "Lỗi mẫu hóa đơn",
-          description: "Không tìm thấy thông tin mẫu số hóa đơn được chọn",
-          variant: "destructive",
-        });
-        setIsPublishing(false);
+        alert("Không tìm thấy thông tin mẫu số hóa đơn được chọn");
         return;
       }
 
@@ -1059,10 +1004,8 @@ export function EInvoiceModal({
               savedInvoice,
             );
           } else {
-            console.error(
-              "❌ Failed to save invoice to database:",
-              await invoiceResponse.text(),
-            );
+            const errorText = await invoiceResponse.text();
+            console.error("❌ Failed to save invoice to database:", errorText);
           }
         } catch (invoiceSaveError) {
           console.error(
@@ -1125,18 +1068,9 @@ export function EInvoiceModal({
           description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
         });
 
-        // Create receipt data immediately after successful publication
+        // Tạo receipt data ngay sau khi phát hành thành công
         const receiptData = {
-          transactionId: publishRequest.transactionID || `TXN-${Date.now()}`,
-          invoiceNumber: result.data?.invoiceNo || null,
-          createdAt: new Date().toISOString(),
-          cashierName: "POS Cashier",
-          paymentMethod: selectedPaymentMethod || "einvoice",
-          customerName: formData.customerName,
-          customerTaxCode: formData.taxCode,
-          customerAddress: formData.address || null,
-          customerPhone: formData.phoneNumber || null,
-          customerEmail: formData.email || null,
+          transactionId: result.data?.invoiceNo || `TXN-${Date.now()}`,
           items: cartItems.map((item) => {
             const itemPrice =
               typeof item.price === "string"
@@ -1166,10 +1100,15 @@ export function EInvoiceModal({
           }),
           subtotal: cartSubtotal.toFixed(2),
           tax: cartTaxAmount.toFixed(2),
-          total: cartTotal.toFixed(2),
-          amountReceived: cartTotal.toFixed(2),
+          total: total.toFixed(2),
+          paymentMethod: "einvoice",
+          amountReceived: total.toFixed(2),
           change: "0.00",
-          orderId: orderId || `temp-${Date.now()}`
+          cashierName: "System User",
+          createdAt: new Date().toISOString(),
+          invoiceNumber: result.data?.invoiceNo || null,
+          customerName: formData.customerName,
+          customerTaxCode: formData.taxCode,
         };
 
         console.log(
@@ -1177,104 +1116,51 @@ export function EInvoiceModal({
           receiptData,
         );
 
-        // Create the final result object for onConfirm - ALWAYS VALID
+        // Prepare comprehensive invoice data with all necessary flags
+        const invoiceResult = {
+          ...formData,
+          invoiceData: result.data,
+          cartItems: cartItems,
+          total: total,
+          paymentMethod: selectedPaymentMethod, // Use original payment method
+          originalPaymentMethod: selectedPaymentMethod,
+          source: source || "pos",
+          orderId: orderId,
+          publishedImmediately: true, // Flag để phân biệt với phát hành sau
+          receipt: receiptData, // Truyền receipt data đã tạo
+          customerName: formData.customerName,
+          taxCode: formData.taxCode,
+          invoiceNumber: result.data?.invoiceNo || null,
+        };
+
+        console.log("✅ Prepared comprehensive invoice result:", invoiceResult);
+
+        // Create the final result object for onConfirm
         const publishResult = {
           success: true,
-          publishedImmediately: true,
-          invoiceNumber: result.data?.invoiceNo || null,
+          invoiceNumber: receiptData.invoiceNumber,
           symbol: selectedTemplate.symbol || null,
           templateNumber: selectedTemplate.templateNumber || null,
           einvoiceStatus: 1, // Đã phát hành
           invoiceStatus: 1, // Hoàn thành
           status: 'published',
-          paymentMethod: selectedPaymentMethod,
+          receipt: receiptData,
+          publishedImmediately: true,
+          showReceiptModal: true, // Ensure receipt modal is shown
+          shouldShowReceipt: true, // Additional flag for receipt display
+          paymentMethod: selectedPaymentMethod, // Include payment method
           originalPaymentMethod: selectedPaymentMethod,
-          cartItems: cartItems,
-          total: cartTotal,
-          subtotal: cartSubtotal,
-          tax: cartTaxAmount,
-          customerName: formData.customerName,
-          taxCode: formData.taxCode,
-          orderId: orderId,
-          source: source || "pos",
-          receipt: receiptData
+          cartItems: cartItems, // Include cart items
+          total: total // Include calculated total
         };
 
-        console.log("📄 IMMEDIATE PUBLISH: Data prepared for receipt modal:", publishResult);
+        console.log(
+          "📧 Step 4: E-Invoice published, now calling onConfirm with receipt data",
+        );
+        console.log("📄 Publish result being sent:", publishResult);
 
-        // ALWAYS call onConfirm to show receipt modal - NO CONDITIONS
-        console.log("📄 IMMEDIATE PUBLISH: Calling onConfirm to show receipt modal");
+        // Call onConfirm to trigger receipt modal display
         onConfirm(publishResult);
-        console.log("✅ IMMEDIATE PUBLISH: onConfirm called - receipt modal should show");
-
-        // Close the E-Invoice modal immediately
-        onClose();
-
-        // Force data refresh on all pages after successful publishing
-        try {
-          // Send WebSocket signal for immediate refresh
-          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          const wsUrl = `${protocol}//${window.location.host}/ws`;
-          const ws = new WebSocket(wsUrl);
-
-          ws.onopen = () => {
-            const refreshSignal = {
-              type: 'einvoice_published',
-              success: true,
-              source: 'einvoice_modal',
-              reason: 'invoice_published',
-              orderId: orderId,
-              invoiceNumber: publishResult.invoiceNumber,
-              timestamp: new Date().toISOString()
-            };
-
-            console.log("📡 E-Invoice: Sending WebSocket refresh signal:", refreshSignal);
-            ws.send(JSON.stringify(refreshSignal));
-
-            setTimeout(() => ws.close(), 100);
-          };
-
-          ws.onerror = (error) => {
-            console.warn("⚠️ E-Invoice: WebSocket error (non-critical):", error);
-          };
-        } catch (wsError) {
-          console.warn("⚠️ E-Invoice: WebSocket signal failed (non-critical):", wsError);
-        }
-
-        // Dispatch custom events for cross-page coordination
-        const refreshEvents = [
-          new CustomEvent('einvoicePublished', {
-            detail: {
-              success: true,
-              invoiceNumber: publishResult.invoiceNumber,
-              orderId: orderId,
-              source: 'einvoice_modal',
-              timestamp: new Date().toISOString()
-            }
-          }),
-          new CustomEvent('forceDataRefresh', {
-            detail: {
-              reason: 'einvoice_published',
-              source: 'einvoice_modal',
-              orderId: orderId,
-              timestamp: new Date().toISOString()
-            }
-          }),
-          new CustomEvent('paymentCompleted', {
-            detail: {
-              orderId: orderId,
-              paymentMethod: 'einvoice',
-              invoiceNumber: publishResult.invoiceNumber,
-              timestamp: new Date().toISOString()
-            }
-          })
-        ];
-
-        refreshEvents.forEach(event => {
-          console.log("📡 E-Invoice: Dispatching refresh event:", event.type);
-          window.dispatchEvent(event);
-        });
-
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",
@@ -1282,19 +1168,7 @@ export function EInvoiceModal({
       }
     } catch (error) {
       console.error("Error publishing invoice:", error);
-      let errorMessage = "Có lỗi xảy ra khi phát hành hóa đơn";
-      
-      if (error instanceof Error) {
-        errorMessage = `Lỗi phát hành hóa đơn: ${error.message}`;
-      } else if (typeof error === "string") {
-        errorMessage = `Lỗi phát hành hóa đơn: ${error}`;
-      }
-      
-      toast({
-        title: "Lỗi phát hành",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);
     } finally {
       setIsPublishing(false);
     }
@@ -1543,7 +1417,6 @@ export function EInvoiceModal({
               onClick={handleConfirm}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               disabled={isPublishing}
-              type="button"
             >
               {isPublishing ? (
                 <>
