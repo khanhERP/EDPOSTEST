@@ -589,8 +589,8 @@ export function ShoppingCart({
     console.log("🎯 POS: E-Invoice confirmed with data:", invoiceData);
     console.log("🔍 POS: Invoice data structure:", JSON.stringify(invoiceData, null, 2));
 
-    // Don't close E-invoice modal immediately - let it handle its own closing
-    // setShowEInvoiceModal(false); // Commented out - let EInvoiceModal handle its own closing
+    // Close E-invoice modal immediately to prevent conflicts
+    setShowEInvoiceModal(false);
     setIsProcessingPayment(false);
 
     // Check if this is publish later or immediate publish
@@ -760,27 +760,25 @@ export function ShoppingCart({
     setShowPaymentModal(false);
     setShowReceiptPreview(false);
     setShowPaymentMethodModal(false);
+    setShowEInvoiceModal(false);
     
-    // Set receipt data and show modal
-    setSelectedReceipt(receiptForDisplay);
-    setShowReceiptModal(true);
+    // Clear cart immediately
+    console.log("🧹 POS: Clearing cart after E-Invoice processing");
+    onClearCart();
+
+    // Clear any active orders
+    if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+      (window as any).clearActiveOrder();
+    }
     
-    // Force re-render multiple times to ensure modal shows
+    // Set receipt data and show modal with small delay to ensure other modals are closed
     setTimeout(() => {
-      console.log("🔥 POS: Force setting receipt modal states again - attempt 1");
+      console.log("🔥 POS: Setting receipt modal states");
       setSelectedReceipt(receiptForDisplay);
       setShowReceiptModal(true);
     }, 100);
-    
-    setTimeout(() => {
-      console.log("🔥 POS: Force setting receipt modal states again - attempt 2");
-      setSelectedReceipt(receiptForDisplay);
-      setShowReceiptModal(true);
-      // Also close E-invoice modal if still open
-      setShowEInvoiceModal(false);
-    }, 300);
 
-    console.log("✅ POS: Receipt modal should now be displayed");
+    console.log("✅ POS: Receipt modal will be displayed");
   };
 
   const canCheckout = cart.length > 0;

@@ -633,9 +633,11 @@ export function EInvoiceModal({
       console.log("📄 PUBLISH LATER: Receipt data to pass:", receiptData);
       console.log("📦 PUBLISH LATER: Complete invoice data:", completeInvoiceData);
 
-      // Call onConfirm immediately without closing modal first
-      console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
+      // Call onConfirm to trigger receipt modal display - let parent handle modal closing
       onConfirm(completeInvoiceData);
+      console.log("✅ PUBLISH LATER: onConfirm called - parent will handle modal states");
+
+      console.log("--------------------------------------------------");
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
@@ -1159,8 +1161,11 @@ export function EInvoiceModal({
         );
         console.log("📄 Publish result being sent:", publishResult);
 
-        // Call onConfirm to trigger receipt modal display
+        // Call onConfirm to trigger receipt modal display - let parent handle modal closing
         onConfirm(publishResult);
+        console.log("✅ PUBLISH LATER: onConfirm called - parent will handle modal states");
+
+        console.log("--------------------------------------------------");
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",
