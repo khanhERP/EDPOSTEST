@@ -73,22 +73,22 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Remove from cache immediately after unmount
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on focus
+    refetchOnMount: false, // Don't refetch on mount if data exists
     refetchInterval: false, // Don't auto-refetch on interval
-    networkMode: 'always', // Always try to fetch
+    networkMode: 'online', // Only fetch when online
   });
 
   const { data: orders, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Remove from cache immediately after unmount
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes (orders change more frequently)
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch on focus
+    refetchOnMount: false, // Don't refetch on mount if data exists
     refetchInterval: false, // Don't auto-refetch on interval
-    networkMode: 'always', // Always try to fetch
+    networkMode: 'online', // Only fetch when online
   });
 
   // Get all active orders' items for proper total calculation
@@ -99,7 +99,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { data: allOrderItems } = useQuery({
     queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
     enabled: activeOrders.length > 0,
-    staleTime: 0,
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     queryFn: async () => {
       const itemsMap = new Map();
 
@@ -126,8 +126,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     queryKey: ["/api/order-items", selectedOrder?.id],
     enabled: !!selectedOrder?.id && orderDetailsOpen,
     refetchOnWindowFocus: false,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Remove from cache immediately after unmount
+    staleTime: 1 * 60 * 1000, // Cache for 1 minute
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     queryFn: async () => {
       const orderId = selectedOrder.id;
       if (!orderId) {
@@ -181,27 +181,27 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: products } = useQuery({
     queryKey: ["/api/products"],
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Remove from cache immediately after unmount
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes (products don't change often)
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const { data: storeSettings } = useQuery({
     queryKey: ["/api/store-settings"],
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Remove from cache immediately after unmount
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 30 * 60 * 1000, // Cache for 30 minutes (settings rarely change)
+    gcTime: 60 * 60 * 1000, // Keep in cache for 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const { data: customers } = useQuery({
     queryKey: ["/api/customers"],
     enabled: pointsPaymentOpen,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Remove from cache immediately after unmount
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   // Filter customers based on search term
@@ -229,24 +229,32 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
 
-  // Listen for custom events to refresh data
+  // Listen for custom events to refresh data - only when really needed
   useEffect(() => {
     const handleRefreshData = (event: CustomEvent) => {
       console.log("🔄 Table Grid: Received refresh data event:", event.detail);
 
-      // Clear cache and refetch fresh data
-      queryClient.removeQueries({ queryKey: ["/api/tables"] });
-      queryClient.removeQueries({ queryKey: ["/api/orders"] });
+      // Only refresh if the event is critical or forced
+      if (event.detail?.forceRefresh || event.detail?.reason === 'payment_completed') {
+        // Clear cache and refetch fresh data
+        queryClient.removeQueries({ queryKey: ["/api/tables"] });
+        queryClient.removeQueries({ queryKey: ["/api/orders"] });
 
-      // Refresh data
-      refetchTables();
-      refetchOrders();
+        // Refresh data
+        refetchTables();
+        refetchOrders();
 
-      console.log("✅ Table Grid: Data refreshed successfully");
+        console.log("✅ Table Grid: Data refreshed successfully");
+      } else {
+        // Gentle invalidation - let cache handle it
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      }
     };
 
     const handleOrderUpdated = (event: CustomEvent) => {
       console.log("📋 Table Grid: Order updated event:", event.detail);
+      // Only invalidate, don't force refetch
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
     };
