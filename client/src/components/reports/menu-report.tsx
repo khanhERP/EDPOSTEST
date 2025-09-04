@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -113,18 +113,8 @@ function MenuReport() {
   });
 
   // Query menu analysis data
-  // Memoize date parameters to prevent unnecessary re-renders
-  const queryParams = useMemo(() => ({ startDate, endDate }), [startDate, endDate]);
-
   const { data: menuAnalysis, isLoading: analysisLoading, error: analysisError, refetch } = useQuery({
-    queryKey: ["/api/menu-analysis", queryParams],
-    enabled: !!startDate && !!endDate,
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
-    gcTime: 20 * 60 * 1000, // Keep in cache for 20 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    networkMode: 'online',
+    queryKey: ["/api/menu-analysis", startDate, endDate, selectedCategory],
     queryFn: async () => {
       try {
         const params = new URLSearchParams({
@@ -411,30 +401,30 @@ function MenuReport() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={menuAnalysis.categoryStats.map((cat, index) => ({
-                          name: cat.categoryName?.length > 15
-                            ? cat.categoryName.substring(0, 15) + '...'
+                          name: cat.categoryName?.length > 15 
+                            ? cat.categoryName.substring(0, 15) + '...' 
                             : cat.categoryName || `Danh mục ${cat.categoryId}`,
                           revenue: Number(cat.totalRevenue || 0)
                         }))}
                         margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                       >
-                        <XAxis
-                          dataKey="name"
+                        <XAxis 
+                          dataKey="name" 
                           angle={-45}
                           textAnchor="end"
                           height={80}
                           fontSize={11}
                         />
-                        <YAxis
+                        <YAxis 
                           tickFormatter={(value) => formatCurrency(value)}
                           fontSize={11}
                         />
-                        <Tooltip
+                        <Tooltip 
                           formatter={(value) => [formatCurrency(Number(value)) + ' ₫', 'Doanh thu']}
                           labelStyle={{ fontWeight: 600, fontSize: 12 }}
                         />
-                        <Bar
-                          dataKey="revenue"
+                        <Bar 
+                          dataKey="revenue" 
                           radius={[4, 4, 0, 0]}
                         >
                           {menuAnalysis.categoryStats.map((entry, index) => (
@@ -458,30 +448,30 @@ function MenuReport() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={menuAnalysis.categoryStats.map((cat, index) => ({
-                          name: cat.categoryName?.length > 15
-                            ? cat.categoryName.substring(0, 15) + '...'
+                          name: cat.categoryName?.length > 15 
+                            ? cat.categoryName.substring(0, 15) + '...' 
                             : cat.categoryName || `Danh mục ${cat.categoryId}`,
                           quantity: Number(cat.totalQuantity || 0)
                         }))}
                         margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                       >
-                        <XAxis
-                          dataKey="name"
+                        <XAxis 
+                          dataKey="name" 
                           angle={-45}
                           textAnchor="end"
                           height={80}
                           fontSize={11}
                         />
-                        <YAxis
+                        <YAxis 
                           tickFormatter={(value) => value.toLocaleString('vi-VN')}
                           fontSize={11}
                         />
-                        <Tooltip
+                        <Tooltip 
                           formatter={(value) => [Number(value).toLocaleString('vi-VN'), 'Số lượng']}
                           labelStyle={{ fontWeight: 600, fontSize: 12 }}
                         />
-                        <Bar
-                          dataKey="quantity"
+                        <Bar 
+                          dataKey="quantity" 
                           radius={[4, 4, 0, 0]}
                         >
                           {menuAnalysis.categoryStats.map((entry, index) => (
@@ -494,7 +484,7 @@ function MenuReport() {
                 </div>
               </div>
             </div>
-
+            
             {/* Category Performance Table */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px]">
