@@ -1050,9 +1050,9 @@ export function ShoppingCart({
       )}
 
       {/* Final Receipt Modal - Shows after successful payment */}
-      {(showReceiptModal || selectedReceipt) && (
+      {showReceiptModal && selectedReceipt && (
         <ReceiptModal
-          isOpen={showReceiptModal}
+          isOpen={showReceiptModal && !!selectedReceipt}
           onClose={() => {
             console.log('🔄 Shopping Cart: Receipt modal closing, clearing cart and sending refresh signal');
 

@@ -2884,7 +2884,7 @@ export function OrderManagement() {
 
       {/* Receipt Modal - Final receipt after payment */}
       <ReceiptModal
-        isOpen={showReceiptModal}
+        isOpen={showReceiptModal && !!selectedReceipt}
         onClose={async () => {
           console.log('🔴 Order Management: Closing final receipt modal safely');
 

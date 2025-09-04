@@ -52,6 +52,16 @@ export function ReceiptModal({
     enabled: isOpen, // Only fetch when modal is open
   });
 
+  // Reset states on mount to prevent unwanted modal display
+  useEffect(() => {
+    // If modal is supposed to be open but has no valid data, close it immediately
+    if (isOpen && !receipt && !isPreview && (!cartItems || cartItems.length === 0 || total <= 0)) {
+      console.log("🚨 Receipt Modal: Detected invalid state on mount - closing modal");
+      setTimeout(() => onClose(), 0);
+      return;
+    }
+  }, []); // Run only on mount
+
   // Log receipt modal state for debugging - ALWAYS CALL THIS HOOK
   useEffect(() => {
     if (isOpen) {
@@ -72,56 +82,46 @@ export function ReceiptModal({
         receipt,
         cartItems: cartItems?.length || 0,
         onConfirm: !!onConfirm,
-        hasReceiptData: !!(receipt && typeof receipt === 'object'),
-        hasValidData: !!(receipt && typeof receipt === 'object') || (isPreview && cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0)
+        hasReceiptData: !!(receipt && typeof receipt === 'object' && (receipt.id || receipt.transactionId)),
+        hasValidData: !!(receipt && typeof receipt === 'object' && (receipt.id || receipt.transactionId)) || (isPreview && cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0)
       });
       
       // Force show modal when receipt data exists
-      if (receipt && typeof receipt === 'object') {
+      if (receipt && typeof receipt === 'object' && (receipt.id || receipt.transactionId)) {
         console.log("✅ Receipt Modal: Valid receipt data found - modal will display");
       }
+    } else {
+      console.log("❌ Receipt Modal: Modal is not open or has invalid data");
     }
   }, [isOpen, receipt, isPreview, cartItems, total, onConfirm]);
 
-  // Early return after hooks
+  // Early return after hooks - STRICT validation to prevent unwanted display
   if (!isOpen) {
     console.log("❌ Receipt Modal: Modal is closed");
     return null;
   }
 
-  // Handle missing data cases
-  const hasReceiptData = receipt && typeof receipt === 'object';
+  // Handle missing data cases with STRICT validation
+  const hasReceiptData = receipt && typeof receipt === 'object' && (receipt.id || receipt.transactionId);
   const hasCartData = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
   const hasValidData = hasReceiptData || (isPreview && hasCartData && total > 0);
 
+  // CRITICAL: If no valid data at all, don't show modal - just return null
   if (!hasValidData) {
-    console.log("❌ Receipt Modal: No valid data for display", {
+    console.log("❌ Receipt Modal: No valid data for display - closing modal", {
       hasReceiptData,
       hasCartData,
       isPreview,
-      total
+      total,
+      receiptId: receipt?.id,
+      receiptTransactionId: receipt?.transactionId
     });
 
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Thông tin hóa đơn</DialogTitle>
-          </DialogHeader>
-          <div className="p-4 text-center">
-            <p>
-              {isPreview
-                ? "Không có sản phẩm trong giỏ hàng để xem trước hóa đơn"
-                : "Không có dữ liệu hóa đơn để hiển thị"
-              }
-            </p>
-            <Button onClick={onClose} className="mt-4">
-              Đóng
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
+    // Instead of showing error dialog, just close the modal silently
+    if (isOpen) {
+      setTimeout(() => onClose(), 0);
+    }
+    return null;
   }
 
   const handlePrint = () => {
