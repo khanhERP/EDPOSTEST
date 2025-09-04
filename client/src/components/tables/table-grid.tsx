@@ -209,117 +209,211 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   // Enhanced WebSocket connection for AGGRESSIVE real-time updates
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(wsUrl);
+    let ws = null;
+    let reconnectTimeout = null;
+    let shouldReconnect = true;
 
-    ws.onmessage = async (event) => {
+    const connectWebSocket = () => {
       try {
-        const data = JSON.parse(event.data);
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        ws = new WebSocket(wsUrl);
 
-        // Expanded list of events that trigger aggressive refresh
-        if (data.type === 'popup_close' ||
-            data.type === 'payment_success' ||
-            data.type === 'order_status_update' ||
-            data.type === 'force_refresh' ||
-            data.type === 'einvoice_published' ||
-            data.type === 'einvoice_saved_for_later' ||
-            data.type === 'payment_completed' ||
-            data.type === 'modal_closed' ||
-            data.force_refresh === true) {
-          
-          console.log('🔄 TableGrid: AGGRESSIVE data refresh triggered by WebSocket:', data.type);
-
-          try {
-            // AGGRESSIVE REFRESH STRATEGY
-            // Step 1: Complete cache clearing
-            queryClient.clear();
-            queryClient.removeQueries();
-
-            // Step 2: Force immediate fresh data fetch with cache busting
-            const timestamp = Date.now().toString();
-            const [freshTables, freshOrders] = await Promise.all([
-              fetch(`/api/tables?_ws_refresh=${timestamp}`, {
-                cache: "no-store",
-                headers: { 
-                  "Cache-Control": "no-cache, no-store, must-revalidate",
-                  "Pragma": "no-cache",
-                  "Expires": "0"
-                }
-              }).then(r => r.json()),
-              fetch(`/api/orders?_ws_refresh=${timestamp}`, {
-                cache: "no-store",
-                headers: { 
-                  "Cache-Control": "no-cache, no-store, must-revalidate",
-                  "Pragma": "no-cache",
-                  "Expires": "0"
-                }
-              }).then(r => r.json())
-            ]);
-
-            // Step 3: Set fresh data immediately
-            queryClient.setQueryData(["/api/tables"], freshTables);
-            queryClient.setQueryData(["/api/orders"], freshOrders);
-
-            console.log('✅ TableGrid: Fresh data loaded via WebSocket trigger');
-
-            // Step 4: Multiple timed invalidations for guaranteed UI update
-            setTimeout(() => {
-              queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-            }, 100);
-
-            setTimeout(() => {
-              queryClient.refetchQueries({ queryKey: ["/api/tables"] });
-              queryClient.refetchQueries({ queryKey: ["/api/orders"] });
-            }, 250);
-
-          } catch (refreshError) {
-            console.error('❌ TableGrid: WebSocket triggered refresh failed, using fallback:', refreshError);
-            
-            // Fallback to standard refresh
-            queryClient.clear();
-            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-          }
-
-          // Dispatch custom event for other components
-          window.dispatchEvent(new CustomEvent('refreshTableData', {
-            detail: {
-              source: 'table_grid_websocket_aggressive',
-              reason: data.type,
-              action: data.action || 'aggressive_refresh',
-              invoiceId: data.invoiceId || null,
-              forceRefresh: true,
-              timestamp: new Date().toISOString()
-            }
+        ws.onopen = () => {
+          console.log('🔌 TableGrid: WebSocket connected successfully');
+          // Register as table grid client
+          ws.send(JSON.stringify({
+            type: 'register_table_grid',
+            timestamp: new Date().toISOString()
           }));
-        }
+        };
+
+        ws.onmessage = async (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            // Expanded list of events that trigger aggressive refresh for table grid
+            if (data.type === 'popup_close' ||
+                data.type === 'payment_success' ||
+                data.type === 'order_status_update' ||
+                data.type === 'force_refresh' ||
+                data.type === 'einvoice_published' ||
+                data.type === 'einvoice_saved_for_later' ||
+                data.type === 'payment_completed' ||
+                data.type === 'modal_closed' ||
+                data.type === 'refresh_data_after_print' ||
+                data.type === 'invoice_modal_closed' ||
+                data.force_refresh === true) {
+              
+              console.log('🔄 TableGrid: IMMEDIATE data refresh triggered by:', data.type);
+              console.log('📊 TableGrid: Event details:', data);
+
+              // IMMEDIATE MULTI-STRATEGY REFRESH
+              try {
+                // Strategy 1: Complete cache clearing
+                queryClient.clear();
+                queryClient.removeQueries();
+
+                // Strategy 2: Force immediate fresh data fetch with multiple cache busting techniques
+                const timestamp = Date.now().toString();
+                const cacheBuster = `${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
+                
+                console.log('📡 TableGrid: Fetching fresh data with cache buster:', cacheBuster);
+                
+                const [freshTables, freshOrders] = await Promise.all([
+                  fetch(`/api/tables?_ws_refresh=${cacheBuster}&_force=true&_timestamp=${timestamp}`, {
+                    cache: "no-store",
+                    headers: { 
+                      "Cache-Control": "no-cache, no-store, must-revalidate",
+                      "Pragma": "no-cache",
+                      "Expires": "0",
+                      "X-Requested-With": "XMLHttpRequest"
+                    }
+                  }).then(r => {
+                    if (!r.ok) throw new Error(`Tables fetch failed: ${r.status}`);
+                    return r.json();
+                  }),
+                  fetch(`/api/orders?_ws_refresh=${cacheBuster}&_force=true&_timestamp=${timestamp}`, {
+                    cache: "no-store",
+                    headers: { 
+                      "Cache-Control": "no-cache, no-store, must-revalidate",
+                      "Pragma": "no-cache",
+                      "Expires": "0",
+                      "X-Requested-With": "XMLHttpRequest"
+                    }
+                  }).then(r => {
+                    if (!r.ok) throw new Error(`Orders fetch failed: ${r.status}`);
+                    return r.json();
+                  })
+                ]);
+
+                console.log('✅ TableGrid: Fresh data fetched successfully:', {
+                  tables: freshTables?.length || 0,
+                  orders: freshOrders?.length || 0
+                });
+
+                // Strategy 3: Set fresh data immediately with forced update
+                queryClient.setQueryData(["/api/tables"], freshTables);
+                queryClient.setQueryData(["/api/orders"], freshOrders);
+
+                // Strategy 4: Multiple timed invalidations with force refetch
+                setTimeout(() => {
+                  console.log('🔄 TableGrid: First invalidation wave');
+                  queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                }, 50);
+
+                setTimeout(() => {
+                  console.log('🔄 TableGrid: Second refetch wave');
+                  queryClient.refetchQueries({ queryKey: ["/api/tables"] });
+                  queryClient.refetchQueries({ queryKey: ["/api/orders"] });
+                }, 200);
+
+                setTimeout(() => {
+                  console.log('🔄 TableGrid: Final force refresh wave');
+                  queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                  refetchTables();
+                  refetchOrders();
+                }, 500);
+
+                console.log('🎉 TableGrid: All refresh strategies completed successfully');
+
+              } catch (refreshError) {
+                console.error('❌ TableGrid: WebSocket refresh failed, using fallback:', refreshError);
+                
+                // Enhanced fallback strategy
+                queryClient.clear();
+                queryClient.removeQueries();
+                
+                try {
+                  await Promise.all([
+                    refetchTables(),
+                    refetchOrders()
+                  ]);
+                  console.log('✅ TableGrid: Fallback refresh completed');
+                } catch (fallbackError) {
+                  console.error('❌ TableGrid: Even fallback failed:', fallbackError);
+                  
+                  // Last resort: force page reload for critical data
+                  setTimeout(() => {
+                    if (data.type === 'payment_success' || data.type === 'einvoice_published') {
+                      console.warn('⚠️ TableGrid: Critical refresh failed, considering page reload...');
+                      // Don't auto-reload, just log the issue
+                    }
+                  }, 1000);
+                }
+              }
+
+              // Strategy 5: Dispatch custom events for cross-component coordination
+              window.dispatchEvent(new CustomEvent('refreshTableData', {
+                detail: {
+                  source: 'table_grid_websocket_enhanced',
+                  reason: data.type,
+                  action: data.action || 'aggressive_refresh',
+                  invoiceId: data.invoiceId || null,
+                  orderId: data.orderId || null,
+                  forceRefresh: true,
+                  timestamp: new Date().toISOString(),
+                  success: true
+                }
+              }));
+
+              // Also dispatch to window for other components
+              window.dispatchEvent(new CustomEvent('dataRefreshCompleted', {
+                detail: {
+                  component: 'table_grid',
+                  reason: data.type,
+                  timestamp: new Date().toISOString()
+                }
+              }));
+            }
+          } catch (error) {
+            console.error('❌ TableGrid: Error processing WebSocket message:', error);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('❌ TableGrid: WebSocket error:', error);
+        };
+
+        ws.onclose = (event) => {
+          console.log('🔌 TableGrid: WebSocket connection closed:', event.code, event.reason);
+          
+          // Attempt reconnection if still needed
+          if (shouldReconnect) {
+            console.log('🔄 TableGrid: Attempting WebSocket reconnection in 2 seconds...');
+            reconnectTimeout = setTimeout(connectWebSocket, 2000);
+          }
+        };
+
       } catch (error) {
-        console.error('❌ TableGrid: Error processing WebSocket message:', error);
+        console.error('❌ TableGrid: Failed to create WebSocket connection:', error);
+        
+        // Retry connection after delay
+        if (shouldReconnect) {
+          reconnectTimeout = setTimeout(connectWebSocket, 3000);
+        }
       }
     };
 
-    ws.onerror = (error) => {
-      console.warn('⚠️ TableGrid: WebSocket error:', error);
-    };
+    // Initialize connection
+    connectWebSocket();
 
-    ws.onclose = () => {
-      console.log('ℹ️ TableGrid: WebSocket connection closed, will reconnect...');
-      // Implement reconnection with delay
-      setTimeout(() => {
-        console.log('🔄 TableGrid: Attempting WebSocket reconnection...');
-        // This will trigger the useEffect to run again
-      }, 3000);
-    };
-
-    // Cleanup on component unmount
+    // Cleanup function
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      console.log('🧹 TableGrid: Cleaning up WebSocket connection');
+      shouldReconnect = false;
+      
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close(1000, 'Component unmounting');
       }
     };
-  }, [queryClient]);
+  }, [queryClient, refetchTables, refetchOrders]);
 
 
   const updateTableStatusMutation = useMutation({

@@ -125,7 +125,7 @@ export function ReceiptModal({
   }
 
   const handlePrint = () => {
-    console.log('🖨️ Receipt Modal: Print button clicked - triggering cart clear');
+    console.log('🖨️ Receipt Modal: Print button clicked - triggering data refresh');
     
     // Force clear cart immediately when print is clicked
     if (typeof window !== 'undefined') {
@@ -138,23 +138,48 @@ export function ReceiptModal({
       }));
     }
 
-    // Send popup close signal before printing to trigger cart clear
+    // Send enhanced refresh signals to ensure table data is updated
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        ws.send(JSON.stringify({
-          type: "popup_close",
-          success: true,
-          action: 'print_receipt_requested',
-          timestamp: new Date().toISOString()
-        }));
-        ws.close();
+        // Send multiple signals to ensure all components refresh
+        const signals = [
+          {
+            type: "popup_close",
+            success: true,
+            action: 'print_receipt_requested',
+            forceRefresh: true,
+            timestamp: new Date().toISOString()
+          },
+          {
+            type: "payment_completed",
+            success: true,
+            action: 'receipt_printed',
+            refreshTables: true,
+            timestamp: new Date().toISOString()
+          },
+          {
+            type: "force_refresh",
+            reason: 'receipt_modal_print',
+            refreshTables: true,
+            refreshOrders: true,
+            timestamp: new Date().toISOString()
+          }
+        ];
+
+        signals.forEach((signal, index) => {
+          setTimeout(() => {
+            ws.send(JSON.stringify(signal));
+          }, index * 100);
+        });
+
+        setTimeout(() => ws.close(), 500);
       };
     } catch (error) {
-      console.error("Failed to send popup close signal:", error);
+      console.error("Failed to send refresh signals:", error);
     }
 
     const printContent = document.getElementById('receipt-content');
@@ -762,7 +787,7 @@ export function ReceiptModal({
               </Button>
               <Button
                 onClick={() => {
-                  console.log('🔴 Receipt Modal: Close button clicked - forcing cart clear');
+                  console.log('🔴 Receipt Modal: Close button clicked - forcing data refresh');
                   
                   // Force clear cart when close button is clicked
                   if (typeof window !== 'undefined') {
@@ -774,25 +799,56 @@ export function ReceiptModal({
                     }));
                   }
                   
-                  // Send refresh signal
+                  // Send enhanced refresh signals to update table data
                   try {
                     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
                     const wsUrl = `${protocol}//${window.location.host}/ws`;
                     const ws = new WebSocket(wsUrl);
 
                     ws.onopen = () => {
-                      ws.send(JSON.stringify({
-                        type: "popup_close",
-                        success: true,
-                        action: 'receipt_modal_closed_manually',
-                        timestamp: new Date().toISOString()
-                      }));
-                      ws.close();
+                      // Send multiple refresh signals for table data update
+                      const refreshSignals = [
+                        {
+                          type: "popup_close",
+                          success: true,
+                          action: 'receipt_modal_closed_manually',
+                          refreshTables: true,
+                          timestamp: new Date().toISOString()
+                        },
+                        {
+                          type: "invoice_modal_closed",
+                          success: true,
+                          refreshTables: true,
+                          refreshOrders: true,
+                          timestamp: new Date().toISOString()
+                        },
+                        {
+                          type: "modal_closed",
+                          modalType: 'receipt',
+                          forceRefresh: true,
+                          refreshTables: true,
+                          timestamp: new Date().toISOString()
+                        }
+                      ];
+
+                      refreshSignals.forEach((signal, index) => {
+                        setTimeout(() => {
+                          console.log('📡 Receipt Modal: Sending refresh signal:', signal.type);
+                          ws.send(JSON.stringify(signal));
+                        }, index * 50);
+                      });
+
+                      setTimeout(() => ws.close(), 300);
+                    };
+
+                    ws.onerror = (error) => {
+                      console.error("WebSocket error when closing receipt modal:", error);
                     };
                   } catch (error) {
-                    console.error("Failed to send refresh signal:", error);
+                    console.error("Failed to send refresh signals:", error);
                   }
                   
+                  // Close the modal
                   onClose();
                 }}
                 variant="outline"

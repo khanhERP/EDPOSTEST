@@ -598,7 +598,11 @@ export function ShoppingCart({
       return;
     }
 
-    // Show success message based on action type BEFORE any async operations
+    // Close E-Invoice modal immediately
+    setShowEInvoiceModal(false);
+    setIsProcessingPayment(false);
+
+    // Show success message based on action type
     if (invoiceData.publishLater) {
       toast({
         title: "Thành công",
@@ -611,8 +615,39 @@ export function ShoppingCart({
       });
     }
 
-    // Always prepare receipt data, regardless of publishing status
-    const receiptForDisplay = {
+    // Prepare receipt data exactly like table grid
+    let subtotal = 0;
+    let totalTax = 0;
+
+    const currentOrderItems = lastCartItems.length > 0 ? lastCartItems :
+                             orderForPayment?.items || cart;
+
+    if (Array.isArray(currentOrderItems) && Array.isArray(products)) {
+      currentOrderItems.forEach((item: any) => {
+        const basePrice = Number(item.price || 0);
+        const quantity = Number(item.quantity || 0);
+        const product = products.find((p: any) => p.id === item.id);
+
+        // Calculate subtotal (base price without tax)
+        subtotal += basePrice * quantity;
+
+        // Use EXACT same tax calculation logic as table grid
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const taxPerUnit = afterTaxPrice - basePrice;
+          totalTax += taxPerUnit * quantity;
+        }
+      });
+    }
+
+    const finalTotal = subtotal + totalTax;
+
+    // Create proper receipt data with calculated values
+    const receiptData = {
       transactionId: invoiceData.transactionId || `TXN-${Date.now()}`,
       invoiceNumber: invoiceData.invoiceNumber,
       createdAt: new Date().toISOString(),
@@ -621,69 +656,43 @@ export function ShoppingCart({
       customerTaxCode: invoiceData.taxCode,
       paymentMethod: "einvoice",
       originalPaymentMethod: selectedPaymentMethod || "cash",
-      amountReceived: (() => {
-        const totalToUse = orderForPayment?.exactTotal ||
-                         orderForPayment?.calculatedTotal ||
-                         parseFloat(orderForPayment?.total || '0');
-        return Math.floor(totalToUse).toString();
-      })(),
+      amountReceived: Math.floor(finalTotal).toString(),
       change: "0.00",
-      items: (() => {
-        const itemsToUse = lastCartItems.length > 0 ? lastCartItems :
-                          orderForPayment?.cartItems || cart;
-
-        return itemsToUse.map((item: any) => ({
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          quantity: item.quantity,
-          price: item.price.toString(),
-          total: (parseFloat(item.price) * item.quantity).toString(),
-          sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: item.taxRate || 0,
-        }));
-      })(),
-      subtotal: (() => {
-        const totalToUse = orderForPayment?.exactTotal ||
-                         orderForPayment?.calculatedTotal ||
-                         parseFloat(orderForPayment?.total || '0');
-
-        // Calculate subtotal from total minus tax
-        const taxAmount = calculateTax(cart);
-        const subtotal = totalToUse - taxAmount;
-        return Math.floor(subtotal).toString();
-      })(),
-      tax: (() => {
-        const taxAmount = calculateTax(cart);
-        return Math.floor(taxAmount).toString();
-      })(),
-      total: (() => {
-        const totalToUse = orderForPayment?.exactTotal ||
-                         orderForPayment?.calculatedTotal ||
-                         parseFloat(orderForPayment?.total || '0');
-        return Math.floor(totalToUse).toString();
-      })(),
+      items: currentOrderItems.map((item: any) => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        quantity: item.quantity,
+        price: item.price.toString(),
+        total: (parseFloat(item.price) * item.quantity).toString(),
+        sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
+        taxRate: item.taxRate || 0,
+      })),
+      subtotal: Math.floor(subtotal).toString(),
+      tax: Math.floor(totalTax).toString(),
+      total: Math.floor(finalTotal).toString(),
     };
 
-    console.log("📄 POS: Setting receipt data immediately:", receiptForDisplay);
-    console.log("📦 POS: Receipt items count:", receiptForDisplay?.items?.length || 0);
+    console.log("📄 POS: Showing receipt modal after E-invoice with proper data");
+    console.log("💰 Receipt data:", {
+      itemsCount: receiptData.items.length,
+      subtotal: receiptData.subtotal,
+      tax: receiptData.tax,
+      total: receiptData.total,
+    });
 
-    // CRITICAL: Set receipt data FIRST before any other operations
-    setSelectedReceipt(receiptForDisplay);
-
-    // CRITICAL: Close E-Invoice modal and show receipt modal SYNCHRONOUSLY
-    setShowEInvoiceModal(false);
+    // Set receipt data and show modal immediately
+    setSelectedReceipt(receiptData);
     setShowReceiptModal(true);
-    setIsProcessingPayment(false);
 
     // Close other modals
     setShowPaymentModal(false);
     setShowReceiptPreview(false);
     setShowPaymentMethodModal(false);
 
-    console.log("✅ POS: Receipt modal set to display immediately - NO DELAYS");
+    console.log("✅ POS: Receipt modal displayed immediately after E-invoice");
 
-    // Clear cart and orders AFTER receipt modal is shown
+    // Clear cart after receipt modal is shown
     setTimeout(() => {
       console.log("🧹 POS: Clearing cart after receipt modal is displayed");
       onClearCart();
@@ -1133,7 +1142,7 @@ export function ShoppingCart({
               finalTotalToUse: totalToUse
             });
 
-            return totalToUse;
+            return Math.floor(totalToUse || 0);
           })()}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={(() => {
