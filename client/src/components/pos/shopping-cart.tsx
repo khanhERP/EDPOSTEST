@@ -155,7 +155,7 @@ export function ShoppingCart({
         ws.onopen = () => {
           console.log('📡 Shopping Cart: WebSocket connected for refresh signals');
           reconnectAttempts = 0; // Reset attempts on successful connection
-          
+
           // Register as shopping cart client
           ws?.send(JSON.stringify({
             type: 'register_shopping_cart',
@@ -174,7 +174,7 @@ export function ShoppingCart({
               // Clear cart if payment was successful
               if ((data.type === 'popup_close' && data.success) || data.type === 'payment_success' || data.type === 'einvoice_published') {
                 console.log('🧹 Shopping Cart: Clearing cart due to successful payment/invoice');
-                
+
                 // Multiple attempts to ensure cart is cleared
                 onClearCart();
                 setTimeout(() => onClearCart(), 100);
@@ -267,7 +267,7 @@ export function ShoppingCart({
       console.log('🔄 Shopping Cart: Received force refresh event:', event.detail);
       // Force clear cart and refresh
       onClearCart();
-      
+
       // Clear any active orders
       if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
         (window as any).clearActiveOrder();
@@ -589,18 +589,14 @@ export function ShoppingCart({
     console.log("🎯 POS: E-Invoice confirmed with data:", invoiceData);
     console.log("🔍 POS: Invoice data structure:", JSON.stringify(invoiceData, null, 2));
 
-    // Close E-invoice modal immediately to prevent conflicts
-    setShowEInvoiceModal(false);
-    setIsProcessingPayment(false);
+    // IMPORTANT: Keep E-invoice modal open initially to prevent premature closure
+    console.log("🔄 POS: Processing E-invoice data while keeping modal states controlled");
 
     // Check if this is publish later or immediate publish
     const isPublishLater = invoiceData?.publishLater === true;
     console.log("🔍 POS: Publish Later?", isPublishLater);
-    
-    // ALWAYS show receipt modal - no conditions
-    console.log("✅ POS: Processing invoice data - ALWAYS showing receipt modal");
 
-    // Create receipt object for display - handle all scenarios
+    // Create comprehensive receipt object for display - handle all scenarios
     const receiptForDisplay = {
       // Transaction and invoice info
       transactionId: invoiceData?.transactionId || 
@@ -609,7 +605,7 @@ export function ShoppingCart({
       invoiceNumber: invoiceData?.invoiceNumber || 
                     invoiceData?.receipt?.invoiceNumber || 
                     null,
-      
+
       // Customer info
       customerName: invoiceData?.customerName || 
                    invoiceData?.receipt?.customerName || 
@@ -626,7 +622,7 @@ export function ShoppingCart({
       customerEmail: invoiceData?.customerEmail || 
                     invoiceData?.receipt?.customerEmail || 
                     null,
-      
+
       // Payment info
       paymentMethod: invoiceData?.originalPaymentMethod || 
                     invoiceData?.receipt?.paymentMethod || 
@@ -635,16 +631,20 @@ export function ShoppingCart({
       originalPaymentMethod: invoiceData?.originalPaymentMethod || 
                            invoiceData?.receipt?.originalPaymentMethod ||
                            invoiceData?.paymentMethod,
-      
-      // Items - use multiple fallback sources
+
+      // Items - use multiple fallback sources with better handling
       items: (() => {
+        console.log("🔍 POS: Determining items source for receipt");
+
         // Try receipt items first
         if (invoiceData?.receipt?.items && Array.isArray(invoiceData.receipt.items) && invoiceData.receipt.items.length > 0) {
+          console.log("✅ POS: Using receipt items from invoiceData.receipt.items");
           return invoiceData.receipt.items;
         }
-        
+
         // Try cart items from invoice data
         if (invoiceData?.cartItems && Array.isArray(invoiceData.cartItems) && invoiceData.cartItems.length > 0) {
+          console.log("✅ POS: Using cart items from invoiceData.cartItems");
           return invoiceData.cartItems.map((item) => ({
             id: item.id,
             productId: item.id,
@@ -656,9 +656,10 @@ export function ShoppingCart({
             taxRate: item.taxRate || 0,
           }));
         }
-        
+
         // Use lastCartItems as fallback
         if (lastCartItems && Array.isArray(lastCartItems) && lastCartItems.length > 0) {
+          console.log("✅ POS: Using lastCartItems as fallback");
           return lastCartItems.map((item) => ({
             id: item.id,
             productId: item.id,
@@ -670,8 +671,9 @@ export function ShoppingCart({
             taxRate: item.taxRate || 0,
           }));
         }
-        
+
         // Final fallback to current cart
+        console.log("⚠️ POS: Using current cart as final fallback");
         return cart.map((item) => ({
           id: item.id,
           productId: item.id,
@@ -683,12 +685,14 @@ export function ShoppingCart({
           taxRate: item.taxRate || 0,
         }));
       })(),
-      
-      // Financial info with multiple fallbacks
-      subtotal: invoiceData?.receipt?.subtotal || 
+
+      // Financial info with enhanced fallback logic
+      subtotal: (() => {
+        return invoiceData?.receipt?.subtotal || 
                invoiceData?.subtotal?.toString() || 
                (invoiceData?.total && invoiceData?.tax ? (parseFloat(invoiceData.total) - parseFloat(invoiceData.tax)).toFixed(2) : null) ||
-               total.toFixed(2),
+               total.toFixed(2);
+      })(),
       tax: invoiceData?.receipt?.tax || 
           invoiceData?.tax?.toString() || 
           "0.00",
@@ -699,14 +703,14 @@ export function ShoppingCart({
                      invoiceData?.total?.toString() || 
                      total.toFixed(2),
       change: invoiceData?.receipt?.change || "0.00",
-      
+
       // System info
       cashierName: invoiceData?.receipt?.cashierName || "POS Cashier",
       createdAt: invoiceData?.receipt?.createdAt || new Date().toISOString(),
       orderId: invoiceData?.orderId || 
               invoiceData?.receipt?.orderId || 
               `temp-${Date.now()}`,
-      
+
       // Status info
       einvoiceStatus: invoiceData?.einvoiceStatus !== undefined ? invoiceData.einvoiceStatus : 0,
       invoiceStatus: invoiceData?.invoiceStatus !== undefined ? invoiceData.invoiceStatus : 0,
@@ -715,29 +719,34 @@ export function ShoppingCart({
 
     console.log("📄 POS: Receipt data prepared for display:", receiptForDisplay);
     console.log("📄 POS: Receipt items count:", receiptForDisplay.items?.length || 0);
+    console.log("📄 POS: Receipt financial data:", {
+      subtotal: receiptForDisplay.subtotal,
+      tax: receiptForDisplay.tax,
+      total: receiptForDisplay.total
+    });
 
     // Show appropriate success message based on action
     if (invoiceData?.publishLater) {
-      console.log("⏳ POS: Publish later flow - showing success message and receipt");
+      console.log("⏳ POS: Publish later flow - showing success message");
       toast({
         title: "Thành công", 
-        description: "Hóa đơn đã được lưu để phát hành sau. Hiển thị hóa đơn để in...",
+        description: "Hóa đơn đã được lưu để phát hành sau. Đang hiển thị hóa đơn để in...",
       });
     } else if (invoiceData?.publishedImmediately || invoiceData?.success) {
-      console.log("✅ POS: Immediate publish flow - showing success message and receipt");
+      console.log("✅ POS: Immediate publish flow - showing success message");
       toast({
         title: "Thành công",
-        description: "Hóa đơn điện tử đã được phát hành thành công. Hiển thị hóa đơn để in...",
+        description: "Hóa đơn điện tử đã được phát hành thành công. Đang hiển thị hóa đơn để in...",
       });
     } else {
-      console.log("ℹ️ POS: Generic success flow - showing receipt");
+      console.log("ℹ️ POS: Generic success flow");
       toast({
         title: "Thành công",
-        description: "Hóa đơn đã được xử lý. Hiển thị hóa đơn để in...",
+        description: "Hóa đơn đã được xử lý. Đang hiển thị hóa đơn để in...",
       });
     }
 
-    // Clear cart immediately
+    // Clear cart immediately to prevent confusion
     console.log("🧹 POS: Clearing cart after E-Invoice processing");
     onClearCart();
 
@@ -746,39 +755,28 @@ export function ShoppingCart({
       (window as any).clearActiveOrder();
     }
 
-    // Close all other modals
-    setShowPaymentModal(false);
-    setShowReceiptPreview(false);
-    setShowPaymentMethodModal(false);
+    // Close all modals in the correct sequence with small delays
+    console.log("🔄 POS: Closing modals in sequence");
 
-    // ALWAYS SHOW RECEIPT MODAL - NO EXCEPTIONS
-    console.log("🔥 POS: ALWAYS showing receipt modal - removed all conditional checks");
-    console.log("🔥 POS: receiptForDisplay being set:", receiptForDisplay);
-    console.log("🔥 POS: receiptForDisplay items count:", receiptForDisplay?.items?.length || 0);
-    
-    // Close all other modals first to prevent conflicts
+    // First, close payment related modals
     setShowPaymentModal(false);
-    setShowReceiptPreview(false);
     setShowPaymentMethodModal(false);
-    setShowEInvoiceModal(false);
-    
-    // Clear cart immediately
-    console.log("🧹 POS: Clearing cart after E-Invoice processing");
-    onClearCart();
+    setShowReceiptPreview(false);
 
-    // Clear any active orders
-    if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-      (window as any).clearActiveOrder();
-    }
-    
-    // Set receipt data and show modal with small delay to ensure other modals are closed
+    // Close E-invoice modal with slight delay
     setTimeout(() => {
-      console.log("🔥 POS: Setting receipt modal states");
+      setShowEInvoiceModal(false);
+      setIsProcessingPayment(false);
+
+      // Set receipt data and force show receipt modal
+      console.log("🔥 POS: Setting receipt data and showing receipt modal");
       setSelectedReceipt(receiptForDisplay);
       setShowReceiptModal(true);
+
+      console.log("✅ POS: Receipt modal should now be visible");
     }, 100);
 
-    console.log("✅ POS: Receipt modal will be displayed");
+    console.log("✅ POS: E-Invoice confirmation process completed");
   };
 
   const canCheckout = cart.length > 0;
