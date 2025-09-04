@@ -129,65 +129,34 @@ export function OrderDialog({
         throw error;
       }
     },
-    onSuccess: async (response) => {
-      console.log('=== ORDER MUTATION SUCCESS ===');
+    onSuccess: (response) => {
+      console.log('=== ORDER MUTATION SUCCESS (SINGLE CALL) ===');
       console.log(
         mode === "edit"
-          ? "Order updated successfully:"
+          ? "Order updated successfully (no duplicates):"
           : "Order created successfully:",
         response,
       );
 
-      try {
-        // Force immediate refresh to ensure UI updates
-        console.log('🔄 Refreshing data after order update...');
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
-          queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
-          queryClient.invalidateQueries({ queryKey: ["/api/order-items"] }),
-          queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
-          queryClient.refetchQueries({ queryKey: ["/api/tables"] })
-        ]);
+      // Only invalidate - let React Query handle refetch naturally (no forced refetch)
+      console.log('🔄 Invalidating queries (natural refresh only)...');
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
 
-        // Reset form state
-        setCart([]);
-        setCustomerName("");
-        setCustomerCount(1);
-        setExistingItems([]);
-        onOpenChange(false);
+      // Reset form state
+      setCart([]);
+      setCustomerName("");
+      setCustomerCount(1);
+      setExistingItems([]);
+      onOpenChange(false);
 
-        toast({
-          title: "Thành công",
-          description: mode === "edit" ? "Đã thêm món mới vào đơn hàng" : "Đã tạo đơn hàng mới",
-        });
+      toast({
+        title: t('orders.orderUpdateSuccess'),
+        description: mode === "edit" ? "Đã cập nhật đơn hàng (1 lần duy nhất)" : t('orders.orderUpdateSuccessDesc'),
+      });
 
-        console.log('✅ Order update completed successfully');
-
-        // Dispatch custom event for real-time updates
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('orderUpdated', {
-            detail: {
-              orderId: response.orderId || response.id,
-              action: mode === "edit" ? 'items_added' : 'created',
-              timestamp: new Date().toISOString()
-            }
-          }));
-        }
-
-      } catch (error) {
-        console.error('❌ Error during post-success operations:', error);
-        // Still show success toast since the operation itself succeeded
-        toast({
-          title: "Thành công", 
-          description: mode === "edit" ? "Đã thêm món mới vào đơn hàng" : "Đã tạo đơn hàng mới",
-        });
-        
-        setCart([]);
-        setCustomerName("");
-        setCustomerCount(1);
-        setExistingItems([]);
-        onOpenChange(false);
-      }
+      console.log('✅ Order mutation completed - no duplicate API calls triggered');
     },
     onError: (error: any) => {
       console.error('=== ORDER MUTATION ERROR ===');
@@ -208,10 +177,9 @@ export function OrderDialog({
         errorMessage = error.message;
       }
 
-      const action = mode === "edit" ? "cập nhật đơn hàng" : "tạo đơn hàng";
       toast({
-        title: "Lỗi",
-        description: `Không thể ${action}: ${errorMessage}`,
+        title: t("common.error"),
+        description: mode === "edit" ? `Lỗi cập nhật đơn hàng: ${errorMessage}` : `Lỗi tạo đơn hàng: ${errorMessage}`,
         variant: "destructive",
       });
     },
@@ -356,12 +324,12 @@ export function OrderDialog({
       const hasChanges = cart.length > 0 || existingItems.some(item => item.quantity === 0); // Check if any existing item quantity became 0
 
       // CHẶN HOÀN TOÀN VIỆC UPDATE KHI KHÔNG CẦN THIẾT
-        if (cart.length === 0) {
-          console.log('⚠️ Order Dialog: No new items to add, skipping database update to prevent duplicates');
+        if (cart.length === 0 && !existingItems.some(item => item.quantity === 0)) {
+          console.log('⚠️ Order Dialog: No changes detected, skipping database update to prevent duplicates');
 
           toast({
-            title: "Thông báo",
-            description: "Không có món mới nào để thêm vào đơn hàng",
+            title: "Thành công",
+            description: "Đơn hàng hiện tại không có thay đổi nào",
             variant: "default",
           });
 
@@ -369,6 +337,7 @@ export function OrderDialog({
           setCart([]);
           setCustomerName("");
           setCustomerCount(1);
+          setExistingItems([]);
           onOpenChange(false);
           return;
         }
@@ -962,15 +931,17 @@ export function OrderDialog({
               {/* Action button */}
               <Button
                 onClick={handlePlaceOrder}
-                disabled={createOrderMutation.isPending || (mode === "edit" && cart.length === 0)}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={createOrderMutation.isPending}
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex-shrink-0"
                 size="lg"
               >
                 {createOrderMutation.isPending
-                  ? (mode === "edit" ? "Đang cập nhật..." : "Đang tạo...")
+                  ? mode === "edit"
+                    ? t("orders.updating")
+                    : t("tables.placing")
                   : mode === "edit"
-                    ? (cart.length === 0 ? "Không có món mới" : "Thêm món vào đơn hàng")
-                    : "Đặt đơn hàng"}
+                    ? (cart.length === 0 ? t("orders.updateAndRefresh") : t("orders.updateOrder"))
+                    : t("tables.placeOrder")}
               </Button>
             </div>
           </DialogFooter>
