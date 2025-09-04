@@ -929,78 +929,94 @@ export class DatabaseStorage implements IStorage {
   async getAttendanceRecords(
     employeeId?: number,
     date?: string,
+    tenantDb?: any,
   ): Promise<AttendanceRecord[]> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getAttendanceRecords`);
-      throw new Error(`Database connection is not available`);
-    }
-    const conditions = [];
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'getAttendanceRecords');
+      
+      const conditions = [];
 
-    if (employeeId) {
-      conditions.push(eq(attendanceRecords.employeeId, employeeId));
-    }
+      if (employeeId) {
+        conditions.push(eq(attendanceRecords.employeeId, employeeId));
+      }
 
-    if (date) {
-      const startDate = new Date(date);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(date);
-      endDate.setHours(23, 59, 59, 999);
+      if (date) {
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
 
-      conditions.push(
-        gte(attendanceRecords.clockIn, startDate),
-        lte(attendanceRecords.clockIn, endDate),
-      );
-    }
+        conditions.push(
+          gte(attendanceRecords.clockIn, startDate),
+          lte(attendanceRecords.clockIn, endDate),
+        );
+      }
 
-    if (conditions.length > 0) {
-      return await db
+      if (conditions.length > 0) {
+        return await database
+          .select()
+          .from(attendanceRecords)
+          .where(and(...conditions))
+          .orderBy(attendanceRecords.clockIn);
+      }
+
+      return await database
         .select()
         .from(attendanceRecords)
-        .where(and(...conditions))
         .orderBy(attendanceRecords.clockIn);
+    } catch (error) {
+      console.error(`❌ Error in getAttendanceRecords:`, error);
+      return [];
     }
-
-    return await db
-      .select()
-      .from(attendanceRecords)
-      .orderBy(attendanceRecords.clockIn);
   }
 
-  async getAttendanceRecord(id: number): Promise<AttendanceRecord | undefined> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getAttendanceRecord`);
-      throw new Error(`Database connection is not available`);
+  async getAttendanceRecord(id: number, tenantDb?: any): Promise<AttendanceRecord | undefined> {
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'getAttendanceRecord');
+      const [record] = await database
+        .select()
+        .from(attendanceRecords)
+        .where(eq(attendanceRecords.id, id));
+      return record || undefined;
+    } catch (error) {
+      console.error(`❌ Error in getAttendanceRecord:`, error);
+      return undefined;
     }
-    const [record] = await db
-      .select()
-      .from(attendanceRecords)
-      .where(eq(attendanceRecords.id, id));
-    return record || undefined;
   }
 
   async getTodayAttendance(
     employeeId: number,
+    tenantDb?: any,
   ): Promise<AttendanceRecord | undefined> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getTodayAttendance`);
-      throw new Error(`Database connection is not available`);
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'getTodayAttendance');
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const [record] = await db
-      .select()
-      .from(attendanceRecords)
-      .where(
-        and(
-          eq(attendanceRecords.employeeId, employeeId),
-          gte(attendanceRecords.clockIn, today),
-          lte(attendanceRecords.clockIn, tomorrow),
-        ),
-      );
-    return record || undefined;
+      const [record] = await database
+        .select()
+        .from(attendanceRecords)
+        .where(
+          and(
+            eq(attendanceRecords.employeeId, employeeId),
+            gte(attendanceRecords.clockIn, today),
+            lte(attendanceRecords.clockIn, tomorrow),
+          ),
+        );
+      return record || undefined;
+    } catch (error) {
+      console.error(`❌ Error in getTodayAttendance:`, error);
+      return undefined;
+    }
   }
 
   async clockIn(employeeId: number, notes?: string): Promise<AttendanceRecord> {
@@ -1132,83 +1148,113 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Tables
-  async getTables(): Promise<Table[]> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getTables`);
-      throw new Error(`Database connection is not available`);
+  async getTables(tenantDb?: any): Promise<Table[]> {
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'getTables');
+      return await database.select().from(tables).orderBy(tables.tableNumber);
+    } catch (error) {
+      console.error(`❌ Error in getTables:`, error);
+      return [];
     }
-    return await db.select().from(tables).orderBy(tables.tableNumber);
   }
 
-  async getTable(id: number): Promise<Table | undefined> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getTable`);
-      throw new Error(`Database connection is not available`);
+  async getTable(id: number, tenantDb?: any): Promise<Table | undefined> {
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'getTable');
+      const [table] = await database.select().from(tables).where(eq(tables.id, id));
+      return table || undefined;
+    } catch (error) {
+      console.error(`❌ Error in getTable:`, error);
+      return undefined;
     }
-    const [table] = await db.select().from(tables).where(eq(tables.id, id));
-    return table || undefined;
   }
 
-  async getTableByNumber(tableNumber: string): Promise<Table | undefined> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getTableByNumber`);
-      throw new Error(`Database connection is not available`);
+  async getTableByNumber(tableNumber: string, tenantDb?: any): Promise<Table | undefined> {
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'getTableByNumber');
+      const [table] = await database
+        .select()
+        .from(tables)
+        .where(eq(tables.tableNumber, tableNumber));
+      return table || undefined;
+    } catch (error) {
+      console.error(`❌ Error in getTableByNumber:`, error);
+      return undefined;
     }
-    const [table] = await db
-      .select()
-      .from(tables)
-      .where(eq(tables.tableNumber, tableNumber));
-    return table || undefined;
   }
 
-  async createTable(table: InsertTable): Promise<Table> {
-    if (!db) {
-      console.error(`❌ Database is undefined in createTable`);
-      throw new Error(`Database connection is not available`);
+  async createTable(table: InsertTable, tenantDb?: any): Promise<Table> {
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'createTable');
+      const [newTable] = await database.insert(tables).values(table).returning();
+      return newTable;
+    } catch (error) {
+      console.error(`❌ Error in createTable:`, error);
+      throw error;
     }
-    const [newTable] = await db.insert(tables).values(table).returning();
-    return newTable;
   }
 
   async updateTable(
     id: number,
     table: Partial<InsertTable>,
+    tenantDb?: any,
   ): Promise<Table | undefined> {
-    if (!db) {
-      console.error(`❌ Database is undefined in updateTable`);
-      throw new Error(`Database connection is not available`);
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'updateTable');
+      const [updatedTable] = await database
+        .update(tables)
+        .set(table)
+        .where(eq(tables.id, id))
+        .returning();
+      return updatedTable || undefined;
+    } catch (error) {
+      console.error(`❌ Error in updateTable:`, error);
+      return undefined;
     }
-    const [updatedTable] = await db
-      .update(tables)
-      .set(table)
-      .where(eq(tables.id, id))
-      .returning();
-    return updatedTable || undefined;
   }
 
   async updateTableStatus(
     id: number,
     status: string,
+    tenantDb?: any,
   ): Promise<Table | undefined> {
-    if (!db) {
-      console.error(`❌ Database is undefined in updateTableStatus`);
-      throw new Error(`Database connection is not available`);
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'updateTableStatus');
+      const [table] = await database
+        .update(tables)
+        .set({ status })
+        .where(eq(tables.id, id))
+        .returning();
+      return table || undefined;
+    } catch (error) {
+      console.error(`❌ Error in updateTableStatus:`, error);
+      return undefined;
     }
-    const [table] = await db
-      .update(tables)
-      .set({ status })
-      .where(eq(tables.id, id))
-      .returning();
-    return table || undefined;
   }
 
-  async deleteTable(id: number): Promise<boolean> {
-    if (!db) {
-      console.error(`❌ Database is undefined in deleteTable`);
-      throw new Error(`Database connection is not available`);
+  async deleteTable(id: number, tenantDb?: any): Promise<boolean> {
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'deleteTable');
+      const result = await database.delete(tables).where(eq(tables.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error(`❌ Error in deleteTable:`, error);
+      return false;
     }
-    const result = await db.delete(tables).where(eq(tables.id, id));
-    return (result.rowCount ?? 0) > 0;
   }
 
   // Orders
@@ -1239,51 +1285,67 @@ export class DatabaseStorage implements IStorage {
     return await database.select().from(orders).orderBy(orders.orderedAt);
   }
 
-  async getOrder(id: number): Promise<Order | undefined> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getOrder`);
-      throw new Error(`Database connection is not available`);
+  async getOrder(id: number, tenantDb?: any): Promise<Order | undefined> {
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'getOrder');
+      const [order] = await database.select().from(orders).where(eq(orders.id, id));
+      return order || undefined;
+    } catch (error) {
+      console.error(`❌ Error in getOrder:`, error);
+      return undefined;
     }
-    const [order] = await db.select().from(orders).where(eq(orders.id, id));
-    return order || undefined;
   }
 
-  async getOrderByNumber(orderNumber: string): Promise<Order | undefined> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getOrderByNumber`);
-      throw new Error(`Database connection is not available`);
+  async getOrderByNumber(orderNumber: string, tenantDb?: any): Promise<Order | undefined> {
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'getOrderByNumber');
+      const [order] = await database
+        .select()
+        .from(orders)
+        .where(eq(orders.orderNumber, orderNumber));
+      return order || undefined;
+    } catch (error) {
+      console.error(`❌ Error in getOrderByNumber:`, error);
+      return undefined;
     }
-    const [order] = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.orderNumber, orderNumber));
-    return order || undefined;
   }
 
   async createOrder(
     order: InsertOrder,
     items: InsertOrderItem[],
+    tenantDb?: any,
   ): Promise<Order> {
-    if (!db) {
-      console.error(`❌ Database is undefined in createOrder`);
-      throw new Error(`Database connection is not available`);
+    const database = tenantDb || db;
+    
+    try {
+      this.validateDatabase(database, 'createOrder');
+      
+      const [newOrder] = await database.insert(orders).values(order).returning();
+
+      if (items.length > 0) {
+        const itemsWithOrderId = items.map((item) => ({
+          ...item,
+          orderId: newOrder.id,
+          unitPrice: item.unitPrice.toString(),
+          total: item.total.toString(),
+        }));
+        await database.insert(orderItems).values(itemsWithOrderId);
+      }
+
+      // Update table status to occupied
+      if (newOrder.tableId) {
+        await this.updateTableStatus(newOrder.tableId, "occupied");
+      }
+
+      return newOrder;
+    } catch (error) {
+      console.error(`❌ Error in createOrder:`, error);
+      throw error;
     }
-    const [newOrder] = await db.insert(orders).values(order).returning();
-
-    if (items.length > 0) {
-      const itemsWithOrderId = items.map((item) => ({
-        ...item,
-        orderId: newOrder.id,
-        unitPrice: item.unitPrice.toString(),
-        total: item.total.toString(),
-      }));
-      await db.insert(orderItems).values(itemsWithOrderId);
-    }
-
-    // Update table status to occupied
-    await this.updateTableStatus(newOrder.tableId, "occupied");
-
-    return newOrder;
   }
 
   async updateOrder(
