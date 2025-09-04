@@ -1471,121 +1471,71 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrder(
     id: number,
-    order: Partial<InsertOrder>,
+    orderData: any,
     tenantDb?: any,
-  ): Promise<Order | undefined> {
+  ): Promise<Order | null> {
     try {
-      const database = this.getSafeDatabase(tenantDb, 'updateOrder');
+      const safeDb = await this.getSafeDatabase('updateOrder', tenantDb);
 
-    console.log('=== UPDATING ORDER ===');
-    console.log('Order ID:', id);
-    console.log('Update data:', order);
+      console.log(`📝 Storage: Updating order ${id} with data:`, orderData);
 
-    // Get current order state before update
-    const [currentOrder] = await database
-      .select()
-      .from(orders)
-      .where(eq(orders.id, id));
+      const updateData: any = {
+        updatedAt: new Date().toISOString()
+      };
 
-    if (!currentOrder) {
-      console.error(`❌ Order not found: ${id}`);
-      return undefined;
-    }
+      // Add fields that are provided in orderData
+      if (orderData.customerName !== undefined) updateData.customerName = orderData.customerName;
+      if (orderData.customerCount !== undefined) updateData.customerCount = orderData.customerCount;
+      if (orderData.status !== undefined) updateData.status = orderData.status;
+      if (orderData.paymentMethod !== undefined) updateData.paymentMethod = orderData.paymentMethod;
+      if (orderData.paymentStatus !== undefined) updateData.paymentStatus = orderData.paymentStatus;
+      if (orderData.einvoiceStatus !== undefined) updateData.einvoiceStatus = orderData.einvoiceStatus;
+      if (orderData.templateNumber !== undefined) updateData.templateNumber = orderData.templateNumber;
+      if (orderData.symbol !== undefined) updateData.symbol = orderData.symbol;
+      if (orderData.invoiceNumber !== undefined) updateData.invoiceNumber = orderData.invoiceNumber;
+      if (orderData.notes !== undefined) updateData.notes = orderData.notes;
+      if (orderData.paidAt !== undefined) updateData.paidAt = orderData.paidAt;
+      if (orderData.servedAt !== undefined) updateData.servedAt = orderData.servedAt;
 
-    // Handle field mapping - einvoiceStatus should map to einvoice_status in database
-    const mappedData = { ...order };
-    if (order.einvoiceStatus !== undefined) {
-      mappedData.einvoiceStatus = order.einvoiceStatus;
-      console.log('Mapped einvoiceStatus field:', order.einvoiceStatus);
-    }
-
-    // Add updatedAt timestamp
-    mappedData.updatedAt = new Date();
-
-    console.log('Final mapped data to update:', JSON.stringify(mappedData, null, 2));
-
-    const [updatedOrder] = await database
-      .update(orders)
-      .set(mappedData)
-      .where(eq(orders.id, id))
-      .returning();
-
-    if (updatedOrder) {
-      console.log('✅ Order updated successfully:', {
-        orderId: updatedOrder.id,
-        status: updatedOrder.status,
-        einvoiceStatus: updatedOrder.einvoiceStatus,
-        paymentMethod: updatedOrder.paymentMethod,
-        paidAt: updatedOrder.paidAt
-      });
-
-      // If order status was updated to 'paid' or 'completed', check table status
-      if ((order.status === "paid" || order.status === "completed") && updatedOrder.tableId) {
-        console.log(`💳 Order ${order.status} - checking table ${updatedOrder.tableId} for release`);
-
-        try {
-          // Check for other unpaid orders on the same table (excluding current order)
-          // Only process if current order is a real database order (not temporary)
-          const unpaidStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
-          const otherUnpaidOrders = await database
-                .select()
-                .from(orders)
-                .where(
-                  and(
-                    eq(orders.tableId, updatedOrder.tableId),
-                    not(eq(orders.id, Number(id))), // Exclude current order
-                    or(
-                      ...unpaidStatuses.map(unpaidStatus => eq(orders.status, unpaidStatus))
-                    )
-                  )
-                );
-
-          console.log(`🔍 Unpaid orders remaining on table ${updatedOrder.tableId}:`, {
-            count: otherUnpaidOrders.length,
-            orders: otherUnpaidOrders.map(o => ({ 
-              id: o.id, 
-              status: o.status, 
-              orderNumber: o.orderNumber 
-            }))
-          });
-
-          // Import tables from schema
-          const { tables } = await import("@shared/schema");
-
-          // Only update table status to available if no other unpaid orders exist
-          if (otherUnpaidOrders.length === 0) {
-            console.log(`🔓 No unpaid orders remaining - releasing table ${updatedOrder.tableId}`);
-
-            const [updatedTable] = await database
-              .update(tables)
-              .set({ 
-                status: "available",
-                updatedAt: new Date()
-              })
-              .where(eq(tables.id, updatedOrder.tableId))
-              .returning();
-
-            if (updatedTable) {
-              console.log(`✅ Table ${updatedOrder.tableId} released successfully`);
-            } else {
-              console.error(`❌ Failed to release table ${updatedOrder.tableId}`);
-            }
-          } else {
-            console.log(`🔒 Table ${updatedOrder.tableId} remains occupied due to ${otherUnpaidOrders.length} unpaid orders`);
-          }
-        } catch (tableError) {
-          console.error(`❌ Error processing table status for table ${updatedOrder.tableId}:`, tableError);
-        }
+      // CRITICAL: Always update financial fields if provided
+      if (orderData.subtotal !== undefined) {
+        updateData.subtotal = orderData.subtotal.toString();
+        console.log(`💰 Storage: Updating subtotal to ${orderData.subtotal}`);
       }
-    } else {
-      console.error('❌ No order returned after update');
-    }
+      if (orderData.tax !== undefined) {
+        updateData.tax = orderData.tax.toString();
+        console.log(`💰 Storage: Updating tax to ${orderData.tax}`);
+      }
+      if (orderData.total !== undefined) {
+        updateData.total = orderData.total.toString();
+        console.log(`💰 Storage: Updating total to ${orderData.total}`);
+      }
 
-    console.log('=== END UPDATING ORDER ===');
-    return updatedOrder || undefined;
+      console.log(`💾 Storage: Final update data for order ${id}:`, updateData);
+
+      const [updatedOrder] = await safeDb
+        .update(orders)
+        .set(updateData)
+        .where(eq(orders.id, id))
+        .returning();
+
+      if (updatedOrder) {
+        console.log(`✅ Storage: Order ${id} updated successfully:`, {
+          orderId: updatedOrder.id,
+          status: updatedOrder.status,
+          customerName: updatedOrder.customerName,
+          paymentMethod: updatedOrder.paymentMethod,
+          einvoiceStatus: updatedOrder.einvoiceStatus,
+          subtotal: updatedOrder.subtotal,
+          tax: updatedOrder.tax,
+          total: updatedOrder.total
+        });
+      }
+
+      return updatedOrder || null;
     } catch (error) {
-      console.error(`❌ Error in updateOrder:`, error);
-      return undefined;
+      console.error('Storage: Error updating order:', error);
+      throw error;
     }
   }
 
@@ -1675,7 +1625,7 @@ export class DatabaseStorage implements IStorage {
         customerPhone: null,
         customerEmail: null,
         subtotal: "0.00",
-        tax: "0.00", 
+        tax: "0.00",
         total: "0.00",
         status: status,
         paymentMethod: status === 'paid' ? 'cash' : null,

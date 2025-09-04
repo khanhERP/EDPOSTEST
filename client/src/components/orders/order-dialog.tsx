@@ -96,42 +96,71 @@ export function OrderDialog({
       );
 
       try {
-        // For edit mode, handle both new items and order updates
         if (mode === "edit" && existingOrder) {
-          let finalResult = existingOrder;
+          let finalResult = null;
 
-          // Only add items if there are actually new items in the cart
+          // Step 1: Add new items if any exist
           if (orderData.items.length > 0) {
             console.log(`📝 Adding ${orderData.items.length} new items to existing order ${existingOrder.id}`);
             const addItemsResponse = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
               items: orderData.items,
             });
 
-            if (!addItemsResponse.ok) {
-              const errorData = await addItemsResponse.text();
-              throw new Error(`Failed to add items: ${errorData}`);
-            }
-
             const addItemsResult = await addItemsResponse.json();
             console.log('✅ Items added successfully:', addItemsResult);
-            finalResult = addItemsResult.updatedOrder || finalResult;
+            finalResult = addItemsResult.updatedOrder || addItemsResult;
           }
 
-          // Always update order information (customer details, etc.) regardless of items
-          console.log(`📝 Updating order information for order ${existingOrder.id}`);
+          // Step 2: Always recalculate and update order totals
+          console.log(`📝 Recalculating order totals for order ${existingOrder.id}`);
+
+          // Fetch current order items to recalculate totals
+          const itemsResponse = await apiRequest("GET", `/api/order-items/${existingOrder.id}`);
+          const currentItems = await itemsResponse.json();
+
+          let newSubtotal = 0;
+          let newTax = 0;
+
+          if (Array.isArray(currentItems) && currentItems.length > 0) {
+            currentItems.forEach((item: any) => {
+              const unitPrice = Number(item.unitPrice || 0);
+              const quantity = Number(item.quantity || 0);
+              const product = products?.find((p: any) => p.id === item.productId);
+
+              // Calculate subtotal
+              newSubtotal += unitPrice * quantity;
+
+              // Calculate tax using afterTaxPrice if available
+              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                const taxPerUnit = afterTaxPrice - unitPrice;
+                newTax += taxPerUnit * quantity;
+              }
+            });
+          }
+
+          const newTotal = newSubtotal + newTax;
+
+          console.log('💰 Calculated new totals:', {
+            subtotal: newSubtotal,
+            tax: newTax,
+            total: newTotal
+          });
+
+          // Step 3: Update order with customer info AND calculated totals
+          console.log(`📝 Updating order with customer info and calculated totals for order ${existingOrder.id}`);
           const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
             customerName: orderData.order.customerName,
             customerCount: orderData.order.customerCount,
-            updatedAt: new Date().toISOString()
+            subtotal: newSubtotal.toString(),
+            tax: newTax.toString(),
+            total: newTotal.toString(),
           });
 
-          if (!updateResponse.ok) {
-            const errorData = await updateResponse.text();
-            throw new Error(`Failed to update order: ${errorData}`);
-          }
-
           const updateResult = await updateResponse.json();
-          console.log('✅ Order updated successfully:', updateResult);
+          console.log('✅ Order updated successfully with new totals:', updateResult);
+
+          // Return the final result (prioritize the order update result)
           return updateResult;
         } else {
           console.log('📝 Creating new order...');

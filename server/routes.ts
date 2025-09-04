@@ -1294,8 +1294,20 @@ export async function registerRoutes(app: Express): Promise < Server > {
         orderNumber: existingOrder.orderNumber,
         tableId: existingOrder.tableId,
         currentStatus: existingOrder.status,
-        paymentMethod: existingOrder.paymentMethod
+        paymentMethod: existingOrder.paymentMethod,
+        currentSubtotal: existingOrder.subtotal,
+        currentTax: existingOrder.tax,
+        currentTotal: existingOrder.total
       });
+
+      // Log the data being updated, especially financial fields
+      if (orderData.subtotal !== undefined || orderData.tax !== undefined || orderData.total !== undefined) {
+        console.log(`💰 Updating financial fields:`, {
+          subtotal: orderData.subtotal,
+          tax: orderData.tax,
+          total: orderData.total
+        });
+      }
 
       const order = await storage.updateOrder(id, orderData, tenantDb);
 
@@ -1309,7 +1321,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
         status: order.status,
         paymentMethod: order.paymentMethod,
         paidAt: order.paidAt,
-        einvoiceStatus: order.einvoiceStatus
+        einvoiceStatus: order.einvoiceStatus,
+        updatedSubtotal: order.subtotal,
+        updatedTax: order.tax,
+        updatedTotal: order.total
       });
 
       res.json({
