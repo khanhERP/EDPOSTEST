@@ -659,15 +659,16 @@ export function OrderManagement() {
     };
   }, [selectedOrder, orderItems, products]);
 
-  // Function to get order total - calculate from order items with products data
+  // Function to get order total - use consistent calculation logic
   const getOrderTotal = React.useCallback((order: Order) => {
-    // For cancelled orders, return 0
+    // For cancelled orders, show stored total with strikethrough styling
     if (order.status === 'cancelled') {
-      console.log(`💰 Order ${order.orderNumber} is cancelled, returning 0`);
-      return 0;
+      const storedTotal = Math.floor(Number(order.total || 0));
+      console.log(`💰 Order ${order.orderNumber} is cancelled, showing stored total: ${storedTotal}`);
+      return storedTotal;
     }
 
-    // Use calculatedTotal from API if available and valid
+    // Try to use calculatedTotal from API first (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
       const total = Math.floor(Number(apiCalculatedTotal));
@@ -675,11 +676,18 @@ export function OrderManagement() {
       return total;
     }
 
+    // If we have cached calculated total for this order, use it
+    if (calculatedTotals.has(order.id)) {
+      const cachedTotal = calculatedTotals.get(order.id)!;
+      console.log(`💰 Using cached calculated total for order ${order.orderNumber}: ${cachedTotal}`);
+      return cachedTotal;
+    }
+
     // Fallback to stored total
     const storedTotal = Math.floor(Number(order.total || 0));
     console.log(`💰 Using stored total for order ${order.orderNumber}: ${storedTotal}`);
     return storedTotal;
-  }, []);
+  }, [calculatedTotals]);
 
   const formatTime = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
@@ -1437,13 +1445,70 @@ export function OrderManagement() {
     if (currentOrders && currentOrders.length > 0 && products && products.length > 0) {
       console.log(`🧮 Current page orders changed, triggering total calculations for ${currentOrders.length} displayed orders (page ${currentPage})`);
 
-      // Calculate totals ONLY for orders currently displayed on this page
-      currentOrders.forEach(order => {
-        if (!calculatedTotals.has(order.id) && order.status !== 'cancelled') {
-          console.log(`🧮 Calculating total for displayed order ${order.orderNumber} (ID: ${order.id})`);
-          // Note: We are no longer calling calculateOrderTotal here,
-          // as the API now provides the calculated total.
-          // This section can be removed or adapted if pre-calculating from API response is needed.
+      // Calculate totals for orders that don't have API calculated totals
+      currentOrders.forEach(async (order) => {
+        const apiCalculatedTotal = (order as any).calculatedTotal;
+        
+        // Skip if we already have a valid API calculated total or cached total
+        if ((apiCalculatedTotal && Number(apiCalculatedTotal) > 0) || calculatedTotals.has(order.id)) {
+          return;
+        }
+
+        // Skip cancelled orders
+        if (order.status === 'cancelled') {
+          return;
+        }
+
+        console.log(`🧮 Calculating total for order ${order.orderNumber} (ID: ${order.id})`);
+        
+        try {
+          // Fetch order items for calculation
+          const response = await apiRequest('GET', `/api/order-items/${order.id}`);
+          if (!response.ok) {
+            console.warn(`❌ Failed to fetch order items for order ${order.id}`);
+            return;
+          }
+
+          const orderItemsData = await response.json();
+          if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
+            console.log(`⚪ No items found for order ${order.id}, using stored total`);
+            return;
+          }
+
+          // Calculate total using same logic as Order Details
+          let subtotal = 0;
+          let taxAmount = 0;
+
+          orderItemsData.forEach((item: any) => {
+            const unitPrice = Number(item.unitPrice || 0);
+            const quantity = Number(item.quantity || 0);
+            const product = products.find((p: any) => p.id === item.productId);
+
+            // Calculate subtotal
+            subtotal += unitPrice * quantity;
+
+            // Calculate tax using same logic as order details
+            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+              const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+              taxAmount += taxPerUnit * quantity;
+            }
+          });
+
+          const calculatedTotal = Math.floor(subtotal + taxAmount);
+          
+          console.log(`💰 Calculated total for order ${order.orderNumber}:`, {
+            subtotal,
+            taxAmount,
+            calculatedTotal,
+            itemsCount: orderItemsData.length
+          });
+
+          // Cache the calculated total
+          setCalculatedTotals(prev => new Map(prev.set(order.id, calculatedTotal)));
+
+        } catch (error) {
+          console.error(`❌ Error calculating total for order ${order.id}:`, error);
         }
       });
     }
@@ -1710,12 +1775,26 @@ export function OrderManagement() {
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
                           const displayTotal = getOrderTotal(order);
+                          const apiCalculatedTotal = (order as any).calculatedTotal;
+                          const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
+                          const hasCachedTotal = calculatedTotals.has(order.id);
 
-                          // Show loading state only for active orders with zero total that haven't been calculated yet
-                          if (displayTotal === 0 && 
-                              order.status !== 'cancelled' && 
-                              order.status !== 'paid' && 
-                              !calculatedTotals.has(order.id)) {
+                          // For cancelled orders, show with strikethrough
+                          if (order.status === 'cancelled') {
+                            return (
+                              <span className="text-sm text-gray-400 line-through">
+                                {formatCurrency(displayTotal)}
+                              </span>
+                            );
+                          }
+
+                          // For paid orders, show normally
+                          if (order.status === 'paid') {
+                            return formatCurrency(displayTotal);
+                          }
+
+                          // Show loading state only if we don't have any calculated total and it's an active order
+                          if (!hasApiTotal && !hasCachedTotal && displayTotal === 0) {
                             return (
                               <span className="text-sm text-gray-500 italic animate-pulse">
                                 Đang tính...
@@ -1723,16 +1802,27 @@ export function OrderManagement() {
                             );
                           }
 
-                          // For cancelled orders with zero total, show as cancelled
-                          if (displayTotal === 0 && order.status === 'cancelled') {
+                          // Show the calculated total with confidence indicator
+                          if (hasApiTotal) {
                             return (
-                              <span className="text-sm text-gray-400 line-through">
-                                {formatCurrency(Number(order.total || 0))}
+                              <span className="text-green-600">
+                                {formatCurrency(displayTotal)}
+                              </span>
+                            );
+                          } else if (hasCachedTotal) {
+                            return (
+                              <span className="text-green-600">
+                                {formatCurrency(displayTotal)}
+                              </span>
+                            );
+                          } else {
+                            // Fallback to stored total with different styling to indicate uncertainty
+                            return (
+                              <span className="text-orange-600">
+                                {formatCurrency(displayTotal)}
                               </span>
                             );
                           }
-
-                          return formatCurrency(displayTotal);
                         })()}
                       </span>
                     </div>
