@@ -73,20 +73,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: true, // Only fetch on mount
-    refetchInterval: false, // Disable auto-refresh completely
+    staleTime: 0, // No cache for tables - always fresh
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Always fetch on mount
+    refetchInterval: false, // Disable auto-refresh
   });
 
   const { data: orders, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: true, // Only fetch on mount
-    refetchInterval: false, // Disable auto-refresh completely
+    staleTime: 0, // No cache for orders - always fresh
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Always fetch on mount
+    refetchInterval: false, // Disable auto-refresh
   });
 
   
@@ -203,18 +203,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
       apiRequest("PUT", `/api/tables/${tableId}/status`, { status }),
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       console.log(`🔄 Table Grid: Table ${variables.tableId} status updated to ${variables.status}`);
       
-      // Update cache directly instead of invalidating
-      queryClient.setQueryData(["/api/tables"], (oldData: any) => {
-        if (!Array.isArray(oldData)) return oldData;
-        return oldData.map((table: any) => 
-          table.id === variables.tableId 
-            ? { ...table, status: variables.status }
-            : table
-        );
-      });
+      // Clear cache and force immediate refresh for immediate UI update
+      queryClient.removeQueries({ queryKey: ["/api/tables"] });
+      queryClient.removeQueries({ queryKey: ["/api/orders"] });
+      
+      // Force immediate fresh fetch
+      try {
+        await Promise.all([
+          refetchTables(),
+          refetchOrders()
+        ]);
+        console.log("✅ Table status update refresh completed");
+      } catch (error) {
+        console.error("❌ Table status update refresh failed:", error);
+      }
       
       toast({
         title: t("tables.title"),
@@ -245,43 +250,47 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     onSuccess: async (data, variables) => {
       console.log("🎯 Table completePaymentMutation.onSuccess called");
 
-      // Force immediate data refresh with multiple strategies
-      console.log("🔄 Table: Starting comprehensive data refresh after payment success");
-
-      // Strategy 1: Clear all cached data completely
+      // IMMEDIATE: Clear all cache before any other operation
       queryClient.clear();
+      queryClient.removeQueries();
 
-      // Strategy 2: Invalidate specific queries
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/order-items", variables.orderId],
-      });
+      console.log("🔄 Table: Starting aggressive data refresh after payment success");
 
-      // Strategy 3: Force immediate fresh fetch
+      // IMMEDIATE: Force fresh API calls with no-cache headers
       try {
+        // Use fetch directly with no-cache to bypass React Query entirely for immediate update
+        const [freshTables, freshOrders] = await Promise.all([
+          fetch("/api/tables", { 
+            cache: "no-store",
+            headers: { "Cache-Control": "no-cache" }
+          }).then(r => r.json()),
+          fetch("/api/orders", { 
+            cache: "no-store",
+            headers: { "Cache-Control": "no-cache" }
+          }).then(r => r.json())
+        ]);
+
+        // Set fresh data immediately in cache
+        queryClient.setQueryData(["/api/tables"], freshTables);
+        queryClient.setQueryData(["/api/orders"], freshOrders);
+
+        console.log("✅ Table: Fresh data fetched and set in cache");
+
+        // Force component re-render by invalidating after setting fresh data
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        }, 50);
+
+      } catch (fetchError) {
+        console.error("❌ Table: Error during immediate fresh fetch:", fetchError);
+        
+        // Fallback to normal refetch
         await Promise.all([
           refetchTables(),
           refetchOrders()
         ]);
-        console.log("✅ Table: Immediate refresh completed successfully");
-      } catch (refreshError) {
-        console.error("❌ Table: Error during immediate refresh:", refreshError);
       }
-
-      // Strategy 4: Delayed refresh for consistency (backup)
-      setTimeout(async () => {
-        console.log("🔄 Table: Performing delayed backup refresh");
-        try {
-          await Promise.all([
-            refetchTables(),
-            refetchOrders()
-          ]);
-          console.log("✅ Table: Delayed backup refresh completed");
-        } catch (error) {
-          console.error("❌ Table: Error during delayed refresh:", error);
-        }
-      }, 500);
 
       // Strategy 5: Dispatch custom events for cross-component coordination
       if (typeof window !== 'undefined') {
@@ -2673,8 +2682,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       {showReceiptModal && selectedReceipt && (
         <ReceiptModal
           isOpen={showReceiptModal}
-          onClose={async () => {
-            console.log("🔴 Table: Receipt modal closing, clearing states and forcing complete data refresh");
+          onClose={() => {
+            console.log("🔴 Table: Receipt modal closing - simple immediate refresh");
 
             // Clear all modal states immediately
             setShowReceiptModal(false);
@@ -2688,38 +2697,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setSelectedOrder(null);
             setSelectedPaymentMethod("");
 
-            // Force aggressive data refresh - multiple strategies for reliability
-            try {
-              console.log("🔄 Table: Starting comprehensive data refresh after receipt modal close");
+            // Simple immediate refresh - no complex retry logic
+            queryClient.clear();
+            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
 
-              // Strategy 1: Clear ALL cache completely
-              queryClient.clear();
-              queryClient.removeQueries();
-
-              // Strategy 2: Force multiple fresh fetches with delays for reliability
-              const refreshAttempts = 5; // Increased attempts
-              for (let i = 0; i < refreshAttempts; i++) {
-                console.log(`🔄 Table: Refresh attempt ${i + 1}/${refreshAttempts}`);
-
-                try {
-                  await Promise.all([
-                    queryClient.refetchQueries({ queryKey: ["/api/tables"], type: 'active' }),
-                    queryClient.refetchQueries({ queryKey: ["/api/orders"], type: 'active' }),
-                    refetchTables(),
-                    refetchOrders()
-                  ]);
-                  console.log(`✅ Table: Refresh attempt ${i + 1} completed successfully`);
-                } catch (refreshError) {
-                  console.error(`❌ Table: Refresh attempt ${i + 1} failed:`, refreshError);
-                }
-
-                // Add delay between attempts except the last one
-                if (i < refreshAttempts - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 300));
-                }
-              }
-
-              console.log("✅ Table: All refresh attempts completed");
+            // Single immediate refetch
+            Promise.all([
+              refetchTables(),
+              refetchOrders()
+            ]).then(() => {
+              console.log("✅ Table: Receipt modal close refresh completed");
+            }).catch(error => {
+              console.error("❌ Table: Receipt modal close refresh failed:", error);
+            });
 
               // Strategy 3: Force invalidate and refetch with no cache
               queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
