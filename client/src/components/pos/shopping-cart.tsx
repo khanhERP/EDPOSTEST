@@ -217,15 +217,28 @@ export function ShoppingCart({
     const handleClearCart = (event: CustomEvent) => {
       console.log('🔄 Shopping Cart: Received clear cart event:', event.detail);
 
-      // Clear cart immediately
-      onClearCart();
+      // Clear cart immediately multiple times to ensure it works
+      setTimeout(() => {
+        console.log('🔄 Shopping Cart: Clearing cart - attempt 1');
+        onClearCart();
+      }, 0);
+
+      setTimeout(() => {
+        console.log('🔄 Shopping Cart: Clearing cart - attempt 2');
+        onClearCart();
+      }, 100);
+
+      setTimeout(() => {
+        console.log('🔄 Shopping Cart: Clearing cart - attempt 3');
+        onClearCart();
+      }, 300);
 
       // Clear any active orders in POS
       if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
         (window as any).clearActiveOrder();
       }
 
-      console.log('✅ Shopping Cart: Cart cleared successfully');
+      console.log('✅ Shopping Cart: Cart clearing process initiated');
     };
 
     const handleCartUpdate = (event: CustomEvent) => {
@@ -233,13 +246,26 @@ export function ShoppingCart({
       // Could trigger a cart sync or update if needed
     };
 
+    const handleForceRefresh = (event: CustomEvent) => {
+      console.log('🔄 Shopping Cart: Received force refresh event:', event.detail);
+      // Force clear cart and refresh
+      onClearCart();
+      
+      // Clear any active orders
+      if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+        (window as any).clearActiveOrder();
+      }
+    };
+
     // Add event listeners
     window.addEventListener('clearCart', handleClearCart as EventListener);
     window.addEventListener('cartUpdateRequest', handleCartUpdate as EventListener);
+    window.addEventListener('forceRefreshCart', handleForceRefresh as EventListener);
 
     return () => {
       window.removeEventListener('clearCart', handleClearCart as EventListener);
       window.removeEventListener('cartUpdateRequest', handleCartUpdate as EventListener);
+      window.addEventListener('forceRefreshCart', handleForceRefresh as EventListener);
     };
   }, [onClearCart]);
 

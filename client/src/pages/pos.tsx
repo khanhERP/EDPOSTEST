@@ -289,6 +289,20 @@ export default function POS({ onLogout }: POSPageProps) {
           console.log("🔴 POS: Closing receipt modal and clearing cart");
           setShowReceiptModal(false);
 
+          // Force clear cart immediately
+          console.log("🔄 POS: Force clearing cart when receipt modal closes");
+          clearCart();
+
+          // Also dispatch clear cart event for other components
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('clearCart', {
+              detail: { 
+                source: 'pos_receipt_close',
+                timestamp: new Date().toISOString()
+              }
+            }));
+          }
+
           // Clear cart when receipt modal closes
           setTimeout(() => {
             clearCart();

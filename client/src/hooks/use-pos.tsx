@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -108,7 +108,7 @@ export function usePOS() {
 
     const filteredOrders = orders.filter(order => order.id !== orderId);
     setOrders(filteredOrders);
-    
+
     // If removing active order, switch to first remaining order
     if (orderId === activeOrderId) {
       setActiveOrderId(filteredOrders[0].id);
@@ -178,7 +178,7 @@ export function usePOS() {
           taxRate: product.taxRate || "0",
           afterTaxPrice: product.afterTaxPrice || undefined
         };
-        
+
         console.log("Creating cart item:", cartItem);
         newCart = [...currentCart, cartItem];
       }
@@ -224,8 +224,34 @@ export function usePOS() {
   };
 
   const clearCart = () => {
-    updateActiveOrderCart([]);
+    console.log("🗑️ POS: Clearing cart");
+    setOrders((prevOrders) => {
+      const updatedOrders = prevOrders.map((order) => {
+        if (order.id === activeOrderId) {
+          return { ...order, cart: [] };
+        }
+        return order;
+      });
+
+      console.log("🗑️ POS: Cart cleared for active order:", activeOrderId);
+      return updatedOrders;
+    });
   };
+
+  // Expose clearCart globally for other components to use
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).clearActiveOrder = clearCart;
+      (window as any).posGlobalClearCart = clearCart;
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).clearActiveOrder;
+        delete (window as any).posGlobalClearCart;
+      }
+    };
+  }, [clearCart]);
 
   const processCheckout = async (paymentData: any): Promise<Receipt | null> => {
     if (cart.length === 0) {

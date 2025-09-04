@@ -118,6 +118,19 @@ export function ReceiptModal({
   }
 
   const handlePrint = () => {
+    console.log('🖨️ Receipt Modal: Print button clicked - triggering cart clear');
+    
+    // Force clear cart immediately when print is clicked
+    if (typeof window !== 'undefined') {
+      // Dispatch custom event to clear cart
+      window.dispatchEvent(new CustomEvent('clearCart', {
+        detail: { 
+          source: 'receipt_print',
+          timestamp: new Date().toISOString()
+        }
+      }));
+    }
+
     // Send popup close signal before printing to trigger cart clear
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -739,6 +752,46 @@ export function ReceiptModal({
               >
                 <Printer className="mr-2" size={16} />
                 {t("pos.printReceipt")}
+              </Button>
+              <Button
+                onClick={() => {
+                  console.log('🔴 Receipt Modal: Close button clicked - forcing cart clear');
+                  
+                  // Force clear cart when close button is clicked
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('clearCart', {
+                      detail: { 
+                        source: 'receipt_close_button',
+                        timestamp: new Date().toISOString()
+                      }
+                    }));
+                  }
+                  
+                  // Send refresh signal
+                  try {
+                    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+                    const wsUrl = `${protocol}//${window.location.host}/ws`;
+                    const ws = new WebSocket(wsUrl);
+
+                    ws.onopen = () => {
+                      ws.send(JSON.stringify({
+                        type: "popup_close",
+                        success: true,
+                        action: 'receipt_modal_closed_manually',
+                        timestamp: new Date().toISOString()
+                      }));
+                      ws.close();
+                    };
+                  } catch (error) {
+                    console.error("Failed to send refresh signal:", error);
+                  }
+                  
+                  onClose();
+                }}
+                variant="outline"
+                className="ml-2"
+              >
+                Đóng
               </Button>
             </div>
           )}
