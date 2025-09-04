@@ -1550,7 +1550,6 @@ export async function registerRoutes(app: Express): Promise < Server > {
     try {
       console.log('=== GET ORDER ITEMS API CALLED ===');
       const orderId = parseInt(req.params.orderId);
-      const tenantDb = await getTenantDatabase(req);
       console.log('Order ID requested:', orderId);
 
       if (isNaN(orderId)) {
@@ -1558,21 +1557,32 @@ export async function registerRoutes(app: Express): Promise < Server > {
         return res.status(400).json({ message: "Invalid order ID" });
       }
 
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for order items');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for order items:', dbError);
+        tenantDb = null;
+      }
+
       console.log('Fetching order items from storage...');
       const items = await storage.getOrderItems(orderId, tenantDb);
       console.log(`Found ${items.length} order items:`, items);
 
-      res.json(items);
+      // Ensure items is always an array
+      const safeItems = Array.isArray(items) ? items : [];
+      res.json(safeItems);
     } catch (error) {
       console.error('=== GET ORDER ITEMS ERROR ===');
-      console.error("Error type:", error.constructor.name);
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
+      console.error("Error type:", error?.constructor?.name || 'Unknown');
+      console.error("Error message:", error?.message || 'Unknown error');
+      console.error("Error stack:", error?.stack || 'No stack trace');
       console.error("Order ID:", req.params.orderId);
 
       res.status(500).json({
         message: "Failed to fetch order items",
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       });
     }

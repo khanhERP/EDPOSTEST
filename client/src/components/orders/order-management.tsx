@@ -108,9 +108,18 @@ export function OrderManagement() {
     gcTime: 20 * 60 * 1000, // Keep in cache for 20 minutes
     queryFn: async () => {
       if (!selectedOrder?.id) return [];
-      const response = await apiRequest('GET', `/api/order-items/${selectedOrder.id}`);
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      try {
+        const response = await apiRequest('GET', `/api/order-items/${selectedOrder.id}`);
+        if (!response.ok) {
+          console.error(`API error fetching order items: ${response.status} ${response.statusText}`);
+          return [];
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching order items:', error);
+        return [];
+      }
     },
   });
 

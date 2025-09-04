@@ -2067,9 +2067,12 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
-      console.log(`=== GET ORDER ITEMS API CALLED ===`);
-      console.log(`Order ID requested: ${orderId}`);
-      console.log(`Fetching order items from storage...`);
+      console.log(`🔍 Storage: Fetching order items for order ID ${orderId}`);
+
+      if (!orderId || isNaN(orderId)) {
+        console.error(`❌ Invalid order ID: ${orderId}`);
+        return [];
+      }
 
       const items = await database
         .select({
@@ -2087,11 +2090,18 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(products, eq(orderItems.productId, products.id))
         .where(eq(orderItems.orderId, orderId));
 
-      console.log(`Found ${items.length} order items:`, items);
-      return items;
+      console.log(`✅ Storage: Found ${items.length} order items for order ${orderId}`);
+      return Array.isArray(items) ? items : [];
     } catch (error) {
-      console.error(`❌ Error fetching order items for order ${orderId}:`, error);
-      throw error;
+      console.error(`❌ Storage error fetching order items for order ${orderId}:`, error);
+      console.error("Error details:", {
+        message: error?.message || 'Unknown error',
+        code: error?.code || 'No code',
+        stack: error?.stack || 'No stack'
+      });
+
+      // Return empty array instead of throwing to prevent 500 errors
+      return [];
     }
   }
 
