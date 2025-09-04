@@ -580,9 +580,9 @@ function MenuReport() {
                 </tbody>
               </table>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {/* Top Products */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
