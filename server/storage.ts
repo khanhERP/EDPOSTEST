@@ -2646,17 +2646,17 @@ export class DatabaseStorage implements IStorage {
   async getInvoiceTemplates(tenantDb?: any): Promise<any[]> {
     const database = tenantDb || db;
     return await database.select().from(invoiceTemplates).orderBy(invoiceTemplates.name);
-  },
+  }
 
   async getActiveInvoiceTemplates(): Promise<any[]> {
     return await db.select().from(invoiceTemplates).where(eq(invoiceTemplates.isActive, true)).orderBy(invoiceTemplates.name);
-  },
+  }
 
   // Invoice methods
   async getInvoices(tenantDb?: any): Promise<any[]> {
     const database = tenantDb || db;
     return await database.select().from(invoices).orderBy(desc(invoices.createdAt));
-  },
+  }
 
   async getInvoice(id: number, tenantDb?: any): Promise<any> {
     const database = tenantDb || db;
@@ -2671,7 +2671,7 @@ export class DatabaseStorage implements IStorage {
       ...invoice,
       items: items
     };
-  },
+  }
 
   async createInvoice(invoiceData: any, tenantDb?: any): Promise<any> {
     const database = tenantDb || db;
@@ -2722,7 +2722,7 @@ export class DatabaseStorage implements IStorage {
       console.error('❌ Error creating invoice:', error);
       throw error;
     }
-  },
+  }
 
   async updateInvoice(id: number, updateData: any, tenantDb?: any): Promise<any> {
     const database = tenantDb || db;
@@ -2736,7 +2736,7 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return invoice;
-  },
+  }
 
   async deleteInvoice(id: number, tenantDb?: any): Promise<boolean> {
     const database = tenantDb || db;
@@ -2748,7 +2748,7 @@ export class DatabaseStorage implements IStorage {
     const result = await database.delete(invoices).where(eq(invoices.id, id));
 
     return result.rowCount > 0;
-  },
+  }
 
   // E-invoice connections methods
   async getEInvoiceConnections(): Promise<any[]> {
@@ -2766,7 +2766,7 @@ export class DatabaseStorage implements IStorage {
       console.error("Error fetching e-invoice connections:", error);
       return [];
     }
-  },
+  }
 
   async getEInvoiceConnection(id: number): Promise<any> {
     if (!db) {
@@ -2784,7 +2784,7 @@ export class DatabaseStorage implements IStorage {
       console.error("Error fetching e-invoice connection:", error);
       return null;
     }
-  },
+  }
 
   async createEInvoiceConnection(data: any): Promise<any> {
     if (!db) {
@@ -2812,7 +2812,7 @@ export class DatabaseStorage implements IStorage {
       console.error("Error creating e-invoice connection:", error);
       throw error;
     }
-  },
+  }
 
   async updateEInvoiceConnection(id: number, data: any): Promise<any> {
     if (!db) {
@@ -2831,7 +2831,7 @@ export class DatabaseStorage implements IStorage {
       console.error("Error updating e-invoice connection:", error);
       throw error;
     }
-  },
+  }
 
   async deleteEInvoiceConnection(id: number): Promise<boolean> {
     if (!db) {
