@@ -301,7 +301,7 @@ export function OrderDialog({
     return calculateTotal() + calculateTax();
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     // In edit mode, allow update even with empty cart
     // In create mode, require items in cart
     if (!table || (mode !== "edit" && cart.length === 0)) return;
