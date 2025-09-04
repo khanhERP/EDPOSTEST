@@ -1715,8 +1715,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     try {
       const orderId = parseInt(req.params.orderId);
       const { items } = req.body;
-      const tenantDb = await getTenantDatabase(req);
-
+      
       console.log(`📝 Adding ${items?.length || 0} items to order ${orderId}`);
 
       if (!items || !Array.isArray(items) || items.length === 0) {
@@ -1727,8 +1726,21 @@ export async function registerRoutes(app: Express): Promise < Server > {
         return res.status(400).json({ error: "Invalid order ID" });
       }
 
+      // Get tenant database connection
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for adding order items');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for adding order items:', dbError);
+        return res.status(500).json({ error: "Database connection failed" });
+      }
+
+      // Use tenant database for all operations
+      const database = tenantDb || db;
+
       // Validate that order exists
-      const [existingOrder] = await db
+      const [existingOrder] = await database
         .select()
         .from(orders)
         .where(eq(orders.id, orderId))
@@ -1756,8 +1768,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       console.log(`📝 Validated items for insertion:`, validatedItems);
 
-      // Insert new items
-      const insertedItems = await db
+      // Insert new items using tenant database
+      const insertedItems = await database
         .insert(orderItems)
         .values(validatedItems)
         .returning();
@@ -1765,7 +1777,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       console.log(`✅ Successfully added ${insertedItems.length} items to order ${orderId}`);
 
       // Fetch ALL order items to recalculate totals using order-dialog logic
-      const allOrderItems = await db
+      const allOrderItems = await database
         .select()
         .from(orderItems)
         .where(eq(orderItems.orderId, orderId));
@@ -1773,7 +1785,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       console.log(`📦 Found ${allOrderItems.length} total items for order ${orderId}`);
 
       // Get products for tax calculation (same as order-dialog)
-      const allProducts = await db.select().from(products);
+      const allProducts = await database.select().from(products);
       const productMap = new Map(allProducts.map(p => [p.id, p]));
 
       // EXACT same logic as order-dialog calculateTotal()
@@ -1819,8 +1831,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
         calculationMethod: 'order-dialog-exact'
       });
 
-      // Update order totals with calculated values
-      const [updatedOrder] = await db
+      // Update order totals with calculated values using tenant database
+      const [updatedOrder] = await database
         .update(orders)
         .set({
           subtotal: calculatedSubtotal.toString(),

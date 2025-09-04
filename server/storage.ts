@@ -986,10 +986,8 @@ export class DatabaseStorage implements IStorage {
     date?: string,
     tenantDb?: any,
   ): Promise<AttendanceRecord[]> {
-    const database = tenantDb || this.db;
-
     try {
-      this.validateDatabase(database, 'getAttendanceRecords');
+      const database = this.getSafeDatabase(tenantDb, 'getAttendanceRecords');
 
       const conditions = [];
 
