@@ -1398,6 +1398,42 @@ export function OrderManagement() {
     }
   }, [currentPage, totalPages]);
 
+  // Preload totals for next/previous pages for better UX (optional background loading)
+  useEffect(() => {
+    if (allOrders && allOrders.length > 0 && products && products.length > 0) {
+      // Calculate range for preloading (current page + 1 page before and after)
+      const preloadStartIndex = Math.max(0, (currentPage - 2) * ordersPerPage);
+      const preloadEndIndex = Math.min(allOrders.length, (currentPage + 1) * ordersPerPage);
+      const preloadOrders = allOrders.slice(preloadStartIndex, preloadEndIndex);
+      
+      console.log(`🔄 Preloading totals for ${preloadOrders.length} orders around current page ${currentPage}`);
+      
+      // Batch preload in background with low priority
+      const preloadBatch = preloadOrders.filter(order => 
+        !calculatedTotals.has(order.id) && 
+        order.status !== 'cancelled' &&
+        !currentOrders.some(currentOrder => currentOrder.id === order.id) // Don't duplicate current page
+      );
+      
+      if (preloadBatch.length > 0) {
+        // Use setTimeout to make this low priority
+        setTimeout(() => {
+          preloadBatch.forEach(order => {
+            calculateOrderTotal(order).then(total => {
+              setCalculatedTotals(prev => {
+                const newMap = new Map(prev);
+                newMap.set(order.id, total);
+                return newMap;
+              });
+            }).catch(error => {
+              console.error(`❌ Error preloading total for order ${order.id}:`, error);
+            });
+          });
+        }, 500); // 500ms delay to not interfere with current page loading
+      }
+    }
+  }, [allOrders, products, currentPage, ordersPerPage, calculateOrderTotal, currentOrders, calculatedTotals]);
+
   // Function to refresh data with error handling
   const refreshData = React.useCallback(async () => {
     console.log('🔄 Order Management: Refreshing data...');
@@ -1419,6 +1455,34 @@ export function OrderManagement() {
     }
   }, [queryClient]);
 
+  // Cleanup calculated totals for orders no longer in the dataset
+  useEffect(() => {
+    if (allOrders && allOrders.length > 0 && calculatedTotals.size > 0) {
+      const currentOrderIds = new Set(allOrders.map(order => order.id));
+      const calculatedOrderIds = Array.from(calculatedTotals.keys());
+      
+      // Remove calculated totals for orders that no longer exist
+      const toRemove = calculatedOrderIds.filter(id => !currentOrderIds.has(id));
+      
+      if (toRemove.length > 0) {
+        console.log(`🧹 Cleaning up calculated totals for ${toRemove.length} removed orders`);
+        setCalculatedTotals(prev => {
+          const newMap = new Map(prev);
+          toRemove.forEach(id => newMap.delete(id));
+          return newMap;
+        });
+      }
+      
+      // Also limit memory usage - keep only last 100 calculated totals
+      if (calculatedTotals.size > 100) {
+        console.log(`🧹 Memory cleanup: Removing old calculated totals (current: ${calculatedTotals.size})`);
+        const entries = Array.from(calculatedTotals.entries());
+        const toKeep = entries.slice(-50); // Keep last 50 entries
+        setCalculatedTotals(new Map(toKeep));
+      }
+    }
+  }, [allOrders, calculatedTotals]);
+
   // Refresh data when tab becomes active or component mounts
   useEffect(() => {
     refreshData();
@@ -1430,14 +1494,15 @@ export function OrderManagement() {
     return () => clearInterval(interval);
   }, [refreshData]);
 
-  // Trigger total calculations when orders data changes
+  // Trigger total calculations when current page orders data changes
   useEffect(() => {
-    if (allOrders && allOrders.length > 0 && products && products.length > 0) {
-      console.log(`🧮 Orders data changed, triggering total calculations for ${allOrders.length} orders`);
+    if (currentOrders && currentOrders.length > 0 && products && products.length > 0) {
+      console.log(`🧮 Current page orders changed, triggering total calculations for ${currentOrders.length} displayed orders (page ${currentPage})`);
       
-      // Calculate totals for orders that don't have calculated totals yet
-      allOrders.forEach(order => {
+      // Calculate totals ONLY for orders currently displayed on this page
+      currentOrders.forEach(order => {
         if (!calculatedTotals.has(order.id) && order.status !== 'cancelled') {
+          console.log(`🧮 Calculating total for displayed order ${order.orderNumber} (ID: ${order.id})`);
           calculateOrderTotal(order).then(total => {
             setCalculatedTotals(prev => {
               const newMap = new Map(prev);
@@ -1450,7 +1515,7 @@ export function OrderManagement() {
         }
       });
     }
-  }, [allOrders, products, calculateOrderTotal]);
+  }, [currentOrders, products, calculateOrderTotal, currentPage]);
 
   // WebSocket connection for real-time updates
   useEffect(() => {
