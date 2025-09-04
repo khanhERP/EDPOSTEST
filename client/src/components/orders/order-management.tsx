@@ -1778,14 +1778,11 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          const displayTotal = getOrderTotal(order);
-                          const apiCalculatedTotal = (order as any).calculatedTotal;
-                          const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
-                          const hasCachedTotal = calculatedTotals.has(order.id);
-
-                          // For cancelled orders, show stored total with strikethrough
+                          // CRITICAL: Check status FIRST before any calculations
+                          // For cancelled orders, ALWAYS show stored total with strikethrough
                           if (order.status === 'cancelled') {
                             const cancelledTotal = Math.floor(Number(order.total || 0));
+                            console.log(`💰 CANCELLED Order ${order.orderNumber} - showing stored total only: ${cancelledTotal}`);
                             return (
                               <span className="text-sm text-gray-400 line-through">
                                 {formatCurrency(cancelledTotal)}
@@ -1793,10 +1790,22 @@ export function OrderManagement() {
                             );
                           }
 
-                          // For paid orders, show normally
+                          // For paid orders, show stored total normally
                           if (order.status === 'paid') {
-                            return formatCurrency(displayTotal);
+                            const paidTotal = Math.floor(Number(order.total || 0));
+                            console.log(`💰 PAID Order ${order.orderNumber} - showing stored total: ${paidTotal}`);
+                            return (
+                              <span className="text-green-600">
+                                {formatCurrency(paidTotal)}
+                              </span>
+                            );
                           }
+
+                          // For active orders, use calculation logic
+                          const displayTotal = getOrderTotal(order);
+                          const apiCalculatedTotal = (order as any).calculatedTotal;
+                          const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
+                          const hasCachedTotal = calculatedTotals.has(order.id);
 
                           // Show loading state only if we don't have any calculated total and it's an active order
                           if (!hasApiTotal && !hasCachedTotal && displayTotal === 0) {
