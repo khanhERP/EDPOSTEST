@@ -1740,43 +1740,80 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       console.log(`✅ Successfully added ${insertedItems.length} items to order ${orderId}`);
 
-      // Calculate new totals after adding items
-      const [orderItemsSum] = await db
-        .select({
-          total: sql<number>`COALESCE(sum(CAST(${orderItems.total} AS DECIMAL)), 0)`,
-        })
+      // Fetch ALL order items to recalculate totals using order-dialog logic
+      const allOrderItems = await db
+        .select()
         .from(orderItems)
         .where(eq(orderItems.orderId, orderId));
 
-      const totalAmount = Number(orderItemsSum.total) || 0;
-      const subtotalAmount = totalAmount / 1.1; // Remove 10% tax
-      const taxAmount = totalAmount - subtotalAmount;
+      console.log(`📦 Found ${allOrderItems.length} total items for order ${orderId}`);
 
-      console.log(`💰 Calculated new totals for order ${orderId}:`, {
-        subtotal: subtotalAmount.toFixed(2),
-        tax: taxAmount.toFixed(2),
-        total: totalAmount.toFixed(2)
+      // Get products for tax calculation (same as order-dialog)
+      const allProducts = await db.select().from(products);
+      const productMap = new Map(allProducts.map(p => [p.id, p]));
+
+      // EXACT same logic as order-dialog calculateTotal()
+      let calculatedSubtotal = 0; // Tiền tạm tính (trước thuế)
+
+      allOrderItems.forEach((item: any) => {
+        const unitPrice = Number(item.unitPrice || 0); // Giá trước thuế
+        const quantity = Number(item.quantity || 0);
+
+        // Calculate subtotal (base price * quantity) - EXACT same as order-dialog
+        const itemSubtotal = unitPrice * quantity;
+        calculatedSubtotal += itemSubtotal;
       });
 
-      // Update order totals ONCE
+      // EXACT same logic as order-dialog calculateTax()
+      let calculatedTax = 0; // Tổng thuế
+
+      allOrderItems.forEach((item: any) => {
+        const unitPrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        const product = productMap.get(item.productId);
+
+        let itemTax = 0;
+        // Thuế = (after_tax_price - price) * quantity - EXACT same as order-dialog
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
+          const preTaxPrice = unitPrice;                          // Giá trước thuế
+          const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
+          itemTax = taxPerUnit * quantity;
+        }
+        // Không có thuế nếu không có afterTaxPrice
+        calculatedTax += itemTax;
+      });
+
+      // EXACT same logic as order-dialog calculateGrandTotal()
+      const calculatedTotal = calculatedSubtotal + calculatedTax;
+
+      console.log(`💰 Calculated new totals using order-dialog logic:`, {
+        subtotal: calculatedSubtotal,
+        tax: calculatedTax,
+        total: calculatedTotal,
+        itemsCount: allOrderItems.length,
+        calculationMethod: 'order-dialog-exact'
+      });
+
+      // Update order totals with calculated values
       const [updatedOrder] = await db
         .update(orders)
         .set({
-          total: totalAmount.toFixed(2),
-          subtotal: subtotalAmount.toFixed(2),
-          tax: taxAmount.toFixed(2),
+          subtotal: calculatedSubtotal.toString(),
+          tax: calculatedTax.toString(),
+          total: calculatedTotal.toString(),
           updatedAt: new Date().toISOString()
         })
         .where(eq(orders.id, orderId))
         .returning();
 
-      console.log(`✅ Order ${orderId} totals updated successfully - SINGLE UPDATE COMPLETED`);
+      console.log(`✅ Order ${orderId} totals updated successfully using order-dialog calculation`);
 
       res.json({
         success: true,
         insertedItems,
         updatedOrder,
-        message: `Added ${insertedItems.length} items and updated order totals`
+        message: `Added ${insertedItems.length} items and updated order totals using order-dialog logic`
       });
 
     } catch (error) {
