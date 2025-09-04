@@ -309,30 +309,79 @@ export function OrderDialog({
     if (mode === "edit" && existingOrder) {
       // Check if there are new items to add
       if (cart.length === 0) {
-        // No new items to add, but still need to refresh data and invalidate queries
-        console.log('🔄 Order Dialog: No new items to add, refreshing data and closing dialog');
+        // No new items to add, but need to RECALCULATE order totals and refresh UI
+        console.log('🧮 Order Dialog: No new items to add, RECALCULATING order totals and refreshing');
 
-        // Clear all cache first to force fresh data
-        queryClient.clear();
-        
-        // Invalidate and refetch all related queries to ensure data is fresh
-        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
-
-        // Force immediate refetch to update UI
-        Promise.all([
-          queryClient.refetchQueries({ queryKey: ["/api/tables"] }),
-          queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
-          queryClient.refetchQueries({ queryKey: ["/api/order-items"] })
-        ]).then(() => {
-          console.log('✅ Order Dialog: All queries refreshed successfully');
+        try {
+          // Step 1: Recalculate order totals based on existing items
+          console.log('🔢 Recalculating order totals for order:', existingOrder.id);
           
-          // Emit custom events to notify other components
-          window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
+          let newSubtotal = 0;
+          let newTax = 0;
+
+          if (existingItems && existingItems.length > 0) {
+            existingItems.forEach((item) => {
+              const basePrice = Number(item.unitPrice || 0);
+              const quantity = Number(item.quantity || 0);
+              const product = products?.find((p: Product) => p.id === item.productId);
+
+              // Calculate subtotal
+              newSubtotal += basePrice * quantity;
+
+              // Calculate tax using the same logic as other components
+              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                const taxPerUnit = afterTaxPrice - basePrice;
+                newTax += Math.floor(taxPerUnit * quantity);
+              }
+            });
+          }
+
+          const newTotal = newSubtotal + Math.abs(newTax);
+
+          console.log('💰 Order Dialog: Calculated new totals:', {
+            oldSubtotal: existingOrder.subtotal,
+            oldTax: existingOrder.tax,
+            oldTotal: existingOrder.total,
+            newSubtotal,
+            newTax: Math.abs(newTax),
+            newTotal,
+            itemsCount: existingItems?.length || 0
+          });
+
+          // Step 2: Update order totals in database
+          console.log('💾 Updating order totals in database...');
+          const updateResponse = await apiRequest('PUT', `/api/orders/${existingOrder.id}`, {
+            subtotal: newSubtotal.toString(),
+            tax: Math.abs(newTax).toString(),
+            total: newTotal.toString()
+          });
+
+          if (!updateResponse.ok) {
+            throw new Error('Failed to update order totals');
+          }
+
+          console.log('✅ Order Dialog: Order totals updated successfully in database');
+
+          // Step 3: Clear cache and force fresh data fetch
+          queryClient.clear();
+          
+          // Step 4: Force immediate refetch with fresh data
+          await Promise.all([
+            queryClient.refetchQueries({ queryKey: ["/api/tables"] }),
+            queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
+            queryClient.refetchQueries({ queryKey: ["/api/order-items"] })
+          ]);
+
+          console.log('🔄 Order Dialog: All queries refreshed with new data');
+          
+          // Step 5: Emit events to notify other components with updated data
+          window.dispatchEvent(new CustomEvent('orderTotalsUpdated', { 
             detail: { 
-              orderId: existingOrder.id, 
-              action: 'refresh',
+              orderId: existingOrder.id,
+              oldTotal: existingOrder.total,
+              newTotal: newTotal.toString(),
+              action: 'recalculate',
               immediate: true,
               timestamp: Date.now()
             } 
@@ -341,27 +390,44 @@ export function OrderDialog({
           window.dispatchEvent(new CustomEvent('refreshOrders', { 
             detail: { 
               immediate: true,
-              source: 'order-dialog-refresh',
+              source: 'order-dialog-recalculate',
+              updatedOrder: {
+                id: existingOrder.id,
+                total: newTotal.toString()
+              },
               timestamp: Date.now()
             } 
           }));
 
-          // Additional refresh event specifically for table grid
+          // Force table grid to refresh immediately
           window.dispatchEvent(new CustomEvent('refreshTableGrid', { 
             detail: { 
               immediate: true,
-              source: 'order-dialog-refresh',
+              source: 'order-dialog-recalculate',
+              updatedOrder: {
+                id: existingOrder.id,
+                total: newTotal.toString()
+              },
               timestamp: Date.now()
             } 
           }));
 
           toast({
             title: t('orders.orderUpdateSuccess'),
-            description: 'Dữ liệu đã được làm mới thành công',
+            description: `Đã tính lại và cập nhật: ${newTotal.toLocaleString()} ₫`,
           });
-        });
 
-        // Reset form state and close dialog
+        } catch (error) {
+          console.error('❌ Order Dialog: Error recalculating order totals:', error);
+          toast({
+            title: "Lỗi cập nhật",
+            description: "Có lỗi xảy ra khi tính lại tổng tiền đơn hàng",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Step 6: Reset form state and close dialog
         setCart([]);
         setCustomerName("");
         setCustomerCount(1);
