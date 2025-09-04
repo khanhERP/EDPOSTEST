@@ -73,19 +73,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
-    staleTime: 0, // No cache for tables - always fresh
+    staleTime: 60 * 1000, // Fresh for 1 minute
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchOnMount: true, // Always fetch on mount
+    refetchOnWindowFocus: false, // Don't auto-refetch on focus
+    refetchOnMount: false, // Don't auto-refetch on mount
     refetchInterval: false, // Disable auto-refresh
   });
 
   const { data: orders, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
-    staleTime: 0, // No cache for orders - always fresh
+    staleTime: 60 * 1000, // Fresh for 1 minute
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchOnMount: true, // Always fetch on mount
+    refetchOnWindowFocus: false, // Don't auto-refetch on focus
+    refetchOnMount: false, // Don't auto-refetch on mount
     refetchInterval: false, // Disable auto-refresh
   });
 
@@ -101,8 +101,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false,
-    staleTime: 30 * 60 * 1000, // Cache for 30 minutes
-    gcTime: 60 * 60 * 1000, // Keep in cache for 1 hour
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     queryFn: async () => {
       const orderId = selectedOrder?.id;
       if (!orderId) {

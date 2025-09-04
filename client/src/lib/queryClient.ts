@@ -51,15 +51,14 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: 5000, // Refetch every 5 seconds
-      refetchOnWindowFocus: true, // Always refetch when window focus
-      staleTime: 0, // Data is always stale, always refetch
-      gcTime: 0, // No garbage collection time, immediate cleanup
-      cacheTime: 0, // No cache time
+      refetchInterval: false, // Disable automatic refetching
+      refetchOnWindowFocus: false, // Only refetch on manual trigger
+      staleTime: 30 * 1000, // Data is fresh for 30 seconds
+      gcTime: 5 * 60 * 1000, // Keep in memory for 5 minutes
       retry: false,
-      refetchOnMount: "always", // Always refetch when component mounts
-      refetchOnReconnect: "always", // Always refetch when reconnecting
-      networkMode: "always", // Always make network requests
+      refetchOnMount: false, // Don't automatically refetch on mount
+      refetchOnReconnect: true, // Refetch when reconnecting to internet
+      networkMode: "online", // Only make requests when online
     },
     mutations: {
       retry: false,
