@@ -453,8 +453,22 @@ export async function registerRoutes(app: Express): Promise < Server > {
         JSON.stringify({ transaction, items }, null, 2),
       );
 
+      // Find the transaction validation schema and update invoiceNumber to be nullable
+      // The issue is that invoiceNumber should be string | null for publish later scenarios
+      const transactionSchema = z.object({
+        transactionId: z.string(),
+        subtotal: z.string(),
+        tax: z.string(),
+        total: z.string(),
+        paymentMethod: z.string(),
+        cashierName: z.string(),
+        notes: z.string().optional(),
+        invoiceNumber: z.string().nullable(), // Updated to allow null
+        orderId: z.number().optional()
+      });
+
       // Validate with original string format, then transform
-      const validatedTransaction = insertTransactionSchema.parse(transaction);
+      const validatedTransaction = transactionSchema.parse(transaction);
       const validatedItems = z.array(insertTransactionItemSchema).parse(items);
 
       console.log(
@@ -1091,7 +1105,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       let tenantDb;
       try {
         tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained successfully');
+        console.log('✅ Tenant database connection obtained');
       } catch (dbError) {
         console.error('❌ Failed to get tenant database:', dbError);
         // Fall back to default storage without tenant DB
@@ -1244,7 +1258,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (isTemporaryId) {
         console.log(`🟡 Temporary order ID detected: ${rawId} - returning success for flow continuation`);
 
-        // Return a mock success response to allow E-Invoice flow to continue
+        // Return a mock success response to allow E-invoice flow to continue
         const mockOrder = {
           id: rawId,
           orderNumber: `TEMP-${Date.now()}`,
@@ -1715,7 +1729,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     try {
       const orderId = parseInt(req.params.orderId);
       const { items } = req.body;
-      
+
       console.log(`📝 Adding ${items?.length || 0} items to order ${orderId}`);
 
       if (!items || !Array.isArray(items) || items.length === 0) {
@@ -1755,7 +1769,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         if (!item.productId || !item.quantity || !item.unitPrice) {
           throw new Error(`Item at index ${index} is missing required fields: productId, quantity, or unitPrice`);
         }
-        
+
         return {
           orderId,
           productId: parseInt(item.productId),
@@ -1854,12 +1868,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
     } catch (error) {
       console.error(`❌ Error adding items to order ${req.params.orderId}:`, error);
-      
+
       let errorMessage = "Failed to add items to order";
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
+
       res.status(500).json({ 
         error: errorMessage,
         details: error instanceof Error ? error.message : String(error)
