@@ -48,6 +48,28 @@ export function OrderManagement() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
+  // CRITICAL: Reset all modal states on component mount to prevent unwanted displays
+  useEffect(() => {
+    console.log("🔄 Order Management: Component mounted - resetting all modal states");
+    
+    // Force close any modals that might be open from previous sessions
+    setShowReceiptModal(false);
+    setSelectedReceipt(null);
+    setShowReceiptPreview(false);
+    setPreviewReceipt(null);
+    setShowPaymentMethodModal(false);
+    setShowEInvoiceModal(false);
+    setOrderDetailsOpen(false);
+    setSelectedOrder(null);
+    setOrderForPayment(null);
+    setPaymentMethodsOpen(false);
+    setShowQRPayment(false);
+    setPointsPaymentOpen(false);
+    setMixedPaymentOpen(false);
+    
+    console.log("✅ Order Management: All modal states reset on mount");
+  }, []); // Run only once on mount
+
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
     if (shouldOpenReceiptPreview && previewReceipt && orderForPayment) {
@@ -56,6 +78,35 @@ export function OrderManagement() {
       setShouldOpenReceiptPreview(false); // Reset the flag
     }
   }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
+
+  // DEBUG: Monitor modal states to catch unwanted openings
+  useEffect(() => {
+    if (showReceiptModal || selectedReceipt || showReceiptPreview || previewReceipt) {
+      console.log("🔍 Order Management: Modal states changed", {
+        showReceiptModal,
+        hasSelectedReceipt: !!selectedReceipt,
+        selectedReceiptId: selectedReceipt?.id,
+        selectedReceiptTransactionId: selectedReceipt?.transactionId,
+        showReceiptPreview,
+        hasPreviewReceipt: !!previewReceipt,
+        timestamp: new Date().toISOString()
+      });
+
+      // SAFETY CHECK: If receipt modal is supposed to be open but has invalid data, close it
+      if (showReceiptModal && (!selectedReceipt || (!selectedReceipt.id && !selectedReceipt.transactionId))) {
+        console.log("🚨 Order Management: Detected invalid receipt modal state - closing");
+        setShowReceiptModal(false);
+        setSelectedReceipt(null);
+      }
+
+      // SAFETY CHECK: If preview modal is supposed to be open but has invalid data, close it
+      if (showReceiptPreview && (!previewReceipt || (!previewReceipt.items || previewReceipt.items.length === 0))) {
+        console.log("🚨 Order Management: Detected invalid preview modal state - closing");
+        setShowReceiptPreview(false);
+        setPreviewReceipt(null);
+      }
+    }
+  }, [showReceiptModal, selectedReceipt, showReceiptPreview, previewReceipt]);
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
@@ -2884,7 +2935,7 @@ export function OrderManagement() {
 
       {/* Receipt Modal - Final receipt after payment */}
       <ReceiptModal
-        isOpen={showReceiptModal && !!selectedReceipt}
+        isOpen={showReceiptModal && !!selectedReceipt && (selectedReceipt.id || selectedReceipt.transactionId)}
         onClose={async () => {
           console.log('🔴 Order Management: Closing final receipt modal safely');
 
@@ -2948,17 +2999,30 @@ export function OrderManagement() {
           }
         }}
         receipt={selectedReceipt}
-        cartItems={selectedReceipt?.items?.map((item: any) => ({
-          id: item.productId || item.id,
-          name: item.productName || item.name,
-          price: parseFloat(item.price || item.unitPrice || '0'),
-          quantity: item.quantity,
-          sku: item.sku || `SP${item.productId}`,
-          taxRate: (() => {
-            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            return product?.taxRate ? parseFloat(product.taxRate) : 10;
-          })()
-        })) || []}
+        cartItems={(() => {
+          // STRICT validation: Only process items if receipt has valid ID/transactionId
+          if (!selectedReceipt || (!selectedReceipt.id && !selectedReceipt.transactionId)) {
+            console.log("❌ Order Management: No valid receipt for cart items mapping");
+            return [];
+          }
+
+          if (!selectedReceipt.items || !Array.isArray(selectedReceipt.items) || selectedReceipt.items.length === 0) {
+            console.log("❌ Order Management: No valid items in receipt");
+            return [];
+          }
+
+          return selectedReceipt.items.map((item: any) => ({
+            id: item.productId || item.id,
+            name: item.productName || item.name,
+            price: parseFloat(item.price || item.unitPrice || '0'),
+            quantity: item.quantity,
+            sku: item.sku || `SP${item.productId}`,
+            taxRate: (() => {
+              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+              return product?.taxRate ? parseFloat(product.taxRate) : 10;
+            })()
+          }));
+        })()}
         autoClose={true}
       />
     </div>
