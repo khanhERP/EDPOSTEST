@@ -436,16 +436,12 @@ export function EInvoiceModal({
         return;
       }
 
-      // Lấy thông tin mẫu số hóa đơn được chọn
-      const selectedTemplate = invoiceTemplates.find(
-        (template) => template.id.toString() === formData.selectedTemplateId,
-      );
-
-      if (!selectedTemplate) {
-        alert("Không tìm thấy thông tin mẫu số hóa đơn được chọn");
-        setIsPublishing(false);
-        return;
-      }
+      // Lấy thông tin mẫu số hóa đơn được chọn (optional cho phát hành sau)
+      const selectedTemplate = formData.selectedTemplateId 
+        ? invoiceTemplates.find(
+            (template) => template.id.toString() === formData.selectedTemplateId,
+          )
+        : null;
 
       // Calculate subtotal and tax with proper type conversion and handling afterTaxPrice
       let calculatedSubtotal = 0;
@@ -488,7 +484,7 @@ export function EInvoiceModal({
             total: grandTotal.toFixed(2),
             paymentMethod: selectedPaymentMethod,
             cashierName: "POS Cashier",
-            notes: `POS Sale - E-Invoice to be published later - Template: ${selectedTemplate.templateNumber || "N/A"}`,
+            notes: `POS Sale - E-Invoice to be published later - Template: ${selectedTemplate?.templateNumber || "Not selected"}`,
             invoiceNumber: null, // Will be updated when e-invoice is published
             orderId: orderId // Link to the order if available
           },
@@ -544,8 +540,8 @@ export function EInvoiceModal({
 
           const invoicePayload = {
             invoiceNumber: `INV-${Date.now()}`, // Placeholder, will be updated later
-            templateNumber: selectedTemplate.templateNumber || null,
-            symbol: selectedTemplate.symbol || null,
+            templateNumber: selectedTemplate?.templateNumber || null,
+            symbol: selectedTemplate?.symbol || null,
             customerName: formData.customerName,
             customerTaxCode: formData.taxCode || null,
             customerAddress: formData.address || null,
@@ -558,7 +554,7 @@ export function EInvoiceModal({
             invoiceDate: new Date(),
             status: "draft",
             einvoiceStatus: 0, // 0 = Chưa phát hành
-            notes: `E-Invoice saved for later publishing - Template: ${selectedTemplate.templateNumber || "N/A"}`,
+            notes: `E-Invoice saved for later publishing - Template: ${selectedTemplate?.templateNumber || "Not selected"}`,
             items: cartItems.map((item) => {
               const itemPrice =
                 typeof item.price === "string"
