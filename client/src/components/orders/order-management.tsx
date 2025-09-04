@@ -57,6 +57,15 @@ export function OrderManagement() {
     }
   }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
 
+  // Prevent automatic receipt modal reopening after payment completion
+  useEffect(() => {
+    if (showReceiptModal && selectedReceipt && !orderForPayment) {
+      console.log('🔒 Order Management: Preventing receipt modal from reopening after payment completion');
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
+    }
+  }, [showReceiptModal, selectedReceipt, orderForPayment]);
+
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
     refetchInterval: 2000, // Faster polling - every 2 seconds
@@ -160,7 +169,7 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
 
-      // Close all modals immediately to prevent duplicate displays
+      // Close ALL modals immediately and permanently
       setOrderDetailsOpen(false);
       setPaymentMethodsOpen(false);
       setShowPaymentMethodModal(false);
@@ -169,6 +178,8 @@ export function OrderManagement() {
       setPreviewReceipt(null);
       setSelectedOrder(null);
       setOrderForPayment(null);
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
 
       toast({
         title: 'Thanh toán thành công',
@@ -198,6 +209,8 @@ export function OrderManagement() {
           window.dispatchEvent(event);
         });
       }
+
+      console.log('✅ Order Management: Payment completed, all modals permanently closed');
     },
     onError: (error) => {
       console.log('❌ Order Management completePaymentMutation.onError called:', error);
@@ -487,7 +500,7 @@ export function OrderManagement() {
           : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
       });
 
-      // Close all modals immediately to prevent duplicates
+      // Close all modals immediately and permanently
       setShowEInvoiceModal(false);
       setShowPaymentMethodModal(false);
       setShowReceiptPreview(false);
@@ -495,13 +508,12 @@ export function OrderManagement() {
       setOrderDetailsOpen(false);
       setSelectedOrder(null);
       setOrderForPayment(null);
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
 
-      // ONLY show receipt if explicitly provided with auto-close enabled
-      if (invoiceData.receipt && invoiceData.shouldShowReceipt !== false) {
-        console.log('📄 Order Management: Showing receipt from E-Invoice with auto-close');
-        setSelectedReceipt(invoiceData.receipt);
-        setShowReceiptModal(true);
-      }
+      // DO NOT show receipt modal automatically after E-Invoice
+      // User can access receipt through other means if needed
+      console.log('✅ Order Management: Payment completed, all modals closed');
 
     } catch (error) {
       console.error('❌ Error during payment completion:', error);
@@ -947,25 +959,23 @@ export function OrderManagement() {
           queryClient.refetchQueries({ queryKey: ['/api/tables'] })
         ]);
 
-        // Close all modals immediately
+        // Close all modals immediately and prevent any reopening
         setShowPaymentMethodModal(false);
         setOrderForPayment(null);
         setOrderDetailsOpen(false);
         setSelectedOrder(null);
         setShowReceiptPreview(false);
         setPreviewReceipt(null);
+        setShowReceiptModal(false);
+        setSelectedReceipt(null);
 
         toast({
           title: 'Thành công',
           description: 'Đơn hàng đã được thanh toán thành công',
         });
 
-        // ONLY show receipt if explicitly requested in data with shouldShowReceipt = true
-        if (data.receipt && data.shouldShowReceipt === true && !showReceiptModal) {
-          console.log('📄 Order Management: Showing final receipt modal with auto-close');
-          setSelectedReceipt(data.receipt);
-          setShowReceiptModal(true);
-        }
+        // DO NOT show receipt modal automatically - prevent duplicate display
+        console.log('✅ Order Management: Payment completed, no automatic receipt display');
 
       } catch (error) {
         console.error('❌ Error refreshing data after payment:', error);
