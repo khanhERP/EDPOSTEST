@@ -437,7 +437,7 @@ export function EInvoiceModal({
       }
 
       // Lấy thông tin mẫu số hóa đơn được chọn (optional cho phát hành sau)
-      const selectedTemplate = formData.selectedTemplateId 
+      const selectedTemplate = formData.selectedTemplateId
         ? invoiceTemplates.find(
             (template) => template.id.toString() === formData.selectedTemplateId,
           )
@@ -491,7 +491,7 @@ export function EInvoiceModal({
             paymentMethod: getPaymentMethodCode(selectedPaymentMethod), // Use numeric code
             invoiceDate: new Date(),
             status: "draft",
-            einvoiceStatus: 0, // 0 = Chưa phát hành
+            einvoiceStatus: 0, // 0 = chưa phát hành
             notes: `E-Invoice saved for later publishing - Template: ${selectedTemplate?.templateNumber || "Not selected"}`,
             items: cartItems.map((item) => {
               const itemPrice =
@@ -599,7 +599,7 @@ export function EInvoiceModal({
 
       // Call onConfirm with complete data
       console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
-      
+
       // Ensure we have all required data before calling onConfirm
       if (completeInvoiceData && completeInvoiceData.receipt) {
         onConfirm(completeInvoiceData);
@@ -629,7 +629,7 @@ export function EInvoiceModal({
         title: "Lỗi",
         description: errorMessage,
       });
-      
+
       // Don't call onConfirm on error to prevent white screen
       console.log("❌ PUBLISH LATER: Not calling onConfirm due to error");
     } finally {
@@ -1048,7 +1048,13 @@ export function EInvoiceModal({
 
         // Tạo receipt data ngay sau khi phát hành thành công
         const receiptData = {
-          transactionId: result.data?.invoiceNo || `TXN-${Date.now()}`,
+          transactionId: `INV-${result.data?.invoiceNo || Date.now()}`,
+          invoiceNumber: result.data?.invoiceNo || null,
+          createdAt: new Date().toISOString(),
+          cashierName: "POS Cashier",
+          paymentMethod: "einvoice",
+          customerName: formData.customerName,
+          customerTaxCode: formData.taxCode,
           items: cartItems.map((item) => {
             const itemPrice =
               typeof item.price === "string"
@@ -1078,15 +1084,9 @@ export function EInvoiceModal({
           }),
           subtotal: cartSubtotal.toFixed(2),
           tax: cartTaxAmount.toFixed(2),
-          total: total.toFixed(2),
-          paymentMethod: "einvoice",
-          amountReceived: total.toFixed(2),
+          total: cartTotal.toFixed(2),
+          amountReceived: cartTotal.toFixed(2),
           change: "0.00",
-          cashierName: "System User",
-          createdAt: new Date().toISOString(),
-          invoiceNumber: result.data?.invoiceNo || null,
-          customerName: formData.customerName,
-          customerTaxCode: formData.taxCode,
         };
 
         console.log(
@@ -1099,7 +1099,7 @@ export function EInvoiceModal({
           ...formData,
           invoiceData: result.data,
           cartItems: cartItems,
-          total: total,
+          total: cartTotal,
           paymentMethod: selectedPaymentMethod, // Use original payment method
           originalPaymentMethod: selectedPaymentMethod,
           source: source || "pos",
@@ -1129,7 +1129,7 @@ export function EInvoiceModal({
           paymentMethod: selectedPaymentMethod, // Include payment method
           originalPaymentMethod: selectedPaymentMethod,
           cartItems: cartItems, // Include cart items
-          total: total // Include calculated total
+          total: cartTotal // Include calculated total
         };
 
         console.log(
@@ -1139,6 +1139,72 @@ export function EInvoiceModal({
 
         // Call onConfirm to trigger receipt modal display
         onConfirm(publishResult);
+
+        // Force data refresh on all pages after successful publishing
+        try {
+          // Send WebSocket signal for immediate refresh
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = `${protocol}//${window.location.host}/ws`;
+          const ws = new WebSocket(wsUrl);
+
+          ws.onopen = () => {
+            const refreshSignal = {
+              type: 'einvoice_published',
+              success: true,
+              source: 'einvoice_modal',
+              reason: 'invoice_published',
+              orderId: orderId,
+              invoiceNumber: publishResult.invoiceNumber,
+              timestamp: new Date().toISOString()
+            };
+
+            console.log("📡 E-Invoice: Sending WebSocket refresh signal:", refreshSignal);
+            ws.send(JSON.stringify(refreshSignal));
+
+            setTimeout(() => ws.close(), 100);
+          };
+
+          ws.onerror = (error) => {
+            console.warn("⚠️ E-Invoice: WebSocket error (non-critical):", error);
+          };
+        } catch (wsError) {
+          console.warn("⚠️ E-Invoice: WebSocket signal failed (non-critical):", wsError);
+        }
+
+        // Dispatch custom events for cross-page coordination
+        const refreshEvents = [
+          new CustomEvent('einvoicePublished', {
+            detail: {
+              success: true,
+              invoiceNumber: publishResult.invoiceNumber,
+              orderId: orderId,
+              source: 'einvoice_modal',
+              timestamp: new Date().toISOString()
+            }
+          }),
+          new CustomEvent('forceDataRefresh', {
+            detail: {
+              reason: 'einvoice_published',
+              source: 'einvoice_modal',
+              orderId: orderId,
+              timestamp: new Date().toISOString()
+            }
+          }),
+          new CustomEvent('paymentCompleted', {
+            detail: {
+              orderId: orderId,
+              paymentMethod: 'einvoice',
+              invoiceNumber: publishResult.invoiceNumber,
+              timestamp: new Date().toISOString()
+            }
+          })
+        ];
+
+        refreshEvents.forEach(event => {
+          console.log("📡 E-Invoice: Dispatching refresh event:", event.type);
+          window.dispatchEvent(event);
+        });
+
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",

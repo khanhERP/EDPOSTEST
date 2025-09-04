@@ -37,7 +37,7 @@ export default function POS({ onLogout }: POSPageProps) {
     processCheckout
   } = usePOS();
 
-  // Add WebSocket listener for data refresh
+  // Add WebSocket listener for refresh signals
   useEffect(() => {
     let ws: WebSocket | null = null;
 
@@ -51,7 +51,7 @@ export default function POS({ onLogout }: POSPageProps) {
           console.log('📡 POS: WebSocket connected for refresh signals');
           // Register as POS client
           ws?.send(JSON.stringify({
-            type: 'register_pos',
+            type: 'register_pos_client',
             timestamp: new Date().toISOString()
           }));
         };
@@ -61,23 +61,27 @@ export default function POS({ onLogout }: POSPageProps) {
             const data = JSON.parse(event.data);
             console.log('📩 POS: Received WebSocket message:', data);
 
-            if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'force_refresh') {
-              console.log('🔄 POS: Refreshing data due to WebSocket signal');
-              
+            if (data.type === 'popup_close' || 
+                data.type === 'payment_success' || 
+                data.type === 'force_refresh' ||
+                data.type === 'einvoice_published' ||
+                data.type === 'einvoice_saved_for_later') {
+              console.log('🔄 POS: Refreshing data due to WebSocket signal:', data.type);
+
               // Clear cache and force refresh
               queryClient.clear();
               queryClient.invalidateQueries({ queryKey: ["/api/products"] });
               queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-              queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-              
-              // Clear active order if needed
-              if (data.type === 'popup_close' && data.success) {
-                console.log('🔄 POS: Clearing active order due to successful payment');
-                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                  (window as any).clearActiveOrder();
+              queryClient.invalidateQueries({ queryKey: ["/api/store-settings"] });
+
+              // Dispatch custom events for components
+              window.dispatchEvent(new CustomEvent('forceDataRefresh', {
+                detail: {
+                  source: 'pos_websocket',
+                  reason: data.type,
+                  timestamp: new Date().toISOString()
                 }
-              }
+              }));
             }
           } catch (error) {
             console.error('❌ POS: Error processing WebSocket message:', error);
@@ -98,12 +102,41 @@ export default function POS({ onLogout }: POSPageProps) {
       }
     };
 
+    // Add custom event listeners for e-invoice events
+    const handleEInvoiceEvents = (event: CustomEvent) => {
+      console.log('📧 POS: E-invoice event received:', event.type, event.detail);
+
+      // Force data refresh for any e-invoice related events
+      queryClient.clear();
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/store-settings"] });
+
+      // Dispatch refresh event for components
+      window.dispatchEvent(new CustomEvent('forceDataRefresh', {
+        detail: {
+          source: 'pos_einvoice_event',
+          reason: event.type,
+          timestamp: new Date().toISOString()
+        }
+      }));
+    };
+
+    // Listen for e-invoice related events
+    window.addEventListener('einvoicePublished', handleEInvoiceEvents);
+    window.addEventListener('einvoiceSavedForLater', handleEInvoiceEvents);
+    window.addEventListener('forceDataRefresh', handleEInvoiceEvents);
+
     connectWebSocket();
 
     return () => {
       if (ws) {
         ws.close();
       }
+      // Clean up event listeners
+      window.removeEventListener('einvoicePublished', handleEInvoiceEvents);
+      window.removeEventListener('einvoiceSavedForLater', handleEInvoiceEvents);
+      window.removeEventListener('forceDataRefresh', handleEInvoiceEvents);
     };
   }, [queryClient]);
 
@@ -255,11 +288,11 @@ export default function POS({ onLogout }: POSPageProps) {
         onClose={() => {
           console.log("🔴 POS: Closing receipt modal and clearing cart");
           setShowReceiptModal(false);
-          
+
           // Clear cart when receipt modal closes
           setTimeout(() => {
             clearCart();
-            
+
             // Send popup close signal via WebSocket to trigger other components to refresh
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";

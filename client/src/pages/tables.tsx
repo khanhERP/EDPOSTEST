@@ -40,8 +40,12 @@ export default function TablesPage() {
             const data = JSON.parse(event.data);
             console.log('📩 Tables: Received WebSocket message:', data);
 
-            if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'force_refresh') {
-              console.log('🔄 Tables: Refreshing data due to WebSocket signal');
+            if (data.type === 'popup_close' || 
+                data.type === 'payment_success' || 
+                data.type === 'force_refresh' ||
+                data.type === 'einvoice_published' ||
+                data.type === 'einvoice_saved_for_later') {
+              console.log('🔄 Tables: Refreshing data due to WebSocket signal:', data.type);
 
               // Clear cache and force refresh
               queryClient.clear();
@@ -76,12 +80,40 @@ export default function TablesPage() {
       }
     };
 
+    // Add custom event listeners for e-invoice events
+    const handleEInvoiceEvents = (event: CustomEvent) => {
+      console.log('📧 Tables: E-invoice event received:', event.type, event.detail);
+      
+      // Force data refresh for any e-invoice related events
+      queryClient.clear();
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+
+      // Dispatch refresh event for TableGrid
+      window.dispatchEvent(new CustomEvent('refreshTableData', {
+        detail: {
+          source: 'tables_einvoice_event',
+          reason: event.type,
+          timestamp: new Date().toISOString()
+        }
+      }));
+    };
+
+    // Listen for e-invoice related events
+    window.addEventListener('einvoicePublished', handleEInvoiceEvents);
+    window.addEventListener('einvoiceSavedForLater', handleEInvoiceEvents);
+    window.addEventListener('forceDataRefresh', handleEInvoiceEvents);
+
     connectWebSocket();
 
     return () => {
       if (ws) {
         ws.close();
       }
+      // Clean up event listeners
+      window.removeEventListener('einvoicePublished', handleEInvoiceEvents);
+      window.removeEventListener('einvoiceSavedForLater', handleEInvoiceEvents);
+      window.removeEventListener('forceDataRefresh', handleEInvoiceEvents);
     };
   }, [queryClient]);
 
