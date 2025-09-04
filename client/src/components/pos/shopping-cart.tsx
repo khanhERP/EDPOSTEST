@@ -589,8 +589,8 @@ export function ShoppingCart({
     console.log("🎯 POS: E-Invoice confirmed with data:", invoiceData);
     console.log("🔍 POS: Invoice data structure:", JSON.stringify(invoiceData, null, 2));
 
-    // Always close the E-invoice modal first
-    setShowEInvoiceModal(false);
+    // Don't close E-invoice modal immediately - let it handle its own closing
+    // setShowEInvoiceModal(false); // Commented out - let EInvoiceModal handle its own closing
     setIsProcessingPayment(false);
 
     // Check if this is publish later or immediate publish
@@ -756,15 +756,29 @@ export function ShoppingCart({
     console.log("🔥 POS: receiptForDisplay being set:", receiptForDisplay);
     console.log("🔥 POS: receiptForDisplay items count:", receiptForDisplay?.items?.length || 0);
     
+    // Close all other modals first to prevent conflicts
+    setShowPaymentModal(false);
+    setShowReceiptPreview(false);
+    setShowPaymentMethodModal(false);
+    
+    // Set receipt data and show modal
     setSelectedReceipt(receiptForDisplay);
     setShowReceiptModal(true);
     
-    // Force re-render to ensure modal shows
+    // Force re-render multiple times to ensure modal shows
     setTimeout(() => {
-      console.log("🔥 POS: Force setting receipt modal states again");
+      console.log("🔥 POS: Force setting receipt modal states again - attempt 1");
       setSelectedReceipt(receiptForDisplay);
       setShowReceiptModal(true);
-    }, 50);
+    }, 100);
+    
+    setTimeout(() => {
+      console.log("🔥 POS: Force setting receipt modal states again - attempt 2");
+      setSelectedReceipt(receiptForDisplay);
+      setShowReceiptModal(true);
+      // Also close E-invoice modal if still open
+      setShowEInvoiceModal(false);
+    }, 300);
 
     console.log("✅ POS: Receipt modal should now be displayed");
   };

@@ -641,14 +641,15 @@ export function EInvoiceModal({
       console.log("📄 PUBLISH LATER: Calling onConfirm to show receipt modal");
       console.log("📄 PUBLISH LATER: completeInvoiceData being passed:", JSON.stringify(completeInvoiceData, null, 2));
       
-      // Call onConfirm first, then close modal after a small delay
+      // Call onConfirm first to trigger receipt modal
       onConfirm(completeInvoiceData);
       console.log("✅ PUBLISH LATER: onConfirm called - receipt modal should show");
 
-      // Close the E-Invoice modal after a small delay to ensure onConfirm processes
+      // Close the E-Invoice modal after a longer delay to ensure receipt modal opens first
       setTimeout(() => {
+        console.log("🔄 PUBLISH LATER: Closing E-Invoice modal after receipt modal should be open");
         onClose();
-      }, 100);
+      }, 500);
 
       console.log("--------------------------------------------------");
 
