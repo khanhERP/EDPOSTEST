@@ -1724,7 +1724,7 @@ export function SalesChartReport() {
                                       })}
                                     </TableCell>
                                     <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
-                                      1
+                                      {transaction.orderNumber || "1"}
                                     </TableCell>
                                     <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                       {formatCurrency(
@@ -2334,7 +2334,7 @@ export function SalesChartReport() {
                           .reduce((sum, item) => sum + item.orders, 0)
                           .toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-center border-r min-w-[130px] px-4"></TableCell>
+                      <TableCell className="text-center border-r min-w-[130px]"></TableCell>
                       <TableCell className="text-right border-r min-w-[140px] px-4">
                         {formatCurrency(
                           data.reduce((sum, item) => sum + item.totalAmount, 0),
