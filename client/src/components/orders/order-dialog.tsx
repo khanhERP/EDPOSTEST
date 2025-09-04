@@ -179,7 +179,7 @@ export function OrderDialog({
 
       toast({
         title: t("common.error"),
-        description: mode === "edit" ? "Bạn chưa sửa đơn hàng" : `Lỗi tạo đơn hàng: ${errorMessage}`,
+        description: mode === "edit" ? `Lỗi cập nhật đơn hàng: ${errorMessage}` : `Lỗi tạo đơn hàng: ${errorMessage}`,
         variant: "destructive",
       });
     },
@@ -336,16 +336,15 @@ export function OrderDialog({
         hasAnyChanges
       });
 
-      // Allow update to proceed if there are new items or any changes
-      // If no changes, just show a warning but still allow the update
-      if (!hasAnyChanges && cart.length === 0) {
-        console.log('⚠️ Order Dialog: No changes detected, but proceeding with update');
-        toast({
-          title: "Thông báo",
-          description: "Không có thay đổi mới, đang cập nhật lại đơn hàng hiện tại",
-          variant: "default",
-        });
-      }
+      // Always allow update to proceed - user wants to refresh/update order data
+      console.log('📝 Order Dialog: Processing order update:', {
+        hasNewItems,
+        hasRemovedItems,
+        hasCustomerNameChange,
+        hasCustomerCountChange,
+        hasAnyChanges,
+        allowUpdate: true
+      });
 
 
       // For edit mode, handle both new items and order updates
