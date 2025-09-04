@@ -96,8 +96,11 @@ export function OrderDialog({
       );
 
       try {
+        // For edit mode, handle both new items and order updates
         if (mode === "edit" && existingOrder) {
-          // If there are new items to add, add them first
+          let finalResult = existingOrder;
+
+          // Only add items if there are actually new items in the cart
           if (orderData.items.length > 0) {
             console.log(`📝 Adding ${orderData.items.length} new items to existing order ${existingOrder.id}`);
             const addItemsResponse = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
@@ -111,9 +114,10 @@ export function OrderDialog({
 
             const addItemsResult = await addItemsResponse.json();
             console.log('✅ Items added successfully:', addItemsResult);
+            finalResult = addItemsResult.updatedOrder || finalResult;
           }
 
-          // Update order information (customer details, etc.)
+          // Always update order information (customer details, etc.) regardless of items
           console.log(`📝 Updating order information for order ${existingOrder.id}`);
           const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
             customerName: orderData.order.customerName,
@@ -344,7 +348,7 @@ export function OrderDialog({
       const hasRemovedItems = existingItems.some(item => item.quantity === 0);
       const hasCustomerNameChange = (customerName || "") !== (existingOrder.customerName || "");
       const hasCustomerCountChange = customerCount !== (existingOrder.customerCount || 1);
-      
+
       const hasAnyChanges = hasNewItems || hasRemovedItems || hasCustomerNameChange || hasCustomerCountChange;
 
       console.log('📝 Order Dialog: Update attempt - Changes detected:', {
@@ -356,17 +360,16 @@ export function OrderDialog({
         cartLength: cart.length
       });
 
-      // Always allow update to proceed if there are new items in cart or customer changes
-      if (cart.length > 0) {
-        console.log('📝 Order Dialog: Processing order update with new items:', {
-          newItemsCount: cart.length,
-          hasCustomerChanges: hasCustomerNameChange || hasCustomerCountChange
-        });
-      } else if (hasCustomerNameChange || hasCustomerCountChange) {
-        console.log('📝 Order Dialog: Processing order update with customer changes only');
-      } else {
-        console.log('📝 Order Dialog: No new items or changes, but allowing update');
-      }
+      // Always allow update to proceed - user wants to refresh/update order data
+      console.log('📝 Order Dialog: Processing order update:', {
+        hasNewItems,
+        hasRemovedItems,
+        hasCustomerNameChange,
+        hasCustomerCountChange,
+        hasAnyChanges,
+        allowUpdate: true,
+        cartItemsCount: cart.length
+      });
 
 
       // For edit mode, handle both new items and order updates
@@ -380,7 +383,8 @@ export function OrderDialog({
         // Tax = (after_tax_price - price) * quantity
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          itemTax = (afterTaxPrice - basePrice) * quantity;
+          const taxPerUnit = afterTaxPrice - basePrice;
+          itemTax = (taxPerUnit * quantity);
         }
 
         const itemTotal = itemSubtotal + itemTax;
@@ -409,7 +413,7 @@ export function OrderDialog({
         customerCount: parseInt(customerCount.toString()) || 1,
       };
 
-      console.log("📝 Processing order update:", { 
+      console.log("📝 Processing order update:", {
         orderId: existingOrder.id,
         hasNewItems: items.length > 0,
         hasCustomerChanges: hasCustomerNameChange || hasCustomerCountChange,
