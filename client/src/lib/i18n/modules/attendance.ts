@@ -1,137 +1,5 @@
 import type { AttendanceTranslations } from '../types';
 
-export const attendanceTranslations: AttendanceTranslations = {
-  vi: {
-    attendance: {
-      // Clock in/out
-      clockInOut: 'Chấm công',
-      clockIn: 'Chấm công vào',
-      clockOut: 'Chấm công ra',
-      startBreak: 'Bắt đầu nghỉ',
-      endBreak: 'Kết thúc nghỉ',
-      
-      // Records
-      attendanceRecords: 'Bản ghi chấm công',
-      recordsDescription: 'Xem bản ghi chấm công hàng ngày',
-      selectedDate: 'Ngày đã chọn',
-      startDate: 'Ngày bắt đầu',
-      endDate: 'Ngày kết thúc',
-      useDateRange: 'Sử dụng khoảng thời gian',
-      
-      // Time
-      clockInTime: 'Giờ vào',
-      clockOutTime: 'Giờ ra',
-      breakTime: 'Thời gian nghỉ',
-      totalHours: 'Tổng giờ làm',
-      overtime: 'Làm thêm',
-      hours: 'giờ',
-      minutes: 'phút',
-      
-      // Status
-      status: {
-        present: 'Có mặt',
-        absent: 'Vắng mặt',
-        late: 'Trễ',
-        halfDay: 'Nửa ngày',
-      },
-      
-      // Messages
-      noRecords: 'Không có bản ghi chấm công',
-      selectOtherDate: 'Vui lòng chọn ngày khác',
-      unknownEmployee: 'Nhân viên không xác định',
-      
-      // Statistics
-      statistics: 'Thống kê',
-    }
-  },
-  en: {
-    attendance: {
-      // Clock in/out
-      clockInOut: 'Clock In/Out',
-      clockIn: 'Clock In',
-      clockOut: 'Clock Out',
-      startBreak: 'Start Break',
-      endBreak: 'End Break',
-      
-      // Records
-      attendanceRecords: 'Attendance Records',
-      recordsDescription: 'View daily attendance records',
-      selectedDate: 'Selected Date',
-      startDate: 'Start Date',
-      endDate: 'End Date',
-      useDateRange: 'Use Date Range',
-      
-      // Time
-      clockInTime: 'Clock In Time',
-      clockOutTime: 'Clock Out Time',
-      breakTime: 'Break Time',
-      totalHours: 'Total Hours',
-      overtime: 'Overtime',
-      hours: 'hours',
-      minutes: 'minutes',
-      
-      // Status
-      status: {
-        present: 'Present',
-        absent: 'Absent',
-        late: 'Late',
-        halfDay: 'Half Day',
-      },
-      
-      // Messages
-      noRecords: 'No attendance records',
-      selectOtherDate: 'Please select another date',
-      unknownEmployee: 'Unknown Employee',
-      
-      // Statistics
-      statistics: 'Statistics',
-    }
-  },
-  ko: {
-    attendance: {
-      // Clock in/out
-      clockInOut: '출퇴근',
-      clockIn: '출근',
-      clockOut: '퇴근',
-      startBreak: '휴식 시작',
-      endBreak: '휴식 종료',
-      
-      // Records
-      attendanceRecords: '출석 기록',
-      recordsDescription: '일일 출석 기록 보기',
-      selectedDate: '선택된 날짜',
-      startDate: '시작 날짜',
-      endDate: '종료 날짜',
-      useDateRange: '기간 선택 사용',
-      
-      // Time
-      clockInTime: '출근 시간',
-      clockOutTime: '퇴근 시간',
-      breakTime: '휴식 시간',
-      totalHours: '총 근무시간',
-      overtime: '초과근무',
-      hours: '시간',
-      minutes: '분',
-      
-      // Status
-      status: {
-        present: '출석',
-        absent: '결석',
-        late: '지각',
-        halfDay: '반일',
-      },
-      
-      // Messages
-      noRecords: '출석 기록이 없습니다',
-      selectOtherDate: '다른 날짜를 선택해주세요',
-      unknownEmployee: '알 수 없는 직원',
-      
-      // Statistics
-      statistics: '통계',
-    }
-  }
-};
-
 export const attendanceTranslations: { [key: string]: AttendanceTranslations } = {
   ko: {
     title: '출근 관리',
@@ -147,9 +15,6 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     notes: '메모',
     recordsDescription: '일일 출근 기록 확인',
     selectedDate: '선택된 날짜',
-  startDate: '시작 날짜',
-  endDate: '종료 날짜',
-  dateRange: '기간 조회',
     unknownEmployee: '알 수 없는 직원',
     noRecords: '기록이 없습니다',
     selectOtherDate: '다른 날짜를 선택해주세요',
@@ -168,32 +33,69 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     urlCopy: 'URL 복사',
     copySuccess: '복사 완료',
     copySuccessDesc: 'URL이 클립보드에 복사되었습니다',
+    breakEndSuccess: '휴식 종료',
+    breakEndSuccessDesc: '휴식이 종료되었습니다',
+    breakEndError: '휴식 종료 오류',
+    loading: '로딩 중...',
+    noAttendanceData: '출석 데이터가 없습니다',
+    selectEmployeeFirst: '먼저 직원을 선택해주세요',
+    invalidEmployee: '유효하지 않은 직원',
+    alreadyClockedIn: '이미 출근했습니다',
+    notClockedIn: '출근하지 않았습니다',
+    alreadyOnBreak: '이미 휴식 중입니다',
+    notOnBreak: '휴식 중이 아닙니다',
+    confirmClockOut: '퇴근을 확인하시겠습니까?',
+    confirmBreakStart: '휴식 시작을 확인하시겠습니까?',
+    confirmBreakEnd: '휴식 종료를 확인하시겠습니까?',
+    processing: '처리 중...',
+    attendanceHistory: '출석 기록',
+    weeklyView: '주간 보기',
+    monthlyView: '월간 보기',
+    filterByEmployee: '직원별 필터',
+    exportData: '데이터 내보내기',
+    printReport: '보고서 인쇄',
+    clockInSuccess: '출근 성공',
+    clockInSuccessDesc: '출근이 성공적으로 기록되었습니다',
+    clockInError: '출근 오류',
+    clockOutSuccess: '퇴근 성공',
+    clockOutSuccessDesc: '퇴근이 성공적으로 기록되었습니다',
+    clockOutError: '퇴근 오류',
+    breakStartSuccess: '휴식 시작',
     breakStartSuccessDesc: '휴식이 시작되었습니다',
     breakStartError: '휴식 시작 오류',
     hours: '시간',
     minutes: '분',
     notesPlaceholder: '메모를 입력하세요',
     workingTime: '근무 시간',
-    monthlyStats: '근태 통계',
-    monthlyStatsDesc: '월별 근태 현황과 직원별 통계를 확인합니다.',
+    monthlyStats: '월간 통계',
+    monthlyStatsDesc: '월간 출석 현황 및 직원 통계를 확인합니다.',
     selectMonth: '월 선택',
     monthPickerPlaceholder: '월을 선택하세요',
     totalWorkDays: '총 근무일',
-    totalAttendance: '총 출근 횟수',
+    totalAttendance: '총 출석',
     totalWorkHours: '총 근무시간',
     totalOvertime: '총 초과근무',
     averageWorkHours: '평균 근무시간',
     dailyAverageWorkHours: '일일 평균 근무시간',
-    attendanceRate: '출근율',
-    overallAttendanceRate: '전체 직원 평균 출근율',
+    attendanceRate: '출석률',
+    overallAttendanceRate: '전체 직원 평균 출석률',
     employeeStats: '직원별 통계',
-    employeeStatsDesc: '각 직원의 근태 현황을 자세히 확인할 수 있습니다.',
-    workDays: '근무 일수',
+    employeeStatsDesc: '각 직원의 출석 현황을 자세히 확인할 수 있습니다.',
+    workDays: '근무일',
     days: '일',
     overtimeHours: '초과근무',
     lateCount: '지각',
     absentCount: '결근',
     times: '회',
+    status: {
+      present: '출석',
+      absent: '결석',
+      late: '지각',
+      halfDay: '반일',
+      working: '근무 중',
+      onBreak: '휴식 중',
+      clockedOut: '퇴근함',
+    },
   },
   en: {
     title: 'Attendance Management',
@@ -227,13 +129,41 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     urlCopy: 'Copy URL',
     copySuccess: 'Copied',
     copySuccessDesc: 'URL has been copied to clipboard',
+    breakEndSuccess: 'Break Ended',
+    breakEndSuccessDesc: 'Break has been ended',
+    breakEndError: 'Error ending break',
+    loading: 'Loading...',
+    noAttendanceData: 'No attendance data',
+    selectEmployeeFirst: 'Please select an employee first',
+    invalidEmployee: 'Invalid employee',
+    alreadyClockedIn: 'Already clocked in',
+    notClockedIn: 'Not clocked in',
+    alreadyOnBreak: 'Already on break',
+    notOnBreak: 'Not on break',
+    confirmClockOut: 'Confirm clock out?',
+    confirmBreakStart: 'Confirm start break?',
+    confirmBreakEnd: 'Confirm end break?',
+    processing: 'Processing...',
+    attendanceHistory: 'Attendance History',
+    weeklyView: 'Weekly View',
+    monthlyView: 'Monthly View',
+    filterByEmployee: 'Filter by Employee',
+    exportData: 'Export Data',
+    printReport: 'Print Report',
+    clockInSuccess: 'Clock In Success',
+    clockInSuccessDesc: 'Clock in recorded successfully',
+    clockInError: 'Clock In Error',
+    clockOutSuccess: 'Clock Out Success',
+    clockOutSuccessDesc: 'Clock out recorded successfully',
+    clockOutError: 'Clock Out Error',
+    breakStartSuccess: 'Break Started',
     breakStartSuccessDesc: 'Break has been started',
-    breakStartError: 'Error starting break',
+    breakStartError: 'Break Start Error',
     hours: 'hours',
     minutes: 'minutes',
     notesPlaceholder: 'Enter notes',
     workingTime: 'Working Time',
-    monthlyStats: 'Attendance Statistics',
+    monthlyStats: 'Monthly Statistics',
     monthlyStatsDesc: 'View monthly attendance status and employee statistics.',
     selectMonth: 'Select Month',
     monthPickerPlaceholder: 'Select a month',
@@ -253,6 +183,15 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     lateCount: 'Late',
     absentCount: 'Absent',
     times: 'times',
+    status: {
+      present: 'Present',
+      absent: 'Absent',
+      late: 'Late',
+      halfDay: 'Half Day',
+      working: 'Working',
+      onBreak: 'On Break',
+      clockedOut: 'Clocked Out',
+    },
   },
   vi: {
     title: 'Quản lý chấm công',
@@ -305,7 +244,6 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     lateCount: 'Trễ',
     absentCount: 'Vắng mặt',
     times: 'lần',
-    // Additional translations for UI/UX improvements
     noRecords: 'Không có bản ghi nào',
     selectOtherDate: 'Vui lòng chọn ngày khác',
     clockInTime: 'Giờ vào ca',
@@ -323,8 +261,6 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     urlCopy: 'Sao chép URL',
     copySuccess: 'Đã sao chép',
     copySuccessDesc: 'URL đã được sao chép vào clipboard',
-
-    // Additional missing keys for attendance management
     loading: 'Đang tải...',
     noAttendanceData: 'Không có dữ liệu chấm công',
     selectEmployeeFirst: 'Vui lòng chọn nhân viên trước',
