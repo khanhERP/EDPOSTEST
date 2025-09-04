@@ -302,51 +302,28 @@ export function OrderDialog({
   };
 
   const handlePlaceOrder = async () => {
-    // In edit mode, allow update even with empty cart
+    // For edit mode, allow update even with empty cart
     // In create mode, require items in cart
     if (!table || (mode !== "edit" && cart.length === 0)) return;
 
     if (mode === "edit" && existingOrder) {
       // Check if there are new items to add
       if (cart.length === 0) {
-        // No new items to add, but need to RECALCULATE order totals and refresh UI
-        console.log('🧮 Order Dialog: No new items to add, RECALCULATING order totals and refreshing');
+        // No new items to add, use already calculated values from UI
+        console.log('🧮 Order Dialog: No new items to add, using calculated values from UI');
 
         try {
-          // Step 1: Recalculate order totals based on existing items
-          console.log('🔢 Recalculating order totals for order:', existingOrder.id);
-          
-          let newSubtotal = 0;
-          let newTax = 0;
+          // Step 1: Use already calculated values from the UI instead of recalculating
+          console.log('💰 Using pre-calculated values from UI for order:', existingOrder.id);
 
-          if (existingItems && existingItems.length > 0) {
-            existingItems.forEach((item) => {
-              const basePrice = Number(item.unitPrice || 0);
-              const quantity = Number(item.quantity || 0);
-              const product = products?.find((p: Product) => p.id === item.productId);
+          const newSubtotal = calculateTotal();
+          const newTax = calculateTax();
+          const newTotal = calculateGrandTotal();
 
-              // Calculate subtotal
-              newSubtotal += basePrice * quantity;
-
-              // Calculate tax using the same logic as other components
-              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                const taxPerUnit = afterTaxPrice - basePrice;
-                newTax += taxPerUnit * quantity;
-              }
-            });
-          }
-
-          const newTotal = newSubtotal + newTax;
-
-          console.log('💰 Order Dialog: Calculated new totals:', {
-            oldSubtotal: existingOrder.subtotal,
-            oldTax: existingOrder.tax,
-            oldTotal: existingOrder.total,
+          console.log('✅ Order Dialog: Using calculated totals:', {
             newSubtotal,
             newTax,
             newTotal,
-            itemsCount: existingItems?.length || 0
           });
 
           // Step 2: Update order totals in database
@@ -365,7 +342,7 @@ export function OrderDialog({
 
           // Step 3: Clear cache and force fresh data fetch
           queryClient.clear();
-          
+
           // Step 4: Force immediate refetch with fresh data
           await Promise.all([
             queryClient.refetchQueries({ queryKey: ["/api/tables"] }),
@@ -374,7 +351,7 @@ export function OrderDialog({
           ]);
 
           console.log('🔄 Order Dialog: All queries refreshed with new data');
-          
+
           // Step 5: Emit events to notify other components with updated data
           window.dispatchEvent(new CustomEvent('orderTotalsUpdated', { 
             detail: { 
@@ -386,7 +363,7 @@ export function OrderDialog({
               timestamp: Date.now()
             } 
           }));
-          
+
           window.dispatchEvent(new CustomEvent('refreshOrders', { 
             detail: { 
               immediate: true,
@@ -775,30 +752,22 @@ export function OrderDialog({
                                                 remainingItems.forEach((remainingItem: any) => {
                                                   const basePrice = Number(remainingItem.unitPrice || 0);
                                                   const quantity = Number(remainingItem.quantity || 0);
+                                                  const product = products?.find((p: any) => p.id === remainingItem.productId);
 
-                                                  // Calculate subtotal and tax exactly as in other components
-                                                  if (Array.isArray(remainingItems) && remainingItems.length > 0) {
-                                                    remainingItems.forEach((remainingItem: any) => {
-                                                      const basePrice = Number(remainingItem.unitPrice || 0);
-                                                      const quantity = Number(remainingItem.quantity || 0);
-                                                      const product = products?.find((p: any) => p.id === remainingItem.productId);
+                                                  // Calculate subtotal
+                                                  newSubtotal += basePrice * quantity;
 
-                                                      // Calculate subtotal
-                                                      newSubtotal += basePrice * quantity;
-
-                                                      // Calculate tax using Math.floor((after_tax_price - price) * quantity)
-                                                      if (
-                                                        product?.afterTaxPrice &&
-                                                        product.afterTaxPrice !== null &&
-                                                        product.afterTaxPrice !== ""
-                                                      ) {
-                                                        const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                                        const taxPerUnit = afterTaxPrice - basePrice;
-                                                        newTax += Math.floor(taxPerUnit * quantity);
-                                                      }
-                                                    });
+                                                  // Calculate tax using Math.floor((after_tax_price - price) * quantity)
+                                                  if (
+                                                    product?.afterTaxPrice &&
+                                                    product.afterTaxPrice !== null &&
+                                                    product.afterTaxPrice !== ""
+                                                  ) {
+                                                    const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                                    const taxPerUnit = afterTaxPrice - basePrice;
+                                                    newTax += Math.floor(taxPerUnit * quantity);
                                                   }
-                                                  });
+                                                });
                                               }
                                               // If no items left, totals should be 0
                                               else {
