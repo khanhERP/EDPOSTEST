@@ -608,12 +608,12 @@ export function ShoppingCart({
 
       console.log("📄 POS: Valid receipt data found, proceeding to show receipt modal");
 
-      // Create receipt object for display
+      // Create receipt object for display with enhanced data
       const receiptForDisplay = {
         ...invoiceData.receipt,
         // Ensure all required fields are present
-        transactionId: invoiceData.receipt.transactionId || `TXN-${Date.now()}`,
-        invoiceNumber: invoiceData.invoiceNumber || invoiceData.receipt.invoiceNumber,
+        transactionId: invoiceData.transactionId || invoiceData.receipt.transactionId || `TXN-${Date.now()}`,
+        invoiceNumber: invoiceData.invoiceNumber || invoiceData.receipt.invoiceNumber || null,
         customerName: invoiceData.customerName || invoiceData.receipt.customerName,
         customerTaxCode: invoiceData.taxCode || invoiceData.receipt.customerTaxCode,
         paymentMethod: 'einvoice',
@@ -626,19 +626,23 @@ export function ShoppingCart({
         change: invoiceData.receipt.change || "0.00",
         cashierName: invoiceData.receipt.cashierName || "POS Cashier",
         createdAt: invoiceData.receipt.createdAt || new Date().toISOString(),
-        orderId: invoiceData.orderId || invoiceData.receipt.orderId
+        orderId: invoiceData.orderId || invoiceData.receipt.orderId,
+        // Additional fields for publish later
+        einvoiceStatus: invoiceData.einvoiceStatus || 0,
+        invoiceStatus: invoiceData.invoiceStatus || 0,
+        status: invoiceData.status || 'draft'
       };
 
       console.log("📄 POS: Enhanced receipt data for display:", receiptForDisplay);
 
-      // Check if this is a publish later or immediate publish
+      // Show appropriate success message
       if (invoiceData.publishLater) {
         console.log("⏳ POS: E-Invoice saved for later publishing - showing receipt");
         toast({
-          title: "Thành công",
+          title: "Thành công", 
           description: "Hóa đơn đã được lưu để phát hành sau. Hiển thị hóa đơn để in...",
         });
-      } else {
+      } else if (invoiceData.publishedImmediately) {
         console.log("✅ POS: E-Invoice published immediately - showing receipt");
         toast({
           title: "Thành công",

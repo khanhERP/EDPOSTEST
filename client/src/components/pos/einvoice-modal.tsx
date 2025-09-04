@@ -620,20 +620,25 @@ export function EInvoiceModal({
         receipt: receiptData
       };
 
-      console.log("✅ PUBLISH LATER: Prepared enhanced data for onConfirm");
-      console.log("📦 PUBLISH LATER: Complete invoice data:", completeInvoiceData);
+      console.log("✅ PUBLISH LATER: Prepared enhanced data for onConfirm:", completeInvoiceData);
 
-      // Close the E-Invoice modal first
-      console.log("🔒 Closing E-Invoice modal before showing receipt (publish later)");
+      // Show success toast first
+      toast({
+        title: "Thành công",
+        description: "Hóa đơn đã được lưu để phát hành sau. Đang hiển thị hóa đơn để in...",
+      });
 
-      // Call onConfirm with complete data
-      console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
+      // Call onConfirm IMMEDIATELY to trigger receipt modal
+      console.log("📄 PUBLISH LATER: Calling onConfirm to show receipt modal");
       onConfirm(completeInvoiceData);
 
-      // Close the modal after processing
+      // Close the E-Invoice modal after a small delay
       setTimeout(() => {
+        console.log("🔒 PUBLISH LATER: Closing E-Invoice modal");
         onClose();
       }, 100);
+
+      console.log("--------------------------------------------------");
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
