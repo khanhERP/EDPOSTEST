@@ -2431,7 +2431,7 @@ export function SalesChartReport() {
       );
     };
 
-    // Legacy Sales Channel Report Component Logic
+    // Sales Channel Report Component Logic
     const renderSalesChannelReport = () => {
       const dashboardStats = getDashboardStats();
 
