@@ -68,7 +68,8 @@ export function OrderManagement() {
           id: o.id,
           orderNumber: o.orderNumber,
           status: o.status,
-          tableId: o.tableId
+          tableId: o.tableId,
+          storedTotal: o.total
         }))
       });
     },
@@ -76,6 +77,9 @@ export function OrderManagement() {
       console.error(`❌ DEBUG: Orders query onError:`, error);
     }
   });
+
+  // Create a map to store calculated totals for orders with items
+  const [calculatedTotals, setCalculatedTotals] = useState<Map<number, number>>(new Map());
 
   const { data: tables } = useQuery({
     queryKey: ['/api/tables'],
@@ -579,6 +583,100 @@ export function OrderManagement() {
     // Always round to integer and format without decimals
     return `${Math.floor(amount).toLocaleString('vi-VN')} ₫`;
   };
+
+  // Function to calculate order total from items
+  const calculateOrderTotal = React.useCallback(async (order: Order) => {
+    try {
+      console.log(`🧮 Calculating total for order ${order.id}`);
+      
+      // Fetch order items
+      const response = await apiRequest('GET', `/api/order-items/${order.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch order items');
+      }
+      
+      const orderItemsData = await response.json();
+      console.log(`📦 Order ${order.id} items:`, orderItemsData);
+
+      if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
+        return Number(order.total || 0);
+      }
+
+      // Calculate total using same logic as other components
+      let calculatedSubtotal = 0;
+      let calculatedTax = 0;
+
+      orderItemsData.forEach((item: any) => {
+        const unitPrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+        // Subtotal calculation
+        const itemSubtotal = unitPrice * quantity;
+        calculatedSubtotal += itemSubtotal;
+
+        // Tax calculation from afterTaxPrice if available
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const originalPrice = parseFloat(product.price || unitPrice);
+          const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
+          calculatedTax += taxPerUnit * quantity;
+        }
+      });
+
+      const finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
+      
+      console.log(`💰 Order ${order.id} calculated total:`, {
+        subtotal: calculatedSubtotal,
+        tax: calculatedTax,
+        finalTotal: finalTotal,
+        storedTotal: order.total
+      });
+
+      return finalTotal;
+    } catch (error) {
+      console.error(`❌ Error calculating total for order ${order.id}:`, error);
+      return Number(order.total || 0);
+    }
+  }, [products, apiRequest]);
+
+  // Function to get order total (calculated or stored)
+  const getOrderTotal = React.useCallback((order: Order) => {
+    const storedTotal = Number(order.total || 0);
+    const calculatedTotal = calculatedTotals.get(order.id);
+
+    // If we have a calculated total and it's different from stored total, prefer calculated
+    if (calculatedTotal !== undefined && calculatedTotal > 0) {
+      console.log(`💰 Order ${order.orderNumber} using calculated total:`, calculatedTotal);
+      return calculatedTotal;
+    }
+
+    // If stored total is valid, use it
+    if (storedTotal > 0) {
+      console.log(`💰 Order ${order.orderNumber} using stored total:`, storedTotal);
+      return storedTotal;
+    }
+
+    // For orders with 0 total but not cancelled, trigger calculation
+    if (storedTotal === 0 && order.status !== 'cancelled' && !calculatedTotal) {
+      console.log(`💰 Order ${order.orderNumber} needs calculation`);
+      
+      // Trigger calculation in background
+      calculateOrderTotal(order).then(total => {
+        if (total > 0) {
+          setCalculatedTotals(prev => {
+            const newMap = new Map(prev);
+            newMap.set(order.id, total);
+            return newMap;
+          });
+        }
+      });
+      
+      return 0; // Return 0 for now, will update when calculation completes
+    }
+
+    return storedTotal;
+  }, [calculatedTotals, calculateOrderTotal]);
 
   const formatTime = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
@@ -1509,18 +1607,7 @@ export function OrderManagement() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
-                        {(() => {
-                          // Calculate total using same logic as table display
-                          const orderTotal = Number(order.total || 0);
-
-                          // If order has valid total, use it
-                          if (orderTotal > 0) {
-                            return formatCurrency(orderTotal);
-                          }
-
-                          // Otherwise return 0
-                          return formatCurrency(0);
-                        })()}
+                        {formatCurrency(getOrderTotal(order))}
                       </span>
                     </div>
 
