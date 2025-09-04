@@ -396,11 +396,8 @@ export function EInvoiceModal({
       return;
     }
 
-    if (!formData.selectedTemplateId) {
-      alert("Vui lòng chọn mẫu số hóa đơn");
-      setIsPublishing(false);
-      return;
-    }
+    // For publish later, template selection is optional
+    // Template can be selected when actually publishing the invoice
 
     try {
       console.log(
