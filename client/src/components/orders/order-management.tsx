@@ -631,7 +631,7 @@ export function OrderManagement() {
         const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
         const itemTax = taxPerUnit * quantity;
         calculatedTax += itemTax;
-        
+
         console.log(`💸 Order Details: Tax calculated for ${item.productName}:`, {
           afterTaxPrice,
           basePrice,
@@ -663,14 +663,14 @@ export function OrderManagement() {
   const calculateOrderTotal = React.useCallback(async (order: Order) => {
     try {
       console.log(`🧮 Order Management: Calculating total for order ${order.id} (${order.orderNumber})`);
-      
+
       // Fetch order items first
       const response = await apiRequest('GET', `/api/order-items/${order.id}`);
       if (!response.ok) {
         console.warn(`⚠️ Order Management: Failed to fetch items for order ${order.id}`);
         return Number(order.total || 0);
       }
-      
+
       const orderItemsData = await response.json();
       console.log(`📦 Order Management: Order ${order.id} items:`, {
         itemsCount: orderItemsData?.length || 0,
@@ -721,7 +721,7 @@ export function OrderManagement() {
           const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
           const itemTax = taxPerUnit * quantity;
           calculatedTax += itemTax;
-          
+
           console.log(`💸 Order Management: Tax calculated for ${item.productName}:`, {
             afterTaxPrice,
             basePrice,
@@ -736,8 +736,8 @@ export function OrderManagement() {
       });
 
       // Floor the total like in Table Grid to match display format
-      const finalTotal = Math.floor(calculatedSubtotal + calculatedTax);
-      
+      const finalTotal = Math.floor(calculatedSubtotal + Math.abs(calculatedTax));
+
       console.log(`💰 Order Management: Order ${order.id} calculation result:`, {
         subtotal: calculatedSubtotal,
         tax: calculatedTax,
@@ -750,7 +750,7 @@ export function OrderManagement() {
 
       // Return calculated total, ensuring it's at least 0
       return Math.max(0, finalTotal);
-      
+
     } catch (error) {
       console.error(`❌ Order Management: Error calculating total for order ${order.id}:`, error);
       // Return stored total as fallback
@@ -782,7 +782,7 @@ export function OrderManagement() {
     // If no calculated total yet, trigger calculation for active orders
     if (order.status !== 'cancelled' && order.status !== 'paid') {
       console.log(`💰 Order ${order.orderNumber} triggering calculation for active order`);
-      
+
       // Trigger calculation in background
       setTimeout(() => {
         calculateOrderTotal(order).then(total => {
@@ -1438,7 +1438,7 @@ export function OrderManagement() {
         console.warn('Order Management: Invalid orders data:', orders);
         return [];
       }
-      
+
       return (orders as Order[])
         .filter(order => order && order.id && order.orderedAt) // Filter out invalid orders
         .sort((a: Order, b: Order) => {
@@ -1477,16 +1477,16 @@ export function OrderManagement() {
       const preloadStartIndex = Math.max(0, (currentPage - 2) * ordersPerPage);
       const preloadEndIndex = Math.min(allOrders.length, (currentPage + 1) * ordersPerPage);
       const preloadOrders = allOrders.slice(preloadStartIndex, preloadEndIndex);
-      
+
       console.log(`🔄 Preloading totals for ${preloadOrders.length} orders around current page ${currentPage}`);
-      
+
       // Batch preload in background with low priority
       const preloadBatch = preloadOrders.filter(order => 
         !calculatedTotals.has(order.id) && 
         order.status !== 'cancelled' &&
         !currentOrders.some(currentOrder => currentOrder.id === order.id) // Don't duplicate current page
       );
-      
+
       if (preloadBatch.length > 0) {
         // Use setTimeout to make this low priority
         setTimeout(() => {
@@ -1532,10 +1532,10 @@ export function OrderManagement() {
     if (allOrders && allOrders.length > 0 && calculatedTotals.size > 0) {
       const currentOrderIds = new Set(allOrders.map(order => order.id));
       const calculatedOrderIds = Array.from(calculatedTotals.keys());
-      
+
       // Remove calculated totals for orders that no longer exist
       const toRemove = calculatedOrderIds.filter(id => !currentOrderIds.has(id));
-      
+
       if (toRemove.length > 0) {
         console.log(`🧹 Cleaning up calculated totals for ${toRemove.length} removed orders`);
         setCalculatedTotals(prev => {
@@ -1544,7 +1544,7 @@ export function OrderManagement() {
           return newMap;
         });
       }
-      
+
       // Also limit memory usage - keep only last 100 calculated totals
       if (calculatedTotals.size > 100) {
         console.log(`🧹 Memory cleanup: Removing old calculated totals (current: ${calculatedTotals.size})`);
@@ -1570,7 +1570,7 @@ export function OrderManagement() {
   useEffect(() => {
     if (currentOrders && currentOrders.length > 0 && products && products.length > 0) {
       console.log(`🧮 Current page orders changed, triggering total calculations for ${currentOrders.length} displayed orders (page ${currentPage})`);
-      
+
       // Calculate totals ONLY for orders currently displayed on this page
       currentOrders.forEach(order => {
         if (!calculatedTotals.has(order.id) && order.status !== 'cancelled') {
@@ -1850,7 +1850,7 @@ export function OrderManagement() {
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
                           const displayTotal = getOrderTotal(order);
-                          
+
                           // Show loading state only for active orders with zero total that haven't been calculated yet
                           if (displayTotal === 0 && 
                               order.status !== 'cancelled' && 
@@ -1862,7 +1862,7 @@ export function OrderManagement() {
                               </span>
                             );
                           }
-                          
+
                           // For cancelled orders with zero total, show as cancelled
                           if (displayTotal === 0 && order.status === 'cancelled') {
                             return (
@@ -1871,7 +1871,7 @@ export function OrderManagement() {
                               </span>
                             );
                           }
-                          
+
                           return formatCurrency(displayTotal);
                         })()}
                       </span>
@@ -1967,7 +1967,7 @@ export function OrderManagement() {
               <div className="text-sm text-gray-600">
                 Hiển thị {startIndex + 1}-{Math.min(endIndex, totalOrders)} của {totalOrders} đơn hàng
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -1979,7 +1979,7 @@ export function OrderManagement() {
                   <ChevronLeft className="w-4 h-4" />
                   Trước
                 </Button>
-                
+
                 <div className="flex items-center gap-1">
                   {/* Show page numbers */}
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -1993,7 +1993,7 @@ export function OrderManagement() {
                     } else {
                       pageNumber = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <Button
                         key={pageNumber}
@@ -2006,7 +2006,7 @@ export function OrderManagement() {
                       </Button>
                     );
                   })}
-                  
+
                   {totalPages > 5 && currentPage < totalPages - 2 && (
                     <>
                       <span className="px-2 text-gray-500">...</span>
@@ -2021,7 +2021,7 @@ export function OrderManagement() {
                     </>
                   )}
                 </div>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -2572,7 +2572,7 @@ export function OrderManagement() {
                   {(() => {
                     const orderTotal = getOrderTotal(selectedOrder);
                     const customerPointsValue = (selectedCustomer.points || 0) * 1000;
-                    
+
                     return customerPointsValue >= orderTotal ? (
                       <div className="text-green-600">
                         <p className="text-sm">✓ Đủ điểm để thanh toán toàn bộ đơn hàng</p>
@@ -2980,12 +2980,12 @@ export function OrderManagement() {
         isOpen={showReceiptModal}
         onClose={async () => {
           console.log('🔴 Order Management: Closing final receipt modal safely');
-          
+
           try {
             // Step 1: Close modal immediately
             setShowReceiptModal(false);
             setSelectedReceipt(null);
-            
+
             // Step 2: Force data refresh before clearing states
             await Promise.all([
               queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
@@ -2993,20 +2993,20 @@ export function OrderManagement() {
               queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
               queryClient.refetchQueries({ queryKey: ['/api/tables'] })
             ]);
-            
+
             // Step 3: Clear modal states gradually to prevent white screen
             setTimeout(() => {
               setOrderForPayment(null);
               setShowPaymentMethodModal(false);
               setShowEInvoiceModal(false);
             }, 50);
-            
+
             setTimeout(() => {
               setShowReceiptPreview(false);
               setPreviewReceipt(null);
               setOrderDetailsOpen(false);
             }, 100);
-            
+
             setTimeout(() => {
               setSelectedOrder(null);
               setPaymentMethodsOpen(false);
@@ -3014,7 +3014,7 @@ export function OrderManagement() {
               setPointsPaymentOpen(false);
               setMixedPaymentOpen(false);
             }, 150);
-            
+
             // Step 4: Send global refresh signal
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('orderManagementRefresh', {
@@ -3023,7 +3023,7 @@ export function OrderManagement() {
             }
 
             console.log('✅ Order Management: Receipt modal closed safely with gradual state clearing');
-            
+
           } catch (error) {
             console.error('❌ Error during receipt modal close:', error);
             // Fallback: just clear states without refresh
