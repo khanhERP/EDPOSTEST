@@ -98,19 +98,41 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: allOrderItems } = useQuery({
     queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
-    enabled: activeOrders.length > 0,
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    enabled: activeOrders.length > 0 && activeOrders.length <= 20, // Limit to prevent too many requests
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: 15 * 60 * 1000, // Cache for 15 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
     queryFn: async () => {
       const itemsMap = new Map();
 
-      for (const order of activeOrders) {
-        try {
-          const response = await apiRequest("GET", `/api/order-items/${order.id}`);
-          const items = await response.json();
-          itemsMap.set(order.id, Array.isArray(items) ? items : []);
-        } catch (error) {
-          console.error(`Error fetching items for order ${order.id}:`, error);
-          itemsMap.set(order.id, []);
+      // Batch process in chunks of 5 to prevent overwhelming the server
+      const chunks = [];
+      for (let i = 0; i < activeOrders.length; i += 5) {
+        chunks.push(activeOrders.slice(i, i + 5));
+      }
+
+      for (const chunk of chunks) {
+        const promises = chunk.map(async (order) => {
+          try {
+            const response = await apiRequest("GET", `/api/order-items/${order.id}`);
+            const items = await response.json();
+            return { orderId: order.id, items: Array.isArray(items) ? items : [] };
+          } catch (error) {
+            console.error(`Error fetching items for order ${order.id}:`, error);
+            return { orderId: order.id, items: [] };
+          }
+        });
+
+        const results = await Promise.all(promises);
+        results.forEach(({ orderId, items }) => {
+          itemsMap.set(orderId, items);
+        });
+
+        // Small delay between chunks to prevent server overload
+        if (chunks.indexOf(chunk) < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
 
@@ -126,19 +148,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     queryKey: ["/api/order-items", selectedOrder?.id],
     enabled: !!selectedOrder?.id && orderDetailsOpen,
     refetchOnWindowFocus: false,
-    staleTime: 1 * 60 * 1000, // Cache for 1 minute
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
     queryFn: async () => {
       const orderId = selectedOrder.id;
       if (!orderId) {
         return [];
       }
 
-      const response = await fetch(`/api/order-items/${orderId}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      const response = await apiRequest("GET", `/api/order-items/${orderId}`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
@@ -183,12 +203,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       })
     : [];
 
-  // Force refetch order items when dialog opens
+  // Only refetch order items when absolutely necessary
   useEffect(() => {
     if (orderDetailsOpen && selectedOrder?.id) {
-      refetchOrderItems();
+      // Check if we already have data, only refetch if missing or very old
+      const cachedData = queryClient.getQueryData(["/api/order-items", selectedOrder.id]);
+      if (!cachedData) {
+        refetchOrderItems();
+      }
     }
-  }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
+  }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems, queryClient]);
 
   // Listen for custom events to refresh data - only when really needed
   useEffect(() => {

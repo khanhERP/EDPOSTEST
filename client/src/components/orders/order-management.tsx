@@ -100,8 +100,11 @@ export function OrderManagement() {
   const { data: orderItems, isLoading: orderItemsLoading } = useQuery({
     queryKey: ['/api/order-items', selectedOrder?.id],
     enabled: !!selectedOrder?.id && orderDetailsOpen,
-    staleTime: 30000, // Cache for 30 seconds
-    gcTime: 60000, // Keep in cache for 1 minute
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    gcTime: 20 * 60 * 1000, // Keep in cache for 20 minutes
     queryFn: async () => {
       if (!selectedOrder?.id) return [];
       const response = await apiRequest('GET', `/api/order-items/${selectedOrder.id}`);
