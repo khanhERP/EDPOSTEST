@@ -556,9 +556,9 @@ export function SalesChartReport() {
 
                         return (
                           <>
-                            {paymentMethodsArray.map((method: any) => (
+                            {paymentMethodsArray.map((method: any, index: number) => (
                               <TableHead
-                                key={method}
+                                key={`payment-method-${index}-${method}`}
                                 className="text-center border-r bg-blue-50 min-w-[130px]"
                               >
                                 {getPaymentMethodLabel(method)}
@@ -1121,7 +1121,13 @@ export function SalesChartReport() {
           return false;
         }
 
-        const dateMatch = orderDate >= start && orderDate <= end;
+        // Fix date comparison - ensure we're comparing dates correctly
+        const startOfDay = new Date(start);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(end);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
 
         const employeeMatch =
           selectedEmployee === "all" ||
@@ -1378,9 +1384,9 @@ export function SalesChartReport() {
 
                         return (
                           <>
-                            {paymentMethodsArray.map((method: any) => (
+                            {paymentMethodsArray.map((method: any, index: number) => (
                               <TableHead
-                                key={method}
+                                key={`payment-method-${index}-${method}`}
                                 className="text-center border-r bg-blue-50 min-w-[130px]"
                               >
                                 {getPaymentMethodLabel(method)}
@@ -2291,7 +2297,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2788,7 +2793,13 @@ export function SalesChartReport() {
               return false;
             }
 
-            const dateMatch = orderDate >= empStart && orderDate <= empEnd;
+            // Fix date comparison - ensure we're comparing dates correctly
+            const startOfDay = new Date(empStart);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(empEnd);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
 
             const employeeMatch =
               selectedEmployee === "all" ||
@@ -3024,7 +3035,13 @@ export function SalesChartReport() {
             return false;
           }
 
-          return orderDate >= start && orderDate <= end;
+          // Fix date comparison - ensure we're comparing dates correctly
+          const startOfDay = new Date(start);
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date(end);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          return orderDate >= startOfDay && orderDate <= endOfDay;
         });
 
         console.log("Filtered Orders for Product Report:", {
@@ -3346,7 +3363,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
