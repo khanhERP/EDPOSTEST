@@ -48,28 +48,6 @@ export function OrderManagement() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // CRITICAL: Reset all modal states on component mount to prevent unwanted displays
-  useEffect(() => {
-    console.log("🔄 Order Management: Component mounted - resetting all modal states");
-
-    // Force close any modals that might be open from previous sessions
-    setShowReceiptModal(false);
-    setSelectedReceipt(null);
-    setShowReceiptPreview(false);
-    setPreviewReceipt(null);
-    setShowPaymentMethodModal(false);
-    setShowEInvoiceModal(false);
-    setOrderDetailsOpen(false);
-    setSelectedOrder(null);
-    setOrderForPayment(null);
-    setPaymentMethodsOpen(false);
-    setShowQRPayment(false);
-    setPointsPaymentOpen(false);
-    setMixedPaymentOpen(false);
-
-    console.log("✅ Order Management: All modal states reset on mount");
-  }, []); // Run only once on mount
-
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
     if (shouldOpenReceiptPreview && previewReceipt && orderForPayment) {
@@ -78,59 +56,6 @@ export function OrderManagement() {
       setShouldOpenReceiptPreview(false); // Reset the flag
     }
   }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
-
-  // DEBUG: Monitor modal states to catch unwanted openings
-  useEffect(() => {
-    if (showReceiptModal || selectedReceipt || showReceiptPreview || previewReceipt) {
-      console.log("🔍 Order Management: Modal states changed", {
-        showReceiptModal,
-        hasSelectedReceipt: !!selectedReceipt,
-        selectedReceiptId: selectedReceipt?.id,
-        selectedReceiptTransactionId: selectedReceipt?.transactionId,
-        showReceiptPreview,
-        hasPreviewReceipt: !!previewReceipt,
-        timestamp: new Date().toISOString()
-      });
-
-      // SAFETY CHECK: If receipt modal is supposed to be open but has invalid data, close it
-      if (showReceiptModal && (!selectedReceipt || (!selectedReceipt.id && !selectedReceipt.transactionId))) {
-        console.log("🚨 Order Management: Detected invalid receipt modal state - closing");
-        setShowReceiptModal(false);
-        setSelectedReceipt(null);
-      }
-
-      // SAFETY CHECK: If preview modal is supposed to be open but has invalid data, close it
-      if (showReceiptPreview && (!previewReceipt || (!previewReceipt.items || previewReceipt.items.length === 0))) {
-        console.log("🚨 Order Management: Detected invalid preview modal state - closing");
-        setShowReceiptPreview(false);
-        setPreviewReceipt(null);
-      }
-    }
-  }, [showReceiptModal, selectedReceipt, showReceiptPreview, previewReceipt]);
-
-  // CRITICAL: Prevent unwanted modal display on mount/reload
-  useEffect(() => {
-    console.log("🔍 Order Management: Receipt Modal mount effect - checking states", {
-      showReceiptModal,
-      selectedReceipt,
-      showReceiptPreview,
-      previewReceipt,
-      timestamp: new Date().toISOString()
-    });
-
-    // If any receipt modal is supposed to be open but has no valid data, close it immediately
-    if (showReceiptModal && (!selectedReceipt || (!selectedReceipt.id && !selectedReceipt.transactionId))) {
-      console.log("🚨 Order Management: Detected invalid receipt modal state on mount - closing");
-      setShowReceiptModal(false);
-      setSelectedReceipt(null);
-    }
-
-    if (showReceiptPreview && (!previewReceipt || !previewReceipt.items || previewReceipt.items.length === 0)) {
-      console.log("🚨 Order Management: Detected invalid preview modal state on mount - closing");
-      setShowReceiptPreview(false);
-      setPreviewReceipt(null);
-    }
-  }, []); // Run only on mount
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
@@ -682,7 +607,7 @@ export function OrderManagement() {
 
     // For active orders only (pending, confirmed, preparing, ready, served), use calculation priority
     console.log(`💰 ACTIVE Order ${order.orderNumber} (${order.status}) - using calculation priority`);
-
+    
     // Priority 1: API calculated total (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
@@ -1376,8 +1301,8 @@ export function OrderManagement() {
       console.log(`🔄 Preloading totals for ${preloadOrders.length} orders around current page ${currentPage}`);
 
       // Batch preload in background with low priority
-      const preloadBatch = preloadOrders.filter(order =>
-        !calculatedTotals.has(order.id) &&
+      const preloadBatch = preloadOrders.filter(order => 
+        !calculatedTotals.has(order.id) && 
         order.status !== 'cancelled' &&
         !currentOrders.some(currentOrder => currentOrder.id === order.id) // Don't duplicate current page
       );
@@ -1463,7 +1388,7 @@ export function OrderManagement() {
       // Calculate totals for orders that don't have API calculated totals
       currentOrders.forEach(async (order) => {
         const apiCalculatedTotal = (order as any).calculatedTotal;
-
+        
         // Skip if we already have a valid API calculated total or cached total
         if ((apiCalculatedTotal && Number(apiCalculatedTotal) > 0) || calculatedTotals.has(order.id)) {
           return;
@@ -1477,7 +1402,7 @@ export function OrderManagement() {
         }
 
         console.log(`🧮 Calculating total for order ${order.orderNumber} (ID: ${order.id})`);
-
+        
         try {
           // Fetch order items for calculation
           const response = await apiRequest('GET', `/api/order-items/${order.id}`);
@@ -1513,7 +1438,7 @@ export function OrderManagement() {
           });
 
           const calculatedTotal = Math.floor(subtotal + taxAmount);
-
+          
           console.log(`💰 Calculated total for order ${order.orderNumber}:`, {
             subtotal,
             taxAmount,
@@ -1796,7 +1721,7 @@ export function OrderManagement() {
                           if (order.status === 'paid' || order.status === 'cancelled') {
                             const storedTotal = Math.floor(Number(order.total || 0));
                             console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - using STORED total ONLY: ${storedTotal}`);
-
+                            
                             return (
                               <span className="text-green-600">
                                 {formatCurrency(storedTotal)}
@@ -1808,7 +1733,7 @@ export function OrderManagement() {
                           const apiCalculatedTotal = (order as any).calculatedTotal;
                           const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
                           const hasCachedTotal = calculatedTotals.has(order.id);
-
+                          
                           // Priority 1: Use API calculated total if available
                           if (hasApiTotal) {
                             const displayTotal = Math.floor(Number(apiCalculatedTotal));
@@ -1819,7 +1744,7 @@ export function OrderManagement() {
                               </span>
                             );
                           }
-
+                          
                           // Priority 2: Use cached calculated total
                           if (hasCachedTotal) {
                             const cachedTotal = calculatedTotals.get(order.id)!;
@@ -2222,7 +2147,7 @@ export function OrderManagement() {
                             unitPrice: unitPrice,
                             price: unitPrice,
                             total: unitPrice * quantity,
-                            sku: item.sku || `SP${item.productId}`,
+                            sku: item.productSku || product?.sku || `SP${item.productId}`,
                             taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
                             afterTaxPrice: product?.afterTaxPrice || null
                           };
@@ -2959,7 +2884,7 @@ export function OrderManagement() {
 
       {/* Receipt Modal - Final receipt after payment */}
       <ReceiptModal
-        isOpen={showReceiptModal && !!selectedReceipt && (selectedReceipt.id || selectedReceipt.transactionId)}
+        isOpen={showReceiptModal}
         onClose={async () => {
           console.log('🔴 Order Management: Closing final receipt modal safely');
 
@@ -3023,30 +2948,17 @@ export function OrderManagement() {
           }
         }}
         receipt={selectedReceipt}
-        cartItems={(() => {
-          // STRICT validation: Only process items if receipt has valid ID/transactionId
-          if (!selectedReceipt || (!selectedReceipt.id && !selectedReceipt.transactionId)) {
-            console.log("❌ Order Management: No valid receipt for cart items mapping");
-            return [];
-          }
-
-          if (!selectedReceipt.items || !Array.isArray(selectedReceipt.items) || selectedReceipt.items.length === 0) {
-            console.log("❌ Order Management: No valid items in receipt");
-            return [];
-          }
-
-          return selectedReceipt.items.map((item: any) => ({
-            id: item.productId || item.id,
-            name: item.productName || item.name,
-            price: parseFloat(item.price || item.unitPrice || '0'),
-            quantity: item.quantity,
-            sku: item.sku || `SP${item.productId}`,
-            taxRate: (() => {
-              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })()
-          }));
-        })()}
+        cartItems={selectedReceipt?.items?.map((item: any) => ({
+          id: item.productId || item.id,
+          name: item.productName || item.name,
+          price: parseFloat(item.price || item.unitPrice || '0'),
+          quantity: item.quantity,
+          sku: item.sku || `SP${item.productId}`,
+          taxRate: (() => {
+            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+          })()
+        })) || []}
         autoClose={true}
       />
     </div>
