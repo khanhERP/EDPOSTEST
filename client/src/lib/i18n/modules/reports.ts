@@ -372,21 +372,28 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     costAnalysis: "Phân tích chi phí",
     stockMovement: "Di chuyển tồn kho",
     menuAnalysisDescription: "Phân tích hiệu suất menu và sản phẩm bán chạy",
-    // Missing keys for menu report
-    menuItems: "Món ăn",
+    
+    // Menu report specific translations
+    menuItems: "Sản phẩm",
     itemsSold: "Đã bán",
     revenueShare: "Phần doanh thu",
     salesShare: "Phần bán hàng",
-    popularMenuByQuantity: "Món phổ biến theo số lượng",
-    popularMenuByQuantityDesc: "Top món được bán nhiều nhất theo số lượng",
-    highRevenueMenu: "Món doanh thu cao",
-    highRevenueMenuDesc: "Top món có doanh thu cao nhất",
+    popularMenuByQuantity: "Sản phẩm bán chạy theo số lượng",
+    popularMenuByQuantityDesc: "Top sản phẩm được bán nhiều nhất theo số lượng",
+    highRevenueMenu: "Sản phẩm doanh thu cao",
+    highRevenueMenuDesc: "Top sản phẩm có doanh thu cao nhất",
     rank: "Xếp hạng",
-    menuName: "Tên món",
+    menuName: "Tên sản phẩm",
     salesCount: "Số lượng bán",
     noCategoryData: "Không có dữ liệu danh mục",
     noSalesData: "Không có dữ liệu bán hàng",
     noRevenueData: "Không có dữ liệu doanh thu",
+    
+    // Additional menu report keys
+    menuItemAnalysis: "Phân tích sản phẩm",
+    totalSales: "Tổng bán",
+    averagePrice: "Giá trung bình",
+    productCount: "Số sản phẩm",
     productType: "Loại sản phẩm",
     product: "Sản phẩm",
     // Table analysis

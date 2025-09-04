@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -98,7 +97,7 @@ function MenuReport() {
       try {
         const searchParam = productSearch ? encodeURIComponent(productSearch) : "";
         const response = await apiRequest(
-          "GET", 
+          "GET",
           `/api/products/${selectedCategory}/${productType}/${searchParam}`
         );
         if (!response.ok) throw new Error("Failed to fetch products");
@@ -122,16 +121,16 @@ function MenuReport() {
           endDate,
           ...(selectedCategory !== "all" && { categoryId: selectedCategory })
         });
-        
+
         const response = await apiRequest("GET", `/api/menu-analysis?${params.toString()}`);
         if (!response.ok) {
           console.error("Menu analysis API error:", response.status, response.statusText);
           throw new Error(`Failed to fetch menu analysis: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log("Menu analysis data received:", data);
-        
+
         // Ensure data structure is correct
         return {
           totalRevenue: Number(data.totalRevenue || 0),
@@ -162,13 +161,13 @@ function MenuReport() {
   const filteredProducts = products.filter((product: Product) => {
     if (!product || !product.name) return false;
 
-    const searchMatch = !productSearch || 
+    const searchMatch = !productSearch ||
       product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
       (product.sku && product.sku.toLowerCase().includes(productSearch.toLowerCase()));
-      
-    const categoryMatch = selectedCategory === "all" || 
+
+    const categoryMatch = selectedCategory === "all" ||
       product.categoryId === parseInt(selectedCategory);
-      
+
     const typeMatch = productType === "all" ||
       (productType === "combo" && product.productType === 3) ||
       (productType === "product" && product.productType === 1) ||
@@ -299,7 +298,7 @@ function MenuReport() {
               </div>
             </div>
           </div>
-          
+
         </CardContent>
       </Card>
 
@@ -442,7 +441,7 @@ function MenuReport() {
                       <div>
                         <p className="font-medium">{product.productName || `Sản phẩm ${product.productId}`}</p>
                         <p className="text-sm text-gray-500">
-                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} {t("common.sold") || "đã bán"}
+                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
                         </p>
                       </div>
                     </div>
@@ -473,7 +472,7 @@ function MenuReport() {
                       <div>
                         <p className="font-medium">{product.productName || `Sản phẩm ${product.productId}`}</p>
                         <p className="text-sm text-gray-500">
-                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} {t("common.sold") || "đã bán"}
+                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
                         </p>
                       </div>
                     </div>
