@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart3, TrendingUp, Package, DollarSign, Search, RefreshCw } from "lucide-react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
 import { useTranslation } from "@/lib/i18n";
 
 interface Product {
@@ -425,7 +425,7 @@ function MenuReport() {
           ) : (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {/* Revenue Chart */}
+                {/* Revenue Pie Chart */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600" />
@@ -435,38 +435,26 @@ function MenuReport() {
                     <div className="absolute inset-0 bg-white/50 rounded-lg"></div>
                     <div className="relative z-10 h-full p-4">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={menuAnalysis.categoryStats.map((cat, index) => ({
-                            name: cat.categoryName?.length > 12 
-                              ? cat.categoryName.substring(0, 12) + '...' 
-                              : cat.categoryName || `Danh mục ${cat.categoryId}`,
-                            revenue: Number(cat.totalRevenue || 0),
-                            fullName: cat.categoryName || `Danh mục ${cat.categoryId}`
-                          }))}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                        >
-                          <XAxis 
-                            dataKey="name" 
-                            angle={-45}
-                            textAnchor="end"
-                            height={80}
-                            fontSize={11}
-                            tick={{ fill: '#374151' }}
-                          />
-                          <YAxis 
-                            tickFormatter={(value) => formatCurrency(value)}
-                            fontSize={11}
-                            tick={{ fill: '#374151' }}
-                          />
+                        <PieChart>
+                          <Pie
+                            data={menuAnalysis.categoryStats.map((cat, index) => ({
+                              name: cat.categoryName || `Danh mục ${cat.categoryId}`,
+                              value: Number(cat.totalRevenue || 0),
+                              fill: `hsl(${(index * 137.508) % 360}, 70%, 60%)`
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={80}
+                            paddingAngle={2}
+                            dataKey="value"
+                          >
+                            {menuAnalysis.categoryStats.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={`hsl(${(index * 137.508) % 360}, 70%, 60%)`} />
+                            ))}
+                          </Pie>
                           <Tooltip 
-                            formatter={(value, name, props) => [
-                              formatCurrency(Number(value)) + ' ₫', 
-                              'Doanh thu'
-                            ]}
-                            labelFormatter={(label, payload) => {
-                              const item = payload?.[0]?.payload;
-                              return item?.fullName || label;
-                            }}
+                            formatter={(value) => [formatCurrency(Number(value)) + ' ₫', 'Doanh thu']}
                             contentStyle={{ 
                               backgroundColor: 'white', 
                               border: '1px solid #e5e7eb',
@@ -474,18 +462,18 @@ function MenuReport() {
                               fontSize: '12px'
                             }}
                           />
-                          <Bar 
-                            dataKey="revenue" 
-                            radius={[6, 6, 0, 0]}
-                            fill="#10b981"
+                          <Legend 
+                            verticalAlign="bottom" 
+                            height={36}
+                            wrapperStyle={{ fontSize: '12px' }}
                           />
-                        </BarChart>
+                        </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
                 </div>
 
-                {/* Quantity Chart */}
+                {/* Quantity Pie Chart */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <Package className="w-4 h-4 text-blue-600" />
@@ -495,38 +483,26 @@ function MenuReport() {
                     <div className="absolute inset-0 bg-white/50 rounded-lg"></div>
                     <div className="relative z-10 h-full p-4">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={menuAnalysis.categoryStats.map((cat, index) => ({
-                            name: cat.categoryName?.length > 12 
-                              ? cat.categoryName.substring(0, 12) + '...' 
-                              : cat.categoryName || `Danh mục ${cat.categoryId}`,
-                            quantity: Number(cat.totalQuantity || 0),
-                            fullName: cat.categoryName || `Danh mục ${cat.categoryId}`
-                          }))}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                        >
-                          <XAxis 
-                            dataKey="name" 
-                            angle={-45}
-                            textAnchor="end"
-                            height={80}
-                            fontSize={11}
-                            tick={{ fill: '#374151' }}
-                          />
-                          <YAxis 
-                            tickFormatter={(value) => value.toLocaleString('vi-VN')}
-                            fontSize={11}
-                            tick={{ fill: '#374151' }}
-                          />
+                        <PieChart>
+                          <Pie
+                            data={menuAnalysis.categoryStats.map((cat, index) => ({
+                              name: cat.categoryName || `Danh mục ${cat.categoryId}`,
+                              value: Number(cat.totalQuantity || 0),
+                              fill: `hsl(${200 + (index * 137.508) % 160}, 70%, 60%)`
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={80}
+                            paddingAngle={2}
+                            dataKey="value"
+                          >
+                            {menuAnalysis.categoryStats.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={`hsl(${200 + (index * 137.508) % 160}, 70%, 60%)`} />
+                            ))}
+                          </Pie>
                           <Tooltip 
-                            formatter={(value, name, props) => [
-                              Number(value).toLocaleString('vi-VN'), 
-                              'Số lượng'
-                            ]}
-                            labelFormatter={(label, payload) => {
-                              const item = payload?.[0]?.payload;
-                              return item?.fullName || label;
-                            }}
+                            formatter={(value) => [Number(value).toLocaleString('vi-VN'), 'Số lượng']}
                             contentStyle={{ 
                               backgroundColor: 'white', 
                               border: '1px solid #e5e7eb',
@@ -534,12 +510,12 @@ function MenuReport() {
                               fontSize: '12px'
                             }}
                           />
-                          <Bar 
-                            dataKey="quantity" 
-                            radius={[6, 6, 0, 0]}
-                            fill="#3b82f6"
+                          <Legend 
+                            verticalAlign="bottom" 
+                            height={36}
+                            wrapperStyle={{ fontSize: '12px' }}
                           />
-                        </BarChart>
+                        </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
