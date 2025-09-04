@@ -93,11 +93,32 @@ function extractSubdomain(host: string): string | null {
 
 export async function getTenantDatabase(req: TenantRequest) {
   if (!req.tenant) {
+    console.error('❌ Tenant not found in request');
     throw new Error('Tenant not found in request');
   }
 
   if (!req.tenant.db) {
-    req.tenant.db = await tenantManager.getDatabaseConnection(req.tenant.subdomain);
+    console.log(`🔍 Getting database connection for tenant: ${req.tenant.subdomain}`);
+    try {
+      req.tenant.db = await tenantManager.getDatabaseConnection(req.tenant.subdomain);
+      
+      // Validate the database connection
+      if (!req.tenant.db) {
+        console.error('❌ Database connection is null for tenant:', req.tenant.subdomain);
+        throw new Error('Failed to establish database connection');
+      }
+      
+      // Check if database has required methods
+      if (typeof req.tenant.db.select !== 'function') {
+        console.error('❌ Database connection is missing select method for tenant:', req.tenant.subdomain);
+        throw new Error('Invalid database connection - missing select method');
+      }
+      
+      console.log('✅ Tenant database connection validated successfully');
+    } catch (error) {
+      console.error('❌ Error getting tenant database connection:', error);
+      throw error;
+    }
   }
 
   return req.tenant.db;

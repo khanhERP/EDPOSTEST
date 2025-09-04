@@ -86,13 +86,23 @@ export async function registerRoutes(app: Express): Promise < Server > {
   }
 
   // Categories
-  app.get("/api/categories", async (req: TenantRequest, res) => {
+  app.get("/api/categories", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      const tenantDb = await getTenantDatabase(req);
+      console.log('🔍 GET /api/categories - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for categories');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for categories:', dbError);
+        tenantDb = null;
+      }
+
       const categories = await storage.getCategories(tenantDb);
+      console.log(`✅ Successfully fetched ${categories.length} categories`);
       res.json(categories);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("❌ Error fetching categories:", error);
       res.status(500).json({ error: "Failed to fetch categories" });
     }
   });
@@ -176,55 +186,24 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Products
-  app.get("/api/products", async (req: TenantRequest, res) => {
+  app.get("/api/products", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      const { category, search, includeInactive } = req.query;
-      let products;
-
-      console.log("=== PRODUCTS API DEBUG ===");
-      console.log("Query params:", { category, search, includeInactive });
-
-      const shouldIncludeInactive = includeInactive === "true";
-      const tenantDb = await getTenantDatabase(req);
-
-      if (search) {
-        console.log("Searching products with term:", search);
-        products = await storage.searchProducts(
-          search as string,
-          shouldIncludeInactive,
-          tenantDb,
-        );
-      } else if (category && category !== "all") {
-        console.log("Getting products by category:", category);
-        products = await storage.getProductsByCategory(
-          parseInt(category as string),
-          shouldIncludeInactive,
-          tenantDb,
-        );
-      } else {
-        console.log("Getting all products, includeInactive:", shouldIncludeInactive);
-        products = await storage.getAllProducts(shouldIncludeInactive, tenantDb);
+      console.log('🔍 GET /api/products - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for products');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for products:', dbError);
+        tenantDb = null;
       }
 
-      console.log("Products found:", products.length);
-      console.log("First few products:", products.slice(0, 3));
-
-      // Debug afterTaxPrice for Bánh test
-      const banhTest = products.find(p => p.name === 'Bánh test');
-      if (banhTest) {
-        console.log("=== BÁNH TEST DEBUG ===");
-        console.log("Product ID:", banhTest.id);
-        console.log("Name:", banhTest.name);
-        console.log("Price:", banhTest.price);
-        console.log("Tax Rate:", banhTest.taxRate);
-        console.log("After Tax Price:", banhTest.afterTaxPrice);
-        console.log("After Tax Price Type:", typeof banhTest.afterTaxPrice);
-      }
-
+      const products = await storage.getProducts(tenantDb);
+      console.log(`✅ Successfully fetched ${products.length} products`);
       res.json(products);
     } catch (error) {
-      console.error('Products API error:', error);
-      res.status(500).json({ message: "Failed to fetch products" });
+      console.error("❌ Error fetching products:", error);
+      res.status(500).json({ error: "Failed to fetch products" });
     }
   });
 
@@ -616,7 +595,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const limit = parseInt(req.query.limit as string) || 20;
 
       const tenantDb = await getTenantDatabase(req);
-      
+
       // Use direct database query with proper ordering
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -745,12 +724,23 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Employees
-  app.get("/api/employees", async (req: TenantRequest, res) => {
+  app.get("/api/employees", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      const tenantDb = await getTenantDatabase(req);
+      console.log('🔍 GET /api/employees - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for employees');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for employees:', dbError);
+        tenantDb = null;
+      }
+
       const employees = await storage.getEmployees(tenantDb);
+      console.log(`✅ Successfully fetched ${employees.length} employees`);
       res.json(employees);
     } catch (error) {
+      console.error("❌ Error fetching employees:", error);
       res.status(500).json({ message: "Failed to fetch employees" });
     }
   });
@@ -1005,12 +995,23 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Tables
-  app.get("/api/tables", async (req: TenantRequest, res) => {
+  app.get("/api/tables", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      const tenantDb = await getTenantDatabase(req);
+      console.log('🔍 GET /api/tables - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for tables');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for tables:', dbError);
+        tenantDb = null;
+      }
+
       const tables = await storage.getTables(tenantDb);
+      console.log(`✅ Successfully fetched ${tables.length} tables`);
       res.json(tables);
     } catch (error) {
+      console.error("❌ Error fetching tables:", error);
       res.status(500).json({ message: "Failed to fetch tables" });
     }
   });
@@ -1093,18 +1094,26 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Orders
-  app.get("/api/orders", async (req: TenantRequest, res) => {
+  app.get("/api/orders", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      const { tableId, status } = req.query;
-      const tenantDb = await getTenantDatabase(req);
-      const orders = await storage.getOrders(
-        tableId ? parseInt(tableId as string) : undefined,
-        status as string,
-        tenantDb,
-      );
+      console.log('🔍 GET /api/orders - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained successfully');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database:', dbError);
+        // Fall back to default storage without tenant DB
+        console.log('🔄 Falling back to default database connection');
+        tenantDb = null;
+      }
+
+      const orders = await storage.getOrders(undefined, undefined, tenantDb);
+      console.log(`✅ Successfully fetched ${orders.length} orders`);
       res.json(orders);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch orders" });
+      console.error("❌ Error fetching orders:", error);
+      res.status(500).json({ error: "Failed to fetch orders" });
     }
   });
 
@@ -1230,75 +1239,94 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   app.put("/api/orders/:id", async (req: TenantRequest, res) => {
-    console.log("=== PUT ORDER API CALLED ===");
-    const orderId = req.params.id;
-    console.log("Raw Order ID:", orderId);
-    console.log("Update data:", JSON.stringify(req.body, null, 2));
-
     try {
-      const orderIdNum = parseInt(orderId);
-      if (isNaN(orderIdNum)) {
-        return res.status(400).json({ error: "Invalid order ID" });
+      const { id: rawId } = req.params;
+      const orderData = req.body; // Use raw body to preserve all fields
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log(`=== PUT ORDER API CALLED ===`);
+      console.log(`Raw Order ID: ${rawId}`);
+      console.log(`Update data:`, JSON.stringify(orderData, null, 2));
+
+      // Handle temporary IDs - allow flow to continue
+      const isTemporaryId = rawId.startsWith('temp-');
+      if (isTemporaryId) {
+        console.log(`🟡 Temporary order ID detected: ${rawId} - returning success for flow continuation`);
+
+        // Return a mock success response to allow E-Invoice flow to continue
+        const mockOrder = {
+          id: rawId,
+          orderNumber: `TEMP-${Date.now()}`,
+          tableId: null,
+          customerName: orderData.customerName || "Khách hàng",
+          status: orderData.status || 'paid',
+          paymentMethod: orderData.paymentMethod || 'cash',
+          einvoiceStatus: orderData.einvoiceStatus || 0,
+          paidAt: orderData.paidAt || new Date(),
+          updatedAt: new Date(),
+          updated: true,
+          updateTimestamp: new Date().toISOString()
+        };
+
+        console.log(`✅ Mock order update response for temporary ID:`, mockOrder);
+        return res.json(mockOrder);
       }
 
-      // Get current order to check status
-      const currentOrder = await req.db
+      const id = parseInt(rawId);
+      if (isNaN(id)) {
+        console.error(`❌ Invalid order ID: ${rawId}`);
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+
+      // Check if order exists first
+      const [existingOrder] = await db
         .select()
         .from(orders)
-        .where(eq(orders.id, orderIdNum))
-        .limit(1);
+        .where(eq(orders.id, id));
 
-      if (currentOrder.length === 0) {
-        return res.status(404).json({ error: "Order not found" });
+      if (!existingOrder) {
+        console.error(`❌ Order not found: ${id}`);
+        return res.status(404).json({ message: "Order not found" });
       }
 
-      console.log("📋 Current order state:", {
-        id: currentOrder[0].id,
-        orderNumber: currentOrder[0].orderNumber,
-        tableId: currentOrder[0].tableId,
-        currentStatus: currentOrder[0].status,
-        paymentMethod: currentOrder[0].paymentMethod,
+      console.log(`📋 Current order state:`, {
+        id: existingOrder.id,
+        orderNumber: existingOrder.orderNumber,
+        tableId: existingOrder.tableId,
+        currentStatus: existingOrder.status,
+        paymentMethod: existingOrder.paymentMethod
       });
 
-      console.log("=== UPDATING ORDER ===");
-      console.log("Order ID:", orderIdNum);
-      console.log("Update data:", req.body);
+      const order = await storage.updateOrder(id, orderData, tenantDb);
 
-      // Map einvoiceStatus field if present
-      const updateData = { ...req.body };
-      if (updateData.einvoiceStatus !== undefined) {
-        console.log("Mapped einvoiceStatus field:", updateData.einvoiceStatus);
+      if (!order) {
+        console.error(`❌ Failed to update order ${id}`);
+        return res.status(500).json({ message: "Failed to update order" });
       }
 
-      // Convert paidAt string to Date object if present
-      if (updateData.paidAt && typeof updateData.paidAt === 'string') {
-        updateData.paidAt = new Date(updateData.paidAt);
-        console.log("Converted paidAt to Date object:", updateData.paidAt);
-      }
+      console.log(`✅ Order update API completed successfully:`, {
+        orderId: order.id,
+        status: order.status,
+        paymentMethod: order.paymentMethod,
+        paidAt: order.paidAt,
+        einvoiceStatus: order.einvoiceStatus
+      });
 
-      // Add updatedAt timestamp
-      updateData.updatedAt = new Date();
-
-      console.log(
-        "Final mapped data to update:",
-        JSON.stringify(updateData, (key, value) => 
-          value instanceof Date ? value.toISOString() : value, 2),
-      );
-
-      const result = await req.db
-        .update(orders)
-        .set(updateData)
-        .where(eq(orders.id, orderIdNum))
-        .returning();
-
-      console.log("✅ PUT Order updated successfully:", result[0]);
-
-      res.json(result[0]);
+      res.json({
+        ...order,
+        updated: true,
+        updateTimestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error("❌ PUT Order API error:", error);
+      if (error instanceof z.ZodError) {
+        return res
+          .status(400)
+          .json({ message: "Invalid order data", errors: error.errors });
+      }
       res.status(500).json({
         message: "Failed to update order",
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });
@@ -1819,10 +1847,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Suppliers
-  app.get("/api/suppliers", async (req: TenantRequest, res) => {
+  app.get("/api/suppliers", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
+      console.log('🔍 GET /api/suppliers - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for suppliers');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for suppliers:', dbError);
+        tenantDb = null;
+      }
+
       const { status, search } = req.query;
-      const tenantDb = await getTenantDatabase(req);
       let suppliers;
 
       if (search) {
@@ -1832,9 +1869,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } else {
         suppliers = await storage.getSuppliers(tenantDb);
       }
-
+      console.log(`✅ Successfully fetched ${suppliers.length} suppliers`);
       res.json(suppliers);
     } catch (error) {
+      console.error("❌ Error fetching suppliers:", error);
       res.status(500).json({ message: "Failed to fetch suppliers" });
     }
   });
@@ -1921,12 +1959,23 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Customer management routes - Added Here
-  app.get("/api/customers", async (req: TenantRequest, res) => {
+  app.get("/api/customers", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      const tenantDb = await getTenantDatabase(req);
+      console.log('🔍 GET /api/customers - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for customers');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for customers:', dbError);
+        tenantDb = null;
+      }
+
       const customers = await storage.getCustomers(tenantDb);
+      console.log(`✅ Successfully fetched ${customers.length} customers`);
       res.json(customers);
     } catch (error) {
+      console.error("❌ Error fetching customers:", error);
       res.status(500).json({ message: "Failed to fetch customers" });
     }
   });
@@ -2347,13 +2396,23 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Invoice templates management
-  app.get("/api/invoice-templates", async (req: TenantRequest, res) => {
+  app.get("/api/invoice-templates", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      const tenantDb = await getTenantDatabase(req);
+      console.log('🔍 GET /api/invoice-templates - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for invoice templates');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for invoice templates:', dbError);
+        tenantDb = null;
+      }
+
       const templates = await storage.getInvoiceTemplates(tenantDb);
+      console.log(`✅ Successfully fetched ${templates.length} invoice templates`);
       res.json(templates);
     } catch (error) {
-      console.error("Error fetching invoice templates:", error);
+      console.error("❌ Error fetching invoice templates:", error);
       res.status(500).json({ error: "Failed to fetch invoice templates" });
     }
   });
@@ -2417,12 +2476,23 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // E-invoice connections management
-  app.get("/api/einvoice-connections", async (req: TenantRequest, res) => {
+  app.get("/api/einvoice-connections", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      const tenantDb = await getTenantDatabase(req);
+      console.log('🔍 GET /api/einvoice-connections - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for e-invoice connections');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for e-invoice connections:', dbError);
+        tenantDb = null;
+      }
+
       const connections = await storage.getEInvoiceConnections(tenantDb);
+      console.log(`✅ Successfully fetched ${connections.length} e-invoice connections`);
       res.json(connections);
     } catch (error) {
+      console.error("❌ Error fetching e-invoice connections:", error);
       res
         .status(500)
         .json({ message: "Failed to fetch e-invoice connections" });
@@ -2865,13 +2935,23 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Employee routes
-  app.get("/api/employees", async (req: TenantRequest, res) => {
+  app.get("/api/employees", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      const tenantDb = await getTenantDatabase(req);
+      console.log('🔍 GET /api/employees - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for employees');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for employees:', dbError);
+        tenantDb = null;
+      }
+
       const employees = await storage.getEmployees(tenantDb);
+      console.log(`✅ Successfully fetched ${employees.length} employees`);
       res.json(employees);
     } catch (error) {
-      console.error("Error fetching employees:", error);
+      console.error("❌ Error fetching employees:", error);
       res.status(500).json({ message: "Failed to fetch employees" });
     }
   });
@@ -2947,9 +3027,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
           startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee
         });
 
+        // Get transactions data
         const transactions = await storage.getTransactions(tenantDb);
 
-        const filteredTransactions = transactions.filter((transaction) => {
+        // Filter transactions based on parameters
+        const filteredTransactions = transactions.filter((transaction: any) => {
           const transactionDate = new Date(transaction.createdAt);
           const start = new Date(startDate);
           const end = new Date(endDate);
@@ -2957,31 +3039,51 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
           const dateMatch = transactionDate >= start && transactionDate <= end;
 
-          // Enhanced filtering logic based on actual transaction data
-          const methodMatch =
-            salesMethod === "all" ||
-            (salesMethod === "no_delivery" &&
-              (!transaction.deliveryMethod || transaction.deliveryMethod === "pickup")) ||
-            (salesMethod === "delivery" &&
-              transaction.deliveryMethod === "delivery");
+          // Enhanced sales method filtering
+          let salesMethodMatch = true;
+          if (salesMethod !== 'all') {
+            const paymentMethod = transaction.paymentMethod || 'cash';
+            switch (salesMethod) {
+              case 'no_delivery':
+                salesMethodMatch = !transaction.deliveryMethod || transaction.deliveryMethod === 'pickup' || transaction.deliveryMethod === 'takeaway';
+                break;
+              case 'delivery':
+                salesMethodMatch = transaction.deliveryMethod === 'delivery';
+                break;
+              default:
+                salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
+            }
+          }
 
-          const channelMatch =
-            salesChannel === "all" ||
-            (salesChannel === "direct" &&
-              (!transaction.salesChannel || transaction.salesChannel === "direct" || transaction.salesChannel === "pos")) ||
-            (salesChannel === "other" &&
-              transaction.salesChannel && transaction.salesChannel !== "direct" && transaction.salesChannel !== "pos");
+          // Enhanced sales channel filtering
+          let salesChannelMatch = true;
+          if (salesChannel !== 'all') {
+            const channel = transaction.salesChannel || 'direct';
+            switch (salesChannel) {
+              case 'direct':
+                salesChannelMatch = !transaction.salesChannel || transaction.salesChannel === 'direct' || transaction.salesChannel === 'pos';
+                break;
+              case 'other':
+                salesChannelMatch = transaction.salesChannel && transaction.salesChannel !== 'direct' && transaction.salesChannel !== 'pos';
+                break;
+              default:
+                salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
+            }
+          }
 
-          // Employee filter
-          const employeeMatch =
-            selectedEmployee === "all" ||
-            transaction.cashierName === selectedEmployee ||
-            transaction.employeeId?.toString() === selectedEmployee ||
-            (transaction.cashierName && transaction.cashierName.includes(selectedEmployee));
+          // Enhanced employee filtering
+          let employeeMatch = true;
+          if (selectedEmployee !== 'all') {
+            employeeMatch =
+              transaction.cashierName === selectedEmployee ||
+              transaction.employeeId?.toString() === selectedEmployee ||
+              (transaction.cashierName && transaction.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
+          }
 
-          return dateMatch && methodMatch && salesChannelMatch && employeeMatch;
+          return dateMatch && salesMethodMatch && salesChannelMatch && employeeMatch;
         });
 
+        console.log(`Found ${filteredTransactions.length} filtered transactions out of ${transactions.length} total`);
         res.json(filteredTransactions);
       } catch (error) {
         console.error("Error in transactions API:", error);
@@ -3001,38 +3103,65 @@ export async function registerRoutes(app: Express): Promise < Server > {
           startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType
         });
 
+        // Get orders data
         const orders = await storage.getOrders(undefined, undefined, tenantDb);
 
-        const filteredOrders = orders.filter((order) => {
-          const orderDate = new Date(order.orderedAt);
+        // Filter orders based on parameters with enhanced logic
+        const filteredOrders = orders.filter((order: any) => {
+          const orderDate = new Date(order.orderedAt || order.createdAt);
           const start = new Date(startDate);
           const end = new Date(endDate);
           end.setHours(23, 59, 59, 999);
 
           const dateMatch = orderDate >= start && orderDate <= end;
-          const statusMatch = order.status === "paid";
 
-          const employeeMatch =
-            selectedEmployee === "all" ||
-            order.employeeId?.toString() === selectedEmployee;
+          // Enhanced employee filtering
+          let employeeMatch = true;
+          if (selectedEmployee !== 'all') {
+            employeeMatch =
+              order.employeeId?.toString() === selectedEmployee ||
+              (order.employeeName && order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase()));
+          }
 
-          const channelMatch =
-            salesChannel === "all" ||
-            (salesChannel === "direct" &&
-              (!order.salesChannel || order.salesChannel === "direct")) ||
-            (salesChannel === "other" &&
-              order.salesChannel && order.salesChannel !== "direct");
+          // Enhanced sales channel filtering
+          let salesChannelMatch = true;
+          if (salesChannel !== 'all') {
+            const channel = order.salesChannel || 'direct';
+            switch (salesChannel) {
+              case 'direct':
+                salesChannelMatch = !order.salesChannel || order.salesChannel === 'direct' || order.salesChannel === 'pos';
+                break;
+              case 'other':
+                salesChannelMatch = order.salesChannel && order.salesChannel !== 'direct' && order.salesChannel !== 'pos';
+                break;
+              default:
+                salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
+            }
+          }
 
-          const methodMatch =
-            salesMethod === "all" ||
-            (salesMethod === "no_delivery" &&
-              (!order.deliveryMethod || order.deliveryMethod === "pickup")) ||
-            (salesMethod === "delivery" &&
-              order.deliveryMethod === "delivery");
+          // Enhanced sales method filtering
+          let salesMethodMatch = true;
+          if (salesMethod !== 'all') {
+            switch (salesMethod) {
+              case 'no_delivery':
+                salesMethodMatch = !order.deliveryMethod || order.deliveryMethod === 'pickup' || order.deliveryMethod === 'takeaway';
+                break;
+              case 'delivery':
+                salesMethodMatch = order.deliveryMethod === 'delivery';
+                break;
+              default:
+                const paymentMethod = order.paymentMethod || 'cash';
+                salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
+            }
+          }
 
-          return dateMatch && statusMatch && employeeMatch && channelMatch && methodMatch;
+          // Only include paid orders for analysis
+          const statusMatch = order.status === 'paid';
+
+          return dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch && statusMatch;
         });
 
+        console.log(`Found ${filteredOrders.length} filtered orders out of ${orders.length} total`);
         res.json(filteredOrders);
       } catch (error) {
         console.error("Error in orders API:", error);
@@ -3040,1725 +3169,6 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
     },
   );
-
-  // Sales channel sales data
-  // Sales Channel Sales API
-  app.get(
-    "/api/sales-channel-sales/:startDate/:endDate/:seller/:channel",
-    async (req: TenantRequest, res) => {
-      try {
-        const { startDate, endDate, seller, channel } = req.params;
-        const tenantDb = await getTenantDatabase(req);
-
-        // Use storage instead of direct db queries
-        const orders = await storage.getOrders(undefined, undefined, tenantDb);
-        const filteredOrders = orders.filter((order) => {
-          const orderDate = new Date(order.orderedAt);
-          const start = new Date(startDate);
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-
-          const dateMatch = orderDate >= start && orderDate <= end;
-          const statusMatch = order.status === "paid";
-          const sellerMatch =
-            seller === "all" || order.employeeId?.toString() === seller;
-          const channelMatch =
-            channel === "all" || order.salesChannel === channel;
-
-          return dateMatch && statusMatch && sellerMatch && channelMatch;
-        });
-
-        const salesData = [{
-          salesChannelName: "Direct Sales",
-          revenue: filteredOrders.reduce(
-            (sum, order) => sum + Number(order.total),
-            0,
-          ),
-          returnValue: 0,
-          netRevenue: filteredOrders.reduce(
-            (sum, order) => sum + Number(order.total),
-            0,
-          ),
-        }, ];
-
-        res.json(salesData);
-      } catch (error) {
-        console.error("Error fetching sales channel sales data:", error);
-        res
-          .status(500)
-          .json({ error: "Failed to fetch sales channel sales data" });
-      }
-    },
-  );
-
-  // Sales Channel Profit API
-  app.get(
-    "/api/sales-channel-profit/:startDate/:endDate/:seller/:channel",
-    async (req: TenantRequest, res) => {
-      try {
-        const { startDate, endDate, seller, channel } = req.params;
-        const tenantDb = await getTenantDatabase(req);
-
-        // Use storage instead of direct db queries
-        const orders = await storage.getOrders(undefined, undefined, tenantDb);
-        const filteredOrders = orders.filter((order) => {
-          const orderDate = new Date(order.orderedAt);
-          const start = new Date(startDate);
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-
-          const dateMatch = orderDate >= start && orderDate <= end;
-          const statusMatch = order.status === "paid";
-          const sellerMatch =
-            seller === "all" || order.employeeId?.toString() === seller;
-          const channelMatch =
-            channel === "all" || order.salesChannel === channel;
-
-          return dateMatch && statusMatch && sellerMatch && channelMatch;
-        });
-
-        const totalAmount = filteredOrders.reduce(
-          (sum, order) => sum + Number(order.total),
-          0,
-        );
-        const profitData = [{
-          salesChannelName: "Direct Sales",
-          totalAmount: totalAmount,
-          discount: 0,
-          revenue: totalAmount,
-          returnValue: 0,
-          netRevenue: totalAmount,
-          totalCost: totalAmount * 0.6,
-          grossProfit: totalAmount * 0.4,
-          platformFee: 0,
-          netProfit: totalAmount * 0.4,
-        }, ];
-
-        res.json(profitData);
-      } catch (error) {
-        console.error("Error fetching sales channel profit data:", error);
-        res
-          .status(500)
-          .json({ error: "Failed to fetch sales channel profit data" });
-      }
-    },
-  );
-
-  // Sales channel sales data
-  app.get(
-    "/api/sales-channel-sales/:startDate/:endDate/:sellerId/:salesChannel",
-    async (req: TenantRequest, res) => {
-      try {
-        const { startDate, endDate, sellerId, salesChannel } = req.params;
-        const tenantDb = await getTenantDatabase(req);
-
-        let query = `
-        SELECT 
-          COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
-          e.name as sellerName,
-          SUM(t.total) as revenue,
-          SUM(COALESCE(t.refundAmount, 0)) as returnValue,
-          SUM(t.total - COALESCE(t.refundAmount, 0)) as netRevenue
-        FROM transactions t
-        LEFT JOIN employees e ON t.employeeId = e.id
-        WHERE DATE(t.createdAt) BETWEEN ? AND ?
-      `;
-
-        const params = [startDate, endDate];
-
-        if (sellerId !== "all") {
-          query += " AND t.employeeId = ?";
-          params.push(sellerId);
-        }
-
-        if (salesChannel !== "all") {
-          if (salesChannel === "direct") {
-            query +=
-              ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
-          } else {
-            query +=
-              ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
-          }
-        }
-
-        query +=
-          ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId ORDER BY netRevenue DESC';
-
-        const salesData = await new Promise((resolve, reject) => {
-          db.all(query, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-          });
-        });
-
-        res.json(salesData);
-      } catch (error) {
-        console.error("Error fetching sales channel sales data:", error);
-        res
-          .status(500)
-          .json({ error: "Failed to fetch sales channel sales data" });
-      }
-    },
-  );
-
-  // Sales channel profit data
-  app.get(
-    "/api/sales-channel-profit/:startDate/:endDate/:sellerId/:salesChannel",
-    async (req: TenantRequest, res) => {
-      try {
-        const { startDate, endDate, sellerId, salesChannel } = req.params;
-        const tenantDb = await getTenantDatabase(req);
-
-        let query = `
-        SELECT 
-          COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
-          e.name as sellerName,
-          SUM(t.totalAmount) as totalAmount,
-          SUM(COALESCE(t.discountAmount, 0)) as discount,
-          SUM(t.totalAmount - COALESCE(t.discountAmount, 0)) as revenue,
-          SUM(COALESCE(t.refundAmount, 0)) as returnValue,
-          SUM(t.totalAmount - COALESCE(t.discountAmount, 0) - COALESCE(t.refundAmount, 0)) as netRevenue,
-          SUM(COALESCE(ti.quantity * p.costPrice, 0)) as totalCost,
-          SUM(t.totalAmount - COALESCE(t.discountAmount, 0) - COALESCE(ti.quantity * p.costPrice, 0)) as grossProfit,
-          SUM(COALESCE(t.platformFee, 0)) as platformFee,
-          SUM(t.totalAmount - COALESCE(t.discountAmount, 0) - COALESCE(ti.quantity * p.costPrice, 0) - COALESCE(t.platformFee, 0)) as netProfit
-        FROM transactions t
-        LEFT JOIN employees e ON t.employeeId = e.id
-        LEFT JOIN transaction_items ti ON t.id = ti.transactionId
-        LEFT JOIN products p ON ti.productId = p.id
-        WHERE DATE(t.createdAt) BETWEEN ? AND ?
-      `;
-
-        const params = [startDate, endDate];
-
-        if (sellerId !== "all") {
-          query += " AND t.employeeId = ?";
-          params.push(sellerId);
-        }
-
-        if (salesChannel !== "all") {
-          if (salesChannel === "direct") {
-            query +=
-              ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
-          } else {
-            query +=
-              ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
-          }
-        }
-
-        query +=
-          ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId ORDER BY netProfit DESC';
-
-        const profitData = await new Promise((resolve, reject) => {
-          db.all(query, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-          });
-        });
-
-        res.json(profitData);
-      } catch (error) {
-        console.error("Error fetching sales channel profit data:", error);
-        res
-          .status(500)
-          .json({ error: "Failed to fetch sales channel profit data" });
-      }
-    },
-  );
-
-  // Sales channel products data
-  app.get(
-    "/api/sales-channel-products/:startDate/:endDate/:sellerId/:salesChannel/:productSearch/:productType/:categoryId",
-    async (req: TenantRequest, res) => {
-      try {
-        const {
-          startDate,
-          endDate,
-          sellerId,
-          salesChannel,
-          productSearch,
-          productType,
-          categoryId,
-        } = req.params;
-        const tenantDb = await getTenantDatabase(req);
-
-        let query = `
-        SELECT 
-          COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
-          e.name as sellerName,
-          p.sku as productCode,
-          p.name as productName,
-          SUM(ti.quantity) as quantitySold,
-          SUM(ti.quantity * ti.price) as revenue,
-          SUM(COALESCE(rti.quantity, 0)) as quantityReturned,
-          SUM(COALESCE(rti.quantity * rti.price, 0)) as returnValue,
-          SUM(ti.quantity * ti.price - COALESCE(rti.quantity * rti.price, 0)) as netRevenue
-        FROM transactions t
-        LEFT JOIN employees e ON t.employeeId = e.id        LEFT JOIN transaction_items ti ON t.id = ti.transactionId
-        LEFT JOIN products p ON ti.productId = p.id
-        LEFT JOIN categories c ON p.categoryId = c.id
-        LEFT JOIN transaction_items rti ON t.id = rti.transactionId AND rti.productId = p.id AND rti.isReturn = 1
-        WHERE DATE(t.createdAt) BETWEEN ? AND ? AND ti.isReturn != 1
-      `;
-
-        const params = [startDate, endDate];
-
-        if (sellerId !== "all") {
-          query += " AND t.employeeId = ?";
-          params.push(sellerId);
-        }
-
-        if (salesChannel !== "all") {
-          if (salesChannel === "direct") {
-            query +=
-              ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
-          } else {
-            query +=
-              ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
-          }
-        }
-
-        if (productSearch !== "all" && productSearch) {
-          query += " AND (p.name LIKE ? OR p.sku LIKE ?)";
-          params.push(`%${productSearch}%`, `%${productSearch}%`);
-        }
-
-        if (productType !== "all" && productType) {
-          query += " AND p.type = ?";
-          params.push(productType);
-        }
-
-        if (categoryId !== "all" && categoryId) {
-          query += " AND p.categoryId = ?";
-          params.push(categoryId);
-        }
-
-        query +=
-          ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId, p.id ORDER BY netRevenue DESC';
-
-        const productsData = await new Promise((resolve, reject) => {
-          db.all(query, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-          });
-        });
-
-        res.json(productsData);
-      } catch (error) {
-        console.error("Error fetching sales channel products data:", error);
-        res
-          .status(500)
-          .json({ error: "Failed to fetch sales channel products data" });
-      }
-    },
-  );
-
-  // Financial report endpoints
-  app.get(
-    "/api/financial-summary/:period/:year/:month?/:quarter?",
-    async (req: TenantRequest, res) => {
-      try {
-        const { period, year, month, quarter } = req.params;
-        const tenantDb = await getTenantDatabase(req);
-
-        // Get transactions for financial calculations
-        const transactions = await storage.getTransactions(tenantDb);
-
-        let filteredTransactions = transactions.filter((transaction) => {
-          const date = new Date(transaction.createdAt);
-          const transactionYear = date.getFullYear();
-
-          if (period === "yearly") {
-            return transactionYear === parseInt(year);
-          } else if (period === "monthly") {
-            const transactionMonth = date.getMonth() + 1;
-            return (
-              transactionYear === parseInt(year) &&
-              transactionMonth === parseInt(month)
-            );
-          } else if (period === "quarterly") {
-            const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
-            return (
-              transactionYear === parseInt(year) &&
-              transactionQuarter === parseInt(quarter)
-            );
-          }
-          return false;
-        });
-
-        // Calculate financial metrics
-        const totalIncome = filteredTransactions.reduce(
-          (sum, t) => sum + Number(t.total),
-          0,
-        );
-        const totalExpenses = totalIncome * 0.6; // Mock expense calculation (60% of income)
-        const grossProfit = totalIncome - totalExpenses;
-        const operatingExpenses = totalIncome * 0.15; // Mock operating expenses (15% of income)
-        const netIncome = grossProfit - operatingExpenses;
-        const profitMargin =
-          totalIncome > 0 ? (netIncome / totalIncome) * 100 : 0;
-
-        const summary = {
-          totalIncome,
-          totalExpenses,
-          grossProfit,
-          operatingExpenses,
-          netIncome,
-          profitMargin,
-          transactionCount: filteredTransactions.length,
-        };
-
-        res.json(summary);
-      } catch (error) {
-        console.error("Error fetching financial summary:", error);
-        res.status(500).json({ error: "Failed to fetch financial summary" });
-      }
-    },
-  );
-
-  app.get(
-    "/api/income-breakdown/:period/:year/:month?/:quarter?",
-    async (req: TenantRequest, res) => {
-      try {
-        const { period, year, month, quarter } = req.params;
-        const tenantDb = await getTenantDatabase(req);
-
-        const transactions = await storage.getTransactions(tenantDb);
-
-        let filteredTransactions = transactions.filter((transaction) => {
-          const date = new Date(transaction.createdAt);
-          const transactionYear = date.getFullYear();
-
-          if (period === "yearly") {
-            return transactionYear === parseInt(year);
-          } else if (period === "monthly") {
-            const transactionMonth = date.getMonth() + 1;
-            return (
-              transactionYear === parseInt(year) &&
-              transactionMonth === parseInt(month)
-            );
-          } else if (period === "quarterly") {
-            const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
-            return (
-              transactionYear === parseInt(year) &&
-              transactionQuarter === parseInt(quarter)
-            );
-          }
-          return false;
-        });
-
-        // Group by payment method
-        const incomeByMethod = {};
-        filteredTransactions.forEach((transaction) => {
-          const method = transaction.paymentMethod || "cash";
-          incomeByMethod[method] =
-            (incomeByMethod[method] || 0) + Number(transaction.total);
-        });
-
-        const breakdown = Object.entries(incomeByMethod).map(
-          ([method, amount]) => ({
-            category: method,
-            amount: amount,
-            percentage:
-              filteredTransactions.length > 0
-                ? (amount /
-                  filteredTransactions.reduce(
-                    (sum, t) => sum + Number(t.total),
-                    0,
-                  )) *
-                100
-                : 0,
-          }),
-        );
-
-        res.json(breakdown);
-      } catch (error) {
-        console.error("Error fetching income breakdown:", error);
-        res.status(500).json({ error: "Failed to fetch income breakdown" });
-      }
-    },
-  );
-
-  app.get(
-    "/api/expense-breakdown/:period/:year/:month?/:quarter?",
-    async (req: TenantRequest, res) => {
-      try {
-        // Mock expense data since we don't have a dedicated expenses table
-        const mockExpenses = [
-          { category: "Cost of Goods Sold", amount: 2500000, percentage: 60 },
-          { category: "Rent", amount: 500000, percentage: 12 },
-          { category: "Utilities", amount: 200000, percentage: 5 },
-          { category: "Staff Salaries", amount: 800000, percentage: 19 },
-          { category: "Marketing", amount: 100000, percentage: 2 },
-          { category: "Other", amount: 83333, percentage: 2 },
-        ];
-
-        res.json(mockExpenses);
-      } catch (error) {
-        console.error("Error fetching expense breakdown:", error);
-        res.status(500).json({ error: "Failed to fetch expense breakdown" });
-      }
-    },
-  );
-
-  app.get(
-    "/api/cash-flow/:period/:year/:month?/:quarter?",
-    async (req: TenantRequest, res) => {
-      try {
-        const { period, year, month, quarter } = req.params;
-        const tenantDb = await getTenantDatabase(req);
-
-        const transactions = await storage.getTransactions(tenantDb);
-
-        let filteredTransactions = transactions.filter((transaction) => {
-          const date = new Date(transaction.createdAt);
-          const transactionYear = date.getFullYear();
-
-          if (period === "yearly") {
-            return transactionYear === parseInt(year);
-          } else if (period === "monthly") {
-            const transactionMonth = date.getMonth() + 1;
-            return (
-              transactionYear === parseInt(year) &&
-              transactionMonth === parseInt(month)
-            );
-          } else if (period === "quarterly") {
-            const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
-            return (
-              transactionYear === parseInt(year) &&
-              transactionQuarter === parseInt(quarter)
-            );
-          }
-          return false;
-        });
-
-        const totalIncome = filteredTransactions.reduce(
-          (sum, t) => sum + Number(t.total),
-          0,
-        );
-
-        // Mock cash flow calculations
-        const operatingCashFlow = totalIncome * 0.25; // 25% of income
-        const investingCashFlow = -totalIncome * 0.05; // 5% negative (investments)
-        const financingCashFlow = totalIncome * 0.02; // 2% positive (financing)
-        const netCashFlow =
-          operatingCashFlow + investingCashFlow + financingCashFlow;
-
-        const cashFlow = {
-          operatingCashFlow,
-          investingCashFlow,
-          financingCashFlow,
-          netCashFlow,
-        };
-
-        res.json(cashFlow);
-      } catch (error) {
-        console.error("Error fetching cash flow:", error);
-        res.status(500).json({ error: "Failed to fetch cash flow" });
-      }
-    },
-  );
-
-  // POS Login API endpoint
-  app.post("/api/pos/login", async (req: TenantRequest, res) => {
-    try {
-      const { clientID, clientSecret, masterId, bankCode } = req.body;
-      const tenantDb = await getTenantDatabase(req);
-
-      console.log("POS Login request:", { clientID, clientSecret, masterId, bankCode });
-
-      // Use external server URL for login
-      const apiBaseUrl = process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
-      const response = await fetch(`${apiBaseUrl}/api/pos/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          clientID,
-          clientSecret,
-          masterId,
-          bankCode,
-        }),
-      });
-
-      if (!response.ok) {
-        console.error("POS Login API error:", response.status, response.statusText);
-        return res.status(response.status).json({
-          error: "Failed to login for QR payment",
-          details: `API returned ${response.status}: ${response.statusText}`,
-        });
-      }
-
-      const result = await response.json();
-      console.log("POS Login response:", result);
-
-      res.json(result);
-    } catch (error) {
-      console.error("POS Login proxy error:", error);
-      res.status(500).json({
-        error: "Failed to login for QR payment",
-        details: error.message,
-      });
-    }
-  });
-
-  // QR Payment API proxy endpoint
-  app.post("/api/pos/create-qr", async (req: TenantRequest, res) => {
-    // Stock update error
-    try {
-      const { bankCode, clientID } = req.query;
-      const body = req.body;
-      const tenantDb = await getTenantDatabase(req);
-
-      console.log("CreateQRPos request:", { bankCode, clientID, body });
-
-      // Use external server URL
-      const apiBaseUrl =
-        process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
-      const response = await fetch(
-        `${apiBaseUrl}/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(body),
-        },
-      );
-
-      if (!response.ok) {
-        console.error(
-          "CreateQRPos API error:",
-          response.status,
-          response.statusText,
-        );
-        return res.status(response.status).json({
-          error: "Failed to create QR payment",
-          details: `API returned ${response.status}: ${response.statusText}`,
-        });
-      }
-
-      const result = await response.json();
-      console.log("CreateQRPos response:", result);
-
-      res.json(result);
-    } catch (error) {
-      console.error("CreateQRPos proxy error:", error);
-      res.status(500).json({
-        error: "Failed to create QR payment",
-        details: error.message,
-      });
-    }
-  });
-
-  // Tax code lookup proxy endpoint
-  app.post("/api/tax-code-lookup", async (req: TenantRequest, res) => {
-    try {
-      const { taxCode } = req.body;
-      const tenantDb = await getTenantDatabase(req);
-
-      if (!taxCode) {
-        return res.status(400).json({
-          success: false,
-          message: "Mã số thuế không được để trống"
-        });
-      }
-
-      // Call the external tax code API
-      const response = await fetch("https://infoerpvn.com:9440/api/CheckListTaxCode/v2", {
-        method: "POST",
-        headers: {
-          "token": "EnURbbnPhUm4GjNgE4Ogrw==",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify([taxCode]),
-      });
-
-      if (!response.ok) {
-        throw new Error(`External API error: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-
-      res.json({
-        success: true,
-        data: result,
-        message: "Tra cứu thành công"
-      });
-
-    } catch (error) {
-      console.error("Tax code lookup error:", error);
-      res.status(500).json({
-        success: false,
-        message: "Có lỗi xảy ra khi tra cứu mã số thuế",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  // Invoices management
-  app.post("/api/invoices", async (req: TenantRequest, res) => {
-    try {
-      const invoiceData = req.body;
-      const tenantDb = await getTenantDatabase(req);
-      console.log("Creating invoice record:", JSON.stringify(invoiceData, null, 2));
-
-      // Validate required fields
-      if (!invoiceData.total || !invoiceData.customerName) {
-        return res.status(400).json({
-          error: "Missing required fields",
-          details: "total and customerName are required",
-          received: invoiceData
-        });
-      }
-
-      // Generate trade number
-      const tradeNumber = `INV-${Date.now()}`;
-
-      // Validate and prepare invoice data with proper type conversion
-      const validatedInvoice = {
-        invoiceNumber: null,
-        tradeNumber,
-        customerId: invoiceData.customerId || null,
-        customerName: invoiceData.customerName || "Khách hàng",
-        customerTaxCode: invoiceData.customerTaxCode || null,
-        customerAddress: invoiceData.customerAddress || null,
-        customerPhone: invoiceData.customerPhone || null,
-        customerEmail: invoiceData.customerEmail || null,
-        subtotal: typeof invoiceData.subtotal === 'string' ? invoiceData.subtotal : invoiceData.subtotal?.toString() || "0",
-        tax: typeof invoiceData.tax === 'string' ? invoiceData.tax : invoiceData.tax?.toString() || "0",
-        total: typeof invoiceData.total === 'string' ? invoiceData.total : invoiceData.total?.toString() || "0",
-        paymentMethod: invoiceData.paymentMethod || 'cash',
-        invoiceDate: new Date(invoiceData.invoiceDate || new Date()),
-        status: invoiceData.status || 'draft',
-        einvoiceStatus: invoiceData.einvoiceStatus || 0,
-        notes: invoiceData.notes || null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      console.log("Validated invoice data:", JSON.stringify(validatedInvoice, null, 2));
-
-      // Save invoice to database
-      const [savedInvoice] = await db
-        .insert(invoices)
-        .values(validatedInvoice)
-        .returning();
-
-      console.log("Invoice saved to database:", savedInvoice);
-
-      // Save invoice items
-      if (invoiceData.items && Array.isArray(invoiceData.items) && invoiceData.items.length > 0) {
-        console.log("Processing invoice items:", invoiceData.items.length);
-
-        const invoiceItemsData = invoiceData.items.map((item: any, index: number) => {
-          console.log(`Processing item ${index + 1}:`, item);
-
-          return {
-            invoiceId: savedInvoice.id,
-            productId: item.productId || 0,
-            productName: item.productName || `Product ${index + 1}`,
-            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1),
-            unitPrice: typeof item.unitPrice === 'string' ? item.unitPrice : (item.unitPrice?.toString() || "0"),
-            total: typeof item.total === 'string' ? item.total : (item.total?.toString() || "0"),
-            taxRate: typeof item.taxRate === 'string' ? item.taxRate : ((item.taxRate || 10).toString())
-          };
-        });
-
-        console.log("Invoice items data:", JSON.stringify(invoiceItemsData, null, 2));
-
-        const savedItems = await db
-          .insert(invoiceItems)
-          .values(invoiceItemsData)
-          .returning();
-
-        console.log("Invoice items saved:", savedItems.length);
-      } else {
-        console.log("No invoice items to save");
-      }
-
-      res.status(201).json({
-        success: true,
-        invoice: savedInvoice,
-        message: "Hóa đơn đã được lưu thành công"
-      });
-
-    } catch (error) {
-      console.error("=== INVOICE CREATION ERROR ===");
-      console.error("Error type:", error?.constructor?.name);
-      console.error("Error message:", error?.message);
-      console.error("Error stack:", error?.stack);
-      console.error("Request body:", JSON.stringify(req.body, null, 2));
-
-      // Check for specific database errors
-      let errorMessage = "Failed to create invoice";
-      let errorDetails = error instanceof Error ? error.message : "Unknown error";
-
-      if (error?.message?.includes("NOT NULL constraint failed")) {
-        errorMessage = "Missing required database fields";
-        errorDetails = "Some required fields are missing or null";
-      } else if (error?.message?.includes("FOREIGN KEY constraint failed")) {
-        errorMessage = "Invalid reference data";
-        errorDetails = "Referenced data does not exist";
-      } else if (error?.message?.includes("UNIQUE constraint failed")) {
-        errorMessage = "Duplicate data conflict";
-        errorDetails = "Data already exists in database";
-      }
-
-      res.status(500).json({
-        error: errorMessage,
-        details: errorDetails,
-        timestamp: new Date().toISOString(),
-        requestData: req.body
-      });
-    }
-  });
-
-  app.get("/api/invoices", async (req: TenantRequest, res) => {
-    try {
-      const tenantDb = await getTenantDatabase(req);
-      const invoicesList = await db
-        .select()
-        .from(invoices)
-        .orderBy(desc(invoices.createdAt));
-
-      res.json(invoicesList);
-    } catch (error) {
-      console.error("Error fetching invoices:", error);
-      res.status(500).json({ error: "Failed to fetch invoices" });
-    }
-  });
-
-  app.get("/api/invoice-items/:invoiceId", async (req: TenantRequest, res) => {
-    try {
-      const invoiceId = parseInt(req.params.invoiceId);
-      const tenantDb = await getTenantDatabase(req);
-
-      if (isNaN(invoiceId)) {
-        return res.status(400).json({ error: "Invalid invoice ID" });
-      }
-
-      const items = await db
-        .select()
-        .from(invoiceItems)
-        .where(eq(invoiceItems.invoiceId, invoiceId))
-        .orderBy(invoiceItems.id);
-
-      res.json(items);
-    } catch (error) {
-      console.error("Error fetching invoice items:", error);
-      res.status(500).json({ error: "Failed to fetch invoice items" });
-    }
-  });
-
-  // Update invoice (including status fields)
-  app.put("/api/invoices/:id", async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const updateData = req.body;
-      const tenantDb = await getTenantDatabase(req);
-
-      console.log("=== UPDATING INVOICE ===");
-      console.log("Invoice ID:", id);
-      console.log("Update data:", JSON.stringify(updateData, null, 2));
-
-      if (isNaN(id)) {
-        console.error("Invalid invoice ID:", req.params.id);
-        return res.status(400).json({ error: "Invalid invoice ID" });
-      }
-
-      // Check if invoice exists first
-      const [existingInvoice] = await db
-        .select()
-        .from(invoices)
-        .where(eq(invoices.id, id))
-        .limit(1);
-
-      if (!existingInvoice) {
-        console.error("Invoice not found:", id);
-        return res.status(404).json({ error: "Invoice not found" });
-      }
-
-      console.log("Existing invoice:", existingInvoice);
-
-      // Prepare fields to update with proper mapping
-      const fieldsToUpdate: any = {};
-
-      // Handle invoiceStatus mapping
-      if (updateData.invoiceStatus !== undefined) {
-        fieldsToUpdate.invoiceStatus = updateData.invoiceStatus;
-      }
-
-      if (updateData.invoice_status !== undefined) {
-        fieldsToUpdate.invoiceStatus = updateData.invoice_status; // Map to the correct database field
-      }
-
-      // Handle other standard fields
-      const standardFields = ['status', 'einvoiceStatus', 'invoiceNumber', 'symbol', 'templateNumber', 'tradeNumber'];
-      standardFields.forEach(field => {
-        if (updateData[field] !== undefined) {
-          fieldsToUpdate[field] = updateData[field];
-        }
-      });
-
-      // Add any other fields from updateData (excluding already processed ones)
-      Object.keys(updateData).forEach(key => {
-        if (!['invoiceStatus', 'invoice_status', ...standardFields].includes(key)) {
-          if (updateData[key] !== undefined) {
-            fieldsToUpdate[key] = updateData[key];
-          }
-        }
-      });
-
-      fieldsToUpdate.updatedAt = new Date();
-
-      console.log("Fields to update:", JSON.stringify(fieldsToUpdate, null, 2));
-
-      const [updatedInvoice] = await db
-        .update(invoices)
-        .set(fieldsToUpdate)
-        .where(eq(invoices.id, id))
-        .returning();
-
-      if (!updatedInvoice) {
-        console.error("Failed to update invoice - no result returned");
-        return res.status(500).json({ error: "Failed to update invoice - no result returned" });
-      }
-
-      console.log("✅ Invoice updated successfully:", updatedInvoice);
-      res.json(updatedInvoice);
-    } catch (error) {
-      console.error("=== INVOICE UPDATE ERROR ===");
-      console.error("Error type:", error?.constructor?.name);
-      console.error("Error message:", error?.message);
-      console.error("Error details:", error);
-      console.error("Invoice ID:", req.params.id);
-      console.error("Update data:", req.body);
-
-      res.status(500).json({
-        error: "Failed to update invoice",
-        details: error instanceof Error ? error.message : "Unknown error",
-        invoiceID: req.params.id,
-        updateData: req.body
-      });
-    }
-  });
-
-  // Update order (including template_number and symbol fields)
-  app.put("/api/orders/:id", async (req: TenantRequest, res) => {
-    try {
-      const { id: rawId } = req.params;
-      const orderData = req.body; // Use raw body to preserve all fields
-      const tenantDb = await getTenantDatabase(req);
-
-      console.log(`=== PUT ORDER API CALLED ===`);
-      console.log(`Raw Order ID: ${rawId}`);
-      console.log(`Update data:`, JSON.stringify(orderData, null, 2));
-
-      // Handle temporary IDs - allow flow to continue
-      const isTemporaryId = rawId.startsWith('temp-');
-      if (isTemporaryId) {
-        console.log(`🟡 Temporary order ID detected: ${rawId} - returning success for flow continuation`);
-
-        // Return a mock success response to allow E-Invoice flow to continue
-        const mockOrder = {
-          id: rawId,
-          orderNumber: `TEMP-${Date.now()}`,
-          tableId: null,
-          customerName: orderData.customerName || "Khách hàng",
-          status: orderData.status || 'paid',
-          paymentMethod: orderData.paymentMethod || 'cash',
-          einvoiceStatus: orderData.einvoiceStatus || 0,
-          paidAt: orderData.paidAt || new Date(),
-          updatedAt: new Date(),
-          updated: true,
-          updateTimestamp: new Date().toISOString()
-        };
-
-        console.log(`✅ Mock order update response for temporary ID:`, mockOrder);
-        return res.json(mockOrder);
-      }
-
-      const id = parseInt(rawId);
-      if (isNaN(id)) {
-        console.error(`❌ Invalid order ID: ${rawId}`);
-        return res.status(400).json({ message: "Invalid order ID" });
-      }
-
-      // Check if order exists first
-      const [existingOrder] = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.id, id));
-
-      if (!existingOrder) {
-        console.error(`❌ Order not found: ${id}`);
-        return res.status(404).json({ message: "Order not found" });
-      }
-
-      console.log(`📋 Current order state:`, {
-        id: existingOrder.id,
-        orderNumber: existingOrder.orderNumber,
-        tableId: existingOrder.tableId,
-        currentStatus: existingOrder.status,
-        paymentMethod: existingOrder.paymentMethod
-      });
-
-      const order = await storage.updateOrder(id, orderData, tenantDb);
-
-      if (!order) {
-        console.error(`❌ Failed to update order ${id}`);
-        return res.status(500).json({ message: "Failed to update order" });
-      }
-
-      console.log(`✅ Order update API completed successfully:`, {
-        orderId: order.id,
-        status: order.status,
-        paymentMethod: order.paymentMethod,
-        paidAt: order.paidAt,
-        einvoiceStatus: order.einvoiceStatus
-      });
-
-      res.json({
-        ...order,
-        updated: true,
-        updateTimestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("❌ PUT Order API error:", error);
-      if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({ message: "Invalid order data", errors: error.errors });
-      }
-      res.status(500).json({
-        message: "Failed to update order",
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // Update invoice_number for both orders and invoices
-  app.put("/api/einvoice/update-invoice-number", async (req: TenantRequest, res) => {
-    try {
-      const { orderId, invoiceId, invoiceNumber } = req.body;
-      const tenantDb = await getTenantDatabase(req);
-
-      console.log("=== UPDATING INVOICE NUMBER ===");
-      console.log("Order ID:", orderId);
-      console.log("Invoice ID:", invoiceId);
-      console.log("Invoice Number:", invoiceNumber);
-
-      const updateResults: any = {};
-
-      // Update orders table if orderId is provided
-      if (orderId) {
-        try {
-          const [updatedOrder] = await db
-            .update(orders)
-            .set({
-              invoiceNumber: invoiceNumber,
-              updatedAt: new Date()
-            })
-            .where(eq(orders.id, orderId))
-            .returning();
-
-          if (updatedOrder) {
-            updateResults.order = updatedOrder;
-            console.log("✅ Order invoice_number updated successfully:", updatedOrder);
-          } else {
-            console.error("❌ Order not found for ID:", orderId);
-            updateResults.orderError = "Order not found";
-          }
-        } catch (orderError) {
-          console.error("❌ Error updating order:", orderError);
-          updateResults.orderError = orderError.message;
-        }
-      }
-
-      // Update invoices table if invoiceId is provided
-      if (invoiceId) {
-        try {
-          const [updatedInvoice] = await db
-            .update(invoices)
-            .set({
-              invoiceNumber: invoiceNumber,
-              updatedAt: new Date()
-            })
-            .where(eq(invoices.id, invoiceId))
-            .returning();
-
-          if (updatedInvoice) {
-            updateResults.invoice = updatedInvoice;
-            console.log("✅ Invoice invoice_number updated successfully:", updatedInvoice);
-          } else {
-            console.error("❌ Invoice not found for ID:", invoiceId);
-            updateResults.invoiceError = "Invoice not found";
-          }
-        } catch (invoiceError) {
-          console.error("❌ Error updating invoice:", invoiceError);
-          updateResults.invoiceError = invoiceError.message;
-        }
-      }
-
-      res.json({
-        success: true,
-        message: "Invoice number updated successfully",
-        results: updateResults
-      });
-
-    } catch (error) {
-      console.error("=== UPDATE INVOICE NUMBER ERROR ===");
-      console.error("Error:", error);
-
-      res.status(500).json({
-        error: "Failed to update invoice number",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  // E-invoice publish proxy endpoint
-  app.post("/api/einvoice/publish", async (req: TenantRequest, res) => {
-    try {
-      const publishRequest = req.body;
-      const tenantDb = await getTenantDatabase(req);
-      console.log("Publishing invoice with data:", JSON.stringify(publishRequest, null, 2));
-
-      // Call the real e-invoice API
-      const response = await fetch("https://infoerpvn.com:9440/api/invoice/publish", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "token": "EnURbbnPhUm4GjNgE4Ogrw=="
-        },
-        body: JSON.stringify(publishRequest)
-      });
-
-      if (!response.ok) {
-        console.error("E-invoice API error:", response.status, response.statusText);
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-
-        return res.status(response.status).json({
-          error: "Failed to publish invoice",
-          details: `API returned ${response.status}: ${response.statusText}`,
-          apiResponse: errorText
-        });
-      }
-
-      const result = await response.json();
-      console.log("E-invoice API response:", result);
-
-      // Check if the API returned success
-      if (result.status === true) {
-        console.log("Invoice published successfully:", result);
-
-        // Return standardized response format
-        res.json({
-          success: true,
-          message: result.message || "Hóa đơn điện tử đã được phát hành thành công",
-          data: {
-            invoiceNo: result.data?.invoiceNo,
-            invDate: result.data?.invDate,
-            transactionID: result.data?.transactionID,
-            macqt: result.data?.macqt,
-            originalRequest: {
-              transactionID: publishRequest.transactionID,
-              invRef: publishRequest.invRef,
-              totalAmount: publishRequest.invTotalAmount,
-              customer: publishRequest.Customer
-            }
-          }
-        });
-      } else {
-        // API returned failure
-        console.error("E-invoice API returned failure:", result);
-        res.status(400).json({
-          error: "E-invoice publication failed",
-          message: result.message || "Unknown error from e-invoice service",
-          details: result
-        });
-      }
-
-    } catch (error) {
-      console.error("E-invoice publish proxy error details:");
-      console.error("- Error type:", error.constructor.name);
-      console.error("- Error message:", error.message);
-      console.error("- Full error:", error);
-
-      res.status(500).json({
-        error: "Failed to publish invoice",
-        details: error.message,
-        errorType: error.constructor.name
-      });
-    }
-  });
-
-  // Add einvoiceStatus column to orders table if it doesn't exist
-  try {
-    await db.execute(sql `
-      ALTER TABLE orders ADD COLUMN IF NOT EXISTS einvoice_status INTEGER NOT NULL DEFAULT 0
-    `);
-    console.log("Added einvoiceStatus column to orders table");
-  } catch (error) {
-    console.log("einvoiceStatus column already exists in orders table or addition failed:", error);
-  }
-
-
-
-  // Printer Configs API
-  app.get('/api/printer-configs', async (req, res) => {
-    try {
-      const tenantDb = await getTenantDatabase(req);
-      const result = await db.execute(sql `
-        SELECT id, name, printer_type, connection_type, ip_address, port, 
-               mac_address, paper_width, print_speed, is_employee, is_kitchen, 
-               is_active, created_at, updated_at
-        FROM printer_configs 
-        ORDER BY id ASC
-      `);
-
-      const configs = result.rows.map(row => ({
-        id: row.id,
-        name: row.name,
-        printerType: row.printer_type,
-        connectionType: row.connection_type,
-        ipAddress: row.ip_address,
-        port: row.port,
-        macAddress: row.mac_address,
-        paperWidth: row.paper_width,
-        printSpeed: row.print_speed,
-        isEmployee: row.is_employee,
-        isKitchen: row.is_kitchen,
-        isActive: row.is_active,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      }));
-
-      res.json(configs);
-    } catch (error) {
-      console.error('Error fetching printer configs:', error);
-      res.status(500).json({ error: 'Failed to fetch printer configs' });
-    }
-  });
-
-  // Get active printer configs for auto-print
-  app.get('/api/printer-configs/active', async (req, res) => {
-    try {
-      const { type } = req.query; // 'employee', 'kitchen', or 'all'
-      const tenantDb = await getTenantDatabase(req);
-
-      let whereClause = 'WHERE is_active = true';
-      if (type === 'employee') {
-        whereClause += ' AND is_employee = true';
-      } else if (type === 'kitchen') {
-        whereClause += ' AND is_kitchen = true';
-      }
-
-      const result = await db.execute(sql `
-        SELECT id, name, printer_type, connection_type, ip_address, port, 
-               mac_address, paper_width, print_speed, is_employee, is_kitchen, 
-               is_active, created_at, updated_at
-        FROM printer_configs 
-        ${sql.raw(whereClause)}
-        ORDER BY id ASC
-      `);
-
-      const configs = result.rows.map(row => ({
-        id: row.id,
-        name: row.name,
-        printerType: row.printer_type,
-        connectionType: row.connection_type,
-        ipAddress: row.ip_address,
-        port: row.port,
-        macAddress: row.mac_address,
-        paperWidth: row.paper_width,
-        printSpeed: row.print_speed,
-        isEmployee: row.is_employee,
-        isKitchen: row.is_kitchen,
-        isActive: row.is_active,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      }));
-
-      res.json(configs);
-    } catch (error) {
-      console.error('Error fetching active printer configs:', error);
-      res.status(500).json({ error: 'Failed to fetch active printer configs' });
-    }
-  });
-
-  // Auto-print API endpoint
-  app.post('/api/auto-print', async (req, res) => {
-    try {
-      const { receiptData, printerType } = req.body;
-      const tenantDb = await getTenantDatabase(req);
-
-      console.log('🖨️ Auto-print request:', { printerType, receiptData: !!receiptData });
-
-      // Get active printer configs based on type
-      let whereClause = 'WHERE is_active = true';
-      if (printerType === 'employee') {
-        whereClause += ' AND is_employee = true';
-      } else if (printerType === 'kitchen') {
-        whereClause += ' AND is_kitchen = true';
-      } else if (printerType === 'both') {
-        whereClause += ' AND (is_employee = true OR is_kitchen = true)';
-      }
-
-      const result = await db.execute(sql `
-        SELECT id, name, printer_type, connection_type, ip_address, port, 
-               mac_address, paper_width, print_speed, is_employee, is_kitchen
-        FROM printer_configs 
-        ${sql.raw(whereClause)}
-        ORDER BY is_employee DESC, is_kitchen DESC
-      `);
-
-      if (!result.rows || result.rows.length === 0) {
-        return res.status(404).json({
-          error: 'No active printer found',
-          message: 'Không tìm thấy máy in hoặc không có cấu hình máy in'
-        });
-      }
-
-      const printResults = [];
-
-      // Print to each configured printer
-      for (const printer of result.rows) {
-        try {
-          console.log(`🖨️ Printing to: ${printer.name} (${printer.connection_type})`);
-
-          // Mock print job - In real implementation, you would send to actual printer
-          if (printer.connection_type === 'network' && printer.ip_address) {
-            // Network printer logic
-            console.log(`📡 Sending to network printer at ${printer.ip_address}:${printer.port}`);
-          } else if (printer.connection_type === 'usb') {
-            // USB printer logic
-            console.log(`🔌 Sending to USB printer: ${printer.name}`);
-          } else if (printer.connection_type === 'bluetooth' && printer.mac_address) {
-            // Bluetooth printer logic
-            console.log(`📶 Sending to Bluetooth printer: ${printer.mac_address}`);
-          }
-
-          printResults.push({
-            printerId: printer.id,
-            printerName: printer.name,
-            status: 'success',
-            message: `In thành công trên máy ${printer.name}`
-          });
-
-          // Simulate print delay
-          await new Promise(resolve => setTimeout(resolve, 100));
-
-        } catch (printerError) {
-          console.error(`❌ Print failed for ${printer.name}:`, printerError);
-          printResults.push({
-            printerId: printer.id,
-            printerName: printer.name,
-            status: 'error',
-            message: `Lỗi in trên máy ${printer.name}: ${printerError.message}`
-          });
-        }
-      }
-
-      const successCount = printResults.filter(r => r.status === 'success').length;
-      const totalCount = printResults.length;
-
-      res.json({
-        success: successCount > 0,
-        message: `In thành công ${successCount}/${totalCount} máy in`,
-        results: printResults,
-        totalPrinters: totalCount,
-        successfulPrints: successCount
-      });
-
-    } catch (error) {
-      console.error('❌ Auto-print error:', error);
-      res.status(500).json({
-        error: 'Print failed',
-        message: 'Có lỗi xảy ra khi in hóa đơn'
-      });
-    }
-  });
-
-  app.post("/api/printer-configs", async (req: TenantRequest, res) => {
-    try {
-      const tenantDb = await getTenantDatabase(req);
-      const configData = req.body;
-
-      // If setting as primary, unset all other primaries
-      if (configData.isPrimary) {
-        await db.execute(sql `UPDATE printer_configs SET is_primary = false`);
-      }
-
-      // If setting as secondary, unset all other secondaries
-      if (configData.isSecondary) {
-        await db.execute(sql `UPDATE printer_configs SET is_secondary = false`);
-      }
-
-      const result = await db.execute(sql `
-        INSERT INTO printer_configs (
-          name, printer_type, connection_type, ip_address, port, mac_address,
-          paper_width, print_speed, is_employee, is_kitchen, is_active
-        ) VALUES (
-          ${configData.name}, ${configData.printerType}, ${configData.connectionType},
-          ${configData.ipAddress || null}, ${configData.port || null}, ${configData.macAddress || null},
-          ${configData.paperWidth}, ${configData.printSpeed}, ${configData.isEmployee || false}, ${configData.isKitchen || false}, ${configData.isActive !== false}
-        ) RETURNING *
-      `);
-
-      if (!result.rows || result.rows.length === 0) {
-        return res.status(500).json({ error: "Failed to create printer config" });
-      }
-
-      res.status(201).json(result.rows[0]);
-    } catch (error) {
-      console.error("Error creating printer config:", error);
-      res.status(500).json({ error: "Failed to create printer config" });
-    }
-  });
-
-  app.put("/api/printer-configs/:id", async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-      const configData = req.body;
-
-      // If setting as employee printer, unset all other employee printers
-      if (configData.isEmployee) {
-        await db.execute(sql `UPDATE printer_configs SET is_employee = false WHERE id != ${id}`);
-      }
-
-      // If setting as kitchen printer, unset all other kitchen printers
-      if (configData.isKitchen) {
-        await db.execute(sql `UPDATE printer_configs SET is_kitchen = false WHERE id != ${id}`);
-      }
-
-      const result = await db.execute(sql `
-        UPDATE printer_configs SET
-          name = ${configData.name},
-          printer_type = ${configData.printerType},
-          connection_type = ${configData.connectionType},
-          ip_address = ${configData.ipAddress || null},
-          port = ${configData.port || null},
-          mac_address = ${configData.macAddress || null},
-          paper_width = ${configData.paperWidth},
-          print_speed = ${configData.printSpeed},
-          is_employee = ${configData.isEmployee},
-          is_kitchen = ${configData.isKitchen},
-          is_active = ${configData.isActive !== false}
-        WHERE id = ${id}
-        RETURNING *
-      `);
-
-      if (!result.rows || result.rows.length === 0) {
-        return res.status(404).json({ error: "Printer config not found" });
-      }
-
-      res.json(result.rows[0]);
-    } catch (error) {
-      console.error("Error updating printer config:", error);
-      res.status(500).json({ error: "Failed to update printer config" });
-    }
-  });
-
-  app.delete("/api/printer-configs/:id", async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-
-      const result = await db.execute(sql `DELETE FROM printer_configs WHERE id = ${id}`);
-
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Printer config not found" });
-      }
-
-      res.json({ message: "Printer config deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting printer config:", error);
-      res.status(500).json({ error: "Failed to delete printer config" });
-    }
-  });
-
-  app.post("/api/printer-configs/:id/test", async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-
-      const result = await db.execute(sql `
-        SELECT * FROM printer_configs WHERE id = ${id}
-      `);
-
-      if (!result.rows || result.rows.length === 0) {
-        return res.status(404).json({ error: "Printer config not found" });
-      }
-
-      const config = result.rows[0];
-
-      // Mock test print functionality
-      console.log(`Testing printer: ${config.name}`);
-
-      res.json({
-        message: "Test print sent successfully",
-        printer: config.name,
-        status: "success"
-      });
-    } catch (error) {
-      console.error("Error testing printer:", error);
-      res.status(500).json({ error: "Failed to test printer" });
-    }
-  });
-
-  // Save invoice as order (for both "Phát hành" and "Phát hành sau" functionality)
-  app.post("/api/invoices/save-as-order", async (req: TenantRequest, res) => {
-    try {
-      const invoiceData = req.body;
-      const { publishType } = invoiceData; // "publish" hoặc "draft"
-      const tenantDb = await getTenantDatabase(req);
-      console.log("Creating order from invoice data:", JSON.stringify(invoiceData, null, 2));
-
-      // Validate required fields
-      if (!invoiceData.total || !invoiceData.customerName) {
-        return res.status(400).json({
-          error: "Missing required fields",
-          details: "total, customerName and items are required",
-          received: invoiceData
-        });
-      }
-
-      // Calculate totals
-      const subtotal = parseFloat(invoiceData.subtotal || "0");
-      const tax = parseFloat(invoiceData.tax || "0");
-      const total = parseFloat(invoiceData.total || "0");
-
-      // Determine einvoice status based on publish type
-      let einvoiceStatus = 0; // Default: Chưa phát hành
-      let orderStatus = 'draft';
-      let statusMessage = "Đơn hàng đã được lưu để phát hành hóa đơn sau";
-
-      if (publishType === "publish") {
-        einvoiceStatus = 1; // Đã phát hành
-        orderStatus = 'paid';
-        statusMessage = "Hóa đơn điện tử đã được phát hành thành công";
-      }
-
-      // Create order data
-      const orderData = {
-        orderNumber: `ORD-${Date.now()}`,
-        tableId: null, // No table for POS orders
-        customerName: invoiceData.customerName,
-        customerPhone: invoiceData.customerPhone || null,
-        customerEmail: invoiceData.customerEmail || null,
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
-        status: orderStatus,
-        paymentMethod: 'einvoice',
-        paymentStatus: publishType === "publish" ? 'paid' : 'pending',
-        einvoiceStatus: einvoiceStatus,
-        notes: `E-Invoice Info - Tax Code: ${invoiceData.customerTaxCode || 'N/A'}, Address: ${invoiceData.customerAddress || 'N/A'}`,
-        orderedAt: new Date(),
-        employeeId: null, // Can be set if employee info is available
-        salesChannel: 'pos'
-      };
-
-      console.log("Order data to save:", orderData);
-
-      // Save order
-      const [savedOrder] = await db
-        .insert(orders)
-        .values(orderData)
-        .returning();
-
-      console.log("Order saved:", savedOrder);
-
-      // Save order items
-      if (invoiceData.items && Array.isArray(invoiceData.items)) {
-        const orderItemsData = invoiceData.items.map((item: any) => ({
-          orderId: savedOrder.id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice.toString(),
-          total: item.total.toString(),
-          notes: `Tax Rate: ${item.taxRate}%`
-        }));
-
-        const savedItems = await db
-          .insert(orderItems)
-          .values(orderItemsData)
-          .returning();
-
-        console.log("Order items saved:", savedItems.length);
-      }
-
-      res.status(201).json({
-        success: true,
-        order: savedOrder,
-        message: statusMessage,
-        einvoiceStatus: einvoiceStatus
-      });
-
-    } catch (error) {
-      console.error("=== SAVE ORDER FROM INVOICE ERROR ===");
-      console.error("Error:", error);
-
-      res.status(500).json({
-        error: "Failed to save order from invoice",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  // Sales Chart Report API endpoints - Updated with proper filtering
-  app.get("/api/transactions/:startDate/:endDate/:salesMethod/:salesChannel/:analysisType/:concernType/:selectedEmployee", async (req: TenantRequest, res) => {
-    try {
-      const { startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee } = req.params;
-      const tenantDb = await getTenantDatabase(req);
-
-      console.log("Transactions API called with params:", { startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee });
-
-      // Get transactions data
-      const transactions = await storage.getTransactions(tenantDb);
-
-      // Filter transactions based on parameters
-      const filteredTransactions = transactions.filter((transaction: any) => {
-        const transactionDate = new Date(transaction.createdAt);
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-
-        const dateMatch = transactionDate >= start && transactionDate <= end;
-
-        // Enhanced sales method filtering
-        let salesMethodMatch = true;
-        if (salesMethod !== 'all') {
-          const paymentMethod = transaction.paymentMethod || 'cash';
-          switch (salesMethod) {
-            case 'no_delivery':
-              salesMethodMatch = !transaction.deliveryMethod || transaction.deliveryMethod === 'pickup' || transaction.deliveryMethod === 'takeaway';
-              break;
-            case 'delivery':
-              salesMethodMatch = transaction.deliveryMethod === 'delivery';
-              break;
-            default:
-              salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
-          }
-        }
-
-        // Enhanced sales channel filtering
-        let salesChannelMatch = true;
-        if (salesChannel !== 'all') {
-          const channel = transaction.salesChannel || 'direct';
-          switch (salesChannel) {
-            case 'direct':
-              salesChannelMatch = !transaction.salesChannel || transaction.salesChannel === 'direct' || transaction.salesChannel === 'pos';
-              break;
-            case 'other':
-              salesChannelMatch = transaction.salesChannel && transaction.salesChannel !== 'direct' && transaction.salesChannel !== 'pos';
-              break;
-            default:
-              salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
-          }
-        }
-
-        // Enhanced employee filtering
-        let employeeMatch = true;
-        if (selectedEmployee !== 'all') {
-          employeeMatch =
-            transaction.cashierName === selectedEmployee ||
-            transaction.employeeId?.toString() === selectedEmployee ||
-            (transaction.cashierName && transaction.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
-        }
-
-        return dateMatch && salesMethodMatch && salesChannelMatch && employeeMatch;
-      });
-
-      console.log(`Found ${filteredTransactions.length} filtered transactions out of ${transactions.length} total`);
-      res.json(filteredTransactions);
-    } catch (error) {
-      console.error("Error in transactions API:", error);
-      res.status(500).json({ error: "Failed to fetch transactions data" });
-    }
-  });
-
-  app.get("/api/orders/:startDate/:endDate/:selectedEmployee/:salesChannel/:salesMethod/:analysisType/:concernType", async (req: TenantRequest, res) => {
-    try {
-      const { startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType } = req.params;
-      const tenantDb = await getTenantDatabase(req);
-
-      console.log("Orders API called with params:", { startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType });
-
-      // Get orders data
-      const orders = await storage.getOrders(undefined, undefined, tenantDb);
-
-      // Filter orders based on parameters with enhanced logic
-      const filteredOrders = orders.filter((order: any) => {
-        const orderDate = new Date(order.orderedAt || order.createdAt);
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-
-        const dateMatch = orderDate >= start && orderDate <= end;
-
-        // Enhanced employee filtering
-        let employeeMatch = true;
-        if (selectedEmployee !== 'all') {
-          employeeMatch =
-            order.employeeId?.toString() === selectedEmployee ||
-            (order.employeeName && order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase()));
-        }
-
-        // Enhanced sales channel filtering
-        let salesChannelMatch = true;
-        if (salesChannel !== 'all') {
-          const channel = order.salesChannel || 'direct';
-          switch (salesChannel) {
-            case 'direct':
-              salesChannelMatch = !order.salesChannel || order.salesChannel === 'direct' || order.salesChannel === 'pos';
-              break;
-            case 'other':
-              salesChannelMatch = order.salesChannel && order.salesChannel !== 'direct' && order.salesChannel !== 'pos';
-              break;
-            default:
-              salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
-          }
-        }
-
-        // Enhanced sales method filtering
-        let salesMethodMatch = true;
-        if (salesMethod !== 'all') {
-          switch (salesMethod) {
-            case 'no_delivery':
-              salesMethodMatch = !order.deliveryMethod || order.deliveryMethod === 'pickup' || order.deliveryMethod === 'takeaway';
-              break;
-            case 'delivery':
-              salesMethodMatch = order.deliveryMethod === 'delivery';
-              break;
-            default:
-              const paymentMethod = order.paymentMethod || 'cash';
-              salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
-          }
-        }
-
-        // Only include paid orders for analysis
-        const statusMatch = order.status === 'paid';
-
-        return dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch && statusMatch;
-      });
-
-      console.log(`Found ${filteredOrders.length} filtered orders out of ${orders.length} total`);
-      res.json(filteredOrders);
-    } catch (error) {
-      console.error("Error in orders API:", error);
-      res.status(500).json({ error: "Failed to fetch orders data" });
-    }
-  });
 
   app.get("/api/products/:selectedCategory/:productType/:productSearch?", async (req: TenantRequest, res) => {
     try {
