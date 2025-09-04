@@ -92,6 +92,8 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     noDataToExport: '내보낼 데이터가 없습니다',
     useDateRange: '날짜 범위 사용',
     dateRangeSelected: '선택된 날짜:',
+    startDate: '시작 날짜',
+    endDate: '종료 날짜',
     status: {
       present: '출석',
       absent: '결석',
@@ -192,6 +194,8 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     noDataToExport: 'No data to export',
     useDateRange: 'Use Date Range',
     dateRangeSelected: 'Date Range Selected:',
+    startDate: 'Start Date',
+    endDate: 'End Date',
     status: {
       present: 'Present',
       absent: 'Absent',
@@ -292,6 +296,8 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     noDataToExport: 'Không có dữ liệu để xuất',
     useDateRange: 'Tìm kiếm theo khoảng thời gian',
     dateRangeSelected: 'Ngày đã chọn:',
+    startDate: 'Từ ngày',
+    endDate: 'Đến ngày',
     status: {
       present: 'Có mặt',
       absent: 'Vắng mặt',
