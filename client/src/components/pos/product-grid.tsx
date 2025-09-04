@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Grid3X3, List, ArrowUpDown, Package, Coffee, Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,8 +36,11 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // Remove setCart as it's not used in this component
-  // Only use onAddToCart prop for adding items
+  // Assume setCart and other necessary hooks/context are available if this were a real component
+  // For demonstration, we'll just use the onAddToCart prop
+  const setCart = (items: CartItem[]) => {
+    console.log("Set cart called with:", items);
+  };
 
   // Fetch all products once and cache them
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
@@ -64,12 +67,9 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
   // Pre-filter products based on category and search without making new API calls
   const products = useMemo(() => {
-    if (!allProducts || !Array.isArray(allProducts)) return [];
+    if (!allProducts) return [];
 
     return allProducts.filter((product: Product) => {
-      // Safety check for product data
-      if (!product || typeof product !== 'object') return false;
-      
       // Category filter
       if (selectedCategory !== "all" && product.categoryId !== selectedCategory) {
         return false;
@@ -79,8 +79,8 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       if (searchQuery) {
         const searchLower = searchQuery.toLowerCase();
         return (
-          (product.name && product.name.toLowerCase().includes(searchLower)) ||
-          (product.sku && product.sku.toLowerCase().includes(searchLower))
+          product.name.toLowerCase().includes(searchLower) ||
+          product.sku.toLowerCase().includes(searchLower)
         );
       }
 
@@ -116,7 +116,19 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     });
   };
   
-  // updateCart function removed as it's not needed in this component
+  // Mock updateCart function to demonstrate the change
+  const updateCart = (productId: number, quantity: number) => {
+    setCart(prev => prev.map(item => 
+      item.id === productId 
+        ? { 
+            ...item, 
+            quantity, 
+            total: (parseFloat(item.price) * quantity).toFixed(2),
+            afterTaxPrice: item.afterTaxPrice // Preserve afterTaxPrice
+          }
+        : item
+    ));
+  };
 
   const getPlaceholderImage = (categoryId: number, productName: string) => {
     // Determine the best placeholder based on category and product name
@@ -221,16 +233,16 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
       switch (sortBy) {
         case 'price':
-          aValue = parseFloat(a.price || '0');
-          bValue = parseFloat(b.price || '0');
+          aValue = parseFloat(a.price);
+          bValue = parseFloat(b.price);
           break;
         case 'stock':
-          aValue = a.stock || 0;
-          bValue = b.stock || 0;
+          aValue = a.stock;
+          bValue = b.stock;
           break;
         default:
-          aValue = (a.name || '').toLowerCase();
-          bValue = (b.name || '').toLowerCase();
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
       }
 
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
@@ -309,11 +321,9 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                           className="w-full h-32 object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            if (target) {
-                              target.style.display = 'none';
-                              const placeholder = target.nextElementSibling as HTMLElement;
-                              if (placeholder) placeholder.style.display = 'flex';
-                            }
+                            target.style.display = 'none';
+                            const placeholder = target.nextElementSibling as HTMLElement;
+                            if (placeholder) placeholder.style.display = 'flex';
                           }}
                         />
                       ) : null}

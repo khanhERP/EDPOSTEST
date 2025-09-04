@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   ShoppingCart as CartIcon,
   Minus,
@@ -71,7 +71,7 @@ export function ShoppingCart({
   // Pre-calculate totals using useMemo to avoid continuous recalculation
   const cartTotals = useMemo(() => {
     const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-
+    
     const tax = cart.reduce((sum, item) => {
       if (item.taxRate && parseFloat(item.taxRate) > 0) {
         const basePrice = parseFloat(item.price);
@@ -85,14 +85,14 @@ export function ShoppingCart({
       }
       return sum;
     }, 0);
-
+    
     const total = Math.round(subtotal + tax);
-
+    
     return { subtotal, tax, total };
   }, [cart]);
 
   const { subtotal, tax, total } = cartTotals;
-
+  
   const change = useMemo(() => {
     return paymentMethod === "cash"
       ? Math.max(0, parseFloat(amountReceived || "0") - total)
@@ -159,12 +159,12 @@ export function ShoppingCart({
 
             if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'force_refresh') {
               console.log('🔄 Shopping Cart: Refreshing data due to WebSocket signal');
-
+              
               // Clear cart if payment was successful
               if (data.type === 'popup_close' && data.success) {
                 console.log('🔄 Shopping Cart: Clearing cart due to successful payment');
                 onClearCart();
-
+                
                 // Clear any active orders
                 if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
                   (window as any).clearActiveOrder();
@@ -199,11 +199,11 @@ export function ShoppingCart({
     return () => {
       console.log('🔗 Shopping Cart: Cleaning up WebSocket connection');
       shouldReconnect = false;
-
+      
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
       }
-
+      
       if (ws) {
         ws.close();
       }
