@@ -1318,7 +1318,94 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     method: string,
     paymentData?: any,
   ) => {
-    console.log("💳 Payment method selected:", method, paymentData);
+    console.log("💳 Table Grid: Payment method selected:", method, paymentData);
+
+    if (method === "paymentCompleted" && paymentData?.success) {
+      console.log('✅ Table Grid: Payment completed successfully', paymentData);
+
+      try {
+        // IMMEDIATE: Clear all cache and force aggressive refresh
+        console.log("🔄 Table Grid: Starting aggressive data refresh after payment success");
+        
+        queryClient.clear();
+        queryClient.removeQueries({ queryKey: ["/api/tables"] });
+        queryClient.removeQueries({ queryKey: ["/api/orders"] });
+
+        // Force immediate fresh API calls
+        const [freshTables, freshOrders] = await Promise.all([
+          fetch("/api/tables", {
+            cache: "no-store",
+            headers: { "Cache-Control": "no-cache" }
+          }).then(r => r.json()),
+          fetch("/api/orders", {
+            cache: "no-store", 
+            headers: { "Cache-Control": "no-cache" }
+          }).then(r => r.json())
+        ]);
+
+        // Set fresh data immediately
+        queryClient.setQueryData(["/api/tables"], freshTables);
+        queryClient.setQueryData(["/api/orders"], freshOrders);
+
+        console.log("✅ Table Grid: Fresh data loaded after payment completion");
+
+        // Force re-render
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        }, 100);
+
+        // Close all modals and clear states
+        setShowPaymentMethodModal(false);
+        setOrderForPayment(null);
+        setOrderDetailsOpen(false);
+        setSelectedOrder(null);
+        setOrderForEInvoice(null);
+
+        // Show success message
+        toast({
+          title: 'Thành công',
+          description: paymentData.publishLater
+            ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
+            : 'Đơn hàng đã được thanh toán thành công',
+        });
+
+        // Show receipt if provided
+        if (paymentData.receipt && paymentData.shouldShowReceipt !== false) {
+          console.log('📄 Table Grid: Showing final receipt modal');
+          setSelectedReceipt(paymentData.receipt);
+          setShowReceiptModal(true);
+        }
+
+        console.log('🎉 Table Grid: Payment flow completed and data refreshed successfully');
+
+      } catch (error) {
+        console.error('❌ Table Grid: Error refreshing data after payment:', error);
+        
+        // Fallback refresh
+        await Promise.all([
+          refetchTables(),
+          refetchOrders()
+        ]);
+      }
+
+      return;
+    }
+
+    if (method === "paymentError" && paymentData) {
+      console.error("❌ Table Grid: Payment failed", paymentData);
+
+      toast({
+        title: 'Lỗi',
+        description: paymentData.error || 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+
+      // Close modal and clear states
+      setShowPaymentMethodModal(false);
+      setOrderForPayment(null);
+      return;
+    }
 
     if (!orderForPayment) {
       console.error("❌ No order found for payment");
