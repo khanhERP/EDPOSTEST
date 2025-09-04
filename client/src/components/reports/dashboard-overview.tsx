@@ -204,26 +204,39 @@ export function DashboardOverview() {
         } : null
       });
 
-      // Calculate revenue from each source using formula: total - discount - tax
+      // Calculate revenue from each source - use subtotal (before tax) as net revenue
       const orderRevenue = completedOrders.reduce((sum: number, order: any) => {
+        // Use subtotal if available, otherwise calculate total - tax
+        const subtotal = Number(order.subtotal || 0);
         const total = Number(order.total || 0);
-        const discount = Number(order.discount || 0);
         const tax = Number(order.tax || 0);
-        return sum + (total - discount - tax);
+        const discount = Number(order.discount || 0);
+        
+        // Net revenue = subtotal - discount (excluding tax)
+        const netRevenue = subtotal > 0 ? (subtotal - discount) : (total - tax - discount);
+        return sum + Math.max(0, netRevenue);
       }, 0);
 
       const transactionRevenue = completedTransactions.reduce((sum: number, tx: any) => {
+        const subtotal = Number(tx.subtotal || 0);
         const total = Number(tx.total || tx.amount || 0);
-        const discount = Number(tx.discount || 0);
         const tax = Number(tx.tax || 0);
-        return sum + (total - discount - tax);
+        const discount = Number(tx.discount || 0);
+        
+        // Net revenue = subtotal - discount (excluding tax)
+        const netRevenue = subtotal > 0 ? (subtotal - discount) : (total - tax - discount);
+        return sum + Math.max(0, netRevenue);
       }, 0);
 
       const invoiceRevenue = publishedInvoices.reduce((sum: number, invoice: any) => {
+        const subtotal = Number(invoice.subtotal || 0);
         const total = Number(invoice.total || 0);
-        const discount = Number(invoice.discount || 0);
         const tax = Number(invoice.tax || 0);
-        return sum + (total - discount - tax);
+        const discount = Number(invoice.discount || 0);
+        
+        // Net revenue = subtotal - discount (excluding tax)
+        const netRevenue = subtotal > 0 ? (subtotal - discount) : (total - tax - discount);
+        return sum + Math.max(0, netRevenue);
       }, 0);
 
       // Total revenue from all sources
