@@ -94,7 +94,7 @@ export function ReceiptModal({
       isPreview,
       total
     });
-    
+
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md">
@@ -103,8 +103,8 @@ export function ReceiptModal({
           </DialogHeader>
           <div className="p-4 text-center">
             <p>
-              {isPreview 
-                ? "Không có sản phẩm trong giỏ hàng để xem trước hóa đơn" 
+              {isPreview
+                ? "Không có sản phẩm trong giỏ hàng để xem trước hóa đơn"
                 : "Không có dữ liệu hóa đơn để hiển thị"
               }
             </p>
@@ -490,25 +490,25 @@ export function ReceiptModal({
             </div>
 
             <div className="space-y-2 mb-3">
-              {receipt.items.map((item) => {
+              {(receipt.items || []).map((item) => {
                 // For receipt display, show the unit price (base price without tax) and total from order details
-                const unitPrice = parseFloat(item.price);
+                const unitPrice = parseFloat(item.price || "0");
 
                 return (
-                  <div key={item.id}>
+                  <div key={item.id || Math.random()}>
                     <div className="flex justify-between text-sm">
                       <div className="flex-1">
-                        <div>{item.productName}</div>
+                        <div>{item.productName || item.name || "Unknown Product"}</div>
                         <div className="text-xs text-gray-600">
                           SKU:{" "}
-                          {`FOOD${String(item.productId || item.id).padStart(5, "0")}`}
+                          {`FOOD${String(item.productId || item.id || "0").padStart(5, "0")}`}
                         </div>
                         <div className="text-xs text-gray-600">
-                          {item.quantity} x{" "}
-                          {Math.floor(parseFloat(item.total) / item.quantity).toLocaleString("vi-VN")} ₫
+                          {item.quantity || 1} x{" "}
+                          {Math.floor(parseFloat(item.total || "0") / (item.quantity || 1)).toLocaleString("vi-VN")} ₫
                         </div>
                       </div>
-                      <div>{Math.floor(parseFloat(item.total)).toLocaleString("vi-VN")} ₫</div>
+                      <div>{Math.floor(parseFloat(item.total || "0")).toLocaleString("vi-VN")} ₫</div>
                     </div>
                   </div>
                 );
