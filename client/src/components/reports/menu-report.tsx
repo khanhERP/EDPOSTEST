@@ -523,7 +523,7 @@ function MenuReport() {
               </div>
             </>
           )}
-          
+
           {/* Category Performance Table - Only show when data exists */}
           {menuAnalysis?.categoryStats && menuAnalysis.categoryStats.length > 0 && (
             <div className="overflow-x-auto">
