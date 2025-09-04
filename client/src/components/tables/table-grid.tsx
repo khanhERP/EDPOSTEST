@@ -1990,11 +1990,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           className={`font-medium ${Number(activeOrder.total) <= 0 ? "text-gray-400" : "text-gray-900"}`}
                         >
                           {(() => {
-                            // Always use the stored total from database for display consistency
+                            // Get stored total from database
                             const storedTotal = Number(activeOrder.total || 0);
 
                             console.log(
-                              `💰 Table ${table.tableNumber} using stored total:`,
+                              `💰 Table ${table.tableNumber} total calculation:`,
                               {
                                 orderId: activeOrder.id,
                                 storedTotal: storedTotal,
@@ -2002,11 +2002,53 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               }
                             );
 
-                            if (storedTotal <= 0) {
-                              return "0";
+                            // If stored total exists and is positive, use it
+                            if (storedTotal > 0) {
+                              return Math.floor(storedTotal).toLocaleString("vi-VN");
                             }
 
-                            return Math.floor(storedTotal).toLocaleString("vi-VN");
+                            // If no stored total, try to calculate from order items if available
+                            const orderItemsForTable = allOrderItems?.get(activeOrder.id);
+                            if (orderItemsForTable && Array.isArray(orderItemsForTable) && orderItemsForTable.length > 0) {
+                              let calculatedSubtotal = 0;
+                              let calculatedTax = 0;
+
+                              orderItemsForTable.forEach((item: any) => {
+                                const basePrice = Number(item.unitPrice || 0);
+                                const quantity = Number(item.quantity || 0);
+                                const product = Array.isArray(products)
+                                  ? products.find((p: any) => p.id === item.productId)
+                                  : null;
+
+                                // Calculate subtotal
+                                calculatedSubtotal += basePrice * quantity;
+
+                                // Calculate tax using same logic as other components
+                                if (
+                                  product?.afterTaxPrice &&
+                                  product.afterTaxPrice !== null &&
+                                  product.afterTaxPrice !== ""
+                                ) {
+                                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                  const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                                  calculatedTax += taxPerUnit * quantity;
+                                }
+                              });
+
+                              const calculatedTotal = calculatedSubtotal + calculatedTax;
+                              if (calculatedTotal > 0) {
+                                console.log(`💰 Table ${table.tableNumber} using calculated total:`, {
+                                  itemsCount: orderItemsForTable.length,
+                                  calculatedSubtotal,
+                                  calculatedTax,
+                                  calculatedTotal
+                                });
+                                return Math.floor(calculatedTotal).toLocaleString("vi-VN");
+                              }
+                            }
+
+                            // Fallback to "0" if no valid total found
+                            return "0";
                           })()}{" "}
                           ₫
                         </div>
