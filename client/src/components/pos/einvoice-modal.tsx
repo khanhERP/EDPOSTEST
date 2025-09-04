@@ -203,18 +203,38 @@ export function EInvoiceModal({
       );
       console.log("🔥 total when modal opens:", total);
 
+      // Set default template based on available templates
+      const defaultTemplate = invoiceTemplates.length > 0 ? invoiceTemplates[0].id.toString() : "";
+
       setFormData({
-        invoiceProvider: "EasyInvoice", // Default provider
+        invoiceProvider: eInvoiceConnections.length > 0 ? eInvoiceConnections[0].softwareName : "EasyInvoice", // Use first available provider
         invoiceTemplate: "1C25TYY", // Default template
-        selectedTemplateId: "",
+        selectedTemplateId: defaultTemplate,
         taxCode: "0123456789", // Default tax code
         customerName: "Khách hàng lẻ", // Default customer name
         address: "",
         phoneNumber: "",
         email: "",
       });
+
+      // Show warning if no connections or templates are available
+      if (eInvoiceConnections.length === 0) {
+        toast({
+          title: "Cảnh báo",
+          description: "Chưa có kết nối hóa đơn điện tử nào được cấu hình. Vui lòng kiểm tra Settings.",
+          variant: "destructive",
+        });
+      }
+      
+      if (invoiceTemplates.length === 0) {
+        toast({
+          title: "Cảnh báo", 
+          description: "Chưa có mẫu hóa đơn nào được kích hoạt. Vui lòng kiểm tra Settings.",
+          variant: "destructive",
+        });
+      }
     }
-  }, [isOpen]); // Only reset when modal opens/closes
+  }, [isOpen, eInvoiceConnections, invoiceTemplates]); // Add dependencies
 
   // Separate effect for debugging cartItems changes without resetting form
   useEffect(() => {
@@ -428,8 +448,19 @@ export function EInvoiceModal({
       if (!total || total <= 0) {
         console.error("❌ Invalid total amount for later publishing:", total);
         toast({
-          title: "Lỗi",
+          title: "Lỗi", 
           description: "Tổng tiền không hợp lệ để lưu hóa đơn.",
+          variant: "destructive",
+        });
+        setIsPublishing(false);
+        return;
+      }
+
+      // Validate required customer information
+      if (!formData.customerName || formData.customerName.trim() === "") {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng nhập tên khách hàng.",
           variant: "destructive",
         });
         setIsPublishing(false);
@@ -678,14 +709,22 @@ export function EInvoiceModal({
 
     // Validate required fields
     if (!formData.invoiceProvider || !formData.customerName) {
-      alert(
-        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
-      );
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
+        variant: "destructive",
+      });
+      setIsPublishing(false);
       return;
     }
 
     if (!formData.selectedTemplateId) {
-      alert("Vui lòng chọn mẫu số hóa đơn");
+      toast({
+        title: "Lỗi", 
+        description: "Vui lòng chọn mẫu số hóa đơn",
+        variant: "destructive",
+      });
+      setIsPublishing(false);
       return;
     }
 
@@ -713,9 +752,23 @@ export function EInvoiceModal({
       );
 
       if (!connectionInfo) {
-        alert(
-          `Không tìm thấy thông tin kết nối cho ${formData.invoiceProvider}. Vui lòng kiểm tra cấu hình trong Settings.`,
-        );
+        toast({
+          title: "Lỗi kết nối",
+          description: `Không tìm thấy thông tin kết nối cho ${formData.invoiceProvider}. Vui lòng kiểm tra cấu hình trong Settings.`,
+          variant: "destructive",
+        });
+        setIsPublishing(false);
+        return;
+      }
+
+      // Validate connection info completeness
+      if (!connectionInfo.taxCode || !connectionInfo.loginId || !connectionInfo.password) {
+        toast({
+          title: "Lỗi cấu hình",
+          description: `Thông tin kết nối cho ${formData.invoiceProvider} không đầy đủ. Vui lòng kiểm tra Mã số thuế, Login ID và Password trong Settings.`,
+          variant: "destructive",
+        });
+        setIsPublishing(false);
         return;
       }
 
@@ -733,16 +786,12 @@ export function EInvoiceModal({
           length: cartItems?.length,
           total: total,
         });
-        alert(
-          "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " +
-            (cartItems?.length || 0) +
-            "\n- Tổng tiền: " +
-            total.toLocaleString("vi-VN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }) +
-            " ₫\n\nVui lòng thử lại từ màn hình bán hàng.",
-        );
+        toast({
+          title: "Lỗi dữ liệu",
+          description: `Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử. Số sản phẩm: ${cartItems?.length || 0}, Tổng tiền: ${total.toLocaleString("vi-VN")} ₫`,
+          variant: "destructive",
+        });
+        setIsPublishing(false);
         return;
       }
 
@@ -766,9 +815,12 @@ export function EInvoiceModal({
 
       if (invalidItems.length > 0) {
         console.error("❌ Invalid cart items found:", invalidItems);
-        alert(
-          `Có ${invalidItems.length} sản phẩm trong giỏ hàng thiếu thông tin:\n${invalidItems.map((item) => `- ${item?.name || "Không có tên"}`).join("\n")}\n\nVui lòng kiểm tra lại giỏ hàng.`,
-        );
+        toast({
+          title: "Lỗi dữ liệu sản phẩm",
+          description: `Có ${invalidItems.length} sản phẩm trong giỏ hàng thiếu thông tin. Vui lòng kiểm tra lại giỏ hàng.`,
+          variant: "destructive",
+        });
+        setIsPublishing(false);
         return;
       }
 
@@ -874,7 +926,12 @@ export function EInvoiceModal({
       );
 
       if (!selectedTemplate) {
-        alert("Không tìm thấy thông tin mẫu số hóa đơn được chọn");
+        toast({
+          title: "Lỗi mẫu hóa đơn",
+          description: "Không tìm thấy thông tin mẫu số hóa đơn được chọn",
+          variant: "destructive",
+        });
+        setIsPublishing(false);
         return;
       }
 
@@ -1251,7 +1308,19 @@ export function EInvoiceModal({
       }
     } catch (error) {
       console.error("Error publishing invoice:", error);
-      alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);
+      let errorMessage = "Có lỗi xảy ra khi phát hành hóa đơn";
+      
+      if (error instanceof Error) {
+        errorMessage = `Lỗi phát hành hóa đơn: ${error.message}`;
+      } else if (typeof error === "string") {
+        errorMessage = `Lỗi phát hành hóa đơn: ${error}`;
+      }
+      
+      toast({
+        title: "Lỗi phát hành",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsPublishing(false);
     }

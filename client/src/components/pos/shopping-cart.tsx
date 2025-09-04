@@ -685,11 +685,22 @@ export function ShoppingCart({
 
     } else {
       console.error("❌ POS: E-Invoice processing failed or cancelled");
+      
+      let errorMessage = "Không thể xử lý hóa đơn điện tử";
+      if (invoiceData && invoiceData.error) {
+        errorMessage = `Lỗi hóa đơn điện tử: ${invoiceData.error}`;
+      } else if (invoiceData && invoiceData.message) {
+        errorMessage = `Lỗi hóa đơn điện tử: ${invoiceData.message}`;
+      }
+      
       toast({
-        title: "Lỗi",
-        description: "Không thể xử lý hóa đơn điện tử",
+        title: "Lỗi phát hành hóa đơn",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Reset states on error
+      setIsProcessingPayment(false);
     }
   };
 
