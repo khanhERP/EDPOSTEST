@@ -310,50 +310,96 @@ export function OrderDialog({
       // Check if there are new items to add or if existing items were removed
       const hasChanges = cart.length > 0 || existingItems.some(item => item.quantity === 0); // Check if any existing item quantity became 0
 
-      // If no new items are added, just refresh the data without updating database
+      // If no new items are added, recalculate and update order totals in database
       if (cart.length === 0 && !existingItems.some(item => item.quantity === 0)) {
-        console.log('🔄 Order Dialog: Refreshing data without updating database');
+        console.log('🧮 Order Dialog: No new items to add, recalculating and updating totals in database');
 
         try {
-          // Just refresh the displayed data from database
+          // Step 1: Calculate new totals based on current items
+          const newSubtotal = calculateTotal();
+          const newTax = calculateTax();
+          const newTotal = calculateGrandTotal();
+
+          console.log('💰 Order Dialog: Calculated new totals:', {
+            newSubtotal,
+            newTax,
+            newTotal,
+          });
+
+          // Step 2: Update order in database with new calculated totals
+          console.log('💾 Updating order totals in database...');
+          const updateData = {
+            subtotal: newSubtotal.toFixed(2),
+            tax: newTax.toFixed(2),
+            total: newTotal.toFixed(2),
+            updatedAt: new Date().toISOString()
+          };
+
+          console.log('📤 Sending update data to database:', updateData);
+
+          const updateResponse = await apiRequest('PUT', `/api/orders/${existingOrder.id}`, updateData);
+
+          if (!updateResponse.ok) {
+            const errorText = await updateResponse.text();
+            throw new Error(`Failed to update order totals: ${errorText}`);
+          }
+
+          const updatedOrderData = await updateResponse.json();
+          console.log('✅ Order Dialog: Order updated successfully in database:', updatedOrderData);
+
+          // Step 3: Force fresh data fetch from all sources
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
             queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
             queryClient.invalidateQueries({ queryKey: ["/api/order-items"] }),
-            queryClient.invalidateQueries({ queryKey: ["/api/order-items", existingOrder.id] }),
             queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
-            queryClient.refetchQueries({ queryKey: ["/api/tables"] }),
-            queryClient.refetchQueries({ queryKey: ["/api/order-items", existingOrder.id] })
+            queryClient.refetchQueries({ queryKey: ["/api/tables"] })
           ]);
 
-          console.log('🔄 Order Dialog: Data refreshed successfully');
+          console.log('🔄 Order Dialog: All queries invalidated and refetched');
 
-          // Emit refresh events
+          // Step 4: Emit events to notify other components
+          window.dispatchEvent(new CustomEvent('orderTotalsUpdated', { 
+            detail: { 
+              orderId: existingOrder.id,
+              oldTotal: existingOrder.total,
+              newTotal: newTotal.toFixed(2),
+              action: 'recalculate',
+              immediate: true,
+              timestamp: Date.now()
+            } 
+          }));
+
           window.dispatchEvent(new CustomEvent('refreshOrders', { 
             detail: { 
               immediate: true,
-              source: 'order-dialog-refresh',
-              action: 'data_refresh_only',
+              source: 'order-dialog-recalculate',
+              updatedOrder: {
+                id: existingOrder.id,
+                total: newTotal.toFixed(2),
+                subtotal: newSubtotal.toFixed(2),
+                tax: newTax.toFixed(2)
+              },
               timestamp: Date.now()
             } 
           }));
 
           toast({
-            title: "Đã làm mới",
-            description: "Dữ liệu đã được cập nhật từ database",
+            title: t('orders.orderUpdateSuccess'),
+            description: `Đã cập nhật thành công: ${Math.round(newTotal).toLocaleString()} ₫`,
           });
 
         } catch (error) {
-          console.error('❌ Order Dialog: Error refreshing data:', error);
+          console.error('❌ Order Dialog: Error updating order totals:', error);
           toast({
-            title: "Lỗi làm mới",
-            description: `Có lỗi xảy ra khi làm mới dữ liệu: ${error.message}`,
+            title: "Lỗi cập nhật",
+            description: `Có lỗi xảy ra khi cập nhật tổng tiền: ${error.message}`,
             variant: "destructive",
           });
           return;
         }
 
-        // Reset form state and close dialog
+        // Step 5: Reset form state and close dialog
         setCart([]);
         setCustomerName("");
         setCustomerCount(1);
