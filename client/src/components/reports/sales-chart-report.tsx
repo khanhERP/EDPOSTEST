@@ -312,24 +312,60 @@ export function SalesChartReport() {
       [date: string]: { orders: number; revenue: number; customers: number };
     } = {};
 
-    filteredCompletedOrders.forEach((item: any) => {
-      try {
-        const itemDate = new Date(item.date);
-        if (isNaN(itemDate.getTime())) return;
+    console.log("Processing filtered completed orders:", {
+      count: filteredCompletedOrders.length,
+      sampleOrder: filteredCompletedOrders[0]
+    });
 
-        const dateStr = itemDate.toISOString().split("T")[0];
+    filteredCompletedOrders.forEach((order: any) => {
+      try {
+        // Use correct date field from order
+        const orderDate = new Date(
+          order.orderedAt ||
+          order.createdAt ||
+          order.created_at ||
+          order.paidAt ||
+          order.date
+        );
+        
+        if (isNaN(orderDate.getTime())) {
+          console.warn("Invalid date for order:", order.id, {
+            orderedAt: order.orderedAt,
+            createdAt: order.createdAt,
+            paidAt: order.paidAt,
+            date: order.date
+          });
+          return;
+        }
+
+        const dateStr = orderDate.toISOString().split("T")[0];
 
         if (!dailySales[dateStr]) {
           dailySales[dateStr] = { orders: 0, revenue: 0, customers: 0 };
         }
 
         dailySales[dateStr].orders += 1;
-        dailySales[dateStr].revenue += Number(item.amount || 0);
-        dailySales[dateStr].customers += Number(item.customerCount || 1);
+        // Use total from order, not amount
+        const orderTotal = Number(order.total || order.amount || 0);
+        const orderDiscount = Number(order.discount || 0);
+        const revenue = orderTotal - orderDiscount;
+        
+        dailySales[dateStr].revenue += revenue;
+        dailySales[dateStr].customers += Number(order.customerCount || 1);
+
+        console.log("Processing order:", {
+          id: order.id,
+          date: dateStr,
+          total: orderTotal,
+          discount: orderDiscount,
+          revenue: revenue
+        });
       } catch (error) {
-        console.warn("Error processing item for daily sales:", error);
+        console.warn("Error processing order for daily sales:", error, order);
       }
     });
+
+    console.log("Daily sales calculated:", dailySales);
 
     const paymentMethods: {
       [method: string]: { count: number; revenue: number };
@@ -343,10 +379,12 @@ export function SalesChartReport() {
       paymentMethods[method].count += 1;
 
       // Use EXACT same revenue calculation as dashboard: total - discount
-      const orderTotal = Number(order.total || 0);
+      const orderTotal = Number(order.total || order.amount || 0);
       const discount = Number(order.discount || 0);
       paymentMethods[method].revenue += orderTotal - discount;
     });
+
+    console.log("Payment methods calculated:", paymentMethods);
 
     // Use dashboard stats directly for consistency
     const totalRevenue = dashboardStats.periodRevenue || 0;
@@ -2599,10 +2637,17 @@ export function SalesChartReport() {
         filteredOrders.forEach((order: any) => {
           const orderDate = new Date(
             order.orderedAt ||
-              order.paidAt ||
               order.createdAt ||
-              order.created_at,
+              order.created_at ||
+              order.paidAt ||
+              order.date
           );
+          
+          if (isNaN(orderDate.getTime())) {
+            console.warn("Invalid date in chart data generation:", order.id);
+            return;
+          }
+          
           const year = orderDate.getFullYear();
           const month = (orderDate.getMonth() + 1).toString().padStart(2, "0");
           const day = orderDate.getDate().toString().padStart(2, "0");
@@ -2613,7 +2658,7 @@ export function SalesChartReport() {
           }
 
           // Use exact same revenue calculation as dashboard
-          const orderTotal = Number(order.total || 0);
+          const orderTotal = Number(order.total || order.amount || 0);
           const orderDiscount = Number(order.discount || 0);
           const revenue = orderTotal - orderDiscount;
 
