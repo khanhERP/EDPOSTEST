@@ -2679,6 +2679,16 @@ export class DatabaseStorage implements IStorage {
     console.log('💾 Creating invoice in database:', invoiceData);
 
     try {
+      // Handle date conversion properly
+      let invoiceDate = new Date();
+      if (invoiceData.invoiceDate) {
+        if (invoiceData.invoiceDate instanceof Date) {
+          invoiceDate = invoiceData.invoiceDate;
+        } else if (typeof invoiceData.invoiceDate === 'string') {
+          invoiceDate = new Date(invoiceData.invoiceDate);
+        }
+      }
+
       // Insert invoice
       const [invoice] = await database.insert(invoices).values({
         invoiceNumber: invoiceData.invoiceNumber || null,
@@ -2693,7 +2703,7 @@ export class DatabaseStorage implements IStorage {
         tax: invoiceData.tax,
         total: invoiceData.total,
         paymentMethod: invoiceData.paymentMethod || 1,
-        invoiceDate: invoiceData.invoiceDate || new Date(),
+        invoiceDate: invoiceDate,
         status: invoiceData.status || 'draft',
         einvoiceStatus: invoiceData.einvoiceStatus || 0,
         notes: invoiceData.notes || null
