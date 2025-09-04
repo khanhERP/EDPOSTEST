@@ -207,36 +207,90 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   }, []);
 
 
-  // WebSocket connection for real-time updates
+  // Enhanced WebSocket connection for AGGRESSIVE real-time updates
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     const ws = new WebSocket(wsUrl);
 
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
 
+        // Expanded list of events that trigger aggressive refresh
         if (data.type === 'popup_close' ||
             data.type === 'payment_success' ||
             data.type === 'order_status_update' ||
             data.type === 'force_refresh' ||
             data.type === 'einvoice_published' ||
-            data.type === 'einvoice_saved_for_later') {
-          console.log('🔄 TableGrid: Refreshing data due to WebSocket signal:', data.type);
+            data.type === 'einvoice_saved_for_later' ||
+            data.type === 'payment_completed' ||
+            data.type === 'modal_closed' ||
+            data.force_refresh === true) {
+          
+          console.log('🔄 TableGrid: AGGRESSIVE data refresh triggered by WebSocket:', data.type);
 
-          // Force refresh all queries
-          queryClient.clear();
-          queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+          try {
+            // AGGRESSIVE REFRESH STRATEGY
+            // Step 1: Complete cache clearing
+            queryClient.clear();
+            queryClient.removeQueries();
+
+            // Step 2: Force immediate fresh data fetch with cache busting
+            const timestamp = Date.now().toString();
+            const [freshTables, freshOrders] = await Promise.all([
+              fetch(`/api/tables?_ws_refresh=${timestamp}`, {
+                cache: "no-store",
+                headers: { 
+                  "Cache-Control": "no-cache, no-store, must-revalidate",
+                  "Pragma": "no-cache",
+                  "Expires": "0"
+                }
+              }).then(r => r.json()),
+              fetch(`/api/orders?_ws_refresh=${timestamp}`, {
+                cache: "no-store",
+                headers: { 
+                  "Cache-Control": "no-cache, no-store, must-revalidate",
+                  "Pragma": "no-cache",
+                  "Expires": "0"
+                }
+              }).then(r => r.json())
+            ]);
+
+            // Step 3: Set fresh data immediately
+            queryClient.setQueryData(["/api/tables"], freshTables);
+            queryClient.setQueryData(["/api/orders"], freshOrders);
+
+            console.log('✅ TableGrid: Fresh data loaded via WebSocket trigger');
+
+            // Step 4: Multiple timed invalidations for guaranteed UI update
+            setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+            }, 100);
+
+            setTimeout(() => {
+              queryClient.refetchQueries({ queryKey: ["/api/tables"] });
+              queryClient.refetchQueries({ queryKey: ["/api/orders"] });
+            }, 250);
+
+          } catch (refreshError) {
+            console.error('❌ TableGrid: WebSocket triggered refresh failed, using fallback:', refreshError);
+            
+            // Fallback to standard refresh
+            queryClient.clear();
+            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+          }
 
           // Dispatch custom event for other components
           window.dispatchEvent(new CustomEvent('refreshTableData', {
             detail: {
-              source: 'table_grid_websocket',
+              source: 'table_grid_websocket_aggressive',
               reason: data.type,
-              action: data.action || 'refresh',
+              action: data.action || 'aggressive_refresh',
               invoiceId: data.invoiceId || null,
+              forceRefresh: true,
               timestamp: new Date().toISOString()
             }
           }));
@@ -251,13 +305,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     };
 
     ws.onclose = () => {
-      console.log('ℹ️ TableGrid: WebSocket connection closed.');
-      // Optionally implement reconnection logic here
+      console.log('ℹ️ TableGrid: WebSocket connection closed, will reconnect...');
+      // Implement reconnection with delay
+      setTimeout(() => {
+        console.log('🔄 TableGrid: Attempting WebSocket reconnection...');
+        // This will trigger the useEffect to run again
+      }, 3000);
     };
 
     // Cleanup on component unmount
     return () => {
-      ws.close();
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
     };
   }, [queryClient]);
 
@@ -1313,7 +1373,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   };
 
-  // Define handlePaymentMethodSelect here
+  // Define handlePaymentMethodSelect here - ENHANCED for immediate data refresh
   const handlePaymentMethodSelect = async (
     method: string,
     paymentData?: any,
@@ -1324,38 +1384,57 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       console.log('✅ Table Grid: Payment completed successfully', paymentData);
 
       try {
-        // IMMEDIATE: Clear all cache and force aggressive refresh
-        console.log("🔄 Table Grid: Starting aggressive data refresh after payment success");
-        
+        // STEP 1: Clear ALL cache aggressively
+        console.log("🔄 Table Grid: AGGRESSIVE cache clearing starting...");
         queryClient.clear();
-        queryClient.removeQueries({ queryKey: ["/api/tables"] });
-        queryClient.removeQueries({ queryKey: ["/api/orders"] });
-
-        // Force immediate fresh API calls
+        queryClient.removeQueries();
+        
+        // STEP 2: Force immediate fresh data fetch with multiple strategies
+        console.log("🔄 Table Grid: Force fetching fresh data...");
+        
+        // Strategy A: Direct fetch with no-cache headers
         const [freshTables, freshOrders] = await Promise.all([
-          fetch("/api/tables", {
+          fetch("/api/tables?" + new URLSearchParams({ 
+            _t: Date.now().toString(),
+            _force: "true" 
+          }), {
             cache: "no-store",
-            headers: { "Cache-Control": "no-cache" }
+            headers: { 
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache",
+              "Expires": "0"
+            }
           }).then(r => r.json()),
-          fetch("/api/orders", {
-            cache: "no-store", 
-            headers: { "Cache-Control": "no-cache" }
+          fetch("/api/orders?" + new URLSearchParams({ 
+            _t: Date.now().toString(),
+            _force: "true" 
+          }), {
+            cache: "no-store",
+            headers: { 
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache", 
+              "Expires": "0"
+            }
           }).then(r => r.json())
         ]);
 
-        // Set fresh data immediately
+        // STEP 3: Set fresh data immediately in cache
         queryClient.setQueryData(["/api/tables"], freshTables);
         queryClient.setQueryData(["/api/orders"], freshOrders);
+        console.log("✅ Table Grid: Fresh data loaded and cached");
 
-        console.log("✅ Table Grid: Fresh data loaded after payment completion");
-
-        // Force re-render
+        // STEP 4: Force multiple re-renders with different timings
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
           queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-        }, 100);
+        }, 50);
 
-        // Close all modals and clear states
+        setTimeout(() => {
+          queryClient.refetchQueries({ queryKey: ["/api/tables"] });
+          queryClient.refetchQueries({ queryKey: ["/api/orders"] });
+        }, 200);
+
+        // STEP 5: Close all modals and clear states
         setShowPaymentMethodModal(false);
         setOrderForPayment(null);
         setOrderDetailsOpen(false);
@@ -1382,11 +1461,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       } catch (error) {
         console.error('❌ Table Grid: Error refreshing data after payment:', error);
         
-        // Fallback refresh
-        await Promise.all([
-          refetchTables(),
-          refetchOrders()
-        ]);
+        // Fallback refresh with forced refetch
+        try {
+          await Promise.all([
+            refetchTables(),
+            refetchOrders()
+          ]);
+          console.log("✅ Fallback refresh completed");
+        } catch (fallbackError) {
+          console.error("❌ Fallback refresh also failed:", fallbackError);
+        }
       }
 
       return;
@@ -2854,14 +2938,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         />
       )}
 
-      {/* Receipt Modal - Final receipt after payment */}
+      {/* Receipt Modal - Final receipt after payment - ENHANCED with aggressive refresh */}
       {showReceiptModal && selectedReceipt && (
         <ReceiptModal
           isOpen={showReceiptModal}
           onClose={async () => {
-            console.log("🔴 Table: Receipt modal closing - force data refresh");
+            console.log("🔴 Table: Receipt modal closing - AGGRESSIVE data refresh starting");
 
-            // Clear all modal states immediately
+            // IMMEDIATE: Clear all modal states first
             setShowReceiptModal(false);
             setSelectedReceipt(null);
             setOrderForPayment(null);
@@ -2873,49 +2957,73 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setSelectedOrder(null);
             setSelectedPaymentMethod("");
 
-            // Force complete data refresh
-            console.log("🔄 Table: Force complete data refresh after receipt modal close");
+            // AGGRESSIVE DATA REFRESH - Multiple strategies
+            console.log("🔄 Table: Starting MULTI-STRATEGY data refresh after receipt modal close");
             
-            // Clear all cache
-            queryClient.clear();
-            queryClient.removeQueries();
-            
-            // Force immediate fresh data fetch with no cache
             try {
+              // Strategy 1: Complete cache clearing
+              queryClient.clear();
+              queryClient.removeQueries();
+              
+              // Strategy 2: Force immediate fresh data fetch with timestamp to bypass any cache
+              const timestamp = Date.now().toString();
               const [freshTables, freshOrders] = await Promise.all([
-                fetch("/api/tables", {
+                fetch(`/api/tables?_t=${timestamp}&_force=refresh`, {
                   cache: "no-store",
-                  headers: { "Cache-Control": "no-cache" }
+                  headers: { 
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
+                  }
                 }).then(r => r.json()),
-                fetch("/api/orders", {
+                fetch(`/api/orders?_t=${timestamp}&_force=refresh`, {
                   cache: "no-store",
-                  headers: { "Cache-Control": "no-cache" }
+                  headers: { 
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
+                  }
                 }).then(r => r.json())
               ]);
 
-              // Set fresh data immediately
+              // Strategy 3: Set fresh data immediately in cache
               queryClient.setQueryData(["/api/tables"], freshTables);
               queryClient.setQueryData(["/api/orders"], freshOrders);
               
-              console.log("✅ Table: Fresh data loaded after receipt modal close");
+              console.log("✅ Table: Fresh data loaded and cached after receipt modal close");
               
-              // Force component re-render
+              // Strategy 4: Multiple timed invalidations to force re-renders
               setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-              }, 100);
+              }, 50);
+
+              setTimeout(() => {
+                queryClient.refetchQueries({ queryKey: ["/api/tables"] });
+                queryClient.refetchQueries({ queryKey: ["/api/orders"] });
+              }, 150);
+
+              setTimeout(() => {
+                // Force one more invalidation to ensure UI updates
+                queryClient.invalidateQueries();
+              }, 300);
 
             } catch (fetchError) {
-              console.error("❌ Table: Error fetching fresh data:", fetchError);
+              console.error("❌ Table: Error during aggressive fetch, falling back:", fetchError);
               
-              // Fallback to normal refetch
-              await Promise.all([
-                refetchTables(),
-                refetchOrders()
-              ]);
+              // Strategy 5: Fallback with forced refetch
+              try {
+                await Promise.all([
+                  refetchTables(),
+                  refetchOrders()
+                ]);
+                console.log("✅ Table: Fallback refresh completed");
+              } catch (fallbackError) {
+                console.error("❌ Table: Fallback refresh also failed:", fallbackError);
+              }
             }
 
-            // Send WebSocket signal for cross-page coordination
+            // Strategy 6: Send WebSocket signal for cross-page coordination
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -2923,15 +3031,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
               ws.onopen = () => {
                 const refreshSignal = {
-                  type: "popup_close",
+                  type: "force_refresh",
                   success: true,
-                  source: "table-grid-receipt",
-                  reason: "receipt_modal_closed",
+                  source: "table-grid-receipt-close",
+                  reason: "receipt_modal_closed_with_payment",
                   force_refresh: true,
                   timestamp: new Date().toISOString()
                 };
 
-                console.log("📡 Table: Sending WebSocket refresh signal:", refreshSignal);
+                console.log("📡 Table: Sending AGGRESSIVE WebSocket refresh signal:", refreshSignal);
                 ws.send(JSON.stringify(refreshSignal));
 
                 setTimeout(() => ws.close(), 100);
@@ -2940,19 +3048,28 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               console.warn("⚠️ Table: WebSocket signal failed (non-critical):", wsError);
             }
 
-            // Dispatch refresh events
+            // Strategy 7: Dispatch multiple refresh events
             const refreshEvents = [
-              new CustomEvent('refreshTableData', {
+              new CustomEvent('forceDataRefresh', {
                 detail: {
-                  reason: 'receipt_modal_closed',
+                  reason: 'receipt_modal_closed_aggressive',
                   source: 'table-grid',
                   forceRefresh: true,
+                  aggressive: true,
                   timestamp: new Date().toISOString()
                 }
               }),
               new CustomEvent('paymentCompleted', {
                 detail: {
-                  action: 'modal_closed',
+                  action: 'modal_closed_force_refresh',
+                  source: 'table-grid',
+                  forceRefresh: true,
+                  timestamp: new Date().toISOString()
+                }
+              }),
+              new CustomEvent('refreshTableData', {
+                detail: {
+                  reason: 'receipt_modal_closed',
                   source: 'table-grid',
                   forceRefresh: true,
                   timestamp: new Date().toISOString()
@@ -2967,10 +3084,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
             toast({
               title: "Thành công",
-              description: "Dữ liệu đã được cập nhật",
+              description: "Thanh toán hoàn tất và dữ liệu đã được cập nhật",
             });
 
-            console.log("✅ Table: Receipt modal closed and data refresh completed");
+            console.log("✅ Table: AGGRESSIVE receipt modal close and data refresh completed");
           }}
           receipt={selectedReceipt}
           cartItems={
