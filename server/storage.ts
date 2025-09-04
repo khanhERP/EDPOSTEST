@@ -228,17 +228,24 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Store db connection for reuse
+  private db: any;
+
+  constructor() {
+    this.db = db;
+  }
+
   // Get safe database connection with fallback
   private getSafeDatabase(tenantDb?: any, operation: string = 'operation'): any {
     console.log(`🔍 Getting safe database for operation: ${operation}`);
 
-    let database = tenantDb || db;
+    let database = tenantDb || this.db;
 
     // If both tenantDb and db are undefined/null, throw critical error
     if (!database) {
       console.error(`❌ CRITICAL: No database connection available for ${operation}`);
       console.error(`❌ tenantDb:`, !!tenantDb);
-      console.error(`❌ global db:`, !!db);
+      console.error(`❌ global db:`, !!this.db);
       throw new Error(`Database connection is completely unavailable for ${operation}`);
     }
 
@@ -251,9 +258,9 @@ export class DatabaseStorage implements IStorage {
       });
 
       // Try falling back to global db if tenantDb is invalid
-      if (tenantDb && db && typeof db === 'object' && db !== null) {
+      if (tenantDb && this.db && typeof this.db === 'object' && this.db !== null) {
         console.log(`🔄 Falling back to global db for ${operation}`);
-        database = db;
+        database = this.db;
       } else {
         throw new Error(`Invalid database connection for ${operation} - no valid fallback available`);
       }
@@ -270,11 +277,11 @@ export class DatabaseStorage implements IStorage {
       });
 
       // Try falling back to global db if methods are missing
-      if (tenantDb && db && typeof db === 'object') {
-        const globalDbMissingMethods = requiredMethods.filter(method => !db[method] || typeof db[method] !== 'function');
+      if (tenantDb && this.db && typeof this.db === 'object') {
+        const globalDbMissingMethods = requiredMethods.filter(method => !this.db[method] || typeof this.db[method] !== 'function');
         if (globalDbMissingMethods.length === 0) {
           console.log(`🔄 Falling back to global db with complete methods for ${operation}`);
-          database = db;
+          database = this.db;
         } else {
           throw new Error(`Both tenant and global database connections are invalid for ${operation}`);
         }
@@ -300,7 +307,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCategory(insertCategory: InsertCategory, tenantDb?: any): Promise<Category> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     const [category] = await database
       .insert(categories)
       .values(insertCategory)
@@ -313,7 +320,7 @@ export class DatabaseStorage implements IStorage {
     updateData: Partial<InsertCategory>,
     tenantDb?: any,
   ): Promise<Category> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     const [category] = await database
       .update(categories)
       .set(updateData)
@@ -323,7 +330,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCategory(id: number, tenantDb?: any): Promise<void> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     await database.delete(categories).where(eq(categories.id, id));
   }
 
@@ -377,7 +384,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProduct(id: number, tenantDb?: any): Promise<Product | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getProduct`);
       throw new Error(`Database connection is not available`);
@@ -390,7 +397,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProductBySku(sku: string, tenantDb?: any): Promise<Product | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getProductBySku`);
       throw new Error(`Database connection is not available`);
@@ -407,7 +414,7 @@ export class DatabaseStorage implements IStorage {
     includeInactive: boolean = false,
     tenantDb?: any,
   ): Promise<Product[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in searchProducts`);
       throw new Error(`Database connection is not available`);
@@ -425,7 +432,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(insertProduct: InsertProduct, tenantDb?: any): Promise<Product> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in createProduct`);
       throw new Error(`Database connection is not available`);
@@ -464,7 +471,7 @@ export class DatabaseStorage implements IStorage {
     updateData: Partial<InsertProduct>,
     tenantDb?: any,
   ): Promise<Product | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in updateProduct`);
       throw new Error(`Database connection is not available`);
@@ -481,7 +488,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: number, tenantDb?: any): Promise<boolean> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in deleteProduct`);
       throw new Error(`Database connection is not available`);
@@ -525,7 +532,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteInactiveProducts(tenantDb?: any): Promise<number> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in deleteInactiveProducts`);
       throw new Error(`Database connection is not available`);
@@ -542,7 +549,7 @@ export class DatabaseStorage implements IStorage {
     quantity: number,
     tenantDb?: any,
   ): Promise<Product | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in updateProductStock`);
       throw new Error(`Database connection is not available`);
@@ -625,7 +632,7 @@ export class DatabaseStorage implements IStorage {
     items: InsertTransactionItem[],
     tenantDb?: any,
   ): Promise<Receipt> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in createTransaction`);
       throw new Error(`Database connection is not available`);
@@ -731,18 +738,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTransaction(id: number): Promise<Receipt | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getTransaction`);
       throw new Error(`Database connection is not available`);
     }
-    const [transaction] = await db
+    const [transaction] = await this.db
       .select()
       .from(transactions)
       .where(eq(transactions.id, id));
 
     if (!transaction) return undefined;
 
-    const items = await db
+    const items = await this.db
       .select()
       .from(transactionItems)
       .where(eq(transactionItems.transactionId, id));
@@ -753,18 +760,18 @@ export class DatabaseStorage implements IStorage {
   async getTransactionByTransactionId(
     transactionId: string,
   ): Promise<Receipt | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getTransactionByTransactionId`);
       throw new Error(`Database connection is not available`);
     }
-    const [transaction] = await db
+    const [transaction] = await this.db
       .select()
       .from(transactions)
       .where(eq(transactions.transactionId, transactionId));
 
     if (!transaction) return undefined;
 
-    const items = await db
+    const items = await this.db
       .select()
       .from(transactionItems)
       .where(eq(transactionItems.transactionId, transaction.id));
@@ -773,7 +780,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTransactions(tenantDb?: any): Promise<Transaction[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getTransactions`);
       throw new Error(`Database connection is not available`);
@@ -783,7 +790,7 @@ export class DatabaseStorage implements IStorage {
 
   // Get next employee ID in sequence
   async getNextEmployeeId(tenantDb?: any): Promise<string> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getNextEmployeeId`);
       throw new Error(`Database connection is not available`);
@@ -819,7 +826,7 @@ export class DatabaseStorage implements IStorage {
 
   // Generate next customer ID
   async getNextCustomerId(tenantDb?: any): Promise<string> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getNextCustomerId`);
       throw new Error(`Database connection is not available`);
@@ -857,7 +864,7 @@ export class DatabaseStorage implements IStorage {
 
   // Employee methods
   async getEmployees(tenantDb?: any): Promise<Employee[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getEmployees`);
       throw new Error(`Database connection is not available`);
@@ -869,7 +876,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmployee(id: number, tenantDb?: any): Promise<Employee | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getEmployee`);
       throw new Error(`Database connection is not available`);
@@ -885,7 +892,7 @@ export class DatabaseStorage implements IStorage {
     employeeId: string,
     tenantDb?: any,
   ): Promise<Employee | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getEmployeeByEmployeeId`);
       throw new Error(`Database connection is not available`);
@@ -900,7 +907,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEmployee(insertEmployee: InsertEmployee, tenantDb?: any): Promise<Employee> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in createEmployee`);
       throw new Error(`Database connection is not available`);
@@ -917,7 +924,7 @@ export class DatabaseStorage implements IStorage {
     updateData: Partial<InsertEmployee>,
     tenantDb?: any,
   ): Promise<Employee | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in updateEmployee`);
       throw new Error(`Database connection is not available`);
@@ -931,7 +938,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteEmployee(id: number, tenantDb?: any): Promise<boolean> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in deleteEmployee`);
       throw new Error(`Database connection is not available`);
@@ -977,7 +984,7 @@ export class DatabaseStorage implements IStorage {
     date?: string,
     tenantDb?: any,
   ): Promise<AttendanceRecord[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'getAttendanceRecords');
@@ -1019,7 +1026,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAttendanceRecord(id: number, tenantDb?: any): Promise<AttendanceRecord | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'getAttendanceRecord');
@@ -1038,7 +1045,7 @@ export class DatabaseStorage implements IStorage {
     employeeId: number,
     tenantDb?: any,
   ): Promise<AttendanceRecord | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'getTodayAttendance');
@@ -1066,13 +1073,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async clockIn(employeeId: number, notes?: string): Promise<AttendanceRecord> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in clockIn`);
       throw new Error(`Database connection is not available`);
     }
     try {
       // Check if employee exists
-      const [employee] = await db
+      const [employee] = await this.db
         .select()
         .from(employees)
         .where(eq(employees.id, employeeId))
@@ -1089,7 +1096,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       const clockInTime = new Date();
-      const [record] = await db
+      const [record] = await this.db
         .insert(attendanceRecords)
         .values({
           employeeId,
@@ -1111,7 +1118,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async clockOut(attendanceId: number): Promise<AttendanceRecord | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in clockOut`);
       throw new Error(`Database connection is not available`);
     }
@@ -1136,7 +1143,7 @@ export class DatabaseStorage implements IStorage {
     // Calculate overtime (assuming 8 hour work day)
     const overtime = Math.max(0, totalHours - 8);
 
-    const [updatedRecord] = await db
+    const [updatedRecord] = await this.db
       .update(attendanceRecords)
       .set({
         clockOut: clockOutTime,
@@ -1152,11 +1159,11 @@ export class DatabaseStorage implements IStorage {
   async startBreak(
     attendanceId: number,
   ): Promise<AttendanceRecord | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in startBreak`);
       throw new Error(`Database connection is not available`);
     }
-    const [record] = await db
+    const [record] = await this.db
       .update(attendanceRecords)
       .set({ breakStart: new Date() })
       .where(eq(attendanceRecords.id, attendanceId))
@@ -1165,11 +1172,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async endBreak(attendanceId: number): Promise<AttendanceRecord | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in endBreak`);
       throw new Error(`Database connection is not available`);
     }
-    const [record] = await db
+    const [record] = await this.db
       .update(attendanceRecords)
       .set({ breakEnd: new Date() })
       .where(eq(attendanceRecords.id, attendanceId))
@@ -1181,11 +1188,11 @@ export class DatabaseStorage implements IStorage {
     id: number,
     status: string,
   ): Promise<AttendanceRecord | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in updateAttendanceStatus`);
       throw new Error(`Database connection is not available`);
     }
-    const [record] = await db
+    const [record] = await this.db
       .update(attendanceRecords)
       .set({ status })
       .where(eq(attendanceRecords.id, id))
@@ -1195,7 +1202,7 @@ export class DatabaseStorage implements IStorage {
 
   // Tables
   async getTables(tenantDb?: any): Promise<Table[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'getTables');
@@ -1207,7 +1214,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTable(id: number, tenantDb?: any): Promise<Table | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'getTable');
@@ -1220,7 +1227,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTableByNumber(tableNumber: string, tenantDb?: any): Promise<Table | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'getTableByNumber');
@@ -1236,7 +1243,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTable(table: InsertTable, tenantDb?: any): Promise<Table> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'createTable');
@@ -1253,7 +1260,7 @@ export class DatabaseStorage implements IStorage {
     table: Partial<InsertTable>,
     tenantDb?: any,
   ): Promise<Table | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'updateTable');
@@ -1274,7 +1281,7 @@ export class DatabaseStorage implements IStorage {
     status: string,
     tenantDb?: any,
   ): Promise<Table | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'updateTableStatus');
@@ -1291,7 +1298,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTable(id: number, tenantDb?: any): Promise<boolean> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'deleteTable');
@@ -1333,7 +1340,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrder(id: number, tenantDb?: any): Promise<Order | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'getOrder');
@@ -1346,7 +1353,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderByNumber(orderNumber: string, tenantDb?: any): Promise<Order | undefined> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'getOrderByNumber');
@@ -1366,7 +1373,7 @@ export class DatabaseStorage implements IStorage {
     items: InsertOrderItem[],
     tenantDb?: any,
   ): Promise<Order> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     try {
       this.validateDatabase(database, 'createOrder');
@@ -1657,9 +1664,9 @@ export class DatabaseStorage implements IStorage {
       console.error(`❌ Database validation failed in updateOrderStatus:`, dbError);
 
       // Try to fall back to global db if tenant db is problematic
-      if (tenantDb && db && typeof db === 'object' && db.select && db.update) {
+      if (tenantDb && this.db && typeof this.db === 'object' && this.db.select && this.db.update) {
         console.log(`🔄 Falling back to global database connection`);
-        database = db;
+        database = this.db;
       } else {
         console.error(`❌ No valid fallback database available`);
         throw new Error(`Database connection is completely unavailable: ${dbError.message}`);
@@ -1958,25 +1965,25 @@ export class DatabaseStorage implements IStorage {
     orderId: number,
     items: InsertOrderItem[],
   ): Promise<OrderItem[]> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in addOrderItems`);
       throw new Error(`Database connection is not available`);
     }
     const itemsWithOrderId = items.map((item) => ({ ...item, orderId }));
-    return await db.insert(orderItems).values(itemsWithOrderId).returning();
+    return await this.db.insert(orderItems).values(itemsWithOrderId).returning();
   }
 
   async removeOrderItem(itemId: number): Promise<boolean> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in removeOrderItem`);
       throw new Error(`Database connection is not available`);
     }
-    const result = await db.delete(orderItems).where(eq(orderItems.id, itemId));
+    const result = await this.db.delete(orderItems).where(eq(orderItems.id, itemId));
     return (result.rowCount ?? 0) > 0;
   }
 
   async deleteOrderItem(itemId: number, tenantDb?: any): Promise<boolean> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in deleteOrderItem`);
       throw new Error(`Database connection is not available`);
@@ -1986,7 +1993,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderItems(orderId: number, tenantDb?: any): Promise<OrderItem[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getOrderItems`);
       throw new Error(`Database connection is not available`);
@@ -2028,7 +2035,7 @@ export class DatabaseStorage implements IStorage {
     type: "add" | "subtract" | "set",
     notes?: string,
   ): Promise<Product | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in updateInventoryStock`);
       throw new Error(`Database connection is not available`);
     }
@@ -2051,7 +2058,7 @@ export class DatabaseStorage implements IStorage {
         return undefined;
     }
 
-    const [updatedProduct] = await db
+    const [updatedProduct] = await this.db
       .update(products)
       .set({ stock: newStock })
       .where(eq(products.id, productId))
@@ -2062,7 +2069,7 @@ export class DatabaseStorage implements IStorage {
 
   // Store Settings
   async getStoreSettings(tenantDb?: any): Promise<StoreSettings> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getStoreSettings`);
       throw new Error(`Database connection is not available`);
@@ -2091,7 +2098,7 @@ export class DatabaseStorage implements IStorage {
     settings: Partial<InsertStoreSettings>,
     tenantDb?: any,
   ): Promise<StoreSettings> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in updateStoreSettings`);
       throw new Error(`Database connection is not available`);
@@ -2109,19 +2116,19 @@ export class DatabaseStorage implements IStorage {
 
   // Suppliers
   async getSuppliers(): Promise<any> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getSuppliers`);
       throw new Error(`Database connection is not available`);
     }
-    return await db.select().from(suppliers).orderBy(suppliers.name);
+    return await this.db.select().from(suppliers).orderBy(suppliers.name);
   }
 
   async getSupplier(id: number): Promise<any> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getSupplier`);
       throw new Error(`Database connection is not available`);
     }
-    const [result] = await db
+    const [result] = await this.db
       .select()
       .from(suppliers)
       .where(eq(suppliers.id, id));
@@ -2129,11 +2136,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSuppliersByStatus(status: string): Promise<any> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getSuppliersByStatus`);
       throw new Error(`Database connection is not available`);
     }
-    return await db
+    return await this.db
       .select()
       .from(suppliers)
       .where(eq(suppliers.status, status))
@@ -2141,11 +2148,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchSuppliers(query: string): Promise<any> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in searchSuppliers`);
       throw new Error(`Database connection is not available`);
     }
-    return await db
+    return await this.db
       .select()
       .from(suppliers)
       .where(
@@ -2159,11 +2166,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createSupplier(data: InsertSupplier): Promise<any> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in createSupplier`);
       throw new Error(`Database connection is not available`);
     }
-    const [result] = await db.insert(suppliers).values(data).returning();
+    const [result] = await this.db.insert(suppliers).values(data).returning();
     return result;
   }
 
@@ -2171,11 +2178,11 @@ export class DatabaseStorage implements IStorage {
     id: number,
     data: Partial<InsertSupplier>,
   ): Promise<any> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in updateSupplier`);
       throw new Error(`Database connection is not available`);
     }
-    const [result] = await db
+    const [result] = await this.db
       .update(suppliers)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(suppliers.id, id))
@@ -2185,11 +2192,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteSupplier(id: number): Promise<boolean> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in deleteSupplier`);
       throw new Error(`Database connection is not available`);
     }
-    const result = await db
+    const result = await this.db
       .delete(suppliers)
       .where(eq(suppliers.id, id))
       .returning();
@@ -2198,7 +2205,7 @@ export class DatabaseStorage implements IStorage {
 
   // Customers
   async getCustomers(tenantDb?: any): Promise<Customer[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getCustomers`);
       throw new Error(`Database connection is not available`);
@@ -2243,11 +2250,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchCustomers(query: string): Promise<Customer[]> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in searchCustomers`);
       throw new Error(`Database connection is not available`);
     }
-    return await db
+    return await this.db
       .select()
       .from(customers)
       .where(
@@ -2262,11 +2269,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCustomer(id: number): Promise<Customer | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getCustomer`);
       throw new Error(`Database connection is not available`);
     }
-    const [result] = await db
+    const [result] = await this.db
       .select()
       .from(customers)
       .where(eq(customers.id, id));
@@ -2276,11 +2283,11 @@ export class DatabaseStorage implements IStorage {
   async getCustomerByCustomerId(
     customerId: string,
   ): Promise<Customer | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getCustomerByCustomerId`);
       throw new Error(`Database connection is not available`);
     }
-    const [result] = await db
+    const [result] = await this.db
       .select()
       .from(customers)
       .where(eq(customers.customerId, customerId));
@@ -2288,20 +2295,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomer(customerData: InsertCustomer): Promise<Customer> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in createCustomer`);
       throw new Error(`Database connection is not available`);
     }
     // Generate customer ID if not provided
     if (!customerData.customerId) {
-      const count = await db
+      const count = await this.db
         .select({ count: sql<number>`count(*)` })
         .from(customers);
       const customerCount = count[0]?.count || 0;
       customerData.customerId = `CUST${String(customerCount + 1).padStart(3, "0")}`;
     }
 
-    const [result] = await db
+    const [result] = await this.db
       .insert(customers)
       .values(customerData)
       .returning();
@@ -2312,11 +2319,11 @@ export class DatabaseStorage implements IStorage {
     id: number,
     customerData: Partial<InsertCustomer>,
   ): Promise<Customer | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in updateCustomer`);
       throw new Error(`Database connection is not available`);
     }
-    const [result] = await db
+    const [result] = await this.db
       .update(customers)
       .set({ ...customerData, updatedAt: new Date() })
       .where(eq(customers.id, id))
@@ -2325,11 +2332,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCustomer(id: number): Promise<boolean> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in deleteCustomer`);
       throw new Error(`Database connection is not available`);
     }
-    const result = await db
+    const result = await this.db
       .delete(customers)
       .where(eq(customers.id, id))
       .returning();
@@ -2341,11 +2348,11 @@ export class DatabaseStorage implements IStorage {
     amount: number,
     points: number,
   ) {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in updateCustomerVisit`);
       throw new Error(`Database connection is not available`);
     }
-    const [customer] = await db
+    const [customer] = await this.db
       .select()
       .from(customers)
       .where(eq(customers.id, customerId));
@@ -2366,7 +2373,7 @@ export class DatabaseStorage implements IStorage {
       thresholds.VIP,
     );
 
-    const [updated] = await db
+    const [updated] = await this.db
       .update(customers)
       .set({
         visitCount: newVisitCount,
@@ -2385,7 +2392,7 @@ export class DatabaseStorage implements IStorage {
   async getCustomerPoints(
     customerId: number,
   ): Promise<{ points: number } | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getCustomerPoints`);
       throw new Error(`Database connection is not available`);
     }
@@ -2402,7 +2409,7 @@ export class DatabaseStorage implements IStorage {
     employeeId?: number,
     orderId?: number,
   ): Promise<PointTransaction> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in updateCustomerPoints`);
       throw new Error(`Database connection is not available`);
     }
@@ -2425,7 +2432,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Update customer points
-    await db
+    await this.db
       .update(customers)
       .set({
         points: newBalance,
@@ -2434,7 +2441,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(customers.id, customerId));
 
     // Create point transaction record
-    const [pointTransaction] = await db
+    const [pointTransaction] = await this.db
       .insert(pointTransactions)
       .values({
         customerId,
@@ -2455,11 +2462,11 @@ export class DatabaseStorage implements IStorage {
     customerId: number,
     limit: number = 50,
   ): Promise<PointTransaction[]> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getPointHistory`);
       throw new Error(`Database connection is not available`);
     }
-    return await db
+    return await this.db
       .select()
       .from(pointTransactions)
       .where(eq(pointTransactions.customerId, customerId))
@@ -2470,11 +2477,11 @@ export class DatabaseStorage implements IStorage {
   async getAllPointTransactions(
     limit: number = 100,
   ): Promise<PointTransaction[]> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getAllPointTransactions`);
       throw new Error(`Database connection is not available`);
     }
-    return await db
+    return await this.db
       .select()
       .from(pointTransactions)
       .orderBy(sql`${pointTransactions.createdAt} DESC`)
@@ -2483,12 +2490,12 @@ export class DatabaseStorage implements IStorage {
 
   // Get membership thresholds
   async getMembershipThresholds(): Promise<{ GOLD: number; VIP: number }> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getMembershipThresholds`);
       throw new Error(`Database connection is not available`);
     }
     try {
-      const [settings] = await db.select().from(storeSettings).limit(1);
+      const [settings] = await this.db.select().from(storeSettings).limit(1);
 
       if (!settings) {
         // Return default values if no settings exist
@@ -2522,7 +2529,7 @@ export class DatabaseStorage implements IStorage {
     GOLD: number;
     VIP: number;
   }): Promise<{ GOLD: number; VIP: number }> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in updateMembershipThresholds`);
       throw new Error(`Database connection is not available`);
     }
@@ -2530,7 +2537,7 @@ export class DatabaseStorage implements IStorage {
       // Update or insert store settings with thresholds
       const currentSettings = await this.getStoreSettings();
 
-      await db
+      await this.db
         .update(storeSettings)
         .set({
           goldThreshold: thresholds.GOLD.toString(),
@@ -2557,11 +2564,11 @@ export class DatabaseStorage implements IStorage {
     goldThreshold: number,
     vipThreshold: number,
   ) {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in recalculateAllMembershipLevels`);
       throw new Error(`Database connection is not available`);
     }
-    const allCustomers = await db.select().from(customers);
+    const allCustomers = await this.db.select().from(customers);
 
     for (const customer of allCustomers) {
       const totalSpent = parseFloat(customer.totalSpent || "0");
@@ -2572,7 +2579,7 @@ export class DatabaseStorage implements IStorage {
       );
 
       if (customer.membershipLevel !== calculatedLevel) {
-        await db
+        await this.db
           .update(customers)
           .set({
             membershipLevel: calculatedLevel,
@@ -2609,7 +2616,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActiveProducts(tenantDb?: any): Promise<Product[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     if (!database) {
       console.error(`❌ Database is undefined in getActiveProducts`);
       throw new Error(`Database connection is not available`);
@@ -2628,11 +2635,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(productData: Omit<Product, "id">): Promise<Product> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in createProduct`);
       throw new Error(`Database connection is not available`);
     }
-    const [product] = await db
+    const [product] = await this.db
       .insert(products)
       .values({
         ...productData,
@@ -2644,22 +2651,22 @@ export class DatabaseStorage implements IStorage {
 
   // Invoice template methods
   async getInvoiceTemplates(tenantDb?: any): Promise<any[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     return await database.select().from(invoiceTemplates).orderBy(invoiceTemplates.name);
   }
 
   async getActiveInvoiceTemplates(): Promise<any[]> {
-    return await db.select().from(invoiceTemplates).where(eq(invoiceTemplates.isActive, true)).orderBy(invoiceTemplates.name);
+    return await this.db.select().from(invoiceTemplates).where(eq(invoiceTemplates.isActive, true)).orderBy(invoiceTemplates.name);
   }
 
   // Invoice methods
   async getInvoices(tenantDb?: any): Promise<any[]> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     return await database.select().from(invoices).orderBy(desc(invoices.createdAt));
   }
 
   async getInvoice(id: number, tenantDb?: any): Promise<any> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
     const [invoice] = await database.select().from(invoices).where(eq(invoices.id, id));
 
     if (!invoice) return null;
@@ -2674,7 +2681,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoice(invoiceData: any, tenantDb?: any): Promise<any> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     console.log('💾 Creating invoice in database:', invoiceData);
 
@@ -2735,7 +2742,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInvoice(id: number, updateData: any, tenantDb?: any): Promise<any> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     const [invoice] = await database.update(invoices)
       .set({
@@ -2749,7 +2756,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteInvoice(id: number, tenantDb?: any): Promise<boolean> {
-    const database = tenantDb || db;
+    const database = tenantDb || this.db;
 
     // Delete invoice items first
     await database.delete(invoiceItems).where(eq(invoiceItems.invoiceId, id));
@@ -2762,13 +2769,13 @@ export class DatabaseStorage implements IStorage {
 
   // E-invoice connections methods
   async getEInvoiceConnections(): Promise<any[]> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getEInvoiceConnections`);
       throw new Error(`Database connection is not available`);
     }
     try {
       const { eInvoiceConnections } = await import("@shared/schema");
-      return await db
+      return await this.db
         .select()
         .from(eInvoiceConnections)
         .orderBy(eInvoiceConnections.symbol);
@@ -2779,13 +2786,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEInvoiceConnection(id: number): Promise<any> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getEInvoiceConnection`);
       throw new Error(`Database connection is not available`);
     }
     try {
       const { eInvoiceConnections } = await import("@shared/schema");
-      const [result] = await db
+      const [result] = await this.db
         .select()
         .from(eInvoiceConnections)
         .where(eq(eInvoiceConnections.id, id));
@@ -2797,7 +2804,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEInvoiceConnection(data: any): Promise<any> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in createEInvoiceConnection`);
       throw new Error(`Database connection is not available`);
     }
@@ -2808,7 +2815,7 @@ export class DatabaseStorage implements IStorage {
       const existingConnections = await this.getEInvoiceConnections();
       const nextSymbol = (existingConnections.length + 1).toString();
 
-      const [result] = await db
+      const [result] = await this.db
         .insert(eInvoiceConnections)
         .values({
           ...data,
@@ -2825,13 +2832,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateEInvoiceConnection(id: number, data: any): Promise<any> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in updateEInvoiceConnection`);
       throw new Error(`Database connection is not available`);
     }
     try {
       const { eInvoiceConnections } = await import("@shared/schema");
-      const [result] = await db
+      const [result] = await this.db
         .update(eInvoiceConnections)
         .set({ ...data, updatedAt: new Date() })
         .where(eq(eInvoiceConnections.id, id))
@@ -2844,13 +2851,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteEInvoiceConnection(id: number): Promise<boolean> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in deleteEInvoiceConnection`);
       throw new Error(`Database connection is not available`);
     }
     try {
       const { eInvoiceConnections } = await import("@shared/schema");
-      const result = await db
+      const result = await this.db
         .delete(eInvoiceConnections)
         .where(eq(eInvoiceConnections.id, id))
         .returning();
@@ -2862,12 +2869,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmployeeByEmail(email: string): Promise<Employee | undefined> {
-    if (!db) {
+    if (!this.db) {
       console.error(`❌ Database is undefined in getEmployeeByEmail`);
       throw new Error(`Database connection is not available`);
     }
     if (email && email.trim() !== "") {
-      const [employee] = await db
+      const [employee] = await this.db
         .select()
         .from(employees)
         .where(eq(employees.email, email));
