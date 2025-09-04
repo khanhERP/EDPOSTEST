@@ -661,6 +661,12 @@ export function EInvoiceModal({
   };
 
   const handleConfirm = async () => {
+    // Prevent duplicate calls
+    if (isPublishing) {
+      console.log("⚠️ Already processing publish, skipping duplicate call");
+      return;
+    }
+
     // Validate required fields
     if (!formData.invoiceProvider || !formData.customerName) {
       alert(
@@ -675,6 +681,8 @@ export function EInvoiceModal({
     }
 
     setIsPublishing(true);
+    
+    console.log("🚀 Starting E-Invoice publishing process...");
     try {
       // Debug log current cart items
       console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
@@ -1071,13 +1079,16 @@ export function EInvoiceModal({
 
         // Tạo receipt data ngay sau khi phát hành thành công
         const receiptData = {
-          transactionId: `INV-${result.data?.invoiceNo || Date.now()}`,
+          transactionId: publishRequest.transactionID || `TXN-${Date.now()}`,
           invoiceNumber: result.data?.invoiceNo || null,
           createdAt: new Date().toISOString(),
           cashierName: "POS Cashier",
-          paymentMethod: "einvoice",
+          paymentMethod: selectedPaymentMethod || "einvoice",
           customerName: formData.customerName,
           customerTaxCode: formData.taxCode,
+          customerAddress: formData.address || null,
+          customerPhone: formData.phoneNumber || null,
+          customerEmail: formData.email || null,
           items: cartItems.map((item) => {
             const itemPrice =
               typeof item.price === "string"
@@ -1110,6 +1121,7 @@ export function EInvoiceModal({
           total: cartTotal.toFixed(2),
           amountReceived: cartTotal.toFixed(2),
           change: "0.00",
+          orderId: orderId || `temp-${Date.now()}`
         };
 
         console.log(
@@ -1133,47 +1145,31 @@ export function EInvoiceModal({
           originalPaymentMethod: selectedPaymentMethod,
           cartItems: cartItems,
           total: cartTotal,
+          subtotal: cartSubtotal,
+          tax: cartTaxAmount,
           customerName: formData.customerName,
           taxCode: formData.taxCode,
           orderId: orderId,
           source: source || "pos",
-          receipt: {
-            ...receiptData,
-            // Ensure all required fields are present for receipt display
-            transactionId: receiptData.transactionId || `TXN-${Date.now()}`,
-            invoiceNumber: result.data?.invoiceNo || null,
-            createdAt: receiptData.createdAt || new Date().toISOString(),
-            cashierName: receiptData.cashierName || 'Cashier',
-            paymentMethod: selectedPaymentMethod || 'einvoice',
-            customerName: formData.customerName,
-            customerTaxCode: formData.taxCode,
-            items: receiptData.items || [],
-            subtotal: receiptData.subtotal || grandTotal.toFixed(2),
-            tax: receiptData.tax || calculatedTax.toFixed(2),
-            total: receiptData.total || grandTotal.toFixed(2),
-            amountReceived: receiptData.amountReceived || grandTotal.toFixed(2),
-            change: receiptData.change || "0.00",
-            // Add orderId for status update tracking
-            orderId: orderId || `temp-${Date.now()}`
-          }
+          receipt: receiptData
         };
+
+        console.log("📄 Final publishResult for onConfirm:", publishResult);
 
         console.log(
           "📧 Step 4: E-Invoice published, now calling onConfirm with enhanced receipt data",
         );
         console.log("📄 Enhanced publish result being sent:", publishResult);
 
-        // Close the E-Invoice modal first
-        console.log("🔒 Closing E-Invoice modal before showing receipt");
-        
-        // Call onConfirm to trigger receipt modal display
+        // Call onConfirm FIRST to trigger receipt modal display
         console.log("📄 Calling onConfirm with publishResult:", publishResult);
         onConfirm(publishResult);
         
-        // Close the modal after successful publishing
+        // Close the E-Invoice modal after a small delay to ensure receipt modal is shown
+        console.log("🔒 Closing E-Invoice modal after triggering receipt");
         setTimeout(() => {
           onClose();
-        }, 100);
+        }, 200);
 
         // Force data refresh on all pages after successful publishing
         try {
@@ -1496,6 +1492,7 @@ export function EInvoiceModal({
               onClick={handleConfirm}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               disabled={isPublishing}
+              type="button"
             >
               {isPublishing ? (
                 <>
