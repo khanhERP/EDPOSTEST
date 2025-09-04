@@ -1300,6 +1300,86 @@ export async function registerRoutes(app: Express): Promise < Server > {
         currentTotal: existingOrder.total
       });
 
+      // If updating financial fields from table-grid, recalculate using order-dialog logic
+      if ((orderData.subtotal !== undefined || orderData.tax !== undefined || orderData.total !== undefined) && 
+          !orderData.skipRecalculation) {
+        console.log(`💰 Recalculating totals from order items for order ${id} (using order-dialog logic)`);
+
+        try {
+          // Fetch current order items
+          const orderItemsResponse = await db
+            .select()
+            .from(orderItems)
+            .where(eq(orderItems.orderId, id));
+
+          if (orderItemsResponse && orderItemsResponse.length > 0) {
+            console.log(`📦 Found ${orderItemsResponse.length} items for calculation`);
+
+            // Get products for tax calculation (same as order-dialog)
+            const allProducts = await db.select().from(products);
+            const productMap = new Map(allProducts.map(p => [p.id, p]));
+
+            // EXACT same logic as order-dialog calculateTotal()
+            let calculatedSubtotal = 0; // Tiền tạm tính (trước thuế)
+
+            orderItemsResponse.forEach((item: any) => {
+              const unitPrice = Number(item.unitPrice || 0); // Giá trước thuế
+              const quantity = Number(item.quantity || 0);
+
+              // Calculate subtotal (base price * quantity) - EXACT same as order-dialog
+              const itemSubtotal = unitPrice * quantity;
+              calculatedSubtotal += itemSubtotal;
+            });
+
+            // EXACT same logic as order-dialog calculateTax()
+            let calculatedTax = 0; // Tổng thuế
+
+            orderItemsResponse.forEach((item: any) => {
+              const unitPrice = Number(item.unitPrice || 0);
+              const quantity = Number(item.quantity || 0);
+              const product = productMap.get(item.productId);
+
+              let itemTax = 0;
+              // Thuế = (after_tax_price - price) * quantity - EXACT same as order-dialog
+              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
+                const preTaxPrice = unitPrice;                          // Giá trước thuế
+                const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
+                itemTax = taxPerUnit * quantity;
+              }
+              // Không có thuế nếu không có afterTaxPrice
+              calculatedTax += itemTax;
+            });
+
+            // EXACT same logic as order-dialog calculateGrandTotal()
+            const calculatedTotal = calculatedSubtotal + calculatedTax;
+
+            console.log(`💰 Calculated totals using order-dialog logic:`, {
+              subtotal: calculatedSubtotal,
+              tax: calculatedTax,
+              total: calculatedTotal,
+              itemsCount: orderItemsResponse.length,
+              calculationMethod: 'order-dialog-exact'
+            });
+
+            // Update orderData with calculated values (same format as order-dialog)
+            orderData.subtotal = calculatedSubtotal.toString();
+            orderData.tax = calculatedTax.toString();
+            orderData.total = calculatedTotal.toString();
+
+            console.log(`✅ Updated order data with order-dialog calculated totals`);
+          } else {
+            console.log(`⚠️ No items found for order ${id}, setting totals to zero`);
+            orderData.subtotal = "0";
+            orderData.tax = "0";
+            orderData.total = "0";
+          }
+        } catch (calcError) {
+          console.error(`❌ Error calculating totals for order ${id}:`, calcError);
+          // Continue with original values if calculation fails
+        }
+      }
+
       // Log the data being updated, especially financial fields
       if (orderData.subtotal !== undefined || orderData.tax !== undefined || orderData.total !== undefined) {
         console.log(`💰 Updating financial fields:`, {
