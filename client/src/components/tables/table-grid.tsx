@@ -69,6 +69,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
+  const [orderForEInvoice, setOrderForEInvoice] = useState<any>(null);
 
   const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
@@ -2432,7 +2433,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         // Calculate subtotal exactly as Order Details display
                         orderDetailsSubtotal += basePrice * quantity;
 
-                        // Use EXACT same tax calculation logic as Order Details display
+                        // Use EXACT same tax calculation logic as Order Details
                         if (
                           product?.afterTaxPrice &&
                           product.afterTaxPrice !== null &&
@@ -2678,7 +2679,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
         }}
-        receipt={previewReceipt}
         onConfirm={() => {
           console.log(
             "📄 Table: Receipt preview confirmed, starting payment flow",
@@ -2799,52 +2799,49 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       />
 
       {/* E-Invoice Modal */}
-      {showEInvoiceModal && orderForPayment && (
+      {showEInvoiceModal && orderForEInvoice && (
         <EInvoiceModal
           isOpen={showEInvoiceModal}
           onClose={() => {
             setShowEInvoiceModal(false);
-            setOrderForPayment(null);
+            setOrderForEInvoice(null);
           }}
           onConfirm={handleEInvoiceConfirm}
           total={(() => {
-            const orderTotal =
-              orderForPayment?.exactTotal ??
-              orderForPayment?.total ??
-              selectedOrder?.total ??
-              0;
-            return Math.floor(parseFloat(orderTotal.toString()) || 0);
-          })()}
-          cartItems={(() => {
-            // Use orderItems from orderForPayment if available
-            const itemsToMap = orderForPayment?.orderItems || orderItems || [];
-            console.log(
-              "📦 Mapping cart items for E-invoice modal:",
-              itemsToMap.length,
-            );
+            // Use calculated total first, then fallback to stored total
+            const calculatedTotal = orderForEInvoice?.calculatedTotal;
+            const exactTotal = orderForEInvoice?.exactTotal;
+            const storedTotal = orderForEInvoice?.total;
 
-            return itemsToMap.map((item: any) => {
-              const product = Array.isArray(products)
-                ? products.find((p: any) => p.id === item.productId)
-                : null;
+            const finalTotal = calculatedTotal || exactTotal || storedTotal || 0;
 
-              return {
-                id: item.productId,
-                name: item.productName || getProductName(item.productId),
-                price: parseFloat(item.unitPrice || "0"),
-                quantity: item.quantity,
-                sku: item.productSku || `SP${item.productId}`,
-                taxRate: (() => {
-                  const product = Array.isArray(products)
-                    ? products.find((p: any) => p.id === item.productId)
-                    : null;
-                  return product?.taxRate ? parseFloat(product.taxRate) : 10;
-                })(),
-              };
+            console.log('🔍 Table Grid E-Invoice Modal: Total calculation:', {
+              calculatedTotal,
+              exactTotal,
+              storedTotal,
+              finalTotal,
+              orderForEInvoiceId: orderForEInvoice?.id
             });
+
+            return Math.floor(finalTotal);
           })()}
+          cartItems={orderForEInvoice?.orderItems?.map((item: any) => ({
+            id: item.productId,
+            name: item.productName,
+            price: parseFloat(item.unitPrice || '0'),
+            quantity: item.quantity,
+            sku: item.productSku || `SP${item.productId}`,
+            taxRate: (() => {
+              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+              return product?.taxRate ? parseFloat(product.taxRate) : 10;
+            })(),
+            afterTaxPrice: (() => {
+              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+              return product?.afterTaxPrice || null;
+            })()
+          })) || []}
           source="table"
-          orderId={orderForPayment.id}
+          orderId={orderForEInvoice?.id}
         />
       )}
 
