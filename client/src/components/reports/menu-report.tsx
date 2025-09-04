@@ -229,7 +229,7 @@ function MenuReport() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">
                 {t("reports.fromDate") || "Từ ngày"}
@@ -297,6 +297,16 @@ function MenuReport() {
                   className="pl-8"
                 />
               </div>
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={handleRefresh} 
+                className="flex items-center gap-2"
+                disabled={analysisLoading}
+              >
+                <RefreshCw className={`w-4 h-4 ${analysisLoading ? 'animate-spin' : ''}`} />
+                {analysisLoading ? 'Đang tải...' : 'Làm mới'}
+              </Button>
             </div>
           </div>
 
@@ -383,107 +393,163 @@ function MenuReport() {
       </div>
 
       {/* Category Performance Charts */}
-      {menuAnalysis?.categoryStats && menuAnalysis.categoryStats.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("reports.categoryPerformance") || "Hiệu suất danh mục"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Revenue Chart */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-gray-700">
-                  {t("reports.revenue") || "Doanh thu"} theo danh mục
-                </h4>
-                <div className="h-64 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-50/20 to-emerald-50/20 rounded-xl"></div>
-                  <div className="relative z-10 h-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={menuAnalysis.categoryStats.map((cat, index) => ({
-                          name: cat.categoryName?.length > 15 
-                            ? cat.categoryName.substring(0, 15) + '...' 
-                            : cat.categoryName || `Danh mục ${cat.categoryId}`,
-                          revenue: Number(cat.totalRevenue || 0)
-                        }))}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                      >
-                        <XAxis 
-                          dataKey="name" 
-                          angle={-45}
-                          textAnchor="end"
-                          height={80}
-                          fontSize={11}
-                        />
-                        <YAxis 
-                          tickFormatter={(value) => formatCurrency(value)}
-                          fontSize={11}
-                        />
-                        <Tooltip 
-                          formatter={(value) => [formatCurrency(Number(value)) + ' ₫', 'Doanh thu']}
-                          labelStyle={{ fontWeight: 600, fontSize: 12 }}
-                        />
-                        <Bar 
-                          dataKey="revenue" 
-                          radius={[4, 4, 0, 0]}
-                        >
-                          {menuAnalysis.categoryStats.map((entry, index) => (
-                            <Bar key={`cell-${index}`} fill={`hsl(${(index * 45) % 360}, 70%, 50%)`} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quantity Chart */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-gray-700">
-                  {t("reports.quantity") || "Số lượng"} bán theo danh mục
-                </h4>
-                <div className="h-64 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-indigo-50/20 rounded-xl"></div>
-                  <div className="relative z-10 h-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={menuAnalysis.categoryStats.map((cat, index) => ({
-                          name: cat.categoryName?.length > 15 
-                            ? cat.categoryName.substring(0, 15) + '...' 
-                            : cat.categoryName || `Danh mục ${cat.categoryId}`,
-                          quantity: Number(cat.totalQuantity || 0)
-                        }))}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                      >
-                        <XAxis 
-                          dataKey="name" 
-                          angle={-45}
-                          textAnchor="end"
-                          height={80}
-                          fontSize={11}
-                        />
-                        <YAxis 
-                          tickFormatter={(value) => value.toLocaleString('vi-VN')}
-                          fontSize={11}
-                        />
-                        <Tooltip 
-                          formatter={(value) => [Number(value).toLocaleString('vi-VN'), 'Số lượng']}
-                          labelStyle={{ fontWeight: 600, fontSize: 12 }}
-                        />
-                        <Bar 
-                          dataKey="quantity" 
-                          radius={[4, 4, 0, 0]}
-                        >
-                          {menuAnalysis.categoryStats.map((entry, index) => (
-                            <Bar key={`cell-${index}`} fill={`hsl(${(index * 60 + 180) % 360}, 65%, 55%)`} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            {t("reports.categoryPerformance") || "Hiệu suất danh mục"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {analysisLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Đang tải dữ liệu biểu đồ...</p>
             </div>
+          ) : !menuAnalysis?.categoryStats || menuAnalysis.categoryStats.length === 0 ? (
+            <div className="text-center py-12">
+              <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg font-medium mb-2">Không có dữ liệu biểu đồ</p>
+              <p className="text-gray-400 text-sm">
+                Chọn khoảng thời gian có dữ liệu bán hàng để xem biểu đồ
+              </p>
+              <Button 
+                onClick={handleRefresh} 
+                className="mt-4 flex items-center gap-2 mx-auto"
+                variant="outline"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Làm mới dữ liệu
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {/* Revenue Chart */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    {t("reports.revenue") || "Doanh thu"} theo danh mục
+                  </h4>
+                  <div className="h-80 relative border rounded-lg bg-gradient-to-br from-green-50/30 to-emerald-50/20">
+                    <div className="absolute inset-0 bg-white/50 rounded-lg"></div>
+                    <div className="relative z-10 h-full p-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={menuAnalysis.categoryStats.map((cat, index) => ({
+                            name: cat.categoryName?.length > 12 
+                              ? cat.categoryName.substring(0, 12) + '...' 
+                              : cat.categoryName || `Danh mục ${cat.categoryId}`,
+                            revenue: Number(cat.totalRevenue || 0),
+                            fullName: cat.categoryName || `Danh mục ${cat.categoryId}`
+                          }))}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                        >
+                          <XAxis 
+                            dataKey="name" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                            fontSize={11}
+                            tick={{ fill: '#374151' }}
+                          />
+                          <YAxis 
+                            tickFormatter={(value) => formatCurrency(value)}
+                            fontSize={11}
+                            tick={{ fill: '#374151' }}
+                          />
+                          <Tooltip 
+                            formatter={(value, name, props) => [
+                              formatCurrency(Number(value)) + ' ₫', 
+                              'Doanh thu'
+                            ]}
+                            labelFormatter={(label, payload) => {
+                              const item = payload?.[0]?.payload;
+                              return item?.fullName || label;
+                            }}
+                            contentStyle={{ 
+                              backgroundColor: 'white', 
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              fontSize: '12px'
+                            }}
+                          />
+                          <Bar 
+                            dataKey="revenue" 
+                            radius={[6, 6, 0, 0]}
+                            fill="#10b981"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quantity Chart */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Package className="w-4 h-4 text-blue-600" />
+                    {t("reports.quantity") || "Số lượng"} bán theo danh mục
+                  </h4>
+                  <div className="h-80 relative border rounded-lg bg-gradient-to-br from-blue-50/30 to-indigo-50/20">
+                    <div className="absolute inset-0 bg-white/50 rounded-lg"></div>
+                    <div className="relative z-10 h-full p-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={menuAnalysis.categoryStats.map((cat, index) => ({
+                            name: cat.categoryName?.length > 12 
+                              ? cat.categoryName.substring(0, 12) + '...' 
+                              : cat.categoryName || `Danh mục ${cat.categoryId}`,
+                            quantity: Number(cat.totalQuantity || 0),
+                            fullName: cat.categoryName || `Danh mục ${cat.categoryId}`
+                          }))}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                        >
+                          <XAxis 
+                            dataKey="name" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                            fontSize={11}
+                            tick={{ fill: '#374151' }}
+                          />
+                          <YAxis 
+                            tickFormatter={(value) => value.toLocaleString('vi-VN')}
+                            fontSize={11}
+                            tick={{ fill: '#374151' }}
+                          />
+                          <Tooltip 
+                            formatter={(value, name, props) => [
+                              Number(value).toLocaleString('vi-VN'), 
+                              'Số lượng'
+                            ]}
+                            labelFormatter={(label, payload) => {
+                              const item = payload?.[0]?.payload;
+                              return item?.fullName || label;
+                            }}
+                            contentStyle={{ 
+                              backgroundColor: 'white', 
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              fontSize: '12px'
+                            }}
+                          />
+                          <Bar 
+                            dataKey="quantity" 
+                            radius={[6, 6, 0, 0]}
+                            fill="#3b82f6"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+          
+          {/* Category Performance Table - Only show when data exists */}
+          {menuAnalysis?.categoryStats && menuAnalysis.categoryStats.length > 0 && (
             
             {/* Category Performance Table */}
             <div className="overflow-x-auto">
