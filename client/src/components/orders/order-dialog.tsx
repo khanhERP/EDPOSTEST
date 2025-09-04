@@ -179,7 +179,7 @@ export function OrderDialog({
 
       toast({
         title: t("common.error"),
-        description: mode === "edit" ? `Lỗi cập nhật đơn hàng: ${errorMessage}` : `Lỗi tạo đơn hàng: ${errorMessage}`,
+        description: mode === "edit" ? "Bạn chưa sửa đơn hàng" : `Lỗi tạo đơn hàng: ${errorMessage}`,
         variant: "destructive",
       });
     },
@@ -328,8 +328,8 @@ export function OrderDialog({
           console.log('⚠️ Order Dialog: No changes detected, skipping database update to prevent duplicates');
 
           toast({
-            title: "Thành công",
-            description: "Đơn hàng hiện tại không có thay đổi nào",
+            title: "Không có thay đổi",
+            description: "Không có món nào mới để cập nhật",
             variant: "default",
           });
 
