@@ -111,54 +111,28 @@ export function OrderDialog({
             finalResult = addItemsResult.updatedOrder || addItemsResult;
           }
 
-          // Step 2: Always recalculate and update order totals with correct mapping
-          console.log(`📝 Recalculating order totals for order ${existingOrder.id}`);
+          // Step 2: Use pre-calculated totals from UI (already calculated correctly)
+          console.log(`📝 Using pre-calculated totals from UI for order ${existingOrder.id}`);
 
-          // Fetch current order items to recalculate totals
-          const itemsResponse = await apiRequest("GET", `/api/order-items/${existingOrder.id}`);
-          const currentItems = await itemsResponse.json();
+          // Get the calculated values from the UI functions
+          const uiSubtotal = calculateTotal();    // Tiền tạm tính (đã tính đúng)
+          const uiTax = calculateTax();           // Thuế (đã tính đúng)  
+          const uiGrandTotal = calculateGrandTotal(); // Tổng tiền (đã tính đúng)
 
-          let newSubtotal = 0; // Tiền tạm tính (trước thuế)
-          let newTax = 0;      // Thuế
-          let newTotal = 0;    // Tổng tiền
-
-          if (Array.isArray(currentItems) && currentItems.length > 0) {
-            currentItems.forEach((item: any) => {
-              const unitPrice = Number(item.unitPrice || 0); // Giá trước thuế
-              const quantity = Number(item.quantity || 0);
-              const product = products?.find((p: any) => p.id === item.productId);
-
-              // Subtotal = tiền tạm tính (unitPrice * quantity - giá trước thuế)
-              const itemSubtotal = unitPrice * quantity;
-              newSubtotal += itemSubtotal;
-
-              // Tax = thuế (sử dụng afterTaxPrice nếu có)
-              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-                const itemTax = taxPerUnit * quantity;
-                newTax += itemTax;
-              }
-            });
-          }
-
-          // Total = tổng tiền (subtotal + tax)
-          newTotal = newSubtotal + newTax;
-
-          console.log('💰 Calculated new totals:', {
-            subtotal: newSubtotal,
-            tax: newTax,
-            total: newTotal
+          console.log('💰 Using UI calculated totals:', {
+            subtotal: uiSubtotal,
+            tax: uiTax,
+            total: uiGrandTotal
           });
 
-          // Step 3: Update order with customer info AND calculated totals
-          console.log(`📝 Updating order with customer info and calculated totals for order ${existingOrder.id}`);
+          // Step 3: Update order with customer info AND UI calculated totals
+          console.log(`📝 Updating order with customer info and UI calculated totals for order ${existingOrder.id}`);
           const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
             customerName: orderData.order.customerName,
             customerCount: orderData.order.customerCount,
-            subtotal: newSubtotal.toString(),
-            tax: newTax.toString(),
-            total: newTotal.toString(),
+            subtotal: uiSubtotal.toString(),
+            tax: uiTax.toString(),
+            total: uiGrandTotal.toString(),
           });
 
           const updateResult = await updateResponse.json();
