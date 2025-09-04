@@ -110,41 +110,63 @@ export function AttendanceList({
             </CardDescription>
           </div>
           <div className="flex items-center gap-4">
-            {useRange && onDateRangeChange ? (
-              <>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="start-date">{t('attendance.startDate')}:</Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    value={dateRange?.startDate || ''}
-                    onChange={(e) => onDateRangeChange(e.target.value, dateRange?.endDate || '')}
-                    className="w-auto"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="end-date">{t('attendance.endDate')}:</Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    value={dateRange?.endDate || ''}
-                    onChange={(e) => onDateRangeChange(dateRange?.startDate || '', e.target.value)}
-                    className="w-auto"
-                  />
-                </div>
-              </>
-            ) : (
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Label htmlFor="date-picker">{t('attendance.selectedDate')}:</Label>
-                <Input
-                  id="date-picker"
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => onDateChange(e.target.value)}
-                  className="w-auto"
+                <input
+                  type="checkbox"
+                  id="use-range"
+                  checked={useRange}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    if (onDateRangeChange) {
+                      // Switch between single date and date range mode
+                      if (checked) {
+                        // Initialize range with current selected date
+                        onDateRangeChange(selectedDate, selectedDate);
+                      }
+                    }
+                  }}
+                  className="mr-1"
                 />
+                <Label htmlFor="use-range">{t('attendance.useDateRange')}</Label>
               </div>
-            )}
+              
+              {useRange && onDateRangeChange ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="start-date">{t('attendance.startDate')}:</Label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={dateRange?.startDate || ''}
+                      onChange={(e) => onDateRangeChange(e.target.value, dateRange?.endDate || '')}
+                      className="w-auto"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="end-date">{t('attendance.endDate')}:</Label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={dateRange?.endDate || ''}
+                      onChange={(e) => onDateRangeChange(dateRange?.startDate || '', e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="date-picker">{t('attendance.selectedDate')}:</Label>
+                  <Input
+                    id="date-picker"
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => onDateChange(e.target.value)}
+                    className="w-auto"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </CardHeader>

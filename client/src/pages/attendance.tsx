@@ -78,7 +78,13 @@ export default function AttendancePage() {
             </TabsContent>
 
             <TabsContent value="records">
-              <AttendanceList selectedDate={selectedDate} onDateChange={setSelectedDate} />
+              <AttendanceList 
+                selectedDate={selectedDate} 
+                onDateChange={setSelectedDate}
+                dateRange={dateRange}
+                onDateRangeChange={handleDateRangeChange}
+                useRange={useRange}
+              />
             </TabsContent>
 
             <TabsContent value="stats">

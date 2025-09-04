@@ -1,5 +1,137 @@
 import type { AttendanceTranslations } from '../types';
 
+export const attendanceTranslations: AttendanceTranslations = {
+  vi: {
+    attendance: {
+      // Clock in/out
+      clockInOut: 'Chấm công',
+      clockIn: 'Chấm công vào',
+      clockOut: 'Chấm công ra',
+      startBreak: 'Bắt đầu nghỉ',
+      endBreak: 'Kết thúc nghỉ',
+      
+      // Records
+      attendanceRecords: 'Bản ghi chấm công',
+      recordsDescription: 'Xem bản ghi chấm công hàng ngày',
+      selectedDate: 'Ngày đã chọn',
+      startDate: 'Ngày bắt đầu',
+      endDate: 'Ngày kết thúc',
+      useDateRange: 'Sử dụng khoảng thời gian',
+      
+      // Time
+      clockInTime: 'Giờ vào',
+      clockOutTime: 'Giờ ra',
+      breakTime: 'Thời gian nghỉ',
+      totalHours: 'Tổng giờ làm',
+      overtime: 'Làm thêm',
+      hours: 'giờ',
+      minutes: 'phút',
+      
+      // Status
+      status: {
+        present: 'Có mặt',
+        absent: 'Vắng mặt',
+        late: 'Trễ',
+        halfDay: 'Nửa ngày',
+      },
+      
+      // Messages
+      noRecords: 'Không có bản ghi chấm công',
+      selectOtherDate: 'Vui lòng chọn ngày khác',
+      unknownEmployee: 'Nhân viên không xác định',
+      
+      // Statistics
+      statistics: 'Thống kê',
+    }
+  },
+  en: {
+    attendance: {
+      // Clock in/out
+      clockInOut: 'Clock In/Out',
+      clockIn: 'Clock In',
+      clockOut: 'Clock Out',
+      startBreak: 'Start Break',
+      endBreak: 'End Break',
+      
+      // Records
+      attendanceRecords: 'Attendance Records',
+      recordsDescription: 'View daily attendance records',
+      selectedDate: 'Selected Date',
+      startDate: 'Start Date',
+      endDate: 'End Date',
+      useDateRange: 'Use Date Range',
+      
+      // Time
+      clockInTime: 'Clock In Time',
+      clockOutTime: 'Clock Out Time',
+      breakTime: 'Break Time',
+      totalHours: 'Total Hours',
+      overtime: 'Overtime',
+      hours: 'hours',
+      minutes: 'minutes',
+      
+      // Status
+      status: {
+        present: 'Present',
+        absent: 'Absent',
+        late: 'Late',
+        halfDay: 'Half Day',
+      },
+      
+      // Messages
+      noRecords: 'No attendance records',
+      selectOtherDate: 'Please select another date',
+      unknownEmployee: 'Unknown Employee',
+      
+      // Statistics
+      statistics: 'Statistics',
+    }
+  },
+  ko: {
+    attendance: {
+      // Clock in/out
+      clockInOut: '출퇴근',
+      clockIn: '출근',
+      clockOut: '퇴근',
+      startBreak: '휴식 시작',
+      endBreak: '휴식 종료',
+      
+      // Records
+      attendanceRecords: '출석 기록',
+      recordsDescription: '일일 출석 기록 보기',
+      selectedDate: '선택된 날짜',
+      startDate: '시작 날짜',
+      endDate: '종료 날짜',
+      useDateRange: '기간 선택 사용',
+      
+      // Time
+      clockInTime: '출근 시간',
+      clockOutTime: '퇴근 시간',
+      breakTime: '휴식 시간',
+      totalHours: '총 근무시간',
+      overtime: '초과근무',
+      hours: '시간',
+      minutes: '분',
+      
+      // Status
+      status: {
+        present: '출석',
+        absent: '결석',
+        late: '지각',
+        halfDay: '반일',
+      },
+      
+      // Messages
+      noRecords: '출석 기록이 없습니다',
+      selectOtherDate: '다른 날짜를 선택해주세요',
+      unknownEmployee: '알 수 없는 직원',
+      
+      // Statistics
+      statistics: '통계',
+    }
+  }
+};
+
 export const attendanceTranslations: { [key: string]: AttendanceTranslations } = {
   ko: {
     title: '출근 관리',

@@ -2921,10 +2921,20 @@ export class DatabaseStorage implements IStorage {
       this.validateDatabase(database, 'getAttendanceRecordsByRange');
       console.log(`🔍 Getting attendance records for date range: ${startDate} to ${endDate}`);
 
+      // Ensure dates are valid and set to start/end of day
       const startOfRange = new Date(startDate);
+      if (isNaN(startOfRange.getTime())) {
+        throw new Error(`Invalid start date provided: ${startDate}`);
+      }
       startOfRange.setHours(0, 0, 0, 0);
+
       const endOfRange = new Date(endDate);
+      if (isNaN(endOfRange.getTime())) {
+        throw new Error(`Invalid end date provided: ${endDate}`);
+      }
       endOfRange.setHours(23, 59, 59, 999);
+
+      console.log(`🔍 Date range for query: ${startOfRange.toISOString()} to ${endOfRange.toISOString()}`);
 
       const records = await database.select()
         .from(attendanceRecords)
@@ -2940,6 +2950,7 @@ export class DatabaseStorage implements IStorage {
       return records;
     } catch (error) {
       console.error('Error fetching attendance records by range:', error);
+      // Re-throw the error to be handled by the caller
       throw error;
     }
   }

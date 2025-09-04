@@ -867,22 +867,35 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Attendance routes
   app.get("/api/attendance", async (req: TenantRequest, res) => {
     try {
-      const { date, startDate, endDate } = req.query;
+      const { date, startDate, endDate, employeeId } = req.query;
       const tenantDb = await getTenantDatabase(req);
+
+      console.log(`📅 Attendance API called with params:`, { date, startDate, endDate, employeeId });
 
       if (!tenantDb) {
         return res.status(500).json({ message: "Database connection not available" });
       }
 
+      let records;
+
       // If startDate and endDate are provided, use date range
       if (startDate && endDate) {
-        const records = await storage.getAttendanceRecordsByRange(tenantDb, startDate as string, endDate as string);
-        res.json(records);
+        console.log(`📅 Fetching attendance records by date range: ${startDate} to ${endDate}`);
+        records = await storage.getAttendanceRecordsByRange(startDate as string, endDate as string, tenantDb);
+      } else if (date) {
+        // Single date filter
+        console.log(`📅 Fetching attendance records for single date: ${date}`);
+        const employeeIdNum = employeeId ? parseInt(employeeId as string) : undefined;
+        records = await storage.getAttendanceRecords(employeeIdNum, date as string, tenantDb);
       } else {
-        // Otherwise use single date or all records
-        const records = await storage.getAttendanceRecords(tenantDb, date as string);
-        res.json(records);
+        // All records
+        console.log(`📅 Fetching all attendance records`);
+        const employeeIdNum = employeeId ? parseInt(employeeId as string) : undefined;
+        records = await storage.getAttendanceRecords(employeeIdNum, undefined, tenantDb);
       }
+
+      console.log(`✅ Returning ${records.length} attendance records`);
+      res.json(records);
     } catch (error) {
       console.error('Error fetching attendance records:', error);
       res.status(500).json({ message: "Failed to fetch attendance records" });
