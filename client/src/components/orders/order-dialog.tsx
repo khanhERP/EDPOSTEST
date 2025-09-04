@@ -111,35 +111,39 @@ export function OrderDialog({
             finalResult = addItemsResult.updatedOrder || addItemsResult;
           }
 
-          // Step 2: Always recalculate and update order totals
+          // Step 2: Always recalculate and update order totals with correct mapping
           console.log(`📝 Recalculating order totals for order ${existingOrder.id}`);
 
           // Fetch current order items to recalculate totals
           const itemsResponse = await apiRequest("GET", `/api/order-items/${existingOrder.id}`);
           const currentItems = await itemsResponse.json();
 
-          let newSubtotal = 0;
-          let newTax = 0;
+          let newSubtotal = 0; // Tiền tạm tính (trước thuế)
+          let newTax = 0;      // Thuế
+          let newTotal = 0;    // Tổng tiền
 
           if (Array.isArray(currentItems) && currentItems.length > 0) {
             currentItems.forEach((item: any) => {
-              const unitPrice = Number(item.unitPrice || 0);
+              const unitPrice = Number(item.unitPrice || 0); // Giá trước thuế
               const quantity = Number(item.quantity || 0);
               const product = products?.find((p: any) => p.id === item.productId);
 
-              // Calculate subtotal
-              newSubtotal += unitPrice * quantity;
+              // Subtotal = tiền tạm tính (unitPrice * quantity - giá trước thuế)
+              const itemSubtotal = unitPrice * quantity;
+              newSubtotal += itemSubtotal;
 
-              // Calculate tax using afterTaxPrice if available
+              // Tax = thuế (sử dụng afterTaxPrice nếu có)
               if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                const taxPerUnit = afterTaxPrice - unitPrice;
-                newTax += taxPerUnit * quantity;
+                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+                const itemTax = taxPerUnit * quantity;
+                newTax += itemTax;
               }
             });
           }
 
-          const newTotal = newSubtotal + newTax;
+          // Total = tổng tiền (subtotal + tax)
+          newTotal = newSubtotal + newTax;
 
           console.log('💰 Calculated new totals:', {
             subtotal: newSubtotal,
@@ -300,42 +304,45 @@ export function OrderDialog({
   };
 
   const calculateTotal = () => {
-    const cartTotal = cart.reduce(
+    // Tính subtotal (tiền tạm tính - trước thuế) cho cart items
+    const cartSubtotal = cart.reduce(
       (total, item) => {
-        const itemSubtotal = item.product.price * item.quantity;
+        const preTaxPrice = parseFloat(item.product.price); // Giá trước thuế
+        const itemSubtotal = preTaxPrice * item.quantity;
         return total + itemSubtotal;
       },
       0,
     );
 
-    // In edit mode, also add existing items subtotal (pre-tax)
-    const existingTotal =
+    // In edit mode, add existing items subtotal (pre-tax)
+    const existingSubtotal =
       mode === "edit" && existingItems.length > 0
         ? existingItems.reduce((total, item) => {
-            // Use unitPrice * quantity for existing items (pre-tax amount)
-            const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-            return total + itemSubtotal;
+            // Use unitPrice * quantity for existing items (tiền tạm tính)
+            const preTaxAmount = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+            return total + preTaxAmount;
           }, 0)
         : 0;
 
-    return cartTotal + existingTotal;
+    return cartSubtotal + existingSubtotal; // Trả về subtotal (tiền tạm tính)
   };
 
   const calculateTax = () => {
-    let totalTax = 0;
+    let totalTax = 0; // Tổng thuế
 
     // Calculate tax for items in the current cart
     cart.forEach((item) => {
       const product = products?.find((p: Product) => p.id === item.product.id);
       let itemTax = 0;
 
-      // Tax = (after_tax_price - price) * quantity
+      // Thuế = (after_tax_price - price) * quantity
       if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-        const afterTaxPrice = parseFloat(product.afterTaxPrice);
-        const price = parseFloat(product.price);
-        itemTax = (afterTaxPrice - price) * item.quantity;
+        const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
+        const preTaxPrice = parseFloat(product.price);           // Giá trước thuế
+        const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
+        itemTax = taxPerUnit * item.quantity;
       }
-      // No tax if no afterTaxPrice in database
+      // Không có thuế nếu không có afterTaxPrice
 
       totalTax += itemTax;
     });
@@ -346,13 +353,13 @@ export function OrderDialog({
         const product = products?.find((p: Product) => p.id === item.productId);
         let itemTax = 0;
 
-        // Tax = (after_tax_price - price) * quantity
+        // Thuế = (after_tax_price - unitPrice) * quantity
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const price = parseFloat(product.price);
-          itemTax = (afterTaxPrice - price) * item.quantity;
+          const preTaxPrice = Number(item.unitPrice || 0); // Sử dụng unitPrice từ order item
+          const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice);
+          itemTax = taxPerUnit * item.quantity;
         }
-        // No tax if no afterTaxPrice in database
 
         totalTax += itemTax;
       });
@@ -457,13 +464,19 @@ export function OrderDialog({
       // Always proceed with mutation - either adding items or updating customer info
       createOrderMutation.mutate({ order: updatedOrder, items });
     } else {
-      // Create mode - original logic
+      // Create mode - calculate with correct mapping
       const orderNumber = `ORD-${Date.now()}`;
+      
+      // Subtotal = tiền tạm tính (giá trước thuế * số lượng)
       const subtotalAmount = cart.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
+        (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
         0,
       );
-      const taxAmount = calculateTax(); // Use the new calculateTax function
+      
+      // Tax = thuế (sử dụng calculateTax function)
+      const taxAmount = calculateTax();
+      
+      // Total = tổng tiền (subtotal + tax)
       const totalAmount = subtotalAmount + taxAmount;
 
       const order = {
@@ -989,14 +1002,14 @@ export function OrderDialog({
                   </>
                 )}
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-600">{t("tables.subtotalLabel")}</span>
+                  <span className="text-gray-600">Tiền tạm tính</span>
                   <span className="font-medium">
                     {Math.floor(calculateTotal()).toLocaleString()} ₫
                   </span>
                 </div>
                 <div className="w-px h-4 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-600">{t("tables.taxLabel")}</span>
+                  <span className="text-gray-600">Thuế</span>
                   <span className="font-medium">
                     {Math.floor(calculateTax()).toLocaleString()} ₫
                   </span>
@@ -1004,7 +1017,7 @@ export function OrderDialog({
                 <div className="w-px h-4 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600 font-bold">
-                    {t("tables.totalLabel")}
+                    Tổng tiền
                   </span>
                   <span className="font-bold text-lg text-blue-600">
                     {Math.floor(calculateGrandTotal()).toLocaleString()} ₫
