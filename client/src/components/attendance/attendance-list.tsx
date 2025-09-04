@@ -4,9 +4,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, User, FileDown } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import type { AttendanceRecord, Employee } from "@shared/schema";
+import * as XLSX from 'xlsx';
 
 interface AttendanceListProps {
   selectedDate: string;
@@ -24,7 +26,7 @@ export function AttendanceList({
   onDateChange, 
   dateRange, 
   onDateRangeChange, 
-  useRange = false 
+  useRange = true // Default to use range
 }: AttendanceListProps) {
   const { t } = useTranslation();
   const { data: employees } = useQuery({
@@ -96,6 +98,49 @@ export function AttendanceList({
     return hours > 0 ? `${hours}${t('attendance.hours')} ${mins}${t('attendance.minutes')}` : `${mins}${t('attendance.minutes')}`;
   };
 
+  const exportToExcel = () => {
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+      alert(t('attendance.noDataToExport'));
+      return;
+    }
+
+    // Prepare data for Excel export
+    const excelData = attendanceRecords.map((record: AttendanceRecord) => ({
+      [t('employees.name')]: getEmployeeName(record.employeeId),
+      [t('common.status')]: getStatusText(record.status),
+      [t('attendance.clockInTime')]: formatTime(record.clockIn),
+      [t('attendance.clockOutTime')]: formatTime(record.clockOut),
+      [t('attendance.breakTime')]: calculateBreakTime(record.breakStart, record.breakEnd),
+      [t('attendance.totalHours')]: record.totalHours ? `${record.totalHours}${t('attendance.hours')}` : "-",
+      [t('attendance.overtime')]: record.overtime && parseFloat(record.overtime) > 0 ? `${record.overtime}${t('attendance.hours')}` : "-",
+      [t('attendance.notes')]: record.notes || "-"
+    }));
+
+    // Create workbook and worksheet
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, t('attendance.attendanceRecords'));
+
+    // Generate filename
+    const dateStr = useRange && dateRange 
+      ? `${dateRange.startDate}_${dateRange.endDate}`
+      : selectedDate;
+    const filename = `attendance_records_${dateStr}.xlsx`;
+
+    // Save file
+    XLSX.writeFile(wb, filename);
+  };
+
+  const getStatusText = (status: string) => {
+    const statusConfig = {
+      present: t('attendance.status.present'),
+      absent: t('attendance.status.absent'),
+      late: t('attendance.status.late'),
+      half_day: t('attendance.status.halfDay'),
+    };
+    return statusConfig[status as keyof typeof statusConfig] || status;
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -111,27 +156,7 @@ export function AttendanceList({
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="use-range"
-                  checked={useRange}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    if (onDateRangeChange) {
-                      // Switch between single date and date range mode
-                      if (checked) {
-                        // Initialize range with current selected date
-                        onDateRangeChange(selectedDate, selectedDate);
-                      }
-                    }
-                  }}
-                  className="mr-1"
-                />
-                <Label htmlFor="use-range">{t('attendance.useDateRange')}</Label>
-              </div>
-              
-              {useRange && onDateRangeChange ? (
+              {onDateRangeChange ? (
                 <>
                   <div className="flex items-center gap-2">
                     <Label htmlFor="start-date">{t('attendance.startDate')}:</Label>
@@ -166,6 +191,17 @@ export function AttendanceList({
                   />
                 </div>
               )}
+              
+              <Button 
+                onClick={exportToExcel}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                disabled={!attendanceRecords || attendanceRecords.length === 0}
+              >
+                <FileDown className="w-4 h-4" />
+                {t('attendance.exportExcel')}
+              </Button>
             </div>
           </div>
         </div>
