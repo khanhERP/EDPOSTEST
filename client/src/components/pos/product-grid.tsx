@@ -42,53 +42,53 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     console.log("Set cart called with:", items);
   };
 
-  const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products", { category: selectedCategory, search: searchQuery }],
+  // Fetch all products once and cache them
+  const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+    staleTime: 15 * 60 * 1000, // Cache for 15 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedCategory !== "all") {
-        params.append("category", selectedCategory.toString());
-      }
-      if (searchQuery) {
-        params.append("search", searchQuery);
-      }
-
-      const response = await fetch(`/api/products?${params}`);
+      const response = await fetch('/api/products');
       if (!response.ok) throw new Error('Failed to fetch products');
       const allProducts = await response.json();
 
-      console.log("Raw products from API:", allProducts);
-      console.log("Total products received:", allProducts.length);
-
-      // Only filter out raw materials (productType = 2) and inactive products
+      // Filter once and cache the result
       const filteredProducts = allProducts.filter((product: any) => {
         const isNotRawMaterial = product.productType !== 2;
         const isActive = product.isActive !== false;
-        const isIncluded = isNotRawMaterial && isActive;
-
-        if (!isIncluded) {
-          console.log(`❌ Product ${product.name} excluded: productType=${product.productType}, isActive=${product.isActive}`);
-        } else {
-          console.log(`✅ Product ${product.name} included: category=${product.categoryId}`);
-        }
-
-        return isIncluded;
+        return isNotRawMaterial && isActive;
       });
-
-      console.log("Filtered products for POS:", filteredProducts);
-      console.log("Products after filtering:", filteredProducts.length);
-
-      // Group by category for debugging
-      const productsByCategory = filteredProducts.reduce((acc: any, product: any) => {
-        if (!acc[product.categoryId]) acc[product.categoryId] = [];
-        acc[product.categoryId].push(product.name);
-        return acc;
-      }, {});
-      console.log("Products grouped by category:", productsByCategory);
 
       return filteredProducts;
     },
   });
+
+  // Pre-filter products based on category and search without making new API calls
+  const products = useMemo(() => {
+    if (!allProducts) return [];
+
+    return allProducts.filter((product: Product) => {
+      // Category filter
+      if (selectedCategory !== "all" && product.categoryId !== selectedCategory) {
+        return false;
+      }
+
+      // Search filter
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        return (
+          product.name.toLowerCase().includes(searchLower) ||
+          product.sku.toLowerCase().includes(searchLower)
+        );
+      }
+
+      return true;
+    });
+  }, [allProducts, selectedCategory, searchQuery]);
+
+  const isLoading = isLoadingProducts;
 
   const handleAddToCart = (product: Product) => {
     if (product.trackInventory !== false && product.stock <= 0) {

@@ -68,38 +68,36 @@ export function ShoppingCart({
   const [orderForPayment, setOrderForPayment] = useState(null);
 
 
-  const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-  const tax = cart.reduce((sum, item) => {
+  // Pre-calculate totals using useMemo to avoid continuous recalculation
+  const cartTotals = useMemo(() => {
+    const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+    
+    const tax = cart.reduce((sum, item) => {
       if (item.taxRate && parseFloat(item.taxRate) > 0) {
         const basePrice = parseFloat(item.price);
-
-        // Debug log to check afterTaxPrice
-        console.log("=== SHOPPING CART TAX CALCULATION DEBUG ===");
-        console.log("Product:", item.name);
-        console.log("Base Price:", basePrice);
-        console.log("Tax Rate:", item.taxRate + "%");
-        console.log("After Tax Price (from DB):", item.afterTaxPrice);
-        console.log("After Tax Price Type:", typeof item.afterTaxPrice);
 
         // Tax = (after_tax_price - price) * quantity
         if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(item.afterTaxPrice);
           const totalItemTax = Math.floor((afterTaxPrice - basePrice) * item.quantity);
-          console.log("✅ Using tax formula: Math.floor((after_tax_price - price) * quantity)");
-          console.log("  After Tax Price:", afterTaxPrice, "₫");
-          console.log("  Base Price:", basePrice, "₫");
-          console.log("  Quantity:", item.quantity);
-          console.log("  Tax calculation: Math.floor((" + afterTaxPrice + " - " + basePrice + ") * " + item.quantity + ") = " + totalItemTax + "₫");
           return sum + totalItemTax;
         }
       }
       return sum;
     }, 0);
-  const total = Math.round(subtotal + tax);
-  const change =
-    paymentMethod === "cash"
+    
+    const total = Math.round(subtotal + tax);
+    
+    return { subtotal, tax, total };
+  }, [cart]);
+
+  const { subtotal, tax, total } = cartTotals;
+  
+  const change = useMemo(() => {
+    return paymentMethod === "cash"
       ? Math.max(0, parseFloat(amountReceived || "0") - total)
       : 0;
+  }, [paymentMethod, amountReceived, total]);
 
   // Helper functions for receipt generation (used in handlePaymentMethodSelect)
   const calculateSubtotal = () =>
