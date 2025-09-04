@@ -400,17 +400,6 @@ export function ShoppingCart({
       // Reset states
       setPreviewReceipt(null);
       setOrderForPayment(null);
-    } else if (method === "einvoice") {
-      console.log("📧 POS: Opening E-invoice modal from payment method selection");
-      
-      // Close payment modal and show E-invoice modal
-      setShowPaymentModal(false);
-      setShowEInvoiceModal(true);
-      
-      // Set selected payment method for E-invoice processing
-      setSelectedPaymentMethod(data?.originalPaymentMethod || "cash");
-      
-      return;
     } else {
       // For other method selections, close payment modal
       setShowPaymentModal(false);
@@ -748,6 +737,25 @@ export function ShoppingCart({
       });
     }
 
+    // Clear cart immediately
+    console.log("🧹 POS: Clearing cart after E-Invoice processing");
+    onClearCart();
+
+    // Clear any active orders
+    if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+      (window as any).clearActiveOrder();
+    }
+
+    // Close all other modals
+    setShowPaymentModal(false);
+    setShowReceiptPreview(false);
+    setShowPaymentMethodModal(false);
+
+    // ALWAYS SHOW RECEIPT MODAL - NO EXCEPTIONS
+    console.log("🔥 POS: ALWAYS showing receipt modal - removed all conditional checks");
+    console.log("🔥 POS: receiptForDisplay being set:", receiptForDisplay);
+    console.log("🔥 POS: receiptForDisplay items count:", receiptForDisplay?.items?.length || 0);
+    
     // Close all other modals first to prevent conflicts
     setShowPaymentModal(false);
     setShowReceiptPreview(false);
@@ -763,16 +771,14 @@ export function ShoppingCart({
       (window as any).clearActiveOrder();
     }
     
-    // FORCE SHOW RECEIPT MODAL - NO DELAY, NO CONDITIONS
-    console.log("🔥 POS: FORCE showing receipt modal immediately");
-    console.log("🔥 POS: receiptForDisplay being set:", receiptForDisplay);
-    console.log("🔥 POS: receiptForDisplay items count:", receiptForDisplay?.items?.length || 0);
-    
-    // Set receipt data and show modal immediately
-    setSelectedReceipt(receiptForDisplay);
-    setShowReceiptModal(true);
+    // Set receipt data and show modal with small delay to ensure other modals are closed
+    setTimeout(() => {
+      console.log("🔥 POS: Setting receipt modal states");
+      setSelectedReceipt(receiptForDisplay);
+      setShowReceiptModal(true);
+    }, 100);
 
-    console.log("✅ POS: Receipt modal FORCED to display");
+    console.log("✅ POS: Receipt modal will be displayed");
   };
 
   const canCheckout = cart.length > 0;
@@ -1195,12 +1201,7 @@ export function ShoppingCart({
             setShowEInvoiceModal(false);
             setIsProcessingPayment(false);
           }}
-          onConfirm={(invoiceData) => {
-            console.log("🎯 POS: E-Invoice onConfirm called with data:", invoiceData);
-            
-            // Force call to handleEInvoiceConfirm
-            handleEInvoiceConfirm(invoiceData);
-          }}
+          onConfirm={handleEInvoiceConfirm}
           total={(() => {
             // Use the most accurate total available
             const totalToUse = orderForPayment?.exactTotal ||
@@ -1218,9 +1219,9 @@ export function ShoppingCart({
               finalTotalToUse: totalToUse
             });
 
-            return Math.floor(totalToUse || 0);
+            return totalToUse;
           })()}
-          selectedPaymentMethod={selectedPaymentMethod || "cash"}
+          selectedPaymentMethod={selectedPaymentMethod}
           cartItems={(() => {
             // Use the most accurate cart items available
             const itemsToUse = lastCartItems.length > 0 ? lastCartItems :
