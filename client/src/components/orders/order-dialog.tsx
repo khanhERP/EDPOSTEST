@@ -332,19 +332,19 @@ export function OrderDialog({
               if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                 const taxPerUnit = afterTaxPrice - basePrice;
-                newTax += Math.floor(taxPerUnit * quantity);
+                newTax += taxPerUnit * quantity;
               }
             });
           }
 
-          const newTotal = newSubtotal + Math.abs(newTax);
+          const newTotal = newSubtotal + newTax;
 
           console.log('💰 Order Dialog: Calculated new totals:', {
             oldSubtotal: existingOrder.subtotal,
             oldTax: existingOrder.tax,
             oldTotal: existingOrder.total,
             newSubtotal,
-            newTax: Math.abs(newTax),
+            newTax,
             newTotal,
             itemsCount: existingItems?.length || 0
           });
@@ -353,7 +353,7 @@ export function OrderDialog({
           console.log('💾 Updating order totals in database...');
           const updateResponse = await apiRequest('PUT', `/api/orders/${existingOrder.id}`, {
             subtotal: newSubtotal.toString(),
-            tax: Math.abs(newTax).toString(),
+            tax: newTax.toString(),
             total: newTotal.toString()
           });
 
@@ -414,7 +414,7 @@ export function OrderDialog({
 
           toast({
             title: t('orders.orderUpdateSuccess'),
-            description: `Đã tính lại và cập nhật: ${newTotal.toLocaleString()} ₫`,
+            description: `Đã tính lại và cập nhật: ${Math.round(newTotal).toLocaleString()} ₫`,
           });
 
         } catch (error) {
