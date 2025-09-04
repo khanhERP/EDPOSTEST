@@ -661,33 +661,35 @@ export function OrderManagement() {
 
   // Function to get order total - use consistent calculation logic
   const getOrderTotal = React.useCallback((order: Order) => {
-    // CRITICAL: For cancelled and paid orders, ALWAYS use stored total only
-    // These orders should never be recalculated as their state is final
-    if (order.status === 'cancelled' || order.status === 'paid') {
+    // CRITICAL: For all final states (paid, cancelled), ALWAYS use stored total only
+    // These orders are finalized and should NEVER be recalculated
+    if (order.status === 'paid' || order.status === 'cancelled') {
       const storedTotal = Math.floor(Number(order.total || 0));
-      console.log(`💰 Order ${order.orderNumber} is ${order.status}, using STORED total ONLY: ${storedTotal}`);
+      console.log(`💰 FINAL STATE Order ${order.orderNumber} (${order.status}) - using STORED total ONLY: ${storedTotal}`);
       return storedTotal;
     }
 
-    // For active orders only, try to use calculated totals
-    // Try to use calculatedTotal from API first (most accurate)
+    // For active orders only (pending, confirmed, preparing, ready, served), use calculation priority
+    console.log(`💰 ACTIVE Order ${order.orderNumber} (${order.status}) - using calculation priority`);
+    
+    // Priority 1: API calculated total (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
       const total = Math.floor(Number(apiCalculatedTotal));
-      console.log(`💰 Using API calculated total for active order ${order.orderNumber}: ${total}`);
+      console.log(`💰 Priority 1 - API calculated total for ${order.orderNumber}: ${total}`);
       return total;
     }
 
-    // If we have cached calculated total for this active order, use it
+    // Priority 2: Cached calculated total
     if (calculatedTotals.has(order.id)) {
       const cachedTotal = calculatedTotals.get(order.id)!;
-      console.log(`💰 Using cached calculated total for active order ${order.orderNumber}: ${cachedTotal}`);
+      console.log(`💰 Priority 2 - Cached calculated total for ${order.orderNumber}: ${cachedTotal}`);
       return cachedTotal;
     }
 
-    // Fallback to stored total for active orders
+    // Priority 3: Stored total as fallback
     const storedTotal = Math.floor(Number(order.total || 0));
-    console.log(`💰 Using stored total for active order ${order.orderNumber}: ${storedTotal}`);
+    console.log(`💰 Priority 3 - Stored total fallback for ${order.orderNumber}: ${storedTotal}`);
     return storedTotal;
   }, [calculatedTotals]);
 
@@ -1778,65 +1780,72 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          // CRITICAL: Check status FIRST before any calculations
-                          // For cancelled orders, ALWAYS show stored total with strikethrough
-                          if (order.status === 'cancelled') {
-                            const cancelledTotal = Math.floor(Number(order.total || 0));
-                            console.log(`💰 CANCELLED Order ${order.orderNumber} - showing stored total only: ${cancelledTotal}`);
-                            return (
-                              <span className="text-sm text-gray-400 line-through">
-                                {formatCurrency(cancelledTotal)}
-                              </span>
-                            );
+                          // CRITICAL: For all final states (paid, cancelled), ALWAYS use stored total
+                          // These orders are finalized and should never be recalculated
+                          if (order.status === 'paid' || order.status === 'cancelled') {
+                            const storedTotal = Math.floor(Number(order.total || 0));
+                            console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - using STORED total ONLY: ${storedTotal}`);
+                            
+                            if (order.status === 'cancelled') {
+                              return (
+                                <span className="text-sm text-gray-400 line-through">
+                                  {formatCurrency(storedTotal)}
+                                </span>
+                              );
+                            } else {
+                              return (
+                                <span className="text-green-600">
+                                  {formatCurrency(storedTotal)}
+                                </span>
+                              );
+                            }
                           }
 
-                          // For paid orders, show stored total normally
-                          if (order.status === 'paid') {
-                            const paidTotal = Math.floor(Number(order.total || 0));
-                            console.log(`💰 PAID Order ${order.orderNumber} - showing stored total: ${paidTotal}`);
-                            return (
-                              <span className="text-green-600">
-                                {formatCurrency(paidTotal)}
-                              </span>
-                            );
-                          }
-
-                          // For active orders, use calculation logic
-                          const displayTotal = getOrderTotal(order);
+                          // For active orders only, use calculation logic
                           const apiCalculatedTotal = (order as any).calculatedTotal;
                           const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
                           const hasCachedTotal = calculatedTotals.has(order.id);
-
-                          // Show loading state only if we don't have any calculated total and it's an active order
-                          if (!hasApiTotal && !hasCachedTotal && displayTotal === 0) {
+                          
+                          // Priority 1: Use API calculated total if available
+                          if (hasApiTotal) {
+                            const displayTotal = Math.floor(Number(apiCalculatedTotal));
+                            console.log(`💰 Active order ${order.orderNumber} - using API calculated total: ${displayTotal}`);
                             return (
-                              <span className="text-sm text-gray-500 italic animate-pulse">
-                                Đang tính...
+                              <span className="text-green-600">
+                                {formatCurrency(displayTotal)}
+                              </span>
+                            );
+                          }
+                          
+                          // Priority 2: Use cached calculated total
+                          if (hasCachedTotal) {
+                            const cachedTotal = calculatedTotals.get(order.id)!;
+                            console.log(`💰 Active order ${order.orderNumber} - using cached calculated total: ${cachedTotal}`);
+                            return (
+                              <span className="text-green-600">
+                                {formatCurrency(cachedTotal)}
                               </span>
                             );
                           }
 
-                          // Show the calculated total with confidence indicator
-                          if (hasApiTotal) {
-                            return (
-                              <span className="text-green-600">
-                                {formatCurrency(displayTotal)}
-                              </span>
-                            );
-                          } else if (hasCachedTotal) {
-                            return (
-                              <span className="text-green-600">
-                                {formatCurrency(displayTotal)}
-                              </span>
-                            );
-                          } else {
-                            // Fallback to stored total with different styling to indicate uncertainty
+                          // Priority 3: Use stored total as fallback for active orders
+                          const storedTotal = Math.floor(Number(order.total || 0));
+                          if (storedTotal > 0) {
+                            console.log(`💰 Active order ${order.orderNumber} - using stored total as fallback: ${storedTotal}`);
                             return (
                               <span className="text-orange-600">
-                                {formatCurrency(displayTotal)}
+                                {formatCurrency(storedTotal)}
                               </span>
                             );
                           }
+
+                          // Show loading state only if no total is available
+                          console.log(`💰 Active order ${order.orderNumber} - showing loading state`);
+                          return (
+                            <span className="text-sm text-gray-500 italic animate-pulse">
+                              Đang tính...
+                            </span>
+                          );
                         })()}
                       </span>
                     </div>
