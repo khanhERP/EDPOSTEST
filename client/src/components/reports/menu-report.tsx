@@ -299,12 +299,7 @@ function MenuReport() {
               </div>
             </div>
           </div>
-          <div className="mt-4">
-            <Button onClick={handleRefresh} className="flex items-center gap-2" disabled={analysisLoading}>
-              <RefreshCw className={`w-4 h-4 ${analysisLoading ? 'animate-spin' : ''}`} />
-              {analysisLoading ? "Đang tải..." : "Cập nhật"}
-            </Button>
-          </div>
+          
         </CardContent>
       </Card>
 
