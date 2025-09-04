@@ -472,7 +472,69 @@ export function EInvoiceModal({
       );
 
 
-      // Lưu hóa đơn vào database với trạng thái "chưa phát hành"
+      // Create transaction record for publish later
+      try {
+        console.log("💾 Creating transaction record for publish later");
+
+        const transactionPayload = {
+          transaction: {
+            transactionId: `TXN-${Date.now()}`,
+            subtotal: calculatedSubtotal.toFixed(2),
+            tax: calculatedTax.toFixed(2),
+            total: grandTotal.toFixed(2),
+            paymentMethod: selectedPaymentMethod,
+            cashierName: "POS Cashier",
+            notes: `POS Sale - E-Invoice to be published later - Template: ${selectedTemplate?.templateNumber || "Not selected"}`,
+            invoiceNumber: null, // Will be updated when e-invoice is published
+            orderId: orderId // Link to the order if available
+          },
+          items: cartItems.map((item) => {
+            const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+            const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
+
+            return {
+              productId: item.id,
+              productName: item.name,
+              price: itemPrice.toFixed(2),
+              quantity: itemQuantity,
+              total: (itemPrice * itemQuantity).toFixed(2),
+            };
+          }),
+        };
+
+        console.log("💾 Transaction payload for publish later:", transactionPayload);
+
+        const transactionResponse = await fetch("/api/transactions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(transactionPayload),
+        });
+
+        if (transactionResponse.ok) {
+          const savedTransaction = await transactionResponse.json();
+          console.log("✅ Transaction for publish later saved successfully:", savedTransaction);
+        } else {
+          const errorText = await transactionResponse.text();
+          console.error("❌ Failed to save transaction for publish later:", errorText);
+          toast({
+            title: "Lỗi",
+            description: "Không thể lưu giao dịch cho hóa đơn phát hành sau. " + errorText,
+            variant: "destructive",
+          });
+        }
+      } catch (transactionSaveError) {
+        console.error("❌ Error saving transaction for publish later:", transactionSaveError);
+        toast({
+          title: "Lỗi",
+          description: `Lỗi khi lưu giao dịch cho hóa đơn phát hành sau: ${transactionSaveError}`,
+          variant: "destructive",
+        });
+      }
+
+
+        // Lưu hóa đơn vào database với trạng thái "chưa phát hành"
         try {
           console.log("💾 Saving unpublished invoice to database");
 
