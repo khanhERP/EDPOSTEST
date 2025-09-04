@@ -1,7 +1,9 @@
 import {
   categories,
   products,
+  transactions,
   transactions as transactionsTable,
+  transactionItems,
   transactionItems as transactionItemsTable,
   employees,
   attendanceRecords,
