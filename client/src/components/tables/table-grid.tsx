@@ -71,19 +71,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const queryClient = useQueryClient();
   const [orderForEInvoice, setOrderForEInvoice] = useState<any>(null);
 
-  const { data: tables, isLoading, refetch: refetchTables } = useQuery({
-    queryKey: ["/api/tables"],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnWindowFocus: false, // Don't refetch on focus
-    refetchOnMount: false, // Don't refetch on mount if data exists
-    refetchInterval: false, // Don't auto-refetch on interval
-    networkMode: 'online', // Only fetch when online
-  });
-
-  const { data: orders, refetch: refetchOrders } = useQuery({
-    queryKey: ["/api/orders"],
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes (orders change more frequently)
+  // Use optimized endpoint that returns tables with calculated totals in one call
+  const { data: tablesWithTotals, isLoading, refetch: refetchTables } = useQuery({
+    queryKey: ["/api/tables-with-totals"],
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes (tables with orders change frequently)
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     refetchOnWindowFocus: false, // Don't refetch on focus
     refetchOnMount: false, // Don't refetch on mount if data exists
@@ -91,54 +82,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     networkMode: 'online', // Only fetch when online
   });
 
-  // Get all active orders' items for proper total calculation
-  const activeOrders = Array.isArray(orders) ? orders.filter(
-    (order: any) => !["paid", "cancelled"].includes(order.status)
-  ) : [];
+  // Extract tables and orders from the optimized response
+  const tables = tablesWithTotals?.map(table => ({
+    id: table.id,
+    tableNumber: table.tableNumber,
+    capacity: table.capacity,
+    status: table.status,
+    qrCode: table.qrCode,
+    createdAt: table.createdAt
+  })) || [];
 
-  const { data: allOrderItems } = useQuery({
-    queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
-    enabled: activeOrders.length > 0 && activeOrders.length <= 20, // Limit to prevent too many requests
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    staleTime: 15 * 60 * 1000, // Cache for 15 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
-    queryFn: async () => {
-      const itemsMap = new Map();
+  const orders = tablesWithTotals?.filter(table => table.activeOrder)
+    .map(table => table.activeOrder) || [];
 
-      // Batch process in chunks of 5 to prevent overwhelming the server
-      const chunks = [];
-      for (let i = 0; i < activeOrders.length; i += 5) {
-        chunks.push(activeOrders.slice(i, i + 5));
-      }
-
-      for (const chunk of chunks) {
-        const promises = chunk.map(async (order) => {
-          try {
-            const response = await apiRequest("GET", `/api/order-items/${order.id}`);
-            const items = await response.json();
-            return { orderId: order.id, items: Array.isArray(items) ? items : [] };
-          } catch (error) {
-            console.error(`Error fetching items for order ${order.id}:`, error);
-            return { orderId: order.id, items: [] };
-          }
-        });
-
-        const results = await Promise.all(promises);
-        results.forEach(({ orderId, items }) => {
-          itemsMap.set(orderId, items);
-        });
-
-        // Small delay between chunks to prevent server overload
-        if (chunks.indexOf(chunk) < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
-
-      return itemsMap;
-    },
-  });
+  // Create a simple refetch function that refetches the optimized endpoint
+  const refetchOrders = refetchTables;
 
   const {
     data: orderItems,
@@ -1053,42 +1011,22 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   });
 
   const getActiveOrder = (tableId: number) => {
-    if (!orders || !Array.isArray(orders)) return null;
+    if (!tablesWithTotals || !Array.isArray(tablesWithTotals)) return null;
 
-    // Get all active orders for this table and sort by orderedAt descending to get the latest
-    const activeOrders = orders.filter(
-      (order: Order) =>
-        order.tableId === tableId &&
-        !["paid", "cancelled"].includes(order.status),
-    );
+    // Find the table and return its active order directly from optimized response
+    const tableData = tablesWithTotals.find(table => table.id === tableId);
+    
+    if (!tableData || !tableData.activeOrder) return null;
 
-    console.log(
-      `Active orders for table ${tableId}:`,
-      activeOrders.map((o) => ({
-        id: o.id,
-        orderNumber: o.orderNumber,
-        orderedAt: o.orderedAt,
-        status: o.status,
-        total: o.total,
-      })),
-    );
-
-    if (activeOrders.length === 0) return null;
-
-    // Sort by orderedAt descending and return the most recent order
-    const latestOrder = activeOrders.sort(
-      (a: Order, b: Order) =>
-        new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime(),
-    )[0];
-
-    console.log(`Latest order for table ${tableId}:`, {
-      id: latestOrder.id,
-      orderNumber: latestOrder.orderNumber,
-      orderedAt: latestOrder.orderedAt,
-      total: latestOrder.total,
+    console.log(`Active order for table ${tableId}:`, {
+      id: tableData.activeOrder.id,
+      orderNumber: tableData.activeOrder.orderNumber,
+      orderedAt: tableData.activeOrder.orderedAt,
+      total: tableData.activeOrder.storedTotal,
+      calculatedTotal: tableData.activeOrder.calculatedTotal,
     });
 
-    return latestOrder;
+    return tableData.activeOrder;
   };
 
   // Helper function to get product name
@@ -1981,69 +1919,27 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           )}
                         </div>
                         <div
-                          className={`font-medium ${Number(activeOrder.total) <= 0 ? "text-gray-400" : "text-gray-900"}`}
+                          className={`font-medium ${Number(activeOrder.calculatedTotal || activeOrder.storedTotal || 0) <= 0 ? "text-gray-400" : "text-gray-900"}`}
                         >
                           {(() => {
-                            // Get stored total from database
-                            const storedTotal = Number(activeOrder.total || 0);
+                            // Use pre-calculated total from optimized API
+                            const calculatedTotal = activeOrder.calculatedTotal || 0;
+                            const storedTotal = Number(activeOrder.storedTotal || 0);
 
                             console.log(
-                              `💰 Table ${table.tableNumber} total calculation:`,
+                              `💰 Table ${table.tableNumber} total from optimized API:`,
                               {
                                 orderId: activeOrder.id,
-                                storedTotal: storedTotal,
-                                orderNumber: activeOrder.orderNumber
+                                orderNumber: activeOrder.orderNumber,
+                                calculatedTotal,
+                                storedTotal
                               }
                             );
 
-                            // Always try to calculate from order items first for accuracy
-                            const orderItemsForTable = allOrderItems?.get(activeOrder.id);
-                            if (orderItemsForTable && Array.isArray(orderItemsForTable) && orderItemsForTable.length > 0) {
-                              let calculatedSubtotal = 0;
-                              let calculatedTax = 0;
-
-                              orderItemsForTable.forEach((item: any) => {
-                                const basePrice = Number(item.unitPrice || 0);
-                                const quantity = Number(item.quantity || 0);
-                                const product = Array.isArray(products)
-                                  ? products.find((p: any) => p.id === item.productId)
-                                  : null;
-
-                                // Calculate subtotal
-                                calculatedSubtotal += basePrice * quantity;
-
-                                // Calculate tax using same logic as other components
-                                if (
-                                  product?.afterTaxPrice &&
-                                  product.afterTaxPrice !== null &&
-                                  product.afterTaxPrice !== ""
-                                ) {
-                                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                  const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-                                  calculatedTax += taxPerUnit * quantity;
-                                }
-                              });
-
-                              const calculatedTotal = calculatedSubtotal + calculatedTax;
-                              if (calculatedTotal > 0) {
-                                console.log(`💰 Table ${table.tableNumber} using calculated total:`, {
-                                  itemsCount: orderItemsForTable.length,
-                                  calculatedSubtotal,
-                                  calculatedTax,
-                                  calculatedTotal
-                                });
-                                return Math.floor(calculatedTotal).toLocaleString("vi-VN");
-                              }
-                            }
-
-                            // Fallback to stored total if calculation fails
-                            if (storedTotal > 0) {
-                              console.log(`💰 Table ${table.tableNumber} using stored total:`, storedTotal);
-                              return Math.floor(storedTotal).toLocaleString("vi-VN");
-                            }
-
-                            // Final fallback to "0" if no valid total found
-                            return "0";
+                            // Use calculated total if available, otherwise fallback to stored total
+                            const finalTotal = calculatedTotal > 0 ? calculatedTotal : storedTotal;
+                            
+                            return finalTotal > 0 ? Math.floor(finalTotal).toLocaleString("vi-VN") : "0";
                           })()}{" "}
                           ₫
                         </div>
