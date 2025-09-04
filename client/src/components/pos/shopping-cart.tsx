@@ -138,8 +138,15 @@ export function ShoppingCart({
     let ws: WebSocket | null = null;
     let reconnectTimer: NodeJS.Timeout | null = null;
     let shouldReconnect = true;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
 
     const connectWebSocket = () => {
+      if (reconnectAttempts >= maxReconnectAttempts) {
+        console.log('📡 Shopping Cart: Max reconnection attempts reached, giving up');
+        return;
+      }
+
       try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -147,6 +154,8 @@ export function ShoppingCart({
 
         ws.onopen = () => {
           console.log('📡 Shopping Cart: WebSocket connected for refresh signals');
+          reconnectAttempts = 0; // Reset attempts on successful connection
+          
           // Register as shopping cart client
           ws?.send(JSON.stringify({
             type: 'register_shopping_cart',
@@ -159,13 +168,17 @@ export function ShoppingCart({
             const data = JSON.parse(event.data);
             console.log('📩 Shopping Cart: Received WebSocket message:', data);
 
-            if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'force_refresh') {
+            if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'force_refresh' || data.type === 'einvoice_published') {
               console.log('🔄 Shopping Cart: Refreshing data due to WebSocket signal');
 
               // Clear cart if payment was successful
-              if (data.type === 'popup_close' && data.success) {
-                console.log('🔄 Shopping Cart: Clearing cart due to successful payment');
+              if ((data.type === 'popup_close' && data.success) || data.type === 'payment_success' || data.type === 'einvoice_published') {
+                console.log('🧹 Shopping Cart: Clearing cart due to successful payment/invoice');
+                
+                // Multiple attempts to ensure cart is cleared
                 onClearCart();
+                setTimeout(() => onClearCart(), 100);
+                setTimeout(() => onClearCart(), 300);
 
                 // Clear any active orders
                 if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
@@ -180,8 +193,10 @@ export function ShoppingCart({
 
         ws.onclose = () => {
           console.log('📡 Shopping Cart: WebSocket disconnected, attempting reconnect...');
-          if (shouldReconnect) {
-            reconnectTimer = setTimeout(connectWebSocket, 2000);
+          if (shouldReconnect && reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            const delay = Math.min(2000 * reconnectAttempts, 10000); // Exponential backoff
+            reconnectTimer = setTimeout(connectWebSocket, delay);
           }
         };
 
@@ -190,8 +205,10 @@ export function ShoppingCart({
         };
       } catch (error) {
         console.error('❌ Shopping Cart: Failed to connect WebSocket:', error);
-        if (shouldReconnect) {
-          reconnectTimer = setTimeout(connectWebSocket, 2000);
+        if (shouldReconnect && reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++;
+          const delay = Math.min(2000 * reconnectAttempts, 10000);
+          reconnectTimer = setTimeout(connectWebSocket, delay);
         }
       }
     };
@@ -206,7 +223,7 @@ export function ShoppingCart({
         clearTimeout(reconnectTimer);
       }
 
-      if (ws) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close();
       }
     };
@@ -333,17 +350,44 @@ export function ShoppingCart({
       // Close payment modal
       setShowPaymentModal(false);
 
-      // Clear cart after successful payment
+      // CRITICAL: Clear cart immediately after successful payment
+      console.log("🧹 POS: Clearing cart after successful payment");
       onClearCart();
+
+      // Clear any active orders
+      if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+        (window as any).clearActiveOrder();
+      }
 
       // Reset states
       setPreviewReceipt(null);
       setOrderForPayment(null);
+      setLastCartItems([]);
 
       // Show final receipt if needed
       if (data.shouldShowReceipt !== false) {
         console.log("📋 POS: Showing final receipt modal");
+        setSelectedReceipt(data.receipt || null);
         setShowReceiptModal(true);
+      }
+
+      // Send WebSocket signal for refresh
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        const ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify({
+            type: 'payment_success',
+            success: true,
+            source: 'shopping-cart',
+            timestamp: new Date().toISOString()
+          }));
+          setTimeout(() => ws.close(), 100);
+        };
+      } catch (error) {
+        console.warn("⚠️ WebSocket signal failed (non-critical):", error);
       }
 
       console.log('🎉 POS: Payment flow completed successfully');
@@ -600,6 +644,15 @@ export function ShoppingCart({
           title: "Thành công",
           description: "Hóa đơn điện tử đã được phát hành thành công. Hiển thị hóa đơn để in...",
         });
+      }
+
+      // CRITICAL: Clear cart immediately after successful payment
+      console.log("🧹 POS: Clearing cart immediately after successful E-Invoice processing");
+      onClearCart();
+
+      // Clear any active orders
+      if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+        (window as any).clearActiveOrder();
       }
 
       // Force close any existing modals first
