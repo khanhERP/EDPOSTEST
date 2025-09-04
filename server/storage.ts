@@ -1537,12 +1537,12 @@ export class DatabaseStorage implements IStorage {
       const queryStartTime = Date.now();
       console.log(`⏱️ DATABASE QUERY STARTED at:`, new Date().toISOString());
 
-      const result = await this.safeDbQuery(
+      const updateResult = await this.safeDbQuery(
         () => database.update(orders).set(updateData).where(eq(orders.id, orderId as number)).returning(),
         [],
         `updateOrderStatus-${orderId}`
       );
-      const [order] = result;
+      const [order] = updateResult;
 
       const queryEndTime = Date.now();
       console.log(`⏱️ DATABASE QUERY COMPLETED in ${queryEndTime - queryStartTime}ms`);
