@@ -1704,37 +1704,67 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       console.log(`Successfully created ${createdItems.length} items`);
 
-      // Update order total
+      // Update order total using accurate tax calculation
       try {
-        const [orderItemsSum] = await db
-          .select({
-            total: sql < number > `COALESCE(sum(CAST(${orderItems.total} AS DECIMAL)), 0)`,
-          })
+        // Get all order items to calculate accurate totals
+        const allOrderItems = await db
+          .select()
           .from(orderItems)
           .where(eq(orderItems.orderId, orderId));
 
-        console.log("Order items sum result:", orderItemsSum);
+        console.log(`Recalculating totals for ${allOrderItems.length} order items`);
 
-        const totalAmount = Number(orderItemsSum.total) || 0;
-        const subtotalAmount = totalAmount / 1.1; // Remove 10% tax
-        const taxAmount = totalAmount - subtotalAmount;
+        let calculatedSubtotal = 0;
+        let calculatedTax = 0;
 
-        console.log("Calculated amounts:", {
-          total: totalAmount,
-          subtotal: subtotalAmount,
-          tax: taxAmount,
+        // Calculate totals using same logic as order details
+        for (const orderItem of allOrderItems) {
+          const basePrice = Number(orderItem.unitPrice || 0);
+          const quantity = Number(orderItem.quantity || 0);
+          
+          // Get product for tax calculation
+          const [product] = await db
+            .select()
+            .from(products)
+            .where(eq(products.id, orderItem.productId));
+
+          // Calculate subtotal (base price without tax)
+          calculatedSubtotal += basePrice * quantity;
+
+          // Calculate tax using afterTaxPrice if available
+          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+            const afterTaxPrice = parseFloat(product.afterTaxPrice);
+            const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+            calculatedTax += Math.floor(taxPerUnit * quantity);
+            
+            console.log(`Tax calculation for ${product.name}:`, {
+              basePrice,
+              afterTaxPrice,
+              taxPerUnit,
+              quantity,
+              itemTax: Math.floor(taxPerUnit * quantity)
+            });
+          }
+        }
+
+        const calculatedTotal = calculatedSubtotal + calculatedTax;
+
+        console.log("Calculated amounts using accurate tax:", {
+          subtotal: calculatedSubtotal,
+          tax: calculatedTax,
+          total: calculatedTotal,
         });
 
         await db
           .update(orders)
           .set({
-            total: totalAmount.toFixed(2),
-            subtotal: subtotalAmount.toFixed(2),
-            tax: taxAmount.toFixed(2),
+            subtotal: calculatedSubtotal.toFixed(2),
+            tax: calculatedTax.toFixed(2),
+            total: calculatedTotal.toFixed(2),
           })
           .where(eq(orders.id, orderId));
 
-        console.log("Updated order totals successfully");
+        console.log("Updated order totals successfully with accurate tax calculation");
       } catch (updateError) {
         console.error("Error updating order totals:", updateError);
         // Don't throw here, as items were already created successfully
