@@ -4149,4 +4149,3 @@ export function SalesChartReport() {
       </div>
     );
   };
-}
