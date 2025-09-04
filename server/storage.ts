@@ -1477,7 +1477,7 @@ export class DatabaseStorage implements IStorage {
     tenantDb?: any,
   ): Promise<Order | null> {
     try {
-      const safeDb = await this.getSafeDatabase('updateOrder', tenantDb);
+      const safeDb = this.getSafeDatabase(tenantDb, 'updateOrder');
 
       console.log(`📝 Storage: Updating order ${id} with data:`, orderData);
 
