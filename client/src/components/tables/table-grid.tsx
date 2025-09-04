@@ -73,79 +73,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
-    refetchOnWindowFocus: true, // Refetch on focus to get fresh data
-    refetchOnMount: true, // Always refetch on mount to get fresh data
-    refetchInterval: 15000, // Auto-refetch every 15 seconds
-    networkMode: 'online', // Only fetch when online
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false, // Disable auto-refresh
   });
 
   const { data: orders, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
-    refetchOnWindowFocus: true, // Refetch on focus to get fresh data
-    refetchOnMount: true, // Always refetch on mount to get fresh data
-    refetchInterval: 15000, // Auto-refetch every 15 seconds for orders
-    networkMode: 'online', // Only fetch when online
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false, // Disable auto-refresh
   });
 
-  // Get all active orders' items for proper total calculation
-  const activeOrders = Array.isArray(orders) ? orders.filter(
-    (order: any) => !["paid", "cancelled"].includes(order.status)
-  ) : [];
-
-  const { data: allOrderItems, refetch: refetchAllOrderItems } = useQuery({
-    queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
-    enabled: activeOrders.length > 0 && activeOrders.length <= 25, // Slightly increased limit
-    refetchOnWindowFocus: true, // Always refetch on focus to get fresh data
-    refetchOnMount: true, // Always refetch on mount to get fresh data
-    refetchInterval: 15000, // Refetch every 15 seconds for faster updates
-    staleTime: 0, // Don't use stale data - always fetch fresh
-    gcTime: 1 * 60 * 1000, // Keep in cache for only 1 minute
-    networkMode: 'online', // Only fetch when online
-    queryFn: async () => {
-      console.log("🔄 Fetching fresh order items for", activeOrders.length, "active orders");
-      const itemsMap = new Map();
-
-      // Batch process in chunks of 3 for better performance
-      const chunks = [];
-      for (let i = 0; i < activeOrders.length; i += 3) {
-        chunks.push(activeOrders.slice(i, i + 3));
-      }
-
-      for (const chunk of chunks) {
-        const promises = chunk.map(async (order) => {
-          try {
-            const response = await apiRequest("GET", `/api/order-items/${order.id}`, 
-              undefined, 
-              { cache: 'no-store' } // Force no cache for fresh data
-            );
-            const items = await response.json();
-            console.log(`✅ Fetched ${items?.length || 0} items for order ${order.id}`);
-            return { orderId: order.id, items: Array.isArray(items) ? items : [] };
-          } catch (error) {
-            console.error(`❌ Error fetching items for order ${order.id}:`, error);
-            return { orderId: order.id, items: [] };
-          }
-        });
-
-        const results = await Promise.all(promises);
-        results.forEach(({ orderId, items }) => {
-          itemsMap.set(orderId, items);
-        });
-
-        // Small delay between chunks to prevent server overload
-        if (chunks.indexOf(chunk) < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
-      }
-
-      console.log("✅ All order items fetched, total orders with items:", itemsMap.size);
-      return itemsMap;
-    },
-  });
+  
 
   const {
     data: orderItems,
@@ -221,148 +165,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems, queryClient]);
 
-  // Listen for custom events to refresh data - only when really needed
+  // Simple refresh logic for payment completion
   useEffect(() => {
-    const handleRefreshData = (event: CustomEvent) => {
-      console.log("🔄 Table Grid: Received refresh data event:", event.detail);
-
-      // Always clear cache for order items when refreshing to ensure correct totals
-      queryClient.removeQueries({ queryKey: ["/api/all-order-items"] });
-      queryClient.removeQueries({ predicate: (query) => 
-        query.queryKey[0] === "/api/order-items" 
-      });
-
-      // Only refresh if the event is critical or forced
-      if (event.detail?.forceRefresh || event.detail?.reason === 'payment_completed') {
-        // Clear cache and refetch fresh data
-        queryClient.removeQueries({ queryKey: ["/api/tables"] });
-        queryClient.removeQueries({ queryKey: ["/api/orders"] });
-
-        // Refresh data including order items
-        Promise.all([
-          refetchTables(),
-          refetchOrders(),
-          refetchAllOrderItems()
-        ]);
-
-        console.log("✅ Table Grid: Data refreshed successfully including order items");
-      } else {
-        // Gentle invalidation - let cache handle it but always refresh order items
-        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-        refetchAllOrderItems(); // Always refresh order items for correct totals
-      }
-    };
-
-    const handleOrderUpdated = (event: CustomEvent) => {
-      console.log("📋 Table Grid: Order updated event:", event.detail);
-      // Only invalidate, don't force refetch
+    const handlePaymentCompleted = () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      refetchTables();
+      refetchOrders();
     };
 
-    // Add event listeners
-    window.addEventListener('refreshTableData', handleRefreshData as EventListener);
-    window.addEventListener('orderUpdated', handleOrderUpdated as EventListener);
-
-    return () => {
-      window.removeEventListener('refreshTableData', handleRefreshData as EventListener);
-      window.removeEventListener('orderUpdated', handleOrderUpdated as EventListener);
-    };
+    window.addEventListener('paymentCompleted', handlePaymentCompleted);
+    return () => window.removeEventListener('paymentCompleted', handlePaymentCompleted);
   }, [queryClient, refetchTables, refetchOrders]);
 
-  // Add event listeners for payment completion
-  useEffect(() => {
-    const handlePaymentCompleted = (event: CustomEvent) => {
-      console.log("💳 Table Grid: Payment completed event received:", event.detail);
-
-      // Force immediate data refresh with multiple strategies
-      const refreshData = async () => {
-        console.log("🔄 Table Grid: Starting aggressive refresh after payment completion");
-
-        try {
-          // Clear all cached data completely
-          queryClient.clear();
-          queryClient.removeQueries();
-
-          // Force fresh data fetch multiple times
-          for (let i = 0; i < 3; i++) {
-            await Promise.all([
-              refetchTables(),
-              refetchOrders()
-            ]);
-
-            if (i < 2) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
-          }
-
-          console.log("✅ Table Grid: Aggressive payment refresh completed");
-
-          toast({
-            title: "Đã cập nhật",
-            description: "Trạng thái bàn đã được làm mới sau thanh toán",
-          });
-
-        } catch (error) {
-          console.error("❌ Table Grid: Error refreshing after payment:", error);
-          // Fallback: force page reload if refresh fails
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        }
-      };
-
-      // Execute refresh immediately
-      refreshData();
-    };
-
-    const handleOrderStatusUpdate = (event: CustomEvent) => {
-      console.log("📋 Table Grid: Order status updated:", event.detail);
-
-      if (event.detail?.status === "paid") {
-        console.log("💳 Table Grid: Order marked as paid, refreshing table status");
-
-        // Clear cache and refresh immediately for paid orders
-        queryClient.removeQueries({ queryKey: ["/api/tables"] });
-        queryClient.removeQueries({ queryKey: ["/api/orders"] });
-
-        setTimeout(() => {
-          refetchTables();
-          refetchOrders();
-        }, 50);
-      }
-    };
-
-    const handleForceRefresh = (event: CustomEvent) => {
-      console.log("🔄 Table Grid: Force refresh requested:", event.detail);
-
-      if (event.detail?.reason === "payment_completed") {
-        console.log("💰 Table Grid: Refreshing due to payment completion");
-
-        // Clear all data and force fresh fetch
-        queryClient.clear();
-
-        Promise.all([
-          refetchTables(),
-          refetchOrders()
-        ]).then(() => {
-          console.log("✅ Table Grid: Force refresh completed");
-        });
-      }
-    };
-
-    // Add event listeners
-    window.addEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
-    window.addEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
-    window.addEventListener('forceRefresh', handleForceRefresh as EventListener);
-
-    return () => {
-      window.removeEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
-      window.removeEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
-      window.removeEventListener('forceRefresh', handleForceRefresh as EventListener);
-    };
-  }, [queryClient, toast, refetchTables, refetchOrders]);
+  
 
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
@@ -2029,77 +1845,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             },
                           )}
                         </div>
-                        <div
-                          className={`font-medium ${Number(activeOrder.total) <= 0 ? "text-gray-400" : "text-gray-900"}`}
-                        >
-                          {(() => {
-                            // Always calculate fresh total from order items without cache dependency
-                            const orderItemsForTable = allOrderItems?.get(activeOrder.id);
-                            
-                            console.log(`🔍 Table ${table.tableNumber} - Checking order ${activeOrder.id}:`, {
-                              orderNumber: activeOrder.orderNumber,
-                              hasItems: !!orderItemsForTable,
-                              itemsCount: orderItemsForTable?.length || 0,
-                              storedTotal: activeOrder.total
-                            });
-                            
-                            if (orderItemsForTable && Array.isArray(orderItemsForTable) && orderItemsForTable.length > 0) {
-                              let calculatedSubtotal = 0;
-                              let calculatedTax = 0;
-
-                              orderItemsForTable.forEach((item: any) => {
-                                const basePrice = Number(item.unitPrice || 0);
-                                const quantity = Number(item.quantity || 0);
-                                const product = Array.isArray(products)
-                                  ? products.find((p: any) => p.id === item.productId)
-                                  : null;
-
-                                // Calculate subtotal (before tax)
-                                calculatedSubtotal += basePrice * quantity;
-
-                                // Calculate tax using exact same logic as order details
-                                if (
-                                  product?.afterTaxPrice &&
-                                  product.afterTaxPrice !== null &&
-                                  product.afterTaxPrice !== ""
-                                ) {
-                                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                  const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-                                  calculatedTax += Math.floor(taxPerUnit * quantity);
-                                }
-                              });
-
-                              const calculatedTotal = calculatedSubtotal + calculatedTax;
-                              
-                              console.log(`💰 Table ${table.tableNumber} - Calculated total:`, {
-                                orderId: activeOrder.id,
-                                orderNumber: activeOrder.orderNumber,
-                                itemsCount: orderItemsForTable.length,
-                                calculatedSubtotal,
-                                calculatedTax,
-                                calculatedTotal,
-                                displayTotal: Math.floor(calculatedTotal)
-                              });
-                              
-                              // Return calculated total if greater than 0, otherwise show stored total
-                              return calculatedTotal > 0 
-                                ? Math.floor(calculatedTotal).toLocaleString("vi-VN")
-                                : Math.floor(Number(activeOrder.total || 0)).toLocaleString("vi-VN");
-                            }
-
-                            // If no items found or calculation failed, use stored total with warning
-                            const storedTotal = Number(activeOrder.total || 0);
-                            console.log(`⚠️ Table ${table.tableNumber} - Using stored total (no items found):`, {
-                              orderId: activeOrder.id,
-                              orderNumber: activeOrder.orderNumber,
-                              storedTotal,
-                              itemsAvailable: !!orderItemsForTable,
-                              itemsCount: orderItemsForTable?.length || 0
-                            });
-                            
-                            return Math.floor(storedTotal).toLocaleString("vi-VN");
-                          })()}{" "}
-                          ₫
+                        <div className="font-medium text-gray-900">
+                          {Math.floor(Number(activeOrder.total || 0)).toLocaleString("vi-VN")} ₫
                         </div>
                       </div>
                     )}
