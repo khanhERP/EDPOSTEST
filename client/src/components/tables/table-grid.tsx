@@ -165,18 +165,45 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems, queryClient]);
 
-  // Simple refresh logic for payment completion
+  // CHẶN CÁC REFRESH KHÔNG CẦN THIẾT TỪNG GÂY DUP UPDATE
   useEffect(() => {
-    const handlePaymentCompleted = () => {
+    const handlePaymentCompleted = (event: CustomEvent) => {
+      console.log('🛡️ Table Grid: Payment completed event received, checking if refresh needed:', event.detail);
+      
+      // CHỈ REFRESH KHI THỰC SỰ CẦN THIẾT
+      if (event.detail?.skipAllRefetch) {
+        console.log('🚫 Table Grid: Skipping refresh due to skipAllRefetch flag');
+        return;
+      }
+      
+      // CHỈ INVALIDATE QUERIES - KHÔNG FORCE REFETCH
+      console.log('🔄 Table Grid: Invalidating queries only (no forced refetch)');
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-      refetchTables();
-      refetchOrders();
+    };
+
+    const handleOrderUpdate = (event: CustomEvent) => {
+      console.log('🛡️ Table Grid: Order update event received:', event.detail);
+      
+      // CHỈ REFRESH KHI KHÔNG CÓ FLAG CHẶN
+      if (event.detail?.skipAllRefetch) {
+        console.log('🚫 Table Grid: Skipping refresh due to skipAllRefetch flag');
+        return;
+      }
+      
+      // CHỈ INVALIDATE - KHÔNG FORCE REFETCH
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
     };
 
     window.addEventListener('paymentCompleted', handlePaymentCompleted);
-    return () => window.removeEventListener('paymentCompleted', handlePaymentCompleted);
-  }, [queryClient, refetchTables, refetchOrders]);
+    window.addEventListener('orderTotalsUpdated', handleOrderUpdate);
+    
+    return () => {
+      window.removeEventListener('paymentCompleted', handlePaymentCompleted);
+      window.removeEventListener('orderTotalsUpdated', handleOrderUpdate);
+    };
+  }, [queryClient]);
 
   
 

@@ -101,24 +101,24 @@ export function OrderDialog({
           const response = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
             items: orderData.items,
           });
-          
+
           if (!response.ok) {
             const errorData = await response.text();
             throw new Error(`Failed to add items: ${errorData}`);
           }
-          
+
           const result = await response.json();
           console.log('✅ Items added successfully with updated totals:', result);
           return result;
         } else {
           console.log('📝 Creating new order...');
           const response = await apiRequest("POST", "/api/orders", orderData);
-          
+
           if (!response.ok) {
             const errorData = await response.text();
             throw new Error(`Failed to create order: ${errorData}`);
           }
-          
+
           const result = await response.json();
           console.log('✅ Order created successfully:', result);
           return result;
@@ -323,93 +323,25 @@ export function OrderDialog({
       // Check if there are new items to add or if existing items were removed
       const hasChanges = cart.length > 0 || existingItems.some(item => item.quantity === 0); // Check if any existing item quantity became 0
 
-      // If no new items are added, recalculate and update order totals in database
-      if (cart.length === 0 && !existingItems.some(item => item.quantity === 0)) {
-        console.log('🧮 Order Dialog: No new items to add, recalculating and updating totals in database');
-
-        try {
-          // Step 1: Calculate new totals based on current items
-          const newSubtotal = calculateTotal();
-          const newTax = calculateTax();
-          const newTotal = calculateGrandTotal();
-
-          console.log('💰 Order Dialog: Calculated new totals (SINGLE UPDATE ONLY):', {
-            newSubtotal,
-            newTax,
-            newTotal,
-          });
-
-          // Step 2: SINGLE database update - no duplicate calls
-          console.log('💾 Executing SINGLE database update...');
-          const updateData = {
-            subtotal: newSubtotal.toFixed(2),
-            tax: newTax.toFixed(2),
-            total: newTotal.toFixed(2),
-            updatedAt: new Date().toISOString()
-          };
-
-          console.log('📤 Sending update data to database (ONCE ONLY):', updateData);
-
-          const updateResponse = await apiRequest('PUT', `/api/orders/${existingOrder.id}`, updateData);
-
-          if (!updateResponse.ok) {
-            const errorText = await updateResponse.text();
-            throw new Error(`Failed to update order totals: ${errorText}`);
-          }
-
-          const updatedOrderData = await updateResponse.json();
-          console.log('✅ Order Dialog: SINGLE update completed successfully:', updatedOrderData);
-
-          // Step 3: Minimal data refresh - ONLY invalidate without refetch
-          console.log('🔄 Order Dialog: Invalidating queries (NO additional API calls)...');
-          queryClient.setQueryData(["/api/orders"], (oldData: any) => {
-            if (Array.isArray(oldData)) {
-              return oldData.map(order => 
-                order.id === existingOrder.id 
-                  ? { ...order, total: newTotal.toFixed(2), subtotal: newSubtotal.toFixed(2), tax: newTax.toFixed(2) }
-                  : order
-              );
-            }
-            return oldData;
-          });
-
-          // Step 4: Emit events with skipRefetch flag
-          window.dispatchEvent(new CustomEvent('orderTotalsUpdated', { 
-            detail: { 
-              orderId: existingOrder.id,
-              oldTotal: existingOrder.total,
-              newTotal: newTotal.toFixed(2),
-              action: 'single-update-only',
-              skipAllRefetch: true,
-              timestamp: Date.now()
-            } 
-          }));
+      // CHẶN HOÀN TOÀN VIỆC UPDATE KHI KHÔNG CẦN THIẾT
+        if (cart.length === 0 && !existingItems.some(item => item.quantity === 0)) {
+          console.log('⚠️ Order Dialog: No changes detected, skipping database update to prevent duplicates');
 
           toast({
-            title: t('orders.orderUpdateSuccess'),
-            description: `Đã cập nhật thành công (1 lần duy nhất): ${Math.round(newTotal).toLocaleString()} ₫`,
+            title: "Không có thay đổi",
+            description: "Không có món nào mới để cập nhật",
+            variant: "default",
           });
 
-          console.log('✅ Order Dialog: Single update process completed - no duplicate calls');
-
-        } catch (error) {
-          console.error('❌ Order Dialog: Error updating order totals:', error);
-          toast({
-            title: "Lỗi cập nhật",
-            description: `Có lỗi xảy ra khi cập nhật tổng tiền: ${error.message}`,
-            variant: "destructive",
-          });
+          // Chỉ đóng dialog mà không gọi API
+          setCart([]);
+          setCustomerName("");
+          setCustomerCount(1);
+          setExistingItems([]);
+          onOpenChange(false);
           return;
         }
 
-        // Step 5: Reset form state and close dialog
-        setCart([]);
-        setCustomerName("");
-        setCustomerCount(1);
-        setExistingItems([]);
-        onOpenChange(false);
-        return;
-      }
 
       // For edit mode, only send the new items to be added
       const items = cart.map((item) => {
