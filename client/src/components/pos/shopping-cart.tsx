@@ -250,7 +250,7 @@ export function ShoppingCart({
       console.log('🔄 Shopping Cart: Received force refresh event:', event.detail);
       // Force clear cart and refresh
       onClearCart();
-      
+
       // Clear any active orders
       if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
         (window as any).clearActiveOrder();
@@ -542,45 +542,33 @@ export function ShoppingCart({
   };
 
   const handleEInvoiceConfirm = (invoiceData: any) => {
-    console.log("🎯 POS: E-Invoice confirmed with data:", invoiceData);
+    console.log("🎯 POS: E-Invoice confirm received:", invoiceData);
 
-    // Always close the E-invoice modal first
-    setShowEInvoiceModal(false);
-    setIsProcessingPayment(false);
-
-    if (invoiceData && invoiceData.success) {
-      console.log("✅ POS: E-Invoice processing successful");
-
-      // Validate receipt data exists
-      if (!invoiceData.receipt) {
-        console.error("❌ POS: No receipt data in invoice response");
-        toast({
-          title: "Lỗi",
-          description: "Không có dữ liệu hóa đơn để hiển thị",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log("📄 POS: Valid receipt data found, proceeding to show receipt modal");
-
-      // Create receipt object for display
+    if (invoiceData.success) {
+      // Create comprehensive receipt data from invoice response
       const receiptForDisplay = {
-        ...invoiceData.receipt,
-        // Ensure all required fields are present
-        transactionId: invoiceData.receipt.transactionId || `TXN-${Date.now()}`,
-        invoiceNumber: invoiceData.invoiceNumber || invoiceData.receipt.invoiceNumber,
-        customerName: invoiceData.customerName || invoiceData.receipt.customerName,
-        customerTaxCode: invoiceData.taxCode || invoiceData.receipt.customerTaxCode,
-        paymentMethod: 'einvoice',
-        items: invoiceData.receipt.items || [],
-        subtotal: invoiceData.receipt.subtotal || "0.00",
-        tax: invoiceData.receipt.tax || "0.00",
-        total: invoiceData.receipt.total || "0.00",
-        amountReceived: invoiceData.receipt.amountReceived || invoiceData.receipt.total || "0.00",
-        change: invoiceData.receipt.change || "0.00",
-        cashierName: invoiceData.receipt.cashierName || "POS Cashier",
-        createdAt: invoiceData.receipt.createdAt || new Date().toISOString(),
+        transactionId: invoiceData.receipt?.transactionId || `TXN-${Date.now()}`,
+        invoiceNumber: invoiceData.invoiceNumber || invoiceData.receipt?.invoiceNumber || null,
+        paymentMethod: invoiceData.paymentMethod || invoiceData.originalPaymentMethod || "einvoice",
+        total: parseFloat(invoiceData.total || invoiceData.receipt?.total || total), // Use 'total' from hook if invoiceData is missing
+        subtotal: parseFloat(invoiceData.subtotal || invoiceData.receipt?.subtotal || subtotal), // Use 'subtotal' from hook
+        tax: parseFloat(invoiceData.tax || invoiceData.receipt?.tax || tax), // Use 'tax' from hook
+        items: invoiceData.cartItems || invoiceData.receipt?.items || cart.map(item => ({
+          id: item.id,
+          productId: item.id,
+          productName: item.name,
+          price: typeof item.price === 'string' ? item.price : item.price.toString(),
+          quantity: item.quantity,
+          total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity).toFixed(2),
+          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0)
+        })),
+        amountReceived: parseFloat(invoiceData.total || invoiceData.receipt?.total || total), // Use 'total' from hook
+        change: "0.00", // Change is typically handled by the payment processing itself
+        customerName: invoiceData.customerName || invoiceData.receipt?.customerName || "Khách hàng",
+        customerTaxCode: invoiceData.taxCode || invoiceData.receipt?.customerTaxCode || null,
+        cashierName: invoiceData.receipt?.cashierName || "POS Cashier",
+        createdAt: invoiceData.receipt?.createdAt || new Date().toISOString(),
         orderId: invoiceData.orderId || invoiceData.receipt.orderId
       };
 
@@ -608,14 +596,17 @@ export function ShoppingCart({
         receiptData: receiptForDisplay,
         showReceiptModal: true,
         einvoiceData: invoiceData,
-        success: true
+        success: true,
+        shouldClearCartAfterReceipt: true // Flag to clear cart after receipt modal closes
       });
 
+      // Close the E-Invoice modal after showing receipt
+      setShowEInvoiceModal(false);
     } else {
-      console.error("❌ POS: E-Invoice processing failed or cancelled");
+      console.error("❌ POS: E-Invoice failed:", invoiceData);
       toast({
         title: "Lỗi",
-        description: "Không thể xử lý hóa đơn điện tử",
+        description: "Có lỗi xảy ra khi xử lý hóa đơn điện tử",
         variant: "destructive",
       });
     }
@@ -970,9 +961,46 @@ export function ShoppingCart({
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log('🔄 Shopping Cart: Receipt modal closing, clearing cart and sending refresh signal');
+          console.log('🔄 Shopping Cart: Receipt modal closing');
 
-          // Close modal and clear states
+          // Clear cart and reset states if the flag is set
+          if (selectedReceipt?.shouldClearCartAfterReceipt) {
+            console.log('🔄 Shopping Cart: Clearing cart and sending refresh signal as requested');
+
+            // Clear cart
+            onClearCart();
+
+            // Clear any active orders
+            if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+              (window as any).clearActiveOrder();
+            }
+
+            // Broadcast empty cart
+            broadcastCartUpdate([]);
+
+            // Send popup close signal to refresh other components
+            try {
+              const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
+
+              ws.onopen = () => {
+                ws.send(JSON.stringify({
+                  type: 'popup_close',
+                  success: true,
+                  source: 'shopping-cart',
+                  timestamp: new Date().toISOString()
+                }));
+                ws.close();
+              };
+            } catch (error) {
+              console.error('❌ Shopping Cart: Failed to send refresh signal:', error);
+            }
+          } else {
+            console.log('ℹ️ Shopping Cart: Not clearing cart or sending refresh signal as per receipt modal.');
+          }
+
+          // Reset states regardless of cart clearing
           setShowReceiptModal(false);
           setSelectedReceipt(null);
           setLastCartItems([]);
@@ -980,39 +1008,9 @@ export function ShoppingCart({
           setPreviewReceipt(null);
           setIsProcessingPayment(false);
 
-          // Clear cart
-          onClearCart();
-
-          // Clear any active orders
-          if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-            (window as any).clearActiveOrder();
-          }
-
-          // Broadcast empty cart
-          broadcastCartUpdate([]);
-
-          // Send popup close signal to refresh other components
-          try {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            const ws = new WebSocket(wsUrl);
-
-            ws.onopen = () => {
-              ws.send(JSON.stringify({
-                type: 'popup_close',
-                success: true,
-                source: 'shopping-cart',
-                timestamp: new Date().toISOString()
-              }));
-              ws.close();
-            };
-          } catch (error) {
-            console.error('❌ Shopping Cart: Failed to send refresh signal:', error);
-          }
-
-          console.log('✅ Shopping Cart: Receipt modal closed and refresh signal sent');
+          console.log('✅ Shopping Cart: Receipt modal closed');
         }}
-        receipt={selectedReceipt}
+        receipt={{ ...selectedReceipt, shouldClearCartAfterReceipt: undefined }} // Remove the flag before passing down
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
