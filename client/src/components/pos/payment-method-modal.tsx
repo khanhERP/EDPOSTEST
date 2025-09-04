@@ -773,7 +773,7 @@ export function PaymentMethodModal({
       }, 100);
 
       // Show success message based on action type
-      if (invoiceData.publishLater) {
+    if (invoiceData.publishLater) {
         console.log("⏳ E-Invoice publish later completed - will show receipt");
         toast({
           title: "Thành công",
@@ -785,7 +785,7 @@ export function PaymentMethodModal({
           title: "Thành công",
           description: "Hóa đơn điện tử đã được phát hành thành công. Đang hiển thị hóa đơn để in...",
         });
-      }e.log("✅ E-Invoice published immediately - will show receipt");
+      }
         toast({
           title: "Thành công", 
           description: "Hóa đơn điện tử đã được phát hành thành công!",
@@ -799,7 +799,6 @@ export function PaymentMethodModal({
       }, 300);
 
     } else {
-      console.error("❌ No valid receipt data found in E-Invoice response:", invoiceData);
       
       // Even if no receipt data, still show success and close payment flow
       if (invoiceData.success || invoiceData.publishLater || invoiceData.publishedImmediately) {
