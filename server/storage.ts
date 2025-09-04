@@ -240,26 +240,28 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // Get safe database connection with fallback
   private getSafeDatabase(tenantDb?: any, operation: string = 'operation'): any {
+    console.log(`🔍 Getting safe database for operation: ${operation}`);
+    
     let database = tenantDb || db;
     
     // If both tenantDb and db are undefined/null, throw critical error
     if (!database) {
       console.error(`❌ CRITICAL: No database connection available for ${operation}`);
-      console.error(`❌ tenantDb:`, tenantDb);
+      console.error(`❌ tenantDb:`, !!tenantDb);
       console.error(`❌ global db:`, !!db);
       throw new Error(`Database connection is completely unavailable for ${operation}`);
     }
     
-    // Validate the database object has required methods
-    if (typeof database !== 'object' || !database.select) {
-      console.error(`❌ Invalid database object in ${operation}:`, {
+    // Comprehensive validation of database object
+    if (typeof database !== 'object' || database === null) {
+      console.error(`❌ Database is not a valid object in ${operation}:`, {
         type: typeof database,
-        hasSelect: !!database?.select,
-        isObject: typeof database === 'object'
+        isNull: database === null,
+        isUndefined: database === undefined
       });
       
       // Try falling back to global db if tenantDb is invalid
-      if (tenantDb && db && db.select) {
+      if (tenantDb && db && typeof db === 'object' && db !== null) {
         console.log(`🔄 Falling back to global db for ${operation}`);
         database = db;
       } else {
@@ -267,6 +269,31 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
+    // Validate required methods exist
+    const requiredMethods = ['select', 'insert', 'update', 'delete'];
+    const missingMethods = requiredMethods.filter(method => !database[method] || typeof database[method] !== 'function');
+    
+    if (missingMethods.length > 0) {
+      console.error(`❌ Database missing required methods in ${operation}:`, {
+        missingMethods,
+        availableMethods: Object.keys(database).filter(key => typeof database[key] === 'function')
+      });
+      
+      // Try falling back to global db if methods are missing
+      if (tenantDb && db && typeof db === 'object') {
+        const globalDbMissingMethods = requiredMethods.filter(method => !db[method] || typeof db[method] !== 'function');
+        if (globalDbMissingMethods.length === 0) {
+          console.log(`🔄 Falling back to global db with complete methods for ${operation}`);
+          database = db;
+        } else {
+          throw new Error(`Both tenant and global database connections are invalid for ${operation}`);
+        }
+      } else {
+        throw new Error(`Database connection is invalid - missing methods: ${missingMethods.join(', ')} for ${operation}`);
+      }
+    }
+    
+    console.log(`✅ Database validation passed for ${operation}`);
     return database;
   }
 
@@ -1527,17 +1554,29 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Safe database query wrapper
+  // Safe database query wrapper with enhanced error handling
   private async safeDbQuery<T>(
     queryFn: () => Promise<T>,
     fallbackValue: T,
     operation: string
   ): Promise<T> {
     try {
+      console.log(`🔍 Executing safe database query for ${operation}`);
       const result = await queryFn();
-      return result;
+      console.log(`✅ Safe database query completed successfully for ${operation}`);
+      return result || fallbackValue;
     } catch (error) {
-      console.error(`❌ Database error in ${operation}:`, error);
+      console.error(`❌ Database error in ${operation}:`, {
+        errorMessage: error?.message,
+        errorType: error?.constructor?.name,
+        errorStack: error?.stack
+      });
+      
+      // Check if it's a connection error specifically
+      if (error?.message?.includes('select') || error?.message?.includes('undefined')) {
+        console.error(`❌ CRITICAL: Database connection lost during ${operation}`);
+      }
+      
       return fallbackValue;
     }
   }
@@ -1600,14 +1639,41 @@ export class DatabaseStorage implements IStorage {
       return mockOrder;
     }
 
-    // Ensure database is properly initialized
-    const database = tenantDb || db;
-    
+    // Enhanced database validation with comprehensive error handling
+    let database;
     try {
-      this.validateDatabase(database, 'updateOrderStatus');
+      database = this.getSafeDatabase(tenantDb, 'updateOrderStatus');
+      
+      // Additional runtime validation
+      if (!database || typeof database !== 'object') {
+        console.error(`❌ CRITICAL: Invalid database object in updateOrderStatus`);
+        throw new Error(`Database connection is completely invalid`);
+      }
+      
+      if (!database.select || typeof database.select !== 'function') {
+        console.error(`❌ CRITICAL: Database missing select method in updateOrderStatus`);
+        console.error(`❌ Available methods:`, Object.keys(database));
+        throw new Error(`Database connection is missing required methods`);
+      }
+      
+      if (!database.update || typeof database.update !== 'function') {
+        console.error(`❌ CRITICAL: Database missing update method in updateOrderStatus`);
+        throw new Error(`Database connection is missing update method`);
+      }
+      
+      console.log(`✅ Database validation passed for updateOrderStatus`);
+      
     } catch (dbError) {
       console.error(`❌ Database validation failed in updateOrderStatus:`, dbError);
-      throw new Error(`Database connection is not available or invalid: ${dbError.message}`);
+      
+      // Try to fall back to global db if tenant db is problematic
+      if (tenantDb && db && typeof db === 'object' && db.select && db.update) {
+        console.log(`🔄 Falling back to global database connection`);
+        database = db;
+      } else {
+        console.error(`❌ No valid fallback database available`);
+        throw new Error(`Database connection is completely unavailable: ${dbError.message}`);
+      }
     }
 
     // Ensure id is a number for database operations
