@@ -131,51 +131,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     queryFn: async () => {
       const orderId = selectedOrder.id;
       if (!orderId) {
-        console.log("No order ID available for fetching items");
         return [];
       }
 
-      console.log("=== FETCHING ORDER ITEMS ===");
-      console.log("Fetching order items for order ID:", orderId);
-      console.log("API URL will be:", `/api/order-items/${orderId}`);
-      console.log("Query enabled conditions:", {
-        hasOrderId: !!selectedOrder?.id,
-        dialogOpen: orderDetailsOpen,
-        bothTrue: !!selectedOrder?.id && orderDetailsOpen,
-      });
-
-      const response = await apiRequest("GET", `/api/order-items/${orderId}`);
-      const data = await response.json();
-
-      console.log("Raw order items response for order", orderId, ":", data);
-      console.log("Response type:", typeof data, "Length:", data?.length);
-      console.log("Is array?", Array.isArray(data));
-
-      // Log each item in detail
-      if (Array.isArray(data) && data.length > 0) {
-        console.log("Order items details:");
-        data.forEach((item, index) => {
-          console.log(`  Item ${index + 1}:`, {
-            id: item.id,
-            orderId: item.orderId,
-            productId: item.productId,
-            productName: item.productName,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.total,
-          });
-        });
-      } else {
-        console.log("No items found or response is not an array");
+      const response = await fetch(`/api/order-items/${orderId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Ensure we return an array
-      const items = Array.isArray(data) ? data : [];
-      console.log("Final processed items count:", items.length);
-      console.log("About to return items:", items);
-      console.log("=== END FETCHING ORDER ITEMS ===");
-
-      return items;
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
@@ -221,10 +186,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   // Force refetch order items when dialog opens
   useEffect(() => {
     if (orderDetailsOpen && selectedOrder?.id) {
-      console.log(
-        "Dialog opened, refetching order items for order:",
-        selectedOrder.id,
-      );
       refetchOrderItems();
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
@@ -2438,7 +2399,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           ? products.find((p: any) => p.id === item.productId)
                           : null;
 
-                        // Calculate subtotal exactly as Order Details display
+                        // Calculate subtotal exactly as Order Details
                         orderDetailsSubtotal += basePrice * quantity;
 
                         // Use EXACT same tax calculation logic as Order Details
