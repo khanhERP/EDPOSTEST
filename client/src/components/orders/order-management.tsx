@@ -1795,19 +1795,11 @@ export function OrderManagement() {
                             const storedTotal = Math.floor(Number(order.total || 0));
                             console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - using STORED total ONLY: ${storedTotal}`);
                             
-                            if (order.status === 'cancelled') {
-                              return (
-                                <span className="text-sm text-gray-400 line-through">
-                                  {formatCurrency(storedTotal)}
-                                </span>
-                              );
-                            } else {
-                              return (
-                                <span className="text-green-600">
-                                  {formatCurrency(storedTotal)}
-                                </span>
-                              );
-                            }
+                            return (
+                              <span className="text-green-600">
+                                {formatCurrency(storedTotal)}
+                              </span>
+                            );
                           }
 
                           // For active orders only, use calculation logic
