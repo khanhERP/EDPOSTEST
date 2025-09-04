@@ -326,8 +326,8 @@ export function OrderDialog({
             newTotal,
           });
 
-          // Step 2: Update order in database with new calculated totals
-          console.log('💾 Updating order totals in database...');
+          // Step 2: Update order in database with new calculated totals - SINGLE UPDATE
+          console.log('💾 Performing single database update...');
           const updateData = {
             subtotal: newSubtotal.toFixed(2),
             tax: newTax.toFixed(2),
@@ -347,16 +347,11 @@ export function OrderDialog({
           const updatedOrderData = await updateResponse.json();
           console.log('✅ Order Dialog: Order updated successfully in database:', updatedOrderData);
 
-          // Step 3: Force fresh data fetch from all sources
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
-            queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
-            queryClient.invalidateQueries({ queryKey: ["/api/order-items"] }),
-            queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
-            queryClient.refetchQueries({ queryKey: ["/api/tables"] })
-          ]);
-
-          console.log('🔄 Order Dialog: All queries invalidated and refetched');
+          // Step 3: Optimized data refresh - only invalidate, let queries refetch naturally
+          console.log('🔄 Order Dialog: Invalidating queries for natural refresh...');
+          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
 
           // Step 4: Emit events to notify other components
           window.dispatchEvent(new CustomEvent('orderTotalsUpdated', { 
@@ -366,7 +361,8 @@ export function OrderDialog({
               newTotal: newTotal.toFixed(2),
               action: 'recalculate',
               immediate: true,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              skipRefetch: true // Indicate that manual refetch is not needed
             } 
           }));
 
@@ -380,6 +376,7 @@ export function OrderDialog({
                 subtotal: newSubtotal.toFixed(2),
                 tax: newTax.toFixed(2)
               },
+              skipRefetch: true, // Prevent additional database calls
               timestamp: Date.now()
             } 
           }));
@@ -388,6 +385,8 @@ export function OrderDialog({
             title: t('orders.orderUpdateSuccess'),
             description: `Đã cập nhật thành công: ${Math.round(newTotal).toLocaleString()} ₫`,
           });
+
+          console.log('✅ Order Dialog: Single update completed successfully');
 
         } catch (error) {
           console.error('❌ Order Dialog: Error updating order totals:', error);
