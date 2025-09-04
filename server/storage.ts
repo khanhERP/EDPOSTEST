@@ -238,11 +238,41 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getCategories(tenantDb?: any): Promise<Category[]> {
-    const database = tenantDb || db;
+  // Get safe database connection with fallback
+  private getSafeDatabase(tenantDb?: any, operation: string = 'operation'): any {
+    let database = tenantDb || db;
     
+    // If both tenantDb and db are undefined/null, throw critical error
+    if (!database) {
+      console.error(`❌ CRITICAL: No database connection available for ${operation}`);
+      console.error(`❌ tenantDb:`, tenantDb);
+      console.error(`❌ global db:`, !!db);
+      throw new Error(`Database connection is completely unavailable for ${operation}`);
+    }
+    
+    // Validate the database object has required methods
+    if (typeof database !== 'object' || !database.select) {
+      console.error(`❌ Invalid database object in ${operation}:`, {
+        type: typeof database,
+        hasSelect: !!database?.select,
+        isObject: typeof database === 'object'
+      });
+      
+      // Try falling back to global db if tenantDb is invalid
+      if (tenantDb && db && db.select) {
+        console.log(`🔄 Falling back to global db for ${operation}`);
+        database = db;
+      } else {
+        throw new Error(`Invalid database connection for ${operation} - no valid fallback available`);
+      }
+    }
+    
+    return database;
+  }
+
+  async getCategories(tenantDb?: any): Promise<Category[]> {
     try {
-      this.validateDatabase(database, 'getCategories');
+      const database = this.getSafeDatabase(tenantDb, 'getCategories');
       const result = await database.select().from(categories);
       return result || [];
     } catch (error) {
@@ -281,10 +311,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProducts(tenantDb?: any): Promise<Product[]> {
-    const database = tenantDb || db;
-    
     try {
-      this.validateDatabase(database, 'getProducts');
+      const database = this.getSafeDatabase(tenantDb, 'getProducts');
       const result = await database
         .select()
         .from(products)
@@ -306,28 +334,29 @@ export class DatabaseStorage implements IStorage {
     includeInactive: boolean = false,
     tenantDb?: any,
   ): Promise<Product[]> {
-    const database = tenantDb || db;
-    if (!database) {
-      console.error(`❌ Database is undefined in getProductsByCategory`);
-      throw new Error(`Database connection is not available`);
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'getProductsByCategory');
+      let whereCondition = eq(products.categoryId, categoryId);
+
+      if (!includeInactive) {
+        whereCondition = and(whereCondition, eq(products.isActive, true));
+      }
+
+      const result = await database
+        .select()
+        .from(products)
+        .where(whereCondition)
+        .orderBy(products.name);
+
+      // Ensure afterTaxPrice is properly returned
+      return result.map((product) => ({
+        ...product,
+        afterTaxPrice: product.afterTaxPrice || null
+      }));
+    } catch (error) {
+      console.error(`❌ Error in getProductsByCategory:`, error);
+      return [];
     }
-    let whereCondition = eq(products.categoryId, categoryId);
-
-    if (!includeInactive) {
-      whereCondition = and(whereCondition, eq(products.isActive, true));
-    }
-
-    const result = await database
-      .select()
-      .from(products)
-      .where(whereCondition)
-      .orderBy(products.name);
-
-    // Ensure afterTaxPrice is properly returned
-    return result.map((product) => ({
-      ...product,
-      afterTaxPrice: product.afterTaxPrice || null
-    }));
   }
 
   async getProduct(id: number, tenantDb?: any): Promise<Product | undefined> {
@@ -1259,30 +1288,31 @@ export class DatabaseStorage implements IStorage {
 
   // Orders
   async getOrders(tableId?: number, status?: string, tenantDb?: any): Promise<Order[]> {
-    const database = tenantDb || db;
-    if (!database) {
-      console.error(`❌ Database is undefined in getOrders`);
-      throw new Error(`Database connection is not available`);
-    }
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'getOrders');
 
-    const conditions = [];
+      const conditions = [];
 
-    if (tableId) {
-      conditions.push(eq(orders.tableId, tableId));
-    }
-    if (status) {
-      conditions.push(eq(orders.status, status));
-    }
+      if (tableId) {
+        conditions.push(eq(orders.tableId, tableId));
+      }
+      if (status) {
+        conditions.push(eq(orders.status, status));
+      }
 
-    if (conditions.length > 0) {
-      return await database
-        .select()
-        .from(orders)
-        .where(and(...conditions))
-        .orderBy(orders.orderedAt);
-    }
+      if (conditions.length > 0) {
+        return await database
+          .select()
+          .from(orders)
+          .where(and(...conditions))
+          .orderBy(orders.orderedAt);
+      }
 
-    return await database.select().from(orders).orderBy(orders.orderedAt);
+      return await database.select().from(orders).orderBy(orders.orderedAt);
+    } catch (error) {
+      console.error(`❌ Error in getOrders:`, error);
+      return [];
+    }
   }
 
   async getOrder(id: number, tenantDb?: any): Promise<Order | undefined> {
@@ -1353,11 +1383,8 @@ export class DatabaseStorage implements IStorage {
     order: Partial<InsertOrder>,
     tenantDb?: any,
   ): Promise<Order | undefined> {
-    const database = tenantDb || db;
-    if (!database) {
-      console.error(`❌ Database is undefined in updateOrder`);
-      throw new Error(`Database connection is not available`);
-    }
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'updateOrder');
 
     console.log('=== UPDATING ORDER ===');
     console.log('Order ID:', id);
@@ -1465,6 +1492,10 @@ export class DatabaseStorage implements IStorage {
 
     console.log('=== END UPDATING ORDER ===');
     return updatedOrder || undefined;
+    } catch (error) {
+      console.error(`❌ Error in updateOrder:`, error);
+      return undefined;
+    }
   }
 
   // Validate database connection with comprehensive checks
@@ -2497,27 +2528,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllProducts(includeInactive: boolean = false, tenantDb?: any): Promise<Product[]> {
-    const database = tenantDb || db;
-    if (!database) {
-      console.error(`❌ Database is undefined in getAllProducts`);
-      throw new Error(`Database connection is not available`);
-    }
-    let result;
-    if (includeInactive) {
-      result = await database.select().from(products).orderBy(products.name);
-    } else {
-      result = await database
-        .select()
-        .from(products)
-        .where(eq(products.isActive, true))
-        .orderBy(products.name);
-    }
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'getAllProducts');
+      let result;
+      if (includeInactive) {
+        result = await database.select().from(products).orderBy(products.name);
+      } else {
+        result = await database
+          .select()
+          .from(products)
+          .where(eq(products.isActive, true))
+          .orderBy(products.name);
+      }
 
-    // Ensure afterTaxPrice is properly returned
-    return result.map((product) => ({
-      ...product,
-      afterTaxPrice: product.afterTaxPrice || null
-    }));
+      // Ensure afterTaxPrice is properly returned
+      return result.map((product) => ({
+        ...product,
+        afterTaxPrice: product.afterTaxPrice || null
+      }));
+    } catch (error) {
+      console.error(`❌ Error in getAllProducts:`, error);
+      return [];
+    }
   }
 
   async getActiveProducts(tenantDb?: any): Promise<Product[]> {
