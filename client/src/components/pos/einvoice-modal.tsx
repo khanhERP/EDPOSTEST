@@ -630,12 +630,10 @@ export function EInvoiceModal({
         orderId: orderId || `temp-${Date.now()}`
       };
 
-      // Prepare comprehensive invoice data for onConfirm
+      // Prepare comprehensive invoice data for onConfirm - ALWAYS VALID
       const completeInvoiceData = {
         success: true,
         publishLater: true,
-        showReceiptModal: true,
-        shouldShowReceipt: true,
         einvoiceStatus: 0, // 0 = chưa phát hành
         status: 'draft',
         paymentMethod: selectedPaymentMethod,
@@ -651,27 +649,15 @@ export function EInvoiceModal({
         receipt: receiptData
       };
 
-      console.log("✅ PUBLISH LATER: Prepared enhanced data for onConfirm:", completeInvoiceData);
+      console.log("✅ PUBLISH LATER: Data prepared for receipt modal:", completeInvoiceData);
 
-      // Show success toast first
-      toast({
-        title: "Thành công",
-        description: "Hóa đơn đã được lưu để phát hành sau. Đang hiển thị hóa đơn để in...",
-      });
-
-      // Call onConfirm IMMEDIATELY to trigger receipt modal
+      // ALWAYS call onConfirm to show receipt modal - NO CONDITIONS
       console.log("📄 PUBLISH LATER: Calling onConfirm to show receipt modal");
-      console.log("📄 PUBLISH LATER: Complete invoice data being sent:", completeInvoiceData);
-      
-      // Call onConfirm synchronously to ensure receipt modal shows
       onConfirm(completeInvoiceData);
-      console.log("✅ PUBLISH LATER: onConfirm called successfully");
+      console.log("✅ PUBLISH LATER: onConfirm called - receipt modal should show");
 
-      // Close the E-Invoice modal after a brief delay
-      setTimeout(() => {
-        console.log("🔒 PUBLISH LATER: Closing E-Invoice modal");
-        onClose();
-      }, 100);
+      // Close the E-Invoice modal immediately
+      onClose();
 
       console.log("--------------------------------------------------");
 
@@ -1197,12 +1183,10 @@ export function EInvoiceModal({
           receiptData,
         );
 
-        // Create the final result object for onConfirm with enhanced receipt data
+        // Create the final result object for onConfirm - ALWAYS VALID
         const publishResult = {
           success: true,
           publishedImmediately: true,
-          showReceiptModal: true,
-          shouldShowReceipt: true,
           invoiceNumber: result.data?.invoiceNo || null,
           symbol: selectedTemplate.symbol || null,
           templateNumber: selectedTemplate.templateNumber || null,
@@ -1222,19 +1206,15 @@ export function EInvoiceModal({
           receipt: receiptData
         };
 
-        console.log("📄 Final publishResult for onConfirm:", publishResult);
+        console.log("📄 IMMEDIATE PUBLISH: Data prepared for receipt modal:", publishResult);
 
-        console.log("📧 Step 4: E-Invoice published, now calling onConfirm with enhanced receipt data");
-
-        // Call onConfirm FIRST to trigger receipt modal display
-        console.log("📄 Calling onConfirm with publishResult:", publishResult);
+        // ALWAYS call onConfirm to show receipt modal - NO CONDITIONS
+        console.log("📄 IMMEDIATE PUBLISH: Calling onConfirm to show receipt modal");
         onConfirm(publishResult);
+        console.log("✅ IMMEDIATE PUBLISH: onConfirm called - receipt modal should show");
 
-        // Close the E-Invoice modal after a brief delay
-        setTimeout(() => {
-          console.log("🔒 Closing E-Invoice modal after triggering receipt");
-          onClose();
-        }, 100);
+        // Close the E-Invoice modal immediately
+        onClose();
 
         // Force data refresh on all pages after successful publishing
         try {

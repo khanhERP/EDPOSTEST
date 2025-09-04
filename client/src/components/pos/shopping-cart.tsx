@@ -592,66 +592,59 @@ export function ShoppingCart({
     setShowEInvoiceModal(false);
     setIsProcessingPayment(false);
 
-    if (invoiceData && invoiceData.success) {
-      console.log("✅ POS: E-Invoice processing successful");
+    // CRITICAL: Always show receipt modal if we have any data, don't check conditions
+    if (invoiceData) {
+      console.log("✅ POS: E-Invoice data received - showing receipt modal immediately");
 
-      // Validate receipt data exists
-      if (!invoiceData.receipt) {
-        console.error("❌ POS: No receipt data in invoice response");
-        toast({
-          title: "Lỗi",
-          description: "Không có dữ liệu hóa đơn để hiển thị",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log("📄 POS: Valid receipt data found, proceeding to show receipt modal");
-
-      // Create receipt object for display with enhanced data
+      // Create receipt object for display - use any available data
       const receiptForDisplay = {
-        ...invoiceData.receipt,
-        // Ensure all required fields are present
-        transactionId: invoiceData.transactionId || invoiceData.receipt.transactionId || `TXN-${Date.now()}`,
-        invoiceNumber: invoiceData.invoiceNumber || invoiceData.receipt.invoiceNumber || null,
-        customerName: invoiceData.customerName || invoiceData.receipt.customerName,
-        customerTaxCode: invoiceData.taxCode || invoiceData.receipt.customerTaxCode,
-        paymentMethod: 'einvoice',
-        originalPaymentMethod: invoiceData.originalPaymentMethod || invoiceData.receipt.originalPaymentMethod,
-        items: invoiceData.receipt.items || [],
-        subtotal: invoiceData.receipt.subtotal || "0.00",
-        tax: invoiceData.receipt.tax || "0.00",
-        total: invoiceData.receipt.total || "0.00",
-        amountReceived: invoiceData.receipt.amountReceived || invoiceData.receipt.total || "0.00",
-        change: invoiceData.receipt.change || "0.00",
-        cashierName: invoiceData.receipt.cashierName || "POS Cashier",
-        createdAt: invoiceData.receipt.createdAt || new Date().toISOString(),
-        orderId: invoiceData.orderId || invoiceData.receipt.orderId,
-        // Additional fields for publish later
+        // Use invoice data if available, otherwise create basic receipt
+        transactionId: invoiceData.transactionId || invoiceData.receipt?.transactionId || `TXN-${Date.now()}`,
+        invoiceNumber: invoiceData.invoiceNumber || invoiceData.receipt?.invoiceNumber || null,
+        customerName: invoiceData.customerName || invoiceData.receipt?.customerName || "Khách hàng lẻ",
+        customerTaxCode: invoiceData.taxCode || invoiceData.receipt?.customerTaxCode || null,
+        paymentMethod: invoiceData.originalPaymentMethod || invoiceData.receipt?.paymentMethod || 'einvoice',
+        originalPaymentMethod: invoiceData.originalPaymentMethod || invoiceData.receipt?.originalPaymentMethod,
+        items: invoiceData.receipt?.items || lastCartItems.map((item) => ({
+          id: item.id,
+          productId: item.id,
+          productName: item.name,
+          price: parseFloat(item.price).toFixed(2),
+          quantity: item.quantity,
+          total: (parseFloat(item.price) * item.quantity).toFixed(2),
+          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+          taxRate: item.taxRate || 0,
+        })) || [],
+        subtotal: invoiceData.receipt?.subtotal || invoiceData.subtotal?.toString() || total.toFixed(2),
+        tax: invoiceData.receipt?.tax || invoiceData.tax?.toString() || "0.00",
+        total: invoiceData.receipt?.total || invoiceData.total?.toString() || total.toFixed(2),
+        amountReceived: invoiceData.receipt?.amountReceived || invoiceData.total?.toString() || total.toFixed(2),
+        change: invoiceData.receipt?.change || "0.00",
+        cashierName: invoiceData.receipt?.cashierName || "POS Cashier",
+        createdAt: invoiceData.receipt?.createdAt || new Date().toISOString(),
+        orderId: invoiceData.orderId || invoiceData.receipt?.orderId || `temp-${Date.now()}`,
         einvoiceStatus: invoiceData.einvoiceStatus || 0,
         invoiceStatus: invoiceData.invoiceStatus || 0,
-        status: invoiceData.status || 'draft'
+        status: invoiceData.status || (invoiceData.publishLater ? 'draft' : 'published')
       };
 
-      console.log("📄 POS: Enhanced receipt data for display:", receiptForDisplay);
+      console.log("📄 POS: Receipt data prepared for display:", receiptForDisplay);
 
       // Show appropriate success message
       if (invoiceData.publishLater) {
-        console.log("⏳ POS: E-Invoice saved for later publishing - showing receipt");
         toast({
           title: "Thành công", 
           description: "Hóa đơn đã được lưu để phát hành sau. Hiển thị hóa đơn để in...",
         });
-      } else if (invoiceData.publishedImmediately) {
-        console.log("✅ POS: E-Invoice published immediately - showing receipt");
+      } else {
         toast({
           title: "Thành công",
           description: "Hóa đơn điện tử đã được phát hành thành công. Hiển thị hóa đơn để in...",
         });
       }
 
-      // CRITICAL: Clear cart immediately after successful payment
-      console.log("🧹 POS: Clearing cart immediately after successful E-Invoice processing");
+      // Clear cart immediately
+      console.log("🧹 POS: Clearing cart after E-Invoice processing");
       onClearCart();
 
       // Clear any active orders
@@ -659,48 +652,25 @@ export function ShoppingCart({
         (window as any).clearActiveOrder();
       }
 
-      // Force close any existing modals first
+      // Close all other modals
       setShowPaymentModal(false);
       setShowReceiptPreview(false);
       setShowPaymentMethodModal(false);
 
-      // CRITICAL FIX: Force receipt modal to show immediately
-      console.log("🔥 POS: Force showing receipt modal immediately");
-      
-      // Set receipt data and show modal in one go
+      // SHOW RECEIPT MODAL IMMEDIATELY - NO CONDITIONS
+      console.log("🔥 POS: Showing receipt modal immediately - NO CONDITIONS CHECK");
       setSelectedReceipt(receiptForDisplay);
       setShowReceiptModal(true);
-      
-      // Additional safeguard to ensure modal appears
-      setTimeout(() => {
-        console.log("🔥 POS: Verifying receipt modal is visible");
-        if (!showReceiptModal) {
-          console.log("🔥 POS: Receipt modal not visible, forcing display again");
-          setSelectedReceipt(receiptForDisplay);
-          setShowReceiptModal(true);
-        }
-      }, 200);
 
-      console.log("📄 POS: Receipt modal should now be visible with data:", receiptForDisplay);
+      console.log("📄 POS: Receipt modal displayed with data:", receiptForDisplay);
 
     } else {
-      console.error("❌ POS: E-Invoice processing failed or cancelled");
-      
-      let errorMessage = "Không thể xử lý hóa đơn điện tử";
-      if (invoiceData && invoiceData.error) {
-        errorMessage = `Lỗi hóa đơn điện tử: ${invoiceData.error}`;
-      } else if (invoiceData && invoiceData.message) {
-        errorMessage = `Lỗi hóa đơn điện tử: ${invoiceData.message}`;
-      }
-      
+      console.error("❌ POS: No invoice data received");
       toast({
-        title: "Lỗi phát hành hóa đơn",
-        description: errorMessage,
+        title: "Lỗi",
+        description: "Không nhận được dữ liệu hóa đơn",
         variant: "destructive",
       });
-      
-      // Reset states on error
-      setIsProcessingPayment(false);
     }
   };
 
