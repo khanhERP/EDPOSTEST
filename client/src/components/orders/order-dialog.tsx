@@ -952,17 +952,8 @@ export function OrderDialog({
               {/* Action button */}
               <Button
                 onClick={handlePlaceOrder}
-                disabled={
-                  createOrderMutation.isPending || 
-                  (mode === "edit" && existingOrder && (() => {
-                    const hasNewItems = cart.length > 0;
-                    const hasRemovedItems = existingItems.some(item => item.quantity === 0);
-                    const hasCustomerNameChange = (customerName || "") !== (existingOrder.customerName || "");
-                    const hasCustomerCountChange = customerCount !== (existingOrder.customerCount || 1);
-                    return !(hasNewItems || hasRemovedItems || hasCustomerNameChange || hasCustomerCountChange);
-                  })())
-                }
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={createOrderMutation.isPending}
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex-shrink-0"
                 size="lg"
               >
                 {createOrderMutation.isPending
