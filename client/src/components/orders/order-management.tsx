@@ -624,10 +624,10 @@ export function OrderManagement() {
     };
   }, [selectedOrder, orderItems, products]);
 
-  // Function to calculate order total from items
+  // Function to calculate order total from items using EXACT same logic as Table Grid
   const calculateOrderTotal = React.useCallback(async (order: Order) => {
     try {
-      console.log(`🧮 Calculating total for order ${order.id}`);
+      console.log(`🧮 Order Management: Calculating total for order ${order.id}`);
       
       // Fetch order items
       const response = await apiRequest('GET', `/api/order-items/${order.id}`);
@@ -636,53 +636,54 @@ export function OrderManagement() {
       }
       
       const orderItemsData = await response.json();
-      console.log(`📦 Order ${order.id} items:`, orderItemsData);
+      console.log(`📦 Order Management: Order ${order.id} items:`, orderItemsData);
 
       if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
-        console.log(`📦 Order ${order.id} has no items, using stored total:`, order.total);
+        console.log(`📦 Order Management: Order ${order.id} has no items, using stored total:`, order.total);
         return Number(order.total || 0);
       }
 
-      // Calculate total using EXACT same logic as other components
+      // Calculate total using EXACT same logic as Table Grid
       let calculatedSubtotal = 0;
       let calculatedTax = 0;
 
       orderItemsData.forEach((item: any) => {
-        const unitPrice = Number(item.unitPrice || 0);
+        const basePrice = Number(item.unitPrice || 0);
         const quantity = Number(item.quantity || 0);
         const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
 
-        console.log(`📊 Processing item ${item.id}:`, {
+        console.log(`📊 Order Management: Processing item ${item.id}:`, {
           productId: item.productId,
-          unitPrice,
+          productName: item.productName,
+          basePrice,
           quantity,
           productFound: !!product
         });
 
-        // Subtotal calculation
-        const itemSubtotal = unitPrice * quantity;
+        // Subtotal calculation - use Math.floor like Table Grid
+        const itemSubtotal = Math.floor(basePrice * quantity);
         calculatedSubtotal += itemSubtotal;
 
-        // Tax calculation using EXACT same logic as POS and other components
+        // Tax calculation using EXACT same logic as Table Grid
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const basePrice = parseFloat(product.price || unitPrice);
           const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-          calculatedTax += taxPerUnit * quantity;
+          const itemTax = Math.floor(taxPerUnit * quantity);
+          calculatedTax += itemTax;
           
-          console.log(`💸 Tax calculated for ${item.productName}:`, {
+          console.log(`💸 Order Management: Tax calculated for ${item.productName}:`, {
             afterTaxPrice,
             basePrice,
             taxPerUnit,
             quantity,
-            itemTax: taxPerUnit * quantity
+            itemTax
           });
         }
       });
 
-      const finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
+      const finalTotal = calculatedSubtotal + calculatedTax;
       
-      console.log(`💰 Order ${order.id} calculated total:`, {
+      console.log(`💰 Order Management: Order ${order.id} calculated total:`, {
         subtotal: calculatedSubtotal,
         tax: calculatedTax,
         finalTotal: finalTotal,
@@ -692,7 +693,7 @@ export function OrderManagement() {
 
       return finalTotal;
     } catch (error) {
-      console.error(`❌ Error calculating total for order ${order.id}:`, error);
+      console.error(`❌ Order Management: Error calculating total for order ${order.id}:`, error);
       return Number(order.total || 0);
     }
   }, [products, apiRequest]);
@@ -1776,7 +1777,17 @@ export function OrderManagement() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
-                        {formatCurrency(getOrderTotal(order))}
+                        {(() => {
+                          const calculatedTotal = calculatedTotals.get(order.id);
+                          const storedTotal = Number(order.total || 0);
+                          
+                          // Use calculated total if available, otherwise use stored total
+                          const displayTotal = calculatedTotal !== undefined && calculatedTotal > 0 
+                            ? calculatedTotal 
+                            : storedTotal;
+                          
+                          return formatCurrency(displayTotal);
+                        })()}
                       </span>
                     </div>
 
