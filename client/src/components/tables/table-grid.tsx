@@ -2002,12 +2002,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               }
                             );
 
-                            // If stored total exists and is positive, use it
-                            if (storedTotal > 0) {
-                              return Math.floor(storedTotal).toLocaleString("vi-VN");
-                            }
-
-                            // If no stored total, try to calculate from order items if available
+                            // Always try to calculate from order items first for accuracy
                             const orderItemsForTable = allOrderItems?.get(activeOrder.id);
                             if (orderItemsForTable && Array.isArray(orderItemsForTable) && orderItemsForTable.length > 0) {
                               let calculatedSubtotal = 0;
@@ -2047,7 +2042,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               }
                             }
 
-                            // Fallback to "0" if no valid total found
+                            // Fallback to stored total if calculation fails
+                            if (storedTotal > 0) {
+                              console.log(`💰 Table ${table.tableNumber} using stored total:`, storedTotal);
+                              return Math.floor(storedTotal).toLocaleString("vi-VN");
+                            }
+
+                            // Final fallback to "0" if no valid total found
                             return "0";
                           })()}{" "}
                           ₫
