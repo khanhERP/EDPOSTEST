@@ -1519,7 +1519,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         updateData.change = change;
       }
 
-      console.log(`📤 Updating order with payment data:`, updateData);
+      console.log(`'=>$' Updating order with payment data:`, updateData);
 
       const order = await storage.updateOrder(id, updateData, tenantDb);
 
@@ -1617,176 +1617,75 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Add order items to existing order
   app.post("/api/orders/:orderId/items", async (req: TenantRequest, res) => {
     try {
-      console.log("=== ADD ORDER ITEMS API CALLED ===");
+      const db = req.db; // Access db instance from the request
       const orderId = parseInt(req.params.orderId);
       const { items } = req.body;
-      const tenantDb = await getTenantDatabase(req);
 
-      console.log("Request params:", req.params);
-      console.log("Order ID:", orderId);
-      console.log("Request body:", JSON.stringify(req.body, null, 2));
-      console.log("Items to add:", JSON.stringify(items, null, 2));
+      console.log(`📝 Adding ${items.length} items to order ${orderId}`);
 
-      if (!orderId || isNaN(orderId)) {
-        console.error("Invalid order ID:", req.params.orderId);
-        return res.status(400).json({ error: "Invalid order ID" });
+      if (!items || !Array.isArray(items)) {
+        return res.status(400).json({ error: "Items array is required" });
       }
 
-      if (!items || !Array.isArray(items) || items.length === 0) {
-        console.error("Invalid items data:", items);
-        return res
-          .status(400)
-          .json({ error: "Items array is required and cannot be empty" });
-      }
+      // Insert new items
+      const insertedItems = await db
+        .insert(orderItems)
+        .values(
+          items.map((item: any) => ({
+            orderId,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            total: item.total,
+            notes: item.notes,
+          }))
+        )
+        .returning();
 
-      // Check if order exists
-      const [existingOrder] = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.id, orderId));
+      console.log(`✅ Successfully added ${insertedItems.length} items to order ${orderId}`);
 
-      if (!existingOrder) {
-        console.error("Order not found:", orderId);
-        return res.status(404).json({ error: "Order not found" });
-      }
+      // Calculate new totals after adding items
+      const [orderItemsSum] = await db
+        .select({
+          total: sql<number>`COALESCE(sum(CAST(${orderItems.total} AS DECIMAL)), 0)`,
+        })
+        .from(orderItems)
+        .where(eq(orderItems.orderId, orderId));
 
-      console.log("Found existing order:", existingOrder);
+      const totalAmount = Number(orderItemsSum.total) || 0;
+      const subtotalAmount = totalAmount / 1.1; // Remove 10% tax
+      const taxAmount = totalAmount - subtotalAmount;
 
-      const createdItems = [];
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        console.log(`Processing item ${i + 1}/${items.length}:`, item);
+      console.log(`💰 Calculated new totals for order ${orderId}:`, {
+        subtotal: subtotalAmount.toFixed(2),
+        tax: taxAmount.toFixed(2),
+        total: totalAmount.toFixed(2)
+      });
 
-        // Validate item data
-        if (
-          !item.productId ||
-          !item.quantity ||
-          !item.unitPrice ||
-          !item.total
-        ) {
-          console.error("Missing required item data:", item);
-          throw new Error(`Item ${i + 1} is missing required fields`);
-        }
+      // Update order totals ONCE
+      const [updatedOrder] = await db
+        .update(orders)
+        .set({
+          total: totalAmount.toFixed(2),
+          subtotal: subtotalAmount.toFixed(2),
+          tax: taxAmount.toFixed(2),
+          updatedAt: new Date().toISOString()
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
 
-        // Get product info to include in the order item
-        const [product] = await db
-          .select()
-          .from(products)
-          .where(eq(products.id, item.productId));
+      console.log(`✅ Order ${orderId} totals updated successfully - SINGLE UPDATE COMPLETED`);
 
-        if (!product) {
-          console.error("Product not found:", item.productId);
-          throw new Error(`Product with ID ${item.productId} not found`);
-        }
+      res.json({
+        success: true,
+        insertedItems,
+        updatedOrder,
+        message: `Added ${insertedItems.length} items and updated order totals`
+      });
 
-        console.log("Found product:", product);
-
-        try {
-          const [orderItem] = await db
-            .insert(orderItems)
-            .values({
-              orderId,
-              productId: item.productId,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              total: item.total,
-              notes: item.notes || null,
-            })
-            .returning();
-
-          console.log("Created order item:", orderItem);
-          createdItems.push(orderItem);
-        } catch (insertError) {
-          console.error("Error inserting order item:", insertError);
-          throw insertError;
-        }
-      }
-
-      console.log(`Successfully created ${createdItems.length} items`);
-
-      // Update order total using accurate tax calculation
-      try {
-        // Get all order items to calculate accurate totals
-        const allOrderItems = await db
-          .select()
-          .from(orderItems)
-          .where(eq(orderItems.orderId, orderId));
-
-        console.log(`Recalculating totals for ${allOrderItems.length} order items`);
-
-        let calculatedSubtotal = 0;
-        let calculatedTax = 0;
-
-        // Calculate totals using same logic as order details
-        for (const orderItem of allOrderItems) {
-          const basePrice = Number(orderItem.unitPrice || 0);
-          const quantity = Number(orderItem.quantity || 0);
-          
-          // Get product for tax calculation
-          const [product] = await db
-            .select()
-            .from(products)
-            .where(eq(products.id, orderItem.productId));
-
-          // Calculate subtotal (base price without tax)
-          calculatedSubtotal += basePrice * quantity;
-
-          // Calculate tax using afterTaxPrice if available
-          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-            const afterTaxPrice = parseFloat(product.afterTaxPrice);
-            const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-            calculatedTax += Math.floor(taxPerUnit * quantity);
-            
-            console.log(`Tax calculation for ${product.name}:`, {
-              basePrice,
-              afterTaxPrice,
-              taxPerUnit,
-              quantity,
-              itemTax: Math.floor(taxPerUnit * quantity)
-            });
-          }
-        }
-
-        const calculatedTotal = calculatedSubtotal + calculatedTax;
-
-        console.log("Calculated amounts using accurate tax:", {
-          subtotal: calculatedSubtotal,
-          tax: calculatedTax,
-          total: calculatedTotal,
-        });
-
-        await db
-          .update(orders)
-          .set({
-            subtotal: calculatedSubtotal.toFixed(2),
-            tax: calculatedTax.toFixed(2),
-            total: calculatedTotal.toFixed(2),
-          })
-          .where(eq(orders.id, orderId));
-
-        console.log("Updated order totals successfully with accurate tax calculation");
-      } catch (updateError) {
-        console.error("Error updating order totals:", updateError);
-        // Don't throw here, as items were already created successfully
-      }
-
-      console.log("=== ADD ORDER ITEMS COMPLETED SUCCESSFULLY ===");
-      res.json(createdItems);
     } catch (error) {
-      console.error("=== ADD ORDER ITEMS ERROR ===");
-      console.error("Error type:", error.constructor.name);
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-      console.error("Request data:", {
-        orderId: req.params.orderId,
-        body: req.body,
-      });
-
-      res.status(500).json({
-        error: "Failed to add items to order",
-        details: error.message,
-        timestamp: new Date().toISOString(),
-      });
+      console.error(`❌ Error adding items to order ${req.params.orderId}:`, error);
+      res.status(500).json({ error: "Failed to add items to order" });
     }
   });
 
@@ -2550,7 +2449,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Create invoice in database
       const invoice = await storage.createInvoice(invoiceData, tenantDb);
-      
+
       console.log('✅ Invoice created successfully:', invoice);
       res.status(201).json({ 
         success: true, 
@@ -2559,12 +2458,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
       });
     } catch (error) {
       console.error("❌ Error creating invoice:", error);
-      
+
       let errorMessage = "Failed to create invoice";
       if (error instanceof Error) {
         errorMessage = `Failed to create invoice: ${error.message}`;
       }
-      
+
       res.status(500).json({ 
         error: errorMessage,
         details: error instanceof Error ? error.message : String(error)
@@ -2576,13 +2475,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
     try {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid invoice ID" });
       }
 
       const invoice = await storage.getInvoice(id, tenantDb);
-      
+
       if (!invoice) {
         return res.status(404).json({ error: "Invoice not found" });
       }
@@ -2605,7 +2504,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
 
       const invoice = await storage.updateInvoice(id, updateData, tenantDb);
-      
+
       if (!invoice) {
         return res.status(404).json({ error: "Invoice not found" });
       }
@@ -2621,13 +2520,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
     try {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid invoice ID" });
       }
 
       const deleted = await storage.deleteInvoice(id, tenantDb);
-      
+
       if (!deleted) {
         return res.status(404).json({ error: "Invoice not found" });
       }
@@ -3240,7 +3139,6 @@ export async function registerRoutes(app: Express): Promise < Server > {
           if (selectedEmployee !== 'all') {
             employeeMatch =
               transaction.cashierName === selectedEmployee ||
-              transaction.employeeId?.toString() === selectedEmployee ||
               (transaction.cashierName && transaction.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
           }
 
@@ -3448,7 +3346,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.post("/api/tax-code-lookup", async (req: TenantRequest, res) => {
     try {
       const { taxCode } = req.body;
-      
+
       if (!taxCode) {
         return res.status(400).json({ 
           success: false, 
@@ -3484,7 +3382,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.post("/api/einvoice/publish", async (req: TenantRequest, res) => {
     try {
       const publishData = req.body;
-      
+
       console.log('🔍 Publishing e-invoice:', JSON.stringify(publishData, null, 2));
 
       // Mock successful response for e-invoice publishing

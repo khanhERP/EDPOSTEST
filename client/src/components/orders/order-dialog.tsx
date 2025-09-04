@@ -90,24 +90,38 @@ export function OrderDialog({
       console.log('Existing order:', existingOrder);
       console.log(
         mode === "edit"
-          ? "Updating order with data:"
-          : "Creating order with data:",
+          ? "Adding items to existing order:"
+          : "Creating new order:",
         JSON.stringify(orderData, null, 2),
       );
 
       try {
         if (mode === "edit" && existingOrder) {
-          console.log(`Adding ${orderData.items.length} items to existing order ${existingOrder.id}`);
+          console.log(`📝 Adding ${orderData.items.length} items to existing order ${existingOrder.id} (single database update)`);
           const response = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
             items: orderData.items,
           });
-          console.log('Add items response:', response);
-          return response;
+          
+          if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`Failed to add items: ${errorData}`);
+          }
+          
+          const result = await response.json();
+          console.log('✅ Items added successfully with updated totals:', result);
+          return result;
         } else {
-          console.log('Creating new order...');
+          console.log('📝 Creating new order...');
           const response = await apiRequest("POST", "/api/orders", orderData);
-          console.log('Create order response:', response);
-          return response;
+          
+          if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`Failed to create order: ${errorData}`);
+          }
+          
+          const result = await response.json();
+          console.log('✅ Order created successfully:', result);
+          return result;
         }
       } catch (error) {
         console.error('=== ORDER MUTATION ERROR ===');
@@ -434,7 +448,7 @@ export function OrderDialog({
         };
       });
 
-      console.log("Adding items to existing order:", { items });
+      console.log("📝 Adding items to existing order (API will handle total calculation):", { items });
       createOrderMutation.mutate({ order: existingOrder, items });
     } else {
       // Create mode - original logic
