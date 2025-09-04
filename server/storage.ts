@@ -1312,32 +1312,99 @@ export class DatabaseStorage implements IStorage {
 
   // Orders
   async getOrders(tableId?: number, status?: string, tenantDb?: any): Promise<Order[]> {
-    try {
-      const database = this.getSafeDatabase(tenantDb, 'getOrders');
+    const effectiveDb = tenantDb || this.db;
 
-      const conditions = [];
+    console.log('🔍 Getting safe database for operation: getOrders');
+    const db = this.getSafeDatabase(effectiveDb, 'getOrders');
+
+    try {
+      let query = db
+        .select()
+        .from(orders)
+        .orderBy(desc(orders.orderedAt), desc(orders.id));
 
       if (tableId) {
-        conditions.push(eq(orders.tableId, tableId));
+        query = query.where(eq(orders.tableId, tableId));
       }
       if (status) {
-        conditions.push(eq(orders.status, status));
+        query = query.where(eq(orders.status, status));
       }
 
-      if (conditions.length > 0) {
-        return await database
-          .select()
-          .from(orders)
-          .where(and(...conditions))
-          .orderBy(orders.orderedAt);
-      }
+      const ordersList = await query;
 
-      return await database.select().from(orders).orderBy(orders.orderedAt);
+      // Calculate accurate totals for each order
+      const ordersWithCalculatedTotals = await Promise.all(
+        ordersList.map(async (order) => {
+          try {
+            // For final states (paid, cancelled), keep stored total
+            if (order.status === 'paid' || order.status === 'cancelled') {
+              return {
+                ...order,
+                calculatedTotal: Math.floor(Number(order.total || 0))
+              };
+            }
+
+            // For active orders, calculate from order items
+            const orderItemsResult = await db
+              .select()
+              .from(orderItems)
+              .where(eq(orderItems.orderId, order.id));
+
+            if (!orderItemsResult || orderItemsResult.length === 0) {
+              return {
+                ...order,
+                calculatedTotal: Math.floor(Number(order.total || 0))
+              };
+            }
+
+            // Get all products to calculate tax
+            const productsResult = await db
+              .select()
+              .from(products);
+
+            let subtotal = 0;
+            let taxAmount = 0;
+
+            orderItemsResult.forEach((item: any) => {
+              const unitPrice = Number(item.unitPrice || 0);
+              const quantity = Number(item.quantity || 0);
+              const product = productsResult.find((p: any) => p.id === item.productId);
+
+              // Calculate subtotal
+              subtotal += unitPrice * quantity;
+
+              // Calculate tax using afterTaxPrice if available
+              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+                taxAmount += taxPerUnit * quantity;
+              }
+            });
+
+            const calculatedTotal = Math.floor(subtotal + taxAmount);
+
+            return {
+              ...order,
+              calculatedTotal: calculatedTotal
+            };
+          } catch (calcError) {
+            console.warn(`Failed to calculate total for order ${order.id}:`, calcError);
+            return {
+              ...order,
+              calculatedTotal: Math.floor(Number(order.total || 0))
+            };
+          }
+        })
+      );
+
+      console.log(`✅ Successfully fetched ${ordersWithCalculatedTotals.length} orders with calculated totals`);
+      return ordersWithCalculatedTotals;
     } catch (error) {
-      console.error(`❌ Error in getOrders:`, error);
-      return [];
+      console.error('❌ Error fetching orders:', error);
+      throw error;
     }
   }
+
 
   async getOrder(id: number, tenantDb?: any): Promise<Order | undefined> {
     const database = tenantDb || this.db;
