@@ -153,7 +153,7 @@ export function OrderDialog({
 
       toast({
         title: t('orders.orderUpdateSuccess'),
-        description: mode === "edit" ? "Đã cập nhật đơn hàng (1 lần duy nhất)" : t('orders.orderUpdateSuccessDesc'),
+        description: mode === "edit" ? "Đã cập nhật đơn hàng thành công" : t('orders.orderUpdateSuccessDesc'),
       });
 
       console.log('✅ Order mutation completed - no duplicate API calls triggered');
@@ -320,30 +320,42 @@ export function OrderDialog({
     if (!table || (mode !== "edit" && cart.length === 0)) return;
 
     if (mode === "edit" && existingOrder) {
-      // Check if there are new items to add or if existing items were removed
-      const hasChanges = cart.length > 0 || existingItems.some(item => item.quantity === 0); // Check if any existing item quantity became 0
+      // Check for various types of changes
+      const hasNewItems = cart.length > 0;
+      const hasRemovedItems = existingItems.some(item => item.quantity === 0);
+      const hasCustomerNameChange = (customerName || "") !== (existingOrder.customerName || "");
+      const hasCustomerCountChange = customerCount !== (existingOrder.customerCount || 1);
+      
+      const hasAnyChanges = hasNewItems || hasRemovedItems || hasCustomerNameChange || hasCustomerCountChange;
 
-      // CHẶN HOÀN TOÀN VIỆC UPDATE KHI KHÔNG CẦN THIẾT
-        if (cart.length === 0 && !existingItems.some(item => item.quantity === 0)) {
-          console.log('⚠️ Order Dialog: No changes detected, skipping database update to prevent duplicates');
+      // Only block update if there are truly no changes at all
+      if (!hasAnyChanges) {
+        console.log('⚠️ Order Dialog: No changes detected, skipping database update to prevent duplicates');
 
-          toast({
-            title: "Không có thay đổi",
-            description: "Không có món nào mới để cập nhật",
-            variant: "default",
-          });
+        toast({
+          title: "Không có thay đổi",
+          description: "Không có thay đổi nào để cập nhật",
+          variant: "default",
+        });
 
-          // Chỉ đóng dialog mà không gọi API
-          setCart([]);
-          setCustomerName("");
-          setCustomerCount(1);
-          setExistingItems([]);
-          onOpenChange(false);
-          return;
-        }
+        // Close dialog without API call
+        setCart([]);
+        setCustomerName("");
+        setCustomerCount(1);
+        setExistingItems([]);
+        onOpenChange(false);
+        return;
+      }
+
+      console.log('📝 Order Dialog: Changes detected:', {
+        hasNewItems,
+        hasRemovedItems,
+        hasCustomerNameChange,
+        hasCustomerCountChange
+      });
 
 
-      // For edit mode, only send the new items to be added
+      // For edit mode, handle both new items and order updates
       const items = cart.map((item) => {
         const product = products?.find((p: Product) => p.id === item.product.id);
         const basePrice = item.product.price;
@@ -370,8 +382,22 @@ export function OrderDialog({
         };
       });
 
-      console.log("📝 Adding items to existing order (API will handle total calculation):", { items });
-      createOrderMutation.mutate({ order: existingOrder, items });
+      // Include updated order information
+      const updatedOrder = {
+        ...existingOrder,
+        customerName: customerName || null,
+        customerCount: parseInt(customerCount.toString()) || 1,
+      };
+
+      console.log("📝 Updating existing order with items and customer info:", { 
+        order: updatedOrder, 
+        items,
+        customerUpdates: {
+          name: customerName,
+          count: customerCount
+        }
+      });
+      createOrderMutation.mutate({ order: updatedOrder, items });
     } else {
       // Create mode - original logic
       const orderNumber = `ORD-${Date.now()}`;
@@ -940,7 +966,7 @@ export function OrderDialog({
                     ? t("orders.updating")
                     : t("tables.placing")
                   : mode === "edit"
-                    ? (cart.length === 0 ? t("orders.updateAndRefresh") : t("orders.updateOrder"))
+                    ? t("orders.updateOrder")
                     : t("tables.placeOrder")}
               </Button>
             </div>
