@@ -1830,7 +1830,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                     {/* Order Info */}
                     {activeOrder && (
-                      <div className="space-y-2 text-xs text-gray-600">
+                      <div className="space-y-1 text-xs text-gray-600">
                         <div className="flex items-center justify-center">
                           <Clock className="w-3 h-3 mr-1" />
                           {new Date(activeOrder.orderedAt).toLocaleTimeString(
@@ -1845,11 +1845,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             },
                           )}
                         </div>
-                        <div className="bg-green-50 border border-green-200 rounded px-2 py-1">
-                          <div className="text-xs text-green-600 text-center">Tổng tiền</div>
-                          <div className="font-bold text-green-700 text-center text-sm">
-                            {Math.floor(Number(activeOrder.total || 0)).toLocaleString("vi-VN")} ₫
-                          </div>
+                        <div className="font-medium text-gray-900">
+                          {Math.floor(Number(activeOrder.total || 0)).toLocaleString("vi-VN")} ₫
                         </div>
                       </div>
                     )}
