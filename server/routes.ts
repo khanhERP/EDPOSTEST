@@ -1713,29 +1713,53 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Add order items to existing order
   app.post("/api/orders/:orderId/items", async (req: TenantRequest, res) => {
     try {
-      const db = req.db; // Access db instance from the request
       const orderId = parseInt(req.params.orderId);
       const { items } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
-      console.log(`📝 Adding ${items.length} items to order ${orderId}`);
+      console.log(`📝 Adding ${items?.length || 0} items to order ${orderId}`);
 
-      if (!items || !Array.isArray(items)) {
+      if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ error: "Items array is required" });
       }
+
+      if (isNaN(orderId)) {
+        return res.status(400).json({ error: "Invalid order ID" });
+      }
+
+      // Validate that order exists
+      const [existingOrder] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, orderId))
+        .limit(1);
+
+      if (!existingOrder) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Validate items data
+      const validatedItems = items.map((item: any, index: number) => {
+        if (!item.productId || !item.quantity || !item.unitPrice) {
+          throw new Error(`Item at index ${index} is missing required fields: productId, quantity, or unitPrice`);
+        }
+        
+        return {
+          orderId,
+          productId: parseInt(item.productId),
+          quantity: parseInt(item.quantity),
+          unitPrice: item.unitPrice.toString(),
+          total: item.total ? item.total.toString() : (parseFloat(item.unitPrice) * parseInt(item.quantity)).toString(),
+          notes: item.notes || null,
+        };
+      });
+
+      console.log(`📝 Validated items for insertion:`, validatedItems);
 
       // Insert new items
       const insertedItems = await db
         .insert(orderItems)
-        .values(
-          items.map((item: any) => ({
-            orderId,
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.total,
-            notes: item.notes,
-          }))
-        )
+        .values(validatedItems)
         .returning();
 
       console.log(`✅ Successfully added ${insertedItems.length} items to order ${orderId}`);
@@ -1818,7 +1842,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
     } catch (error) {
       console.error(`❌ Error adding items to order ${req.params.orderId}:`, error);
-      res.status(500).json({ error: "Failed to add items to order" });
+      
+      let errorMessage = "Failed to add items to order";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      res.status(500).json({ 
+        error: errorMessage,
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
