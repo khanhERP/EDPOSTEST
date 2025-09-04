@@ -328,26 +328,24 @@ export function OrderDialog({
       
       const hasAnyChanges = hasNewItems || hasRemovedItems || hasCustomerNameChange || hasCustomerCountChange;
 
-      // Completely block update if there are no changes at all
-      if (!hasAnyChanges) {
-        console.log('⚠️ Order Dialog: No changes detected, blocking update completely');
-
-        toast({
-          title: "Không có thay đổi",
-          description: "Vui lòng thực hiện thay đổi trước khi cập nhật đơn hàng",
-          variant: "destructive",
-        });
-
-        // Do NOT close dialog, just return to prevent API call
-        return;
-      }
-
-      console.log('📝 Order Dialog: Changes detected:', {
+      console.log('📝 Order Dialog: Update attempt - Changes detected:', {
         hasNewItems,
         hasRemovedItems,
         hasCustomerNameChange,
-        hasCustomerCountChange
+        hasCustomerCountChange,
+        hasAnyChanges
       });
+
+      // Allow update to proceed if there are new items or any changes
+      // If no changes, just show a warning but still allow the update
+      if (!hasAnyChanges && cart.length === 0) {
+        console.log('⚠️ Order Dialog: No changes detected, but proceeding with update');
+        toast({
+          title: "Thông báo",
+          description: "Không có thay đổi mới, đang cập nhật lại đơn hàng hiện tại",
+          variant: "default",
+        });
+      }
 
 
       // For edit mode, handle both new items and order updates
@@ -384,14 +382,17 @@ export function OrderDialog({
         customerCount: parseInt(customerCount.toString()) || 1,
       };
 
-      console.log("📝 Updating existing order with items and customer info:", { 
-        order: updatedOrder, 
-        items,
+      console.log("📝 Processing order update:", { 
+        orderId: existingOrder.id,
+        hasNewItems: items.length > 0,
         customerUpdates: {
           name: customerName,
           count: customerCount
-        }
+        },
+        totalItems: items.length
       });
+
+      // Always allow the mutation to proceed
       createOrderMutation.mutate({ order: updatedOrder, items });
     } else {
       // Create mode - original logic
