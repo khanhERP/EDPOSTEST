@@ -152,6 +152,22 @@ export function OrderManagement() {
     onSuccess: async (result, variables) => {
       console.log('🎯 Order Management completePaymentMutation.onSuccess called');
 
+      // CRITICAL: Clear ALL modal states immediately to prevent re-display
+      setOrderDetailsOpen(false);
+      setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptPreview(false);
+      setShowReceiptModal(false);
+      setPreviewReceipt(null);
+      setSelectedReceipt(null);
+      setSelectedOrder(null);
+      setOrderForPayment(null);
+      setPointsPaymentOpen(false);
+      setMixedPaymentOpen(false);
+      setShowQRPayment(false);
+      setSelectedPaymentMethod(null);
+
       // Force immediate refresh
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
@@ -159,18 +175,6 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
         queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
-
-      // Close modals but don't show additional receipt (payment modal will handle it)
-      setTimeout(() => {
-        setOrderDetailsOpen(false);
-        setPaymentMethodsOpen(false);
-        setShowPaymentMethodModal(false);
-        setShowEInvoiceModal(false);
-        setShowReceiptPreview(false);
-        setPreviewReceipt(null);
-        setSelectedOrder(null);
-        setOrderForPayment(null);
-      }, 200);
 
       toast({
         title: 'Thanh toán thành công',
@@ -193,6 +197,12 @@ export function OrderManagement() {
               paymentMethod: variables.paymentMethod,
               timestamp: new Date().toISOString()
             }
+          }),
+          new CustomEvent('clearAllModals', {
+            detail: {
+              source: 'order_management_payment_success',
+              timestamp: new Date().toISOString()
+            }
           })
         ];
 
@@ -203,14 +213,18 @@ export function OrderManagement() {
     },
     onError: (error) => {
       console.log('❌ Order Management completePaymentMutation.onError called:', error);
+      
+      // Clear modal states on error as well
+      setOrderForPayment(null);
+      setShowPaymentMethodModal(false);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      
       toast({
         title: 'Lỗi',
         description: 'Không thể hoàn tất thanh toán',
         variant: "destructive",
       });
-      setTimeout(() => {
-        setOrderForPayment(null);
-      }, 100);
     },
   });
 
@@ -1323,6 +1337,23 @@ export function OrderManagement() {
   // Function to refresh data with error handling
   const refreshData = React.useCallback(async () => {
     console.log('🔄 Order Management: Refreshing data...');
+    
+    // CRITICAL: Clear all modal states during refresh to prevent ghost modals
+    setOrderDetailsOpen(false);
+    setPaymentMethodsOpen(false);
+    setShowPaymentMethodModal(false);
+    setShowEInvoiceModal(false);
+    setShowReceiptPreview(false);
+    setShowReceiptModal(false);
+    setPreviewReceipt(null);
+    setSelectedReceipt(null);
+    setSelectedOrder(null);
+    setOrderForPayment(null);
+    setPointsPaymentOpen(false);
+    setMixedPaymentOpen(false);
+    setShowQRPayment(false);
+    setSelectedPaymentMethod(null);
+    
     try {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
@@ -1373,6 +1404,28 @@ export function OrderManagement() {
   useEffect(() => {
     refreshData();
   }, [refreshData]);
+
+  // Component cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Order Management: Component unmounting, clearing all states');
+      // Clear all modal states on unmount
+      setOrderDetailsOpen(false);
+      setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptPreview(false);
+      setShowReceiptModal(false);
+      setPreviewReceipt(null);
+      setSelectedReceipt(null);
+      setSelectedOrder(null);
+      setOrderForPayment(null);
+      setPointsPaymentOpen(false);
+      setMixedPaymentOpen(false);
+      setShowQRPayment(false);
+      setSelectedPaymentMethod(null);
+    };
+  }, []);
 
   // Set up periodic refresh
   useEffect(() => {
@@ -1607,11 +1660,31 @@ export function OrderManagement() {
       refreshData();
     };
 
+    const handleClearAllModals = (event: CustomEvent) => {
+      console.log("🧹 Order Management: Received clear all modals event:", event.detail);
+      // Clear all modal states immediately
+      setOrderDetailsOpen(false);
+      setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptPreview(false);
+      setShowReceiptModal(false);
+      setPreviewReceipt(null);
+      setSelectedReceipt(null);
+      setSelectedOrder(null);
+      setOrderForPayment(null);
+      setPointsPaymentOpen(false);
+      setMixedPaymentOpen(false);
+      setShowQRPayment(false);
+      setSelectedPaymentMethod(null);
+    };
+
     // Add event listeners
     window.addEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
     window.addEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
     window.addEventListener('refreshOrders', handleRefreshOrders as EventListener);
     window.addEventListener('newOrderCreated', handleNewOrderFromTable as EventListener);
+    window.addEventListener('clearAllModals', handleClearAllModals as EventListener);
 
     // Cleanup event listeners
     return () => {
@@ -1619,6 +1692,7 @@ export function OrderManagement() {
       window.removeEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
       window.removeEventListener('refreshOrders', handleRefreshOrders as EventListener);
       window.removeEventListener('newOrderCreated', handleNewOrderFromTable as EventListener);
+      window.removeEventListener('clearAllModals', handleClearAllModals as EventListener);
     };
   }, [refreshData]);
 
