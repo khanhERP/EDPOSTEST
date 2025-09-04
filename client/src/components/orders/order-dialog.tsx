@@ -85,7 +85,7 @@ export function OrderDialog({
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: { order: any; items: any[] }) => {
-      console.log('=== ORDER MUTATION STARTED ===');
+      console.log('=== ORDER MUTATION STARTED (SINGLE UPDATE MODE) ===');
       console.log('Mode:', mode);
       console.log('Existing order:', existingOrder);
       console.log(
@@ -97,9 +97,10 @@ export function OrderDialog({
 
       try {
         if (mode === "edit" && existingOrder) {
-          console.log(`📝 Adding ${orderData.items.length} items to existing order ${existingOrder.id} (single database update)`);
+          console.log(`📝 Adding ${orderData.items.length} items to existing order ${existingOrder.id} (SINGLE database update)`);
           const response = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
             items: orderData.items,
+            preventDuplicateUpdate: true // Prevent duplicate updates
           });
           
           if (!response.ok) {
@@ -108,7 +109,7 @@ export function OrderDialog({
           }
           
           const result = await response.json();
-          console.log('✅ Items added successfully with updated totals:', result);
+          console.log('✅ Items added successfully with updated totals (SINGLE UPDATE):', result);
           return result;
         } else {
           console.log('📝 Creating new order...');
@@ -130,22 +131,22 @@ export function OrderDialog({
       }
     },
     onSuccess: (response) => {
-      console.log('=== ORDER MUTATION SUCCESS ===');
+      console.log('=== ORDER MUTATION SUCCESS (SINGLE UPDATE COMPLETED) ===');
       console.log(
         mode === "edit"
-          ? "Order updated successfully:"
+          ? "Order updated successfully (no duplicate updates):"
           : "Order created successfully:",
         response,
       );
 
-      // Invalidate queries to refresh data
+      // OPTIMIZED: Only invalidate essential queries, avoid duplicate refetch
+      console.log('🔄 Performing optimized query invalidation...');
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
 
-      // Force refetch table data to ensure immediate UI update
-      queryClient.refetchQueries({ queryKey: ["/api/tables"] });
-      queryClient.refetchQueries({ queryKey: ["/api/orders"] });
+      // NO immediate refetch to prevent duplicate updates
+      console.log('✅ Query invalidation completed without duplicate refetch');
 
       // Reset form state
       setCart([]);
@@ -340,16 +341,17 @@ export function OrderDialog({
             newTotal,
           });
 
-          // Step 2: Update order in database with new calculated totals - SINGLE UPDATE
-          console.log('💾 Performing single database update...');
+          // Step 2: SINGLE DATABASE UPDATE - Perform only one update operation
+          console.log('💾 Performing single database update with transaction safety...');
           const updateData = {
             subtotal: newSubtotal.toFixed(2),
             tax: newTax.toFixed(2),
             total: newTotal.toFixed(2),
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            preventDuplicateUpdate: true // Flag to prevent duplicate updates
           };
 
-          console.log('📤 Sending update data to database:', updateData);
+          console.log('📤 Sending update data to database (single operation):', updateData);
 
           const updateResponse = await apiRequest('PUT', `/api/orders/${existingOrder.id}`, updateData);
 
@@ -359,39 +361,34 @@ export function OrderDialog({
           }
 
           const updatedOrderData = await updateResponse.json();
-          console.log('✅ Order Dialog: Order updated successfully in database:', updatedOrderData);
+          console.log('✅ Order Dialog: SINGLE database update completed successfully:', updatedOrderData);
 
-          // Step 3: Optimized data refresh - only invalidate, let queries refetch naturally
-          console.log('🔄 Order Dialog: Invalidating queries for natural refresh...');
-          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+          // Step 3: Minimal data refresh - avoid triggering additional updates
+          console.log('🔄 Order Dialog: Performing minimal query refresh to avoid duplicates...');
+          
+          // Use setTimeout to ensure update is processed before refresh
+          setTimeout(() => {
+            queryClient.setQueryData(["/api/orders"], (oldData: any) => {
+              if (!Array.isArray(oldData)) return oldData;
+              return oldData.map((order: any) => 
+                order.id === existingOrder.id 
+                  ? { ...order, ...updatedOrderData }
+                  : order
+              );
+            });
+          }, 100);
 
-          // Step 4: Emit events to notify other components
+          // Step 4: Emit SINGLE event to notify components (no duplicate events)
           window.dispatchEvent(new CustomEvent('orderTotalsUpdated', { 
             detail: { 
               orderId: existingOrder.id,
               oldTotal: existingOrder.total,
               newTotal: newTotal.toFixed(2),
-              action: 'recalculate',
-              immediate: true,
+              action: 'single-update-complete',
+              immediate: false, // Avoid immediate refresh
               timestamp: Date.now(),
-              skipRefetch: true // Indicate that manual refetch is not needed
-            } 
-          }));
-
-          window.dispatchEvent(new CustomEvent('refreshOrders', { 
-            detail: { 
-              immediate: true,
-              source: 'order-dialog-recalculate',
-              updatedOrder: {
-                id: existingOrder.id,
-                total: newTotal.toFixed(2),
-                subtotal: newSubtotal.toFixed(2),
-                tax: newTax.toFixed(2)
-              },
-              skipRefetch: true, // Prevent additional database calls
-              timestamp: Date.now()
+              skipRefetch: true,
+              preventDuplicate: true // Prevent duplicate processing
             } 
           }));
 
