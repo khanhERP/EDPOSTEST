@@ -85,71 +85,14 @@ export function SalesChartReport() {
   const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
   const [customerPageSize, setCustomerPageSize] = useState(15);
 
-  // Data queries - using same source as dashboard for consistency
-  const { data: transactions, isLoading: transactionsLoading } = useQuery({
-    queryKey: ["/api/transactions"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/transactions");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Use data from dashboard API response
+  const transactions = dashboardData?.transactions || [];
+  const orders = dashboardData?.orders || [];
+  const invoices = dashboardData?.invoices || [];
+  const tables = dashboardData?.tables || [];
 
-  const { data: orders = [], isLoading: ordersLoading } = useQuery({
-    queryKey: ["/api/orders"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/orders");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
-    queryKey: ["/api/invoices"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/invoices");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error("Error fetching invoices:", error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: tables } = useQuery({
-    queryKey: ["/api/tables"],
-    staleTime: 5 * 60 * 1000,
-  });
+  // Combined loading state
+  const isLoading = dashboardLoading;
 
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
@@ -261,210 +204,55 @@ export function SalesChartReport() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
 
-  // EXACT same data processing logic as dashboard
+  // Use dashboard data API - EXACT same data source as dashboard
+  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
+    queryKey: ["/api/dashboard-data", startDate, endDate],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/dashboard-data/${startDate}/${endDate}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        return null;
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Get dashboard stats from API response
   const getDashboardStats = () => {
-    if (
-      !orders ||
-      !tables ||
-      !Array.isArray(orders) ||
-      !Array.isArray(tables)
-    ) {
+    if (!dashboardData) {
       return null;
     }
 
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0); // Start of the day
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999); // End of the day
-
-    // Check if we have orders in the selected date range
-    const ordersInRange = orders.filter((o: any) => {
-      const oDate = new Date(
-        o.orderedAt || o.paidAt || o.createdAt || o.created_at,
-      );
-      return (
-        !isNaN(oDate.getTime()) &&
-        oDate >= start &&
-        oDate <= end &&
-        (o.status === "paid" || o.status === "completed")
-      );
-    });
-
-    // If no orders in selected date range, use recent data (last 30 days) for demo
-    const useRecentData = ordersInRange.length === 0;
-    let dateFilter = start;
-    let endFilter = end;
-
-    if (useRecentData) {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      dateFilter = thirtyDaysAgo;
-      endFilter = new Date(); // Current time
-      endFilter.setHours(23, 59, 59, 999);
-    }
-
-    // Filter completed orders within date range - ENHANCED to show more data
-    const filteredCompletedOrders = Array.isArray(orders)
-      ? orders.filter((order: any) => {
-          try {
-            if (!order) return false;
-
-            // Try multiple date fields - prioritize orderedAt, then paidAt, then createdAt
-            const orderDate = new Date(
-              order.orderedAt ||
-                order.paidAt ||
-                order.createdAt ||
-                order.created_at,
-            );
-
-            if (isNaN(orderDate.getTime())) {
-              return false;
-            }
-
-            const dateMatch = orderDate >= dateFilter && orderDate <= endFilter;
-
-            // Include more order statuses to show real data
-            const isCompleted =
-              order.status === "paid" ||
-              order.status === "completed" ||
-              order.status === "served" ||
-              order.status === "confirmed";
-
-            return dateMatch && isCompleted;
-          } catch (error) {
-            console.error("Error filtering order:", order, error);
-            return false;
-          }
-        })
-      : [];
-
-    const ordersInSelectedRange = ordersInRange.length;
-
-    console.log("Sales Chart Dashboard Debug:", {
-      totalOrders: orders.length,
+    console.log("Sales Chart Dashboard Debug from API:", {
+      totalOrders: dashboardData.orders?.length || 0,
       startDate,
       endDate,
-      startDateParsed: start.toISOString(),
-      endDateParsed: end.toISOString(),
-      firstOrder: orders[0]
-        ? {
-            id: orders[0].id,
-            status: orders[0].status,
-            employeeName: orders[0].employeeName,
-            cashierName: orders[0].cashierName,
-            total: orders[0].total,
-          }
-        : null,
-      completedOrders: orders.filter(
-        (o: any) => o.status === "completed" || o.status === "paid",
-      ).length,
-      ordersInSelectedRange,
-      filteredCompletedOrders: filteredCompletedOrders.length,
-      usingFallbackData:
-        ordersInSelectedRange === 0 && filteredCompletedOrders.length > 0,
-      todaysOrders: orders.filter((o: any) => {
-        const orderDate = new Date(
-          o.orderedAt || o.paidAt || o.createdAt || o.created_at,
-        );
-        const today = new Date();
-        return orderDate.toDateString() === today.toDateString();
-      }).length,
-      sampleOrderDates: orders.slice(0, 5).map((o: any) => ({
-        id: o.id,
-        status: o.status,
-        orderedAt: o.orderedAt,
-        paidAt: o.paidAt,
-        createdAt: o.createdAt,
-        created_at: o.created_at,
-        parsedDate: new Date(
-          o.orderedAt || o.paidAt || o.createdAt || o.created_at,
-        ).toISOString(),
-        dateOnly: new Date(
-          new Date(o.orderedAt || o.paidAt || o.createdAt || o.created_at),
-        ).toDateString(),
-      })),
+      periodRevenue: dashboardData.periodRevenue,
+      periodOrderCount: dashboardData.periodOrderCount,
+      periodCustomerCount: dashboardData.periodCustomerCount,
+      filteredCompletedOrders: dashboardData.filteredCompletedOrders?.length || 0,
     });
-
-    // Period revenue: total amount for all completed orders - EXACT same as dashboard
-    const periodRevenue = filteredCompletedOrders.reduce(
-      (total: number, order: any) => {
-        const orderTotal = Number(order.total || 0);
-        return total + orderTotal;
-      },
-      0,
-    );
-
-    // Order count: count of completed orders in the filtered period - EXACT same as dashboard
-    const periodOrderCount = filteredCompletedOrders.length;
-
-    // Customer count: count unique customers from completed orders - EXACT same as dashboard
-    const uniqueCustomers = new Set();
-    filteredCompletedOrders.forEach((order: any) => {
-      if (order.customerId) {
-        uniqueCustomers.add(order.customerId);
-      } else {
-        // If no customer ID, count as unique customer per order
-        uniqueCustomers.add(`order_${order.id}`);
-      }
-    });
-    const periodCustomerCount = uniqueCustomers.size;
-
-    // Daily average for the period - EXACT same as dashboard
-    const daysDiff = Math.max(
-      1,
-      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
-    );
-    const dailyAverageRevenue = periodRevenue / daysDiff;
-
-    // Active orders (pending/in-progress orders) - EXACT same as dashboard
-    const activeOrders = orders.filter(
-      (order: any) =>
-        order.status === "pending" || order.status === "in_progress",
-    ).length;
-
-    const occupiedTables = tables.filter(
-      (table: any) => table.status === "occupied",
-    );
-
-    // Month revenue: same as period revenue for the selected date range - EXACT same as dashboard
-    const monthRevenue = periodRevenue;
-
-    // Average order value - EXACT same as dashboard
-    const averageOrderValue =
-      periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
-
-    // Peak hours analysis from filtered completed orders - EXACT same as dashboard
-    const hourlyOrders: { [key: number]: number } = {};
-    filteredCompletedOrders.forEach((order: any) => {
-      const orderDate = new Date(
-        order.orderedAt || order.createdAt || order.created_at || order.paidAt,
-      );
-      if (!isNaN(orderDate.getTime())) {
-        const hour = orderDate.getHours();
-        hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
-      }
-    });
-
-    const peakHour = Object.keys(hourlyOrders).reduce(
-      (peak, hour) =>
-        hourlyOrders[parseInt(hour)] > hourlyOrders[parseInt(peak)]
-          ? hour
-          : peak,
-      "12",
-    );
 
     return {
-      periodRevenue,
-      periodOrderCount,
-      periodCustomerCount,
-      dailyAverageRevenue,
-      activeOrders: activeOrders,
-      occupiedTables: occupiedTables.length,
-      monthRevenue,
-      averageOrderValue,
-      peakHour: parseInt(peakHour),
-      totalTables: tables.length,
-      filteredCompletedOrders: filteredCompletedOrders, // Return filtered orders for further processing
+      periodRevenue: dashboardData.periodRevenue || 0,
+      periodOrderCount: dashboardData.periodOrderCount || 0,
+      periodCustomerCount: dashboardData.periodCustomerCount || 0,
+      dailyAverageRevenue: dashboardData.dailyAverageRevenue || 0,
+      activeOrders: dashboardData.activeOrders || 0,
+      occupiedTables: dashboardData.occupiedTables || 0,
+      monthRevenue: dashboardData.monthRevenue || 0,
+      averageOrderValue: dashboardData.averageOrderValue || 0,
+      peakHour: dashboardData.peakHour || 12,
+      totalTables: dashboardData.totalTables || 0,
+      filteredCompletedOrders: dashboardData.filteredCompletedOrders || [],
     };
   };
 
@@ -478,12 +266,20 @@ export function SalesChartReport() {
 
   // Sales Report Component Logic using dashboard stats
   const renderSalesReport = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
     const dashboardStats = getDashboardStats();
 
     if (!dashboardStats) {
       return (
         <div className="flex justify-center py-8">
-          <div className="text-gray-500">{t("reports.loading")}...</div>
+          <div className="text-gray-500">Không có dữ liệu</div>
         </div>
       );
     }
@@ -1261,10 +1057,18 @@ export function SalesChartReport() {
 
   // Legacy Employee Report Component Logic
   const renderEmployeeReport = () => {
-    if (!orders || !Array.isArray(orders)) {
+    if (isLoading) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
+    if (!orders || !Array.isArray(orders)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">Không có dữ liệu đơn hàng</div>
         </div>
       );
     }
@@ -2001,10 +1805,18 @@ export function SalesChartReport() {
 
   // Legacy Customer Report Component Logic
   const renderCustomerReport = () => {
-    if (!orders || !Array.isArray(orders)) {
+    if (isLoading) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
+    if (!orders || !Array.isArray(orders)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">Không có dữ liệu đơn hàng</div>
         </div>
       );
     }
@@ -2445,12 +2257,20 @@ export function SalesChartReport() {
 
   // Sales Channel Report Component Logic
   const renderSalesChannelReport = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
     const dashboardStats = getDashboardStats();
 
     if (!dashboardStats) {
       return (
         <div className="flex justify-center py-8">
-          <div className="text-gray-500">{t("reports.loading")}...</div>
+          <div className="text-gray-500">Không có dữ liệu</div>
         </div>
       );
     }

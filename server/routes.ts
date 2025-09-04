@@ -3581,7 +3581,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add new API endpoints with proper date filtering for sales chart report
+  // Enhanced API endpoints for sales chart report - using same data source as dashboard
+  app.get(
+    "/api/dashboard-data/:startDate/:endDate",
+    async (req: TenantRequest, res) => {
+      try {
+        const { startDate, endDate } = req.params;
+        const tenantDb = await getTenantDatabase(req);
+
+        console.log("Dashboard data API called with params:", {
+          startDate,
+          endDate,
+        });
+
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+
+        // Get orders, tables, transactions, invoices - EXACT same as dashboard
+        const [orders, tables, transactions, invoices] = await Promise.all([
+          storage.getOrders(undefined, undefined, tenantDb),
+          storage.getTables(tenantDb),
+          storage.getTransactions(tenantDb),
+          storage.getInvoices(tenantDb),
+        ]);
+
+        // Filter completed orders within date range - EXACT same logic as dashboard
+        const filteredCompletedOrders = Array.isArray(orders)
+          ? orders.filter((order: any) => {
+              try {
+                if (!order) return false;
+
+                // Try multiple date fields - prioritize orderedAt, then paidAt, then createdAt
+                const orderDate = new Date(
+                  order.orderedAt ||
+                    order.paidAt ||
+                    order.createdAt ||
+                    order.created_at,
+                );
+
+                if (isNaN(orderDate.getTime())) {
+                  return false;
+                }
+
+                const dateMatch = orderDate >= start && orderDate <= end;
+
+                // Include more order statuses to show real data
+                const isCompleted =
+                  order.status === "paid" ||
+                  order.status === "completed" ||
+                  order.status === "served" ||
+                  order.status === "confirmed";
+
+                return dateMatch && isCompleted;
+              } catch (error) {
+                console.error("Error filtering order:", order, error);
+                return false;
+              }
+            })
+          : [];
+
+        // Calculate dashboard stats - EXACT same logic
+        const periodRevenue = filteredCompletedOrders.reduce(
+          (total: number, order: any) => {
+            const orderTotal = Number(order.total || 0);
+            return total + orderTotal;
+          },
+          0,
+        );
+
+        const periodOrderCount = filteredCompletedOrders.length;
+
+        // Customer count: count unique customers from completed orders
+        const uniqueCustomers = new Set();
+        filteredCompletedOrders.forEach((order: any) => {
+          if (order.customerId) {
+            uniqueCustomers.add(order.customerId);
+          } else {
+            uniqueCustomers.add(`order_${order.id}`);
+          }
+        });
+        const periodCustomerCount = uniqueCustomers.size;
+
+        // Daily average for the period
+        const daysDiff = Math.max(
+          1,
+          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+        );
+        const dailyAverageRevenue = periodRevenue / daysDiff;
+
+        // Active orders (pending/in-progress orders)
+        const activeOrders = orders.filter(
+          (order: any) =>
+            order.status === "pending" || order.status === "in_progress",
+        ).length;
+
+        const occupiedTables = tables.filter(
+          (table: any) => table.status === "occupied",
+        );
+
+        const monthRevenue = periodRevenue;
+        const averageOrderValue =
+          periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
+
+        // Peak hours analysis
+        const hourlyOrders: { [key: number]: number } = {};
+        filteredCompletedOrders.forEach((order: any) => {
+          const orderDate = new Date(
+            order.orderedAt || order.createdAt || order.created_at || order.paidAt,
+          );
+          if (!isNaN(orderDate.getTime())) {
+            const hour = orderDate.getHours();
+            hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
+          }
+        });
+
+        const peakHour = Object.keys(hourlyOrders).reduce(
+          (peak, hour) =>
+            hourlyOrders[parseInt(hour)] > hourlyOrders[parseInt(peak)]
+              ? hour
+              : peak,
+          "12",
+        );
+
+        const dashboardData = {
+          periodRevenue,
+          periodOrderCount,
+          periodCustomerCount,
+          dailyAverageRevenue,
+          activeOrders,
+          occupiedTables: occupiedTables.length,
+          monthRevenue,
+          averageOrderValue,
+          peakHour: parseInt(peakHour),
+          totalTables: tables.length,
+          filteredCompletedOrders,
+          orders: orders || [],
+          tables: tables || [],
+          transactions: transactions || [],
+          invoices: invoices || [],
+        };
+
+        console.log("Dashboard data calculated:", {
+          periodRevenue,
+          periodOrderCount,
+          periodCustomerCount,
+          filteredOrdersCount: filteredCompletedOrders.length,
+        });
+
+        res.json(dashboardData);
+      } catch (error) {
+        console.error("Error in dashboard data API:", error);
+        res.status(500).json({ error: "Failed to fetch dashboard data" });
+      }
+    },
+  );
+
+  // Transactions API with enhanced filtering
   app.get(
     "/api/transactions/:startDate/:endDate/:salesMethod/:salesChannel/:analysisType/:concernType/:selectedEmployee",
     async (req: TenantRequest, res) => {
