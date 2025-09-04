@@ -310,20 +310,55 @@ export function OrderDialog({
       // Check if there are new items to add
       if (cart.length === 0) {
         // No new items to add, but still need to refresh data and invalidate queries
-        console.log('No new items to add, refreshing data and closing dialog');
+        console.log('🔄 Order Dialog: No new items to add, refreshing data and closing dialog');
 
+        // Clear all cache first to force fresh data
+        queryClient.clear();
+        
         // Invalidate and refetch all related queries to ensure data is fresh
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
         queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
         queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
 
         // Force immediate refetch to update UI
-        queryClient.refetchQueries({ queryKey: ["/api/tables"] });
-        queryClient.refetchQueries({ queryKey: ["/api/orders"] });
+        Promise.all([
+          queryClient.refetchQueries({ queryKey: ["/api/tables"] }),
+          queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
+          queryClient.refetchQueries({ queryKey: ["/api/order-items"] })
+        ]).then(() => {
+          console.log('✅ Order Dialog: All queries refreshed successfully');
+          
+          // Emit custom events to notify other components
+          window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
+            detail: { 
+              orderId: existingOrder.id, 
+              action: 'refresh',
+              immediate: true,
+              timestamp: Date.now()
+            } 
+          }));
+          
+          window.dispatchEvent(new CustomEvent('refreshOrders', { 
+            detail: { 
+              immediate: true,
+              source: 'order-dialog-refresh',
+              timestamp: Date.now()
+            } 
+          }));
 
-        toast({
-          title: t('orders.orderUpdateSuccess'),
-          description: 'Dữ liệu đã được làm mới thành công',
+          // Additional refresh event specifically for table grid
+          window.dispatchEvent(new CustomEvent('refreshTableGrid', { 
+            detail: { 
+              immediate: true,
+              source: 'order-dialog-refresh',
+              timestamp: Date.now()
+            } 
+          }));
+
+          toast({
+            title: t('orders.orderUpdateSuccess'),
+            description: 'Dữ liệu đã được làm mới thành công',
+          });
         });
 
         // Reset form state and close dialog
