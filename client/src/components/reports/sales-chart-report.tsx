@@ -1184,10 +1184,11 @@ export function SalesChartReport() {
         })),
       });
 
-      // Calculate employee sales
+      // Calculate employee sales using proper data structure
       const employeeSales: {
-        [employeeId: string]: {
-          employee: any;
+        [employeeKey: string]: {
+          employeeCode: string;
+          employeeName: string;
           orderCount: number;
           revenue: number;
           tax: number;
@@ -1196,32 +1197,37 @@ export function SalesChartReport() {
         };
       } = {};
 
-      // Initialize all employees with 0 values
-      (employees || []).forEach((employee: any) => {
-        employeeSales[employee.id] = {
-          employee,
-          orderCount: 0,
-          revenue: 0,
-          tax: 0,
-          total: 0,
-          paymentMethods: {},
-        };
-      });
+      filteredCompletedOrders.forEach((order: any) => {
+        const employeeCode = order.employeeId ? `EMP-${order.employeeId}` : "EMP-000";
+        const employeeName = order.employeeName || order.cashierName || "Unknown";
+        const employeeKey = `${employeeCode}-${employeeName}`;
 
-      filteredCompletedOrders.forEach((item: any) => {
-        const employeeId = item.employeeId || "unknown";
-        if (employeeSales[employeeId]) {
-          const stats = employeeSales[employeeId];
-          stats.orderCount += 1;
-          stats.revenue += Number(item.amount || 0) - Number(item.tax || 0);
-          stats.tax += Number(item.tax || 0);
-          stats.total += Number(item.amount || 0);
-
-          const paymentMethod = item.paymentMethod || "cash";
-          stats.paymentMethods[paymentMethod] =
-            (stats.paymentMethods[paymentMethod] || 0) +
-            Number(item.amount || 0);
+        if (!employeeSales[employeeKey]) {
+          employeeSales[employeeKey] = {
+            employeeCode,
+            employeeName,
+            orderCount: 0,
+            revenue: 0,
+            tax: 0,
+            total: 0,
+            paymentMethods: {},
+          };
         }
+
+        const stats = employeeSales[employeeKey];
+        const orderTotal = Number(order.total || 0);
+        const orderDiscount = Number(order.discount || 0);
+        const revenue = orderTotal - orderDiscount;
+        const tax = revenue * 0.1; // 10% tax
+
+        stats.orderCount += 1;
+        stats.revenue += revenue;
+        stats.tax += tax;
+        stats.total += revenue;
+
+        const paymentMethod = order.paymentMethod || "cash";
+        stats.paymentMethods[paymentMethod] =
+          (stats.paymentMethods[paymentMethod] || 0) + orderTotal;
       });
 
       const data = Object.values(employeeSales).sort(
@@ -1886,26 +1892,51 @@ export function SalesChartReport() {
         totalAmount: number;
         discount: number;
         revenue: number;
+        status: string;
+        customerGroup: string;
+        orderDetails: any[]; // Added orderDetails
       };
     } = {};
 
-    filteredCompletedOrders.forEach((item: any) => {
-      const customerId = item.customerId || "walk-in";
+    filteredOrders.forEach((order: any) => {
+      const customerId = order.customerId || "walk-in";
+      const customerName = order.customerName || "Khách lẻ";
+
       if (!customerSales[customerId]) {
         customerSales[customerId] = {
-          customer: item.customerName || "Khách lẻ",
+          customer: customerName, // Store customer name directly
           orders: 0,
           totalAmount: 0,
           discount: 0,
           revenue: 0,
+          status: t("reports.active"), // Default status
+          customerGroup: t("common.regularCustomer"), // Default group
+          orderDetails: [], // Initialize orderDetails array
         };
       }
 
-      const stats = customerSales[customerId];
-      stats.orders += 1;
-      stats.totalAmount += Number(item.amount || 0);
-      stats.revenue += Number(item.amount || 0) - Number(item.discount || 0);
-      stats.discount += Number(item.discount || 0);
+      const orderTotal = Number(order.total);
+      const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
+      const orderDiscount = orderSubtotal - orderTotal;
+
+      customerSales[customerId].orders += 1;
+      customerSales[customerId].totalAmount += orderSubtotal;
+      customerSales[customerId].discount += orderDiscount;
+      customerSales[customerId].revenue += orderTotal;
+
+      // Determine customer group based on total spending
+      if (customerSales[customerId].revenue >= 1000000) {
+        customerSales[customerId].customerGroup = t("reports.vip");
+      } else if (customerSales[customerId].revenue >= 500000) {
+        customerSales[customerId].customerGroup = t("common.goldCustomer");
+      }
+    });
+
+    // Add orderDetails to customer sales data
+    Object.keys(customerSales).forEach(customerId => {
+      customerSales[customerId].orderDetails = filteredOrders.filter(order =>
+        (order.customerId || "walk-in") === customerId
+      );
     });
 
     const data = Object.values(customerSales).sort(
@@ -1935,7 +1966,7 @@ export function SalesChartReport() {
                 exportToExcel(
                   paginatedData.map((item) => ({
                     "Mã KH": item.customerId,
-                    "Tên KH": item.customerName,
+                    "Tên KH": item.customer,
                     "Nhóm KH": item.customerGroup,
                     "Số đơn": item.orders,
                     "Tổng tiền": formatCurrency(item.totalAmount),
@@ -2017,7 +2048,7 @@ export function SalesChartReport() {
                               {item.customerId}
                             </TableCell>
                             <TableCell className="text-center border-r bg-green-50 min-w-[150px] px-4">
-                              {item.customerName}
+                              {item.customer}
                             </TableCell>
                             <TableCell className="text-center border-r min-w-[100px] px-4">
                               {item.orders}
@@ -2051,7 +2082,7 @@ export function SalesChartReport() {
                                 }
                                 className="text-xs"
                               >
-                                {t("reports.active")}
+                                {item.status}
                               </Badge>
                             </TableCell>
                           </TableRow>
@@ -2248,11 +2279,21 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
+            )}
+          </CardContent>
+        </Card>
+      );
+    } catch (error) {
+      console.error("Error in renderCustomerReport:", error);
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-red-500">
+            <p>Có lỗi xảy ra khi hiển thị báo cáo khách hàng</p>
+            <p className="text-sm">{error?.message || "Unknown error"}</p>
+          </div>
+        </div>
+      );
+    }
   };
 
   // Sales Channel Report Component Logic
@@ -2652,19 +2693,17 @@ export function SalesChartReport() {
           Array.isArray(transactions) &&
           Object.keys(productSales).length === 0
         ) {
-          const filteredTransactions = transactions.filter(
-            (transaction: any) => {
-              const transactionDate = new Date(
-                transaction.createdAt || transaction.created_at,
-              );
-              const transactionDateOnly = new Date(transactionDate);
-              transactionDateOnly.setHours(0, 0, 0, 0);
-              return (
-                transactionDateOnly >= productStart &&
-                transactionDateOnly <= productEnd
-              );
-            },
-          );
+          const filteredTransactions = transactions.filter((transaction: any) => {
+            const transactionDate = new Date(
+              transaction.createdAt || transaction.created_at,
+            );
+            const transactionDateOnly = new Date(transactionDate);
+            transactionDateOnly.setHours(0, 0, 0, 0);
+            return (
+              transactionDateOnly >= productStart &&
+              transactionDateOnly <= productEnd
+            );
+          });
 
           filteredTransactions.forEach((transaction: any) => {
             if (transaction.items && Array.isArray(transaction.items)) {
