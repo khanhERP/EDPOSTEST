@@ -2060,7 +2060,7 @@ export function SalesChartReport() {
                               {item.customerId}
                             </TableCell>
                             <TableCell className="text-center border-r bg-green-50 min-w-[150px] px-4">
-                              {item.customer}
+                              {item.customerName}
                             </TableCell>
                             <TableCell className="text-center border-r min-w-[100px] px-4">
                               {item.orders}
@@ -2291,7 +2291,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -3343,7 +3342,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -4017,7 +4015,7 @@ export function SalesChartReport() {
 
         {/* Report Content */}
         <div className="space-y-6">
-          {transactionsLoading || ordersLoading || invoicesLoading ? (
+          {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="text-gray-500">{t("reports.loading")}...</div>
             </div>
