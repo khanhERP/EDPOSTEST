@@ -782,15 +782,15 @@ export function PaymentMethodModal({
         });
       }
 
-      // Close payment modal and show receipt modal
-      console.log("🔄 Closing payment modal and showing receipt modal");
-      onClose(); // Close payment modal
+      // Close payment modal first
+      console.log("🔄 Closing payment modal");
+      onClose();
       
-      // Force show receipt modal after a small delay to ensure state is updated
+      // Show receipt modal immediately after closing payment modal
       setTimeout(() => {
-        console.log("📄 FORCE SHOWING RECEIPT MODAL");
+        console.log("📄 SHOWING RECEIPT MODAL");
         setShowReceiptModal(true);
-      }, 300);
+      }, 100);
 
     } else {
       // Even if no receipt data, still show success and close payment flow
@@ -1006,6 +1006,7 @@ export function PaymentMethodModal({
   ]);
 
   return (
+    <>
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
@@ -1632,19 +1633,6 @@ export function PaymentMethodModal({
         />
       )}
 
-      {/* CRITICAL: Render Receipt Modal here */}
-      {showReceiptModal && receiptDataForModal && (
-        <ReceiptModal
-          isOpen={showReceiptModal}
-          onClose={() => {
-            setShowReceiptModal(false);
-            setReceiptDataForModal(null); // Clear data after closing
-            onClose(); // Close the payment modal as well
-          }}
-          receipt={receiptDataForModal}
-        />
-      )}
-
       {/* Debug rendering states */}
       {console.log("🔍 PAYMENT MODAL RENDER DEBUG:", {
         showEInvoice: showEInvoice,
@@ -1655,5 +1643,18 @@ export function PaymentMethodModal({
         timestamp: new Date().toISOString()
       })}
     </Dialog>
+    
+    {/* CRITICAL: Render Receipt Modal outside Dialog to prevent conflicts */}
+    {showReceiptModal && receiptDataForModal && (
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={() => {
+          setShowReceiptModal(false);
+          setReceiptDataForModal(null); // Clear data after closing
+        }}
+        receipt={receiptDataForModal}
+      />
+    )}
+  </>
   );
 }

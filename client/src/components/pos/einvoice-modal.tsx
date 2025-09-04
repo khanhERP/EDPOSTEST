@@ -1140,19 +1140,19 @@ export function EInvoiceModal({
           receipt: {
             ...receiptData,
             // Ensure all required fields are present for receipt display
-            transactionId: receiptData.transactionId,
+            transactionId: receiptData.transactionId || `TXN-${Date.now()}`,
             invoiceNumber: result.data?.invoiceNo || null,
-            createdAt: receiptData.createdAt,
-            cashierName: receiptData.cashierName,
-            paymentMethod: 'einvoice',
+            createdAt: receiptData.createdAt || new Date().toISOString(),
+            cashierName: receiptData.cashierName || 'Cashier',
+            paymentMethod: selectedPaymentMethod || 'einvoice',
             customerName: formData.customerName,
             customerTaxCode: formData.taxCode,
-            items: receiptData.items,
-            subtotal: receiptData.subtotal,
-            tax: receiptData.tax,
-            total: receiptData.total,
-            amountReceived: receiptData.amountReceived,
-            change: receiptData.change,
+            items: receiptData.items || [],
+            subtotal: receiptData.subtotal || grandTotal.toFixed(2),
+            tax: receiptData.tax || calculatedTax.toFixed(2),
+            total: receiptData.total || grandTotal.toFixed(2),
+            amountReceived: receiptData.amountReceived || grandTotal.toFixed(2),
+            change: receiptData.change || "0.00",
             // Add orderId for status update tracking
             orderId: orderId || `temp-${Date.now()}`
           }
@@ -1167,6 +1167,7 @@ export function EInvoiceModal({
         console.log("🔒 Closing E-Invoice modal before showing receipt");
         
         // Call onConfirm to trigger receipt modal display
+        console.log("📄 Calling onConfirm with publishResult:", publishResult);
         onConfirm(publishResult);
         
         // Close the modal after successful publishing
