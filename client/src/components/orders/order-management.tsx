@@ -592,7 +592,7 @@ export function OrderManagement() {
     return `${Math.floor(amount).toLocaleString('vi-VN')} ₫`;
   };
 
-  // Memoize expensive calculations
+  // Memoize expensive calculations - using same logic as Table Grid
   const orderDetailsCalculation = React.useMemo(() => {
     if (!selectedOrder || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
       return { subtotal: 0, tax: 0, total: 0 };
@@ -600,6 +600,7 @@ export function OrderManagement() {
 
     let calculatedSubtotal = 0;
     let calculatedTax = 0;
+    let calculatedTotal = 0;
 
     console.log(`🧮 Order Details: Calculating totals for ${orderItems.length} items`);
 
@@ -621,34 +622,41 @@ export function OrderManagement() {
         return;
       }
 
-      // Subtotal = base price * quantity
+      // Subtotal = base price * quantity (before tax)
       const itemSubtotal = basePrice * quantity;
       calculatedSubtotal += itemSubtotal;
 
-      // Tax calculation using EXACT same logic as calculateOrderTotal
+      // Use EXACT same logic as Table Grid - calculate using afterTaxPrice if available
+      let finalPricePerUnit = basePrice;
+      
       if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-        const afterTaxPrice = parseFloat(product.afterTaxPrice);
-        const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+        finalPricePerUnit = parseFloat(product.afterTaxPrice);
+        const taxPerUnit = Math.max(0, finalPricePerUnit - basePrice);
         const itemTax = taxPerUnit * quantity;
         calculatedTax += itemTax;
 
         console.log(`💸 Order Details: Tax calculated for ${item.productName}:`, {
-          afterTaxPrice,
+          afterTaxPrice: finalPricePerUnit,
           basePrice,
           taxPerUnit,
           quantity,
           itemTax
         });
       }
+
+      // Calculate total using final price (including tax)
+      const itemTotal = finalPricePerUnit * quantity;
+      calculatedTotal += itemTotal;
     });
 
-    // Use floor like in calculateOrderTotal for consistency
-    const finalTotal = Math.floor(calculatedSubtotal + calculatedTax);
+    // Use floor like in Table Grid for consistency
+    const finalTotal = Math.floor(calculatedTotal);
 
     console.log(`💰 Order Details: Final calculation:`, {
       subtotal: calculatedSubtotal,
       tax: calculatedTax,
-      total: finalTotal,
+      calculatedTotal: calculatedTotal,
+      finalTotal: finalTotal,
       itemsProcessed: orderItems.length
     });
 
@@ -688,9 +696,8 @@ export function OrderManagement() {
         return Number(order.total || 0);
       }
 
-      // Calculate total using EXACT same logic as Table Grid and other components
-      let calculatedSubtotal = 0;
-      let calculatedTax = 0;
+      // Calculate total using EXACT same logic as Table Grid
+      let calculatedTotal = 0;
 
       orderItemsData.forEach((item: any) => {
         const basePrice = Number(item.unitPrice || 0);
@@ -711,41 +718,42 @@ export function OrderManagement() {
           return;
         }
 
-        // Subtotal = base price * quantity (before tax)
-        const itemSubtotal = basePrice * quantity;
-        calculatedSubtotal += itemSubtotal;
-
-        // Tax calculation using EXACT same logic as Table Grid
+        // Use EXACT same logic as Table Grid - use afterTaxPrice if available, otherwise use basePrice
+        let finalPricePerUnit = basePrice;
+        
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-          const itemTax = taxPerUnit * quantity;
-          calculatedTax += itemTax;
-
-          console.log(`💸 Order Management: Tax calculated for ${item.productName}:`, {
-            afterTaxPrice,
+          finalPricePerUnit = parseFloat(product.afterTaxPrice);
+          console.log(`💸 Order Management: Using afterTaxPrice for ${item.productName}:`, {
             basePrice,
-            taxPerUnit,
-            quantity,
-            itemTax,
-            totalTaxSoFar: calculatedTax
+            afterTaxPrice: finalPricePerUnit,
+            quantity
           });
         } else {
-          console.log(`💸 Order Management: No tax for ${item.productName} - no afterTaxPrice`);
+          console.log(`💸 Order Management: Using basePrice for ${item.productName} (no afterTaxPrice)`);
         }
+
+        // Calculate item total
+        const itemTotal = finalPricePerUnit * quantity;
+        calculatedTotal += itemTotal;
+
+        console.log(`💰 Order Management: Item total for ${item.productName}:`, {
+          finalPricePerUnit,
+          quantity,
+          itemTotal,
+          runningTotal: calculatedTotal
+        });
       });
 
       // Floor the total like in Table Grid to match display format
-      const finalTotal = Math.floor(calculatedSubtotal + Math.abs(calculatedTax));
+      const finalTotal = Math.floor(calculatedTotal);
 
       console.log(`💰 Order Management: Order ${order.id} calculation result:`, {
-        subtotal: calculatedSubtotal,
-        tax: calculatedTax,
+        calculatedTotal,
         finalTotal: finalTotal,
         storedTotal: order.total,
         itemsCount: orderItemsData.length,
         productsAvailable: products.length,
-        calculationMethod: 'Math.floor(subtotal + tax)'
+        calculationMethod: 'Math.floor(sum of afterTaxPrice * quantity)'
       });
 
       // Return calculated total, ensuring it's at least 0
