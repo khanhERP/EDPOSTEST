@@ -160,8 +160,7 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
 
-      // Don't close modals immediately to prevent white screen
-      // Use setTimeout to close modals after UI refresh
+      // Close modals but don't show additional receipt (payment modal will handle it)
       setTimeout(() => {
         setOrderDetailsOpen(false);
         setPaymentMethodsOpen(false);
@@ -209,7 +208,6 @@ export function OrderManagement() {
         description: 'Không thể hoàn tất thanh toán',
         variant: "destructive",
       });
-      // Don't clear orderForPayment immediately to prevent white screen
       setTimeout(() => {
         setOrderForPayment(null);
       }, 100);
@@ -496,84 +494,13 @@ export function OrderManagement() {
       // Close e-invoice modal first
       setShowEInvoiceModal(false);
 
-      // Always create and show receipt modal after e-invoice processing
-      let receiptData = invoiceData.receipt;
-
-      // If no receipt data provided, create it from current order data
-      if (!receiptData && orderForPayment) {
-        console.log('📄 Creating receipt data from order payment data');
-
-        // Calculate totals using same logic as payment flow
-        let calculatedSubtotal = 0;
-        let calculatedTax = 0;
-
-        const currentOrderItems = orderForPayment?.processedItems || orderForPayment?.orderItems || [];
-
-        if (Array.isArray(currentOrderItems) && Array.isArray(products)) {
-          currentOrderItems.forEach((item: any) => {
-            const basePrice = Number(item.unitPrice || item.price || 0);
-            const quantity = Number(item.quantity || 0);
-            const product = products.find((p: any) => p.id === item.productId);
-
-            // Calculate subtotal exactly as Order Details
-            calculatedSubtotal += basePrice * quantity;
-
-            // Use EXACT same tax calculation logic
-            if (
-              product?.afterTaxPrice &&
-              product.afterTaxPrice !== null &&
-              product.afterTaxPrice !== ""
-            ) {
-              const afterTaxPrice = parseFloat(product.afterTaxPrice);
-              const taxPerUnit = afterTaxPrice - basePrice;
-              calculatedTax += taxPerUnit * quantity;
-            }
-          });
-        }
-
-        const finalTotal = calculatedSubtotal + calculatedTax;
-
-        receiptData = {
-          transactionId: invoiceData.invoiceNumber || `TXN-PREVIEW-${Date.now()}`,
-          items: currentOrderItems.map((item: any) => ({
-            id: item.id,
-            productId: item.productId || item.id,
-            productName: item.productName || item.name,
-            quantity: item.quantity,
-            price: item.unitPrice || item.price,
-            total: item.total,
-            sku: item.productSku || item.sku || `SP${item.productId}`,
-            taxRate: (() => {
-              const product = Array.isArray(products)
-                ? products.find((p: any) => p.id === item.productId)
-                : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })(),
-          })),
-          subtotal: calculatedSubtotal.toString(),
-          tax: calculatedTax.toString(),
-          total: finalTotal.toString(),
-          paymentMethod: "einvoice",
-          originalPaymentMethod: invoiceData.originalPaymentMethod,
-          amountReceived: finalTotal.toString(),
-          change: "0.00",
-          cashierName: "Order Management",
-          createdAt: new Date().toISOString(),
-          customerName: invoiceData.customerName || orderForPayment.customerName,
-          customerTaxCode: invoiceData.taxCode,
-          invoiceNumber: invoiceData.invoiceNumber,
-        };
+      // ONLY show receipt if explicitly requested via invoiceData.receipt
+      // Don't auto-create receipt to avoid duplicate display
+      if (invoiceData.receipt) {
+        console.log('📄 Order Management: Showing receipt from E-Invoice data');
+        setSelectedReceipt(invoiceData.receipt);
+        setShowReceiptModal(true);
       }
-
-      console.log('📄 Order Management: Showing receipt modal with data:', {
-        hasReceipt: !!receiptData,
-        receiptTotal: receiptData?.total,
-        invoiceNumber: receiptData?.invoiceNumber
-      });
-
-      // Show receipt modal for printing
-      setSelectedReceipt(receiptData);
-      setShowReceiptModal(true);
 
       // Clear order states
       setOrderForPayment(null);
@@ -2843,8 +2770,9 @@ export function OrderManagement() {
             setSelectedOrder(null);
             setPreviewReceipt(null);
 
-            // Show receipt if provided
-            if (data.receipt) {
+            // Only show receipt if explicitly provided and not already shown
+            if (data.receipt && data.shouldShowReceipt !== false) {
+              console.log('📄 Showing receipt from payment completion');
               setSelectedReceipt(data.receipt);
               setShowReceiptModal(true);
             }
@@ -2864,9 +2792,6 @@ export function OrderManagement() {
           if (method === "paymentError" && data?.error) {
             console.error('❌ Payment failed from payment modal:', data.error);
 
-            // Close modals but don't clear order data in case user wants to retry
-            setShowPaymentMethodModal(false);
-
             toast({
               title: 'Lỗi thanh toán',
               description: data.error || 'Không thể hoàn tất thanh toán',
@@ -2876,8 +2801,16 @@ export function OrderManagement() {
             return;
           }
 
-          // If payment method returns e-invoice data (like from "phát hành sau"), handle it
-          if (data && data.receipt) {
+          // For E-Invoice flows that already handled receipt display, don't show again
+          if (method === "einvoice" && data?.receiptAlreadyShown) {
+            console.log('📄 E-Invoice already handled receipt, skipping duplicate');
+            setOrderForPayment(null);
+            setPreviewReceipt(null);
+            return;
+          }
+
+          // If payment method returns receipt data (like from "phát hành sau"), handle it
+          if (data && data.receipt && !data.receiptAlreadyShown) {
             console.log('📄 Order Management: Payment method returned receipt data, showing receipt');
             setSelectedReceipt(data.receipt);
             setShowReceiptModal(true);
