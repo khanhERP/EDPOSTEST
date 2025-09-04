@@ -2712,6 +2712,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               console.error("❌ Table: Receipt modal close refresh failed:", error);
             });
 
+            try {
               // Strategy 3: Force invalidate and refetch with no cache
               queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
               queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
