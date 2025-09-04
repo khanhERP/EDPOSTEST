@@ -1199,7 +1199,19 @@ export function ShoppingCart({
             setShowEInvoiceModal(false);
             setIsProcessingPayment(false);
           }}
-          onConfirm={handleEInvoiceConfirm}
+          onConfirm={(invoiceData) => {
+            console.log("🎯 POS: E-Invoice onConfirm called with data:", invoiceData);
+            console.log("🔍 POS: Invoice data structure:", JSON.stringify(invoiceData, null, 2));
+
+            // Ensure we have valid data before proceeding
+            if (!invoiceData) {
+              console.error("❌ POS: No invoice data received");
+              return;
+            }
+
+            // Force call to handleEInvoiceConfirm
+            handleEInvoiceConfirm(invoiceData);
+          }}
           total={(() => {
             // Use the most accurate total available
             const totalToUse = orderForPayment?.exactTotal ||
