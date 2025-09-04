@@ -707,18 +707,40 @@ export function OrderManagement() {
       orderId: order.id,
       storedTotal,
       calculatedTotal,
-      hasCalculated: calculatedTotal !== undefined
+      hasCalculated: calculatedTotal !== undefined,
+      orderStatus: order.status
     });
 
-    // ALWAYS prefer calculated total if available and valid
-    if (calculatedTotal !== undefined && calculatedTotal >= 0) {
+    // ALWAYS prefer calculated total if available and greater than 0
+    if (calculatedTotal !== undefined && calculatedTotal > 0) {
       console.log(`💰 Order ${order.orderNumber} using calculated total:`, calculatedTotal);
       return calculatedTotal;
     }
 
-    // For orders without calculated total, trigger calculation if they have items
+    // If stored total is greater than 0, use it
+    if (storedTotal > 0) {
+      console.log(`💰 Order ${order.orderNumber} using stored total:`, storedTotal);
+      
+      // Still trigger calculation in background for future accuracy if not calculated yet
+      if (calculatedTotal === undefined && order.status !== 'cancelled') {
+        calculateOrderTotal(order).then(total => {
+          console.log(`🧮 Background calculation completed for order ${order.orderNumber}:`, total);
+          setCalculatedTotals(prev => {
+            const newMap = new Map(prev);
+            newMap.set(order.id, total);
+            return newMap;
+          });
+        }).catch(error => {
+          console.error(`❌ Background calculation failed for order ${order.orderNumber}:`, error);
+        });
+      }
+      
+      return storedTotal;
+    }
+
+    // For orders with no total (both calculated and stored are 0), trigger calculation
     if (calculatedTotal === undefined && order.status !== 'cancelled') {
-      console.log(`💰 Order ${order.orderNumber} needs calculation - triggering background calculation`);
+      console.log(`💰 Order ${order.orderNumber} needs calculation - both totals are 0`);
       
       // Trigger calculation in background
       calculateOrderTotal(order).then(total => {
@@ -733,8 +755,8 @@ export function OrderManagement() {
       });
     }
 
-    // Use stored total as fallback
-    console.log(`💰 Order ${order.orderNumber} using stored total (fallback):`, storedTotal);
+    // Final fallback - return stored total even if 0
+    console.log(`💰 Order ${order.orderNumber} using final fallback (stored total):`, storedTotal);
     return storedTotal;
   }, [calculatedTotals, calculateOrderTotal]);
 
@@ -1778,13 +1800,16 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          const calculatedTotal = calculatedTotals.get(order.id);
-                          const storedTotal = Number(order.total || 0);
+                          const displayTotal = getOrderTotal(order);
                           
-                          // Use calculated total if available, otherwise use stored total
-                          const displayTotal = calculatedTotal !== undefined && calculatedTotal > 0 
-                            ? calculatedTotal 
-                            : storedTotal;
+                          // Show "Đang tính..." if total is 0 and calculation is in progress
+                          if (displayTotal === 0 && order.status !== 'cancelled') {
+                            return (
+                              <span className="text-sm text-gray-500 italic">
+                                Đang tính...
+                              </span>
+                            );
+                          }
                           
                           return formatCurrency(displayTotal);
                         })()}
