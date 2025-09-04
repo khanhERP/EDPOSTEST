@@ -96,31 +96,37 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     (order: any) => !["paid", "cancelled"].includes(order.status)
   ) : [];
 
-  const { data: allOrderItems } = useQuery({
+  const { data: allOrderItems, refetch: refetchAllOrderItems } = useQuery({
     queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
-    enabled: activeOrders.length > 0 && activeOrders.length <= 20, // Limit to prevent too many requests
+    enabled: activeOrders.length > 0 && activeOrders.length <= 25, // Slightly increased limit
     refetchOnWindowFocus: true, // Always refetch on focus to get fresh data
     refetchOnMount: true, // Always refetch on mount to get fresh data
-    refetchInterval: 30000, // Refetch every 30 seconds to keep totals fresh
+    refetchInterval: 15000, // Refetch every 15 seconds for faster updates
     staleTime: 0, // Don't use stale data - always fetch fresh
-    gcTime: 2 * 60 * 1000, // Keep in cache for only 2 minutes
+    gcTime: 1 * 60 * 1000, // Keep in cache for only 1 minute
+    networkMode: 'online', // Only fetch when online
     queryFn: async () => {
+      console.log("🔄 Fetching fresh order items for", activeOrders.length, "active orders");
       const itemsMap = new Map();
 
-      // Batch process in chunks of 5 to prevent overwhelming the server
+      // Batch process in chunks of 3 for better performance
       const chunks = [];
-      for (let i = 0; i < activeOrders.length; i += 5) {
-        chunks.push(activeOrders.slice(i, i + 5));
+      for (let i = 0; i < activeOrders.length; i += 3) {
+        chunks.push(activeOrders.slice(i, i + 3));
       }
 
       for (const chunk of chunks) {
         const promises = chunk.map(async (order) => {
           try {
-            const response = await apiRequest("GET", `/api/order-items/${order.id}`);
+            const response = await apiRequest("GET", `/api/order-items/${order.id}`, 
+              undefined, 
+              { cache: 'no-store' } // Force no cache for fresh data
+            );
             const items = await response.json();
+            console.log(`✅ Fetched ${items?.length || 0} items for order ${order.id}`);
             return { orderId: order.id, items: Array.isArray(items) ? items : [] };
           } catch (error) {
-            console.error(`Error fetching items for order ${order.id}:`, error);
+            console.error(`❌ Error fetching items for order ${order.id}:`, error);
             return { orderId: order.id, items: [] };
           }
         });
@@ -132,10 +138,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
         // Small delay between chunks to prevent server overload
         if (chunks.indexOf(chunk) < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
       }
 
+      console.log("✅ All order items fetched, total orders with items:", itemsMap.size);
       return itemsMap;
     },
   });
@@ -219,21 +226,31 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     const handleRefreshData = (event: CustomEvent) => {
       console.log("🔄 Table Grid: Received refresh data event:", event.detail);
 
+      // Always clear cache for order items when refreshing to ensure correct totals
+      queryClient.removeQueries({ queryKey: ["/api/all-order-items"] });
+      queryClient.removeQueries({ predicate: (query) => 
+        query.queryKey[0] === "/api/order-items" 
+      });
+
       // Only refresh if the event is critical or forced
       if (event.detail?.forceRefresh || event.detail?.reason === 'payment_completed') {
         // Clear cache and refetch fresh data
         queryClient.removeQueries({ queryKey: ["/api/tables"] });
         queryClient.removeQueries({ queryKey: ["/api/orders"] });
 
-        // Refresh data
-        refetchTables();
-        refetchOrders();
+        // Refresh data including order items
+        Promise.all([
+          refetchTables(),
+          refetchOrders(),
+          refetchAllOrderItems()
+        ]);
 
-        console.log("✅ Table Grid: Data refreshed successfully");
+        console.log("✅ Table Grid: Data refreshed successfully including order items");
       } else {
-        // Gentle invalidation - let cache handle it
+        // Gentle invalidation - let cache handle it but always refresh order items
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
         queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+        refetchAllOrderItems(); // Always refresh order items for correct totals
       }
     };
 
@@ -1987,6 +2004,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             // Always calculate fresh total from order items without cache dependency
                             const orderItemsForTable = allOrderItems?.get(activeOrder.id);
                             
+                            console.log(`🔍 Table ${table.tableNumber} - Checking order ${activeOrder.id}:`, {
+                              orderNumber: activeOrder.orderNumber,
+                              hasItems: !!orderItemsForTable,
+                              itemsCount: orderItemsForTable?.length || 0,
+                              storedTotal: activeOrder.total
+                            });
+                            
                             if (orderItemsForTable && Array.isArray(orderItemsForTable) && orderItemsForTable.length > 0) {
                               let calculatedSubtotal = 0;
                               let calculatedTax = 0;
@@ -1998,10 +2022,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   ? products.find((p: any) => p.id === item.productId)
                                   : null;
 
-                                // Calculate subtotal
+                                // Calculate subtotal (before tax)
                                 calculatedSubtotal += basePrice * quantity;
 
-                                // Calculate tax using same logic as other components
+                                // Calculate tax using exact same logic as order details
                                 if (
                                   product?.afterTaxPrice &&
                                   product.afterTaxPrice !== null &&
@@ -2009,29 +2033,36 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                 ) {
                                   const afterTaxPrice = parseFloat(product.afterTaxPrice);
                                   const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-                                  calculatedTax += taxPerUnit * quantity;
+                                  calculatedTax += Math.floor(taxPerUnit * quantity);
                                 }
                               });
 
                               const calculatedTotal = calculatedSubtotal + calculatedTax;
-                              console.log(`💰 Table ${table.tableNumber} calculated total:`, {
+                              
+                              console.log(`💰 Table ${table.tableNumber} - Calculated total:`, {
                                 orderId: activeOrder.id,
                                 orderNumber: activeOrder.orderNumber,
                                 itemsCount: orderItemsForTable.length,
                                 calculatedSubtotal,
                                 calculatedTax,
-                                calculatedTotal
+                                calculatedTotal,
+                                displayTotal: Math.floor(calculatedTotal)
                               });
                               
-                              return Math.floor(calculatedTotal).toLocaleString("vi-VN");
+                              // Return calculated total if greater than 0, otherwise show stored total
+                              return calculatedTotal > 0 
+                                ? Math.floor(calculatedTotal).toLocaleString("vi-VN")
+                                : Math.floor(Number(activeOrder.total || 0)).toLocaleString("vi-VN");
                             }
 
-                            // If no items found, try to fetch them fresh or use stored total as last resort
+                            // If no items found or calculation failed, use stored total with warning
                             const storedTotal = Number(activeOrder.total || 0);
-                            console.log(`💰 Table ${table.tableNumber} using stored total as fallback:`, {
+                            console.log(`⚠️ Table ${table.tableNumber} - Using stored total (no items found):`, {
                               orderId: activeOrder.id,
                               orderNumber: activeOrder.orderNumber,
-                              storedTotal
+                              storedTotal,
+                              itemsAvailable: !!orderItemsForTable,
+                              itemsCount: orderItemsForTable?.length || 0
                             });
                             
                             return Math.floor(storedTotal).toLocaleString("vi-VN");
