@@ -586,197 +586,113 @@ export function ShoppingCart({
   };
 
   const handleEInvoiceConfirm = (invoiceData: any) => {
-    console.log("🎯 POS: E-Invoice confirmed with data:", invoiceData);
-    console.log("🔍 POS: Invoice data structure:", JSON.stringify(invoiceData, null, 2));
+    console.log("🎯 POS: E-Invoice confirmed in shopping cart:", invoiceData);
 
-    // IMPORTANT: Keep E-invoice modal open initially to prevent premature closure
-    console.log("🔄 POS: Processing E-invoice data while keeping modal states controlled");
+    if (!invoiceData) {
+      console.error("❌ No invoice data received");
+      toast({
+        title: "Lỗi",
+        description: "Không nhận được dữ liệu hóa đơn",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Check if this is publish later or immediate publish
-    const isPublishLater = invoiceData?.publishLater === true;
-    console.log("🔍 POS: Publish Later?", isPublishLater);
+    // Show success message based on action type BEFORE any async operations
+    if (invoiceData.publishLater) {
+      toast({
+        title: "Thành công",
+        description: "Hóa đơn đã được lưu để phát hành sau",
+      });
+    } else {
+      toast({
+        title: "Thành công", 
+        description: "Hóa đơn điện tử đã được phát hành thành công",
+      });
+    }
 
-    // Create comprehensive receipt object for display - handle all scenarios
+    // Always prepare receipt data, regardless of publishing status
     const receiptForDisplay = {
-      // Transaction and invoice info
-      transactionId: invoiceData?.transactionId || 
-                    invoiceData?.receipt?.transactionId || 
-                    `TXN-${Date.now()}`,
-      invoiceNumber: invoiceData?.invoiceNumber || 
-                    invoiceData?.receipt?.invoiceNumber || 
-                    null,
-
-      // Customer info
-      customerName: invoiceData?.customerName || 
-                   invoiceData?.receipt?.customerName || 
-                   "Khách hàng lẻ",
-      customerTaxCode: invoiceData?.taxCode || 
-                      invoiceData?.receipt?.customerTaxCode || 
-                      null,
-      customerAddress: invoiceData?.customerAddress || 
-                      invoiceData?.receipt?.customerAddress || 
-                      null,
-      customerPhone: invoiceData?.customerPhone || 
-                    invoiceData?.receipt?.customerPhone || 
-                    null,
-      customerEmail: invoiceData?.customerEmail || 
-                    invoiceData?.receipt?.customerEmail || 
-                    null,
-
-      // Payment info
-      paymentMethod: invoiceData?.originalPaymentMethod || 
-                    invoiceData?.receipt?.paymentMethod || 
-                    invoiceData?.paymentMethod || 
-                    'einvoice',
-      originalPaymentMethod: invoiceData?.originalPaymentMethod || 
-                           invoiceData?.receipt?.originalPaymentMethod ||
-                           invoiceData?.paymentMethod,
-
-      // Items - use multiple fallback sources with better handling
+      transactionId: invoiceData.transactionId || `TXN-${Date.now()}`,
+      invoiceNumber: invoiceData.invoiceNumber,
+      createdAt: new Date().toISOString(),
+      cashierName: "Nhân viên",
+      customerName: invoiceData.customerName || "Khách hàng lẻ",
+      customerTaxCode: invoiceData.taxCode,
+      paymentMethod: "einvoice",
+      originalPaymentMethod: selectedPaymentMethod || "cash",
+      amountReceived: (() => {
+        const totalToUse = orderForPayment?.exactTotal ||
+                         orderForPayment?.calculatedTotal ||
+                         parseFloat(orderForPayment?.total || '0');
+        return Math.floor(totalToUse).toString();
+      })(),
+      change: "0.00",
       items: (() => {
-        console.log("🔍 POS: Determining items source for receipt");
+        const itemsToUse = lastCartItems.length > 0 ? lastCartItems :
+                          orderForPayment?.cartItems || cart;
 
-        // Try receipt items first
-        if (invoiceData?.receipt?.items && Array.isArray(invoiceData.receipt.items) && invoiceData.receipt.items.length > 0) {
-          console.log("✅ POS: Using receipt items from invoiceData.receipt.items");
-          return invoiceData.receipt.items;
-        }
-
-        // Try cart items from invoice data
-        if (invoiceData?.cartItems && Array.isArray(invoiceData.cartItems) && invoiceData.cartItems.length > 0) {
-          console.log("✅ POS: Using cart items from invoiceData.cartItems");
-          return invoiceData.cartItems.map((item) => ({
-            id: item.id,
-            productId: item.id,
-            productName: item.name,
-            price: typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price || '0').toFixed(2),
-            quantity: item.quantity,
-            total: (parseFloat(item.price || '0') * item.quantity).toFixed(2),
-            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: item.taxRate || 0,
-          }));
-        }
-
-        // Use lastCartItems as fallback
-        if (lastCartItems && Array.isArray(lastCartItems) && lastCartItems.length > 0) {
-          console.log("✅ POS: Using lastCartItems as fallback");
-          return lastCartItems.map((item) => ({
-            id: item.id,
-            productId: item.id,
-            productName: item.name,
-            price: typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price || '0').toFixed(2),
-            quantity: item.quantity,
-            total: (parseFloat(item.price || '0') * item.quantity).toFixed(2),
-            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: item.taxRate || 0,
-          }));
-        }
-
-        // Final fallback to current cart
-        console.log("⚠️ POS: Using current cart as final fallback");
-        return cart.map((item) => ({
+        return itemsToUse.map((item: any) => ({
           id: item.id,
           productId: item.id,
           productName: item.name,
-          price: typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price || '0').toFixed(2),
           quantity: item.quantity,
-          total: (parseFloat(item.price || '0') * item.quantity).toFixed(2),
-          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+          price: item.price.toString(),
+          total: (parseFloat(item.price) * item.quantity).toString(),
+          sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
           taxRate: item.taxRate || 0,
         }));
       })(),
-
-      // Financial info with enhanced fallback logic
       subtotal: (() => {
-        return invoiceData?.receipt?.subtotal || 
-               invoiceData?.subtotal?.toString() || 
-               (invoiceData?.total && invoiceData?.tax ? (parseFloat(invoiceData.total) - parseFloat(invoiceData.tax)).toFixed(2) : null) ||
-               total.toFixed(2);
+        const totalToUse = orderForPayment?.exactTotal ||
+                         orderForPayment?.calculatedTotal ||
+                         parseFloat(orderForPayment?.total || '0');
+
+        // Calculate subtotal from total minus tax
+        const taxAmount = calculateTax(cart);
+        const subtotal = totalToUse - taxAmount;
+        return Math.floor(subtotal).toString();
       })(),
-      tax: invoiceData?.receipt?.tax || 
-          invoiceData?.tax?.toString() || 
-          "0.00",
-      total: invoiceData?.receipt?.total || 
-            invoiceData?.total?.toString() || 
-            total.toFixed(2),
-      amountReceived: invoiceData?.receipt?.amountReceived || 
-                     invoiceData?.total?.toString() || 
-                     total.toFixed(2),
-      change: invoiceData?.receipt?.change || "0.00",
-
-      // System info
-      cashierName: invoiceData?.receipt?.cashierName || "POS Cashier",
-      createdAt: invoiceData?.receipt?.createdAt || new Date().toISOString(),
-      orderId: invoiceData?.orderId || 
-              invoiceData?.receipt?.orderId || 
-              `temp-${Date.now()}`,
-
-      // Status info
-      einvoiceStatus: invoiceData?.einvoiceStatus !== undefined ? invoiceData.einvoiceStatus : 0,
-      invoiceStatus: invoiceData?.invoiceStatus !== undefined ? invoiceData.invoiceStatus : 0,
-      status: invoiceData?.status || (invoiceData?.publishLater ? 'draft' : 'published')
+      tax: (() => {
+        const taxAmount = calculateTax(cart);
+        return Math.floor(taxAmount).toString();
+      })(),
+      total: (() => {
+        const totalToUse = orderForPayment?.exactTotal ||
+                         orderForPayment?.calculatedTotal ||
+                         parseFloat(orderForPayment?.total || '0');
+        return Math.floor(totalToUse).toString();
+      })(),
     };
 
-    console.log("📄 POS: Receipt data prepared for display:", receiptForDisplay);
-    console.log("📄 POS: Receipt items count:", receiptForDisplay.items?.length || 0);
-    console.log("📄 POS: Receipt financial data:", {
-      subtotal: receiptForDisplay.subtotal,
-      tax: receiptForDisplay.tax,
-      total: receiptForDisplay.total
-    });
+    console.log("📄 POS: Setting receipt data immediately:", receiptForDisplay);
+    console.log("📦 POS: Receipt items count:", receiptForDisplay?.items?.length || 0);
 
-    // Show appropriate success message based on action
-    if (invoiceData?.publishLater) {
-      console.log("⏳ POS: Publish later flow - showing success message");
-      toast({
-        title: "Thành công", 
-        description: "Hóa đơn đã được lưu để phát hành sau. Đang hiển thị hóa đơn để in...",
-      });
-    } else if (invoiceData?.publishedImmediately || invoiceData?.success) {
-      console.log("✅ POS: Immediate publish flow - showing success message");
-      toast({
-        title: "Thành công",
-        description: "Hóa đơn điện tử đã được phát hành thành công. Đang hiển thị hóa đơn để in...",
-      });
-    } else {
-      console.log("ℹ️ POS: Generic success flow");
-      toast({
-        title: "Thành công",
-        description: "Hóa đơn đã được xử lý. Đang hiển thị hóa đơn để in...",
-      });
-    }
+    // CRITICAL: Set receipt data FIRST before any other operations
+    setSelectedReceipt(receiptForDisplay);
 
-    // Clear cart immediately to prevent confusion
-    console.log("🧹 POS: Clearing cart after E-Invoice processing");
-    onClearCart();
+    // CRITICAL: Close E-Invoice modal and show receipt modal SYNCHRONOUSLY
+    setShowEInvoiceModal(false);
+    setShowReceiptModal(true);
+    setIsProcessingPayment(false);
 
-    // Clear any active orders
-    if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-      (window as any).clearActiveOrder();
-    }
-
-    // Close all modals in the correct sequence with small delays
-    console.log("🔄 POS: Closing modals in sequence");
-
-    // First, close payment related modals
+    // Close other modals
     setShowPaymentModal(false);
-    setShowPaymentMethodModal(false);
     setShowReceiptPreview(false);
+    setShowPaymentMethodModal(false);
 
-    // Close E-invoice modal with slight delay
+    console.log("✅ POS: Receipt modal set to display immediately - NO DELAYS");
+
+    // Clear cart and orders AFTER receipt modal is shown
     setTimeout(() => {
-      setShowEInvoiceModal(false);
-      setIsProcessingPayment(false);
+      console.log("🧹 POS: Clearing cart after receipt modal is displayed");
+      onClearCart();
 
-      // Set receipt data and force show receipt modal
-      console.log("🔥 POS: Setting receipt data and showing receipt modal");
-      setSelectedReceipt(receiptForDisplay);
-      setShowReceiptModal(true);
-
-      console.log("✅ POS: Receipt modal should now be visible");
+      // Clear any active orders
+      if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+        (window as any).clearActiveOrder();
+      }
     }, 100);
-
-    console.log("✅ POS: E-Invoice confirmation process completed");
   };
 
   const canCheckout = cart.length > 0;
@@ -1096,7 +1012,7 @@ export function ShoppingCart({
                 price: typeof (item.price || item.unitPrice) === 'string' ? parseFloat(item.price || item.unitPrice) : (item.price || item.unitPrice),
                 quantity: item.quantity,
                 sku: item.sku || `FOOD${String(item.id || item.productId).padStart(5, '0')}`,
-                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
+                taxRate: item.taxRate || 0,
                 afterTaxPrice: item.afterTaxPrice
               }));
               console.log("📦 Shopping Cart: Using orderForPayment items:", mappedItems);
@@ -1199,19 +1115,7 @@ export function ShoppingCart({
             setShowEInvoiceModal(false);
             setIsProcessingPayment(false);
           }}
-          onConfirm={(invoiceData) => {
-            console.log("🎯 POS: E-Invoice onConfirm called with data:", invoiceData);
-            console.log("🔍 POS: Invoice data structure:", JSON.stringify(invoiceData, null, 2));
-
-            // Ensure we have valid data before proceeding
-            if (!invoiceData) {
-              console.error("❌ POS: No invoice data received");
-              return;
-            }
-
-            // Force call to handleEInvoiceConfirm
-            handleEInvoiceConfirm(invoiceData);
-          }}
+          onConfirm={handleEInvoiceConfirm}
           total={(() => {
             // Use the most accurate total available
             const totalToUse = orderForPayment?.exactTotal ||

@@ -71,8 +71,15 @@ export function ReceiptModal({
         isPreview,
         receipt,
         cartItems: cartItems?.length || 0,
-        onConfirm: !!onConfirm
+        onConfirm: !!onConfirm,
+        hasReceiptData: !!(receipt && typeof receipt === 'object'),
+        hasValidData: !!(receipt && typeof receipt === 'object') || (isPreview && cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0)
       });
+      
+      // Force show modal when receipt data exists
+      if (receipt && typeof receipt === 'object') {
+        console.log("✅ Receipt Modal: Valid receipt data found - modal will display");
+      }
     }
   }, [isOpen, receipt, isPreview, cartItems, total, onConfirm]);
 

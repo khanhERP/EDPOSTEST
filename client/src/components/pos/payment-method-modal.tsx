@@ -114,7 +114,7 @@ export function PaymentMethodModal({
       timestamp: new Date().toISOString()
     });
   } else {
-    console.log(`✅ PAYMENT MODAL: orderInfo is valid:`, {
+    console.log(`✅ PAYMENT MODAL: orderInfo is valid`, {
       id: orderInfo.id,
       status: orderInfo.status,
       tableId: orderInfo.tableId,
@@ -758,7 +758,7 @@ export function PaymentMethodModal({
     // Check if we have valid receipt data
     if (invoiceData.receipt && typeof invoiceData.receipt === 'object') {
       console.log("📄 Valid receipt data found, setting for receipt modal:", invoiceData.receipt);
-      
+
       // Set receipt data for modal
       setReceiptDataForModal(invoiceData.receipt);
 
@@ -777,7 +777,7 @@ export function PaymentMethodModal({
         });
       } else {
         toast({
-          title: "Thành công", 
+          title: "Thành công",
           description: "Hóa đơn điện tử đã được phát hành thành công!",
         });
       }
@@ -785,7 +785,7 @@ export function PaymentMethodModal({
       // Close payment modal first
       console.log("🔄 Closing payment modal");
       onClose();
-      
+
       // Show receipt modal immediately after closing payment modal
       setTimeout(() => {
         console.log("📄 SHOWING RECEIPT MODAL");
@@ -797,11 +797,11 @@ export function PaymentMethodModal({
       if (invoiceData.success || invoiceData.publishLater || invoiceData.publishedImmediately) {
         toast({
           title: "Thành công",
-          description: invoiceData.publishLater ? 
-            "Hóa đơn đã được lưu để phát hành sau" : 
+          description: invoiceData.publishLater ?
+            "Hóa đơn đã được lưu để phát hành sau" :
             "Hóa đơn điện tử đã được phát hành thành công",
         });
-        
+
         // Close the entire payment modal after successful processing
         setTimeout(() => {
           onClose();
@@ -1544,7 +1544,21 @@ export function PaymentMethodModal({
         <EInvoiceModal
           isOpen={showEInvoice}
           onClose={handleEInvoiceClose}
-          onConfirm={handleEInvoiceComplete}
+          onConfirm={(invoiceData) => {
+            console.log("📧 E-Invoice confirmed from Payment Method Modal:", invoiceData);
+
+            // Always call handleEInvoiceComplete to ensure proper processing
+            handleEInvoiceComplete(invoiceData);
+
+            // Also notify parent component with payment completion
+            onSelectMethod("paymentCompleted", {
+              success: true,
+              publishLater: invoiceData.publishLater,
+              receipt: invoiceData.receipt || receiptDataForModal,
+              shouldShowReceipt: true,
+              source: 'payment_method_modal_einvoice'
+            });
+          }}
           total={(() => {
             // Debug current data to understand the issue
             console.log("🔥RENDERING E-INVOICE MODAL - Payment Modal EInvoice Total Debug:", {
@@ -1643,7 +1657,7 @@ export function PaymentMethodModal({
         timestamp: new Date().toISOString()
       })}
     </Dialog>
-    
+
     {/* CRITICAL: Render Receipt Modal outside Dialog to prevent conflicts */}
     {showReceiptModal && receiptDataForModal && (
       <ReceiptModal
