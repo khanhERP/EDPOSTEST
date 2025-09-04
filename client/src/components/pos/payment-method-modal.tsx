@@ -760,6 +760,18 @@ export function PaymentMethodModal({
       // Set receipt data for modal
       setReceiptDataForModal(invoiceData.receipt);
 
+      // Close payment modal and show receipt modal
+      console.log("🔄 Closing payment modal and showing receipt modal");
+      onClose(); // Close payment modal
+      
+      // Show receipt modal immediately
+      setTimeout(() => {
+        if (onReceiptReady) {
+          console.log("📄 Triggering receipt modal display");
+          onReceiptReady(invoiceData.receipt);
+        }
+      }, 100);
+
       // Show success message based on action type
       if (invoiceData.publishLater) {
         console.log("⏳ E-Invoice publish later completed - will show receipt");
@@ -769,6 +781,11 @@ export function PaymentMethodModal({
         });
       } else if (invoiceData.publishedImmediately || invoiceData.success) {
         console.log("✅ E-Invoice published immediately - will show receipt");
+        toast({
+          title: "Thành công",
+          description: "Hóa đơn điện tử đã được phát hành thành công. Đang hiển thị hóa đơn để in...",
+        });
+      }e.log("✅ E-Invoice published immediately - will show receipt");
         toast({
           title: "Thành công", 
           description: "Hóa đơn điện tử đã được phát hành thành công!",

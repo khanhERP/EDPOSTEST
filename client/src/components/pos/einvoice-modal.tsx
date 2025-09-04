@@ -564,53 +564,76 @@ export function EInvoiceModal({
           });
         }
 
+      // Create enhanced receipt data for publish later
+      const receiptData = {
+        transactionId: `TXN-${Date.now()}`,
+        invoiceNumber: null, // No invoice number for publish later
+        createdAt: new Date().toISOString(),
+        cashierName: "POS Cashier",
+        paymentMethod: selectedPaymentMethod,
+        customerName: formData.customerName,
+        customerTaxCode: formData.taxCode,
+        items: cartItems.map((item) => {
+          const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+          const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
+          const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
+          const itemSubtotal = itemPrice * itemQuantity;
+          const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+          return {
+            id: item.id,
+            productId: item.id,
+            productName: item.name,
+            price: itemPrice.toFixed(2),
+            quantity: itemQuantity,
+            total: (itemSubtotal + itemTax).toFixed(2),
+            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+            taxRate: itemTaxRate,
+          };
+        }),
+        subtotal: calculatedSubtotal.toFixed(2),
+        tax: calculatedTax.toFixed(2),
+        total: grandTotal.toFixed(2),
+        amountReceived: grandTotal.toFixed(2),
+        change: "0.00",
+        orderId: orderId || `temp-${Date.now()}`
+      };
+
       // Prepare comprehensive invoice data with receipt flags for onConfirm
       const completeInvoiceData = {
         success: true,
-        publishLater: true, // Indicate this is a 'publish later' action
-        receipt: { // Create a minimal receipt structure for confirmation
-          transactionId: `TXN-${Date.now()}`, // Use a placeholder transaction ID
-          invoiceNumber: null, // No invoice number yet
-          originalPaymentMethod: selectedPaymentMethod, // Include original payment method
-          cartItems: cartItems, // Pass cart items for receipt display
-          subtotal: calculatedSubtotal.toFixed(2),
-          tax: calculatedTax.toFixed(2),
-          total: grandTotal.toFixed(2),
-          paymentMethod: selectedPaymentMethod, // Use original payment method
-          customerName: formData.customerName,
-          customerTaxCode: formData.taxCode,
-        },
+        publishLater: true,
+        showReceiptModal: true,
+        shouldShowReceipt: true,
+        einvoiceStatus: 0, // 0 = Chưa phát hành
+        status: 'draft',
+        paymentMethod: selectedPaymentMethod,
+        originalPaymentMethod: selectedPaymentMethod,
         customerName: formData.customerName,
         taxCode: formData.taxCode,
-        showReceiptModal: true, // Flag to indicate receipt modal should be shown
-        shouldShowReceipt: true, // Additional flag for receipt display
-        einvoiceStatus: 0, // 0 = Chưa phát hành
-        status: 'draft', // Draft status for publish later
-        cartItems: cartItems, // Include cart items for receipt
-        total: grandTotal, // Use calculated grand total
-        subtotal: calculatedSubtotal, // Use calculated subtotal
-        tax: calculatedTax, // Use calculated tax
+        cartItems: cartItems,
+        total: grandTotal,
+        subtotal: calculatedSubtotal,
+        tax: calculatedTax,
         orderId: orderId,
         source: source || "pos",
+        receipt: receiptData
       };
 
-      console.log("✅ PUBLISH LATER: Prepared data for onConfirm");
+      console.log("✅ PUBLISH LATER: Prepared enhanced data for onConfirm");
       console.log("📦 PUBLISH LATER: Complete invoice data:", completeInvoiceData);
 
+      // Close the E-Invoice modal first
+      console.log("🔒 Closing E-Invoice modal before showing receipt (publish later)");
+      
       // Call onConfirm with complete data
       console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
-
-      // Ensure we have all required data before calling onConfirm
-      if (completeInvoiceData && completeInvoiceData.receipt) {
-        onConfirm(completeInvoiceData);
-      } else {
-        console.error("❌ PUBLISH LATER: Missing required data for onConfirm");
-        toast({
-          title: "Lỗi",
-          description: "Thiếu thông tin cần thiết để hiển thị hóa đơn",
-          variant: "destructive",
-        });
-      }
+      onConfirm(completeInvoiceData);
+      
+      // Close the modal after processing
+      setTimeout(() => {
+        onClose();
+      }, 100);
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
@@ -1094,51 +1117,62 @@ export function EInvoiceModal({
           receiptData,
         );
 
-        // Prepare comprehensive invoice data with all necessary flags
-        const invoiceResult = {
-          ...formData,
-          invoiceData: result.data,
-          cartItems: cartItems,
-          total: cartTotal,
-          paymentMethod: selectedPaymentMethod, // Use original payment method
-          originalPaymentMethod: selectedPaymentMethod,
-          source: source || "pos",
-          orderId: orderId,
-          publishedImmediately: true, // Flag để phân biệt với phát hành sau
-          receipt: receiptData, // Truyền receipt data đã tạo
-          customerName: formData.customerName,
-          taxCode: formData.taxCode,
-          invoiceNumber: result.data?.invoiceNo || null,
-        };
-
-        console.log("✅ Prepared comprehensive invoice result:", invoiceResult);
-
-        // Create the final result object for onConfirm
+        // Create the final result object for onConfirm with enhanced receipt data
         const publishResult = {
           success: true,
-          invoiceNumber: receiptData.invoiceNumber,
+          publishedImmediately: true,
+          showReceiptModal: true,
+          shouldShowReceipt: true,
+          invoiceNumber: result.data?.invoiceNo || null,
           symbol: selectedTemplate.symbol || null,
           templateNumber: selectedTemplate.templateNumber || null,
           einvoiceStatus: 1, // Đã phát hành
           invoiceStatus: 1, // Hoàn thành
           status: 'published',
-          receipt: receiptData,
-          publishedImmediately: true,
-          showReceiptModal: true, // Ensure receipt modal is shown
-          shouldShowReceipt: true, // Additional flag for receipt display
-          paymentMethod: selectedPaymentMethod, // Include payment method
+          paymentMethod: selectedPaymentMethod,
           originalPaymentMethod: selectedPaymentMethod,
-          cartItems: cartItems, // Include cart items
-          total: cartTotal // Include calculated total
+          cartItems: cartItems,
+          total: cartTotal,
+          customerName: formData.customerName,
+          taxCode: formData.taxCode,
+          orderId: orderId,
+          source: source || "pos",
+          receipt: {
+            ...receiptData,
+            // Ensure all required fields are present for receipt display
+            transactionId: receiptData.transactionId,
+            invoiceNumber: result.data?.invoiceNo || null,
+            createdAt: receiptData.createdAt,
+            cashierName: receiptData.cashierName,
+            paymentMethod: 'einvoice',
+            customerName: formData.customerName,
+            customerTaxCode: formData.taxCode,
+            items: receiptData.items,
+            subtotal: receiptData.subtotal,
+            tax: receiptData.tax,
+            total: receiptData.total,
+            amountReceived: receiptData.amountReceived,
+            change: receiptData.change,
+            // Add orderId for status update tracking
+            orderId: orderId || `temp-${Date.now()}`
+          }
         };
 
         console.log(
-          "📧 Step 4: E-Invoice published, now calling onConfirm with receipt data",
+          "📧 Step 4: E-Invoice published, now calling onConfirm with enhanced receipt data",
         );
-        console.log("📄 Publish result being sent:", publishResult);
+        console.log("📄 Enhanced publish result being sent:", publishResult);
 
+        // Close the E-Invoice modal first
+        console.log("🔒 Closing E-Invoice modal before showing receipt");
+        
         // Call onConfirm to trigger receipt modal display
         onConfirm(publishResult);
+        
+        // Close the modal after successful publishing
+        setTimeout(() => {
+          onClose();
+        }, 100);
 
         // Force data refresh on all pages after successful publishing
         try {
