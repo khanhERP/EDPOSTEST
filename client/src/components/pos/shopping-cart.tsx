@@ -601,15 +601,11 @@ export function ShoppingCart({
         });
       }
 
-      // Trigger checkout with receipt data to show receipt modal
-      onCheckout({
-        paymentMethod: "einvoice",
-        amountReceived: receiptForDisplay.total,
-        receiptData: receiptForDisplay,
-        showReceiptModal: true,
-        einvoiceData: invoiceData,
-        success: true
-      });
+      // Set receipt data and show receipt modal directly
+      setSelectedReceipt(receiptForDisplay);
+      setShowReceiptModal(true);
+
+      console.log("📄 POS: Receipt modal should now be visible with data:", receiptForDisplay);
 
     } else {
       console.error("❌ POS: E-Invoice processing failed or cancelled");
@@ -1013,7 +1009,14 @@ export function ShoppingCart({
           console.log('✅ Shopping Cart: Receipt modal closed and refresh signal sent');
         }}
         receipt={selectedReceipt}
-        cartItems={cart.map((item) => ({
+        cartItems={selectedReceipt?.items || lastCartItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
+          taxRate: parseFloat(item.taxRate || "0"),
+        })) || cart.map((item) => ({
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
