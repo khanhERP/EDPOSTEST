@@ -661,13 +661,21 @@ export function OrderManagement() {
 
   // Function to get order total - use consistent calculation logic
   const getOrderTotal = React.useCallback((order: Order) => {
-    // For cancelled orders, show stored total with strikethrough styling
+    // For cancelled orders, always show stored total (no calculation needed)
     if (order.status === 'cancelled') {
       const storedTotal = Math.floor(Number(order.total || 0));
       console.log(`💰 Order ${order.orderNumber} is cancelled, showing stored total: ${storedTotal}`);
       return storedTotal;
     }
 
+    // For paid orders, also use stored total (payment already completed)
+    if (order.status === 'paid') {
+      const storedTotal = Math.floor(Number(order.total || 0));
+      console.log(`💰 Order ${order.orderNumber} is paid, showing stored total: ${storedTotal}`);
+      return storedTotal;
+    }
+
+    // For active orders, try to use calculated totals
     // Try to use calculatedTotal from API first (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
@@ -683,7 +691,7 @@ export function OrderManagement() {
       return cachedTotal;
     }
 
-    // Fallback to stored total
+    // Fallback to stored total for active orders
     const storedTotal = Math.floor(Number(order.total || 0));
     console.log(`💰 Using stored total for order ${order.orderNumber}: ${storedTotal}`);
     return storedTotal;
@@ -1454,8 +1462,9 @@ export function OrderManagement() {
           return;
         }
 
-        // Skip cancelled orders
-        if (order.status === 'cancelled') {
+        // Skip cancelled and paid orders (use stored totals)
+        if (order.status === 'cancelled' || order.status === 'paid') {
+          console.log(`⏭️ Skipping calculation for ${order.status} order ${order.orderNumber}, using stored total`);
           return;
         }
 
