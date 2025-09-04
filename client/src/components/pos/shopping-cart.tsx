@@ -593,6 +593,10 @@ export function ShoppingCart({
     setShowEInvoiceModal(false);
     setIsProcessingPayment(false);
 
+    // Check if this is publish later or immediate publish
+    const isPublishLater = invoiceData?.publishLater === true;
+    console.log("🔍 POS: Publish Later?", isPublishLater);
+    
     // ALWAYS show receipt modal - no conditions
     console.log("✅ POS: Processing invoice data - ALWAYS showing receipt modal");
 
@@ -714,16 +718,19 @@ export function ShoppingCart({
 
     // Show appropriate success message based on action
     if (invoiceData?.publishLater) {
+      console.log("⏳ POS: Publish later flow - showing success message and receipt");
       toast({
         title: "Thành công", 
         description: "Hóa đơn đã được lưu để phát hành sau. Hiển thị hóa đơn để in...",
       });
     } else if (invoiceData?.publishedImmediately || invoiceData?.success) {
+      console.log("✅ POS: Immediate publish flow - showing success message and receipt");
       toast({
         title: "Thành công",
         description: "Hóa đơn điện tử đã được phát hành thành công. Hiển thị hóa đơn để in...",
       });
     } else {
+      console.log("ℹ️ POS: Generic success flow - showing receipt");
       toast({
         title: "Thành công",
         description: "Hóa đơn đã được xử lý. Hiển thị hóa đơn để in...",
@@ -746,8 +753,18 @@ export function ShoppingCart({
 
     // ALWAYS SHOW RECEIPT MODAL - NO EXCEPTIONS
     console.log("🔥 POS: ALWAYS showing receipt modal - removed all conditional checks");
+    console.log("🔥 POS: receiptForDisplay being set:", receiptForDisplay);
+    console.log("🔥 POS: receiptForDisplay items count:", receiptForDisplay?.items?.length || 0);
+    
     setSelectedReceipt(receiptForDisplay);
     setShowReceiptModal(true);
+    
+    // Force re-render to ensure modal shows
+    setTimeout(() => {
+      console.log("🔥 POS: Force setting receipt modal states again");
+      setSelectedReceipt(receiptForDisplay);
+      setShowReceiptModal(true);
+    }, 50);
 
     console.log("✅ POS: Receipt modal should now be displayed");
   };
