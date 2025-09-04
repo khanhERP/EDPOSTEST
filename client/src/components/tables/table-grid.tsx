@@ -710,7 +710,39 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
 
     const customerPoints = selectedCustomer.points || 0;
-    const orderTotal = Number(selectedOrder.total || 0);
+    
+    // Calculate correct order total from order items
+    let calculatedTotal = 0;
+    if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+      let subtotal = 0;
+      let totalTax = 0;
+
+      orderItems.forEach((item: any) => {
+        const basePrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        const product = products.find((p: any) => p.id === item.productId);
+
+        // Calculate subtotal (base price without tax)
+        subtotal += basePrice * quantity;
+
+        // Calculate tax using same logic as order details
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+          totalTax += Math.floor(taxPerUnit * quantity);
+        }
+      });
+
+      calculatedTotal = Math.floor(subtotal + totalTax);
+    } else {
+      // Fallback to stored total if calculation not possible
+      calculatedTotal = Number(selectedOrder.total || 0);
+    }
+
     const pointsValue = customerPoints * 1000; // 1 point = 1000 VND
 
     if (customerPoints === 0) {
@@ -722,9 +754,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       return;
     }
 
-    if (pointsValue >= orderTotal) {
+    if (pointsValue >= calculatedTotal) {
       // Full points payment
-      const pointsToUse = Math.ceil(orderTotal / 1000);
+      const pointsToUse = Math.ceil(calculatedTotal / 1000);
       pointsPaymentMutation.mutate({
         customerId: selectedCustomer.id,
         points: pointsToUse,
@@ -732,7 +764,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       });
     } else {
       // Mixed payment - use all available points + other payment method
-      const remainingAmount = orderTotal - pointsValue;
+      const remainingAmount = calculatedTotal - pointsValue;
       setMixedPaymentData({
         customerId: selectedCustomer.id,
         pointsToUse: customerPoints,
@@ -3087,7 +3119,39 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="flex justify-between text-sm">
                   <span>{t("orders.pointsPaymentDialog.totalAmount")}</span>
                   <span className="font-medium">
-                    {Math.floor(Number(selectedOrder.total)).toLocaleString()} ₫
+                    {(() => {
+                      // Calculate correct total from order items like other parts of the component
+                      if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+                        let subtotal = 0;
+                        let totalTax = 0;
+
+                        orderItems.forEach((item: any) => {
+                          const basePrice = Number(item.unitPrice || 0);
+                          const quantity = Number(item.quantity || 0);
+                          const product = products.find((p: any) => p.id === item.productId);
+
+                          // Calculate subtotal (base price without tax)
+                          subtotal += basePrice * quantity;
+
+                          // Calculate tax using same logic as order details
+                          if (
+                            product?.afterTaxPrice &&
+                            product.afterTaxPrice !== null &&
+                            product.afterTaxPrice !== ""
+                          ) {
+                            const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                            const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                            totalTax += Math.floor(taxPerUnit * quantity);
+                          }
+                        });
+
+                        const grandTotal = subtotal + totalTax;
+                        return Math.floor(grandTotal).toLocaleString();
+                      }
+
+                      // Fallback to stored total if calculation not possible
+                      return Math.floor(Number(selectedOrder.total)).toLocaleString();
+                    })()} ₫
                   </span>
                 </div>
               </div>
@@ -3172,24 +3236,84 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   <div className="flex justify-between text-sm mb-1">
                     <span>Tổng đơn hàng:</span>
                     <span className="font-medium">
-                      {Number(selectedOrder.total).toLocaleString()} ₫
+                      {(() => {
+                        // Calculate correct total from order items for payment calculation
+                        if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+                          let subtotal = 0;
+                          let totalTax = 0;
+
+                          orderItems.forEach((item: any) => {
+                            const basePrice = Number(item.unitPrice || 0);
+                            const quantity = Number(item.quantity || 0);
+                            const product = products.find((p: any) => p.id === item.productId);
+
+                            // Calculate subtotal (base price without tax)
+                            subtotal += basePrice * quantity;
+
+                            // Calculate tax using same logic as order details
+                            if (
+                              product?.afterTaxPrice &&
+                              product.afterTaxPrice !== null &&
+                              product.afterTaxPrice !== ""
+                            ) {
+                              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                              const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                              totalTax += Math.floor(taxPerUnit * quantity);
+                            }
+                          });
+
+                          return Math.floor(subtotal + totalTax);
+                        }
+
+                        // Fallback to stored total
+                        return Number(selectedOrder.total);
+                      })()} ₫
                     </span>
                   </div>
-                  {(selectedCustomer.points || 0) * 1000 >=
-                  Number(selectedOrder.total) ? (
-                    <div className="text-green-600 text-sm">
-                      ✓ Đủ điểm để thanh toán toàn bộ
-                    </div>
-                  ) : (
-                    <div className="text-orange-600 text-sm">
-                      ⚠ Cần thanh toán thêm:{" "}
-                      {(
-                        Number(selectedOrder.total) -
-                        (selectedCustomer.points || 0) * 1000
-                      ).toLocaleString()}{" "}
-                      ₫
-                    </div>
-                  )}
+                  {(() => {
+                    // Calculate total for comparison
+                    let calculatedTotal = 0;
+                    if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+                      let subtotal = 0;
+                      let totalTax = 0;
+
+                      orderItems.forEach((item: any) => {
+                        const basePrice = Number(item.unitPrice || 0);
+                        const quantity = Number(item.quantity || 0);
+                        const product = products.find((p: any) => p.id === item.productId);
+
+                        subtotal += basePrice * quantity;
+
+                        if (
+                          product?.afterTaxPrice &&
+                          product.afterTaxPrice !== null &&
+                          product.afterTaxPrice !== ""
+                        ) {
+                          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                          const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                          totalTax += Math.floor(taxPerUnit * quantity);
+                        }
+                      });
+
+                      calculatedTotal = Math.floor(subtotal + totalTax);
+                    } else {
+                      calculatedTotal = Number(selectedOrder.total);
+                    }
+
+                    const customerPointsValue = (selectedCustomer.points || 0) * 1000;
+
+                    return customerPointsValue >= calculatedTotal ? (
+                      <div className="text-green-600 text-sm">
+                        ✓ Đủ điểm để thanh toán toàn bộ
+                      </div>
+                    ) : (
+                      <div className="text-orange-600 text-sm">
+                        ⚠ Cần thanh toán thêm:{" "}
+                        {(calculatedTotal - customerPointsValue).toLocaleString()}{" "}
+                        ₫
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
