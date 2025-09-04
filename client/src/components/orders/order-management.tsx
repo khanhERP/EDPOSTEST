@@ -1325,7 +1325,7 @@ export function OrderManagement() {
     }
 
     const currentPoints = selectedCustomer.points || 0;
-    const orderTotal = Number(selectedOrder.total);
+    const orderTotal = getOrderTotal(selectedOrder);
     const pointsValue = currentPoints * 1000; // 1 điểm = 1000đ
 
     if (pointsValue >= orderTotal) {
@@ -2337,7 +2337,7 @@ export function OrderManagement() {
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-gray-600">{t('orders.orderNumber')}: {selectedOrder.orderNumber}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(Number(selectedOrder.total))}
+                  {formatCurrency(getOrderTotal(selectedOrder))}
                 </p>
                 {selectedCustomer && (
                   <div className="mt-2 pt-2 border-t border-blue-200">
@@ -2347,9 +2347,9 @@ export function OrderManagement() {
                         (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
                       </span>
                     </p>
-                    {((selectedCustomer.points || 0) * 1000) < Number(selectedOrder.total) && (
+                    {((selectedCustomer.points || 0) * 1000) < getOrderTotal(selectedOrder) && (
                       <p className="text-sm text-orange-600 mt-1">
-                        Cần thanh toán thêm: {(Number(selectedOrder.total) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
+                        Cần thanh toán thêm: {(getOrderTotal(selectedOrder) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
                       </p>
                     )}
                   </div>
@@ -2407,28 +2407,33 @@ export function OrderManagement() {
               <div className="space-y-3">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h4 className="font-medium mb-2">Chi tiết thanh toán</h4>
-                  {((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ? (
-                    <div className="text-green-600">
-                      <p className="text-sm">✓ Đủ điểm để thanh toán toàn bộ đơn hàng</p>
-                      <p className="text-sm">
-                        Sử dụng: {Math.ceil(Number(selectedOrder.total) / 1000).toLocaleString()}P
-                      </p>
-                      <p className="text-sm">
-                        Còn lại: {((selectedCustomer.points || 0) - Math.ceil(Number(selectedOrder.total) / 1000)).toLocaleString()}P
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-orange-600">
-                      <p className="text-sm">⚠ Không đủ điểm, cần thanh toán hỗn hợp</p>
-                      <p className="text-sm">
-                        Sử dụng tất cả: {(selectedCustomer.points || 0).toLocaleString()}P
-                        (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
-                      </p>
-                      <p className="text-sm">
-                        Cần thanh toán thêm: {(Number(selectedOrder.total) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
-                      </p>
-                    </div>
-                  )}
+                  {(() => {
+                    const orderTotal = getOrderTotal(selectedOrder);
+                    const customerPointsValue = (selectedCustomer.points || 0) * 1000;
+                    
+                    return customerPointsValue >= orderTotal ? (
+                      <div className="text-green-600">
+                        <p className="text-sm">✓ Đủ điểm để thanh toán toàn bộ đơn hàng</p>
+                        <p className="text-sm">
+                          Sử dụng: {Math.ceil(orderTotal / 1000).toLocaleString()}P
+                        </p>
+                        <p className="text-sm">
+                          Còn lại: {((selectedCustomer.points || 0) - Math.ceil(orderTotal / 1000)).toLocaleString()}P
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-orange-600">
+                        <p className="text-sm">⚠ Không đủ điểm, cần thanh toán hỗn hợp</p>
+                        <p className="text-sm">
+                          Sử dụng tất cả: {(selectedCustomer.points || 0).toLocaleString()}P
+                          (≈ {customerPointsValue.toLocaleString()} ₫)
+                        </p>
+                        <p className="text-sm">
+                          Cần thanh toán thêm: {(orderTotal - customerPointsValue).toLocaleString()} ₫
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -2448,7 +2453,7 @@ export function OrderManagement() {
               className="bg-blue-600 hover:bg-blue-700"
             >
               {pointsPaymentMutation.isPending ? 'Đang xử lý...' :
-               ((selectedCustomer?.points || 0) * 1000) >= Number(selectedOrder?.total || 0) ?
+               ((selectedCustomer?.points || 0) * 1000) >= getOrderTotal(selectedOrder || { id: 0, total: 0 } as any) ?
                'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp'}
             </Button>
           </div>
