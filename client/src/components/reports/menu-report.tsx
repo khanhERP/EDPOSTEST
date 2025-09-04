@@ -404,8 +404,7 @@ function MenuReport() {
                           name: cat.categoryName?.length > 15 
                             ? cat.categoryName.substring(0, 15) + '...' 
                             : cat.categoryName || `Danh mục ${cat.categoryId}`,
-                          revenue: Number(cat.totalRevenue || 0),
-                          fill: `hsl(${(index * 45) % 360}, 70%, 50%)`
+                          revenue: Number(cat.totalRevenue || 0)
                         }))}
                         margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                       >
@@ -427,8 +426,11 @@ function MenuReport() {
                         <Bar 
                           dataKey="revenue" 
                           radius={[4, 4, 0, 0]}
-                          fill={(entry) => entry.fill}
-                        />
+                        >
+                          {menuAnalysis.categoryStats.map((entry, index) => (
+                            <Bar key={`cell-${index}`} fill={`hsl(${(index * 45) % 360}, 70%, 50%)`} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -449,8 +451,7 @@ function MenuReport() {
                           name: cat.categoryName?.length > 15 
                             ? cat.categoryName.substring(0, 15) + '...' 
                             : cat.categoryName || `Danh mục ${cat.categoryId}`,
-                          quantity: Number(cat.totalQuantity || 0),
-                          fill: `hsl(${(index * 60 + 180) % 360}, 65%, 55%)`
+                          quantity: Number(cat.totalQuantity || 0)
                         }))}
                         margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                       >
@@ -472,8 +473,11 @@ function MenuReport() {
                         <Bar 
                           dataKey="quantity" 
                           radius={[4, 4, 0, 0]}
-                          fill={(entry) => entry.fill}
-                        />
+                        >
+                          {menuAnalysis.categoryStats.map((entry, index) => (
+                            <Bar key={`cell-${index}`} fill={`hsl(${(index * 60 + 180) % 360}, 65%, 55%)`} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
