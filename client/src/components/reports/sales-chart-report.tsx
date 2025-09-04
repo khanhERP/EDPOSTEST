@@ -85,6 +85,27 @@ export function SalesChartReport() {
   const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
   const [customerPageSize, setCustomerPageSize] = useState(15);
 
+  // Use dashboard data API - EXACT same data source as dashboard
+  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
+    queryKey: ["/api/dashboard-data", startDate, endDate],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/dashboard-data/${startDate}/${endDate}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        return null;
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Use data from dashboard API response
   const transactions = dashboardData?.transactions || [];
   const orders = dashboardData?.orders || [];
@@ -203,27 +224,6 @@ export function SalesChartReport() {
   // Pagination state for sales report
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
-
-  // Use dashboard data API - EXACT same data source as dashboard
-  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
-    queryKey: ["/api/dashboard-data", startDate, endDate],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/dashboard-data/${startDate}/${endDate}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        return null;
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
-  });
 
   // Get dashboard stats from API response
   const getDashboardStats = () => {
