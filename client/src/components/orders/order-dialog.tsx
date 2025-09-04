@@ -310,104 +310,50 @@ export function OrderDialog({
       // Check if there are new items to add or if existing items were removed
       const hasChanges = cart.length > 0 || existingItems.some(item => item.quantity === 0); // Check if any existing item quantity became 0
 
-      // If no new items are added and no existing items were removed (quantity became 0),
-      // we only need to update the order totals if they were changed manually
-      // or if existing items were removed (which recalculates totals).
+      // If no new items are added, just refresh the data without updating database
       if (cart.length === 0 && !existingItems.some(item => item.quantity === 0)) {
-        // No new items to add, and no existing items were removed.
-        // Check if there were manual edits to existing items (e.g. quantity changed, though we don't explicitly track that here beyond removal)
-        // For simplicity, if no new items are added, and no items were marked for removal,
-        // we assume the user wants to confirm the current state or refresh totals.
-        // Let's always recalculate and save if in edit mode and cart is empty,
-        // as the user might have removed items from existingItems list.
-        console.log('🧮 Order Dialog: No new items to add, recalculating and saving totals to database');
+        console.log('🔄 Order Dialog: Refreshing data without updating database');
 
         try {
-          // Step 1: Calculate new totals based on current items
-          const newSubtotal = calculateTotal();
-          const newTax = calculateTax();
-          const newTotal = calculateGrandTotal();
-
-          console.log('💰 Order Dialog: Calculated new totals:', {
-            newSubtotal,
-            newTax,
-            newTotal,
-          });
-
-          // Step 2: Update order in database with new calculated totals
-          console.log('💾 Updating order totals in database...');
-          const updateData = {
-            subtotal: newSubtotal.toFixed(2),
-            tax: newTax.toFixed(2),
-            total: newTotal.toFixed(2),
-            updatedAt: new Date().toISOString()
-          };
-
-          console.log('📤 Sending update data to database:', updateData);
-
-          const updateResponse = await apiRequest('PUT', `/api/orders/${existingOrder.id}`, updateData);
-
-          if (!updateResponse.ok) {
-            const errorText = await updateResponse.text();
-            throw new Error(`Failed to update order totals: ${errorText}`);
-          }
-
-          const updatedOrderData = await updateResponse.json();
-          console.log('✅ Order Dialog: Order updated successfully in database:', updatedOrderData);
-
-          // Step 3: Force fresh data fetch from all sources
+          // Just refresh the displayed data from database
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
             queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
             queryClient.invalidateQueries({ queryKey: ["/api/order-items"] }),
+            queryClient.invalidateQueries({ queryKey: ["/api/order-items", existingOrder.id] }),
             queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
-            queryClient.refetchQueries({ queryKey: ["/api/tables"] })
+            queryClient.refetchQueries({ queryKey: ["/api/tables"] }),
+            queryClient.refetchQueries({ queryKey: ["/api/order-items", existingOrder.id] })
           ]);
 
-          console.log('🔄 Order Dialog: All queries invalidated and refetched');
+          console.log('🔄 Order Dialog: Data refreshed successfully');
 
-          // Step 4: Emit events to notify other components
-          window.dispatchEvent(new CustomEvent('orderTotalsUpdated', { 
-            detail: { 
-              orderId: existingOrder.id,
-              oldTotal: existingOrder.total,
-              newTotal: newTotal.toFixed(2),
-              action: 'recalculate',
-              immediate: true,
-              timestamp: Date.now()
-            } 
-          }));
-
+          // Emit refresh events
           window.dispatchEvent(new CustomEvent('refreshOrders', { 
             detail: { 
               immediate: true,
-              source: 'order-dialog-recalculate',
-              updatedOrder: {
-                id: existingOrder.id,
-                total: newTotal.toFixed(2),
-                subtotal: newSubtotal.toFixed(2),
-                tax: newTax.toFixed(2)
-              },
+              source: 'order-dialog-refresh',
+              action: 'data_refresh_only',
               timestamp: Date.now()
             } 
           }));
 
           toast({
-            title: t('orders.orderUpdateSuccess'),
-            description: `Đã cập nhật thành công: ${Math.round(newTotal).toLocaleString()} ₫`,
+            title: "Đã làm mới",
+            description: "Dữ liệu đã được cập nhật từ database",
           });
 
         } catch (error) {
-          console.error('❌ Order Dialog: Error updating order totals:', error);
+          console.error('❌ Order Dialog: Error refreshing data:', error);
           toast({
-            title: "Lỗi cập nhật",
-            description: `Có lỗi xảy ra khi cập nhật tổng tiền: ${error.message}`,
+            title: "Lỗi làm mới",
+            description: `Có lỗi xảy ra khi làm mới dữ liệu: ${error.message}`,
             variant: "destructive",
           });
           return;
         }
 
-        // Step 5: Reset form state and close dialog
+        // Reset form state and close dialog
         setCart([]);
         setCustomerName("");
         setCustomerCount(1);
