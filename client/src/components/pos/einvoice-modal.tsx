@@ -599,13 +599,13 @@ export function EInvoiceModal({
         orderId: orderId || `temp-${Date.now()}`
       };
 
-      // Prepare comprehensive invoice data with receipt flags for onConfirm
+      // Prepare comprehensive invoice data for onConfirm
       const completeInvoiceData = {
         success: true,
         publishLater: true,
         showReceiptModal: true,
         shouldShowReceipt: true,
-        einvoiceStatus: 0, // 0 = Chưa phát hành
+        einvoiceStatus: 0, // 0 = chưa phát hành
         status: 'draft',
         paymentMethod: selectedPaymentMethod,
         originalPaymentMethod: selectedPaymentMethod,
@@ -625,11 +625,11 @@ export function EInvoiceModal({
 
       // Close the E-Invoice modal first
       console.log("🔒 Closing E-Invoice modal before showing receipt (publish later)");
-      
+
       // Call onConfirm with complete data
       console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
       onConfirm(completeInvoiceData);
-      
+
       // Close the modal after processing
       setTimeout(() => {
         onClose();
@@ -681,7 +681,7 @@ export function EInvoiceModal({
     }
 
     setIsPublishing(true);
-    
+
     console.log("🚀 Starting E-Invoice publishing process...");
     try {
       // Debug log current cart items
@@ -1013,8 +1013,10 @@ export function EInvoiceModal({
               savedInvoice,
             );
           } else {
-            const errorText = await invoiceResponse.text();
-            console.error("❌ Failed to save invoice to database:", errorText);
+            console.error(
+              "❌ Failed to save invoice to database:",
+              await invoiceResponse.text(),
+            );
           }
         } catch (invoiceSaveError) {
           console.error(
@@ -1077,7 +1079,7 @@ export function EInvoiceModal({
           description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
         });
 
-        // Tạo receipt data ngay sau khi phát hành thành công
+        // Create receipt data immediately after successful publication
         const receiptData = {
           transactionId: publishRequest.transactionID || `TXN-${Date.now()}`,
           invoiceNumber: result.data?.invoiceNo || null,
@@ -1164,7 +1166,7 @@ export function EInvoiceModal({
         // Call onConfirm FIRST to trigger receipt modal display
         console.log("📄 Calling onConfirm with publishResult:", publishResult);
         onConfirm(publishResult);
-        
+
         // Close the E-Invoice modal after a small delay to ensure receipt modal is shown
         console.log("🔒 Closing E-Invoice modal after triggering receipt");
         setTimeout(() => {

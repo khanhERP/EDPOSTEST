@@ -97,7 +97,7 @@ export function initializeWebSocketServer(server: Server) {
           console.log('👥 Customer display connected');
           // Mark this connection as customer display if needed
           (ws as any).isCustomerDisplay = true;
-        } else if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'order_status_update' || data.type === 'force_refresh') {
+        } else if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'order_status_update' || data.type === 'force_refresh' || data.type === 'einvoice_published' || data.type === 'einvoice_saved_for_later') {
           // Broadcast data refresh signals to all connected table grids and order management clients
           console.log(`📡 Broadcasting ${data.type} to all clients`);
           clients.forEach(client => {
@@ -108,6 +108,9 @@ export function initializeWebSocketServer(server: Server) {
                   type: data.type,
                   source: data.source || 'unknown',
                   reason: data.reason || 'data_refresh',
+                  action: data.action || 'refresh',
+                  invoiceId: data.invoiceId || null,
+                  invoiceNumber: data.invoiceNumber || null,
                   success: data.success !== undefined ? data.success : true,
                   timestamp: data.timestamp || new Date().toISOString()
                 }));

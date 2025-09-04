@@ -207,6 +207,60 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   }, []);
 
 
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'popup_close' ||
+            data.type === 'payment_success' ||
+            data.type === 'order_status_update' ||
+            data.type === 'force_refresh' ||
+            data.type === 'einvoice_published' ||
+            data.type === 'einvoice_saved_for_later') {
+          console.log('🔄 TableGrid: Refreshing data due to WebSocket signal:', data.type);
+
+          // Force refresh all queries
+          queryClient.clear();
+          queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+
+          // Dispatch custom event for other components
+          window.dispatchEvent(new CustomEvent('refreshTableData', {
+            detail: {
+              source: 'table_grid_websocket',
+              reason: data.type,
+              action: data.action || 'refresh',
+              invoiceId: data.invoiceId || null,
+              timestamp: new Date().toISOString()
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('❌ TableGrid: Error processing WebSocket message:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.warn('⚠️ TableGrid: WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('ℹ️ TableGrid: WebSocket connection closed.');
+      // Optionally implement reconnection logic here
+    };
+
+    // Cleanup on component unmount
+    return () => {
+      ws.close();
+    };
+  }, [queryClient]);
+
 
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
@@ -1281,6 +1335,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         console.log("📧 Opening E-invoice modal for table payment");
         setShowPaymentMethodModal(false);
         setShowEInvoiceModal(true);
+        // Pass the relevant order details to the EInvoiceModal
+        setOrderForEInvoice({
+          ...orderForPayment,
+          orderItems: orderItems || orderForPayment.orderItems, // Ensure orderItems are available
+          exactSubtotal: orderForPayment.exactSubtotal || parseFloat(orderForPayment.subtotal || "0"),
+          exactTax: orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0"),
+          exactTotal: orderForPayment.exactTotal || parseFloat(orderForPayment.total || "0"),
+        });
         return;
       }
 
