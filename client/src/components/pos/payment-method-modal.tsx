@@ -56,6 +56,7 @@ interface PaymentMethodModalProps {
   products?: any[]; // Add products prop for tax rate and afterTaxPrice lookup
   getProductName?: (productId: number | string) => string; // Add getProductName function
   receipt?: any; // Add receipt prop to receive exact total from receipt modal
+  onReceiptReady?: (receiptData: any) => void; // Add callback for receipt ready
 }
 
 export function PaymentMethodModal({
@@ -69,6 +70,7 @@ export function PaymentMethodModal({
   products, // Receive products prop
   getProductName, // Receive getProductName function
   receipt, // Receive receipt prop
+  onReceiptReady, // Receive receipt ready callback
 }: PaymentMethodModalProps) {
   // CRITICAL DEBUG: Log all props when component mounts
   console.log(`🔍 PAYMENT MODAL PROPS DEBUG:`, {
@@ -760,20 +762,8 @@ export function PaymentMethodModal({
       // Set receipt data for modal
       setReceiptDataForModal(invoiceData.receipt);
 
-      // Close payment modal and show receipt modal
-      console.log("🔄 Closing payment modal and showing receipt modal");
-      onClose(); // Close payment modal
-      
-      // Show receipt modal immediately
-      setTimeout(() => {
-        if (onReceiptReady) {
-          console.log("📄 Triggering receipt modal display");
-          onReceiptReady(invoiceData.receipt);
-        }
-      }, 100);
-
       // Show success message based on action type
-    if (invoiceData.publishLater) {
+      if (invoiceData.publishLater) {
         console.log("⏳ E-Invoice publish later completed - will show receipt");
         toast({
           title: "Thành công",
@@ -785,13 +775,17 @@ export function PaymentMethodModal({
           title: "Thành công",
           description: "Hóa đơn điện tử đã được phát hành thành công. Đang hiển thị hóa đơn để in...",
         });
-      }
+      } else {
         toast({
           title: "Thành công", 
           description: "Hóa đơn điện tử đã được phát hành thành công!",
         });
       }
 
+      // Close payment modal and show receipt modal
+      console.log("🔄 Closing payment modal and showing receipt modal");
+      onClose(); // Close payment modal
+      
       // Force show receipt modal after a small delay to ensure state is updated
       setTimeout(() => {
         console.log("📄 FORCE SHOWING RECEIPT MODAL");
@@ -799,7 +793,6 @@ export function PaymentMethodModal({
       }, 300);
 
     } else {
-      
       // Even if no receipt data, still show success and close payment flow
       if (invoiceData.success || invoiceData.publishLater || invoiceData.publishedImmediately) {
         toast({
