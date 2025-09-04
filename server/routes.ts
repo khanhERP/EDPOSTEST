@@ -453,8 +453,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         JSON.stringify({ transaction, items }, null, 2),
       );
 
-      // Find the transaction validation schema and update invoiceNumber to be nullable
-      // The issue is that invoiceNumber should be string | null for publish later scenarios
+      // Transaction validation schema with proper nullable handling for invoiceNumber
       const transactionSchema = z.object({
         transactionId: z.string(),
         subtotal: z.string(),
@@ -463,7 +462,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
         paymentMethod: z.string(),
         cashierName: z.string(),
         notes: z.string().optional(),
-        invoiceNumber: z.string().nullable(), // Updated to allow null
+        invoiceNumber: z.string().nullable().optional(), // Allow null/undefined for publish later
+        invoiceId: z.number().nullable().optional(), // Also allow invoiceId to be null
         orderId: z.number().optional()
       });
 
@@ -530,7 +530,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       const total = subtotal + tax;
 
-      // Update the transaction with calculated totals
+      // Update the transaction with calculated totals and proper null handling
       const transactionWithTotals = {
         ...validatedTransaction,
         subtotal: subtotal.toFixed(2),
@@ -538,6 +538,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
         total: total.toFixed(2),
         invoiceId: validatedTransaction.invoiceId || null,
         invoiceNumber: validatedTransaction.invoiceNumber || null,
+        notes: validatedTransaction.notes || null,
+        orderId: validatedTransaction.orderId || null,
       };
 
       const receipt = await storage.createTransaction(

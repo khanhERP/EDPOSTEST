@@ -209,9 +209,10 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
   createdAt: true,
 }).extend({
-  invoiceId: z.number().optional(),
-  invoiceNumber: z.string().optional(),
-  notes: z.string().optional(),
+  invoiceId: z.number().nullable().optional(),
+  invoiceNumber: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  orderId: z.number().nullable().optional(),
 });
 
 export const insertTransactionItemSchema = createInsertSchema(
