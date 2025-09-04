@@ -109,23 +109,26 @@ export function OrderDialog({
             const addItemsResult = await addItemsResponse.json();
             console.log('✅ Items added successfully:', addItemsResult);
             finalResult = addItemsResult.updatedOrder || addItemsResult;
+          } else {
+            console.log(`📝 No new items to add to order ${existingOrder.id}, proceeding with order update only`);
           }
 
-          // Step 2: Use pre-calculated totals from UI (already calculated correctly)
-          console.log(`📝 Using pre-calculated totals from UI for order ${existingOrder.id}`);
+          // Step 2: Always update order with current UI calculated totals
+          console.log(`📝 Updating order with current UI calculated totals for order ${existingOrder.id}`);
 
           // Get the calculated values from the UI functions
           const uiSubtotal = calculateTotal();    // Tiền tạm tính (đã tính đúng)
           const uiTax = calculateTax();           // Thuế (đã tính đúng)  
           const uiGrandTotal = calculateGrandTotal(); // Tổng tiền (đã tính đúng)
 
-          console.log('💰 Using UI calculated totals:', {
+          console.log('💰 Using UI calculated totals for update:', {
             subtotal: uiSubtotal,
             tax: uiTax,
-            total: uiGrandTotal
+            total: uiGrandTotal,
+            hasNewItems: orderData.items.length > 0
           });
 
-          // Step 3: Update order with customer info AND UI calculated totals
+          // Step 3: Always update order with customer info AND UI calculated totals
           console.log(`📝 Updating order with customer info and UI calculated totals for order ${existingOrder.id}`);
           const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
             customerName: orderData.order.customerName,
@@ -136,7 +139,7 @@ export function OrderDialog({
           });
 
           const updateResult = await updateResponse.json();
-          console.log('✅ Order updated successfully with new totals:', updateResult);
+          console.log('✅ Order updated successfully with current totals:', updateResult);
 
           // Return the final result (prioritize the order update result)
           return updateResult;
@@ -440,16 +443,16 @@ export function OrderDialog({
     } else {
       // Create mode - calculate with correct mapping
       const orderNumber = `ORD-${Date.now()}`;
-      
+
       // Subtotal = tiền tạm tính (giá trước thuế * số lượng)
       const subtotalAmount = cart.reduce(
         (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
         0,
       );
-      
+
       // Tax = thuế (sử dụng calculateTax function)
       const taxAmount = calculateTax();
-      
+
       // Total = tổng tiền (subtotal + tax)
       const totalAmount = subtotalAmount + taxAmount;
 
