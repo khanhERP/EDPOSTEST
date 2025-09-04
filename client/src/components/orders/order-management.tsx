@@ -667,10 +667,10 @@ export function OrderManagement() {
     };
   }, [selectedOrder, orderItems, products]);
 
-  // Function to calculate order total from items using EXACT same logic as Table Grid
+  // Function to calculate order total from items with precise calculation logic
   const calculateOrderTotal = React.useCallback(async (order: Order) => {
     try {
-      console.log(`🧮 Order Management: Calculating total for order ${order.id} (${order.orderNumber})`);
+      console.log(`🧮 Order Management: Starting precise calculation for order ${order.id} (${order.orderNumber})`);
 
       // Fetch order items first
       const response = await apiRequest('GET', `/api/order-items/${order.id}`);
@@ -680,9 +680,9 @@ export function OrderManagement() {
       }
 
       const orderItemsData = await response.json();
-      console.log(`📦 Order Management: Order ${order.id} items:`, {
+      console.log(`📦 Order Management: Order ${order.id} raw items data:`, {
         itemsCount: orderItemsData?.length || 0,
-        hasItems: Array.isArray(orderItemsData) && orderItemsData.length > 0
+        items: orderItemsData?.slice(0, 3) // Log first 3 items for debugging
       });
 
       if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
@@ -696,33 +696,40 @@ export function OrderManagement() {
         return Number(order.total || 0);
       }
 
-      // Calculate total using EXACT same logic as Table Grid
+      // Calculate total with proper tax handling - same logic as Order Details display
+      let calculatedSubtotal = 0;
+      let calculatedTax = 0;
       let calculatedTotal = 0;
 
-      orderItemsData.forEach((item: any) => {
+      console.log(`🧮 Order Management: Processing ${orderItemsData.length} items for calculation`);
+
+      orderItemsData.forEach((item: any, index: number) => {
         const basePrice = Number(item.unitPrice || 0);
         const quantity = Number(item.quantity || 0);
         const product = products.find((p: any) => p.id === item.productId);
 
-        console.log(`📊 Order Management: Processing item ${item.id}:`, {
+        console.log(`📊 Order Management: Item ${index + 1}/${orderItemsData.length} - ${item.productName}:`, {
+          itemId: item.id,
           productId: item.productId,
-          productName: item.productName,
           basePrice,
           quantity,
           productFound: !!product,
-          productAfterTaxPrice: product?.afterTaxPrice,
-          productPrice: product?.price
+          productAfterTaxPrice: product?.afterTaxPrice
         });
 
         if (basePrice <= 0 || quantity <= 0) {
-          console.warn(`⚠️ Invalid item data: basePrice=${basePrice}, quantity=${quantity}`);
+          console.warn(`⚠️ Skipping invalid item: basePrice=${basePrice}, quantity=${quantity}`);
           return;
         }
 
-        // EXACT same logic as Table Grid calculation
+        // Calculate subtotal (before tax)
+        const itemSubtotal = basePrice * quantity;
+        calculatedSubtotal += itemSubtotal;
+
+        // Calculate tax using afterTaxPrice if available
+        let itemTax = 0;
         let finalPricePerUnit = basePrice;
-        
-        // Check if product has afterTaxPrice and use it
+
         if (product?.afterTaxPrice && 
             product.afterTaxPrice !== null && 
             product.afterTaxPrice !== "" && 
@@ -732,59 +739,73 @@ export function OrderManagement() {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           if (!isNaN(afterTaxPrice) && afterTaxPrice > 0) {
             finalPricePerUnit = afterTaxPrice;
-            console.log(`💸 Order Management: Using afterTaxPrice for ${item.productName}:`, {
+            const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+            itemTax = taxPerUnit * quantity;
+            calculatedTax += itemTax;
+
+            console.log(`💸 Tax calculation for ${item.productName}:`, {
               basePrice,
-              afterTaxPrice: finalPricePerUnit,
+              afterTaxPrice,
+              taxPerUnit,
               quantity,
-              productAfterTaxPrice: product.afterTaxPrice
+              itemTax,
+              totalTaxSoFar: calculatedTax
             });
           } else {
-            console.log(`💸 Order Management: afterTaxPrice invalid, using basePrice for ${item.productName}`);
+            console.log(`💸 Invalid afterTaxPrice for ${item.productName}, using basePrice only`);
           }
         } else {
-          console.log(`💸 Order Management: No valid afterTaxPrice, using basePrice for ${item.productName}:`, {
-            afterTaxPrice: product?.afterTaxPrice,
-            basePrice
-          });
+          console.log(`💸 No afterTaxPrice for ${item.productName}, no tax added`);
         }
 
-        // Calculate item total
+        // Calculate total for this item
         const itemTotal = finalPricePerUnit * quantity;
         calculatedTotal += itemTotal;
 
-        console.log(`💰 Order Management: Item calculation for ${item.productName}:`, {
+        console.log(`💰 Item calculation summary for ${item.productName}:`, {
+          basePrice,
           finalPricePerUnit,
           quantity,
+          itemSubtotal,
+          itemTax,
           itemTotal,
+          runningSubtotal: calculatedSubtotal,
+          runningTax: calculatedTax,
           runningTotal: calculatedTotal
         });
       });
 
-      // Floor the total like in Table Grid to match display format
+      // Use Math.floor for consistency with display
       const finalTotal = Math.floor(calculatedTotal);
 
-      console.log(`💰 Order Management: Order ${order.id} final calculation:`, {
-        rawCalculatedTotal: calculatedTotal,
-        flooredTotal: finalTotal,
-        storedTotal: order.total,
+      console.log(`💰 Order Management: Final calculation summary for order ${order.orderNumber}:`, {
+        orderId: order.id,
         itemsProcessed: orderItemsData.length,
-        productsAvailable: products.length,
-        calculationMethod: 'Math.floor(sum of (afterTaxPrice || unitPrice) * quantity)'
+        calculatedSubtotal: calculatedSubtotal,
+        calculatedTax: calculatedTax,
+        rawCalculatedTotal: calculatedTotal,
+        finalTotal: finalTotal,
+        storedTotal: order.total,
+        difference: finalTotal - Number(order.total || 0),
+        calculationMethod: 'subtotal + tax, Math.floor(total)'
       });
 
-      // Return calculated total, ensuring it's at least 0
-      return Math.max(0, finalTotal);
+      // Ensure result is never negative
+      const result = Math.max(0, finalTotal);
+      console.log(`✅ Order Management: Returning calculated total for order ${order.orderNumber}: ${result}`);
+      
+      return result;
 
     } catch (error) {
       console.error(`❌ Order Management: Error calculating total for order ${order.id}:`, error);
       // Return stored total as fallback
       const fallbackTotal = Number(order.total || 0);
-      console.log(`🔄 Using fallback total for order ${order.id}:`, fallbackTotal);
+      console.log(`🔄 Using fallback stored total for order ${order.id}:`, fallbackTotal);
       return fallbackTotal;
     }
   }, [products, apiRequest]);
 
-  // Function to get order total (calculated or stored) - using EXACT same logic as Table Grid
+  // Function to get order total with proper calculation from order items
   const getOrderTotal = React.useCallback((order: Order) => {
     const storedTotal = Number(order.total || 0);
     const calculatedTotal = calculatedTotals.get(order.id);
@@ -803,37 +824,31 @@ export function OrderManagement() {
       return storedTotal;
     }
 
-    // For paid orders, prefer calculated total if available, otherwise use stored
-    if (order.status === 'paid') {
-      if (calculatedTotal !== undefined && calculatedTotal > 0) {
-        console.log(`💰 Order ${order.orderNumber} is paid, using calculated total:`, calculatedTotal);
-        return calculatedTotal;
-      }
-      console.log(`💰 Order ${order.orderNumber} is paid, using stored total:`, storedTotal);
-      return storedTotal;
-    }
-
-    // For active orders (pending, confirmed, preparing, ready, served)
-    // ALWAYS prefer calculated total if available and valid
-    if (calculatedTotal !== undefined) {
-      console.log(`💰 Order ${order.orderNumber} using calculated total:`, calculatedTotal);
+    // For all other orders, ALWAYS prefer calculated total from order items if available
+    if (calculatedTotal !== undefined && calculatedTotal >= 0) {
+      console.log(`💰 Order ${order.orderNumber} using calculated total from items:`, calculatedTotal);
       return calculatedTotal;
     }
 
-    // If no calculated total yet, trigger calculation for active orders
-    console.log(`💰 Order ${order.orderNumber} triggering calculation for active order`);
+    // If no calculated total yet, trigger calculation immediately
+    console.log(`💰 Order ${order.orderNumber} triggering immediate calculation from order items`);
 
-    // Trigger calculation in background with immediate execution
+    // Trigger calculation in background
     calculateOrderTotal(order).then(total => {
-      console.log(`🧮 Background calculation completed for order ${order.orderNumber}:`, total);
+      console.log(`🧮 Calculation completed for order ${order.orderNumber}:`, {
+        calculatedTotal: total,
+        storedTotal: storedTotal,
+        difference: Math.abs(total - storedTotal)
+      });
+      
       setCalculatedTotals(prev => {
         const newMap = new Map(prev);
         newMap.set(order.id, total);
         return newMap;
       });
     }).catch(error => {
-      console.error(`❌ Background calculation failed for order ${order.orderNumber}:`, error);
-      // Set stored total to avoid infinite recalculation
+      console.error(`❌ Calculation failed for order ${order.orderNumber}:`, error);
+      // Use stored total as fallback
       setCalculatedTotals(prev => {
         const newMap = new Map(prev);
         newMap.set(order.id, storedTotal);
@@ -842,7 +857,7 @@ export function OrderManagement() {
     });
 
     // Return stored total as immediate fallback while calculation is running
-    console.log(`💰 Order ${order.orderNumber} using stored total (immediate fallback):`, storedTotal);
+    console.log(`💰 Order ${order.orderNumber} using stored total as fallback:`, storedTotal);
     return storedTotal;
   }, [calculatedTotals, calculateOrderTotal]);
 
