@@ -97,6 +97,8 @@ export function OrderManagement() {
   const { data: orderItems, isLoading: orderItemsLoading } = useQuery({
     queryKey: ['/api/order-items', selectedOrder?.id],
     enabled: !!selectedOrder?.id && orderDetailsOpen,
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 60000, // Keep in cache for 1 minute
     queryFn: async () => {
       if (!selectedOrder?.id) return [];
       const response = await apiRequest('GET', `/api/order-items/${selectedOrder.id}`);
@@ -583,6 +585,38 @@ export function OrderManagement() {
     // Always round to integer and format without decimals
     return `${Math.floor(amount).toLocaleString('vi-VN')} ₫`;
   };
+
+  // Memoize expensive calculations
+  const orderDetailsCalculation = React.useMemo(() => {
+    if (!selectedOrder || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+      return { subtotal: 0, tax: 0, total: 0 };
+    }
+
+    let calculatedSubtotal = 0;
+    let calculatedTax = 0;
+
+    orderItems.forEach((item: any) => {
+      const basePrice = Number(item.unitPrice || 0);
+      const quantity = Number(item.quantity || 0);
+      const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+      // Subtotal calculation
+      calculatedSubtotal += basePrice * quantity;
+
+      // Tax calculation using EXACT same logic as other components
+      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        const afterTaxPrice = parseFloat(product.afterTaxPrice);
+        const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+        calculatedTax += taxPerUnit * quantity;
+      }
+    });
+
+    return {
+      subtotal: calculatedSubtotal,
+      tax: Math.abs(calculatedTax),
+      total: calculatedSubtotal + Math.abs(calculatedTax)
+    };
+  }, [selectedOrder, orderItems, products]);
 
   // Function to calculate order total from items
   const calculateOrderTotal = React.useCallback(async (order: Order) => {
@@ -1890,83 +1924,19 @@ export function OrderManagement() {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">{t('orders.totalAmount')}</h4>
                   <div className="space-y-1 text-sm">
-                    {(() => {
-                      // Use EXACT same calculation logic as displayed in Order Details
-                      let orderDetailsSubtotal = 0;
-                      let orderDetailsTax = 0;
-
-                      console.log('🔍 Order Summary Calculation:', {
-                        orderItems: orderItems?.length || 0,
-                        products: products?.length || 0,
-                        selectedOrderId: selectedOrder?.id
-                      });
-
-                      if (Array.isArray(orderItems) && Array.isArray(products)) {
-                        orderItems.forEach((item: any) => {
-                          const basePrice = Number(item.unitPrice || 0);
-                          const quantity = Number(item.quantity || 0);
-                          const product = products.find((p: any) => p.id === item.productId);
-
-                          console.log(`📊 Processing item ${item.id}:`, {
-                            productId: item.productId,
-                            basePrice,
-                            quantity,
-                            productFound: !!product,
-                            productAfterTaxPrice: product?.afterTaxPrice
-                          });
-
-                          // Calculate subtotal exactly as Order Details display
-                          const itemSubtotal = basePrice * quantity;
-                          orderDetailsSubtotal += itemSubtotal;
-
-                          // Tax calculation with proper validation
-                          if (product?.afterTaxPrice && 
-                              product.afterTaxPrice !== null && 
-                              product.afterTaxPrice !== "" &&
-                              product.afterTaxPrice !== "0.00") {
-                            const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const originalPrice = parseFloat(product.price || basePrice);
-                            const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
-                            const itemTax = taxPerUnit * quantity;
-                            orderDetailsTax += itemTax;
-
-                            console.log(`💸 Tax calculated for ${item.productName}:`, {
-                              afterTaxPrice,
-                              originalPrice,
-                              taxPerUnit,
-                              quantity,
-                              itemTax
-                            });
-                          }
-                        });
-                      }
-
-                      const finalTotal = orderDetailsSubtotal + Math.abs(orderDetailsTax);
-
-                      console.log('💰 Order Summary Final Calculation:', {
-                        subtotal: orderDetailsSubtotal,
-                        tax: orderDetailsTax,
-                        finalTotal: finalTotal
-                      });
-
-                      return (
-                        <>
-                          <div className="flex justify-between">
-                            <span>{t('common.subtotalLabel')}</span>
-                            <span>{formatCurrency(orderDetailsSubtotal)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>{t('orders.tax')}</span>
-                            <span>{formatCurrency(Math.abs(orderDetailsTax))}</span>
-                          </div>
-                          <Separator />
-                          <div className="flex justify-between font-medium">
-                            <span>{t('orders.totalAmount')}:</span>
-                            <span>{formatCurrency(finalTotal)}</span>
-                          </div>
-                        </>
-                      );
-                    })()}
+                    <div className="flex justify-between">
+                      <span>{t('common.subtotalLabel')}</span>
+                      <span>{formatCurrency(orderDetailsCalculation.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t('orders.tax')}</span>
+                      <span>{formatCurrency(orderDetailsCalculation.tax)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-medium">
+                      <span>{t('orders.totalAmount')}:</span>
+                      <span>{formatCurrency(orderDetailsCalculation.total)}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -1991,45 +1961,15 @@ export function OrderManagement() {
                           return;
                         }
 
-                        // Tính toán chính xác giống như hiển thị Order Details
-                        let calculatedSubtotal = 0;
-                        let calculatedTax = 0;
+                        // Use memoized calculations for better performance
+                        const { subtotal: calculatedSubtotal, tax: calculatedTax, total: finalTotal } = orderDetailsCalculation;
 
-                        console.log('💰 Tính toán từ orderItems:', orderItems.length, 'items');
-                        console.log('📦 Products available:', Array.isArray(products) ? products.length : 0);
+                        console.log('💰 Using memoized calculation:', { calculatedSubtotal, calculatedTax, finalTotal });
 
                         const processedItems = orderItems.map((item: any) => {
                           const unitPrice = Number(item.unitPrice || 0);
                           const quantity = Number(item.quantity || 0);
                           const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-
-                          console.log(`📊 Processing item ${item.id}:`, {
-                            productId: item.productId,
-                            unitPrice,
-                            quantity,
-                            productFound: !!product
-                          });
-
-                          // Subtotal = unitPrice * quantity
-                          const itemSubtotal = unitPrice * quantity;
-                          calculatedSubtotal += itemSubtotal;
-
-                          // Tính thuế từ afterTaxPrice nếu có
-                          let itemTax = 0;
-                          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                            const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const originalPrice = parseFloat(product.price || unitPrice);
-                            const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
-                            itemTax = taxPerUnit * quantity;
-                            calculatedTax += itemTax;
-                            console.log(`💸 Tax calculated for ${item.productName}:`, {
-                              afterTaxPrice,
-                              originalPrice,
-                              taxPerUnit,
-                              quantity,
-                              itemTax
-                            });
-                          }
 
                           return {
                             id: item.id,
@@ -2038,14 +1978,12 @@ export function OrderManagement() {
                             quantity: quantity,
                             unitPrice: unitPrice,
                             price: unitPrice,
-                            total: itemSubtotal,
+                            total: unitPrice * quantity,
                             sku: item.productSku || product?.sku || `SP${item.productId}`,
                             taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
                             afterTaxPrice: product?.afterTaxPrice || null
                           };
                         });
-
-                        const finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
 
                         console.log('💰 Kết quả tính toán cuối:', {
                           subtotal: calculatedSubtotal,
