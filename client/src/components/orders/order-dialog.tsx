@@ -333,24 +333,27 @@ export function OrderDialog({
         hasRemovedItems,
         hasCustomerNameChange,
         hasCustomerCountChange,
-        hasAnyChanges
+        hasAnyChanges,
+        cartLength: cart.length
       });
 
-      // Always allow update to proceed - user wants to refresh/update order data
-      console.log('📝 Order Dialog: Processing order update:', {
-        hasNewItems,
-        hasRemovedItems,
-        hasCustomerNameChange,
-        hasCustomerCountChange,
-        hasAnyChanges,
-        allowUpdate: true
-      });
+      // Always allow update to proceed if there are new items in cart or customer changes
+      if (cart.length > 0) {
+        console.log('📝 Order Dialog: Processing order update with new items:', {
+          newItemsCount: cart.length,
+          hasCustomerChanges: hasCustomerNameChange || hasCustomerCountChange
+        });
+      } else if (hasCustomerNameChange || hasCustomerCountChange) {
+        console.log('📝 Order Dialog: Processing order update with customer changes only');
+      } else {
+        console.log('📝 Order Dialog: No new items or changes, but allowing update');
+      }
 
 
       // For edit mode, handle both new items and order updates
       const items = cart.map((item) => {
         const product = products?.find((p: Product) => p.id === item.product.id);
-        const basePrice = item.product.price;
+        const basePrice = parseFloat(item.product.price.toString());
         const quantity = item.quantity;
         const itemSubtotal = basePrice * quantity;
 
@@ -358,17 +361,23 @@ export function OrderDialog({
         // Tax = (after_tax_price - price) * quantity
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const price = parseFloat(product.price);
-          itemTax = (afterTaxPrice - price) * quantity;
+          itemTax = (afterTaxPrice - basePrice) * quantity;
         }
-        // No tax if no afterTaxPrice in database
 
         const itemTotal = itemSubtotal + itemTax;
+
+        console.log(`📝 Order Dialog: Processing cart item ${item.product.name}:`, {
+          productId: item.product.id,
+          quantity: item.quantity,
+          basePrice,
+          itemTax,
+          itemTotal
+        });
 
         return {
           productId: item.product.id,
           quantity: item.quantity,
-          unitPrice: item.product.price.toString(),
+          unitPrice: basePrice.toString(),
           total: itemTotal.toString(),
           notes: item.notes || null,
         };
@@ -384,14 +393,16 @@ export function OrderDialog({
       console.log("📝 Processing order update:", { 
         orderId: existingOrder.id,
         hasNewItems: items.length > 0,
+        hasCustomerChanges: hasCustomerNameChange || hasCustomerCountChange,
         customerUpdates: {
           name: customerName,
           count: customerCount
         },
-        totalItems: items.length
+        totalItems: items.length,
+        proceedWithUpdate: true
       });
 
-      // Always allow the mutation to proceed
+      // Always proceed with mutation - either adding items or updating customer info
       createOrderMutation.mutate({ order: updatedOrder, items });
     } else {
       // Create mode - original logic
