@@ -663,24 +663,41 @@ export function ShoppingCart({
       setShowPaymentModal(false);
       setShowReceiptPreview(false);
       setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false); // Ensure E-Invoice modal is closed
 
-      // Use setTimeout to ensure state updates are processed
+      // CRITICAL FIX: Set receipt data immediately and force modal to show
+      console.log("🔥 POS: Setting receipt data and forcing modal display");
+      setSelectedReceipt(receiptForDisplay);
+      
+      // Use multiple attempts to ensure modal shows
       setTimeout(() => {
-        console.log("🔥 POS: Force showing receipt modal after delay");
-        setSelectedReceipt(receiptForDisplay);
+        console.log("🔥 POS: First attempt to show receipt modal");
         setShowReceiptModal(true);
+      }, 100);
+      
+      setTimeout(() => {
+        console.log("🔥 POS: Second attempt to show receipt modal");
+        setShowReceiptModal(true);
+        setSelectedReceipt(receiptForDisplay); // Re-set receipt data
+      }, 300);
+      
+      setTimeout(() => {
+        console.log("🔥 POS: Final attempt to show receipt modal");
+        if (!showReceiptModal) {
+          setShowReceiptModal(true);
+          setSelectedReceipt(receiptForDisplay);
+        }
         
-        // Double check after another short delay
-        setTimeout(() => {
-          console.log("🔍 POS: Receipt modal state check:", {
-            showReceiptModal,
-            selectedReceipt: !!receiptForDisplay,
-            receiptItems: receiptForDisplay.items?.length || 0
-          });
-        }, 100);
-      }, 50);
+        // Final verification
+        console.log("🔍 POS: Final receipt modal state check:", {
+          showReceiptModal: showReceiptModal,
+          selectedReceipt: !!receiptForDisplay,
+          receiptItems: receiptForDisplay.items?.length || 0,
+          modalShouldBeVisible: true
+        });
+      }, 500);
 
-      console.log("📄 POS: Receipt modal trigger initiated with data:", receiptForDisplay);
+      console.log("📄 POS: Receipt modal trigger process initiated with data:", receiptForDisplay);
 
     } else {
       console.error("❌ POS: E-Invoice processing failed or cancelled");
@@ -1038,68 +1055,70 @@ export function ShoppingCart({
       )}
 
       {/* Final Receipt Modal - Shows after successful payment */}
-      <ReceiptModal
-        isOpen={showReceiptModal}
-        onClose={() => {
-          console.log('🔄 Shopping Cart: Receipt modal closing, clearing cart and sending refresh signal');
+      {(showReceiptModal || selectedReceipt) && (
+        <ReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => {
+            console.log('🔄 Shopping Cart: Receipt modal closing, clearing cart and sending refresh signal');
 
-          // Close modal and clear states
-          setShowReceiptModal(false);
-          setSelectedReceipt(null);
-          setLastCartItems([]);
-          setOrderForPayment(null);
-          setPreviewReceipt(null);
-          setIsProcessingPayment(false);
+            // Close modal and clear states
+            setShowReceiptModal(false);
+            setSelectedReceipt(null);
+            setLastCartItems([]);
+            setOrderForPayment(null);
+            setPreviewReceipt(null);
+            setIsProcessingPayment(false);
 
-          // Clear cart
-          onClearCart();
+            // Clear cart
+            onClearCart();
 
-          // Clear any active orders
-          if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-            (window as any).clearActiveOrder();
-          }
+            // Clear any active orders
+            if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+              (window as any).clearActiveOrder();
+            }
 
-          // Broadcast empty cart
-          broadcastCartUpdate([]);
+            // Broadcast empty cart
+            broadcastCartUpdate([]);
 
-          // Send popup close signal to refresh other components
-          try {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            const ws = new WebSocket(wsUrl);
+            // Send popup close signal to refresh other components
+            try {
+              const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
 
-            ws.onopen = () => {
-              ws.send(JSON.stringify({
-                type: 'popup_close',
-                success: true,
-                source: 'shopping-cart',
-                timestamp: new Date().toISOString()
-              }));
-              ws.close();
-            };
-          } catch (error) {
-            console.error('❌ Shopping Cart: Failed to send refresh signal:', error);
-          }
+              ws.onopen = () => {
+                ws.send(JSON.stringify({
+                  type: 'popup_close',
+                  success: true,
+                  source: 'shopping-cart',
+                  timestamp: new Date().toISOString()
+                }));
+                ws.close();
+              };
+            } catch (error) {
+              console.error('❌ Shopping Cart: Failed to send refresh signal:', error);
+            }
 
-          console.log('✅ Shopping Cart: Receipt modal closed and refresh signal sent');
-        }}
-        receipt={selectedReceipt}
-        cartItems={selectedReceipt?.items || lastCartItems.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),
-          quantity: item.quantity,
-          sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "0"),
-        })) || cart.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),
-          quantity: item.quantity,
-          sku: `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "0"),
-        }))}
-      />
+            console.log('✅ Shopping Cart: Receipt modal closed and refresh signal sent');
+          }}
+          receipt={selectedReceipt}
+          cartItems={selectedReceipt?.items || lastCartItems.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
+            taxRate: parseFloat(item.taxRate || "0"),
+          })) || cart.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            sku: `ITEM${String(item.id).padStart(3, "0")}`,
+            taxRate: parseFloat(item.taxRate || "0"),
+          }))}
+        />
+      )}
 
       {/* E-Invoice Modal for invoice processing */}
       {showEInvoiceModal && (
