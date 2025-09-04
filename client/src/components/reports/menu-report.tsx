@@ -550,8 +550,6 @@ function MenuReport() {
           
           {/* Category Performance Table - Only show when data exists */}
           {menuAnalysis?.categoryStats && menuAnalysis.categoryStats.length > 0 && (
-            
-            {/* Category Performance Table */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px]">
                 <thead>
