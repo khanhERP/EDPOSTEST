@@ -593,98 +593,92 @@ export function OrderManagement() {
     return `${Math.floor(amount).toLocaleString('vi-VN')} ₫`;
   };
 
-  // Memoize expensive calculations - using same logic as Table Grid
+  // Memoize expensive calculations - using EXACT same logic as Table Grid
   const orderDetailsCalculation = React.useMemo(() => {
     if (!selectedOrder || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
       return { subtotal: 0, tax: 0, total: 0 };
     }
 
-    let calculatedSubtotal = 0;
-    let calculatedTax = 0;
-    let calculatedTotal = 0;
+    let subtotal = 0;
+    let taxAmount = 0;
 
-    console.log(`🧮 Order Details: Calculating totals for ${orderItems.length} items`);
+    console.log(`🧮 Order Details: Calculating totals for ${orderItems.length} items using table-grid logic`);
 
     orderItems.forEach((item: any) => {
-      const basePrice = Number(item.unitPrice || 0);
+      const unitPrice = Number(item.unitPrice || 0);
       const quantity = Number(item.quantity || 0);
       const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+      if (unitPrice <= 0 || quantity <= 0) {
+        console.warn(`⚠️ Order Details: Invalid item data: unitPrice=${unitPrice}, quantity=${quantity}`);
+        return;
+      }
 
       console.log(`📊 Order Details: Processing item ${item.id}:`, {
         productId: item.productId,
         productName: item.productName,
-        basePrice,
+        unitPrice,
         quantity,
         productFound: !!product
       });
 
-      if (basePrice <= 0 || quantity <= 0) {
-        console.warn(`⚠️ Order Details: Invalid item data: basePrice=${basePrice}, quantity=${quantity}`);
-        return;
-      }
+      // Calculate subtotal (base price * quantity)
+      const itemSubtotal = unitPrice * quantity;
+      subtotal += itemSubtotal;
 
-      // Subtotal = base price * quantity (before tax)
-      const itemSubtotal = basePrice * quantity;
-      calculatedSubtotal += itemSubtotal;
-
-      // Use EXACT same logic as Table Grid - calculate using afterTaxPrice if available
-      let finalPricePerUnit = basePrice;
-
+      // Calculate tax using afterTaxPrice if available (EXACT same logic as table-grid)
       if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-        finalPricePerUnit = parseFloat(product.afterTaxPrice);
-        const taxPerUnit = Math.max(0, finalPricePerUnit - basePrice);
+        const afterTaxPrice = parseFloat(product.afterTaxPrice);
+        const taxPerUnit = afterTaxPrice - unitPrice;
         const itemTax = taxPerUnit * quantity;
-        calculatedTax += itemTax;
+        taxAmount += itemTax;
 
         console.log(`💸 Order Details: Tax calculated for ${item.productName}:`, {
-          afterTaxPrice: finalPricePerUnit,
-          basePrice,
+          afterTaxPrice,
+          unitPrice,
           taxPerUnit,
           quantity,
           itemTax
         });
       }
-
-      // Calculate total using final price (including tax)
-      const itemTotal = finalPricePerUnit * quantity;
-      calculatedTotal += itemTotal;
     });
 
-    // Use floor like in Table Grid for consistency
-    const finalTotal = Math.floor(calculatedTotal);
+    const finalTotal = Math.floor(subtotal + taxAmount);
 
-    console.log(`💰 Order Details: Final calculation:`, {
-      subtotal: calculatedSubtotal,
-      tax: calculatedTax,
-      calculatedTotal: calculatedTotal,
+    console.log(`💰 Order Details: Final calculation (table-grid logic):`, {
+      subtotal: subtotal,
+      tax: taxAmount,
       finalTotal: finalTotal,
       itemsProcessed: orderItems.length
     });
 
     return {
-      subtotal: calculatedSubtotal,
-      tax: calculatedTax,
+      subtotal: subtotal,
+      tax: taxAmount,
       total: finalTotal
     };
   }, [selectedOrder, orderItems, products]);
 
-  // Function to get order total - now simplified since API provides calculated total
+  // Function to get order total - calculate from order items with products data
   const getOrderTotal = React.useCallback((order: Order) => {
-    // Use calculatedTotal from API if available, otherwise fallback to stored total
+    // For cancelled orders, return 0
+    if (order.status === 'cancelled') {
+      console.log(`💰 Order ${order.orderNumber} is cancelled, returning 0`);
+      return 0;
+    }
+
+    // Use calculatedTotal from API if available and valid
     const apiCalculatedTotal = (order as any).calculatedTotal;
-    const storedTotal = Number(order.total || 0);
+    if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
+      const total = Math.floor(Number(apiCalculatedTotal));
+      console.log(`💰 Using API calculated total for order ${order.orderNumber}: ${total}`);
+      return total;
+    }
 
-    const finalTotal = apiCalculatedTotal ? Number(apiCalculatedTotal) : storedTotal;
-
-    console.log(`💰 getOrderTotal for order ${order.orderNumber}:`, {
-      orderId: order.id,
-      apiCalculatedTotal,
-      storedTotal,
-      finalTotal,
-      orderStatus: order.status
-    });
-
-    return finalTotal;
+    // Fallback to stored total
+    const storedTotal = Math.floor(Number(order.total || 0));
+    console.log(`💰 Using stored total for order ${order.orderNumber}: ${storedTotal}`);
+    return storedTotal;
   }, []);
 
   const formatTime = (dateString: string | Date) => {
