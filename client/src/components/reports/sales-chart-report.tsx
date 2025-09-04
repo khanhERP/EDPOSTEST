@@ -511,35 +511,27 @@ export function SalesChartReport() {
       status: order.status,
     }));
 
+    // Calculate daily sales from filtered completed orders
     const dailySales: {
-      [date: string]: { revenue: number; orders: number; customers: number };
+      [date: string]: { orders: number; revenue: number; customers: number };
     } = {};
 
-    filteredCompletedOrders.forEach((order: any) => {
-      const orderDate = new Date(
-        order.orderedAt || order.createdAt || order.created_at || order.paidAt,
-      );
+    filteredCompletedOrders.forEach((item: any) => {
+      try {
+        const itemDate = new Date(item.date);
+        if (isNaN(itemDate.getTime())) return;
 
-      const year = orderDate.getFullYear();
-      const month = (orderDate.getMonth() + 1).toString().padStart(2, "0");
-      const day = orderDate.getDate().toString().padStart(2, "0");
-      const date = `${year}-${month}-${day}`;
+        const dateStr = itemDate.toISOString().split("T")[0];
 
-      if (!dailySales[date]) {
-        dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
-      }
+        if (!dailySales[dateStr]) {
+          dailySales[dateStr] = { orders: 0, revenue: 0, customers: 0 };
+        }
 
-      // Use EXACT same revenue calculation as dashboard: total - discount
-      const orderTotal = Number(order.total || 0);
-      const discount = Number(order.discount || 0);
-      dailySales[date].revenue += orderTotal - discount;
-      dailySales[date].orders += 1;
-
-      // Count unique customers per day
-      if (order.customerId) {
-        dailySales[date].customers += 1;
-      } else {
-        dailySales[date].customers += 1; // Count walk-in customers
+        dailySales[dateStr].orders += 1;
+        dailySales[dateStr].revenue += Number(item.amount || 0);
+        dailySales[dateStr].customers += Number(item.customerCount || 1);
+      } catch (error) {
+        console.warn("Error processing item for daily sales:", error);
       }
     });
 
@@ -1388,11 +1380,10 @@ export function SalesChartReport() {
         })),
       });
 
-      // Group orders by employee and extract payment methods
-      const employeeData: {
-        [employeeKey: string]: {
-          employeeCode: string;
-          employeeName: string;
+      // Calculate employee sales
+      const employeeSales: {
+        [employeeId: string]: {
+          employee: any;
           orderCount: number;
           revenue: number;
           tax: number;
@@ -1401,58 +1392,35 @@ export function SalesChartReport() {
         };
       } = {};
 
-      // Get all unique payment methods from filtered orders
-      const allPaymentMethods = new Set<string>();
-      filteredCompletedOrders.forEach((order: any) => {
-        const method = order.paymentMethod || "cash";
-        allPaymentMethods.add(method);
+      // Initialize all employees with 0 values
+      (employees || []).forEach((employee: any) => {
+        employeeSales[employee.id] = {
+          employee,
+          orderCount: 0,
+          revenue: 0,
+          tax: 0,
+          total: 0,
+          paymentMethods: {},
+        };
       });
 
-      filteredCompletedOrders.forEach((order: any) => {
-        // Get employee name - try multiple fields
-        const employeeName =
-          order.employeeName || order.cashierName || "Unknown Employee";
+      filteredCompletedOrders.forEach((item: any) => {
+        const employeeId = item.employeeId || "unknown";
+        if (employeeSales[employeeId]) {
+          const stats = employeeSales[employeeId];
+          stats.orderCount += 1;
+          stats.revenue += Number(item.amount || 0) - Number(item.tax || 0);
+          stats.tax += Number(item.tax || 0);
+          stats.total += Number(item.amount || 0);
 
-        const employeeKey = `${order.employeeId || 0}-${employeeName}`;
-
-        if (!employeeData[employeeKey]) {
-          employeeData[employeeKey] = {
-            employeeCode: order.employeeId?.toString() || "Unknown",
-            employeeName: employeeName,
-            orderCount: 0,
-            revenue: 0,
-            tax: 0,
-            total: 0,
-            paymentMethods: {},
-          };
+          const paymentMethod = item.paymentMethod || "cash";
+          stats.paymentMethods[paymentMethod] =
+            (stats.paymentMethods[paymentMethod] || 0) +
+            Number(item.amount || 0);
         }
-
-        // Add payment method to all methods set
-        const paymentMethod = order.paymentMethod || "cash";
-        allPaymentMethods.add(paymentMethod);
-
-        // Initialize payment method if not exists
-        if (!employeeData[employeeKey].paymentMethods[paymentMethod]) {
-          employeeData[employeeKey].paymentMethods[paymentMethod] = 0;
-        }
-
-        // Calculate amounts using actual tax from database (default to 0)
-        const orderTotal = Number(order.total || 0);
-        const discount = Number(order.discount || 0);
-        // Use actual tax from database, default to 0 if not available
-        const tax = Number(order.tax || 0);
-
-        const revenue = orderTotal - discount - tax;
-
-        // Update employee data
-        employeeData[employeeKey].orderCount += 1;
-        employeeData[employeeKey].revenue += revenue;
-        employeeData[employeeKey].tax += tax;
-        employeeData[employeeKey].total += orderTotal;
-        employeeData[employeeKey].paymentMethods[paymentMethod] += revenue;
       });
 
-      const data = Object.values(employeeData).sort(
+      const data = Object.values(employeeSales).sort(
         (a, b) => b.total - a.total,
       );
 
@@ -2098,57 +2066,37 @@ export function SalesChartReport() {
       );
     });
 
-    const customerData: {
+    // Calculate customer sales
+    const customerSales: {
       [customerId: string]: {
-        customerId: string;
-        customerName: string;
-        customerGroup: string;
+        customer: any;
         orders: number;
         totalAmount: number;
         discount: number;
         revenue: number;
-        status: string;
-        orderDetails: any[];
       };
     } = {};
 
-    filteredOrders.forEach((order: any) => {
-      const customerId = order.customerId || "guest";
-      const customerName = order.customerName || "Khách lẻ";
-
-      if (!customerData[customerId]) {
-        customerData[customerId] = {
-          customerId: customerId === "guest" ? "KL-001" : customerId,
-          customerName: customerName,
-          customerGroup: t("common.regularCustomer"), // Default group
+    filteredCompletedOrders.forEach((item: any) => {
+      const customerId = item.customerId || "walk-in";
+      if (!customerSales[customerId]) {
+        customerSales[customerId] = {
+          customer: item.customerName || "Khách lẻ",
           orders: 0,
           totalAmount: 0,
           discount: 0,
           revenue: 0,
-          status: t("reports.active"),
-          orderDetails: [],
         };
       }
 
-      const orderTotal = Number(order.total);
-      const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
-      const orderDiscount = orderSubtotal - orderTotal;
-
-      customerData[customerId].orders += 1;
-      customerData[customerId].totalAmount += orderSubtotal;
-      customerData[customerId].discount += orderDiscount;
-      customerData[customerId].revenue += orderTotal;
-      customerData[customerId].orderDetails.push(order);
-
-      // Determine customer group based on total spending
-      if (customerData[customerId].revenue >= 1000000) {
-        customerData[customerId].customerGroup = t("reports.vip");
-      } else if (customerData[customerId].revenue >= 500000) {
-        customerData[customerId].customerGroup = t("common.goldCustomer");
-      }
+      const stats = customerSales[customerId];
+      stats.orders += 1;
+      stats.totalAmount += Number(item.amount || 0);
+      stats.revenue += Number(item.amount || 0) - Number(item.discount || 0);
+      stats.discount += Number(item.discount || 0);
     });
 
-    const data = Object.values(customerData).sort(
+    const data = Object.values(customerSales).sort(
       (a, b) => b.revenue - a.revenue,
     );
 
@@ -2543,47 +2491,20 @@ export function SalesChartReport() {
       },
     };
 
-    // Process completed orders from dashboard (EXACT same data source)
-    filteredCompletedOrders.forEach((order: any) => {
-      // Determine sales method based on order properties
-      let method = t("reports.dineIn"); // Default
+    // Process completed orders ONLY
+    filteredCompletedOrders.forEach((item: any) => {
+      try {
+        // Use EXACT same logic as dashboard - check tableId to determine method
+        const isDineIn = item.tableId && item.tableId !== null;
+        const method = isDineIn ? t("reports.dineIn") : t("reports.takeaway");
 
-      // Check for delivery/takeaway indicators
-      if (
-        order.deliveryMethod === "delivery" ||
-        order.deliveryMethod === "takeout" ||
-        order.deliveryMethod === "takeaway" ||
-        order.isDelivery === true ||
-        order.salesChannel === "delivery" ||
-        order.salesChannel === "takeout" ||
-        order.salesChannel === "takeaway"
-      ) {
-        method = t("reports.takeaway");
-      } else if (
-        order.deliveryMethod === "dine_in" ||
-        order.deliveryMethod === "dinein" ||
-        order.salesChannel === "dine_in" ||
-        order.tableId ||
-        order.tableNumber
-      ) {
-        method = t("reports.dineIn");
+        if (salesMethodData[method]) {
+          salesMethodData[method].completedOrders += 1;
+          salesMethodData[method].completedRevenue += Number(item.amount || 0);
+        }
+      } catch (error) {
+        console.warn("Error processing item for sales method:", error);
       }
-
-      // Use EXACT same revenue calculation as dashboard: total - discount
-      const orderTotal = Number(order.total || 0);
-      const discount = Number(order.discount || 0);
-      const revenue = orderTotal - discount;
-
-      // All orders from filteredCompletedOrders are already completed/paid
-      if (revenue > 0) {
-        salesMethodData[method].completedOrders += 1;
-        salesMethodData[method].completedRevenue += revenue;
-      }
-
-      salesMethodData[method].totalOrders =
-        salesMethodData[method].completedOrders;
-      salesMethodData[method].totalRevenue =
-        salesMethodData[method].completedRevenue;
     });
 
     console.log("Sales Method Data:", salesMethodData);
@@ -2624,7 +2545,7 @@ export function SalesChartReport() {
         </CardHeader>
         <CardContent>
           <div className="w-full">
-            <div className="overflow-x-auto xl:overflow-x-visible">
+            <div className="overflow-x-visible">
               <Table className="w-full min-w-[800px] xl:min-w-full">
                 <TableHeader>
                   <TableRow>
@@ -2801,6 +2722,7 @@ export function SalesChartReport() {
             : null,
         });
 
+        // Calculate daily sales from filtered completed orders
         const dailySales: {
           [date: string]: { revenue: number; orders: number };
         } = {};
@@ -3161,302 +3083,6 @@ export function SalesChartReport() {
     }
 
     return [];
-  };
-
-  // Chart rendering component
-  const renderChart = () => {
-    try {
-      const chartData = getChartData();
-
-      console.log("Chart data for", analysisType, ":", chartData);
-
-      // Always render the chart container, even with no data
-      return (
-        <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
-            <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-white/90 text-sm font-normal">
-                  {t("reports.chartView")}
-                </div>
-                <div className="text-white font-semibold">
-                  {getReportTitle()}
-                </div>
-              </div>
-            </CardTitle>
-            <CardDescription className="text-blue-100 mt-2">
-              {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
-              {formatDate(startDate)} {t("reports.toDate")}:{" "}
-              {formatDate(endDate)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
-            {!chartData || chartData.length === 0 ? (
-              <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 flex flex-col justify-center items-center">
-                <div className="text-gray-500 mb-4 text-center">
-                  <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <div className="text-lg font-medium mb-2">
-                    {t("reports.noDataDescription")}
-                  </div>
-                  <div className="text-sm text-orange-600 mb-2">
-                    📊 Không có dữ liệu trong khoảng thời gian đã chọn
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    ({formatDate(startDate)} - {formatDate(endDate)})
-                  </div>
-                  <div className="text-xs text-gray-400 mt-2">
-                    Thử chọn khoảng thời gian khác hoặc kiểm tra dữ liệu đơn
-                    hàng và hóa đơn
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-purple-50/20 rounded-xl"></div>
-                <ChartContainer
-                  config={chartConfig}
-                  className="h-full w-full relative z-10"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={chartData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                    >
-                      <defs>
-                        <linearGradient
-                          id="revenueGradient"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#10b981"
-                            stopOpacity={0.9}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#10b981"
-                            stopOpacity={0.6}
-                          />
-                        </linearGradient>
-                        <linearGradient
-                          id="ordersGradient"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#3b82f6"
-                            stopOpacity={0.9}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#3b82f6"
-                            stopOpacity={0.6}
-                          />
-                        </linearGradient>
-                        <linearGradient
-                          id="quantityGradient"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#f59e0b"
-                            stopOpacity={0.9}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#f59e0b"
-                            stopOpacity={0.6}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#e5e7eb"
-                        opacity={0.5}
-                      />
-                      <XAxis
-                        dataKey="name"
-                        stroke="#6b7280"
-                        fontSize={12}
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                        interval={0}
-                      />
-                      <YAxis stroke="#6b7280" fontSize={12} />
-                      <ChartTooltip
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            return (
-                              <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-lg">
-                                <p className="font-semibold text-gray-800 mb-2">
-                                  {label}
-                                </p>
-                                {payload.map((entry, index) => {
-                                  const translatedName =
-                                    entry.dataKey === "revenue"
-                                      ? t("reports.revenue")
-                                      : entry.dataKey === "orders"
-                                        ? t("reports.orders")
-                                        : entry.dataKey === "quantity"
-                                          ? t("reports.quantity")
-                                          : entry.name;
-                                  return (
-                                    <p
-                                      key={index}
-                                      className="text-sm"
-                                      style={{ color: entry.color }}
-                                    >
-                                      {translatedName}:{" "}
-                                      {entry.dataKey === "revenue" ||
-                                      entry.dataKey === "netRevenue"
-                                        ? formatCurrency(Number(entry.value))
-                                        : entry.value}
-                                    </p>
-                                  );
-                                })}
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-
-                      {/* Revenue bar - always show */}
-                      <Bar
-                        dataKey="revenue"
-                        fill="url(#revenueGradient)"
-                        radius={[4, 4, 0, 0]}
-                        maxBarSize={60}
-                      />
-
-                      {/* Additional bars based on analysis type */}
-                      {analysisType === "time" && (
-                        <Bar
-                          dataKey="orders"
-                          fill="url(#ordersGradient)"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      )}
-
-                      {analysisType === "product" && (
-                        <Bar
-                          dataKey="quantity"
-                          fill="url(#quantityGradient)"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      )}
-
-                      {(analysisType === "employee" ||
-                        analysisType === "customer" ||
-                        analysisType === "channel" ||
-                        analysisType === "salesDetail") && (
-                        <Bar
-                          dataKey="orders"
-                          fill="url(#ordersGradient)"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      )}
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      );
-    } catch (error) {
-      console.error("Error in renderChart:", error);
-      return (
-        <Card className="shadow-xl border-0 bg-gradient-to-br from-red-50/50 to-pink-50/30">
-          <CardHeader className="bg-gradient-to-r from-red-600 to-pink-600 rounded-t-lg">
-            <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-white/90 text-sm font-normal">
-                  {t("reports.chartView")}
-                </div>
-                <div className="text-white font-semibold">
-                  Lỗi hiển thị biểu đồ
-                </div>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
-            <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 flex flex-col justify-center items-center">
-              <div className="text-red-500 text-center">
-                <p className="text-lg font-medium mb-2">
-                  Lỗi khi hiển thị biểu đồ
-                </p>
-                <p className="text-sm">{error?.message || "Unknown error"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-  };
-
-  // Main render function
-  const renderReportContent = () => {
-    try {
-      console.log(
-        "Rendering report content for analysisType:",
-        analysisType,
-        "concernType:",
-        concernType,
-      );
-
-      switch (analysisType) {
-        case "time":
-          // Handle concernType for time-based analysis
-          if (concernType === "employee") {
-            return renderEmployeeReport();
-          } else if (concernType === "salesDetail") {
-            return renderSalesDetailReport();
-          }
-          return renderSalesReport();
-        case "product":
-          return renderProductReport();
-        case "employee":
-          return renderEmployeeReport();
-        case "customer":
-          return renderCustomerReport();
-        case "channel":
-          return renderSalesChannelReport();
-        case "salesDetail":
-          return renderSalesDetailReport();
-        default:
-          return renderSalesReport();
-      }
-    } catch (error) {
-      console.error("Error in renderReportContent:", error);
-      return (
-        <div className="flex justify-center py-8">
-          <div className="text-red-500">
-            <p>Có lỗi xảy ra khi hiển thị báo cáo</p>
-            <p className="text-sm">{error.message}</p>
-          </div>
-        </div>
-      );
-    }
   };
 
   // Product Report Logic (Moved up to be before renderChart)
@@ -3859,6 +3485,302 @@ export function SalesChartReport() {
         </CardContent>
       </Card>
     );
+  };
+
+  // Render Chart component
+  const renderChart = () => {
+    try {
+      const chartData = getChartData();
+
+      console.log("Chart data for", analysisType, ":", chartData);
+
+      // Always render the chart container, even with no data
+      return (
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-white/90 text-sm font-normal">
+                  {t("reports.chartView")}
+                </div>
+                <div className="text-white font-semibold">
+                  {getReportTitle()}
+                </div>
+              </div>
+            </CardTitle>
+            <CardDescription className="text-blue-100 mt-2">
+              {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
+              {formatDate(startDate)} {t("reports.toDate")}:{" "}
+              {formatDate(endDate)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
+            {!chartData || chartData.length === 0 ? (
+              <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 flex flex-col justify-center items-center">
+                <div className="text-gray-500 mb-4 text-center">
+                  <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <div className="text-lg font-medium mb-2">
+                    {t("reports.noDataDescription")}
+                  </div>
+                  <div className="text-sm text-orange-600 mb-2">
+                    📊 Không có dữ liệu trong khoảng thời gian đã chọn
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    ({formatDate(startDate)} - {formatDate(endDate)})
+                  </div>
+                  <div className="text-xs text-gray-400 mt-2">
+                    Thử chọn khoảng thời gian khác hoặc kiểm tra dữ liệu đơn
+                    hàng và hóa đơn
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-purple-50/20 rounded-xl"></div>
+                <ChartContainer
+                  config={chartConfig}
+                  className="h-full w-full relative z-10"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chartData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="revenueGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#10b981"
+                            stopOpacity={0.9}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#10b981"
+                            stopOpacity={0.6}
+                          />
+                        </linearGradient>
+                        <linearGradient
+                          id="ordersGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.9}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.6}
+                          />
+                        </linearGradient>
+                        <linearGradient
+                          id="quantityGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#f59e0b"
+                            stopOpacity={0.9}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#f59e0b"
+                            stopOpacity={0.6}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#e5e7eb"
+                        opacity={0.5}
+                      />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#6b7280"
+                        fontSize={12}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        interval={0}
+                      />
+                      <YAxis stroke="#6b7280" fontSize={12} />
+                      <ChartTooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-lg">
+                                <p className="font-semibold text-gray-800 mb-2">
+                                  {label}
+                                </p>
+                                {payload.map((entry, index) => {
+                                  const translatedName =
+                                    entry.dataKey === "revenue"
+                                      ? t("reports.revenue")
+                                      : entry.dataKey === "orders"
+                                        ? t("reports.orders")
+                                        : entry.dataKey === "quantity"
+                                          ? t("reports.quantity")
+                                          : entry.name;
+                                  return (
+                                    <p
+                                      key={index}
+                                      className="text-sm"
+                                      style={{ color: entry.color }}
+                                    >
+                                      {translatedName}:{" "}
+                                      {entry.dataKey === "revenue" ||
+                                      entry.dataKey === "netRevenue"
+                                        ? formatCurrency(Number(entry.value))
+                                        : entry.value}
+                                    </p>
+                                  );
+                                })}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+
+                      {/* Revenue bar - always show */}
+                      <Bar
+                        dataKey="revenue"
+                        fill="url(#revenueGradient)"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={60}
+                      />
+
+                      {/* Additional bars based on analysis type */}
+                      {analysisType === "time" && (
+                        <Bar
+                          dataKey="orders"
+                          fill="url(#ordersGradient)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      )}
+
+                      {analysisType === "product" && (
+                        <Bar
+                          dataKey="quantity"
+                          fill="url(#quantityGradient)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      )}
+
+                      {(analysisType === "employee" ||
+                        analysisType === "customer" ||
+                        analysisType === "channel" ||
+                        analysisType === "salesDetail") && (
+                        <Bar
+                          dataKey="orders"
+                          fill="url(#ordersGradient)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      )}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      );
+    } catch (error) {
+      console.error("Error in renderChart:", error);
+      return (
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-red-50/50 to-pink-50/30">
+          <CardHeader className="bg-gradient-to-r from-red-600 to-pink-600 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-white/90 text-sm font-normal">
+                  {t("reports.chartView")}
+                </div>
+                <div className="text-white font-semibold">
+                  Lỗi hiển thị biểu đồ
+                </div>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
+            <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 flex flex-col justify-center items-center">
+              <div className="text-red-500 text-center">
+                <p className="text-lg font-medium mb-2">
+                  Lỗi khi hiển thị biểu đồ
+                </p>
+                <p className="text-sm">{error?.message || "Unknown error"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+  };
+
+  // Main render function
+  const renderReportContent = () => {
+    try {
+      console.log(
+        "Rendering report content for analysisType:",
+        analysisType,
+        "concernType:",
+        concernType,
+      );
+
+      switch (analysisType) {
+        case "time":
+          // Handle concernType for time-based analysis
+          if (concernType === "employee") {
+            return renderEmployeeReport();
+          } else if (concernType === "salesDetail") {
+            return renderSalesDetailReport();
+          }
+          return renderSalesReport();
+        case "product":
+          return renderProductReport();
+        case "employee":
+          return renderEmployeeReport();
+        case "customer":
+          return renderCustomerReport();
+        case "channel":
+          return renderSalesChannelReport();
+        case "salesDetail":
+          return renderSalesDetailReport();
+        default:
+          return renderSalesReport();
+      }
+    } catch (error) {
+      console.error("Error in renderReportContent:", error);
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-red-500">
+            <p>Có lỗi xảy ra khi hiển thị báo cáo</p>
+            <p className="text-sm">{error.message}</p>
+          </div>
+        </div>
+      );
+    }
   };
 
   return (
