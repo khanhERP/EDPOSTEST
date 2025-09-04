@@ -736,7 +736,7 @@ export default function SalesOrders() {
     // Sort by creation date only (newest first)
     const createdAtA = new Date(a.createdAt || a.date || a.orderedAt || a.invoiceDate);
     const createdAtB = new Date(b.createdAt || b.date || b.orderedAt || b.invoiceDate);
-    
+
     return createdAtB.getTime() - createdAtA.getTime();
   }) : [];
 
@@ -1765,26 +1765,77 @@ export default function SalesOrders() {
                           <option value={100}>100</option>
                         </select>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                          disabled={currentPage === 1}
-                        >
-                          Trước
-                        </Button>
-                        <span className="text-sm text-gray-600">
-                          Trang {currentPage} / {Math.ceil(filteredInvoices.length / itemsPerPage) || 1}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredInvoices.length / itemsPerPage) || 1))}
-                          disabled={currentPage >= (Math.ceil(filteredInvoices.length / itemsPerPage) || 1)}
-                        >
-                          Sau
-                        </Button>
+                      <div className="flex items-center gap-1">
+                        {/* Show page numbers with correct logic */}
+                        {(() => {
+                          const totalPagesForPagination = Math.ceil(filteredInvoices.length / itemsPerPage) || 1;
+
+                          // Simple pagination for small number of pages
+                          if (totalPagesForPagination <= 7) {
+                            return Array.from({ length: totalPagesForPagination }, (_, i) => i + 1).map(pageNum => (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(pageNum)}
+                                className="w-8 h-8 p-0 text-sm"
+                              >
+                                {pageNum}
+                              </Button>
+                            ));
+                          }
+
+                          // Complex pagination for many pages
+                          const pages = [];
+
+                          // Always show first page
+                          pages.push(1);
+
+                          if (currentPage > 4) {
+                            pages.push('...');
+                          }
+
+                          // Show pages around current page
+                          const start = Math.max(2, currentPage - 1);
+                          const end = Math.min(totalPagesForPagination - 1, currentPage + 1);
+
+                          for (let i = start; i <= end; i++) {
+                            if (i !== 1 && i !== totalPagesForPagination) {
+                              pages.push(i);
+                            }
+                          }
+
+                          if (currentPage < totalPagesForPagination - 3) {
+                            pages.push('...');
+                          }
+
+                          // Always show last page
+                          if (totalPagesForPagination > 1) {
+                            pages.push(totalPagesForPagination);
+                          }
+
+                          return pages.map((pageNumber, index) => {
+                            if (pageNumber === '...') {
+                              return (
+                                <span key={`ellipsis-${index}`} className="px-2 text-gray-500 text-sm">
+                                  ...
+                                </span>
+                              );
+                            }
+
+                            return (
+                              <Button
+                                key={pageNumber}
+                                variant={currentPage === pageNumber ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(pageNumber as number)}
+                                className="w-8 h-8 p-0 text-sm"
+                              >
+                                {pageNumber}
+                              </Button>
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
                   </div>
