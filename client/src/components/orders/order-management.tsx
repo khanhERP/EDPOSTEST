@@ -607,7 +607,7 @@ export function OrderManagement() {
 
     // For active orders only (pending, confirmed, preparing, ready, served), use calculation priority
     console.log(`💰 ACTIVE Order ${order.orderNumber} (${order.status}) - using calculation priority`);
-    
+
     // Priority 1: API calculated total (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
@@ -1388,7 +1388,7 @@ export function OrderManagement() {
       // Calculate totals for orders that don't have API calculated totals
       currentOrders.forEach(async (order) => {
         const apiCalculatedTotal = (order as any).calculatedTotal;
-        
+
         // Skip if we already have a valid API calculated total or cached total
         if ((apiCalculatedTotal && Number(apiCalculatedTotal) > 0) || calculatedTotals.has(order.id)) {
           return;
@@ -1402,7 +1402,7 @@ export function OrderManagement() {
         }
 
         console.log(`🧮 Calculating total for order ${order.orderNumber} (ID: ${order.id})`);
-        
+
         try {
           // Fetch order items for calculation
           const response = await apiRequest('GET', `/api/order-items/${order.id}`);
@@ -1438,7 +1438,7 @@ export function OrderManagement() {
           });
 
           const calculatedTotal = Math.floor(subtotal + taxAmount);
-          
+
           console.log(`💰 Calculated total for order ${order.orderNumber}:`, {
             subtotal,
             taxAmount,
@@ -1721,7 +1721,7 @@ export function OrderManagement() {
                           if (order.status === 'paid' || order.status === 'cancelled') {
                             const storedTotal = Math.floor(Number(order.total || 0));
                             console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - using STORED total ONLY: ${storedTotal}`);
-                            
+
                             return (
                               <span className="text-green-600">
                                 {formatCurrency(storedTotal)}
@@ -1733,7 +1733,7 @@ export function OrderManagement() {
                           const apiCalculatedTotal = (order as any).calculatedTotal;
                           const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
                           const hasCachedTotal = calculatedTotals.has(order.id);
-                          
+
                           // Priority 1: Use API calculated total if available
                           if (hasApiTotal) {
                             const displayTotal = Math.floor(Number(apiCalculatedTotal));
@@ -1744,7 +1744,7 @@ export function OrderManagement() {
                               </span>
                             );
                           }
-                          
+
                           // Priority 2: Use cached calculated total
                           if (hasCachedTotal) {
                             const cachedTotal = calculatedTotals.get(order.id)!;
@@ -2705,6 +2705,9 @@ export function OrderManagement() {
           console.log("🔴 Order Management: Closing receipt preview modal");
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
+          // Ensure payment modal states are also cleared
+          setShowPaymentMethodModal(false);
+          setOrderForPayment(null);
         }}
         onConfirm={() => {
           console.log("📄 Order Management: Receipt preview confirmed, starting payment flow");
