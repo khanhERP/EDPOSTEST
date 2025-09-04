@@ -741,8 +741,20 @@ export function PaymentMethodModal({
     // Always close the E-Invoice modal first
     setShowEInvoice(false);
 
+    // Validate invoiceData exists
+    if (!invoiceData) {
+      console.error("❌ No invoice data received");
+      toast({
+        title: "Lỗi",
+        description: "Không nhận được dữ liệu hóa đơn",
+        variant: "destructive",
+      });
+      onClose();
+      return;
+    }
+
     // Check if we have valid receipt data
-    if (invoiceData.receipt) {
+    if (invoiceData.receipt && typeof invoiceData.receipt === 'object') {
       console.log("📄 Valid receipt data found, setting for receipt modal:", invoiceData.receipt);
       
       // Set receipt data for modal
@@ -770,7 +782,7 @@ export function PaymentMethodModal({
       }, 300);
 
     } else {
-      console.error("❌ No receipt data found in E-Invoice response");
+      console.error("❌ No valid receipt data found in E-Invoice response:", invoiceData);
       
       // Even if no receipt data, still show success and close payment flow
       if (invoiceData.success || invoiceData.publishLater || invoiceData.publishedImmediately) {
@@ -782,13 +794,18 @@ export function PaymentMethodModal({
         });
         
         // Close the entire payment modal after successful processing
-        onClose();
+        setTimeout(() => {
+          onClose();
+        }, 1000);
       } else {
+        console.error("❌ Invalid invoice data:", invoiceData);
         toast({
-          title: "Cảnh báo",
-          description: "Hóa đơn đã được xử lý nhưng không thể hiển thị để in. Vui lòng kiểm tra trong danh sách hóa đơn.",
+          title: "Lỗi",
+          description: "Có lỗi xảy ra khi xử lý hóa đơn. Vui lòng thử lại.",
           variant: "destructive",
         });
+        // Close modal on error to prevent white screen
+        onClose();
       }
     }
 

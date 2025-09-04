@@ -659,9 +659,20 @@ export function EInvoiceModal({
       console.log("✅ PUBLISH LATER: Prepared data for onConfirm");
       console.log("📦 PUBLISH LATER: Complete invoice data:", completeInvoiceData);
 
-      // Call onConfirm immediately without closing modal first
+      // Call onConfirm with complete data
       console.log("🔄 PUBLISH LATER: Calling onConfirm to trigger receipt modal display");
-      onConfirm(completeInvoiceData);
+      
+      // Ensure we have all required data before calling onConfirm
+      if (completeInvoiceData && completeInvoiceData.receipt) {
+        onConfirm(completeInvoiceData);
+      } else {
+        console.error("❌ PUBLISH LATER: Missing required data for onConfirm");
+        toast({
+          title: "Lỗi",
+          description: "Thiếu thông tin cần thiết để hiển thị hóa đơn",
+          variant: "destructive",
+        });
+      }
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
@@ -680,6 +691,9 @@ export function EInvoiceModal({
         title: "Lỗi",
         description: errorMessage,
       });
+      
+      // Don't call onConfirm on error to prevent white screen
+      console.log("❌ PUBLISH LATER: Not calling onConfirm due to error");
     } finally {
       setIsPublishing(false); // Always reset loading state
     }
