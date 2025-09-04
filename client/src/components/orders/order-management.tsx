@@ -57,22 +57,29 @@ export function OrderManagement() {
     }
   }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
 
-  const { data: tablesWithTotals } = useQuery({
-    queryKey: ['/api/tables-with-totals'],
+  const { data: orders, isLoading: ordersLoading } = useQuery({
+    queryKey: ['/api/orders'],
     refetchInterval: 2000, // Faster polling - every 2 seconds
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchIntervalInBackground: true, // Continue refetching in background
     staleTime: 0, // Always consider data fresh to force immediate updates
+    onSuccess: (data) => {
+      console.log(`🔍 DEBUG: Orders query onSuccess called:`, {
+        ordersCount: data?.length || 0,
+        timestamp: new Date().toISOString(),
+        firstFewOrders: data?.slice(0, 3)?.map((o: any) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          tableId: o.tableId,
+          storedTotal: o.total
+        }))
+      });
+    },
+    onError: (error) => {
+      console.error(`❌ DEBUG: Orders query onError:`, error);
+    }
   });
-
-  // Extract orders from optimized tables response
-  const orders = tablesWithTotals?.filter(table => table.activeOrder)
-    .map(table => ({
-      ...table.activeOrder,
-      calculatedTotal: table.calculatedTotal
-    })) || [];
-
-  const ordersLoading = !tablesWithTotals;
 
   // Create a map to store calculated totals for orders with items
   const [calculatedTotals, setCalculatedTotals] = useState<Map<number, number>>(new Map());
