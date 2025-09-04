@@ -73,21 +73,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnWindowFocus: false, // Don't refetch on focus
-    refetchOnMount: false, // Don't refetch on mount if data exists
-    refetchInterval: false, // Don't auto-refetch on interval
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
+    refetchOnWindowFocus: true, // Refetch on focus to get fresh data
+    refetchOnMount: true, // Always refetch on mount to get fresh data
+    refetchInterval: 15000, // Auto-refetch every 15 seconds
     networkMode: 'online', // Only fetch when online
   });
 
   const { data: orders, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes (orders change more frequently)
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchOnWindowFocus: false, // Don't refetch on focus
-    refetchOnMount: false, // Don't refetch on mount if data exists
-    refetchInterval: false, // Don't auto-refetch on interval
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
+    refetchOnWindowFocus: true, // Refetch on focus to get fresh data
+    refetchOnMount: true, // Always refetch on mount to get fresh data
+    refetchInterval: 15000, // Auto-refetch every 15 seconds for orders
     networkMode: 'online', // Only fetch when online
   });
 
@@ -99,11 +99,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { data: allOrderItems } = useQuery({
     queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
     enabled: activeOrders.length > 0 && activeOrders.length <= 20, // Limit to prevent too many requests
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    staleTime: 15 * 60 * 1000, // Cache for 15 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    refetchOnWindowFocus: true, // Always refetch on focus to get fresh data
+    refetchOnMount: true, // Always refetch on mount to get fresh data
+    refetchInterval: 30000, // Refetch every 30 seconds to keep totals fresh
+    staleTime: 0, // Don't use stale data - always fetch fresh
+    gcTime: 2 * 60 * 1000, // Keep in cache for only 2 minutes
     queryFn: async () => {
       const itemsMap = new Map();
 
@@ -1984,20 +1984,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           className={`font-medium ${Number(activeOrder.total) <= 0 ? "text-gray-400" : "text-gray-900"}`}
                         >
                           {(() => {
-                            // Get stored total from database
-                            const storedTotal = Number(activeOrder.total || 0);
-
-                            console.log(
-                              `💰 Table ${table.tableNumber} total calculation:`,
-                              {
-                                orderId: activeOrder.id,
-                                storedTotal: storedTotal,
-                                orderNumber: activeOrder.orderNumber
-                              }
-                            );
-
-                            // Always try to calculate from order items first for accuracy
+                            // Always calculate fresh total from order items without cache dependency
                             const orderItemsForTable = allOrderItems?.get(activeOrder.id);
+                            
                             if (orderItemsForTable && Array.isArray(orderItemsForTable) && orderItemsForTable.length > 0) {
                               let calculatedSubtotal = 0;
                               let calculatedTax = 0;
@@ -2025,25 +2014,27 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               });
 
                               const calculatedTotal = calculatedSubtotal + calculatedTax;
-                              if (calculatedTotal > 0) {
-                                console.log(`💰 Table ${table.tableNumber} using calculated total:`, {
-                                  itemsCount: orderItemsForTable.length,
-                                  calculatedSubtotal,
-                                  calculatedTax,
-                                  calculatedTotal
-                                });
-                                return Math.floor(calculatedTotal).toLocaleString("vi-VN");
-                              }
+                              console.log(`💰 Table ${table.tableNumber} calculated total:`, {
+                                orderId: activeOrder.id,
+                                orderNumber: activeOrder.orderNumber,
+                                itemsCount: orderItemsForTable.length,
+                                calculatedSubtotal,
+                                calculatedTax,
+                                calculatedTotal
+                              });
+                              
+                              return Math.floor(calculatedTotal).toLocaleString("vi-VN");
                             }
 
-                            // Fallback to stored total if calculation fails
-                            if (storedTotal > 0) {
-                              console.log(`💰 Table ${table.tableNumber} using stored total:`, storedTotal);
-                              return Math.floor(storedTotal).toLocaleString("vi-VN");
-                            }
-
-                            // Final fallback to "0" if no valid total found
-                            return "0";
+                            // If no items found, try to fetch them fresh or use stored total as last resort
+                            const storedTotal = Number(activeOrder.total || 0);
+                            console.log(`💰 Table ${table.tableNumber} using stored total as fallback:`, {
+                              orderId: activeOrder.id,
+                              orderNumber: activeOrder.orderNumber,
+                              storedTotal
+                            });
+                            
+                            return Math.floor(storedTotal).toLocaleString("vi-VN");
                           })()}{" "}
                           ₫
                         </div>
