@@ -1,8 +1,8 @@
 import {
   categories,
   products,
-  transactions,
-  transactionItems,
+  transactions as transactionsTable,
+  transactionItems as transactionItemsTable,
   employees,
   attendanceRecords,
   tables,
@@ -10,34 +10,13 @@ import {
   orderItems,
   storeSettings,
   suppliers,
-  type Category,
-  type Product,
-  type Transaction,
-  type TransactionItem,
-  type Employee,
-  type AttendanceRecord,
-  type Table,
-  type Order,
-  type OrderItem,
-  type StoreSettings,
-  type InsertCategory,
-  type InsertProduct,
-  type InsertTransaction,
-  type InsertTransactionItem,
-  type InsertEmployee,
-  type InsertAttendance,
-  type InsertTable,
-  type InsertOrder,
-  type InsertOrderItem,
-  type InsertStoreSettings,
-  type Receipt,
-  type InsertSupplier,
   customers,
   pointTransactions,
-  type Customer,
-  type InsertCustomer,
-  type PointTransaction,
-  type InsertPointTransaction,
+  invoiceTemplates,
+  eInvoiceConnections,
+  inventoryTransactions,
+  invoices,
+  invoiceItems,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, and, gte, lte, or, sql, desc, not, like } from "drizzle-orm";
@@ -227,6 +206,17 @@ export interface IStorage {
   getAllProducts(includeInactive?: boolean): Promise<Product[]>;
   getActiveProducts(): Promise<Product[]>;
 
+  // Invoice methods
+  getInvoices(tenantDb?: any): Promise<any[]>;
+  getInvoice(id: number, tenantDb?: any): Promise<any>;
+  createInvoice(invoiceData: any, tenantDb?: any): Promise<any>;
+  updateInvoice(id: number, updateData: any, tenantDb?: any): Promise<any>;
+  deleteInvoice(id: number, tenantDb?: any): Promise<boolean>;
+
+  // Invoice template methods
+  getInvoiceTemplates(tenantDb?: any): Promise<any[]>;
+  getActiveInvoiceTemplates(): Promise<any[]>;
+
   // E-invoice connections
   getEInvoiceConnections(): Promise<any[]>;
   getEInvoiceConnection(id: number): Promise<any>;
@@ -241,9 +231,9 @@ export class DatabaseStorage implements IStorage {
   // Get safe database connection with fallback
   private getSafeDatabase(tenantDb?: any, operation: string = 'operation'): any {
     console.log(`🔍 Getting safe database for operation: ${operation}`);
-    
+
     let database = tenantDb || db;
-    
+
     // If both tenantDb and db are undefined/null, throw critical error
     if (!database) {
       console.error(`❌ CRITICAL: No database connection available for ${operation}`);
@@ -251,7 +241,7 @@ export class DatabaseStorage implements IStorage {
       console.error(`❌ global db:`, !!db);
       throw new Error(`Database connection is completely unavailable for ${operation}`);
     }
-    
+
     // Comprehensive validation of database object
     if (typeof database !== 'object' || database === null) {
       console.error(`❌ Database is not a valid object in ${operation}:`, {
@@ -259,7 +249,7 @@ export class DatabaseStorage implements IStorage {
         isNull: database === null,
         isUndefined: database === undefined
       });
-      
+
       // Try falling back to global db if tenantDb is invalid
       if (tenantDb && db && typeof db === 'object' && db !== null) {
         console.log(`🔄 Falling back to global db for ${operation}`);
@@ -268,17 +258,17 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Invalid database connection for ${operation} - no valid fallback available`);
       }
     }
-    
+
     // Validate required methods exist
     const requiredMethods = ['select', 'insert', 'update', 'delete'];
     const missingMethods = requiredMethods.filter(method => !database[method] || typeof database[method] !== 'function');
-    
+
     if (missingMethods.length > 0) {
       console.error(`❌ Database missing required methods in ${operation}:`, {
         missingMethods,
         availableMethods: Object.keys(database).filter(key => typeof database[key] === 'function')
       });
-      
+
       // Try falling back to global db if methods are missing
       if (tenantDb && db && typeof db === 'object') {
         const globalDbMissingMethods = requiredMethods.filter(method => !db[method] || typeof db[method] !== 'function');
@@ -292,7 +282,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Database connection is invalid - missing methods: ${missingMethods.join(', ')} for ${operation}`);
       }
     }
-    
+
     console.log(`✅ Database validation passed for ${operation}`);
     return database;
   }
@@ -988,10 +978,10 @@ export class DatabaseStorage implements IStorage {
     tenantDb?: any,
   ): Promise<AttendanceRecord[]> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'getAttendanceRecords');
-      
+
       const conditions = [];
 
       if (employeeId) {
@@ -1030,7 +1020,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAttendanceRecord(id: number, tenantDb?: any): Promise<AttendanceRecord | undefined> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'getAttendanceRecord');
       const [record] = await database
@@ -1049,10 +1039,10 @@ export class DatabaseStorage implements IStorage {
     tenantDb?: any,
   ): Promise<AttendanceRecord | undefined> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'getTodayAttendance');
-      
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
@@ -1206,7 +1196,7 @@ export class DatabaseStorage implements IStorage {
   // Tables
   async getTables(tenantDb?: any): Promise<Table[]> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'getTables');
       return await database.select().from(tables).orderBy(tables.tableNumber);
@@ -1218,7 +1208,7 @@ export class DatabaseStorage implements IStorage {
 
   async getTable(id: number, tenantDb?: any): Promise<Table | undefined> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'getTable');
       const [table] = await database.select().from(tables).where(eq(tables.id, id));
@@ -1231,7 +1221,7 @@ export class DatabaseStorage implements IStorage {
 
   async getTableByNumber(tableNumber: string, tenantDb?: any): Promise<Table | undefined> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'getTableByNumber');
       const [table] = await database
@@ -1247,7 +1237,7 @@ export class DatabaseStorage implements IStorage {
 
   async createTable(table: InsertTable, tenantDb?: any): Promise<Table> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'createTable');
       const [newTable] = await database.insert(tables).values(table).returning();
@@ -1264,7 +1254,7 @@ export class DatabaseStorage implements IStorage {
     tenantDb?: any,
   ): Promise<Table | undefined> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'updateTable');
       const [updatedTable] = await database
@@ -1285,7 +1275,7 @@ export class DatabaseStorage implements IStorage {
     tenantDb?: any,
   ): Promise<Table | undefined> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'updateTableStatus');
       const [table] = await database
@@ -1302,7 +1292,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTable(id: number, tenantDb?: any): Promise<boolean> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'deleteTable');
       const result = await database.delete(tables).where(eq(tables.id, id));
@@ -1344,7 +1334,7 @@ export class DatabaseStorage implements IStorage {
 
   async getOrder(id: number, tenantDb?: any): Promise<Order | undefined> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'getOrder');
       const [order] = await database.select().from(orders).where(eq(orders.id, id));
@@ -1357,7 +1347,7 @@ export class DatabaseStorage implements IStorage {
 
   async getOrderByNumber(orderNumber: string, tenantDb?: any): Promise<Order | undefined> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'getOrderByNumber');
       const [order] = await database
@@ -1377,10 +1367,10 @@ export class DatabaseStorage implements IStorage {
     tenantDb?: any,
   ): Promise<Order> {
     const database = tenantDb || db;
-    
+
     try {
       this.validateDatabase(database, 'createOrder');
-      
+
       const [newOrder] = await database.insert(orders).values(order).returning();
 
       if (items.length > 0) {
@@ -1531,23 +1521,23 @@ export class DatabaseStorage implements IStorage {
       console.error(`❌ Database is null/undefined in ${operation}`);
       throw new Error(`Database connection is not available for ${operation}`);
     }
-    
+
     if (typeof database !== 'object') {
       console.error(`❌ Database is not an object in ${operation}:`, typeof database);
       throw new Error(`Invalid database type for ${operation}`);
     }
-    
+
     if (!database.select || typeof database.select !== 'function') {
       console.error(`❌ Database missing select method in ${operation}`);
       console.error(`❌ Available methods:`, Object.keys(database));
       throw new Error(`Database connection is invalid - missing select method for ${operation}`);
     }
-    
+
     if (!database.insert || typeof database.insert !== 'function') {
       console.error(`❌ Database missing insert method in ${operation}`);
       throw new Error(`Database connection is invalid - missing insert method for ${operation}`);
     }
-    
+
     if (!database.update || typeof database.update !== 'function') {
       console.error(`❌ Database missing update method in ${operation}`);
       throw new Error(`Database connection is invalid - missing update method for ${operation}`);
@@ -1571,12 +1561,12 @@ export class DatabaseStorage implements IStorage {
         errorType: error?.constructor?.name,
         errorStack: error?.stack
       });
-      
+
       // Check if it's a connection error specifically
       if (error?.message?.includes('select') || error?.message?.includes('undefined')) {
         console.error(`❌ CRITICAL: Database connection lost during ${operation}`);
       }
-      
+
       return fallbackValue;
     }
   }
@@ -1643,29 +1633,29 @@ export class DatabaseStorage implements IStorage {
     let database;
     try {
       database = this.getSafeDatabase(tenantDb, 'updateOrderStatus');
-      
+
       // Additional runtime validation
       if (!database || typeof database !== 'object') {
         console.error(`❌ CRITICAL: Invalid database object in updateOrderStatus`);
         throw new Error(`Database connection is completely invalid`);
       }
-      
+
       if (!database.select || typeof database.select !== 'function') {
         console.error(`❌ CRITICAL: Database missing select method in updateOrderStatus`);
         console.error(`❌ Available methods:`, Object.keys(database));
         throw new Error(`Database connection is missing required methods`);
       }
-      
+
       if (!database.update || typeof database.update !== 'function') {
         console.error(`❌ CRITICAL: Database missing update method in updateOrderStatus`);
         throw new Error(`Database connection is missing update method`);
       }
-      
+
       console.log(`✅ Database validation passed for updateOrderStatus`);
-      
+
     } catch (dbError) {
       console.error(`❌ Database validation failed in updateOrderStatus:`, dbError);
-      
+
       // Try to fall back to global db if tenant db is problematic
       if (tenantDb && db && typeof db === 'object' && db.select && db.update) {
         console.log(`🔄 Falling back to global database connection`);
@@ -2652,138 +2642,113 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
-  // Invoice templates methods
-  async getInvoiceTemplates(): Promise<any[]> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getInvoiceTemplates`);
-      throw new Error(`Database connection is not available`);
-    }
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
-      return await db
-        .select()
-        .from(invoiceTemplates)
-        .orderBy(invoiceTemplates.id);
-    } catch (error) {
-      console.error("Error fetching invoice templates:", error);
-      return [];
-    }
-  }
+  // Invoice template methods
+  async getInvoiceTemplates(tenantDb?: any): Promise<any[]> {
+    const database = tenantDb || db;
+    return await database.select().from(invoiceTemplates).orderBy(invoiceTemplates.name);
+  },
 
   async getActiveInvoiceTemplates(): Promise<any[]> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getActiveInvoiceTemplates`);
-      throw new Error(`Database connection is not available`);
-    }
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
-      return await db
-        .select()
-        .from(invoiceTemplates)
-        .where(eq(invoiceTemplates.isActive, true))
-        .orderBy(invoiceTemplates.id);
-    } catch (error) {
-      console.error("Error fetching active invoice templates:", error);
-      return [];
-    }
-  }
+    return await db.select().from(invoiceTemplates).where(eq(invoiceTemplates.isActive, true)).orderBy(invoiceTemplates.name);
+  },
 
-  async getInvoiceTemplate(id: number): Promise<any> {
-    if (!db) {
-      console.error(`❌ Database is undefined in getInvoiceTemplate`);
-      throw new Error(`Database connection is not available`);
-    }
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
-      const [result] = await db
-        .select()
-        .from(invoiceTemplates)
-        .where(eq(invoiceTemplates.id, id));
-      return result;
-    } catch (error) {
-      console.error("Error fetching invoice template:", error);
-      return null;
-    }
-  }
+  // Invoice methods
+  async getInvoices(tenantDb?: any): Promise<any[]> {
+    const database = tenantDb || db;
+    return await database.select().from(invoices).orderBy(desc(invoices.createdAt));
+  },
 
-  async createInvoiceTemplate(data: any): Promise<any> {
-    if (!db) {
-      console.error(`❌ Database is undefined in createInvoiceTemplate`);
-      throw new Error(`Database connection is not available`);
-    }
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
+  async getInvoice(id: number, tenantDb?: any): Promise<any> {
+    const database = tenantDb || db;
+    const [invoice] = await database.select().from(invoices).where(eq(invoices.id, id));
 
-      // If this template is set as default, unset all other defaults
-      if (data.isDefault) {
-        await db
-          .update(invoiceTemplates)
-          .set({ isDefault: false })
-          .where(eq(invoiceTemplates.isDefault, true));
+    if (!invoice) return null;
+
+    // Get invoice items
+    const items = await database.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, id));
+
+    return {
+      ...invoice,
+      items: items
+    };
+  },
+
+  async createInvoice(invoiceData: any, tenantDb?: any): Promise<any> {
+    const database = tenantDb || db;
+
+    console.log('💾 Creating invoice in database:', invoiceData);
+
+    try {
+      // Insert invoice
+      const [invoice] = await database.insert(invoices).values({
+        invoiceNumber: invoiceData.invoiceNumber || null,
+        templateNumber: invoiceData.templateNumber || null,
+        symbol: invoiceData.symbol || null,
+        customerName: invoiceData.customerName,
+        customerTaxCode: invoiceData.customerTaxCode || null,
+        customerAddress: invoiceData.customerAddress || null,
+        customerPhone: invoiceData.customerPhone || null,
+        customerEmail: invoiceData.customerEmail || null,
+        subtotal: invoiceData.subtotal,
+        tax: invoiceData.tax,
+        total: invoiceData.total,
+        paymentMethod: invoiceData.paymentMethod || 1,
+        invoiceDate: invoiceData.invoiceDate || new Date(),
+        status: invoiceData.status || 'draft',
+        einvoiceStatus: invoiceData.einvoiceStatus || 0,
+        notes: invoiceData.notes || null
+      }).returning();
+
+      console.log('✅ Invoice created:', invoice);
+
+      // Insert invoice items if provided
+      if (invoiceData.items && Array.isArray(invoiceData.items) && invoiceData.items.length > 0) {
+        const itemsToInsert = invoiceData.items.map((item: any) => ({
+          invoiceId: invoice.id,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+          taxRate: item.taxRate || "0.00"
+        }));
+
+        await database.insert(invoiceItems).values(itemsToInsert);
+        console.log(`✅ Inserted ${itemsToInsert.length} invoice items`);
       }
 
-      const [result] = await db
-        .insert(invoiceTemplates)
-        .values({
-          ...data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .returning();
-      return result;
+      return invoice;
     } catch (error) {
-      console.error("Error creating invoice template:", error);
+      console.error('❌ Error creating invoice:', error);
       throw error;
     }
-  }
+  },
 
-  async updateInvoiceTemplate(id: number, data: any): Promise<any> {
-    if (!db) {
-      console.error(`❌ Database is undefined in updateInvoiceTemplate`);
-      throw new Error(`Database connection is not available`);
-    }
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
+  async updateInvoice(id: number, updateData: any, tenantDb?: any): Promise<any> {
+    const database = tenantDb || db;
 
-      // If this template is set as default, unset all other defaults
-      if (data.isDefault) {
-        await db
-          .update(invoiceTemplates)
-          .set({ isDefault: false })
-          .where(eq(invoiceTemplates.isDefault, true));
-      }
+    const [invoice] = await database.update(invoices)
+      .set({
+        ...updateData,
+        updatedAt: new Date()
+      })
+      .where(eq(invoices.id, id))
+      .returning();
 
-      const [result] = await db
-        .update(invoiceTemplates)
-        .set({
-          ...data,
-          updatedAt: new Date(),
-        })
-        .where(eq(invoiceTemplates.id, id))
-        .returning();
-      return result;
-    } catch (error) {
-      console.error("Error updating invoice template:", error);
-      throw error;
-    }
-  }
+    return invoice;
+  },
 
-  async deleteInvoiceTemplate(id: number): Promise<boolean> {
-    if (!db) {
-      console.error(`❌ Database is undefined in deleteInvoiceTemplate`);
-      throw new Error(`Database connection is not available`);
-    }
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
-      const result = await db
-        .delete(invoiceTemplates)
-        .where(eq(invoiceTemplates.id, id));
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error("Error deleting invoice template:", error);
-      return false;
-    }
-  }
+  async deleteInvoice(id: number, tenantDb?: any): Promise<boolean> {
+    const database = tenantDb || db;
+
+    // Delete invoice items first
+    await database.delete(invoiceItems).where(eq(invoiceItems.invoiceId, id));
+
+    // Delete invoice
+    const result = await database.delete(invoices).where(eq(invoices.id, id));
+
+    return result.rowCount > 0;
+  },
 
   // E-invoice connections methods
   async getEInvoiceConnections(): Promise<any[]> {
@@ -2801,7 +2766,7 @@ export class DatabaseStorage implements IStorage {
       console.error("Error fetching e-invoice connections:", error);
       return [];
     }
-  }
+  },
 
   async getEInvoiceConnection(id: number): Promise<any> {
     if (!db) {
@@ -2819,7 +2784,7 @@ export class DatabaseStorage implements IStorage {
       console.error("Error fetching e-invoice connection:", error);
       return null;
     }
-  }
+  },
 
   async createEInvoiceConnection(data: any): Promise<any> {
     if (!db) {
@@ -2847,7 +2812,7 @@ export class DatabaseStorage implements IStorage {
       console.error("Error creating e-invoice connection:", error);
       throw error;
     }
-  }
+  },
 
   async updateEInvoiceConnection(id: number, data: any): Promise<any> {
     if (!db) {
@@ -2866,7 +2831,7 @@ export class DatabaseStorage implements IStorage {
       console.error("Error updating e-invoice connection:", error);
       throw error;
     }
-  }
+  },
 
   async deleteEInvoiceConnection(id: number): Promise<boolean> {
     if (!db) {

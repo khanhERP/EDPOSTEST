@@ -2475,6 +2475,140 @@ export async function registerRoutes(app: Express): Promise < Server > {
     }
   });
 
+  // Invoices management
+  app.get("/api/invoices", tenantMiddleware, async (req: TenantRequest, res) => {
+    try {
+      console.log('🔍 GET /api/invoices - Starting request processing');
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log('✅ Tenant database connection obtained for invoices');
+      } catch (dbError) {
+        console.error('❌ Failed to get tenant database for invoices:', dbError);
+        tenantDb = null;
+      }
+
+      const invoices = await storage.getInvoices(tenantDb);
+      console.log(`✅ Successfully fetched ${invoices.length} invoices`);
+      res.json(invoices);
+    } catch (error) {
+      console.error("❌ Error fetching invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  app.post("/api/invoices", async (req: TenantRequest, res) => {
+    try {
+      console.log('🔍 POST /api/invoices - Creating new invoice');
+      const tenantDb = await getTenantDatabase(req);
+      const invoiceData = req.body;
+
+      console.log('📄 Invoice data received:', JSON.stringify(invoiceData, null, 2));
+
+      // Validate required fields
+      if (!invoiceData.customerName) {
+        return res.status(400).json({ error: "Customer name is required" });
+      }
+
+      if (!invoiceData.total || parseFloat(invoiceData.total) <= 0) {
+        return res.status(400).json({ error: "Valid total amount is required" });
+      }
+
+      if (!invoiceData.items || !Array.isArray(invoiceData.items) || invoiceData.items.length === 0) {
+        return res.status(400).json({ error: "Invoice items are required" });
+      }
+
+      // Create invoice in database
+      const invoice = await storage.createInvoice(invoiceData, tenantDb);
+      
+      console.log('✅ Invoice created successfully:', invoice);
+      res.status(201).json({ 
+        success: true, 
+        invoice: invoice,
+        message: "Invoice created successfully" 
+      });
+    } catch (error) {
+      console.error("❌ Error creating invoice:", error);
+      
+      let errorMessage = "Failed to create invoice";
+      if (error instanceof Error) {
+        errorMessage = `Failed to create invoice: ${error.message}`;
+      }
+      
+      res.status(500).json({ 
+        error: errorMessage,
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  app.get("/api/invoices/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid invoice ID" });
+      }
+
+      const invoice = await storage.getInvoice(id, tenantDb);
+      
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      res.json(invoice);
+    } catch (error) {
+      console.error("❌ Error fetching invoice:", error);
+      res.status(500).json({ message: "Failed to fetch invoice" });
+    }
+  });
+
+  app.put("/api/invoices/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const updateData = req.body;
+
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid invoice ID" });
+      }
+
+      const invoice = await storage.updateInvoice(id, updateData, tenantDb);
+      
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      res.json(invoice);
+    } catch (error) {
+      console.error("❌ Error updating invoice:", error);
+      res.status(500).json({ message: "Failed to update invoice" });
+    }
+  });
+
+  app.delete("/api/invoices/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid invoice ID" });
+      }
+
+      const deleted = await storage.deleteInvoice(id, tenantDb);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      res.json({ message: "Invoice deleted successfully" });
+    } catch (error) {
+      console.error("❌ Error deleting invoice:", error);
+      res.status(500).json({ message: "Failed to delete invoice" });
+    }
+  });
+
   // E-invoice connections management
   app.get("/api/einvoice-connections", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
@@ -3277,6 +3411,72 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Error in customers API:", error);
       res.status(500).json({ error: "Failed to fetch customers data" });
+    }
+  });
+
+  // Tax code lookup proxy endpoint
+  app.post("/api/tax-code-lookup", async (req: TenantRequest, res) => {
+    try {
+      const { taxCode } = req.body;
+      
+      if (!taxCode) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Tax code is required" 
+        });
+      }
+
+      console.log('🔍 Looking up tax code:', taxCode);
+
+      // Mock response for tax code lookup
+      // In production, this would call the actual tax authority API
+      const mockResponse = {
+        success: true,
+        data: [{
+          tenCty: "CÔNG TY TNHH ABC",
+          diaChi: "123 Đường ABC, Quận 1, TP.HCM",
+          tthai: "00", // Active status
+          trangThaiHoatDong: "Đang hoạt động"
+        }]
+      };
+
+      res.json(mockResponse);
+    } catch (error) {
+      console.error("Error in tax code lookup:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Có lỗi xảy ra khi tra cứu mã số thuế" 
+      });
+    }
+  });
+
+  // E-invoice publish proxy endpoint
+  app.post("/api/einvoice/publish", async (req: TenantRequest, res) => {
+    try {
+      const publishData = req.body;
+      
+      console.log('🔍 Publishing e-invoice:', JSON.stringify(publishData, null, 2));
+
+      // Mock successful response for e-invoice publishing
+      // In production, this would call the actual e-invoice provider API
+      const mockResponse = {
+        success: true,
+        data: {
+          invoiceNo: `INV-${Date.now()}`,
+          transactionId: publishData.transactionID,
+          status: "published",
+          publishDate: new Date().toISOString()
+        },
+        message: "E-invoice published successfully"
+      };
+
+      res.json(mockResponse);
+    } catch (error) {
+      console.error("Error publishing e-invoice:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Có lỗi xảy ra khi phát hành hóa đơn điện tử" 
+      });
     }
   });
 
