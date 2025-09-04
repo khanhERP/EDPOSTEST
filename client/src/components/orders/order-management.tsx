@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Eye, Clock, CheckCircle2, DollarSign, Users, CreditCard, QrCode, Search } from "lucide-react";
+import { Eye, Clock, CheckCircle2, DollarSign, Users, CreditCard, QrCode, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
@@ -41,6 +41,9 @@ export function OrderManagement() {
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const [shouldOpenReceiptPreview, setShouldOpenReceiptPreview] = useState(false);
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(12);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -1353,7 +1356,7 @@ export function OrderManagement() {
            customer.phone?.toLowerCase().includes(searchLower);
   }) || [];
 
-  // Safe order processing with error handling - MOVE ALL HOOKS BEFORE CONDITIONAL RETURNS
+  // Safe order processing with error handling and pagination - MOVE ALL HOOKS BEFORE CONDITIONAL RETURNS
   const allOrders = React.useMemo(() => {
     try {
       if (!orders || !Array.isArray(orders)) {
@@ -1365,6 +1368,7 @@ export function OrderManagement() {
         .filter(order => order && order.id && order.orderedAt) // Filter out invalid orders
         .sort((a: Order, b: Order) => {
           try {
+            // Sort by orderedAt descending (newest first)
             return new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime();
           } catch (error) {
             console.error('Error sorting orders:', error);
@@ -1376,6 +1380,20 @@ export function OrderManagement() {
       return [];
     }
   }, [orders]);
+
+  // Pagination calculations
+  const totalOrders = allOrders.length;
+  const totalPages = Math.ceil(totalOrders / ordersPerPage);
+  const startIndex = (currentPage - 1) * ordersPerPage;
+  const endIndex = startIndex + ordersPerPage;
+  const currentOrders = allOrders.slice(startIndex, endIndex);
+
+  // Reset to page 1 if current page exceeds total pages
+  React.useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
 
   // Function to refresh data with error handling
   const refreshData = React.useCallback(async () => {
@@ -1626,13 +1644,20 @@ export function OrderManagement() {
           <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
           <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
         </div>
-        <Badge variant="secondary" className="text-lg px-4 py-2">
-          {allOrders.length} {t('orders.ordersInProgress')}
-        </Badge>
+        <div className="flex items-center gap-4">
+          <Badge variant="secondary" className="text-lg px-4 py-2">
+            {totalOrders} {t('orders.ordersInProgress')}
+          </Badge>
+          {totalPages > 1 && (
+            <Badge variant="outline" className="text-sm px-3 py-1">
+              Trang {currentPage}/{totalPages}
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Orders Grid */}
-      {allOrders.length === 0 ? (
+      {totalOrders === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -1641,28 +1666,29 @@ export function OrderManagement() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {allOrders.map((order: Order) => {
-            const statusConfig = getOrderStatusBadge(order.status);
-            const tableInfo = getTableInfo(order.tableId);
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {currentOrders.map((order: Order) => {
+              const statusConfig = getOrderStatusBadge(order.status);
+              const tableInfo = getTableInfo(order.tableId);
 
-            return (
-              <Card key={order.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg font-medium">
-                        {order.orderNumber}
-                      </CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {tableInfo?.tableNumber || t('orders.noTableInfo')}
-                      </p>
+              return (
+                <Card key={order.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg font-medium">
+                          {order.orderNumber}
+                        </CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {tableInfo?.tableNumber || t('orders.noTableInfo')}
+                        </p>
+                      </div>
+                      <Badge variant={statusConfig.variant}>
+                        {statusConfig.label}
+                      </Badge>
                     </div>
-                    <Badge variant={statusConfig.variant}>
-                      {statusConfig.label}
-                    </Badge>
-                  </div>
-                </CardHeader>
+                  </CardHeader>
 
                 <CardContent>
                   <div className="space-y-3">
@@ -1766,9 +1792,85 @@ export function OrderManagement() {
                   </div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-gray-600">
+                Hiển thị {startIndex + 1}-{Math.min(endIndex, totalOrders)} của {totalOrders} đơn hàng
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Trước
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {/* Show page numbers */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNumber;
+                    if (totalPages <= 5) {
+                      pageNumber = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNumber = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNumber = totalPages - 4 + i;
+                    } else {
+                      pageNumber = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={currentPage === pageNumber ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNumber}
+                      </Button>
+                    );
+                  })}
+                  
+                  {totalPages > 5 && currentPage < totalPages - 2 && (
+                    <>
+                      <span className="px-2 text-gray-500">...</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(totalPages)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {totalPages}
+                      </Button>
+                    </>
+                  )}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1"
+                >
+                  Sau
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Order Details Dialog */}
