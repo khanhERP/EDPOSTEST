@@ -85,7 +85,7 @@ export function OrderDialog({
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: { order: any; items: any[] }) => {
-      console.log('=== ORDER MUTATION STARTED (SINGLE UPDATE MODE) ===');
+      console.log('=== ORDER MUTATION STARTED ===');
       console.log('Mode:', mode);
       console.log('Existing order:', existingOrder);
       console.log(
@@ -97,10 +97,9 @@ export function OrderDialog({
 
       try {
         if (mode === "edit" && existingOrder) {
-          console.log(`📝 Adding ${orderData.items.length} items to existing order ${existingOrder.id} (SINGLE database update)`);
+          console.log(`📝 Adding ${orderData.items.length} items to existing order ${existingOrder.id} (single database update)`);
           const response = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
             items: orderData.items,
-            preventDuplicateUpdate: true // Prevent duplicate updates
           });
           
           if (!response.ok) {
@@ -109,7 +108,7 @@ export function OrderDialog({
           }
           
           const result = await response.json();
-          console.log('✅ Items added successfully with updated totals (SINGLE UPDATE):', result);
+          console.log('✅ Items added successfully with updated totals:', result);
           return result;
         } else {
           console.log('📝 Creating new order...');
@@ -131,22 +130,19 @@ export function OrderDialog({
       }
     },
     onSuccess: (response) => {
-      console.log('=== ORDER MUTATION SUCCESS (SINGLE UPDATE COMPLETED) ===');
+      console.log('=== ORDER MUTATION SUCCESS (SINGLE CALL) ===');
       console.log(
         mode === "edit"
-          ? "Order updated successfully (no duplicate updates):"
+          ? "Order updated successfully (no duplicates):"
           : "Order created successfully:",
         response,
       );
 
-      // OPTIMIZED: Only invalidate essential queries, avoid duplicate refetch
-      console.log('🔄 Performing optimized query invalidation...');
+      // Only invalidate - let React Query handle refetch naturally (no forced refetch)
+      console.log('🔄 Invalidating queries (natural refresh only)...');
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
-
-      // NO immediate refetch to prevent duplicate updates
-      console.log('✅ Query invalidation completed without duplicate refetch');
 
       // Reset form state
       setCart([]);
@@ -157,8 +153,10 @@ export function OrderDialog({
 
       toast({
         title: t('orders.orderUpdateSuccess'),
-        description: t('orders.orderUpdateSuccessDesc'),
+        description: mode === "edit" ? "Đã cập nhật đơn hàng (1 lần duy nhất)" : t('orders.orderUpdateSuccessDesc'),
       });
+
+      console.log('✅ Order mutation completed - no duplicate API calls triggered');
     },
     onError: (error: any) => {
       console.error('=== ORDER MUTATION ERROR ===');
@@ -335,23 +333,22 @@ export function OrderDialog({
           const newTax = calculateTax();
           const newTotal = calculateGrandTotal();
 
-          console.log('💰 Order Dialog: Calculated new totals:', {
+          console.log('💰 Order Dialog: Calculated new totals (SINGLE UPDATE ONLY):', {
             newSubtotal,
             newTax,
             newTotal,
           });
 
-          // Step 2: SINGLE DATABASE UPDATE - Perform only one update operation
-          console.log('💾 Performing single database update with transaction safety...');
+          // Step 2: SINGLE database update - no duplicate calls
+          console.log('💾 Executing SINGLE database update...');
           const updateData = {
             subtotal: newSubtotal.toFixed(2),
             tax: newTax.toFixed(2),
             total: newTotal.toFixed(2),
-            updatedAt: new Date().toISOString(),
-            preventDuplicateUpdate: true // Flag to prevent duplicate updates
+            updatedAt: new Date().toISOString()
           };
 
-          console.log('📤 Sending update data to database (single operation):', updateData);
+          console.log('📤 Sending update data to database (ONCE ONLY):', updateData);
 
           const updateResponse = await apiRequest('PUT', `/api/orders/${existingOrder.id}`, updateData);
 
@@ -361,43 +358,39 @@ export function OrderDialog({
           }
 
           const updatedOrderData = await updateResponse.json();
-          console.log('✅ Order Dialog: SINGLE database update completed successfully:', updatedOrderData);
+          console.log('✅ Order Dialog: SINGLE update completed successfully:', updatedOrderData);
 
-          // Step 3: Minimal data refresh - avoid triggering additional updates
-          console.log('🔄 Order Dialog: Performing minimal query refresh to avoid duplicates...');
-          
-          // Use setTimeout to ensure update is processed before refresh
-          setTimeout(() => {
-            queryClient.setQueryData(["/api/orders"], (oldData: any) => {
-              if (!Array.isArray(oldData)) return oldData;
-              return oldData.map((order: any) => 
+          // Step 3: Minimal data refresh - ONLY invalidate without refetch
+          console.log('🔄 Order Dialog: Invalidating queries (NO additional API calls)...');
+          queryClient.setQueryData(["/api/orders"], (oldData: any) => {
+            if (Array.isArray(oldData)) {
+              return oldData.map(order => 
                 order.id === existingOrder.id 
-                  ? { ...order, ...updatedOrderData }
+                  ? { ...order, total: newTotal.toFixed(2), subtotal: newSubtotal.toFixed(2), tax: newTax.toFixed(2) }
                   : order
               );
-            });
-          }, 100);
+            }
+            return oldData;
+          });
 
-          // Step 4: Emit SINGLE event to notify components (no duplicate events)
+          // Step 4: Emit events with skipRefetch flag
           window.dispatchEvent(new CustomEvent('orderTotalsUpdated', { 
             detail: { 
               orderId: existingOrder.id,
               oldTotal: existingOrder.total,
               newTotal: newTotal.toFixed(2),
-              action: 'single-update-complete',
-              immediate: false, // Avoid immediate refresh
-              timestamp: Date.now(),
-              skipRefetch: true,
-              preventDuplicate: true // Prevent duplicate processing
+              action: 'single-update-only',
+              skipAllRefetch: true,
+              timestamp: Date.now()
             } 
           }));
 
           toast({
             title: t('orders.orderUpdateSuccess'),
-            description: `Đã cập nhật thành công: ${Math.round(newTotal).toLocaleString()} ₫`,
+            description: `Đã cập nhật thành công (1 lần duy nhất): ${Math.round(newTotal).toLocaleString()} ₫`,
           });
 
-          console.log('✅ Order Dialog: Single update completed successfully');
+          console.log('✅ Order Dialog: Single update process completed - no duplicate calls');
 
         } catch (error) {
           console.error('❌ Order Dialog: Error updating order totals:', error);
