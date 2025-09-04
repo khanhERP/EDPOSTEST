@@ -471,7 +471,6 @@ export function EInvoiceModal({
         `💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${grandTotal}`,
       );
 
-
       // Lưu hóa đơn vào database với trạng thái "chưa phát hành"
         try {
           console.log("💾 Saving unpublished invoice to database");
