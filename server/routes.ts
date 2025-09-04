@@ -2742,8 +2742,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
           productName: products.name,
           categoryId: products.categoryId,
           categoryName: categories.name,
-          totalQuantity: sql<number>`CAST(SUM(${transactionItemsTable.quantity}) AS INTEGER)`,
-          totalRevenue: sql<number>`CAST(SUM(CAST(${transactionItemsTable.unitPrice} AS DECIMAL(10,2)) * ${transactionItemsTable.quantity}) AS DECIMAL(10,2))`
+          totalQuantity: sql<number>`SUM(${transactionItemsTable.quantity})`,
+          totalRevenue: sql<number>`SUM(CAST(${transactionItemsTable.unitPrice} AS DECIMAL(10,2)) * ${transactionItemsTable.quantity})`
         })
         .from(transactionItemsTable)
         .innerJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
@@ -2782,15 +2782,15 @@ export async function registerRoutes(app: Express): Promise < Server > {
           productName: products.name,
           categoryId: products.categoryId,
           categoryName: categories.name,
-          totalQuantity: sql<number>`CAST(SUM(${orderItems.quantity}) AS INTEGER)`,
-          totalRevenue: sql<number>`CAST(SUM(CAST(${orderItems.unitPrice} AS DECIMAL(10,2)) * ${orderItems.quantity}) AS DECIMAL(10,2))`
+          totalQuantity: sql<number>`SUM(${orderItems.quantity})`,
+          totalRevenue: sql<number>`SUM(CAST(${orderItems.unitPrice} AS DECIMAL(10,2)) * ${orderItems.quantity})`
         })
         .from(orderItems)
         .innerJoin(orders, eq(orderItems.orderId, orders.id))
         .innerJoin(products, eq(orderItems.productId, products.id))
         .leftJoin(categories, eq(products.categoryId, categories.id))
         .where(and(
-          ne(orders.status, 'cancelled'),
+          eq(orders.status, 'paid'),
           ...orderDateConditions,
           ...categoryConditions
         ))
