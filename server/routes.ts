@@ -851,34 +851,25 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Attendance routes
   app.get("/api/attendance", async (req: TenantRequest, res) => {
     try {
-      const { date } = req.query;
+      const { date, startDate, endDate } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
-      let whereCondition;
-      if (date && typeof date === "string") {
-        // Filter by specific date
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        whereCondition = and(
-          gte(attendanceRecords.clockIn, startOfDay),
-          lt(attendanceRecords.clockIn, endOfDay),
-        );
+      if (!tenantDb) {
+        return res.status(500).json({ message: "Database connection not available" });
       }
 
-      const attendance = await db
-        .select()
-        .from(attendanceRecords)
-        .where(whereCondition)
-        .orderBy(desc(attendanceRecords.clockIn));
-
-      res.json(attendance);
+      // If startDate and endDate are provided, use date range
+      if (startDate && endDate) {
+        const records = await storage.getAttendanceRecordsByRange(tenantDb, startDate as string, endDate as string);
+        res.json(records);
+      } else {
+        // Otherwise use single date or all records
+        const records = await storage.getAttendanceRecords(tenantDb, date as string);
+        res.json(records);
+      }
     } catch (error) {
-      console.error("Error fetching attendance records:", error);
-      res.status(500).json({ error: "Failed to fetch attendance records" });
+      console.error('Error fetching attendance records:', error);
+      res.status(500).json({ message: "Failed to fetch attendance records" });
     }
   });
 

@@ -112,6 +112,8 @@ export interface IStorage {
     id: number,
     status: string,
   ): Promise<AttendanceRecord | undefined>;
+  getAttendanceRecordsByRange(startDate: string, endDate: string): Promise<AttendanceRecord[]>;
+
 
   // Tables
   getTables(): Promise<Table[]>;
@@ -2909,6 +2911,37 @@ export class DatabaseStorage implements IStorage {
       return employee || undefined;
     }
     return undefined;
+  }
+
+  // New function to get attendance records by date range
+  async getAttendanceRecordsByRange(startDate: string, endDate: string, tenantDb?: any): Promise<AttendanceRecord[]> {
+    const database = tenantDb || this.db;
+
+    try {
+      this.validateDatabase(database, 'getAttendanceRecordsByRange');
+      console.log(`🔍 Getting attendance records for date range: ${startDate} to ${endDate}`);
+
+      const startOfRange = new Date(startDate);
+      startOfRange.setHours(0, 0, 0, 0);
+      const endOfRange = new Date(endDate);
+      endOfRange.setHours(23, 59, 59, 999);
+
+      const records = await database.select()
+        .from(attendanceRecords)
+        .where(
+          and(
+            gte(attendanceRecords.clockIn, startOfRange),
+            lte(attendanceRecords.clockIn, endOfRange)
+          )
+        )
+        .orderBy(attendanceRecords.clockIn);
+
+      console.log(`✅ Found ${records.length} attendance records in date range`);
+      return records;
+    } catch (error) {
+      console.error('Error fetching attendance records by range:', error);
+      throw error;
+    }
   }
 }
 

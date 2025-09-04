@@ -11,23 +11,45 @@ import type { AttendanceRecord, Employee } from "@shared/schema";
 interface AttendanceListProps {
   selectedDate: string;
   onDateChange: (date: string) => void;
+  dateRange?: {
+    startDate: string;
+    endDate: string;
+  };
+  onDateRangeChange?: (startDate: string, endDate: string) => void;
+  useRange?: boolean;
 }
 
-export function AttendanceList({ selectedDate, onDateChange }: AttendanceListProps) {
+export function AttendanceList({ 
+  selectedDate, 
+  onDateChange, 
+  dateRange, 
+  onDateRangeChange, 
+  useRange = false 
+}: AttendanceListProps) {
   const { t } = useTranslation();
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
   });
 
   const { data: attendanceRecords, isLoading } = useQuery({
-    queryKey: ['/api/attendance', selectedDate],
+    queryKey: useRange 
+      ? ['/api/attendance', 'range', dateRange?.startDate, dateRange?.endDate]
+      : ['/api/attendance', selectedDate],
     queryFn: async () => {
-      const response = await fetch(`/api/attendance?date=${selectedDate}`);
+      let url = '/api/attendance';
+      if (useRange && dateRange?.startDate && dateRange?.endDate) {
+        url += `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+      } else {
+        url += `?date=${selectedDate}`;
+      }
+      
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch attendance records');
       }
       return response.json();
-    }
+    },
+    enabled: useRange ? !!(dateRange?.startDate && dateRange?.endDate) : !!selectedDate
   });
 
   const getEmployeeName = (employeeId: number) => {
@@ -87,15 +109,42 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
               {t('attendance.recordsDescription')}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="date-picker">{t('attendance.selectedDate')}:</Label>
-            <Input
-              id="date-picker"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => onDateChange(e.target.value)}
-              className="w-auto"
-            />
+          <div className="flex items-center gap-4">
+            {useRange && onDateRangeChange ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="start-date">{t('attendance.startDate')}:</Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={dateRange?.startDate || ''}
+                    onChange={(e) => onDateRangeChange(e.target.value, dateRange?.endDate || '')}
+                    className="w-auto"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="end-date">{t('attendance.endDate')}:</Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={dateRange?.endDate || ''}
+                    onChange={(e) => onDateRangeChange(dateRange?.startDate || '', e.target.value)}
+                    className="w-auto"
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Label htmlFor="date-picker">{t('attendance.selectedDate')}:</Label>
+                <Input
+                  id="date-picker"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => onDateChange(e.target.value)}
+                  className="w-auto"
+                />
+              </div>
+            )}
           </div>
         </div>
       </CardHeader>

@@ -11,19 +11,28 @@ import { Link } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 
 export default function AttendancePage() {
+  const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
-  const { t } = useTranslation();
+  const [useRange, setUseRange] = useState<boolean>(false);
+  const [dateRange, setDateRange] = useState<{startDate: string, endDate: string}>({
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0]
+  });
+
+  const handleDateRangeChange = (startDate: string, endDate: string) => {
+    setDateRange({ startDate, endDate });
+  };
 
   return (
     <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
       <POSHeader />
-      
+
       {/* Right Sidebar */}
       <RightSidebar />
-      
+
       <div className="main-content pt-16 px-6">
         <div className="max-w-5xl mx-auto py-8">
           {/* Page Header */}
