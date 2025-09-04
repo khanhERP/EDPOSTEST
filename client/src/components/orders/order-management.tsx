@@ -710,7 +710,8 @@ export function OrderManagement() {
           basePrice,
           quantity,
           productFound: !!product,
-          productAfterTaxPrice: product?.afterTaxPrice
+          productAfterTaxPrice: product?.afterTaxPrice,
+          productPrice: product?.price
         });
 
         if (basePrice <= 0 || quantity <= 0) {
@@ -718,25 +719,40 @@ export function OrderManagement() {
           return;
         }
 
-        // Use EXACT same logic as Table Grid - use afterTaxPrice if available, otherwise use basePrice
+        // EXACT same logic as Table Grid calculation
         let finalPricePerUnit = basePrice;
         
-        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-          finalPricePerUnit = parseFloat(product.afterTaxPrice);
-          console.log(`💸 Order Management: Using afterTaxPrice for ${item.productName}:`, {
-            basePrice,
-            afterTaxPrice: finalPricePerUnit,
-            quantity
-          });
+        // Check if product has afterTaxPrice and use it
+        if (product?.afterTaxPrice && 
+            product.afterTaxPrice !== null && 
+            product.afterTaxPrice !== "" && 
+            product.afterTaxPrice !== "0" &&
+            product.afterTaxPrice !== "0.00") {
+          
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          if (!isNaN(afterTaxPrice) && afterTaxPrice > 0) {
+            finalPricePerUnit = afterTaxPrice;
+            console.log(`💸 Order Management: Using afterTaxPrice for ${item.productName}:`, {
+              basePrice,
+              afterTaxPrice: finalPricePerUnit,
+              quantity,
+              productAfterTaxPrice: product.afterTaxPrice
+            });
+          } else {
+            console.log(`💸 Order Management: afterTaxPrice invalid, using basePrice for ${item.productName}`);
+          }
         } else {
-          console.log(`💸 Order Management: Using basePrice for ${item.productName} (no afterTaxPrice)`);
+          console.log(`💸 Order Management: No valid afterTaxPrice, using basePrice for ${item.productName}:`, {
+            afterTaxPrice: product?.afterTaxPrice,
+            basePrice
+          });
         }
 
         // Calculate item total
         const itemTotal = finalPricePerUnit * quantity;
         calculatedTotal += itemTotal;
 
-        console.log(`💰 Order Management: Item total for ${item.productName}:`, {
+        console.log(`💰 Order Management: Item calculation for ${item.productName}:`, {
           finalPricePerUnit,
           quantity,
           itemTotal,
@@ -747,13 +763,13 @@ export function OrderManagement() {
       // Floor the total like in Table Grid to match display format
       const finalTotal = Math.floor(calculatedTotal);
 
-      console.log(`💰 Order Management: Order ${order.id} calculation result:`, {
-        calculatedTotal,
-        finalTotal: finalTotal,
+      console.log(`💰 Order Management: Order ${order.id} final calculation:`, {
+        rawCalculatedTotal: calculatedTotal,
+        flooredTotal: finalTotal,
         storedTotal: order.total,
-        itemsCount: orderItemsData.length,
+        itemsProcessed: orderItemsData.length,
         productsAvailable: products.length,
-        calculationMethod: 'Math.floor(sum of afterTaxPrice * quantity)'
+        calculationMethod: 'Math.floor(sum of (afterTaxPrice || unitPrice) * quantity)'
       });
 
       // Return calculated total, ensuring it's at least 0
@@ -768,7 +784,7 @@ export function OrderManagement() {
     }
   }, [products, apiRequest]);
 
-  // Function to get order total (calculated or stored)
+  // Function to get order total (calculated or stored) - using EXACT same logic as Table Grid
   const getOrderTotal = React.useCallback((order: Order) => {
     const storedTotal = Number(order.total || 0);
     const calculatedTotal = calculatedTotals.get(order.id);
@@ -781,39 +797,52 @@ export function OrderManagement() {
       orderStatus: order.status
     });
 
-    // ALWAYS prefer calculated total if available and valid (including zero for cancelled orders)
+    // For cancelled orders, always show stored total
+    if (order.status === 'cancelled') {
+      console.log(`💰 Order ${order.orderNumber} is cancelled, using stored total:`, storedTotal);
+      return storedTotal;
+    }
+
+    // For paid orders, prefer calculated total if available, otherwise use stored
+    if (order.status === 'paid') {
+      if (calculatedTotal !== undefined && calculatedTotal > 0) {
+        console.log(`💰 Order ${order.orderNumber} is paid, using calculated total:`, calculatedTotal);
+        return calculatedTotal;
+      }
+      console.log(`💰 Order ${order.orderNumber} is paid, using stored total:`, storedTotal);
+      return storedTotal;
+    }
+
+    // For active orders (pending, confirmed, preparing, ready, served)
+    // ALWAYS prefer calculated total if available and valid
     if (calculatedTotal !== undefined) {
       console.log(`💰 Order ${order.orderNumber} using calculated total:`, calculatedTotal);
       return calculatedTotal;
     }
 
     // If no calculated total yet, trigger calculation for active orders
-    if (order.status !== 'cancelled' && order.status !== 'paid') {
-      console.log(`💰 Order ${order.orderNumber} triggering calculation for active order`);
+    console.log(`💰 Order ${order.orderNumber} triggering calculation for active order`);
 
-      // Trigger calculation in background
-      setTimeout(() => {
-        calculateOrderTotal(order).then(total => {
-          console.log(`🧮 Background calculation completed for order ${order.orderNumber}:`, total);
-          setCalculatedTotals(prev => {
-            const newMap = new Map(prev);
-            newMap.set(order.id, total);
-            return newMap;
-          });
-        }).catch(error => {
-          console.error(`❌ Background calculation failed for order ${order.orderNumber}:`, error);
-          // Set stored total to avoid infinite recalculation
-          setCalculatedTotals(prev => {
-            const newMap = new Map(prev);
-            newMap.set(order.id, storedTotal);
-            return newMap;
-          });
-        });
-      }, 50);
-    }
+    // Trigger calculation in background with immediate execution
+    calculateOrderTotal(order).then(total => {
+      console.log(`🧮 Background calculation completed for order ${order.orderNumber}:`, total);
+      setCalculatedTotals(prev => {
+        const newMap = new Map(prev);
+        newMap.set(order.id, total);
+        return newMap;
+      });
+    }).catch(error => {
+      console.error(`❌ Background calculation failed for order ${order.orderNumber}:`, error);
+      // Set stored total to avoid infinite recalculation
+      setCalculatedTotals(prev => {
+        const newMap = new Map(prev);
+        newMap.set(order.id, storedTotal);
+        return newMap;
+      });
+    });
 
-    // Return stored total as fallback while calculation is pending
-    console.log(`💰 Order ${order.orderNumber} using stored total (fallback):`, storedTotal);
+    // Return stored total as immediate fallback while calculation is running
+    console.log(`💰 Order ${order.orderNumber} using stored total (immediate fallback):`, storedTotal);
     return storedTotal;
   }, [calculatedTotals, calculateOrderTotal]);
 
