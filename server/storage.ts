@@ -1307,8 +1307,6 @@ export class DatabaseStorage implements IStorage {
 
     console.log(`🔍 Processing order ID: ${orderId} (type: ${typeof orderId})`);
 
-    const database = tenantDb || db;
-
     try {
       // First, get the current order to know its table
       console.log(`🔍 Fetching current order with ID: ${orderId}`);
