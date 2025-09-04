@@ -48,6 +48,12 @@ if (!db) {
   throw new Error('Database connection failed to initialize');
 }
 
+// Additional validation to ensure db has required methods
+if (!db.select || typeof db.select !== 'function') {
+  console.error('❌ CRITICAL: Database connection is missing select method');
+  throw new Error('Database connection is invalid - missing required methods');
+}
+
 console.log('✅ Database connection validated successfully');
 
 export interface IStorage {
@@ -234,12 +240,9 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   async getCategories(tenantDb?: any): Promise<Category[]> {
     const database = tenantDb || db;
-    if (!database) {
-      console.error(`❌ Database is undefined in getCategories`);
-      throw new Error(`Database connection is not available`);
-    }
     
     try {
+      this.validateDatabase(database, 'getCategories');
       const result = await database.select().from(categories);
       return result || [];
     } catch (error) {
@@ -279,20 +282,23 @@ export class DatabaseStorage implements IStorage {
 
   async getProducts(tenantDb?: any): Promise<Product[]> {
     const database = tenantDb || db;
-    if (!database) {
-      console.error(`❌ Database is undefined in getProducts`);
-      throw new Error(`Database connection is not available`);
+    
+    try {
+      this.validateDatabase(database, 'getProducts');
+      const result = await database
+        .select()
+        .from(products)
+        .where(eq(products.isActive, true));
+      // Ensure productType has a default value if missing and afterTaxPrice is properly returned
+      return result.map((product) => ({
+        ...product,
+        productType: product.productType || 1,
+        afterTaxPrice: product.afterTaxPrice || null
+      }));
+    } catch (error) {
+      console.error(`❌ Error in getProducts:`, error);
+      return [];
     }
-    const result = await database
-      .select()
-      .from(products)
-      .where(eq(products.isActive, true));
-    // Ensure productType has a default value if missing and afterTaxPrice is properly returned
-    return result.map((product) => ({
-      ...product,
-      productType: product.productType || 1,
-      afterTaxPrice: product.afterTaxPrice || null
-    }));
   }
 
   async getProductsByCategory(
@@ -1399,6 +1405,35 @@ export class DatabaseStorage implements IStorage {
     return updatedOrder || undefined;
   }
 
+  // Validate database connection with comprehensive checks
+  private validateDatabase(database: any, operation: string): void {
+    if (!database) {
+      console.error(`❌ Database is null/undefined in ${operation}`);
+      throw new Error(`Database connection is not available for ${operation}`);
+    }
+    
+    if (typeof database !== 'object') {
+      console.error(`❌ Database is not an object in ${operation}:`, typeof database);
+      throw new Error(`Invalid database type for ${operation}`);
+    }
+    
+    if (!database.select || typeof database.select !== 'function') {
+      console.error(`❌ Database missing select method in ${operation}`);
+      console.error(`❌ Available methods:`, Object.keys(database));
+      throw new Error(`Database connection is invalid - missing select method for ${operation}`);
+    }
+    
+    if (!database.insert || typeof database.insert !== 'function') {
+      console.error(`❌ Database missing insert method in ${operation}`);
+      throw new Error(`Database connection is invalid - missing insert method for ${operation}`);
+    }
+    
+    if (!database.update || typeof database.update !== 'function') {
+      console.error(`❌ Database missing update method in ${operation}`);
+      throw new Error(`Database connection is invalid - missing update method for ${operation}`);
+    }
+  }
+
   // Safe database query wrapper
   private async safeDbQuery<T>(
     queryFn: () => Promise<T>,
@@ -1474,9 +1509,12 @@ export class DatabaseStorage implements IStorage {
 
     // Ensure database is properly initialized
     const database = tenantDb || db;
-    if (!database || !database.select) {
-      console.error(`❌ Database is undefined or missing select method - cannot proceed with order status update`);
-      throw new Error(`Database connection is not available or invalid`);
+    
+    try {
+      this.validateDatabase(database, 'updateOrderStatus');
+    } catch (dbError) {
+      console.error(`❌ Database validation failed in updateOrderStatus:`, dbError);
+      throw new Error(`Database connection is not available or invalid: ${dbError.message}`);
     }
 
     // Ensure id is a number for database operations
