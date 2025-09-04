@@ -35,6 +35,7 @@ import {
   ShoppingCart,
   BarChart3,
   Search,
+  Download, // Import Download icon
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import {
@@ -50,6 +51,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import * as XLSX from "xlsx"; // Import xlsx for Excel export
 
 export function SalesChartReport() {
   const { t } = useTranslation();
@@ -466,7 +468,15 @@ export function SalesChartReport() {
     };
   };
 
-  // Legacy Sales Report Component Logic using dashboard stats
+  // Function to export data to Excel
+  const exportToExcel = (dataToExport: any[], fileName: string) => {
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+  };
+
+  // Sales Report Component Logic using dashboard stats
   const renderSalesReport = () => {
     const dashboardStats = getDashboardStats();
 
@@ -641,29 +651,27 @@ export function SalesChartReport() {
         <Card>
           <CardHeader>
             <CardTitle>{t("reports.dailySales")}</CardTitle>
-            <CardDescription>
-              {t("reports.salesChartDescription")}
-              {(() => {
-                const ordersInRange =
-                  orders?.filter((o: any) => {
-                    const oDate = new Date(
-                      o.orderedAt || o.paidAt || o.createdAt || o.created_at,
-                    );
-                    const start = new Date(startDate);
-                    const end = new Date(endDate);
-                    end.setHours(23, 59, 59, 999);
-                    return (
-                      !isNaN(oDate.getTime()) && oDate >= start && oDate <= end
-                    );
-                  }).length || 0;
-
-                return ordersInRange === 0 ? (
-                  <div className="text-orange-600 text-sm mt-1">
-                    📊 Không có dữ liệu trong ngày đã chọn, hiển thị dữ liệu mẫu
-                    từ 30 ngày gần đây
-                  </div>
-                ) : null;
-              })()}
+            <CardDescription className="flex items-center justify-between">
+              <span>Báo cáo chi tiết về doanh số và phân tích theo thời gian</span>
+              <button
+                onClick={() =>
+                  exportToExcel(
+                    Object.entries(dailySales).map(([date, data]) => ({
+                      "Ngày": formatDate(date),
+                      "Tổng số đơn hàng": data.orders,
+                      "Doanh thu": formatCurrency(data.revenue),
+                      "Thuế": formatCurrency(data.revenue * 0.1),
+                      "Thành tiền": formatCurrency(data.revenue),
+                      "Khách hàng": data.customers,
+                    })),
+                    `DailySales_` + `${startDate}_to_${endDate}`,
+                  )
+                }
+                className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Xuất Excel
+              </button>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1461,9 +1469,39 @@ export function SalesChartReport() {
               <Users className="w-5 h-5" />
               {t("reports.employeeSalesReport")}
             </CardTitle>
-            <CardDescription>
-              {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-              {t("reports.toDate")}: {formatDate(endDate)}
+            <CardDescription className="flex items-center justify-between">
+              <span>
+                {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+                {t("reports.toDate")}: {formatDate(endDate)}
+              </span>
+              <button
+                onClick={() =>
+                  exportToExcel(
+                    paginatedData.map((item) => ({
+                      "Mã NV": item.employeeCode,
+                      "Tên NV": item.employeeName,
+                      "Số đơn": item.orderCount,
+                      "Doanh thu": formatCurrency(item.revenue),
+                      "Thuế": formatCurrency(item.tax),
+                      "Tổng cộng": formatCurrency(item.total),
+                      ...Object.fromEntries(
+                        paymentMethodsArray.map((method) => [
+                          getPaymentMethodLabel(method),
+                          item.paymentMethods[method]
+                            ? formatCurrency(item.paymentMethods[method])
+                            : "-",
+                        ]),
+                      ),
+                      "Tổng thanh toán": formatCurrency(item.total),
+                    })),
+                    `EmployeeSales_` + `${startDate}_to_${endDate}`,
+                  )
+                }
+                className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Xuất Excel
+              </button>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -2125,9 +2163,32 @@ export function SalesChartReport() {
             <Users className="w-5 h-5" />
             {t("reports.customerSalesReport")}
           </CardTitle>
-          <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-            {t("reports.toDate")}: {formatDate(endDate)}
+          <CardDescription className="flex items-center justify-between">
+            <span>
+              {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+              {t("reports.toDate")}: {formatDate(endDate)}
+            </span>
+            <button
+              onClick={() =>
+                exportToExcel(
+                  paginatedData.map((item) => ({
+                    "Mã KH": item.customerId,
+                    "Tên KH": item.customerName,
+                    "Nhóm KH": item.customerGroup,
+                    "Số đơn": item.orders,
+                    "Tổng tiền": formatCurrency(item.totalAmount),
+                    "Giảm giá": formatCurrency(item.discount),
+                    "Doanh thu": formatCurrency(item.revenue),
+                    "Trạng thái": item.status,
+                  })),
+                  `CustomerSales_` + `${startDate}_to_${endDate}`,
+                )
+              }
+              className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Xuất Excel
+            </button>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -2425,7 +2486,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2532,9 +2592,31 @@ export function SalesChartReport() {
               <BarChart3 className="w-5 h-5" />
               {t("reports.channelSalesReport")}
             </CardTitle>
-            <CardDescription>
-              {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-              {t("reports.toDate")}: {formatDate(endDate)}
+            <CardDescription className="flex items-center justify-between">
+              <span>
+                {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+                {t("reports.toDate")}: {formatDate(endDate)}
+              </span>
+              <button
+                onClick={() =>
+                  exportToExcel(
+                    Object.entries(salesMethodData).map(([method, data]) => ({
+                      "Phương thức bán hàng": method,
+                      "Đơn đã hoàn thành": data.completedOrders,
+                      "Doanh thu đã hoàn thành": formatCurrency(
+                        data.completedRevenue,
+                      ),
+                      "Tổng đơn": data.totalOrders,
+                      "Tổng doanh thu": formatCurrency(data.totalRevenue),
+                    })),
+                    `SalesChannel_` + `${startDate}_to_${endDate}`,
+                  )
+                }
+                className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Xuất Excel
+              </button>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -3610,9 +3692,32 @@ export function SalesChartReport() {
               <Package className="w-5 h-5" />
               {t("reports.salesReportByProduct")}
             </CardTitle>
-            <CardDescription>
-              {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-              {t("reports.toDate")}: {formatDate(endDate)}
+            <CardDescription className="flex items-center justify-between">
+              <span>
+                {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+                {t("reports.toDate")}: {formatDate(endDate)}
+              </span>
+              <button
+                onClick={() =>
+                  exportToExcel(
+                    paginatedData.map((item) => ({
+                      "Mã SP": item.productCode,
+                      "Tên SP": item.productName,
+                      "Đơn vị": item.unit,
+                      "Số lượng": item.quantitySold,
+                      "Tổng tiền": formatCurrency(item.totalAmount),
+                      "Giảm giá": formatCurrency(item.discount),
+                      "Doanh thu": formatCurrency(item.revenue),
+                      "Nhóm SP": item.categoryName,
+                    })),
+                    `ProductSales_` + `${startDate}_to_${endDate}`,
+                  )
+                }
+                className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Xuất Excel
+              </button>
             </CardDescription>
           </CardHeader>
           <CardContent>
