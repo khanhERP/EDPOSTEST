@@ -217,22 +217,26 @@ export function EInvoiceModal({
         email: "",
       });
 
-      // Show warning if no connections or templates are available
-      if (eInvoiceConnections.length === 0) {
-        toast({
-          title: "Cảnh báo",
-          description: "Chưa có kết nối hóa đơn điện tử nào được cấu hình. Vui lòng kiểm tra Settings.",
-          variant: "destructive",
-        });
-      }
-      
-      if (invoiceTemplates.length === 0) {
-        toast({
-          title: "Cảnh báo", 
-          description: "Chưa có mẫu hóa đơn nào được kích hoạt. Vui lòng kiểm tra Settings.",
-          variant: "destructive",
-        });
-      }
+      // Only show warnings after a slight delay to avoid initial render issues
+      setTimeout(() => {
+        if (isOpen) { // Double check modal is still open
+          if (eInvoiceConnections.length === 0) {
+            toast({
+              title: "Cảnh báo",
+              description: "Chưa có kết nối hóa đơn điện tử nào được cấu hình. Vui lòng kiểm tra Settings.",
+              variant: "destructive",
+            });
+          }
+          
+          if (invoiceTemplates.length === 0) {
+            toast({
+              title: "Cảnh báo", 
+              description: "Chưa có mẫu hóa đơn nào được kích hoạt. Vui lòng kiểm tra Settings.",
+              variant: "destructive",
+            });
+          }
+        }
+      }, 500);
     }
   }, [isOpen, eInvoiceConnections, invoiceTemplates]); // Add dependencies
 
@@ -409,9 +413,11 @@ export function EInvoiceModal({
 
     // Validate required fields before proceeding
     if (!formData.invoiceProvider || !formData.customerName) {
-      alert(
-        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
-      );
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
+        variant: "destructive",
+      });
       setIsPublishing(false);
       return;
     }
@@ -692,6 +698,8 @@ export function EInvoiceModal({
       console.log("⚠️ Already processing publish, skipping duplicate call");
       return;
     }
+
+    setIsPublishing(true);
 
     // Validate required fields
     if (!formData.invoiceProvider || !formData.customerName) {
