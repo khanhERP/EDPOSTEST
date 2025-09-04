@@ -663,41 +663,25 @@ export function ShoppingCart({
       setShowPaymentModal(false);
       setShowReceiptPreview(false);
       setShowPaymentMethodModal(false);
-      setShowEInvoiceModal(false); // Ensure E-Invoice modal is closed
 
-      // CRITICAL FIX: Set receipt data immediately and force modal to show
-      console.log("🔥 POS: Setting receipt data and forcing modal display");
+      // CRITICAL FIX: Force receipt modal to show immediately
+      console.log("🔥 POS: Force showing receipt modal immediately");
+      
+      // Set receipt data and show modal in one go
       setSelectedReceipt(receiptForDisplay);
+      setShowReceiptModal(true);
       
-      // Use multiple attempts to ensure modal shows
+      // Additional safeguard to ensure modal appears
       setTimeout(() => {
-        console.log("🔥 POS: First attempt to show receipt modal");
-        setShowReceiptModal(true);
-      }, 100);
-      
-      setTimeout(() => {
-        console.log("🔥 POS: Second attempt to show receipt modal");
-        setShowReceiptModal(true);
-        setSelectedReceipt(receiptForDisplay); // Re-set receipt data
-      }, 300);
-      
-      setTimeout(() => {
-        console.log("🔥 POS: Final attempt to show receipt modal");
+        console.log("🔥 POS: Verifying receipt modal is visible");
         if (!showReceiptModal) {
-          setShowReceiptModal(true);
+          console.log("🔥 POS: Receipt modal not visible, forcing display again");
           setSelectedReceipt(receiptForDisplay);
+          setShowReceiptModal(true);
         }
-        
-        // Final verification
-        console.log("🔍 POS: Final receipt modal state check:", {
-          showReceiptModal: showReceiptModal,
-          selectedReceipt: !!receiptForDisplay,
-          receiptItems: receiptForDisplay.items?.length || 0,
-          modalShouldBeVisible: true
-        });
-      }, 500);
+      }, 200);
 
-      console.log("📄 POS: Receipt modal trigger process initiated with data:", receiptForDisplay);
+      console.log("📄 POS: Receipt modal should now be visible with data:", receiptForDisplay);
 
     } else {
       console.error("❌ POS: E-Invoice processing failed or cancelled");

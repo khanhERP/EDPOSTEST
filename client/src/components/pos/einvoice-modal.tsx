@@ -632,19 +632,15 @@ export function EInvoiceModal({
       console.log("📄 PUBLISH LATER: Calling onConfirm to show receipt modal");
       console.log("📄 PUBLISH LATER: Complete invoice data being sent:", completeInvoiceData);
       
-      // Force the onConfirm call
-      try {
-        onConfirm(completeInvoiceData);
-        console.log("✅ PUBLISH LATER: onConfirm called successfully");
-      } catch (error) {
-        console.error("❌ PUBLISH LATER: Error calling onConfirm:", error);
-      }
+      // Call onConfirm synchronously to ensure receipt modal shows
+      onConfirm(completeInvoiceData);
+      console.log("✅ PUBLISH LATER: onConfirm called successfully");
 
-      // Close the E-Invoice modal after onConfirm is processed
+      // Close the E-Invoice modal after a brief delay
       setTimeout(() => {
         console.log("🔒 PUBLISH LATER: Closing E-Invoice modal");
         onClose();
-      }, 200);
+      }, 100);
 
       console.log("--------------------------------------------------");
 
@@ -1171,20 +1167,17 @@ export function EInvoiceModal({
 
         console.log("📄 Final publishResult for onConfirm:", publishResult);
 
-        console.log(
-          "📧 Step 4: E-Invoice published, now calling onConfirm with enhanced receipt data",
-        );
-        console.log("📄 Enhanced publish result being sent:", publishResult);
+        console.log("📧 Step 4: E-Invoice published, now calling onConfirm with enhanced receipt data");
 
         // Call onConfirm FIRST to trigger receipt modal display
         console.log("📄 Calling onConfirm with publishResult:", publishResult);
         onConfirm(publishResult);
 
-        // Close the E-Invoice modal after a small delay to ensure receipt modal is shown
-        console.log("🔒 Closing E-Invoice modal after triggering receipt");
+        // Close the E-Invoice modal after a brief delay
         setTimeout(() => {
+          console.log("🔒 Closing E-Invoice modal after triggering receipt");
           onClose();
-        }, 200);
+        }, 100);
 
         // Force data refresh on all pages after successful publishing
         try {
