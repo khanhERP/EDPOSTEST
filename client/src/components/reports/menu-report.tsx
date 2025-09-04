@@ -327,7 +327,7 @@ function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalSales") || "Tổng bán"}
+                  {t("reports.totalSales") || "Tổng số lượng đã bán"}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {(menuAnalysis?.totalQuantity || 0).toLocaleString('vi-VN')}
