@@ -52,11 +52,28 @@ export function ReceiptModal({
     enabled: isOpen, // Only fetch when modal is open
   });
 
-  // Reset states on mount to prevent unwanted modal display
+  // CRITICAL: Prevent unwanted modal display on mount/reload
   useEffect(() => {
+    console.log("🔍 Receipt Modal: Mount effect validation", {
+      isOpen,
+      isPreview,
+      hasReceipt: !!receipt,
+      receiptId: receipt?.id,
+      receiptTransactionId: receipt?.transactionId,
+      hasCartItems: cartItems?.length > 0,
+      total,
+      timestamp: new Date().toISOString()
+    });
+
     // If modal is supposed to be open but has no valid data, close it immediately
-    if (isOpen && !receipt && !isPreview && (!cartItems || cartItems.length === 0 || total <= 0)) {
-      console.log("🚨 Receipt Modal: Detected invalid state on mount - closing modal");
+    if (isOpen && !isPreview && (!receipt || (!receipt.id && !receipt.transactionId))) {
+      console.log("🚨 Receipt Modal: Invalid receipt data on mount - closing modal");
+      setTimeout(() => onClose(), 0);
+      return;
+    }
+
+    if (isOpen && isPreview && (!cartItems || cartItems.length === 0 || total <= 0)) {
+      console.log("🚨 Receipt Modal: Invalid preview data on mount - closing modal");
       setTimeout(() => onClose(), 0);
       return;
     }
@@ -102,9 +119,16 @@ export function ReceiptModal({
   }
 
   // Handle missing data cases with STRICT validation
-  const hasReceiptData = receipt && typeof receipt === 'object' && (receipt.id || receipt.transactionId);
+  const hasReceiptData = receipt && 
+    typeof receipt === 'object' && 
+    (receipt.id || receipt.transactionId) &&
+    receipt.items && 
+    Array.isArray(receipt.items) && 
+    receipt.items.length > 0;
+    
   const hasCartData = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
-  const hasValidData = hasReceiptData || (isPreview && hasCartData && total > 0);
+  const hasValidPreviewData = isPreview && hasCartData && total > 0;
+  const hasValidData = hasReceiptData || hasValidPreviewData;
 
   // CRITICAL: If no valid data at all, don't show modal - just return null
   if (!hasValidData) {
@@ -114,7 +138,9 @@ export function ReceiptModal({
       isPreview,
       total,
       receiptId: receipt?.id,
-      receiptTransactionId: receipt?.transactionId
+      receiptTransactionId: receipt?.transactionId,
+      receiptHasItems: receipt?.items?.length > 0,
+      timestamp: new Date().toISOString()
     });
 
     // Instead of showing error dialog, just close the modal silently

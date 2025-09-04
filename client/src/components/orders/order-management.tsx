@@ -51,7 +51,7 @@ export function OrderManagement() {
   // CRITICAL: Reset all modal states on component mount to prevent unwanted displays
   useEffect(() => {
     console.log("🔄 Order Management: Component mounted - resetting all modal states");
-    
+
     // Force close any modals that might be open from previous sessions
     setShowReceiptModal(false);
     setSelectedReceipt(null);
@@ -66,7 +66,7 @@ export function OrderManagement() {
     setShowQRPayment(false);
     setPointsPaymentOpen(false);
     setMixedPaymentOpen(false);
-    
+
     console.log("✅ Order Management: All modal states reset on mount");
   }, []); // Run only once on mount
 
@@ -107,6 +107,30 @@ export function OrderManagement() {
       }
     }
   }, [showReceiptModal, selectedReceipt, showReceiptPreview, previewReceipt]);
+
+  // CRITICAL: Prevent unwanted modal display on mount/reload
+  useEffect(() => {
+    console.log("🔍 Order Management: Receipt Modal mount effect - checking states", {
+      showReceiptModal,
+      selectedReceipt,
+      showReceiptPreview,
+      previewReceipt,
+      timestamp: new Date().toISOString()
+    });
+
+    // If any receipt modal is supposed to be open but has no valid data, close it immediately
+    if (showReceiptModal && (!selectedReceipt || (!selectedReceipt.id && !selectedReceipt.transactionId))) {
+      console.log("🚨 Order Management: Detected invalid receipt modal state on mount - closing");
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
+    }
+
+    if (showReceiptPreview && (!previewReceipt || !previewReceipt.items || previewReceipt.items.length === 0)) {
+      console.log("🚨 Order Management: Detected invalid preview modal state on mount - closing");
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+    }
+  }, []); // Run only on mount
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
@@ -658,7 +682,7 @@ export function OrderManagement() {
 
     // For active orders only (pending, confirmed, preparing, ready, served), use calculation priority
     console.log(`💰 ACTIVE Order ${order.orderNumber} (${order.status}) - using calculation priority`);
-    
+
     // Priority 1: API calculated total (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
@@ -1352,8 +1376,8 @@ export function OrderManagement() {
       console.log(`🔄 Preloading totals for ${preloadOrders.length} orders around current page ${currentPage}`);
 
       // Batch preload in background with low priority
-      const preloadBatch = preloadOrders.filter(order => 
-        !calculatedTotals.has(order.id) && 
+      const preloadBatch = preloadOrders.filter(order =>
+        !calculatedTotals.has(order.id) &&
         order.status !== 'cancelled' &&
         !currentOrders.some(currentOrder => currentOrder.id === order.id) // Don't duplicate current page
       );
@@ -1439,7 +1463,7 @@ export function OrderManagement() {
       // Calculate totals for orders that don't have API calculated totals
       currentOrders.forEach(async (order) => {
         const apiCalculatedTotal = (order as any).calculatedTotal;
-        
+
         // Skip if we already have a valid API calculated total or cached total
         if ((apiCalculatedTotal && Number(apiCalculatedTotal) > 0) || calculatedTotals.has(order.id)) {
           return;
@@ -1453,7 +1477,7 @@ export function OrderManagement() {
         }
 
         console.log(`🧮 Calculating total for order ${order.orderNumber} (ID: ${order.id})`);
-        
+
         try {
           // Fetch order items for calculation
           const response = await apiRequest('GET', `/api/order-items/${order.id}`);
@@ -1489,7 +1513,7 @@ export function OrderManagement() {
           });
 
           const calculatedTotal = Math.floor(subtotal + taxAmount);
-          
+
           console.log(`💰 Calculated total for order ${order.orderNumber}:`, {
             subtotal,
             taxAmount,
@@ -1772,7 +1796,7 @@ export function OrderManagement() {
                           if (order.status === 'paid' || order.status === 'cancelled') {
                             const storedTotal = Math.floor(Number(order.total || 0));
                             console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - using STORED total ONLY: ${storedTotal}`);
-                            
+
                             return (
                               <span className="text-green-600">
                                 {formatCurrency(storedTotal)}
@@ -1784,7 +1808,7 @@ export function OrderManagement() {
                           const apiCalculatedTotal = (order as any).calculatedTotal;
                           const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
                           const hasCachedTotal = calculatedTotals.has(order.id);
-                          
+
                           // Priority 1: Use API calculated total if available
                           if (hasApiTotal) {
                             const displayTotal = Math.floor(Number(apiCalculatedTotal));
@@ -1795,7 +1819,7 @@ export function OrderManagement() {
                               </span>
                             );
                           }
-                          
+
                           // Priority 2: Use cached calculated total
                           if (hasCachedTotal) {
                             const cachedTotal = calculatedTotals.get(order.id)!;
@@ -2198,7 +2222,7 @@ export function OrderManagement() {
                             unitPrice: unitPrice,
                             price: unitPrice,
                             total: unitPrice * quantity,
-                            sku: item.productSku || product?.sku || `SP${item.productId}`,
+                            sku: item.sku || `SP${item.productId}`,
                             taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
                             afterTaxPrice: product?.afterTaxPrice || null
                           };
