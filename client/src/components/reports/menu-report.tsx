@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart3, TrendingUp, Package, DollarSign, Search, RefreshCw } from "lucide-react";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { useTranslation } from "@/lib/i18n";
 
 interface Product {
@@ -381,13 +382,106 @@ function MenuReport() {
         </Card>
       </div>
 
-      {/* Category Performance */}
+      {/* Category Performance Charts */}
       {menuAnalysis?.categoryStats && menuAnalysis.categoryStats.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>{t("reports.categoryPerformance") || "Hiệu suất danh mục"}</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Revenue Chart */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-gray-700">
+                  {t("reports.revenue") || "Doanh thu"} theo danh mục
+                </h4>
+                <div className="h-64 relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-50/20 to-emerald-50/20 rounded-xl"></div>
+                  <div className="relative z-10 h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={menuAnalysis.categoryStats.map((cat, index) => ({
+                          name: cat.categoryName?.length > 15 
+                            ? cat.categoryName.substring(0, 15) + '...' 
+                            : cat.categoryName || `Danh mục ${cat.categoryId}`,
+                          revenue: Number(cat.totalRevenue || 0),
+                          fill: `hsl(${(index * 45) % 360}, 70%, 50%)`
+                        }))}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                      >
+                        <XAxis 
+                          dataKey="name" 
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                          fontSize={11}
+                        />
+                        <YAxis 
+                          tickFormatter={(value) => formatCurrency(value)}
+                          fontSize={11}
+                        />
+                        <Tooltip 
+                          formatter={(value) => [formatCurrency(Number(value)) + ' ₫', 'Doanh thu']}
+                          labelStyle={{ fontWeight: 600, fontSize: 12 }}
+                        />
+                        <Bar 
+                          dataKey="revenue" 
+                          radius={[4, 4, 0, 0]}
+                          fill={(entry) => entry.fill}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quantity Chart */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-gray-700">
+                  {t("reports.quantity") || "Số lượng"} bán theo danh mục
+                </h4>
+                <div className="h-64 relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-indigo-50/20 rounded-xl"></div>
+                  <div className="relative z-10 h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={menuAnalysis.categoryStats.map((cat, index) => ({
+                          name: cat.categoryName?.length > 15 
+                            ? cat.categoryName.substring(0, 15) + '...' 
+                            : cat.categoryName || `Danh mục ${cat.categoryId}`,
+                          quantity: Number(cat.totalQuantity || 0),
+                          fill: `hsl(${(index * 60 + 180) % 360}, 65%, 55%)`
+                        }))}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                      >
+                        <XAxis 
+                          dataKey="name" 
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                          fontSize={11}
+                        />
+                        <YAxis 
+                          tickFormatter={(value) => value.toLocaleString('vi-VN')}
+                          fontSize={11}
+                        />
+                        <Tooltip 
+                          formatter={(value) => [Number(value).toLocaleString('vi-VN'), 'Số lượng']}
+                          labelStyle={{ fontWeight: 600, fontSize: 12 }}
+                        />
+                        <Bar 
+                          dataKey="quantity" 
+                          radius={[4, 4, 0, 0]}
+                          fill={(entry) => entry.fill}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Category Performance Table */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px]">
                 <thead>
