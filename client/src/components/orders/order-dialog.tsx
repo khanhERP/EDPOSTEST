@@ -90,26 +90,45 @@ export function OrderDialog({
       console.log('Existing order:', existingOrder);
       console.log(
         mode === "edit"
-          ? "Adding items to existing order:"
+          ? "Updating existing order:"
           : "Creating new order:",
         JSON.stringify(orderData, null, 2),
       );
 
       try {
         if (mode === "edit" && existingOrder) {
-          console.log(`📝 Adding ${orderData.items.length} items to existing order ${existingOrder.id} (single database update)`);
-          const response = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
-            items: orderData.items,
-          });
+          // If there are new items to add, add them first
+          if (orderData.items.length > 0) {
+            console.log(`📝 Adding ${orderData.items.length} new items to existing order ${existingOrder.id}`);
+            const addItemsResponse = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
+              items: orderData.items,
+            });
 
-          if (!response.ok) {
-            const errorData = await response.text();
-            throw new Error(`Failed to add items: ${errorData}`);
+            if (!addItemsResponse.ok) {
+              const errorData = await addItemsResponse.text();
+              throw new Error(`Failed to add items: ${errorData}`);
+            }
+
+            const addItemsResult = await addItemsResponse.json();
+            console.log('✅ Items added successfully:', addItemsResult);
           }
 
-          const result = await response.json();
-          console.log('✅ Items added successfully with updated totals:', result);
-          return result;
+          // Update order information (customer details, etc.)
+          console.log(`📝 Updating order information for order ${existingOrder.id}`);
+          const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
+            customerName: orderData.order.customerName,
+            customerCount: orderData.order.customerCount,
+            updatedAt: new Date().toISOString()
+          });
+
+          if (!updateResponse.ok) {
+            const errorData = await updateResponse.text();
+            throw new Error(`Failed to update order: ${errorData}`);
+          }
+
+          const updateResult = await updateResponse.json();
+          console.log('✅ Order updated successfully:', updateResult);
+          return updateResult;
         } else {
           console.log('📝 Creating new order...');
           const response = await apiRequest("POST", "/api/orders", orderData);
@@ -156,7 +175,7 @@ export function OrderDialog({
         description: mode === "edit" ? "Đã cập nhật đơn hàng thành công" : t('orders.orderUpdateSuccessDesc'),
       });
 
-      console.log('✅ Order mutation completed - no duplicate API calls triggered');
+      console.log('✅ Order mutation completed - proper update flow executed');
     },
     onError: (error: any) => {
       console.error('=== ORDER MUTATION ERROR ===');
