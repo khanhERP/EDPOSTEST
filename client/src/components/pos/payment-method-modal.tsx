@@ -546,21 +546,11 @@ export function PaymentMethodModal({
         } else {
           const errorText = await statusResponse.text();
           console.error(`❌ Failed to update order status:`, errorText);
-          toast({
-            title: "Lỗi",
-            description: `Không thể cập nhật trạng thái đơn hàng: ${errorText}`,
-            variant: "destructive",
-          });
-          return; // Stop execution for other payment methods if order update fails
+          alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
         }
       } catch (error) {
         console.error(`❌ Error updating order status:`, error);
-        toast({
-          title: "Lỗi",
-          description: `Không thể cập nhật trạng thái đơn hàng: ${error instanceof Error ? error.message : 'Lỗi không xác định'}`,
-          variant: "destructive",
-        });
-        return; // Stop execution for other payment methods if order update fails
+        alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
       }
     }
   };
@@ -613,27 +603,11 @@ export function PaymentMethodModal({
       } else {
         const errorText = await statusResponse.text();
         console.error(`❌ Failed to update order status:`, errorText);
-        toast({
-          title: "Lỗi",
-          description: `Không thể cập nhật trạng thái đơn hàng: ${errorText}`,
-          variant: "destructive",
-        });
-        // Don't return here - still allow E-Invoice modal to show for temporary orders
-        if (!isTemporaryOrder) {
-          return; // Only return for real orders that failed to update
-        }
+        alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
       }
     } catch (error) {
       console.error(`❌ Error updating order status:`, error);
-      toast({
-        title: "Lỗi",
-        description: `Không thể cập nhật trạng thái đơn hàng: ${error instanceof Error ? error.message : 'Lỗi không xác định'}`,
-        variant: "destructive",
-      });
-      // Don't return here - still allow E-Invoice modal to show for temporary orders
-      if (!isTemporaryOrder) {
-        return; // Only return for real orders that failed to update
-      }
+      alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
     }
   };
 
@@ -751,27 +725,11 @@ export function PaymentMethodModal({
       } else {
         const errorText = await statusResponse.text();
         console.error(`❌ Failed to update order status:`, errorText);
-        toast({
-          title: "Lỗi",
-          description: `Không thể cập nhật trạng thái đơn hàng: ${errorText}`,
-          variant: "destructive",
-        });
-        // Don't return here - still allow E-Invoice modal to show for temporary orders
-        if (!isTemporaryOrder) {
-          return; // Only return for real orders that failed to update
-        }
+        alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
       }
     } catch (error) {
       console.error(`❌ Error updating order status:`, error);
-      toast({
-        title: "Lỗi",
-        description: `Không thể cập nhật trạng thái đơn hàng: ${error instanceof Error ? error.message : 'Lỗi không xác định'}`,
-        variant: "destructive",
-      });
-      // Don't return here - still allow E-Invoice modal to show for temporary orders
-      if (!isTemporaryOrder) {
-        return; // Only return for real orders that failed to update
-      }
+      alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
     }
   };
 
@@ -786,7 +744,7 @@ export function PaymentMethodModal({
     // Check if we have valid receipt data
     if (invoiceData.receipt) {
       console.log("📄 Valid receipt data found, setting for receipt modal:", invoiceData.receipt);
-
+      
       // Set receipt data for modal
       setReceiptDataForModal(invoiceData.receipt);
 
@@ -813,7 +771,7 @@ export function PaymentMethodModal({
 
     } else {
       console.error("❌ No receipt data found in E-Invoice response");
-
+      
       // Even if no receipt data, still show success and close payment flow
       if (invoiceData.success || invoiceData.publishLater || invoiceData.publishedImmediately) {
         toast({
@@ -822,7 +780,7 @@ export function PaymentMethodModal({
             "Hóa đơn đã được lưu để phát hành sau" : 
             "Hóa đơn điện tử đã được phát hành thành công",
         });
-
+        
         // Close the entire payment modal after successful processing
         onClose();
       } else {
