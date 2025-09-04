@@ -1,7 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { tenantMiddleware, getTenantDatabase, TenantRequest } from "./tenant-middleware";
+import {
+  tenantMiddleware,
+  getTenantDatabase,
+  TenantRequest,
+} from "./tenant-middleware";
 import {
   insertProductSchema,
   insertTransactionSchema,
@@ -39,11 +43,9 @@ import {
   lt,
   lte,
   ilike,
-  ne
+  ne,
 } from "drizzle-orm";
-import {
-  sql
-} from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   orders,
   orderItems,
@@ -51,22 +53,22 @@ import {
   categories,
   transactions as transactionsTable,
   transactionItems as transactionItemsTable,
-  tables
+  tables,
 } from "@shared/schema";
 
-export async function registerRoutes(app: Express): Promise < Server > {
+export async function registerRoutes(app: Express): Promise<Server> {
   // Register tenant management routes
   registerTenantRoutes(app);
 
   // Apply tenant middleware to all API routes
-  app.use('/api', tenantMiddleware);
+  app.use("/api", tenantMiddleware);
 
   // Initialize sample data
   await initializeSampleData();
 
   // Ensure inventory_transactions table exists
   try {
-    await db.execute(sql `
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS inventory_transactions (
         id SERIAL PRIMARY KEY,
         product_id INTEGER REFERENCES products(id) NOT NULL,
@@ -86,26 +88,33 @@ export async function registerRoutes(app: Express): Promise < Server > {
   }
 
   // Categories
-  app.get("/api/categories", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log('🔍 GET /api/categories - Starting request processing');
-      let tenantDb;
+  app.get(
+    "/api/categories",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for categories');
-      } catch (dbError) {
-        console.error('❌ Failed to get tenant database for categories:', dbError);
-        tenantDb = null;
-      }
+        console.log("🔍 GET /api/categories - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for categories");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for categories:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const categories = await storage.getCategories(tenantDb);
-      console.log(`✅ Successfully fetched ${categories.length} categories`);
-      res.json(categories);
-    } catch (error) {
-      console.error("❌ Error fetching categories:", error);
-      res.status(500).json({ error: "Failed to fetch categories" });
-    }
-  });
+        const categories = await storage.getCategories(tenantDb);
+        console.log(`✅ Successfully fetched ${categories.length} categories`);
+        res.json(categories);
+      } catch (error) {
+        console.error("❌ Error fetching categories:", error);
+        res.status(500).json({ error: "Failed to fetch categories" });
+      }
+    },
+  );
 
   app.post("/api/categories", async (req: TenantRequest, res) => {
     try {
@@ -144,7 +153,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
         icon: icon || "fas fa-utensils",
       };
 
-      const category = await storage.updateCategory(categoryId, categoryData, tenantDb);
+      const category = await storage.updateCategory(
+        categoryId,
+        categoryData,
+        tenantDb,
+      );
       res.json(category);
     } catch (error) {
       console.error("Error updating category:", error);
@@ -158,7 +171,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const tenantDb = await getTenantDatabase(req);
 
       // Check if category has products
-      const products = await storage.getProductsByCategory(categoryId, tenantDb);
+      const products = await storage.getProductsByCategory(
+        categoryId,
+        tenantDb,
+      );
       if (products.length > 0) {
         return res.status(400).json({
           error: `Không thể xóa danh mục vì còn ${products.length} sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.`,
@@ -186,26 +202,33 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Products
-  app.get("/api/products", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log('🔍 GET /api/products - Starting request processing');
-      let tenantDb;
+  app.get(
+    "/api/products",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for products');
-      } catch (dbError) {
-        console.error('❌ Failed to get tenant database for products:', dbError);
-        tenantDb = null;
-      }
+        console.log("🔍 GET /api/products - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for products");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for products:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const products = await storage.getProducts(tenantDb);
-      console.log(`✅ Successfully fetched ${products.length} products`);
-      res.json(products);
-    } catch (error) {
-      console.error("❌ Error fetching products:", error);
-      res.status(500).json({ error: "Failed to fetch products" });
-    }
-  });
+        const products = await storage.getProducts(tenantDb);
+        console.log(`✅ Successfully fetched ${products.length} products`);
+        res.json(products);
+      } catch (error) {
+        console.error("❌ Error fetching products:", error);
+        res.status(500).json({ error: "Failed to fetch products" });
+      }
+    },
+  );
 
   // Endpoint for POS to get only active products
   app.get("/api/products/active", async (req: TenantRequest, res) => {
@@ -298,7 +321,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
         trackInventory: req.body.trackInventory !== false,
         imageUrl: req.body.imageUrl || null,
         taxRate: req.body.taxRate.toString(),
-        afterTaxPrice: req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== "" ? req.body.afterTaxPrice.toString() : null,
+        afterTaxPrice:
+          req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== ""
+            ? req.body.afterTaxPrice.toString()
+            : null,
       });
 
       console.log("Validated product data:", validatedData);
@@ -347,13 +373,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
         ...req.body,
         price: req.body.price ? req.body.price.toString() : undefined,
         taxRate: req.body.taxRate ? req.body.taxRate.toString() : undefined,
-        afterTaxPrice: req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== "" ? req.body.afterTaxPrice.toString() : null,
+        afterTaxPrice:
+          req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== ""
+            ? req.body.afterTaxPrice.toString()
+            : null,
         priceIncludesTax: req.body.priceIncludesTax || false,
-        trackInventory: req.body.trackInventory !== false
+        trackInventory: req.body.trackInventory !== false,
       };
 
       // Remove undefined fields
-      Object.keys(transformedData).forEach(key => {
+      Object.keys(transformedData).forEach((key) => {
         if (transformedData[key] === undefined) {
           delete transformedData[key];
         }
@@ -361,7 +390,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       console.log("Transformed update data:", transformedData);
 
-      const validatedData = insertProductSchema.partial().parse(transformedData);
+      const validatedData = insertProductSchema
+        .partial()
+        .parse(transformedData);
       const tenantDb = await getTenantDatabase(req);
       const product = await storage.updateProduct(id, validatedData, tenantDb);
 
@@ -380,7 +411,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
       res.status(500).json({
         message: "Failed to update product",
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   });
@@ -413,18 +444,23 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // New endpoint to cleanup inactive products
-  app.delete("/api/products/cleanup/inactive", async (req: TenantRequest, res) => {
-    try {
-      const tenantDb = await getTenantDatabase(req);
-      const deletedCount = await storage.deleteInactiveProducts(tenantDb);
-      res.json({
-        message: `Successfully deleted ${deletedCount} inactive products`,
-        deletedCount,
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to cleanup inactive products" });
-    }
-  });
+  app.delete(
+    "/api/products/cleanup/inactive",
+    async (req: TenantRequest, res) => {
+      try {
+        const tenantDb = await getTenantDatabase(req);
+        const deletedCount = await storage.deleteInactiveProducts(tenantDb);
+        res.json({
+          message: `Successfully deleted ${deletedCount} inactive products`,
+          deletedCount,
+        });
+      } catch (error) {
+        res
+          .status(500)
+          .json({ message: "Failed to cleanup inactive products" });
+      }
+    },
+  );
 
   app.get("/api/products/barcode/:sku", async (req: TenantRequest, res) => {
     try {
@@ -464,7 +500,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         notes: z.string().optional(),
         invoiceNumber: z.string().nullable().optional(), // Allow null/undefined for publish later
         invoiceId: z.number().nullable().optional(), // Also allow invoiceId to be null
-        orderId: z.number().optional()
+        orderId: z.number().optional(),
       });
 
       // Validate with original string format, then transform
@@ -500,13 +536,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
           continue; // Continue checking other items
         }
 
-        console.log(`✅ Stock check passed for ${product.name}: Available=${product.stock}, Requested=${item.quantity}`);
+        console.log(
+          `✅ Stock check passed for ${product.name}: Available=${product.stock}, Requested=${item.quantity}`,
+        );
 
         const itemSubtotal = parseFloat(item.price) * item.quantity;
         let itemTax = 0;
 
         // Tax = (after_tax_price - price) * quantity
-        if (product.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        if (
+          product.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const price = parseFloat(product.price);
           itemTax = (afterTaxPrice - price) * item.quantity;
@@ -524,7 +566,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         return res.status(400).json({
           message: "Stock validation failed for multiple products",
           errors: stockValidationErrors,
-          details: stockValidationErrors.join("; ")
+          details: stockValidationErrors.join("; "),
         });
       }
 
@@ -575,158 +617,175 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Get transactions by date range
-  app.get("/api/transactions/:startDate/:endDate", async (req: TenantRequest, res) => {
-    try {
-      const { startDate, endDate } = req.params;
+  app.get(
+    "/api/transactions/:startDate/:endDate",
+    async (req: TenantRequest, res) => {
+      try {
+        const { startDate, endDate } = req.params;
 
-      const start = new Date(startDate);
-      start.setUTCHours(0, 0, 0, 0);
+        const start = new Date(startDate);
+        start.setUTCHours(0, 0, 0, 0);
 
-      const end = new Date(endDate);
-      end.setUTCHours(23, 59, 59, 999);
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
 
-      const transactions = await db.select().from(transactionsTable)
-        .where(
-          and(
-            gte(transactionsTable.createdAt, start),
-            lte(transactionsTable.createdAt, end)
+        const transactions = await db
+          .select()
+          .from(transactionsTable)
+          .where(
+            and(
+              gte(transactionsTable.createdAt, start),
+              lte(transactionsTable.createdAt, end),
+            ),
           )
-        )
-        .orderBy(desc(transactionsTable.createdAt));
+          .orderBy(desc(transactionsTable.createdAt));
 
-      // Always return an array, even if empty
-      res.json(transactions || []);
-    } catch (error) {
-      console.error("Error fetching transactions:", error);
-      // Return empty array instead of error for reports
-      res.json([]);
-    }
-  });
+        // Always return an array, even if empty
+        res.json(transactions || []);
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        // Return empty array instead of error for reports
+        res.json([]);
+      }
+    },
+  );
 
   // Get orders by date range
-  app.get("/api/orders/date-range/:startDate/:endDate", async (req: TenantRequest, res) => {
-    try {
-      const { startDate, endDate } = req.params;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+  app.get(
+    "/api/orders/date-range/:startDate/:endDate",
+    async (req: TenantRequest, res) => {
+      try {
+        const { startDate, endDate } = req.params;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
 
-      const tenantDb = await getTenantDatabase(req);
+        const tenantDb = await getTenantDatabase(req);
 
-      // Use direct database query with proper ordering
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setUTCHours(23, 59, 59, 999);
+        // Use direct database query with proper ordering
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
 
-      const allOrders = await db
-        .select()
-        .from(orders)
-        .where(
-          and(
-            gte(orders.orderedAt, start),
-            lte(orders.orderedAt, end)
-          )
-        )
-        .orderBy(
-          desc(orders.orderedAt), // Primary sort by order date (newest first)
-          desc(orders.id) // Secondary sort by ID (newest first)
-        );
+        const allOrders = await db
+          .select()
+          .from(orders)
+          .where(and(gte(orders.orderedAt, start), lte(orders.orderedAt, end)))
+          .orderBy(
+            desc(orders.orderedAt), // Primary sort by order date (newest first)
+            desc(orders.id), // Secondary sort by ID (newest first)
+          );
 
-      console.log('Orders by date range - Total found:', allOrders.length);
+        console.log("Orders by date range - Total found:", allOrders.length);
 
-      // Paginate results after sorting
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedOrders = allOrders.slice(startIndex, endIndex);
+        // Paginate results after sorting
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedOrders = allOrders.slice(startIndex, endIndex);
 
-      console.log('Orders by date range - Paginated result:', {
-        page,
-        limit,
-        total: allOrders.length,
-        returned: paginatedOrders.length,
-        newestOrder: paginatedOrders[0] ? {
-          id: paginatedOrders[0].id,
-          orderNumber: paginatedOrders[0].orderNumber,
-          orderedAt: paginatedOrders[0].orderedAt
-        } : null
-      });
+        console.log("Orders by date range - Paginated result:", {
+          page,
+          limit,
+          total: allOrders.length,
+          returned: paginatedOrders.length,
+          newestOrder: paginatedOrders[0]
+            ? {
+                id: paginatedOrders[0].id,
+                orderNumber: paginatedOrders[0].orderNumber,
+                orderedAt: paginatedOrders[0].orderedAt,
+              }
+            : null,
+        });
 
-      res.json(paginatedOrders);
-    } catch (error) {
-      console.error("Error fetching orders by date range:", error);
-      res.status(500).json({ error: "Failed to fetch orders" });
-    }
-  });
+        res.json(paginatedOrders);
+      } catch (error) {
+        console.error("Error fetching orders by date range:", error);
+        res.status(500).json({ error: "Failed to fetch orders" });
+      }
+    },
+  );
 
   // Get invoices by date range
-  app.get("/api/invoices/date-range/:startDate/:endDate", async (req: TenantRequest, res) => {
-    try {
-      const { startDate, endDate } = req.params;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+  app.get(
+    "/api/invoices/date-range/:startDate/:endDate",
+    async (req: TenantRequest, res) => {
+      try {
+        const { startDate, endDate } = req.params;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
 
-      const tenantDb = await getTenantDatabase(req);
+        const tenantDb = await getTenantDatabase(req);
 
-      // Filter by date range using direct database query
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setUTCHours(23, 59, 59, 999);
+        // Filter by date range using direct database query
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
 
-      const allInvoices = await db
-        .select()
-        .from(invoices)
-        .where(
-          and(
-            gte(invoices.invoiceDate, start),
-            lte(invoices.invoiceDate, end)
+        const allInvoices = await db
+          .select()
+          .from(invoices)
+          .where(
+            and(
+              gte(invoices.invoiceDate, start),
+              lte(invoices.invoiceDate, end),
+            ),
           )
-        )
-        .orderBy(
-          desc(invoices.createdAt), // Primary sort by creation time (newest first)
-          desc(invoices.id) // Secondary sort by ID (newest first)
+          .orderBy(
+            desc(invoices.createdAt), // Primary sort by creation time (newest first)
+            desc(invoices.id), // Secondary sort by ID (newest first)
+          );
+
+        // Paginate results
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedInvoices = allInvoices.slice(startIndex, endIndex);
+
+        console.log(
+          "Invoices by date range - Total found:",
+          allInvoices.length,
+        );
+        console.log("Invoices by date range - Paginated result:", {
+          page,
+          limit,
+          total: allInvoices.length,
+          returned: paginatedInvoices.length,
+          newestInvoice: paginatedInvoices[0]
+            ? {
+                id: paginatedInvoices[0].id,
+                tradeNumber: paginatedInvoices[0].tradeNumber,
+                createdAt: paginatedInvoices[0].createdAt,
+              }
+            : null,
+        });
+
+        res.json(paginatedInvoices);
+      } catch (error) {
+        console.error("Error fetching invoices by date range:", error);
+        res.status(500).json({ error: "Failed to fetch invoices" });
+      }
+    },
+  );
+
+  app.get(
+    "/api/transactions/:transactionId",
+    async (req: TenantRequest, res) => {
+      try {
+        const transactionId = req.params.transactionId;
+        const tenantDb = await getTenantDatabase(req);
+        const receipt = await storage.getTransactionByTransactionId(
+          transactionId,
+          tenantDb,
         );
 
-      // Paginate results
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedInvoices = allInvoices.slice(startIndex, endIndex);
+        if (!receipt) {
+          return res.status(404).json({ message: "Transaction not found" });
+        }
 
-      console.log('Invoices by date range - Total found:', allInvoices.length);
-      console.log('Invoices by date range - Paginated result:', {
-        page,
-        limit,
-        total: allInvoices.length,
-        returned: paginatedInvoices.length,
-        newestInvoice: paginatedInvoices[0] ? {
-          id: paginatedInvoices[0].id,
-          tradeNumber: paginatedInvoices[0].tradeNumber,
-          createdAt: paginatedInvoices[0].createdAt
-        } : null
-      });
-
-      res.json(paginatedInvoices);
-    } catch (error) {
-      console.error("Error fetching invoices by date range:", error);
-      res.status(500).json({ error: "Failed to fetch invoices" });
-    }
-  });
-
-
-  app.get("/api/transactions/:transactionId", async (req: TenantRequest, res) => {
-    try {
-      const transactionId = req.params.transactionId;
-      const tenantDb = await getTenantDatabase(req);
-      const receipt =
-        await storage.getTransactionByTransactionId(transactionId, tenantDb);
-
-      if (!receipt) {
-        return res.status(404).json({ message: "Transaction not found" });
+        res.json(receipt);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch transaction" });
       }
-
-      res.json(receipt);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch transaction" });
-    }
-  });
+    },
+  );
 
   // Get next employee ID
   app.get("/api/employees/next-id", async (req: TenantRequest, res) => {
@@ -740,26 +799,33 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Employees
-  app.get("/api/employees", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log('🔍 GET /api/employees - Starting request processing');
-      let tenantDb;
+  app.get(
+    "/api/employees",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for employees');
-      } catch (dbError) {
-        console.error('❌ Failed to get tenant database for employees:', dbError);
-        tenantDb = null;
-      }
+        console.log("🔍 GET /api/employees - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for employees");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for employees:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const employees = await storage.getEmployees(tenantDb);
-      console.log(`✅ Successfully fetched ${employees.length} employees`);
-      res.json(employees);
-    } catch (error) {
-      console.error("❌ Error fetching employees:", error);
-      res.status(500).json({ message: "Failed to fetch employees" });
-    }
-  });
+        const employees = await storage.getEmployees(tenantDb);
+        console.log(`✅ Successfully fetched ${employees.length} employees`);
+        res.json(employees);
+      } catch (error) {
+        console.error("❌ Error fetching employees:", error);
+        res.status(500).json({ message: "Failed to fetch employees" });
+      }
+    },
+  );
 
   app.get("/api/employees/:id", async (req: TenantRequest, res) => {
     try {
@@ -831,7 +897,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
         }
       }
 
-      const employee = await storage.updateEmployee(id, validatedData, tenantDb);
+      const employee = await storage.updateEmployee(
+        id,
+        validatedData,
+        tenantDb,
+      );
 
       if (!employee) {
         return res.status(404).json({ message: "Employee not found" });
@@ -870,48 +940,76 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const { date, startDate, endDate, employeeId } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
-      console.log(`📅 Attendance API called with params:`, { date, startDate, endDate, employeeId });
+      console.log(`📅 Attendance API called with params:`, {
+        date,
+        startDate,
+        endDate,
+        employeeId,
+      });
 
       if (!tenantDb) {
-        return res.status(500).json({ message: "Database connection not available" });
+        return res
+          .status(500)
+          .json({ message: "Database connection not available" });
       }
 
       let records;
 
       // If startDate and endDate are provided, use date range
       if (startDate && endDate) {
-        console.log(`📅 Fetching attendance records by date range: ${startDate} to ${endDate}`);
-        records = await storage.getAttendanceRecordsByRange(startDate as string, endDate as string, tenantDb);
+        console.log(
+          `📅 Fetching attendance records by date range: ${startDate} to ${endDate}`,
+        );
+        records = await storage.getAttendanceRecordsByRange(
+          startDate as string,
+          endDate as string,
+          tenantDb,
+        );
       } else if (date) {
         // Single date filter
         console.log(`📅 Fetching attendance records for single date: ${date}`);
-        const employeeIdNum = employeeId ? parseInt(employeeId as string) : undefined;
-        records = await storage.getAttendanceRecords(employeeIdNum, date as string, tenantDb);
+        const employeeIdNum = employeeId
+          ? parseInt(employeeId as string)
+          : undefined;
+        records = await storage.getAttendanceRecords(
+          employeeIdNum,
+          date as string,
+          tenantDb,
+        );
       } else {
         // All records
         console.log(`📅 Fetching all attendance records`);
-        const employeeIdNum = employeeId ? parseInt(employeeId as string) : undefined;
-        records = await storage.getAttendanceRecords(employeeIdNum, undefined, tenantDb);
+        const employeeIdNum = employeeId
+          ? parseInt(employeeId as string)
+          : undefined;
+        records = await storage.getAttendanceRecords(
+          employeeIdNum,
+          undefined,
+          tenantDb,
+        );
       }
 
       console.log(`✅ Returning ${records.length} attendance records`);
       res.json(records);
     } catch (error) {
-      console.error('Error fetching attendance records:', error);
+      console.error("Error fetching attendance records:", error);
       res.status(500).json({ message: "Failed to fetch attendance records" });
     }
   });
 
-  app.get("/api/attendance/today/:employeeId", async (req: TenantRequest, res) => {
-    try {
-      const employeeId = parseInt(req.params.employeeId);
-      const tenantDb = await getTenantDatabase(req);
-      const record = await storage.getTodayAttendance(employeeId, tenantDb);
-      res.json(record);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch today's attendance" });
-    }
-  });
+  app.get(
+    "/api/attendance/today/:employeeId",
+    async (req: TenantRequest, res) => {
+      try {
+        const employeeId = parseInt(req.params.employeeId);
+        const tenantDb = await getTenantDatabase(req);
+        const record = await storage.getTodayAttendance(employeeId, tenantDb);
+        res.json(record);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch today's attendance" });
+      }
+    },
+  );
 
   app.post("/api/attendance/clock-in", async (req: TenantRequest, res) => {
     try {
@@ -922,7 +1020,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
 
       const tenantDb = await getTenantDatabase(req);
-      const record = await storage.clockIn(parseInt(employeeId), notes, tenantDb);
+      const record = await storage.clockIn(
+        parseInt(employeeId),
+        notes,
+        tenantDb,
+      );
       res.status(201).json(record);
     } catch (error) {
       console.error("Clock-in API error:", error);
@@ -931,20 +1033,20 @@ export async function registerRoutes(app: Express): Promise < Server > {
       let message = "Failed to clock in";
 
       if (error instanceof Error) {
-        if (error.message.includes('not found')) {
+        if (error.message.includes("not found")) {
           statusCode = 404;
           message = error.message;
-        } else if (error.message.includes('already clocked in')) {
+        } else if (error.message.includes("already clocked in")) {
           statusCode = 400;
           message = error.message;
-        } else if (error.message.includes('database')) {
+        } else if (error.message.includes("database")) {
           message = "Database error occurred";
         }
       }
 
       res.status(statusCode).json({
         message,
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   });
@@ -965,21 +1067,26 @@ export async function registerRoutes(app: Express): Promise < Server > {
     }
   });
 
-  app.post("/api/attendance/break-start/:id", async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-      const record = await storage.startBreak(id, tenantDb);
+  app.post(
+    "/api/attendance/break-start/:id",
+    async (req: TenantRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const tenantDb = await getTenantDatabase(req);
+        const record = await storage.startBreak(id, tenantDb);
 
-      if (!record) {
-        return res.status(404).json({ message: "Attendance record not found" });
+        if (!record) {
+          return res
+            .status(404)
+            .json({ message: "Attendance record not found" });
+        }
+
+        res.json(record);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to start break" });
       }
-
-      res.json(record);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to start break" });
-    }
-  });
+    },
+  );
 
   app.post("/api/attendance/break-end/:id", async (req: TenantRequest, res) => {
     try {
@@ -1017,13 +1124,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Tables
   app.get("/api/tables", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      console.log('🔍 GET /api/tables - Starting request processing');
+      console.log("🔍 GET /api/tables - Starting request processing");
       let tenantDb;
       try {
         tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for tables');
+        console.log("✅ Tenant database connection obtained for tables");
       } catch (dbError) {
-        console.error('❌ Failed to get tenant database for tables:', dbError);
+        console.error("❌ Failed to get tenant database for tables:", dbError);
         tenantDb = null;
       }
 
@@ -1116,15 +1223,15 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Orders
   app.get("/api/orders", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
-      console.log('🔍 GET /api/orders - Starting request processing');
+      console.log("🔍 GET /api/orders - Starting request processing");
       let tenantDb;
       try {
         tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained');
+        console.log("✅ Tenant database connection obtained");
       } catch (dbError) {
-        console.error('❌ Failed to get tenant database:', dbError);
+        console.error("❌ Failed to get tenant database:", dbError);
         // Fall back to default storage without tenant DB
-        console.log('🔄 Falling back to default database connection');
+        console.log("🔄 Falling back to default database connection");
         tenantDb = null;
       }
 
@@ -1148,9 +1255,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
 
       const items = await storage.getOrderItems(id, tenantDb);
-      res.json({ ...order,
-        items
-      });
+      res.json({ ...order, items });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch order" });
     }
@@ -1176,7 +1281,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
         if (items && Array.isArray(items)) {
           for (const item of items) {
-            const itemSubtotal = parseFloat(item.unitPrice || '0') * (item.quantity || 0);
+            const itemSubtotal =
+              parseFloat(item.unitPrice || "0") * (item.quantity || 0);
             subtotal += itemSubtotal;
 
             // Get product to calculate tax
@@ -1187,14 +1293,21 @@ export async function registerRoutes(app: Express): Promise < Server > {
                 .where(eq(products.id, item.productId))
                 .limit(1);
 
-              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+              if (
+                product?.afterTaxPrice &&
+                product.afterTaxPrice !== null &&
+                product.afterTaxPrice !== ""
+              ) {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                 const basePrice = parseFloat(product.price);
                 const taxPerUnit = afterTaxPrice - basePrice;
                 tax += taxPerUnit * (item.quantity || 0);
               }
             } catch (productError) {
-              console.warn("Could not fetch product for tax calculation:", item.productId);
+              console.warn(
+                "Could not fetch product for tax calculation:",
+                item.productId,
+              );
             }
           }
         }
@@ -1215,7 +1328,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           paymentStatus: "pending",
           notes: "POS Order",
           orderedAt: new Date(),
-          salesChannel: "pos"
+          salesChannel: "pos",
         };
 
         console.log("Created default order:", orderData);
@@ -1232,7 +1345,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
         JSON.stringify({ orderData, itemsData }, null, 2),
       );
 
-      const newOrder = await storage.createOrder(orderData, itemsData, tenantDb);
+      const newOrder = await storage.createOrder(
+        orderData,
+        itemsData,
+        tenantDb,
+      );
 
       // Verify items were created
       const createdItems = await storage.getOrderItems(newOrder.id, tenantDb);
@@ -1269,9 +1386,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
       console.log(`Update data:`, JSON.stringify(orderData, null, 2));
 
       // Handle temporary IDs - allow flow to continue
-      const isTemporaryId = rawId.startsWith('temp-');
+      const isTemporaryId = rawId.startsWith("temp-");
       if (isTemporaryId) {
-        console.log(`🟡 Temporary order ID detected: ${rawId} - returning success for flow continuation`);
+        console.log(
+          `🟡 Temporary order ID detected: ${rawId} - returning success for flow continuation`,
+        );
 
         // Return a mock success response to allow E-invoice flow to continue
         const mockOrder = {
@@ -1279,16 +1398,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
           orderNumber: `TEMP-${Date.now()}`,
           tableId: null,
           customerName: orderData.customerName || "Khách hàng",
-          status: orderData.status || 'paid',
-          paymentMethod: orderData.paymentMethod || 'cash',
+          status: orderData.status || "paid",
+          paymentMethod: orderData.paymentMethod || "cash",
           einvoiceStatus: orderData.einvoiceStatus || 0,
           paidAt: orderData.paidAt || new Date(),
           updatedAt: new Date(),
           updated: true,
-          updateTimestamp: new Date().toISOString()
+          updateTimestamp: new Date().toISOString(),
         };
 
-        console.log(`✅ Mock order update response for temporary ID:`, mockOrder);
+        console.log(
+          `✅ Mock order update response for temporary ID:`,
+          mockOrder,
+        );
         return res.json(mockOrder);
       }
 
@@ -1317,13 +1439,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
         paymentMethod: existingOrder.paymentMethod,
         currentSubtotal: existingOrder.subtotal,
         currentTax: existingOrder.tax,
-        currentTotal: existingOrder.total
+        currentTotal: existingOrder.total,
       });
 
       // If updating financial fields from table-grid, recalculate using order-dialog logic
-      if ((orderData.subtotal !== undefined || orderData.tax !== undefined || orderData.total !== undefined) && 
-          !orderData.skipRecalculation) {
-        console.log(`💰 Recalculating totals from order items for order ${id} (using order-dialog logic)`);
+      if (
+        (orderData.subtotal !== undefined ||
+          orderData.tax !== undefined ||
+          orderData.total !== undefined) &&
+        !orderData.skipRecalculation
+      ) {
+        console.log(
+          `💰 Recalculating totals from order items for order ${id} (using order-dialog logic)`,
+        );
 
         try {
           // Fetch current order items
@@ -1333,11 +1461,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
             .where(eq(orderItems.orderId, id));
 
           if (orderItemsResponse && orderItemsResponse.length > 0) {
-            console.log(`📦 Found ${orderItemsResponse.length} items for calculation`);
+            console.log(
+              `📦 Found ${orderItemsResponse.length} items for calculation`,
+            );
 
             // Get products for tax calculation (same as order-dialog)
             const allProducts = await db.select().from(products);
-            const productMap = new Map(allProducts.map(p => [p.id, p]));
+            const productMap = new Map(allProducts.map((p) => [p.id, p]));
 
             // EXACT same logic as order-dialog calculateTotal()
             let calculatedSubtotal = 0; // Tiền tạm tính (trước thuế)
@@ -1361,9 +1491,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
               let itemTax = 0;
               // Thuế = (after_tax_price - price) * quantity - EXACT same as order-dialog
-              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+              if (
+                product?.afterTaxPrice &&
+                product.afterTaxPrice !== null &&
+                product.afterTaxPrice !== ""
+              ) {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
-                const preTaxPrice = unitPrice;                          // Giá trước thuế
+                const preTaxPrice = unitPrice; // Giá trước thuế
                 const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
                 itemTax = taxPerUnit * quantity;
               }
@@ -1379,7 +1513,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
               tax: calculatedTax,
               total: calculatedTotal,
               itemsCount: orderItemsResponse.length,
-              calculationMethod: 'order-dialog-exact'
+              calculationMethod: "order-dialog-exact",
             });
 
             // Update orderData with calculated values (same format as order-dialog)
@@ -1387,25 +1521,36 @@ export async function registerRoutes(app: Express): Promise < Server > {
             orderData.tax = calculatedTax.toString();
             orderData.total = calculatedTotal.toString();
 
-            console.log(`✅ Updated order data with order-dialog calculated totals`);
+            console.log(
+              `✅ Updated order data with order-dialog calculated totals`,
+            );
           } else {
-            console.log(`⚠️ No items found for order ${id}, setting totals to zero`);
+            console.log(
+              `⚠️ No items found for order ${id}, setting totals to zero`,
+            );
             orderData.subtotal = "0";
             orderData.tax = "0";
             orderData.total = "0";
           }
         } catch (calcError) {
-          console.error(`❌ Error calculating totals for order ${id}:`, calcError);
+          console.error(
+            `❌ Error calculating totals for order ${id}:`,
+            calcError,
+          );
           // Continue with original values if calculation fails
         }
       }
 
       // Log the data being updated, especially financial fields
-      if (orderData.subtotal !== undefined || orderData.tax !== undefined || orderData.total !== undefined) {
+      if (
+        orderData.subtotal !== undefined ||
+        orderData.tax !== undefined ||
+        orderData.total !== undefined
+      ) {
         console.log(`💰 Updating financial fields:`, {
           subtotal: orderData.subtotal,
           tax: orderData.tax,
-          total: orderData.total
+          total: orderData.total,
         });
       }
 
@@ -1424,13 +1569,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
         einvoiceStatus: order.einvoiceStatus,
         updatedSubtotal: order.subtotal,
         updatedTax: order.tax,
-        updatedTotal: order.total
+        updatedTotal: order.total,
       });
 
       res.json({
         ...order,
         updated: true,
-        updateTimestamp: new Date().toISOString()
+        updateTimestamp: new Date().toISOString(),
       });
     } catch (error) {
       console.error("❌ PUT Order API error:", error);
@@ -1441,7 +1586,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
       res.status(500).json({
         message: "Failed to update order",
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   });
@@ -1454,14 +1599,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
       console.log(`🚀 ========================================`);
       console.log(`🚀 API ENDPOINT CALLED: PUT /api/orders/${id}/status`);
       console.log(`🚀 ========================================`);
-      console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
+      console.log(
+        `📋 Order status update API called - Order ID: ${id}, New Status: ${status}`,
+      );
 
       // Get tenant database first
       const tenantDb = await getTenantDatabase(req);
 
       // Handle both numeric IDs and temporary string IDs
       let orderId: number | string = id;
-      const isTemporaryId = id.startsWith('temp-');
+      const isTemporaryId = id.startsWith("temp-");
 
       if (!isTemporaryId) {
         const parsedId = parseInt(id);
@@ -1478,10 +1625,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
           id: orderId,
           status: status,
           updated: true,
-          previousStatus: 'served',
+          previousStatus: "served",
           updateTimestamp: new Date().toISOString(),
           success: true,
-          temporary: true
+          temporary: true,
         });
       }
 
@@ -1507,19 +1654,21 @@ export async function registerRoutes(app: Express): Promise < Server > {
         tableId: foundOrder.tableId,
         currentStatus: foundOrder.status,
         requestedStatus: status,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       // Direct database update for better reliability
-      console.log(`🔄 Performing direct database update for order ${orderId} to status ${status}`);
+      console.log(
+        `🔄 Performing direct database update for order ${orderId} to status ${status}`,
+      );
 
       const updateData: any = {
         status: status,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Add paidAt timestamp if status is 'paid'
-      if (status === 'paid') {
+      if (status === "paid") {
         updateData.paidAt = new Date();
       }
 
@@ -1530,11 +1679,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
         .returning();
 
       if (!updatedOrder) {
-        console.error(`❌ Failed to update order ${orderId} to status ${status}`);
+        console.error(
+          `❌ Failed to update order ${orderId} to status ${status}`,
+        );
         return res.status(500).json({
           message: "Failed to update order status",
           orderId: id,
-          requestedStatus: status
+          requestedStatus: status,
         });
       }
 
@@ -1545,11 +1696,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
         previousStatus: foundOrder.status,
         newStatus: updatedOrder.status,
         paidAt: updatedOrder.paidAt,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       // If status was updated to 'paid', check if table should be released
-      if (status === 'paid' && updatedOrder.tableId) {
+      if (status === "paid" && updatedOrder.tableId) {
         try {
           // Check if there are any other unpaid orders on this table
           const unpaidOrders = await db
@@ -1558,34 +1709,38 @@ export async function registerRoutes(app: Express): Promise < Server > {
             .where(
               and(
                 eq(orders.tableId, updatedOrder.tableId),
-                ne(orders.status, 'paid'),
-                ne(orders.status, 'cancelled')
-              )
+                ne(orders.status, "paid"),
+                ne(orders.status, "cancelled"),
+              ),
             );
 
-          console.log(`📋 Checking table ${updatedOrder.tableId} for other unpaid orders:`, {
-            tableId: updatedOrder.tableId,
-            unpaidOrdersCount: unpaidOrders.length,
-            unpaidOrders: unpaidOrders.map(o => ({
-              id: o.id,
-              orderNumber: o.orderNumber,
-              status: o.status
-            }))
-          });
+          console.log(
+            `📋 Checking table ${updatedOrder.tableId} for other unpaid orders:`,
+            {
+              tableId: updatedOrder.tableId,
+              unpaidOrdersCount: unpaidOrders.length,
+              unpaidOrders: unpaidOrders.map((o) => ({
+                id: o.id,
+                orderNumber: o.orderNumber,
+                status: o.status,
+              })),
+            },
+          );
 
           // If no unpaid orders remain, release the table
           if (unpaidOrders.length === 0) {
             await db
               .update(tables)
               .set({
-                status: 'available',
-                updatedAt: new Date().toISOString()
+                status: "available",
+                updatedAt: new Date().toISOString(),
               })
               .where(eq(tables.id, updatedOrder.tableId));
 
-            console.log(`✅ Table ${updatedOrder.tableId} released to available status`);
+            console.log(
+              `✅ Table ${updatedOrder.tableId} released to available status`,
+            );
           }
-
         } catch (tableUpdateError) {
           console.error(`❌ Error updating table status:`, tableUpdateError);
           // Don't fail the order update if table update fails
@@ -1598,15 +1753,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
         updated: true,
         previousStatus: foundOrder.status,
         updateTimestamp: new Date().toISOString(),
-        success: true
+        success: true,
       });
-
     } catch (error) {
       console.error(`❌ Error updating order status via API:`, error);
       res.status(500).json({
         message: "Failed to update order status",
         error: error instanceof Error ? error.message : String(error),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   });
@@ -1617,7 +1771,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const { paymentMethod, amountReceived, change } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
-      console.log(`💳 Payment completion API called - Order ID: ${id}, Payment Method: ${paymentMethod}`);
+      console.log(
+        `💳 Payment completion API called - Order ID: ${id}, Payment Method: ${paymentMethod}`,
+      );
 
       // Update order with payment details and status
       const updateData = {
@@ -1649,39 +1805,42 @@ export async function registerRoutes(app: Express): Promise < Server > {
         ...order,
         paymentMethod,
         amountReceived,
-        change
+        change,
       });
     } catch (error) {
       console.error("❌ Payment completion error:", error);
       res.status(500).json({
         message: "Failed to complete payment",
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   });
 
   // Get order items for a specific order
-  app.get('/api/order-items/:orderId', async (req: TenantRequest, res) => {
+  app.get("/api/order-items/:orderId", async (req: TenantRequest, res) => {
     try {
-      console.log('=== GET ORDER ITEMS API CALLED ===');
+      console.log("=== GET ORDER ITEMS API CALLED ===");
       const orderId = parseInt(req.params.orderId);
-      console.log('Order ID requested:', orderId);
+      console.log("Order ID requested:", orderId);
 
       if (isNaN(orderId)) {
-        console.error('Invalid order ID provided:', req.params.orderId);
+        console.error("Invalid order ID provided:", req.params.orderId);
         return res.status(400).json({ message: "Invalid order ID" });
       }
 
       let tenantDb;
       try {
         tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for order items');
+        console.log("✅ Tenant database connection obtained for order items");
       } catch (dbError) {
-        console.error('❌ Failed to get tenant database for order items:', dbError);
+        console.error(
+          "❌ Failed to get tenant database for order items:",
+          dbError,
+        );
         tenantDb = null;
       }
 
-      console.log('Fetching order items from storage...');
+      console.log("Fetching order items from storage...");
       const items = await storage.getOrderItems(orderId, tenantDb);
       console.log(`Found ${items.length} order items:`, items);
 
@@ -1689,51 +1848,51 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const safeItems = Array.isArray(items) ? items : [];
       res.json(safeItems);
     } catch (error) {
-      console.error('=== GET ORDER ITEMS ERROR ===');
-      console.error("Error type:", error?.constructor?.name || 'Unknown');
-      console.error("Error message:", error?.message || 'Unknown error');
-      console.error("Error stack:", error?.stack || 'No stack trace');
+      console.error("=== GET ORDER ITEMS ERROR ===");
+      console.error("Error type:", error?.constructor?.name || "Unknown");
+      console.error("Error message:", error?.message || "Unknown error");
+      console.error("Error stack:", error?.stack || "No stack trace");
       console.error("Order ID:", req.params.orderId);
 
       res.status(500).json({
         message: "Failed to fetch order items",
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
     }
   });
 
   // Delete a specific order item
-  app.delete('/api/order-items/:itemId', async (req: TenantRequest, res) => {
+  app.delete("/api/order-items/:itemId", async (req: TenantRequest, res) => {
     try {
-      console.log('=== DELETE ORDER ITEM API CALLED ===');
+      console.log("=== DELETE ORDER ITEM API CALLED ===");
       const itemId = parseInt(req.params.itemId);
       const tenantDb = await getTenantDatabase(req); // Assuming tenantDb is needed here as well
-      console.log('Item ID requested:', itemId);
+      console.log("Item ID requested:", itemId);
 
       if (isNaN(itemId)) {
-        return res.status(400).json({ error: 'Invalid item ID' });
+        return res.status(400).json({ error: "Invalid item ID" });
       }
 
-      console.log('Deleting order item from storage...');
+      console.log("Deleting order item from storage...");
       const success = await storage.deleteOrderItem(itemId, tenantDb); // Pass tenantDb to storage function
 
       if (success) {
-        console.log('Order item deleted successfully');
-        res.json({ success: true, message: 'Order item deleted successfully' });
+        console.log("Order item deleted successfully");
+        res.json({ success: true, message: "Order item deleted successfully" });
       } else {
-        console.log('Order item not found');
-        res.status(404).json({ error: 'Order item not found' });
+        console.log("Order item not found");
+        res.status(404).json({ error: "Order item not found" });
       }
     } catch (error) {
-      console.error('=== DELETE ORDER ITEM ERROR ===');
-      console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      console.error('Item ID:', req.params.itemId);
+      console.error("=== DELETE ORDER ITEM ERROR ===");
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      console.error("Item ID:", req.params.itemId);
       res.status(500).json({
-        error: 'Failed to delete order item',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: "Failed to delete order item",
+        details: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
     }
@@ -1759,9 +1918,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
       let tenantDb;
       try {
         tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for adding order items');
+        console.log(
+          "✅ Tenant database connection obtained for adding order items",
+        );
       } catch (dbError) {
-        console.error('❌ Failed to get tenant database for adding order items:', dbError);
+        console.error(
+          "❌ Failed to get tenant database for adding order items:",
+          dbError,
+        );
         return res.status(500).json({ error: "Database connection failed" });
       }
 
@@ -1782,7 +1946,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       // Validate items data
       const validatedItems = items.map((item: any, index: number) => {
         if (!item.productId || !item.quantity || !item.unitPrice) {
-          throw new Error(`Item at index ${index} is missing required fields: productId, quantity, or unitPrice`);
+          throw new Error(
+            `Item at index ${index} is missing required fields: productId, quantity, or unitPrice`,
+          );
         }
 
         return {
@@ -1790,7 +1956,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
           productId: parseInt(item.productId),
           quantity: parseInt(item.quantity),
           unitPrice: item.unitPrice.toString(),
-          total: item.total ? item.total.toString() : (parseFloat(item.unitPrice) * parseInt(item.quantity)).toString(),
+          total: item.total
+            ? item.total.toString()
+            : (parseFloat(item.unitPrice) * parseInt(item.quantity)).toString(),
           notes: item.notes || null,
         };
       });
@@ -1803,7 +1971,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
         .values(validatedItems)
         .returning();
 
-      console.log(`✅ Successfully added ${insertedItems.length} items to order ${orderId}`);
+      console.log(
+        `✅ Successfully added ${insertedItems.length} items to order ${orderId}`,
+      );
 
       // Fetch ALL order items to recalculate totals using order-dialog logic
       const allOrderItems = await database
@@ -1811,11 +1981,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
         .from(orderItems)
         .where(eq(orderItems.orderId, orderId));
 
-      console.log(`📦 Found ${allOrderItems.length} total items for order ${orderId}`);
+      console.log(
+        `📦 Found ${allOrderItems.length} total items for order ${orderId}`,
+      );
 
       // Get products for tax calculation (same as order-dialog)
       const allProducts = await database.select().from(products);
-      const productMap = new Map(allProducts.map(p => [p.id, p]));
+      const productMap = new Map(allProducts.map((p) => [p.id, p]));
 
       // EXACT same logic as order-dialog calculateTotal()
       let calculatedSubtotal = 0; // Tiền tạm tính (trước thuế)
@@ -1839,9 +2011,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
         let itemTax = 0;
         // Thuế = (after_tax_price - price) * quantity - EXACT same as order-dialog
-        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
-          const preTaxPrice = unitPrice;                          // Giá trước thuế
+          const preTaxPrice = unitPrice; // Giá trước thuế
           const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
           itemTax = taxPerUnit * quantity;
         }
@@ -1857,7 +2033,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         tax: calculatedTax,
         total: calculatedTotal,
         itemsCount: allOrderItems.length,
-        calculationMethod: 'order-dialog-exact'
+        calculationMethod: "order-dialog-exact",
       });
 
       // Update order totals with calculated values using tenant database
@@ -1867,31 +2043,35 @@ export async function registerRoutes(app: Express): Promise < Server > {
           subtotal: calculatedSubtotal.toString(),
           tax: calculatedTax.toString(),
           total: calculatedTotal.toString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         })
         .where(eq(orders.id, orderId))
         .returning();
 
-      console.log(`✅ Order ${orderId} totals updated successfully using order-dialog calculation`);
+      console.log(
+        `✅ Order ${orderId} totals updated successfully using order-dialog calculation`,
+      );
 
       res.json({
         success: true,
         insertedItems,
         updatedOrder,
-        message: `Added ${insertedItems.length} items and updated order totals using order-dialog logic`
+        message: `Added ${insertedItems.length} items and updated order totals using order-dialog logic`,
       });
-
     } catch (error) {
-      console.error(`❌ Error adding items to order ${req.params.orderId}:`, error);
+      console.error(
+        `❌ Error adding items to order ${req.params.orderId}:`,
+        error,
+      );
 
       let errorMessage = "Failed to add items to order";
       if (error instanceof Error) {
         errorMessage = error.message;
       }
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: errorMessage,
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       });
     }
   });
@@ -1969,7 +2149,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
     try {
       const validatedData = insertStoreSettingsSchema.partial().parse(req.body);
       const tenantDb = await getTenantDatabase(req);
-      const settings = await storage.updateStoreSettings(validatedData, tenantDb);
+      const settings = await storage.updateStoreSettings(
+        validatedData,
+        tenantDb,
+      );
       res.json(settings);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1983,35 +2166,45 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Suppliers
-  app.get("/api/suppliers", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log('🔍 GET /api/suppliers - Starting request processing');
-      let tenantDb;
+  app.get(
+    "/api/suppliers",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for suppliers');
-      } catch (dbError) {
-        console.error('❌ Failed to get tenant database for suppliers:', dbError);
-        tenantDb = null;
-      }
+        console.log("🔍 GET /api/suppliers - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for suppliers");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for suppliers:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const { status, search } = req.query;
-      let suppliers;
+        const { status, search } = req.query;
+        let suppliers;
 
-      if (search) {
-        suppliers = await storage.searchSuppliers(search as string, tenantDb);
-      } else if (status && status !== "all") {
-        suppliers = await storage.getSuppliersByStatus(status as string, tenantDb);
-      } else {
-        suppliers = await storage.getSuppliers(tenantDb);
+        if (search) {
+          suppliers = await storage.searchSuppliers(search as string, tenantDb);
+        } else if (status && status !== "all") {
+          suppliers = await storage.getSuppliersByStatus(
+            status as string,
+            tenantDb,
+          );
+        } else {
+          suppliers = await storage.getSuppliers(tenantDb);
+        }
+        console.log(`✅ Successfully fetched ${suppliers.length} suppliers`);
+        res.json(suppliers);
+      } catch (error) {
+        console.error("❌ Error fetching suppliers:", error);
+        res.status(500).json({ message: "Failed to fetch suppliers" });
       }
-      console.log(`✅ Successfully fetched ${suppliers.length} suppliers`);
-      res.json(suppliers);
-    } catch (error) {
-      console.error("❌ Error fetching suppliers:", error);
-      res.status(500).json({ message: "Failed to fetch suppliers" });
-    }
-  });
+    },
+  );
 
   app.get("/api/suppliers/:id", async (req: TenantRequest, res) => {
     try {
@@ -2050,7 +2243,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const id = parseInt(req.params.id);
       const validatedData = insertSupplierSchema.partial().parse(req.body);
       const tenantDb = await getTenantDatabase(req);
-      const supplier = await storage.updateSupplier(id, validatedData, tenantDb);
+      const supplier = await storage.updateSupplier(
+        id,
+        validatedData,
+        tenantDb,
+      );
 
       if (!supplier) {
         return res.status(404).json({ message: "Supplier not found" });
@@ -2095,26 +2292,33 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Customer management routes - Added Here
-  app.get("/api/customers", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log('🔍 GET /api/customers - Starting request processing');
-      let tenantDb;
+  app.get(
+    "/api/customers",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for customers');
-      } catch (dbError) {
-        console.error('❌ Failed to get tenant database for customers:', dbError);
-        tenantDb = null;
-      }
+        console.log("🔍 GET /api/customers - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for customers");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for customers:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const customers = await storage.getCustomers(tenantDb);
-      console.log(`✅ Successfully fetched ${customers.length} customers`);
-      res.json(customers);
-    } catch (error) {
-      console.error("❌ Error fetching customers:", error);
-      res.status(500).json({ message: "Failed to fetch customers" });
-    }
-  });
+        const customers = await storage.getCustomers(tenantDb);
+        console.log(`✅ Successfully fetched ${customers.length} customers`);
+        res.json(customers);
+      } catch (error) {
+        console.error("❌ Error fetching customers:", error);
+        res.status(500).json({ message: "Failed to fetch customers" });
+      }
+    },
+  );
 
   app.get("/api/customers/:id", async (req: TenantRequest, res) => {
     try {
@@ -2155,21 +2359,24 @@ export async function registerRoutes(app: Express): Promise < Server > {
         pointsBalance: 0,
       };
 
-      const [customer] = await db.insert(customers).values(customerData).returning();
+      const [customer] = await db
+        .insert(customers)
+        .values(customerData)
+        .returning();
       res.json(customer);
     } catch (error: any) {
       console.error("Error creating customer:", error);
 
       // Handle specific database errors
-      if (error.code === 'SQLITE_CONSTRAINT') {
+      if (error.code === "SQLITE_CONSTRAINT") {
         return res.status(400).json({
-          message: "Customer with this ID already exists"
+          message: "Customer with this ID already exists",
         });
       }
 
       res.status(500).json({
         message: "Failed to create customer",
-        error: error.message
+        error: error.message,
       });
     }
   });
@@ -2294,18 +2501,25 @@ export async function registerRoutes(app: Express): Promise < Server > {
     }
   });
 
-  app.get("/api/customers/:id/point-history", async (req: TenantRequest, res) => {
-    try {
-      const customerId = parseInt(req.params.id);
-      const limit = parseInt(req.query.limit as string) || 50;
-      const tenantDb = await getTenantDatabase(req);
+  app.get(
+    "/api/customers/:id/point-history",
+    async (req: TenantRequest, res) => {
+      try {
+        const customerId = parseInt(req.params.id);
+        const limit = parseInt(req.query.limit as string) || 50;
+        const tenantDb = await getTenantDatabase(req);
 
-      const pointHistory = await storage.getPointHistory(customerId, limit, tenantDb);
-      res.json(pointHistory);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch point history" });
-    }
-  });
+        const pointHistory = await storage.getPointHistory(
+          customerId,
+          limit,
+          tenantDb,
+        );
+        res.json(pointHistory);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch point history" });
+      }
+    },
+  );
 
   // New endpoints for points management modal
   app.post("/api/customers/adjust-points", async (req: TenantRequest, res) => {
@@ -2400,7 +2614,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const tenantDb = await getTenantDatabase(req);
       // For now, get all point transactions across all customers
       // In a real app, you might want to add pagination and filtering
-      const allTransactions = await storage.getAllPointTransactions(limit, tenantDb);
+      const allTransactions = await storage.getAllPointTransactions(
+        limit,
+        tenantDb,
+      );
       res.json(allTransactions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch point transactions" });
@@ -2429,8 +2646,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       const validatedData = thresholdSchema.parse(req.body);
       const tenantDb = await getTenantDatabase(req);
-      const thresholds =
-        await storage.updateMembershipThresholds(validatedData, tenantDb);
+      const thresholds = await storage.updateMembershipThresholds(
+        validatedData,
+        tenantDb,
+      );
 
       res.json(thresholds);
     } catch (error) {
@@ -2532,26 +2751,39 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Invoice templates management
-  app.get("/api/invoice-templates", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log('🔍 GET /api/invoice-templates - Starting request processing');
-      let tenantDb;
+  app.get(
+    "/api/invoice-templates",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for invoice templates');
-      } catch (dbError) {
-        console.error('❌ Failed to get tenant database for invoice templates:', dbError);
-        tenantDb = null;
-      }
+        console.log(
+          "🔍 GET /api/invoice-templates - Starting request processing",
+        );
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log(
+            "✅ Tenant database connection obtained for invoice templates",
+          );
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for invoice templates:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const templates = await storage.getInvoiceTemplates(tenantDb);
-      console.log(`✅ Successfully fetched ${templates.length} invoice templates`);
-      res.json(templates);
-    } catch (error) {
-      console.error("❌ Error fetching invoice templates:", error);
-      res.status(500).json({ error: "Failed to fetch invoice templates" });
-    }
-  });
+        const templates = await storage.getInvoiceTemplates(tenantDb);
+        console.log(
+          `✅ Successfully fetched ${templates.length} invoice templates`,
+        );
+        res.json(templates);
+      } catch (error) {
+        console.error("❌ Error fetching invoice templates:", error);
+        res.status(500).json({ error: "Failed to fetch invoice templates" });
+      }
+    },
+  );
 
   app.get("/api/invoice-templates/active", async (req: TenantRequest, res) => {
     try {
@@ -2560,7 +2792,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(activeTemplates);
     } catch (error) {
       console.error("Error fetching active invoice templates:", error);
-      res.status(500).json({ error: "Failed to fetch active invoice templates" });
+      res
+        .status(500)
+        .json({ error: "Failed to fetch active invoice templates" });
     }
   });
 
@@ -2568,7 +2802,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
     try {
       const templateData = req.body;
       const tenantDb = await getTenantDatabase(req);
-      const template = await storage.createInvoiceTemplate(templateData, tenantDb);
+      const template = await storage.createInvoiceTemplate(
+        templateData,
+        tenantDb,
+      );
       res.status(201).json(template);
     } catch (error) {
       console.error("Invoice template creation error:", error);
@@ -2581,7 +2818,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const id = parseInt(req.params.id);
       const templateData = req.body;
       const tenantDb = await getTenantDatabase(req);
-      const template = await storage.updateInvoiceTemplate(id, templateData, tenantDb);
+      const template = await storage.updateInvoiceTemplate(
+        id,
+        templateData,
+        tenantDb,
+      );
 
       if (!template) {
         return res.status(404).json({ message: "Invoice template not found" });
@@ -2612,34 +2853,44 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Invoices management
-  app.get("/api/invoices", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log('🔍 GET /api/invoices - Starting request processing');
-      let tenantDb;
+  app.get(
+    "/api/invoices",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for invoices');
-      } catch (dbError) {
-        console.error('❌ Failed to get tenant database for invoices:', dbError);
-        tenantDb = null;
-      }
+        console.log("🔍 GET /api/invoices - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for invoices");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for invoices:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const invoices = await storage.getInvoices(tenantDb);
-      console.log(`✅ Successfully fetched ${invoices.length} invoices`);
-      res.json(invoices);
-    } catch (error) {
-      console.error("❌ Error fetching invoices:", error);
-      res.status(500).json({ message: "Failed to fetch invoices" });
-    }
-  });
+        const invoices = await storage.getInvoices(tenantDb);
+        console.log(`✅ Successfully fetched ${invoices.length} invoices`);
+        res.json(invoices);
+      } catch (error) {
+        console.error("❌ Error fetching invoices:", error);
+        res.status(500).json({ message: "Failed to fetch invoices" });
+      }
+    },
+  );
 
   app.post("/api/invoices", async (req: TenantRequest, res) => {
     try {
-      console.log('🔍 POST /api/invoices - Creating new invoice');
+      console.log("🔍 POST /api/invoices - Creating new invoice");
       const tenantDb = await getTenantDatabase(req);
       const invoiceData = req.body;
 
-      console.log('📄 Invoice data received:', JSON.stringify(invoiceData, null, 2));
+      console.log(
+        "📄 Invoice data received:",
+        JSON.stringify(invoiceData, null, 2),
+      );
 
       // Validate required fields
       if (!invoiceData.customerName) {
@@ -2647,21 +2898,27 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
 
       if (!invoiceData.total || parseFloat(invoiceData.total) <= 0) {
-        return res.status(400).json({ error: "Valid total amount is required" });
+        return res
+          .status(400)
+          .json({ error: "Valid total amount is required" });
       }
 
-      if (!invoiceData.items || !Array.isArray(invoiceData.items) || invoiceData.items.length === 0) {
+      if (
+        !invoiceData.items ||
+        !Array.isArray(invoiceData.items) ||
+        invoiceData.items.length === 0
+      ) {
         return res.status(400).json({ error: "Invoice items are required" });
       }
 
       // Create invoice in database
       const invoice = await storage.createInvoice(invoiceData, tenantDb);
 
-      console.log('✅ Invoice created successfully:', invoice);
-      res.status(201).json({ 
-        success: true, 
+      console.log("✅ Invoice created successfully:", invoice);
+      res.status(201).json({
+        success: true,
         invoice: invoice,
-        message: "Invoice created successfully" 
+        message: "Invoice created successfully",
       });
     } catch (error) {
       console.error("❌ Error creating invoice:", error);
@@ -2671,9 +2928,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
         errorMessage = `Failed to create invoice: ${error.message}`;
       }
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: errorMessage,
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       });
     }
   });
@@ -2746,34 +3003,50 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // E-invoice connections management
-  app.get("/api/einvoice-connections", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log('🔍 GET /api/einvoice-connections - Starting request processing');
-      let tenantDb;
+  app.get(
+    "/api/einvoice-connections",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for e-invoice connections');
-      } catch (dbError) {
-        console.error('❌ Failed to get tenant database for e-invoice connections:', dbError);
-        tenantDb = null;
-      }
+        console.log(
+          "🔍 GET /api/einvoice-connections - Starting request processing",
+        );
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log(
+            "✅ Tenant database connection obtained for e-invoice connections",
+          );
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for e-invoice connections:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const connections = await storage.getEInvoiceConnections(tenantDb);
-      console.log(`✅ Successfully fetched ${connections.length} e-invoice connections`);
-      res.json(connections);
-    } catch (error) {
-      console.error("❌ Error fetching e-invoice connections:", error);
-      res
-        .status(500)
-        .json({ message: "Failed to fetch e-invoice connections" });
-    }
-  });
+        const connections = await storage.getEInvoiceConnections(tenantDb);
+        console.log(
+          `✅ Successfully fetched ${connections.length} e-invoice connections`,
+        );
+        res.json(connections);
+      } catch (error) {
+        console.error("❌ Error fetching e-invoice connections:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to fetch e-invoice connections" });
+      }
+    },
+  );
 
   app.post("/api/einvoice-connections", async (req: TenantRequest, res) => {
     try {
       const connectionData = req.body;
       const tenantDb = await getTenantDatabase(req);
-      const connection = await storage.createEInvoiceConnection(connectionData, tenantDb);
+      const connection = await storage.createEInvoiceConnection(
+        connectionData,
+        tenantDb,
+      );
       res.status(201).json(connection);
     } catch (error) {
       console.error("E-invoice connection creation error:", error);
@@ -2809,42 +3082,45 @@ export async function registerRoutes(app: Express): Promise < Server > {
     }
   });
 
-  app.delete("/api/einvoice-connections/:id", async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-      const deleted = await storage.deleteEInvoiceConnection(id, tenantDb);
+  app.delete(
+    "/api/einvoice-connections/:id",
+    async (req: TenantRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const tenantDb = await getTenantDatabase(req);
+        const deleted = await storage.deleteEInvoiceConnection(id, tenantDb);
 
-      if (!deleted) {
-        return res
-          .status(404)
-          .json({ message: "E-invoice connection not found" });
+        if (!deleted) {
+          return res
+            .status(404)
+            .json({ message: "E-invoice connection not found" });
+        }
+
+        res.json({ message: "E-invoice connection deleted successfully" });
+      } catch (error) {
+        console.error("E-invoice connection deletion error:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to delete e-invoice connection" });
       }
-
-      res.json({ message: "E-invoice connection deleted successfully" });
-    } catch (error) {
-      console.error("E-invoice connection deletion error:", error);
-      res
-        .status(500)
-        .json({ message: "Failed to delete e-invoice connection" });
-    }
-  });
+    },
+  );
 
   // Menu Analysis API
-  app.get('/api/menu-analysis', async (req, res) => {
+  app.get("/api/menu-analysis", async (req, res) => {
     try {
       const { startDate, endDate, categoryId } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
-      console.log('Menu Analysis API called with params:', {
+      console.log("Menu Analysis API called with params:", {
         startDate,
         endDate,
         search: req.query.search,
         categoryId,
-        productType: req.query.productType
+        productType: req.query.productType,
       });
 
-      console.log('Executing transaction and order queries...');
+      console.log("Executing transaction and order queries...");
 
       // Build date conditions
       const dateConditions = [];
@@ -2854,7 +3130,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         endDateTime.setHours(23, 59, 59, 999);
         dateConditions.push(
           gte(transactionsTable.createdAt, startDateTime),
-          lte(transactionsTable.createdAt, endDateTime)
+          lte(transactionsTable.createdAt, endDateTime),
         );
       } else if (startDate) {
         const startDateTime = new Date(startDate as string);
@@ -2867,8 +3143,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Build category conditions
       const categoryConditions = [];
-      if (categoryId && categoryId !== 'all') {
-        categoryConditions.push(eq(products.categoryId, parseInt(categoryId as string)));
+      if (categoryId && categoryId !== "all") {
+        categoryConditions.push(
+          eq(products.categoryId, parseInt(categoryId as string)),
+        );
       }
 
       // Query transaction items with proper Drizzle ORM
@@ -2879,10 +3157,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
           categoryId: products.categoryId,
           categoryName: categories.name,
           totalQuantity: sql<number>`SUM(${transactionItemsTable.quantity})`,
-          totalRevenue: sql<number>`SUM(CAST(${transactionItemsTable.unitPrice} AS DECIMAL(10,2)) * ${transactionItemsTable.quantity})`
+          totalRevenue: sql<number>`SUM(CAST(${transactionItemsTable.unitPrice} AS DECIMAL(10,2)) * ${transactionItemsTable.quantity})`,
         })
         .from(transactionItemsTable)
-        .innerJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
+        .innerJoin(
+          transactionsTable,
+          eq(transactionItemsTable.transactionId, transactionsTable.id),
+        )
         .innerJoin(products, eq(transactionItemsTable.productId, products.id))
         .leftJoin(categories, eq(products.categoryId, categories.id))
         .where(and(...dateConditions, ...categoryConditions))
@@ -2890,7 +3171,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           transactionItemsTable.productId,
           products.name,
           products.categoryId,
-          categories.name
+          categories.name,
         );
 
       // Query order items with proper Drizzle ORM
@@ -2901,7 +3182,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         endDateTime.setHours(23, 59, 59, 999);
         orderDateConditions.push(
           gte(orders.orderedAt, startDateTime),
-          lte(orders.orderedAt, endDateTime)
+          lte(orders.orderedAt, endDateTime),
         );
       } else if (startDate) {
         const startDateTime = new Date(startDate as string);
@@ -2919,33 +3200,35 @@ export async function registerRoutes(app: Express): Promise < Server > {
           categoryId: products.categoryId,
           categoryName: categories.name,
           totalQuantity: sql<number>`SUM(${orderItems.quantity})`,
-          totalRevenue: sql<number>`SUM(CAST(${orderItems.unitPrice} AS DECIMAL(10,2)) * ${orderItems.quantity})`
+          totalRevenue: sql<number>`SUM(CAST(${orderItems.unitPrice} AS DECIMAL(10,2)) * ${orderItems.quantity})`,
         })
         .from(orderItems)
         .innerJoin(orders, eq(orderItems.orderId, orders.id))
         .innerJoin(products, eq(orderItems.productId, products.id))
         .leftJoin(categories, eq(products.categoryId, categories.id))
-        .where(and(
-          eq(orders.status, 'paid'),
-          ...orderDateConditions,
-          ...categoryConditions
-        ))
+        .where(
+          and(
+            eq(orders.status, "paid"),
+            ...orderDateConditions,
+            ...categoryConditions,
+          ),
+        )
         .groupBy(
           orderItems.productId,
           products.name,
           products.categoryId,
-          categories.name
+          categories.name,
         );
 
-      console.log('Transaction stats:', transactionResults.length, 'items');
-      console.log('Order stats:', orderResults.length, 'items');
+      console.log("Transaction stats:", transactionResults.length, "items");
+      console.log("Order stats:", orderResults.length, "items");
 
       // Combine and aggregate results
       const productMap = new Map();
       const categoryMap = new Map();
 
       // Process transaction results
-      transactionResults.forEach(item => {
+      transactionResults.forEach((item) => {
         const key = item.productId;
         if (productMap.has(key)) {
           const existing = productMap.get(key);
@@ -2964,7 +3247,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       });
 
       // Process order results
-      orderResults.forEach(item => {
+      orderResults.forEach((item) => {
         const key = item.productId;
         if (productMap.has(key)) {
           const existing = productMap.get(key);
@@ -2983,7 +3266,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       });
 
       // Calculate category stats
-      productMap.forEach(product => {
+      productMap.forEach((product) => {
         const categoryKey = product.categoryId;
         if (categoryMap.has(categoryKey)) {
           const existing = categoryMap.get(categoryKey);
@@ -3005,8 +3288,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const categoryStats = Array.from(categoryMap.values());
 
       // Calculate totals
-      const totalRevenue = productStats.reduce((sum, product) => sum + product.totalRevenue, 0);
-      const totalQuantity = productStats.reduce((sum, product) => sum + product.totalQuantity, 0);
+      const totalRevenue = productStats.reduce(
+        (sum, product) => sum + product.totalRevenue,
+        0,
+      );
+      const totalQuantity = productStats.reduce(
+        (sum, product) => sum + product.totalQuantity,
+        0,
+      );
 
       // Top selling products (by quantity)
       const topSellingProducts = productStats
@@ -3027,19 +3316,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
         topRevenueProducts,
       };
 
-      console.log('Menu Analysis Results:', {
+      console.log("Menu Analysis Results:", {
         totalRevenue,
         totalQuantity,
         productCount: productStats.length,
-        categoryCount: categoryStats.length
+        categoryCount: categoryStats.length,
       });
 
       res.json(result);
     } catch (error) {
-      console.error('Menu analysis error:', error);
+      console.error("Menu analysis error:", error);
       res.status(500).json({
-        error: 'Failed to fetch menu analysis',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: "Failed to fetch menu analysis",
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   });
@@ -3056,10 +3345,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
           id: customers.id,
           customerCode: customers.customerId,
           customerName: customers.name,
-          initialDebt: sql < number > `0`, // Mock initial debt
-          newDebt: sql < number > `COALESCE(${customers.totalSpent}, 0) * 0.1`, // 10% of total spent as debt
-          payment: sql < number > `COALESCE(${customers.totalSpent}, 0) * 0.05`, // 5% as payment
-          finalDebt: sql < number > `COALESCE(${customers.totalSpent}, 0) * 0.05`, // Final debt
+          initialDebt: sql<number>`0`, // Mock initial debt
+          newDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.1`, // 10% of total spent as debt
+          payment: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // 5% as payment
+          finalDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // Final debt
           phone: customers.phone,
         })
         .from(customers)
@@ -3092,7 +3381,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           customerName: customers.name,
           totalSales: customers.totalSpent,
           visitCount: customers.visitCount,
-          averageOrder: sql < number > `CASE WHEN ${customers.visitCount} > 0 THEN ${customers.totalSpent} / ${customers.visitCount} ELSE 0 END`,
+          averageOrder: sql<number>`CASE WHEN ${customers.visitCount} > 0 THEN ${customers.totalSpent} / ${customers.visitCount} ELSE 0 END`,
           phone: customers.phone,
         })
         .from(customers)
@@ -3205,26 +3494,33 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Employee routes
-  app.get("/api/employees", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log('🔍 GET /api/employees - Starting request processing');
-      let tenantDb;
+  app.get(
+    "/api/employees",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log('✅ Tenant database connection obtained for employees');
-      } catch (dbError) {
-        console.error('❌ Failed to get tenant database for employees:', dbError);
-        tenantDb = null;
-      }
+        console.log("🔍 GET /api/employees - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for employees");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for employees:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const employees = await storage.getEmployees(tenantDb);
-      console.log(`✅ Successfully fetched ${employees.length} employees`);
-      res.json(employees);
-    } catch (error) {
-      console.error("❌ Error fetching employees:", error);
-      res.status(500).json({ message: "Failed to fetch employees" });
-    }
-  });
+        const employees = await storage.getEmployees(tenantDb);
+        console.log(`✅ Successfully fetched ${employees.length} employees`);
+        res.json(employees);
+      } catch (error) {
+        console.error("❌ Error fetching employees:", error);
+        res.status(500).json({ message: "Failed to fetch employees" });
+      }
+    },
+  );
 
   // Employee sales report data
   app.get("/api/employee-sales", async (req: TenantRequest, res) => {
@@ -3269,15 +3565,15 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const serverTime = {
         timestamp: new Date().toISOString(),
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        localTime: new Date().toLocaleString('vi-VN', {
-          timeZone: 'Asia/Ho_Chi_Minh',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        })
+        localTime: new Date().toLocaleString("vi-VN", {
+          timeZone: "Asia/Ho_Chi_Minh",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
       };
       res.json(serverTime);
     } catch (error) {
@@ -3290,11 +3586,25 @@ export async function registerRoutes(app: Express): Promise < Server > {
     "/api/transactions/:startDate/:endDate/:salesMethod/:salesChannel/:analysisType/:concernType/:selectedEmployee",
     async (req: TenantRequest, res) => {
       try {
-        const { startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee } = req.params;
+        const {
+          startDate,
+          endDate,
+          salesMethod,
+          salesChannel,
+          analysisType,
+          concernType,
+          selectedEmployee,
+        } = req.params;
         const tenantDb = await getTenantDatabase(req);
 
         console.log("Transactions API called with params:", {
-          startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee
+          startDate,
+          endDate,
+          salesMethod,
+          salesChannel,
+          analysisType,
+          concernType,
+          selectedEmployee,
         });
 
         // Get transactions data
@@ -3311,48 +3621,66 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
           // Enhanced sales method filtering
           let salesMethodMatch = true;
-          if (salesMethod !== 'all') {
-            const paymentMethod = transaction.paymentMethod || 'cash';
+          if (salesMethod !== "all") {
+            const paymentMethod = transaction.paymentMethod || "cash";
             switch (salesMethod) {
-              case 'no_delivery':
-                salesMethodMatch = !transaction.deliveryMethod || transaction.deliveryMethod === 'pickup' || transaction.deliveryMethod === 'takeaway';
+              case "no_delivery":
+                salesMethodMatch =
+                  !transaction.deliveryMethod ||
+                  transaction.deliveryMethod === "pickup" ||
+                  transaction.deliveryMethod === "takeaway";
                 break;
-              case 'delivery':
-                salesMethodMatch = transaction.deliveryMethod === 'delivery';
+              case "delivery":
+                salesMethodMatch = transaction.deliveryMethod === "delivery";
                 break;
               default:
-                salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
+                salesMethodMatch =
+                  paymentMethod.toLowerCase() === salesMethod.toLowerCase();
             }
           }
 
           // Enhanced sales channel filtering
           let salesChannelMatch = true;
-          if (salesChannel !== 'all') {
-            const channel = transaction.salesChannel || 'direct';
+          if (salesChannel !== "all") {
+            const channel = transaction.salesChannel || "direct";
             switch (salesChannel) {
-              case 'direct':
-                salesChannelMatch = !transaction.salesChannel || transaction.salesChannel === 'direct' || transaction.salesChannel === 'pos';
+              case "direct":
+                salesChannelMatch =
+                  !transaction.salesChannel ||
+                  transaction.salesChannel === "direct" ||
+                  transaction.salesChannel === "pos";
                 break;
-              case 'other':
-                salesChannelMatch = transaction.salesChannel && transaction.salesChannel !== 'direct' && transaction.salesChannel !== 'pos';
+              case "other":
+                salesChannelMatch =
+                  transaction.salesChannel &&
+                  transaction.salesChannel !== "direct" &&
+                  transaction.salesChannel !== "pos";
                 break;
               default:
-                salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
+                salesChannelMatch =
+                  channel.toLowerCase() === salesChannel.toLowerCase();
             }
           }
 
           // Enhanced employee filtering
           let employeeMatch = true;
-          if (selectedEmployee !== 'all') {
+          if (selectedEmployee !== "all") {
             employeeMatch =
               transaction.cashierName === selectedEmployee ||
-              (transaction.cashierName && transaction.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
+              (transaction.cashierName &&
+                transaction.cashierName
+                  .toLowerCase()
+                  .includes(selectedEmployee.toLowerCase()));
           }
 
-          return dateMatch && salesMethodMatch && salesChannelMatch && employeeMatch;
+          return (
+            dateMatch && salesMethodMatch && salesChannelMatch && employeeMatch
+          );
         });
 
-        console.log(`Found ${filteredTransactions.length} filtered transactions out of ${transactions.length} total`);
+        console.log(
+          `Found ${filteredTransactions.length} filtered transactions out of ${transactions.length} total`,
+        );
         res.json(filteredTransactions);
       } catch (error) {
         console.error("Error in transactions API:", error);
@@ -3365,11 +3693,25 @@ export async function registerRoutes(app: Express): Promise < Server > {
     "/api/orders/:startDate/:endDate/:selectedEmployee/:salesChannel/:salesMethod/:analysisType/:concernType",
     async (req: TenantRequest, res) => {
       try {
-        const { startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType } = req.params;
+        const {
+          startDate,
+          endDate,
+          selectedEmployee,
+          salesChannel,
+          salesMethod,
+          analysisType,
+          concernType,
+        } = req.params;
         const tenantDb = await getTenantDatabase(req);
 
         console.log("Orders API called with params:", {
-          startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType
+          startDate,
+          endDate,
+          selectedEmployee,
+          salesChannel,
+          salesMethod,
+          analysisType,
+          concernType,
         });
 
         // Get orders data
@@ -3386,51 +3728,73 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
           // Enhanced employee filtering
           let employeeMatch = true;
-          if (selectedEmployee !== 'all') {
+          if (selectedEmployee !== "all") {
             employeeMatch =
               order.employeeId?.toString() === selectedEmployee ||
-              (order.employeeName && order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase()));
+              (order.employeeName &&
+                order.employeeName
+                  .toLowerCase()
+                  .includes(selectedEmployee.toLowerCase()));
           }
 
           // Enhanced sales channel filtering
           let salesChannelMatch = true;
-          if (salesChannel !== 'all') {
-            const channel = order.salesChannel || 'direct';
+          if (salesChannel !== "all") {
+            const channel = order.salesChannel || "direct";
             switch (salesChannel) {
-              case 'direct':
-                salesChannelMatch = !order.salesChannel || order.salesChannel === 'direct' || order.salesChannel === 'pos';
+              case "direct":
+                salesChannelMatch =
+                  !order.salesChannel ||
+                  order.salesChannel === "direct" ||
+                  order.salesChannel === "pos";
                 break;
-              case 'other':
-                salesChannelMatch = order.salesChannel && order.salesChannel !== 'direct' && order.salesChannel !== 'pos';
+              case "other":
+                salesChannelMatch =
+                  order.salesChannel &&
+                  order.salesChannel !== "direct" &&
+                  order.salesChannel !== "pos";
                 break;
               default:
-                salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
+                salesChannelMatch =
+                  channel.toLowerCase() === salesChannel.toLowerCase();
             }
           }
 
           // Enhanced sales method filtering
           let salesMethodMatch = true;
-          if (salesMethod !== 'all') {
+          if (salesMethod !== "all") {
             switch (salesMethod) {
-              case 'no_delivery':
-                salesMethodMatch = !order.deliveryMethod || order.deliveryMethod === 'pickup' || order.deliveryMethod === 'takeaway';
+              case "no_delivery":
+                salesMethodMatch =
+                  !order.deliveryMethod ||
+                  order.deliveryMethod === "pickup" ||
+                  order.deliveryMethod === "takeaway";
                 break;
-              case 'delivery':
-                salesMethodMatch = order.deliveryMethod === 'delivery';
+              case "delivery":
+                salesMethodMatch = order.deliveryMethod === "delivery";
                 break;
               default:
-                const paymentMethod = order.paymentMethod || 'cash';
-                salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
+                const paymentMethod = order.paymentMethod || "cash";
+                salesMethodMatch =
+                  paymentMethod.toLowerCase() === salesMethod.toLowerCase();
             }
           }
 
           // Only include paid orders for analysis
-          const statusMatch = order.status === 'paid';
+          const statusMatch = order.status === "paid";
 
-          return dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch && statusMatch;
+          return (
+            dateMatch &&
+            employeeMatch &&
+            salesChannelMatch &&
+            salesMethodMatch &&
+            statusMatch
+          );
         });
 
-        console.log(`Found ${filteredOrders.length} filtered orders out of ${orders.length} total`);
+        console.log(
+          `Found ${filteredOrders.length} filtered orders out of ${orders.length} total`,
+        );
         res.json(filteredOrders);
       } catch (error) {
         console.error("Error in orders API:", error);
@@ -3439,178 +3803,300 @@ export async function registerRoutes(app: Express): Promise < Server > {
     },
   );
 
-  app.get("/api/products/:selectedCategory/:productType/:productSearch?", async (req: TenantRequest, res) => {
-    try {
-      const { selectedCategory, productType, productSearch } = req.params;
-      const tenantDb = await getTenantDatabase(req);
+  app.get(
+    "/api/products/:selectedCategory/:productType/:productSearch?",
+    async (req: TenantRequest, res) => {
+      try {
+        const { selectedCategory, productType, productSearch } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
-      console.log("Products API called with params:", { selectedCategory, productType, productSearch });
+        console.log("Products API called with params:", {
+          selectedCategory,
+          productType,
+          productSearch,
+        });
 
-      let products;
+        let products;
 
-      // Get products by category or all products
-      if (selectedCategory && selectedCategory !== 'all' && selectedCategory !== 'undefined') {
-        const categoryId = parseInt(selectedCategory);
-        if (!isNaN(categoryId)) {
-          products = await storage.getProductsByCategory(categoryId, true, tenantDb);
+        // Get products by category or all products
+        if (
+          selectedCategory &&
+          selectedCategory !== "all" &&
+          selectedCategory !== "undefined"
+        ) {
+          const categoryId = parseInt(selectedCategory);
+          if (!isNaN(categoryId)) {
+            products = await storage.getProductsByCategory(
+              categoryId,
+              true,
+              tenantDb,
+            );
+          } else {
+            products = await storage.getAllProducts(true, tenantDb);
+          }
         } else {
           products = await storage.getAllProducts(true, tenantDb);
         }
-      } else {
-        products = await storage.getAllProducts(true, tenantDb);
-      }
 
-      // Filter by product type if specified
-      if (productType && productType !== 'all' && productType !== 'undefined') {
-        const typeMap = {
-          combo: 3,
-          'combo-dongoi': 3,
-          product: 1,
-          'hang-hoa': 1,
-          service: 2,
-          'dich-vu': 2
-        };
-        const typeValue = typeMap[productType.toLowerCase() as keyof typeof typeMap];
-        if (typeValue) {
-          products = products.filter((product: any) => product.productType === typeValue);
-        }
-      }
-
-      // Filter by product search if provided
-      if (productSearch && productSearch !== '' && productSearch !== 'undefined' && productSearch !== 'all') {
-        const searchTerm = productSearch.toLowerCase();
-        products = products.filter((product: any) =>
-          product.name?.toLowerCase().includes(searchTerm) ||
-          product.sku?.toLowerCase().includes(searchTerm) ||
-          product.description?.toLowerCase().includes(searchTerm)
-        );
-      }
-
-      console.log(`Found ${products.length} products after filtering`);
-      res.json(products);
-    } catch (error) {
-      console.error("Error in products API:", error);
-      res.status(500).json({ error: "Failed to fetch products data" });
-    }
-  });
-
-  app.get("/api/customers/:customerSearch?/:customerStatus?", async (req: TenantRequest, res) => {
-    try {
-      const { customerSearch, customerStatus } = req.params;
-      const tenantDb = await getTenantDatabase(req);
-
-      console.log("Customers API called with search:", customerSearch, "status:", customerStatus);
-
-      let customers = await storage.getCustomers(tenantDb);
-
-      // Filter by search if provided
-      if (customerSearch && customerSearch !== '' && customerSearch !== 'undefined' && customerSearch !== 'all') {
-        const searchTerm = customerSearch.toLowerCase();
-        customers = customers.filter((customer: any) =>
-          customer.name?.toLowerCase().includes(searchTerm) ||
-          customer.phone?.includes(customerSearch) ||
-          customer.email?.toLowerCase().includes(searchTerm) ||
-          customer.customerId?.toLowerCase().includes(searchTerm) ||
-          customer.address?.toLowerCase().includes(searchTerm)
-        );
-      }
-
-      // Filter by status if provided
-      if (customerStatus && customerStatus !== 'all' && customerStatus !== 'undefined') {
-        const now = new Date();
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        customers = customers.filter((customer: any) => {
-          const totalSpent = Number(customer.totalSpent || 0);
-          const lastVisit = customer.lastVisit ? new Date(customer.lastVisit) : null;
-
-          switch (customerStatus) {
-            case 'active':
-              return lastVisit && lastVisit >= thirtyDaysAgo;
-            case 'inactive':
-              return !lastVisit || lastVisit < thirtyDaysAgo;
-            case 'vip':
-              return totalSpent >= 500000; // VIP customers with total spent >= 500k VND
-            case 'new':
-              const joinDate = customer.createdAt ? new Date(customer.createdAt) : null;
-              returnjoinDate && joinDate >= thirtyDaysAgo;
-            default:
-              return true;
+        // Filter by product type if specified
+        if (
+          productType &&
+          productType !== "all" &&
+          productType !== "undefined"
+        ) {
+          const typeMap = {
+            combo: 3,
+            "combo-dongoi": 3,
+            product: 1,
+            "hang-hoa": 1,
+            service: 2,
+            "dich-vu": 2,
+          };
+          const typeValue =
+            typeMap[productType.toLowerCase() as keyof typeof typeMap];
+          if (typeValue) {
+            products = products.filter(
+              (product: any) => product.productType === typeValue,
+            );
           }
-        });
-      }
+        }
 
-      console.log(`Found ${customers.length} customers after filtering`);
-      res.json(customers);
-    } catch (error) {
-      console.error("Error in customers API:", error);
-      res.status(500).json({ error: "Failed to fetch customers data" });
-    }
-  });
+        // Filter by product search if provided
+        if (
+          productSearch &&
+          productSearch !== "" &&
+          productSearch !== "undefined" &&
+          productSearch !== "all"
+        ) {
+          const searchTerm = productSearch.toLowerCase();
+          products = products.filter(
+            (product: any) =>
+              product.name?.toLowerCase().includes(searchTerm) ||
+              product.sku?.toLowerCase().includes(searchTerm) ||
+              product.description?.toLowerCase().includes(searchTerm),
+          );
+        }
+
+        console.log(`Found ${products.length} products after filtering`);
+        res.json(products);
+      } catch (error) {
+        console.error("Error in products API:", error);
+        res.status(500).json({ error: "Failed to fetch products data" });
+      }
+    },
+  );
+
+  app.get(
+    "/api/customers/:customerSearch?/:customerStatus?",
+    async (req: TenantRequest, res) => {
+      try {
+        const { customerSearch, customerStatus } = req.params;
+        const tenantDb = await getTenantDatabase(req);
+
+        console.log(
+          "Customers API called with search:",
+          customerSearch,
+          "status:",
+          customerStatus,
+        );
+
+        let customers = await storage.getCustomers(tenantDb);
+
+        // Filter by search if provided
+        if (
+          customerSearch &&
+          customerSearch !== "" &&
+          customerSearch !== "undefined" &&
+          customerSearch !== "all"
+        ) {
+          const searchTerm = customerSearch.toLowerCase();
+          customers = customers.filter(
+            (customer: any) =>
+              customer.name?.toLowerCase().includes(searchTerm) ||
+              customer.phone?.includes(customerSearch) ||
+              customer.email?.toLowerCase().includes(searchTerm) ||
+              customer.customerId?.toLowerCase().includes(searchTerm) ||
+              customer.address?.toLowerCase().includes(searchTerm),
+          );
+        }
+
+        // Filter by status if provided
+        if (
+          customerStatus &&
+          customerStatus !== "all" &&
+          customerStatus !== "undefined"
+        ) {
+          const now = new Date();
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+          customers = customers.filter((customer: any) => {
+            const totalSpent = Number(customer.totalSpent || 0);
+            const lastVisit = customer.lastVisit
+              ? new Date(customer.lastVisit)
+              : null;
+
+            switch (customerStatus) {
+              case "active":
+                return lastVisit && lastVisit >= thirtyDaysAgo;
+              case "inactive":
+                return !lastVisit || lastVisit < thirtyDaysAgo;
+              case "vip":
+                return totalSpent >= 500000; // VIP customers with total spent >= 500k VND
+              case "new":
+                const joinDate = customer.createdAt
+                  ? new Date(customer.createdAt)
+                  : null;
+                returnjoinDate && joinDate >= thirtyDaysAgo;
+              default:
+                return true;
+            }
+          });
+        }
+
+        console.log(`Found ${customers.length} customers after filtering`);
+        res.json(customers);
+      } catch (error) {
+        console.error("Error in customers API:", error);
+        res.status(500).json({ error: "Failed to fetch customers data" });
+      }
+    },
+  );
 
   // Tax code lookup proxy endpoint
   app.post("/api/tax-code-lookup", async (req: TenantRequest, res) => {
     try {
       const { taxCode } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       if (!taxCode) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "Tax code is required" 
+        return res.status(400).json({
+          success: false,
+          message: "Mã số thuế không được để trống",
         });
       }
 
-      console.log('🔍 Looking up tax code:', taxCode);
+      // Call the external tax code API
+      const response = await fetch(
+        "https://infoerpvn.com:9440/api/CheckListTaxCode/v2",
+        {
+          method: "POST",
+          headers: {
+            token: "EnURbbnPhUm4GjNgE4Ogrw==",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify([taxCode]),
+        },
+      );
 
-      // Mock response for tax code lookup
-      // In production, this would call the actual tax authority API
-      const mockResponse = {
+      if (!response.ok) {
+        throw new Error(
+          `External API error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const result = await response.json();
+
+      res.json({
         success: true,
-        data: [{
-          tenCty: "CÔNG TY TNHH ABC",
-          diaChi: "123 Đường ABC, Quận 1, TP.HCM",
-          tthai: "00", // Active status
-          trangThaiHoatDong: "Đang hoạt động"
-        }]
-      };
-
-      res.json(mockResponse);
+        data: result,
+        message: "Tra cứu thành công",
+      });
     } catch (error) {
-      console.error("Error in tax code lookup:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Có lỗi xảy ra khi tra cứu mã số thuế" 
+      console.error("Tax code lookup error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Có lỗi xảy ra khi tra cứu mã số thuế",
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   });
 
   // E-invoice publish proxy endpoint
+  // E-invoice publish proxy endpoint
   app.post("/api/einvoice/publish", async (req: TenantRequest, res) => {
     try {
-      const publishData = req.body;
+      const publishRequest = req.body;
+      const tenantDb = await getTenantDatabase(req);
+      console.log(
+        "Publishing invoice with data:",
+        JSON.stringify(publishRequest, null, 2),
+      );
 
-      console.log('🔍 Publishing e-invoice:', JSON.stringify(publishData, null, 2));
-
-      // Mock successful response for e-invoice publishing
-      // In production, this would call the actual e-invoice provider API
-      const mockResponse = {
-        success: true,
-        data: {
-          invoiceNo: `INV-${Date.now()}`,
-          transactionId: publishData.transactionID,
-          status: "published",
-          publishDate: new Date().toISOString()
+      // Call the real e-invoice API
+      const response = await fetch(
+        "https://infoerpvn.com:9440/api/invoice/publish",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            token: "EnURbbnPhUm4GjNgE4Ogrw==",
+          },
+          body: JSON.stringify(publishRequest),
         },
-        message: "E-invoice published successfully"
-      };
+      );
 
-      res.json(mockResponse);
+      if (!response.ok) {
+        console.error(
+          "E-invoice API error:",
+          response.status,
+          response.statusText,
+        );
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+
+        return res.status(response.status).json({
+          error: "Failed to publish invoice",
+          details: `API returned ${response.status}: ${response.statusText}`,
+          apiResponse: errorText,
+        });
+      }
+
+      const result = await response.json();
+      console.log("E-invoice API response:", result);
+
+      // Check if the API returned success
+      if (result.status === true) {
+        console.log("Invoice published successfully:", result);
+
+        // Return standardized response format
+        res.json({
+          success: true,
+          message:
+            result.message || "Hóa đơn điện tử đã được phát hành thành công",
+          data: {
+            invoiceNo: result.data?.invoiceNo,
+            invDate: result.data?.invDate,
+            transactionID: result.data?.transactionID,
+            macqt: result.data?.macqt,
+            originalRequest: {
+              transactionID: publishRequest.transactionID,
+              invRef: publishRequest.invRef,
+              totalAmount: publishRequest.invTotalAmount,
+              customer: publishRequest.Customer,
+            },
+          },
+        });
+      } else {
+        // API returned failure
+        console.error("E-invoice API returned failure:", result);
+        res.status(400).json({
+          error: "E-invoice publication failed",
+          message: result.message || "Unknown error from e-invoice service",
+          details: result,
+        });
+      }
     } catch (error) {
-      console.error("Error publishing e-invoice:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Có lỗi xảy ra khi phát hành hóa đơn điện tử" 
+      console.error("E-invoice publish proxy error details:");
+      console.error("- Error type:", error.constructor.name);
+      console.error("- Error message:", error.message);
+      console.error("- Full error:", error);
+
+      res.status(500).json({
+        error: "Failed to publish invoice",
+        details: error.message,
+        errorType: error.constructor.name,
       });
     }
   });
@@ -3619,7 +4105,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.get("/api/health/db", async (req, res) => {
     try {
       // Test basic connection with simple query
-      const result = await db.execute(sql `SELECT 
+      const result = await db.execute(sql`SELECT 
         current_database() as database_name,
         current_user as user_name,
         version() as postgres_version,
@@ -3634,19 +4120,26 @@ export async function registerRoutes(app: Express): Promise < Server > {
         user: dbInfo.user_name,
         version: dbInfo.postgres_version,
         serverTime: dbInfo.server_time,
-        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
-        usingExternalDb: !!process.env.EXTERNAL_DB_URL
+        connectionString: process.env.DATABASE_URL?.replace(
+          /:[^:@]*@/,
+          ":****@",
+        ),
+        usingExternalDb: !!process.env.EXTERNAL_DB_URL,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error("Database health check failed:", error);
 
       res.status(500).json({
         status: "unhealthy",
         error: errorMessage,
-        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
+        connectionString: process.env.DATABASE_URL?.replace(
+          /:[^:@]*@/,
+          ":****@",
+        ),
         usingExternalDb: !!process.env.EXTERNAL_DB_URL,
-        details: error
+        details: error,
       });
     }
   });
