@@ -76,29 +76,38 @@ export function ReceiptModal({
     }
   }, [isOpen, receipt, isPreview, cartItems, total, onConfirm]);
 
-  // Remove auto-print - only print when user clicks the print button
-  // useEffect(() => {
-  //   // Auto-print effect removed - user must click print button
-  // }, []);
-
-  // Don't render if modal is not open - BUT HOOKS MUST STILL BE CALLED ABOVE
+  // Early return after hooks
   if (!isOpen) {
     console.log("❌ Receipt Modal: Modal is closed");
     return null;
   }
 
-  // For preview mode, we can show even without receipt
-  // For final receipt mode, we need receipt data
-  if (!receipt && !isPreview) {
-    console.log("❌ Receipt Modal: No receipt data provided for final receipt");
+  // Handle missing data cases
+  const hasReceiptData = receipt && typeof receipt === 'object';
+  const hasCartData = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
+  const hasValidData = hasReceiptData || (isPreview && hasCartData && total > 0);
+
+  if (!hasValidData) {
+    console.log("❌ Receipt Modal: No valid data for display", {
+      hasReceiptData,
+      hasCartData,
+      isPreview,
+      total
+    });
+    
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Lỗi hóa đơn</DialogTitle>
+            <DialogTitle>Thông tin hóa đơn</DialogTitle>
           </DialogHeader>
           <div className="p-4 text-center">
-            <p>Không có dữ liệu hóa đơn để hiển thị</p>
+            <p>
+              {isPreview 
+                ? "Không có sản phẩm trong giỏ hàng để xem trước hóa đơn" 
+                : "Không có dữ liệu hóa đơn để hiển thị"
+              }
+            </p>
             <Button onClick={onClose} className="mt-4">
               Đóng
             </Button>
@@ -423,7 +432,7 @@ export function ReceiptModal({
           </DialogTitle>
         </DialogHeader>
 
-        {receipt ? (
+        {hasReceiptData ? (
           <div
             id="receipt-content"
             className="receipt-print bg-white"
@@ -590,7 +599,7 @@ export function ReceiptModal({
               <p>{t("pos.keepReceiptRecords")}</p>
             </div>
           </div>
-        ) : isPreview && cartItems && cartItems.length > 0 && total ? (
+        ) : isPreview && hasCartData && total > 0 ? (
           // Generate preview receipt from cartItems when in preview mode
           <div
             id="receipt-content"
@@ -699,9 +708,9 @@ export function ReceiptModal({
             </div>
           </div>
         ) : (
-          // This part renders if no data available
+          // Fallback content - should not reach here due to validation above
           <div className="p-4 text-center">
-            <p>Không có dữ liệu để hiển thị hóa đơn.</p>
+            <p>Đang tải dữ liệu hóa đơn...</p>
             <Button onClick={onClose} className="mt-4">
               Đóng
             </Button>
