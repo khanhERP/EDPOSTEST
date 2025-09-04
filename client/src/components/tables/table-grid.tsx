@@ -89,7 +89,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchInterval: false, // Disable auto-refresh
   });
 
-  
+
 
   const {
     data: orderItems,
@@ -172,7 +172,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   useEffect(() => {
     const handlePaymentCompleted = (event: CustomEvent) => {
       console.log('🛡️ Table Grid: Payment completed event received');
-      
+
       // Only invalidate - don't force refetch, let cache handle it
       if (!event.detail?.skipAllRefetch) {
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
@@ -182,7 +182,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     const handleOrderUpdate = (event: CustomEvent) => {
       console.log('🛡️ Table Grid: Order update event received');
-      
+
       // Only invalidate specific data that changed
       if (!event.detail?.skipAllRefetch && event.detail?.orderId) {
         queryClient.invalidateQueries({ queryKey: ["/api/order-items", event.detail.orderId] });
@@ -191,25 +191,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     window.addEventListener('paymentCompleted', handlePaymentCompleted);
     window.addEventListener('orderTotalsUpdated', handleOrderUpdate);
-    
+
     return () => {
       window.removeEventListener('paymentCompleted', handlePaymentCompleted);
       window.removeEventListener('orderTotalsUpdated', handleOrderUpdate);
     };
   }, []);
 
-  
+
 
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
       apiRequest("PUT", `/api/tables/${tableId}/status`, { status }),
     onSuccess: async (data, variables) => {
       console.log(`🔄 Table Grid: Table ${variables.tableId} status updated to ${variables.status}`);
-      
+
       // Clear cache and force immediate refresh for immediate UI update
       queryClient.removeQueries({ queryKey: ["/api/tables"] });
       queryClient.removeQueries({ queryKey: ["/api/orders"] });
-      
+
       // Force immediate fresh fetch
       try {
         await Promise.all([
@@ -220,7 +220,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       } catch (error) {
         console.error("❌ Table status update refresh failed:", error);
       }
-      
+
       toast({
         title: t("tables.title"),
         description: t("common.success"),
@@ -284,7 +284,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       } catch (fetchError) {
         console.error("❌ Table: Error during immediate fresh fetch:", fetchError);
-        
+
         // Fallback to normal refetch
         await Promise.all([
           refetchTables(),
@@ -565,7 +565,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
 
     const customerPoints = selectedCustomer.points || 0;
-    
+
     // Calculate correct order total from order items
     let calculatedTotal = 0;
     if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
