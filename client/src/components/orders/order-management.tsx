@@ -661,39 +661,33 @@ export function OrderManagement() {
 
   // Function to get order total - use consistent calculation logic
   const getOrderTotal = React.useCallback((order: Order) => {
-    // For cancelled orders, always show stored total (no calculation needed)
-    if (order.status === 'cancelled') {
+    // CRITICAL: For cancelled and paid orders, ALWAYS use stored total only
+    // These orders should never be recalculated as their state is final
+    if (order.status === 'cancelled' || order.status === 'paid') {
       const storedTotal = Math.floor(Number(order.total || 0));
-      console.log(`💰 Order ${order.orderNumber} is cancelled, showing stored total: ${storedTotal}`);
+      console.log(`💰 Order ${order.orderNumber} is ${order.status}, using STORED total ONLY: ${storedTotal}`);
       return storedTotal;
     }
 
-    // For paid orders, also use stored total (payment already completed)
-    if (order.status === 'paid') {
-      const storedTotal = Math.floor(Number(order.total || 0));
-      console.log(`💰 Order ${order.orderNumber} is paid, showing stored total: ${storedTotal}`);
-      return storedTotal;
-    }
-
-    // For active orders, try to use calculated totals
+    // For active orders only, try to use calculated totals
     // Try to use calculatedTotal from API first (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
       const total = Math.floor(Number(apiCalculatedTotal));
-      console.log(`💰 Using API calculated total for order ${order.orderNumber}: ${total}`);
+      console.log(`💰 Using API calculated total for active order ${order.orderNumber}: ${total}`);
       return total;
     }
 
-    // If we have cached calculated total for this order, use it
+    // If we have cached calculated total for this active order, use it
     if (calculatedTotals.has(order.id)) {
       const cachedTotal = calculatedTotals.get(order.id)!;
-      console.log(`💰 Using cached calculated total for order ${order.orderNumber}: ${cachedTotal}`);
+      console.log(`💰 Using cached calculated total for active order ${order.orderNumber}: ${cachedTotal}`);
       return cachedTotal;
     }
 
     // Fallback to stored total for active orders
     const storedTotal = Math.floor(Number(order.total || 0));
-    console.log(`💰 Using stored total for order ${order.orderNumber}: ${storedTotal}`);
+    console.log(`💰 Using stored total for active order ${order.orderNumber}: ${storedTotal}`);
     return storedTotal;
   }, [calculatedTotals]);
 
@@ -1462,9 +1456,10 @@ export function OrderManagement() {
           return;
         }
 
-        // Skip cancelled and paid orders (use stored totals)
+        // IMPORTANT: Skip calculation for cancelled and paid orders completely
+        // These orders must use stored totals only to maintain consistency
         if (order.status === 'cancelled' || order.status === 'paid') {
-          console.log(`⏭️ Skipping calculation for ${order.status} order ${order.orderNumber}, using stored total`);
+          console.log(`⏭️ SKIPPING calculation for ${order.status} order ${order.orderNumber} - stored total is final`);
           return;
         }
 
@@ -1788,11 +1783,12 @@ export function OrderManagement() {
                           const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
                           const hasCachedTotal = calculatedTotals.has(order.id);
 
-                          // For cancelled orders, show with strikethrough
+                          // For cancelled orders, show stored total with strikethrough
                           if (order.status === 'cancelled') {
+                            const cancelledTotal = Math.floor(Number(order.total || 0));
                             return (
                               <span className="text-sm text-gray-400 line-through">
-                                {formatCurrency(displayTotal)}
+                                {formatCurrency(cancelledTotal)}
                               </span>
                             );
                           }
