@@ -2727,6 +2727,9 @@ export function SalesChartReport() {
 
                 const quantity = Number(item.quantity || 0);
                 const total = Number(item.total || 0);
+                const unitPrice = Number(item.price || 0);
+                const totalAmount = quantity * unitPrice;
+                const discount = Math.max(0, totalAmount - total);
 
                 productSales[productId].quantity += quantity;
                 productSales[productId].revenue += total;
