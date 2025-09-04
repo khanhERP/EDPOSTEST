@@ -42,6 +42,14 @@ import {
 import { db } from "./db";
 import { eq, ilike, and, gte, lte, or, sql, desc, not, like } from "drizzle-orm";
 
+// Validate database connection on module load
+if (!db) {
+  console.error('❌ CRITICAL: Database connection is undefined on module load');
+  throw new Error('Database connection failed to initialize');
+}
+
+console.log('✅ Database connection validated successfully');
+
 export interface IStorage {
   // Categories
   getCategories(): Promise<Category[]>;
@@ -226,6 +234,10 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   async getCategories(tenantDb?: any): Promise<Category[]> {
     const database = tenantDb || db;
+    if (!database) {
+      console.error(`❌ Database is undefined in getCategories`);
+      throw new Error(`Database connection is not available`);
+    }
     return await database.select().from(categories);
   }
 
@@ -1042,6 +1054,11 @@ export class DatabaseStorage implements IStorage {
   // Orders
   async getOrders(tableId?: number, status?: string, tenantDb?: any): Promise<Order[]> {
     const database = tenantDb || db;
+    if (!database) {
+      console.error(`❌ Database is undefined in getOrders`);
+      throw new Error(`Database connection is not available`);
+    }
+    
     const conditions = [];
 
     if (tableId) {
@@ -1107,6 +1124,10 @@ export class DatabaseStorage implements IStorage {
     console.log('Update data:', order);
 
     const database = tenantDb || db;
+    if (!database) {
+      console.error(`❌ Database is undefined in updateOrder`);
+      throw new Error(`Database connection is not available`);
+    }
 
     // Get current order state before update
     const [currentOrder] = await database
@@ -1268,6 +1289,13 @@ export class DatabaseStorage implements IStorage {
       });
       
       return mockOrder;
+    }
+
+    // Ensure database is properly initialized
+    const database = tenantDb || db;
+    if (!database) {
+      console.error(`❌ Database is undefined - cannot proceed with order status update`);
+      throw new Error(`Database connection is not available`);
     }
 
     // Ensure id is a number for database operations
