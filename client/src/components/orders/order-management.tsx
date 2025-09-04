@@ -160,17 +160,15 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
 
-      // Close modals but don't show additional receipt (payment modal will handle it)
-      setTimeout(() => {
-        setOrderDetailsOpen(false);
-        setPaymentMethodsOpen(false);
-        setShowPaymentMethodModal(false);
-        setShowEInvoiceModal(false);
-        setShowReceiptPreview(false);
-        setPreviewReceipt(null);
-        setSelectedOrder(null);
-        setOrderForPayment(null);
-      }, 200);
+      // Close all modals immediately to prevent duplicate displays
+      setOrderDetailsOpen(false);
+      setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      setSelectedOrder(null);
+      setOrderForPayment(null);
 
       toast({
         title: 'Thanh toán thành công',
@@ -208,9 +206,7 @@ export function OrderManagement() {
         description: 'Không thể hoàn tất thanh toán',
         variant: "destructive",
       });
-      setTimeout(() => {
-        setOrderForPayment(null);
-      }, 100);
+      setOrderForPayment(null);
     },
   });
 
@@ -491,21 +487,21 @@ export function OrderManagement() {
           : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
       });
 
-      // Close e-invoice modal first
+      // Close all modals immediately to prevent duplicates
       setShowEInvoiceModal(false);
+      setShowPaymentMethodModal(false);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      setOrderDetailsOpen(false);
+      setSelectedOrder(null);
+      setOrderForPayment(null);
 
-      // ONLY show receipt if explicitly requested via invoiceData.receipt
-      // Don't auto-create receipt to avoid duplicate display
-      if (invoiceData.receipt) {
-        console.log('📄 Order Management: Showing receipt from E-Invoice data');
+      // ONLY show receipt if explicitly provided with auto-close enabled
+      if (invoiceData.receipt && invoiceData.shouldShowReceipt !== false) {
+        console.log('📄 Order Management: Showing receipt from E-Invoice with auto-close');
         setSelectedReceipt(invoiceData.receipt);
         setShowReceiptModal(true);
       }
-
-      // Clear order states
-      setOrderForPayment(null);
-      setOrderDetailsOpen(false);
-      setSelectedOrder(null);
 
     } catch (error) {
       console.error('❌ Error during payment completion:', error);
@@ -956,15 +952,17 @@ export function OrderManagement() {
         setOrderForPayment(null);
         setOrderDetailsOpen(false);
         setSelectedOrder(null);
+        setShowReceiptPreview(false);
+        setPreviewReceipt(null);
 
         toast({
           title: 'Thành công',
           description: 'Đơn hàng đã được thanh toán thành công',
         });
 
-        // Show receipt ONLY if explicitly requested and no receipt is currently showing
-        if (data.receipt && data.shouldShowReceipt && !showReceiptModal) {
-          console.log('📄 Order Management: Showing final receipt modal');
+        // ONLY show receipt if explicitly requested in data with shouldShowReceipt = true
+        if (data.receipt && data.shouldShowReceipt === true && !showReceiptModal) {
+          console.log('📄 Order Management: Showing final receipt modal with auto-close');
           setSelectedReceipt(data.receipt);
           setShowReceiptModal(true);
         }
@@ -1016,11 +1014,13 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
 
-      // Close all modals immediately
+      // Close all modals immediately - no receipt display for direct payments
       setShowPaymentMethodModal(false);
       setOrderForPayment(null);
       setOrderDetailsOpen(false);
       setSelectedOrder(null);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
 
       toast({
         title: 'Thành công',
