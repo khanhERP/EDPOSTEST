@@ -8,22 +8,17 @@ import { ReceiptModal } from "@/components/pos/receipt-modal";
 import { ProductManagerModal } from "@/components/pos/product-manager-modal";
 import { usePOS } from "@/hooks/use-pos";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
-import { useTranslation } from "@/lib/i18n";
 
 interface POSPageProps {
   onLogout?: () => void;
 }
 
 export default function POS({ onLogout }: POSPageProps) {
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showProductManagerModal, setShowProductManagerModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [lastCartItems, setLastCartItems] = useState<any[]>([]);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
-  const [cartCustomer, setCartCustomer] = useState<Customer | null>(null);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [receiptData, setReceiptData] = useState<any>(null);
-  const [shouldClearCartAfterReceipt, setShouldClearCartAfterReceipt] = useState(false);
   const queryClient = useQueryClient();
 
   const {
@@ -39,19 +34,8 @@ export default function POS({ onLogout }: POSPageProps) {
     removeOrder,
     lastReceipt,
     isProcessingCheckout,
-    processCheckout,
-    cartItems, // Assuming cartItems is available from usePOS hook
-    setCartItems, // Assuming setCartItems is available from usePOS hook
+    processCheckout
   } = usePOS();
-
-  const { t } = useTranslation();
-
-  // Initialize cart from localStorage on mount
-  useEffect(() => {
-    // This effect might need to load cart and customer from localStorage if they exist
-    // For now, it's empty as the core logic is handled in other parts.
-  }, []);
-
 
   // Add WebSocket listener for refresh signals
   useEffect(() => {
@@ -172,126 +156,88 @@ export default function POS({ onLogout }: POSPageProps) {
     };
   }, [clearCart, orders, switchOrder]);
 
-  const handleCheckout = async (checkoutData: any) => {
-    console.log("🛒 POS: Checkout initiated with data:", checkoutData);
+  const handleCheckout = async (paymentData: any) => {
+    console.log("=== POS PAGE CHECKOUT DEBUG ===");
+    console.log("Cart before checkout:", cart);
+    console.log("Cart length:", cart.length);
+
+    // Prepare cart items with proper data types and validation
+    const cartItemsBeforeCheckout = cart.map(item => {
+      // Ensure price is a number
+      let itemPrice = item.price;
+      if (typeof itemPrice === 'string') {
+        itemPrice = parseFloat(itemPrice);
+      }
+      if (isNaN(itemPrice) || itemPrice <= 0) {
+        itemPrice = 0;
+      }
+
+      // Ensure quantity is a positive integer
+      let itemQuantity = item.quantity;
+      if (typeof itemQuantity === 'string') {
+        itemQuantity = parseInt(itemQuantity);
+      }
+      if (isNaN(itemQuantity) || itemQuantity <= 0) {
+        itemQuantity = 1;
+      }
+
+      // Ensure taxRate is a number
+      let itemTaxRate = item.taxRate;
+      if (typeof itemTaxRate === 'string') {
+        itemTaxRate = parseFloat(itemTaxRate);
+      }
+      if (isNaN(itemTaxRate)) {
+        itemTaxRate = 10; // Default 10%
+      }
+
+      return {
+        id: item.id,
+        name: item.name || `Product ${item.id}`,
+        price: itemPrice,
+        quantity: itemQuantity,
+        sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
+        taxRate: itemTaxRate
+      };
+    });
+
+    console.log("✅ Processed cart items:", cartItemsBeforeCheckout);
+
+    // Validate processed items
+    const invalidItems = cartItemsBeforeCheckout.filter(item => 
+      !item.id || !item.name || item.price <= 0 || item.quantity <= 0
+    );
+
+    if (invalidItems.length > 0) {
+      console.error("❌ Invalid items found after processing:", invalidItems);
+      alert("Có sản phẩm không hợp lệ trong giỏ hàng. Vui lòng kiểm tra lại.");
+      return;
+    }
+
+    // Set cart items before checkout to ensure they're available for receipt modal
+    setLastCartItems([...cartItemsBeforeCheckout]); // Use spread to ensure new array reference
+
+    console.log("✅ Cart items validation passed, processing checkout...");
 
     try {
-      if (checkoutData.showReceiptModal && checkoutData.receiptData) {
-        console.log("📄 POS: Showing receipt modal with data:", checkoutData.receiptData);
-
-        // Set receipt data and show modal
-        setReceiptData(checkoutData.receiptData);
+      const receipt = await processCheckout(paymentData);
+      if (receipt) {
+        console.log("✅ Receipt processed successfully");
+        console.log("✅ Opening receipt modal with cartItems:", cartItemsBeforeCheckout.length, "items");
         setShowReceiptModal(true);
-        setShouldClearCartAfterReceipt(checkoutData.shouldClearCartAfterReceipt || false);
-
-        console.log("📄 POS: Receipt modal opened with data:", {
-          transactionId: checkoutData.receiptData.transactionId,
-          invoiceNumber: checkoutData.receiptData.invoiceNumber,
-          total: checkoutData.receiptData.total,
-          paymentMethod: checkoutData.receiptData.paymentMethod
-        });
-
-        toast({
-          title: "Thanh toán thành công",
-          description: `Hóa đơn: ${checkoutData.receiptData.invoiceNumber || checkoutData.receiptData.transactionId}`,
-        });
-
-        return;
-      }
-
-      // Regular checkout logic for other payment methods
-      console.log("💳 POS: Processing regular checkout");
-
-      const orderData = {
-        items: cartItems.map((item) => ({
-          productId: item.id,
-          quantity: item.quantity,
-          unitPrice: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-          notes: item.notes || null,
-        })),
-        total: calculateCartTotal(),
-        subtotal: calculateCartSubtotal(),
-        tax: calculateCartTax(),
-        paymentMethod: checkoutData.paymentMethod,
-        customerName: cartCustomer?.name || null,
-        customerPhone: cartCustomer?.phone || null,
-        customerEmail: cartCustomer?.email || null,
-        notes: checkoutData.notes || null,
-        amountReceived: checkoutData.amountReceived,
-        changeAmount: checkoutData.changeAmount || 0,
-      };
-
-      console.log("📦 POS: Submitting order:", orderData);
-
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log("✅ POS: Order created successfully:", result);
-
-        toast({
-          title: t("pos.orderSuccess"),
-          description: `${t("pos.orderNumber")}: ${result.orderNumber}`,
-        });
-
-        // Clear cart after successful order
-        clearCartAndRefresh();
+        // Clear cart and close modal after successful checkout and receipt display
+        clearCart(); // Clear the cart after checkout
+        // The requirement to "tự đóng màn hóa đơn lại" is handled by the onClose prop, 
+        // but we also need to ensure the cart is cleared *after* checkout and receipt is shown.
+        // The `clearCart()` call here handles clearing the cart after successful checkout.
       } else {
-        throw new Error("Failed to create order");
+        console.error("❌ Failed to process checkout - no receipt returned");
+        alert("Lỗi thanh toán. Vui lòng thử lại.");
       }
     } catch (error) {
-      console.error("❌ POS: Checkout error:", error);
-      toast({
-        title: t("pos.orderError"),
-        description: t("pos.tryAgain"),
-        variant: "destructive",
-      });
+      console.error("❌ Checkout process failed:", error);
+      alert("Lỗi thanh toán. Vui lòng thử lại.");
     }
   };
-
-  // Function to clear cart and refresh POS
-  const clearCartAndRefresh = () => {
-    console.log("🧹 POS: Clearing cart and refreshing");
-
-    setCartItems([]);
-    setCartCustomer(null);
-    setSelectedPaymentMethod("");
-    localStorage.removeItem("pos-cart");
-    localStorage.removeItem("pos-cart-customer");
-
-    // Force refresh of products and other data
-    queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-
-    console.log("✅ POS: Cart cleared and data refreshed");
-  };
-
-  // Handle receipt modal close
-  const handleReceiptModalClose = () => {
-    console.log("🔒 POS: Receipt modal closing");
-    setShowReceiptModal(false);
-    setReceiptData(null);
-
-    if (shouldClearCartAfterReceipt) {
-      console.log("🧹 POS: Clearing cart after receipt modal closed");
-      clearCartAndRefresh();
-      setShouldClearCartAfterReceipt(false);
-    }
-  };
-
-  // Helper functions to calculate totals (assuming these exist within usePOS or are defined here)
-  const calculateCartTotal = () => cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const calculateCartSubtotal = () => cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const calculateCartTax = () => 0; // Placeholder for tax calculation
-
-  const [wsConnected, setWsConnected] = useState(false); // Assuming wsConnected state is needed elsewhere
 
   try {
     return (
@@ -336,28 +282,62 @@ export default function POS({ onLogout }: POSPageProps) {
         />
       </div>
 
-      {/* Receipt Modal */}
-      {showReceiptModal && receiptData && (
-        <ReceiptModal
-          isOpen={showReceiptModal}
-          onClose={handleReceiptModalClose}
-          receiptData={receiptData}
-        />
-      )}
+      {/* Modals */}
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={() => {
+          console.log("🔴 POS: Closing receipt modal and clearing cart");
+          setShowReceiptModal(false);
 
-      {/* Product Manager Modal */}
+          // Force clear cart immediately
+          console.log("🔄 POS: Force clearing cart when receipt modal closes");
+          clearCart();
+
+          // Also dispatch clear cart event for other components
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('clearCart', {
+              detail: { 
+                source: 'pos_receipt_close',
+                timestamp: new Date().toISOString()
+              }
+            }));
+          }
+
+          // Clear cart when receipt modal closes
+          setTimeout(() => {
+            clearCart();
+
+            // Send popup close signal via WebSocket to trigger other components to refresh
+            try {
+              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
+
+              ws.onopen = () => {
+                ws.send(JSON.stringify({
+                  type: "popup_close",
+                  success: true,
+                  action: 'receipt_modal_closed',
+                  timestamp: new Date().toISOString()
+                }));
+                ws.close();
+              };
+            } catch (error) {
+              console.error("Failed to send popup close signal:", error);
+            }
+          }, 100);
+        }}
+        receipt={lastReceipt}
+        cartItems={lastCartItems}
+      />
+
       <ProductManagerModal
         isOpen={showProductManagerModal}
         onClose={() => setShowProductManagerModal(false)}
       />
-
-      {/* Global WebSocket refresh listener */}
-      {wsConnected && (
-        <div className="hidden">WebSocket Connected</div>
-      )}
-    </div>
-  );
-} catch (error) {
+      </div>
+    );
+  } catch (error) {
     console.error("❌ POS Page Error:", error);
     return (
       <div className="min-h-screen bg-red-50 flex items-center justify-center">
