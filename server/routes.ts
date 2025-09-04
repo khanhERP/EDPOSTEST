@@ -39,9 +39,7 @@ import {
   lt,
   lte,
   ilike,
-  ne,
-  notInArray,
-  isNotNull
+  ne
 } from "drizzle-orm";
 import {
   sql
@@ -2005,14 +2003,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 app.get("/api/tables-with-totals", async (req: TenantRequest, res) => {
   try {
     console.log("🔍 GET /api/tables-with-totals - Starting request processing");
-    const tenantDb = await getTenantDatabase(req);
+    const db = await getTenantDatabase(req);
 
     // Get all tables
-    const tablesResult = await tenantDb.select().from(tables);
+    const tablesResult = await db.select().from(tables);
     console.log(`✅ Found ${tablesResult.length} tables`);
 
     // Get all active orders with their items in one query
-    const activeOrdersWithItems = await tenantDb
+    const activeOrdersWithItems = await db
       .select({
         orderId: orders.id,
         orderNumber: orders.orderNumber,
@@ -2033,14 +2031,13 @@ app.get("/api/tables-with-totals", async (req: TenantRequest, res) => {
       .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
       .where(
         and(
-          ne(orders.status, "paid"),
-          ne(orders.status, "cancelled"),
+          notInArray(orders.status, ["paid", "cancelled"]),
           isNotNull(orders.tableId)
         )
       );
 
     // Get all products for tax calculation
-    const productsResult = await tenantDb.select().from(products);
+    const productsResult = await db.select().from(products);
     console.log(`✅ Found ${productsResult.length} products for tax calculation`);
 
     // Group orders by table and calculate totals
