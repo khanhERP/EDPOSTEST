@@ -238,7 +238,15 @@ export class DatabaseStorage implements IStorage {
       console.error(`❌ Database is undefined in getCategories`);
       throw new Error(`Database connection is not available`);
     }
-    return await database.select().from(categories);
+    
+    try {
+      const result = await database.select().from(categories);
+      return result || [];
+    } catch (error) {
+      console.error(`❌ Error in getCategories:`, error);
+      // Return empty array instead of throwing to prevent crashes
+      return [];
+    }
   }
 
   async createCategory(insertCategory: InsertCategory, tenantDb?: any): Promise<Category> {
@@ -1391,6 +1399,21 @@ export class DatabaseStorage implements IStorage {
     return updatedOrder || undefined;
   }
 
+  // Safe database query wrapper
+  private async safeDbQuery<T>(
+    queryFn: () => Promise<T>,
+    fallbackValue: T,
+    operation: string
+  ): Promise<T> {
+    try {
+      const result = await queryFn();
+      return result;
+    } catch (error) {
+      console.error(`❌ Database error in ${operation}:`, error);
+      return fallbackValue;
+    }
+  }
+
   async updateOrderStatus(
     id: number | string,
     status: string,
@@ -1451,9 +1474,9 @@ export class DatabaseStorage implements IStorage {
 
     // Ensure database is properly initialized
     const database = tenantDb || db;
-    if (!database) {
-      console.error(`❌ Database is undefined - cannot proceed with order status update`);
-      throw new Error(`Database connection is not available`);
+    if (!database || !database.select) {
+      console.error(`❌ Database is undefined or missing select method - cannot proceed with order status update`);
+      throw new Error(`Database connection is not available or invalid`);
     }
 
     // Ensure id is a number for database operations
@@ -1468,10 +1491,12 @@ export class DatabaseStorage implements IStorage {
     try {
       // First, get the current order to know its table
       console.log(`🔍 Fetching current order with ID: ${orderId}`);
-      const [currentOrder] = await database
-        .select()
-        .from(orders)
-        .where(eq(orders.id, orderId as number));
+      const result = await this.safeDbQuery(
+        () => database.select().from(orders).where(eq(orders.id, orderId as number)),
+        [],
+        `fetchCurrentOrder-${orderId}`
+      );
+      const [currentOrder] = result;
 
       if (!currentOrder) {
         console.error(`❌ Order not found: ${orderId}`);
@@ -1512,11 +1537,12 @@ export class DatabaseStorage implements IStorage {
       const queryStartTime = Date.now();
       console.log(`⏱️ DATABASE QUERY STARTED at:`, new Date().toISOString());
 
-      const [order] = await database
-        .update(orders)
-        .set(updateData)
-        .where(eq(orders.id, orderId as number))
-        .returning();
+      const result = await this.safeDbQuery(
+        () => database.update(orders).set(updateData).where(eq(orders.id, orderId as number)).returning(),
+        [],
+        `updateOrderStatus-${orderId}`
+      );
+      const [order] = result;
 
       const queryEndTime = Date.now();
       console.log(`⏱️ DATABASE QUERY COMPLETED in ${queryEndTime - queryStartTime}ms`);
