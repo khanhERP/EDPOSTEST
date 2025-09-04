@@ -73,20 +73,22 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
-    staleTime: 60 * 1000, // Fresh for 1 minute
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchOnWindowFocus: false, // Don't auto-refetch on focus
-    refetchOnMount: false, // Don't auto-refetch on mount
-    refetchInterval: false, // Disable auto-refresh
+    staleTime: 60 * 1000, // Cache 1 phút
+    gcTime: 5 * 60 * 1000, // Giữ cache 5 phút
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    retry: 2,
   });
 
   const { data: orders, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
-    staleTime: 60 * 1000, // Fresh for 1 minute
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchOnWindowFocus: false, // Don't auto-refetch on focus
-    refetchOnMount: false, // Don't auto-refetch on mount
-    refetchInterval: false, // Disable auto-refresh
+    staleTime: 30 * 1000, // Cache 30 giây cho orders
+    gcTime: 2 * 60 * 1000, // Giữ cache 2 phút
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    retry: 2,
   });
 
 
@@ -101,17 +103,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false,
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    staleTime: 60 * 1000, // Cache 1 phút
+    gcTime: 5 * 60 * 1000, // Giữ cache 5 phút
+    retry: 2,
     queryFn: async () => {
       const orderId = selectedOrder?.id;
       if (!orderId) {
         return [];
       }
 
-      const response = await apiRequest("GET", `/api/order-items/${orderId}`);
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      try {
+        const response = await apiRequest("GET", `/api/order-items/${orderId}`);
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error("Error fetching order items:", error);
+        return [];
+      }
     },
   });
 
@@ -260,11 +268,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       try {
         // Use fetch directly with no-cache to bypass React Query entirely for immediate update
         const [freshTables, freshOrders] = await Promise.all([
-          fetch("/api/tables", { 
+          fetch("/api/tables", {
             cache: "no-store",
             headers: { "Cache-Control": "no-cache" }
           }).then(r => r.json()),
-          fetch("/api/orders", { 
+          fetch("/api/orders", {
             cache: "no-store",
             headers: { "Cache-Control": "no-cache" }
           }).then(r => r.json())
@@ -436,7 +444,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             });
           }
 
-          // Use exact calculated values from Order Details display
+          // Use exact calculated values from Order Details
           const receiptData = {
             ...completedOrder,
             transactionId: `TXN-${Date.now()}`,
@@ -2362,7 +2370,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       }
 
                       try {
-                        // Use exact same calculation logic as Order Details display
+                        // Use exact same calculation logic as Order Details
                         let subtotal = 0;
                         let totalTax = 0;
 

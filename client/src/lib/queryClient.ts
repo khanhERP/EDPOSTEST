@@ -51,17 +51,20 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false, // Disable automatic refetching
-      refetchOnWindowFocus: false, // Only refetch on manual trigger
-      staleTime: 30 * 1000, // Data is fresh for 30 seconds
-      gcTime: 5 * 60 * 1000, // Keep in memory for 5 minutes
-      retry: false,
-      refetchOnMount: false, // Don't automatically refetch on mount
-      refetchOnReconnect: true, // Refetch when reconnecting to internet
-      networkMode: "online", // Only make requests when online
+      refetchInterval: false,
+      refetchOnWindowFocus: false,
+      staleTime: 2 * 60 * 1000, // Cache 2 phút
+      gcTime: 10 * 60 * 1000, // Giữ cache 10 phút
+      retry: 1,
+      refetchOnMount: false,
+      refetchOnReconnect: true,
+      networkMode: "online",
     },
     mutations: {
       retry: false,
+      onError: (error) => {
+        console.error("Mutation error:", error);
+      },
     },
   },
 });
