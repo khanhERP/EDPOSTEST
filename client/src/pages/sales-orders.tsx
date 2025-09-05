@@ -36,6 +36,10 @@ interface Invoice {
   invoiceStatus: number;
   notes: string;
   createdAt: string;
+  type?: 'invoice' | 'order'; // Added to differentiate
+  displayNumber?: string;
+  displayStatus?: number;
+  orderNumber?: string;
 }
 
 interface InvoiceItem {
@@ -137,9 +141,9 @@ export default function SalesOrders() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [orderNumberSearch, setOrderNumberSearch] = useState("");
   const [customerCodeSearch, setCustomerCodeSearch] = useState("");
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null); // Renamed to selectedItem for clarity
   const [isEditing, setIsEditing] = useState(false);
-  const [editableInvoice, setEditableInvoice] = useState<Invoice | null>(null);
+  const [editableInvoice, setEditableInvoice] = useState<Invoice | null>(null); // Renamed to editableItem
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [showBulkCancelDialog, setShowBulkCancelDialog] = useState(false);
@@ -149,29 +153,6 @@ export default function SalesOrders() {
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [printReceiptData, setPrintReceiptData] = useState<any>(null);
 
-
-  // Query invoices by date range
-  const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
-    queryKey: ["/api/invoices/date-range", startDate, endDate, currentPage, itemsPerPage],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest("GET", `/api/invoices/date-range/${startDate}/${endDate}?page=${currentPage}&limit=${itemsPerPage}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('Sales Orders - Invoices loaded by date:', data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Error fetching invoices by date:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5000, // Cache for only 5 seconds
-    refetchInterval: 10000, // Auto-refresh every 10 seconds
-  });
 
   // Query orders by date range
   const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
@@ -196,54 +177,14 @@ export default function SalesOrders() {
     refetchInterval: 10000, // Auto-refresh every 10 seconds
   });
 
-  // Query transactions by date range
-  const { data: transactions = [], isLoading: transactionsLoading, error: transactionsError } = useQuery({
-    queryKey: ["/api/transactions", startDate, endDate, currentPage, itemsPerPage],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest("GET", `/api/transactions/${startDate}/${endDate}?page=${currentPage}&limit=${itemsPerPage}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('Sales Orders - Transactions loaded by date:', data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Error fetching transactions by date:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-  });
+  // Removed queries for invoices and transactions as they are no longer needed.
 
-  const isLoading = invoicesLoading || ordersLoading || transactionsLoading;
-  const hasError = invoicesError || ordersError || transactionsError;
+  const isLoading = ordersLoading; // Only orders loading is relevant now
+  const hasError = ordersError; // Only orders error is relevant now
 
-  // Query invoice items for selected invoice
-  const { data: invoiceItems = [] } = useQuery({
-    queryKey: ["/api/invoice-items", selectedInvoice?.id],
-    queryFn: async () => {
-      if (!selectedInvoice?.id) return [];
-      try {
-        const response = await apiRequest("GET", `/api/invoice-items/${selectedInvoice.id}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Error fetching invoice items:', error);
-        return [];
-      }
-    },
-    enabled: !!selectedInvoice?.id && (getItemType(selectedInvoice) === 'invoice' || !selectedInvoice?.type),
-    retry: 2,
-  });
-
-  // Query order items for selected order
+  // Query items for selected order
   const { data: orderItems = [] } = useQuery({
-    queryKey: ["/api/order-items", selectedInvoice?.id],
+    queryKey: ["/api/order-items", selectedInvoice?.id], // selectedInvoice is used here but it's actually an order
     queryFn: async () => {
       if (!selectedInvoice?.id) return [];
       try {
@@ -262,58 +203,48 @@ export default function SalesOrders() {
     retry: 2,
   });
 
-  // Mutation for updating invoice
-  const updateInvoiceMutation = useMutation({
-    mutationFn: async (updatedInvoice: Invoice) => {
-      const response = await apiRequest("PUT", `/api/invoices/${updatedInvoice.id}`, updatedInvoice);
+  // Mutation for updating an order
+  const updateOrderMutation = useMutation({
+    mutationFn: async (updatedOrder: Order) => {
+      const response = await apiRequest("PUT", `/api/orders/${updatedOrder.id}`, updatedOrder);
       return response.json();
     },
-    onSuccess: () => {
-      // Refresh all data sources
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+    onSuccess: (data, updatedOrder) => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       setIsEditing(false);
-      setEditableInvoice(null);
-      // Update selected invoice with new data
-      if (editableInvoice) {
-        setSelectedInvoice(editableInvoice);
+      setEditableInvoice(null); // Resetting editableInvoice as it's used for both
+
+      // Update selected order with new data
+      if (selectedInvoice) {
+        setSelectedInvoice({ ...selectedInvoice, ...updatedOrder });
       }
     },
+    onError: (error) => {
+      console.error('Error updating order:', error);
+      alert(`Lỗi khi cập nhật đơn hàng: ${error.message}`);
+    }
   });
 
   // Mutation for bulk canceling orders
   const bulkCancelOrdersMutation = useMutation({
-    mutationFn: async (orderKeys: string[]) => {
+    mutationFn: async (orderIds: string[]) => { // Changed to accept orderIds directly
       const results = [];
-      for (const orderKey of orderKeys) {
-        const [type, id] = orderKey.split('-');
+      for (const orderId of orderIds) {
         try {
-          let response;
-
-          if (type === 'order') {
-            // For orders, update status to 'cancelled'
-            response = await apiRequest("PUT", `/api/orders/${id}/status`, { 
-              status: "cancelled"
-            });
-          } else {
-            // For invoices, update both invoiceStatus and invoice_status to 3 (Đã hủy)
-            response = await apiRequest("PUT", `/api/invoices/${id}`, { 
-              invoiceStatus: 3, // 3 = Đã hủy
-              invoice_status: 3, // 3 = Đã hủy (database column)
-              status: 'cancelled' // Also update general status
-            });
-          }
+          // For orders, update status to 'cancelled'
+          const response = await apiRequest("PUT", `/api/orders/${orderId}/status`, {
+            status: "cancelled"
+          });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Failed to cancel ${type} ${id}: ${errorText}`);
+            throw new Error(`Failed to cancel order ${orderId}: ${errorText}`);
           }
 
-          results.push({ orderKey, success: true });
+          results.push({ orderId, success: true });
         } catch (error) {
-          console.error(`Error canceling ${type} ${id}:`, error);
-          results.push({ orderKey, success: false, error: error.message });
+          console.error(`Error canceling order ${orderId}:`, error);
+          results.push({ orderId, success: false, error: error.message });
         }
       }
       return results;
@@ -321,39 +252,27 @@ export default function SalesOrders() {
     onSuccess: (results) => {
       console.log('Bulk cancel results:', results);
 
-      // Count successful cancellations
       const successCount = results.filter(r => r.success).length;
       const failCount = results.length - successCount;
 
-      // Close dialog
       setShowBulkCancelDialog(false);
-
-      // Clear selections
       setSelectedOrderIds(new Set());
 
-      // Refresh all data sources
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
 
-      // Update selected invoice if it was cancelled
+      // Update selected order if it was cancelled
       if (selectedInvoice) {
-        const selectedOrderKey = `${selectedInvoice.type}-${selectedInvoice.id}`;
-        const wasCancelled = results.find(r => r.orderKey === selectedOrderKey && r.success);
+        const wasCancelled = results.find(r => r.orderId === String(selectedInvoice.id) && r.success);
         if (wasCancelled) {
           setSelectedInvoice({
             ...selectedInvoice,
-            invoiceStatus: 3,
-            invoice_status: 3,
-            displayStatus: 3,
-            status: selectedInvoice.type === 'order' ? 'cancelled' : selectedInvoice.status
+            status: 'cancelled'
           });
           setIsEditing(false);
           setEditableInvoice(null);
         }
       }
 
-      // Show success message
       if (successCount > 0) {
         alert(`Đã hủy thành công ${successCount} đơn hàng${failCount > 0 ? `, ${failCount} đơn thất bại` : ''}`);
       } else {
@@ -367,7 +286,7 @@ export default function SalesOrders() {
     },
   });
 
-  // Mutation for publishing invoice
+  // Mutation for publishing invoice (kept for now, but might be removed if only orders are displayed)
   const publishRequestMutation = useMutation({
     mutationFn: async (invoiceData: any) => {
       const response = await apiRequest("POST", "/api/einvoice/publish", invoiceData);
@@ -378,17 +297,10 @@ export default function SalesOrders() {
 
       if (result.success && selectedInvoice) {
           try {
-            // Determine the correct API endpoint based on item type
-            const updateEndpoint = getItemType(selectedInvoice) === 'order' 
-              ? `/api/orders/${selectedInvoice.id}`
-              : `/api/invoices/${selectedInvoice.id}`;
-
-            // Map API response data properly
             const invoiceNo = result.data?.invoiceNo || result.invoiceNumber || null;
             const symbol = result.data?.symbol || result.symbol || 'AA/25E';
             const templateNumber = result.data?.templateNumber || result.templateNumber || '1C25TYY';
 
-            // Prepare update data with proper field mapping
             const updateData = {
               einvoiceStatus: 1, // Đã phát hành
               invoiceStatus: 1, // Hoàn thành
@@ -400,14 +312,12 @@ export default function SalesOrders() {
               notes: `E-Invoice published - Invoice No: ${invoiceNo || 'N/A'}`
             };
 
-            console.log(`Updating ${getItemType(selectedInvoice)} with data:`, updateData);
+            console.log(`Updating order with data:`, updateData);
 
-            // Update the invoice/order status
-            const updateResponse = await apiRequest("PUT", updateEndpoint, updateData);
-            console.log('✅ Invoice/Order updated successfully after publish:', updateResponse);
+            const updateResponse = await apiRequest("PUT", `/api/orders/${selectedInvoice.id}`, updateData);
+            console.log('✅ Order updated successfully after publish:', updateResponse);
 
-            // Create receipt data for printing
-            const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+            const items = orderItems;
             const receiptData = {
               transactionId: invoiceNo || selectedInvoice.orderNumber || `TXN-${Date.now()}`,
               orderId: selectedInvoice.id,
@@ -433,12 +343,9 @@ export default function SalesOrders() {
               customerTaxCode: selectedInvoice.customerTaxCode || null,
             };
 
-            // Show print dialog after successful publishing
             setPrintReceiptData(receiptData);
             setShowPrintDialog(true);
 
-            // Refresh data
-            queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
             queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
 
             setShowPublishDialog(false);
@@ -446,7 +353,7 @@ export default function SalesOrders() {
 
             alert(`Hóa đơn đã phát hành thành công!\nSố hóa đơn: ${invoiceNo || 'N/A'}\n\nMàn hình in hóa đơn sẽ hiển thị.`);
           } catch (updateError) {
-            console.error('❌ Error updating invoice/order after publish:', {
+            console.error('❌ Error updating order after publish:', {
               error: updateError,
               message: updateError?.message,
               stack: updateError?.stack
@@ -465,86 +372,59 @@ export default function SalesOrders() {
     }
   });
 
-  // Mutation for canceling invoice or order
-  const cancelInvoiceMutation = useMutation({
-    mutationFn: async (item: { id: number, type: string }) => {
-      try {
-        let response;
+  // Mutation for canceling a single order
+  const cancelOrderMutation = useMutation({
+    mutationFn: async (orderId: number) => { // Changed to accept orderId
+      const response = await apiRequest("PUT", `/api/orders/${orderId}/status`, {
+        status: "cancelled"
+      });
 
-        if (item.type === 'order') {
-          // For orders, update status to 'cancelled'
-          response = await apiRequest("PUT", `/api/orders/${item.id}/status`, { 
-            status: "cancelled"
-          });
-        } else {
-          // For invoices, update both invoiceStatus and invoice_status to 3 (Đã hủy)
-          response = await apiRequest("PUT", `/api/invoices/${item.id}`, { 
-            invoiceStatus: 3, // 3 = Đã hủy
-            invoice_status: 3, // 3 = Đã hủy (database column)
-            status: 'cancelled' // Also update general status
-          });
-        }
-
-        if (!response.ok) {
-          let errorMessage = `HTTP ${response.status}`;
-          try {
-            const errorData = await response.text();
-            errorMessage = errorData || errorMessage;
-          } catch (textError) {
-            console.error('Could not parse error response:', textError);
-          }
-          throw new Error(`Không thể hủy đơn hàng: ${errorMessage}`);
-        }
-
-        // Try to parse JSON response, but don't fail if it's not JSON
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}`;
         try {
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            return await response.json();
-          } else {
-            return { success: true, message: 'Order cancelled successfully' };
-          }
-        } catch (jsonError) {
-          console.warn('Response is not valid JSON, but request was successful:', jsonError);
+          const errorData = await response.text();
+          errorMessage = errorData || errorMessage;
+        } catch (textError) {
+          console.error('Could not parse error response:', textError);
+        }
+        throw new Error(`Không thể hủy đơn hàng: ${errorMessage}`);
+      }
+
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return await response.json();
+        } else {
           return { success: true, message: 'Order cancelled successfully' };
         }
-      } catch (error) {
-        console.error('Cancel order/invoice error:', error);
-        throw error;
+      } catch (jsonError) {
+        console.warn('Response is not valid JSON, but request was successful:', jsonError);
+        return { success: true, message: 'Order cancelled successfully' };
       }
     },
-    onSuccess: (data, item) => {
-      console.log('Order/Invoice cancelled successfully:', item);
+    onSuccess: (data, orderId) => {
+      console.log('Order cancelled successfully:', orderId);
 
-      // 1. Đóng dialog xác nhận
       setShowCancelDialog(false);
 
-      // 2. Refresh danh sách hóa đơn, đơn hàng và giao dịch
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
 
-      // 3. Cập nhật trạng thái của selectedInvoice nếu đang hiển thị
-      if (selectedInvoice && selectedInvoice.id === item.id && selectedInvoice.type === item.type) {
+      // Update selected order if it was cancelled
+      if (selectedInvoice && selectedInvoice.id === orderId) {
         setSelectedInvoice({
           ...selectedInvoice,
-          invoiceStatus: 3, // Đã hủy
-          invoice_status: 3, // Đã hủy (database column)
-          displayStatus: 3,
-          status: item.type === 'order' ? 'cancelled' : selectedInvoice.status
+          status: 'cancelled'
         });
 
-        // Reset editing states
         setIsEditing(false);
         setEditableInvoice(null);
       }
 
-      console.log('Order/Invoice cancelled and status updated');
+      console.log('Order cancelled and status updated');
     },
     onError: (error) => {
-      console.error('Error canceling invoice:', error);
+      console.error('Error canceling order:', error);
       setShowCancelDialog(false);
-      // Could add toast notification here
       alert(`Lỗi hủy đơn hàng: ${error.message}`);
     },
   });
@@ -579,12 +459,16 @@ export default function SalesOrders() {
       draft: "bg-gray-100 text-gray-800",
       published: "bg-green-100 text-green-800",
       cancelled: "bg-red-100 text-red-800",
+      pending: "bg-yellow-100 text-yellow-800", // Added pending status
+      paid: "bg-green-100 text-green-800", // Added paid status
     };
 
     const statusLabels = {
       draft: "Nháp",
       published: "Đã xuất",
       cancelled: "Đã hủy",
+      pending: "Chờ xử lý",
+      paid: "Đã thanh toán",
     };
 
     return (
@@ -633,7 +517,7 @@ export default function SalesOrders() {
   const getInvoiceStatusBadge = (status: number) => {
     const statusLabels = {
       1: "Hoàn thành",
-      2: "Đang phục vụ", 
+      2: "Đang phục vụ",
       3: "Đã hủy",
     };
 
@@ -650,73 +534,45 @@ export default function SalesOrders() {
     );
   };
 
-  // Combine invoices, orders and transactions data with safe array checks
-  const combinedData = [
-    ...(Array.isArray(invoices) ? invoices.map((invoice: Invoice) => ({
-      ...invoice,
-      type: 'invoice' as const,
-      date: invoice.invoiceDate,
-      displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
-      displayStatus: invoice.invoiceStatus || 1,
-      // Ensure all required fields are present
-      customerName: invoice.customerName || 'Khách hàng lẻ',
-      customerPhone: invoice.customerPhone || '',
-      customerAddress: invoice.customerAddress || '',
-      customerTaxCode: invoice.customerTaxCode || '',
-      symbol: invoice.symbol || invoice.templateNumber || '',
-      einvoiceStatus: invoice.einvoiceStatus || 0
-    })) : []),
-    ...(Array.isArray(orders) ? orders.map((order: Order) => ({
-      ...order,
-      type: 'order' as const,
-      date: order.orderedAt,
-      displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
-      displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-      customerName: order.customerName || 'Khách hàng lẻ',
-      invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-      // Map order fields to invoice-like fields for consistency
-      customerPhone: order.customerPhone || '',
-      customerAddress: order.customerAddress || '',
-      customerTaxCode: order.customerTaxCode || '',
-      symbol: order.symbol || order.templateNumber || '',
-      invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
-      tradeNumber: order.orderNumber || '',
-      invoiceDate: order.orderedAt,
-      einvoiceStatus: order.einvoiceStatus || 0
-    })) : []),
-    ...(Array.isArray(transactions) ? transactions.map((transaction: any) => ({
-      ...transaction,
-      type: 'transaction' as const,
-      date: transaction.createdAt || transaction.transactionDate,
-      displayNumber: transaction.invoiceNumber || transaction.receiptNumber || `TXN-${String(transaction.id).padStart(13, '0')}`,
-      displayStatus: transaction.status === 'completed' ? 1 : transaction.status === 'pending' ? 2 : transaction.status === 'cancelled' ? 3 : 1,
-      customerName: transaction.customerName || 'Khách hàng lẻ',
-      invoiceStatus: transaction.status === 'completed' ? 1 : transaction.status === 'pending' ? 2 : transaction.status === 'cancelled' ? 3 : 1,
-      // Map transaction fields to invoice-like fields for consistency
-      customerPhone: transaction.customerPhone || '',
-      customerAddress: transaction.customerAddress || '',
-      customerTaxCode: transaction.customerTaxCode || '',
-      symbol: transaction.symbol || transaction.templateNumber || '',
-      invoiceNumber: transaction.invoiceNumber || `TXN-${String(transaction.id).padStart(8, '0')}`,
-      tradeNumber: transaction.invoiceNumber || transaction.receiptNumber || '',
-      invoiceDate: transaction.createdAt || transaction.transactionDate,
-      subtotal: transaction.subtotal || transaction.amount || '0',
-      tax: transaction.tax || '0',
-      total: transaction.total || transaction.amount || '0',
-      einvoiceStatus: transaction.einvoiceStatus || 0,
-      paymentMethod: transaction.paymentMethod || 1
-    })) : [])
-  ];
+  // Map orders to a consistent structure similar to Invoice for easier handling
+  const combinedData: Invoice[] = Array.isArray(orders) ? orders.map((order: Order) => ({
+    ...order,
+    type: 'order' as const,
+    date: order.orderedAt,
+    displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
+    // Map order status to invoiceStatus convention
+    displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+    customerName: order.customerName || 'Khách hàng lẻ',
+    invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+    customerPhone: order.customerPhone || '',
+    customerAddress: order.customerAddress || '',
+    customerTaxCode: order.customerTaxCode || '',
+    symbol: order.symbol || order.templateNumber || '',
+    invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
+    tradeNumber: order.orderNumber || '',
+    invoiceDate: order.orderedAt,
+    einvoiceStatus: order.einvoiceStatus || 0,
+    // Ensure all fields from Invoice interface are present, even if null/empty
+    invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
+    templateNumber: order.templateNumber || '',
+    customerEmail: order.customerEmail || '',
+    subtotal: order.subtotal || '0',
+    tax: order.tax || '0',
+    total: order.total || '0',
+    paymentMethod: order.paymentMethod || 'cash',
+    notes: order.notes || '',
+    createdAt: order.orderedAt, // Use orderedAt as createdAt
+  })) : [];
 
   const filteredInvoices = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
     try {
       if (!item) return false;
 
-      const customerMatch = !customerSearch || 
+      const customerMatch = !customerSearch ||
         (item.customerName && item.customerName.toLowerCase().includes(customerSearch.toLowerCase()));
-      const orderMatch = !orderNumberSearch || 
+      const orderMatch = !orderNumberSearch ||
         (item.displayNumber && item.displayNumber.toLowerCase().includes(orderNumberSearch.toLowerCase()));
-      const customerCodeMatch = !customerCodeSearch || 
+      const customerCodeMatch = !customerCodeSearch ||
         (item.customerTaxCode && item.customerTaxCode.toLowerCase().includes(customerCodeSearch.toLowerCase()));
 
       return customerMatch && orderMatch && customerCodeMatch;
@@ -725,7 +581,6 @@ export default function SalesOrders() {
       return false;
     }
   }).sort((a: any, b: any) => {
-    // Sort by creation date only (newest first)
     const createdAtA = new Date(a.createdAt || a.date || a.orderedAt || a.invoiceDate);
     const createdAtB = new Date(b.createdAt || b.date || b.orderedAt || b.invoiceDate);
 
@@ -737,7 +592,6 @@ export default function SalesOrders() {
     if (typeof num !== 'number' || isNaN(num)) {
       return '0';
     }
-    // Always round to integer and format without decimals
     return Math.floor(num).toLocaleString('vi-VN');
   };
 
@@ -755,16 +609,16 @@ export default function SalesOrders() {
     }
   };
 
-  const handleEditInvoice = () => {
+  const handleEditOrder = () => { // Renamed function
     if (selectedInvoice) {
       setEditableInvoice({ ...selectedInvoice });
       setIsEditing(true);
     }
   };
 
-  const handleSaveInvoice = () => {
+  const handleSaveOrder = () => { // Renamed function and mutation
     if (editableInvoice) {
-      updateInvoiceMutation.mutate(editableInvoice);
+      updateOrderMutation.mutate(editableInvoice as Order); // Cast to Order
     }
   };
 
@@ -782,8 +636,6 @@ export default function SalesOrders() {
     }
   };
 
-
-
   const calculateTotals = () => {
     const totals = filteredInvoices.reduce((acc, item) => {
       acc.subtotal += parseFloat(item.subtotal || '0');
@@ -795,7 +647,6 @@ export default function SalesOrders() {
     return totals;
   };
 
-  // Helper functions for checkbox selection
   const handleSelectOrder = (orderId: number, orderType: string, checked: boolean) => {
     const orderKey = `${orderType}-${orderId}`;
     const newSelectedIds = new Set(selectedOrderIds);
@@ -825,38 +676,26 @@ export default function SalesOrders() {
   const isAllSelected = filteredInvoices.length > 0 && selectedOrderIds.size === filteredInvoices.length;
   const isIndeterminate = selectedOrderIds.size > 0 && selectedOrderIds.size < filteredInvoices.length;
 
-  // Function to export selected orders to Excel
   const exportSelectedOrdersToExcel = () => {
     if (selectedOrderIds.size === 0) {
       alert('Vui lòng chọn ít nhất một đơn hàng để xuất Excel');
       return;
     }
 
-    // Get selected orders
-    const selectedOrders = filteredInvoices.filter(item => 
+    const selectedOrders = filteredInvoices.filter(item =>
       selectedOrderIds.has(`${item.type}-${item.id}`)
     );
 
-    // Create workbook first
     const wb = XLSX.utils.book_new();
-
-    // Create worksheet with empty data first
     const ws = XLSX.utils.aoa_to_sheet([]);
-
-    // Set default font for entire sheet
     ws['!defaultFont'] = { name: 'Times New Roman', sz: 11 };
 
-    // Add title row (A1)
     XLSX.utils.sheet_add_aoa(ws, [['DANH SÁCH ĐƠN HÀNG BÁN']], { origin: 'A1' });
-
-    // Merge title cells A1:O1
     if (!ws['!merges']) ws['!merges'] = [];
     ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
 
-    // Add empty row for spacing
     XLSX.utils.sheet_add_aoa(ws, [[]], { origin: 'A2' });
 
-    // Add header row at A3
     const headers = [
       'Số đơn bán', 'Ngày đơn bán', 'Bàn', 'Mã khách hàng', 'Tên khách hàng',
       'Thành tiền', 'Giảm giá', 'Tiền thuế', 'Đã thanh toán',
@@ -864,11 +703,9 @@ export default function SalesOrders() {
     ];
     XLSX.utils.sheet_add_aoa(ws, [headers], { origin: 'A3' });
 
-    // Add data rows starting from A4
     const dataRows = selectedOrders.map((item, index) => {
       const orderNumber = item.tradeNumber || item.invoiceNumber || item.orderNumber || `DB${new Date().getFullYear()}${String(item.id).padStart(6, '0')}`;
       const orderDate = formatDate(item.date);
-      // Only show table info for orders, leave empty for invoices
       const table = item.type === 'order' && item.tableId ? `Bàn ${item.tableId}` : '';
       const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
       const customerName = item.customerName || 'Khách lẻ';
@@ -881,7 +718,7 @@ export default function SalesOrders() {
       const employeeName = 'Phạm Vân Duy';
       const symbol = item.symbol || '';
       const invoiceNumber = item.invoiceNumber || String(item.id).padStart(8, '0');
-      const status = item.displayStatus === 1 ? 'Đã hoàn thành' : 
+      const status = item.displayStatus === 1 ? 'Đã hoàn thành' :
                    item.displayStatus === 2 ? 'Đang phục vụ' : 'Đã hủy';
 
       return [
@@ -893,25 +730,16 @@ export default function SalesOrders() {
 
     XLSX.utils.sheet_add_aoa(ws, dataRows, { origin: 'A4' });
 
-    // Set column widths
     ws['!cols'] = [
       { wch: 15 }, { wch: 13 }, { wch: 8 }, { wch: 12 }, { wch: 15 },
       { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
       { wch: 12 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 20 }, { wch: 12 }
     ];
 
-    // Set row heights
     ws['!rows'] = [
-      { hpt: 25 }, // Title row
-      { hpt: 15 }, // Empty row  
-      { hpt: 20 }, // Header row
-      ...Array(selectedOrders.length).fill({ hpt: 18 }) // Data rows
+      { hpt: 25 }, { hpt: 15 }, { hpt: 20 }, ...Array(selectedOrders.length).fill({ hpt: 18 })
     ];
 
-    // Apply styles to all cells
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:O1');
-
-    // Style title cell (A1)
     if (ws['A1']) {
       ws['A1'].s = {
         font: { name: 'Times New Roman', sz: 16, bold: true, color: { rgb: '000000' } },
@@ -920,7 +748,6 @@ export default function SalesOrders() {
       };
     }
 
-    // Style header row (row 3)
     for (let col = 0; col <= 14; col++) {
       const cellAddress = XLSX.utils.encode_cell({ r: 2, c: col });
       if (ws[cellAddress]) {
@@ -938,22 +765,21 @@ export default function SalesOrders() {
       }
     }
 
-    // Style data rows (starting from row 4)
     for (let row = 3; row < 3 + selectedOrders.length; row++) {
       const isEven = (row - 3) % 2 === 0;
       const bgColor = isEven ? 'FFFFFF' : 'F2F2F2';
 
       for (let col = 0; col <= 14; col++) {
         const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-        const isCurrency = [5, 6, 7, 8].includes(col); // Columns F, G, H, I
+        const isCurrency = [5, 6, 7, 8].includes(col);
 
         if (ws[cellAddress]) {
           ws[cellAddress].s = {
             font: { name: 'Times New Roman', sz: 11, color: { rgb: '000000' } },
             fill: { patternType: 'solid', fgColor: { rgb: bgColor } },
-            alignment: { 
-              horizontal: isCurrency ? 'right' : 'center', 
-              vertical: 'center' 
+            alignment: {
+              horizontal: isCurrency ? 'right' : 'center',
+              vertical: 'center'
             },
             border: {
               top: { style: 'thin', color: { rgb: 'BFBFBF' } },
@@ -963,7 +789,6 @@ export default function SalesOrders() {
             }
           };
 
-          // Apply number format for currency columns
           if (isCurrency && typeof ws[cellAddress].v === 'number') {
             ws[cellAddress].z = '#,##0';
           }
@@ -971,24 +796,20 @@ export default function SalesOrders() {
       }
     }
 
-    // Add worksheet to workbook
     XLSX.utils.book_append_sheet(wb, ws, 'Danh sách đơn hàng');
 
-    // Set workbook properties
     wb.Props = {
       Title: "Danh sách đơn hàng bán",
-      Subject: "Báo cáo đơn hàng", 
+      Subject: "Báo cáo đơn hàng",
       Author: "EDPOS System",
       CreatedDate: new Date()
     };
 
-    // Generate filename with timestamp
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const defaultFilename = `danh-sach-don-hang-ban_${timestamp}.xlsx`;
 
-    // Write file with proper options for styling
     try {
-      XLSX.writeFile(wb, defaultFilename, { 
+      XLSX.writeFile(wb, defaultFilename, {
         bookType: 'xlsx',
         cellStyles: true,
         sheetStubs: false,
@@ -999,7 +820,6 @@ export default function SalesOrders() {
       alert('File Excel đã được xuất thành công với định dạng Times New Roman!');
     } catch (error) {
       console.error('❌ Error exporting Excel file:', error);
-      // Fallback export without advanced formatting
       XLSX.writeFile(wb, defaultFilename, { bookType: 'xlsx' });
       alert('File Excel đã được xuất nhưng có thể thiếu một số định dạng.');
     }
@@ -1013,7 +833,6 @@ export default function SalesOrders() {
 
       <div className="main-content p-6">
         <div className="max-w-full mx-auto">
-          {/* Header */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="w-6 h-6 text-green-600" />
@@ -1022,7 +841,6 @@ export default function SalesOrders() {
             <p className="text-gray-600 mb-4">Quản lý tất cả đơn hàng từ bàn và bán hàng trực tiếp</p>
           </div>
 
-          {/* Filters */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-lg">Bộ lọc</CardTitle>
@@ -1055,11 +873,11 @@ export default function SalesOrders() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Khách viên</label>
+                  <label className="block text-sm font-medium mb-2">Mã khách hàng</label>
                   <Input
-                    placeholder="Tìm theo số hóa đơn"
-                    value={orderNumberSearch}
-                    onChange={(e) => setOrderNumberSearch(e.target.value)}
+                    placeholder="Tìm theo mã khách hàng"
+                    value={customerCodeSearch}
+                    onChange={(e) => setCustomerCodeSearch(e.target.value)}
                     className="w-full"
                   />
                 </div>
@@ -1074,29 +892,19 @@ export default function SalesOrders() {
                     className="w-full"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Mã khách hàng</label>
-                  <Input
-                    placeholder="Tìm theo mã khách hàng"
-                    value={customerCodeSearch}
-                    onChange={(e) => setCustomerCodeSearch(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
               </div>
             </CardContent>
           </Card>
 
           <div className="grid grid-cols-1 gap-6">
-            {/* Invoices List */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Danh sách đơn hàng</CardTitle>
                   <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
                       disabled={selectedOrderIds.size === 0}
                       onClick={() => setShowBulkCancelDialog(true)}
@@ -1104,9 +912,9 @@ export default function SalesOrders() {
                       <X className="w-4 h-4" />
                       Hủy đơn ({selectedOrderIds.size})
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
                       disabled={selectedOrderIds.size === 0}
                       onClick={exportSelectedOrdersToExcel}
@@ -1131,16 +939,13 @@ export default function SalesOrders() {
                     </div>
                     <p className="text-gray-500 mb-4">Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.</p>
                     <Button onClick={() => {
-                      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
                       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-                      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
                     }}>
                       Thử lại
                     </Button>
                   </div>
                 ) : (
                   <div>
-                    {/* Table with horizontal scroll similar to settings page */}
                     <div className="w-full overflow-x-auto border rounded-md bg-white">
                     <table className="w-full min-w-[1600px] table-fixed">
                       <thead>
@@ -1215,22 +1020,20 @@ export default function SalesOrders() {
                         ) : (
                       filteredInvoices.map((item, index) => {
                             const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
-                            const discount = 0; // Giảm giá mặc định là 0
+                            const discount = 0;
                             const tax = parseFloat(item.tax || '0');
                             const subtotal = parseFloat(item.subtotal || '0');
                             const total = parseFloat(item.total || '0');
-                            const paid = total; // Đã thanh toán = tổng tiền
+                            const paid = total;
                             const employeeCode = item.employeeId || 'NV0001';
                             const employeeName = 'Phạm Vân Duy';
                             const symbol = item.symbol || '';
                             const invoiceNumber = item.invoiceNumber || String(item.id).padStart(8, '0');
                             const notes = item.notes || '';
 
-                            // Lấy symbol từ dữ liệu gốc của item
                             const itemSymbol = item.symbol || item.templateNumber || '';
 
                             return (
-                              <>
                                 <tr
                                   key={`${item.type}-${item.id}`}
                                   className={`hover:bg-gray-50 ${
@@ -1325,7 +1128,6 @@ export default function SalesOrders() {
                                     {getInvoiceStatusBadge(item.displayStatus)}
                                   </td>
                                 </tr>
-                                {/* Detail row for selected invoice - shown inline under selected row */}
                                 {selectedInvoice && selectedInvoice.id === item.id && selectedInvoice.type === item.type && (
                                   <tr>
                                     <td colSpan={16} className="p-0">
@@ -1335,7 +1137,6 @@ export default function SalesOrders() {
                                             <CardTitle className="text-lg text-blue-700">Chi tiết đơn hàng</CardTitle>
                                           </CardHeader>
                                           <CardContent className="space-y-4">
-                                            {/* Invoice Info */}
                                             <div className="bg-white p-4 rounded-lg overflow-x-auto">
                                               <div className="min-w-[1200px]">
                                                 <table className="w-full text-sm border-collapse">
@@ -1344,7 +1145,7 @@ export default function SalesOrders() {
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Số đơn bán:</td>
                                                       <td className="py-1 pr-6 text-blue-600 font-medium">
                                                         {isEditing && editableInvoice ? (
-                                                          <Input 
+                                                          <Input
                                                             value={editableInvoice.tradeNumber || editableInvoice.invoiceNumber || editableInvoice.orderNumber || ''}
                                                             onChange={(e) => updateEditableInvoiceField(getItemType(selectedInvoice) === 'order' ? 'orderNumber' : 'tradeNumber', e.target.value)}
                                                             className="w-32"
@@ -1356,7 +1157,7 @@ export default function SalesOrders() {
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Ngày:</td>
                                                       <td className="py-1 pr-6">
                                                         {isEditing && editableInvoice ? (
-                                                          <Input 
+                                                          <Input
                                                             type="date"
                                                             value={(editableInvoice.invoiceDate || editableInvoice.orderedAt)?.split('T')[0]}
                                                             onChange={(e) => updateEditableInvoiceField(getItemType(selectedInvoice) === 'order' ? 'orderedAt' : 'invoiceDate', e.target.value)}
@@ -1369,7 +1170,7 @@ export default function SalesOrders() {
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Khách hàng:</td>
                                                       <td className="py-1 pr-6 text-blue-600 font-medium">
                                                         {isEditing && editableInvoice ? (
-                                                          <Input 
+                                                          <Input
                                                             value={editableInvoice.customerName}
                                                             onChange={(e) => updateEditableInvoiceField('customerName', e.target.value)}
                                                             className="w-40"
@@ -1381,7 +1182,7 @@ export default function SalesOrders() {
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Điện thoại:</td>
                                                       <td className="py-1 pr-6">
                                                         {isEditing && editableInvoice ? (
-                                                          <Input 
+                                                          <Input
                                                             value={editableInvoice.customerPhone || ''}
                                                             onChange={(e) => updateEditableInvoiceField('customerPhone', e.target.value)}
                                                             className="w-32"
@@ -1403,7 +1204,7 @@ export default function SalesOrders() {
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Ký hiệu hóa đơn:</td>
                                                       <td className="py-1 pr-6">
                                                         {isEditing && editableInvoice ? (
-                                                          <Input 
+                                                          <Input
                                                             value={editableInvoice.symbol || ''}
                                                             onChange={(e) => updateEditableInvoiceField('symbol', e.target.value)}
                                                             className="w-24"
@@ -1415,7 +1216,7 @@ export default function SalesOrders() {
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Số hóa đơn:</td>
                                                       <td className="py-1 pr-6">
                                                         {isEditing && editableInvoice ? (
-                                                          <Input 
+                                                          <Input
                                                             value={editableInvoice.invoiceNumber || ''}
                                                             onChange={(e) => updateEditableInvoiceField('invoiceNumber', e.target.value)}
                                                             className="w-32"
@@ -1432,7 +1233,6 @@ export default function SalesOrders() {
                                               </div>
                                             </div>
 
-                                            {/* Invoice/Order Items */}
                                             <div>
                                               <h4 className="font-medium mb-3">Danh sách hàng hóa</h4>
                                               <div className="border rounded-lg overflow-hidden">
@@ -1447,7 +1247,7 @@ export default function SalesOrders() {
                                                   <div className="col-span-1">Thuế GTGT</div>
                                                 </div>
                                                 {(() => {
-                                                  const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+                                                  const items = orderItems;
                                                   if (!items || items.length === 0) {
                                                     return (
                                                       <div className="text-center py-4 text-gray-500 border-t">
@@ -1471,14 +1271,13 @@ export default function SalesOrders() {
                                               </div>
                                             </div>
 
-                                            {/* Summary */}
                                             <div className="bg-blue-50 p-4 rounded-lg">
                                               <div className="grid grid-cols-2 gap-4 text-sm">
                                                 <div className="space-y-2">
                                                   {(() => {
                                                     const subtotal = parseFloat(selectedInvoice.subtotal || '0');
                                                     const tax = parseFloat(selectedInvoice.tax || '0');
-                                                    const discount = 0; 
+                                                    const discount = 0;
                                                     const totalPayment = subtotal + tax - discount;
                                                     return (
                                                       <>
@@ -1504,8 +1303,8 @@ export default function SalesOrders() {
                                                 </div>
                                                 <div className="space-y-2">
                                                   {(() => {
-                                                    const isPaid = selectedInvoice.displayStatus === 1 || 
-                                                                  selectedInvoice.status === 'paid' || 
+                                                    const isPaid = selectedInvoice.displayStatus === 1 ||
+                                                                  selectedInvoice.status === 'paid' ||
                                                                   selectedInvoice.paymentStatus === 'paid';
                                                     const paidAmount = isPaid ? parseFloat(selectedInvoice.total || '0') : 0;
                                                     const paymentMethod = selectedInvoice.paymentMethod;
@@ -1541,7 +1340,6 @@ export default function SalesOrders() {
                                               </div>
                                             </div>
 
-                                            {/* Notes */}
                                             <div>
                                               <label className="block text-sm font-medium mb-2">Ghi chú</label>
                                               {isEditing && editableInvoice ? (
@@ -1558,35 +1356,34 @@ export default function SalesOrders() {
                                               )}
                                             </div>
 
-                                            {/* Action Buttons */}
                                             <div className="flex gap-2 pt-4 border-t">
-                                              <Button 
-                                                size="sm" 
+                                              <Button
+                                                size="sm"
                                                 className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
                                                 onClick={() => {
-                                                  if (selectedInvoice && selectedInvoice.invoiceStatus !== 3) {
+                                                  if (selectedInvoice && selectedInvoice.status !== 'cancelled') {
                                                     setShowCancelDialog(true);
                                                   }
                                                 }}
-                                                disabled={selectedInvoice?.invoiceStatus === 3 || cancelInvoiceMutation.isPending}
+                                                disabled={selectedInvoice?.status === 'cancelled' || cancelOrderMutation.isPending}
                                               >
                                                 <X className="w-4 h-4" />
-                                                {cancelInvoiceMutation.isPending ? 'Đang hủy...' : 'Hủy đơn'}
+                                                {cancelOrderMutation.isPending ? 'Đang hủy...' : 'Hủy đơn'}
                                               </Button>
                                               {!isEditing ? (
                                                 <>
-                                                  <Button 
-                                                    size="sm" 
-                                                    variant="outline" 
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
                                                     className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
-                                                    onClick={handleEditInvoice}
+                                                    onClick={handleEditOrder}
                                                   >
                                                     <FileText className="w-4 h-4" />
                                                     Sửa đơn
                                                   </Button>
-                                                  <Button 
-                                                    size="sm" 
-                                                    variant="outline" 
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
                                                     className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                     onClick={() => {
                                                       if (selectedInvoice && selectedInvoice.einvoiceStatus === 0) {
@@ -1598,13 +1395,12 @@ export default function SalesOrders() {
                                                     <Mail className="w-4 h-4" />
                                                     {selectedInvoice?.einvoiceStatus === 0 ? 'Phát hành HĐ điện tử' : 'Đã phát hành'}
                                                   </Button>
-                                                  <Button 
-                                                    size="sm" 
-                                                    variant="outline" 
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
                                                     className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
                                                     onClick={() => {
                                                       if (selectedInvoice) {
-                                                        // Tạo nội dung in hóa đơn
                                                         const printContent = `
                                                           <!DOCTYPE html>
                                                           <html>
@@ -1644,7 +1440,7 @@ export default function SalesOrders() {
                                                                 </thead>
                                                                 <tbody>
                                                                   ${(() => {
-                                                                    const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+                                                                    const items = orderItems;
                                                                     if (!items || items.length === 0) return '<tr><td colspan="6">Không có sản phẩm</td></tr>';
                                                                     return items.map((item: any, index: number) => `
                                                                       <tr>
@@ -1668,7 +1464,6 @@ export default function SalesOrders() {
                                                           </html>
                                                         `;
 
-                                                        // Mở cửa sổ in
                                                         const printWindow = window.open('', '_blank');
                                                         if (printWindow) {
                                                           printWindow.document.write(printContent);
@@ -1688,9 +1483,9 @@ export default function SalesOrders() {
                                                 </>
                                               ) : (
                                                 <>
-                                                  <Button 
-                                                    size="sm" 
-                                                    variant="outline" 
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
                                                     className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                     onClick={() => {
                                                       if (selectedInvoice && selectedInvoice.einvoiceStatus === 0) {
@@ -1702,9 +1497,9 @@ export default function SalesOrders() {
                                                     <Mail className="w-4 h-4" />
                                                     {selectedInvoice?.einvoiceStatus === 0 ? 'Phát hành HĐ điện tử' : 'Đã phát hành'}
                                                   </Button>
-                                                  <Button 
-                                                    size="sm" 
-                                                    variant="outline" 
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
                                                     className="flex items-center gap-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50"
                                                     onClick={handleCancelEdit}
                                                   >
@@ -1713,9 +1508,9 @@ export default function SalesOrders() {
                                                   </Button>
                                                 </>
                                               )}
-                                              <Button 
-                                                size="sm" 
-                                                variant="outline" 
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
                                                 className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
                                                 onClick={() => {
                                                   setSelectedInvoice(null);
@@ -1740,7 +1535,6 @@ export default function SalesOrders() {
                       </tbody>
                     </table>
                     </div>
-                    {/* Pagination controls */}
                     <div className="flex justify-between items-center mt-4">
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-gray-600">Số hàng mỗi trang:</span>
@@ -1748,7 +1542,7 @@ export default function SalesOrders() {
                           value={itemsPerPage}
                           onChange={(e) => {
                             setItemsPerPage(parseInt(e.target.value, 10));
-                            setCurrentPage(1); // Reset to first page on items per page change
+                            setCurrentPage(1);
                           }}
                           className="border rounded p-1 text-sm"
                         >
@@ -1759,11 +1553,9 @@ export default function SalesOrders() {
                         </select>
                       </div>
                       <div className="flex items-center gap-1">
-                        {/* Show page numbers with correct logic */}
                         {(() => {
                           const totalPagesForPagination = Math.ceil(filteredInvoices.length / itemsPerPage) || 1;
 
-                          // Simple pagination for small number of pages
                           if (totalPagesForPagination <= 7) {
                             return Array.from({ length: totalPagesForPagination }, (_, i) => i + 1).map(pageNum => (
                               <Button
@@ -1778,17 +1570,14 @@ export default function SalesOrders() {
                             ));
                           }
 
-                          // Complex pagination for many pages
                           const pages = [];
 
-                          // Always show first page
                           pages.push(1);
 
                           if (currentPage > 4) {
                             pages.push('...');
                           }
 
-                          // Show pages around current page
                           const start = Math.max(2, currentPage - 1);
                           const end = Math.min(totalPagesForPagination - 1, currentPage + 1);
 
@@ -1802,7 +1591,6 @@ export default function SalesOrders() {
                             pages.push('...');
                           }
 
-                          // Always show last page
                           if (totalPagesForPagination > 1) {
                             pages.push(totalPagesForPagination);
                           }
@@ -1834,7 +1622,6 @@ export default function SalesOrders() {
                   </div>
                 )}
 
-                {/* Totals */}
                 <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded">
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
@@ -1857,7 +1644,6 @@ export default function SalesOrders() {
         </div>
       </div>
 
-      {/* Bulk Cancel Orders Confirmation Dialog */}
       <AlertDialog open={showBulkCancelDialog} onOpenChange={setShowBulkCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1868,12 +1654,12 @@ export default function SalesOrders() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Bỏ qua</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => {
-                const orderKeys = Array.from(selectedOrderIds);
-                bulkCancelOrdersMutation.mutate(orderKeys);
+                if (selectedOrderIds.size > 0) {
+                  bulkCancelOrdersMutation.mutate(Array.from(selectedOrderIds).map(id => id.split('-')[1])); // Extract order IDs
+                }
               }}
-              disabled={bulkCancelOrdersMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
             >
               {bulkCancelOrdersMutation.isPending ? 'Đang hủy...' : `Hủy ${selectedOrderIds.size} đơn`}
@@ -1882,9 +1668,6 @@ export default function SalesOrders() {
         </AlertDialogContent>
       </AlertDialog>
 
-
-
-      {/* Publish Invoice Dialog */}
       {selectedInvoice && (
         <AlertDialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
           <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1942,7 +1725,6 @@ export default function SalesOrders() {
                 </div>
               </div>
 
-              {/* Invoice Items */}
               <div className="bg-white p-4 rounded-lg border">
                 <h4 className="font-medium mb-3">Danh sách sản phẩm</h4>
                 <div className="max-h-40 overflow-y-auto">
@@ -1957,7 +1739,7 @@ export default function SalesOrders() {
                     </thead>
                     <tbody>
                       {(() => {
-                        const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+                        const items = orderItems;
                         if (!items || items.length === 0) {
                           return (
                             <tr>
@@ -2009,11 +1791,10 @@ export default function SalesOrders() {
             </div>
             <AlertDialogFooter>
               <div className="flex gap-2 w-full">
-                <Button 
+                <Button
                   className="flex-1 bg-green-600 hover:bg-green-700"
                   onClick={() => {
                     if (selectedInvoice) {
-                      // Generate a new GUID for transactionID
                       const generateGuid = () => {
                         return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
                           /[xy]/g,
@@ -2025,18 +1806,16 @@ export default function SalesOrders() {
                         );
                       };
 
-                      // Get items for this invoice/order
-                      const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+                      const items = orderItems;
 
                       if (!items || items.length === 0) {
                         alert('Không có sản phẩm nào để phát hành hóa đơn');
                         return;
                       }
 
-                      // Calculate totals from items with actual tax rates
                       const subtotal = parseFloat(selectedInvoice.subtotal || '0');
                       const tax = parseFloat(selectedInvoice.tax || '0');
-                      const discount = 0; 
+                      const discount = 0;
                       const totalPayment = subtotal + tax - discount;
 
                       console.log('Publishing invoice with data:', {
@@ -2048,7 +1827,6 @@ export default function SalesOrders() {
                         itemsCount: items.length
                       });
 
-                      // Prepare publish request
                       const publishRequest = {
                         login: {
                           providerId: 1,
@@ -2061,7 +1839,7 @@ export default function SalesOrders() {
                         transactionID: generateGuid(),
                         invRef: selectedInvoice.displayNumber || `INV-${Date.now()}`,
                         invSubTotal: Math.round(subtotal),
-                        invVatRate: 10, // This is a default, but the actual rate is used in product mapping
+                        invVatRate: 10,
                         invVatAmount: Math.round(tax),
                         invDiscAmount: 0,
                         invTotalAmount: Math.round(totalPayment),
@@ -2094,28 +1872,23 @@ export default function SalesOrders() {
                         products: items.map((item: any) => {
                           const basePrice = parseFloat(item.unitPrice);
                           const quantity = item.quantity;
-                          // Use actual tax rate from item or default to 10%
-                          const taxRate = parseFloat(item.taxRate || '10'); 
+                          const taxRate = parseFloat(item.taxRate || '10');
                           const itemSubtotal = basePrice * quantity;
 
                           let totalTax = 0;
 
-                          // Calculate tax based on product's actual tax configuration
                           if (
                             item?.afterTaxPrice &&
                             item.afterTaxPrice !== null &&
                             item.afterTaxPrice !== ""
                           ) {
-                            // Use afterTaxPrice if available
                             const afterTaxPrice = parseFloat(item.afterTaxPrice);
                             const taxPerUnit = afterTaxPrice - basePrice;
                             totalTax += taxPerUnit * quantity;
                           } else if (item?.taxRate && parseFloat(item.taxRate) > 0) {
-                            // Fallback to taxRate if no afterTaxPrice but taxRate exists
                             const taxPerUnit = basePrice * (taxRate / 100);
                             totalTax += taxPerUnit * quantity;
                           }
-                          // No tax if neither afterTaxPrice nor taxRate is available
 
                           const itemTotal = itemSubtotal + totalTax;
 
@@ -2129,17 +1902,14 @@ export default function SalesOrders() {
                             amt: Math.round(itemSubtotal),
                             discRate: 0,
                             discAmt: 0,
-                            vatRt: taxRate.toString(), // Include the tax rate used
+                            vatRt: taxRate.toString(),
                             vatAmt: Math.round(totalTax),
                             totalAmt: Math.round(itemTotal),
                           };
                         }),
                       };
 
-                      // Close dialog first
                       setShowPublishDialog(false);
-
-                      // Call publish API
                       publishRequestMutation.mutate(publishRequest);
                     }
                   }}
@@ -2148,7 +1918,7 @@ export default function SalesOrders() {
                   <Mail className="w-4 h-4 mr-2" />
                   {publishRequestMutation.isPending ? 'Đang phát hành...' : 'Phát hành'}
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   className="flex-1 border-gray-500 text-gray-600"
                   onClick={() => setShowPublishDialog(false)}
@@ -2162,37 +1932,31 @@ export default function SalesOrders() {
         </AlertDialog>
       )}
 
-      {/* Cancel Order Confirmation Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hủy đơn hàng bán</AlertDialogTitle>
+            <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc muốn hủy đơn hàng {selectedInvoice?.tradeNumber || selectedInvoice?.invoiceNumber || `DH${String(selectedInvoice?.id).padStart(8, '0')}`} này không?
+              Bạn có chắc chắn muốn hủy đơn hàng {selectedInvoice?.displayNumber} này không? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Bỏ qua</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
               onClick={() => {
                 if (selectedInvoice) {
-                  console.log('Cancelling order/invoice:', selectedInvoice.id, selectedInvoice.type);
-                  cancelInvoiceMutation.mutate({ 
-                    id: selectedInvoice.id, 
-                    type: selectedInvoice.type || 'invoice' 
-                  });
+                  console.log('Cancelling order:', selectedInvoice.id);
+                  cancelOrderMutation.mutate(selectedInvoice.id);
                 }
               }}
-              disabled={cancelInvoiceMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
             >
-              {cancelInvoiceMutation.isPending ? 'Đang hủy...' : 'Đồng ý'}
+              {cancelOrderMutation.isPending ? 'Đang hủy...' : 'Xác nhận hủy'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Print Dialog */}
       {showPrintDialog && printReceiptData && (
         <PrintDialog
           isOpen={showPrintDialog}
