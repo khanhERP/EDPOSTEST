@@ -1128,9 +1128,10 @@ export default function SalesOrders() {
                                     {getInvoiceStatusBadge(item.displayStatus)}
                                   </td>
                                 </tr>
-                                {selectedInvoice && selectedInvoice.id === item.id && selectedInvoice.type === item.type && (
-                                  <tr>
-                                    <td colSpan={16} className="p-0">
+                                </tr>
+                              {selectedInvoice && selectedInvoice.id === item.id && selectedInvoice.type === item.type && (
+                                <tr>
+                                  <td colSpan={16} className="p-0">
                                       <div className="p-4 border-l-4 border-blue-500 bg-gray-50">
                                         <Card className="shadow-lg">
                                           <CardHeader className="pb-3">
