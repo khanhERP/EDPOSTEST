@@ -16,10 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-  BarChart3,
   TrendingUp,
   FileText,
   Calendar,
@@ -27,13 +33,9 @@ import {
   DollarSign,
   Users,
   ShoppingCart,
+  BarChart3,
   Search,
   Download, // Import Download icon
-  RefreshCw,
-  Filter,
-  LineChart,
-  AreaChart as AreaChartIcon,
-  PieChart as PieChartIcon
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import {
@@ -42,33 +44,21 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
-  ResponsiveContainer,
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  LineChart as RechartsLineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  Area,
-  AreaChart
+  ResponsiveContainer,
 } from "recharts";
 import * as XLSX from "xlsx"; // Import xlsx for Excel export
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 export function SalesChartReport() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [analysisType, setAnalysisType] = useState("time");
-  const [concernType, setConcernType] = useState("time"); // Keep concernType for potential future use or different report types
-  const [chartType, setChartType] = useState("bar"); // Add missing chartType state
+  const [concernType, setConcernType] = useState("time");
 
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0],
@@ -76,8 +66,8 @@ export function SalesChartReport() {
   const [endDate, setEndDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
-  const [salesMethod, setSalesMethod] = useState("all"); // Keep for channel report if needed
-  const [salesChannel, setSalesChannel] = useState("all"); // Keep for channel report if needed
+  const [salesMethod, setSalesMethod] = useState("all");
+  const [salesChannel, setSalesChannel] = useState("all");
 
   // Additional filters from legacy reports
   const [selectedEmployee, setSelectedEmployee] = useState("all");
@@ -95,12 +85,8 @@ export function SalesChartReport() {
   const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
   const [customerPageSize, setCustomerPageSize] = useState(15);
 
-  // Employee Report with Pagination State
-  const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
-  const [employeePageSize, setEmployeePageSize] = useState(15);
-
-  // Use dashboard data API - EXACT same data source as dashboard (consolidated fetching)
-  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError, refetch: refetchDashboard } = useQuery({
+  // Use dashboard data API - EXACT same data source as dashboard
+  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
     queryKey: ["/api/dashboard-data", startDate, endDate],
     queryFn: async () => {
       try {
@@ -112,7 +98,7 @@ export function SalesChartReport() {
         return data;
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
-        throw error; // Re-throw to let the query client handle it
+        return null;
       }
     },
     retry: 3,
@@ -128,10 +114,21 @@ export function SalesChartReport() {
 
   // Combined loading state
   const isLoading = dashboardLoading;
-  const hasError = !!dashboardError;
 
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ["/api/products", selectedCategory, productType, productSearch],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/products/${selectedCategory}/${productType}/${productSearch || ""}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch products");
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000,
   });
 
@@ -140,65 +137,34 @@ export function SalesChartReport() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: customers } = useQuery({
+    queryKey: ["/api/customers", customerSearch, customerStatus],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/customers/${customerSearch || ""}/${customerStatus || "all"}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch customers");
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: suppliers } = useQuery({
     queryKey: ["/api/suppliers"],
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch products, dependent on category, type, and search
-  const { data: products = [] } = useQuery({
-    queryKey: ["/api/products", selectedCategory, productType, productSearch],
-    queryFn: async () => {
-      try {
-        const response = await fetch(
-          `/api/products/${selectedCategory}/${productType}/${productSearch || ""}`,
-        );
-        if (!response.ok) throw new Error("Failed to fetch products");
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        return [];
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-
-  const { data: customers } = useQuery({
-    queryKey: ["/api/customers", customerSearch, customerStatus],
-    queryFn: async () => {
-      try {
-        const response = await fetch(
-          `/api/customers/${customerSearch || ""}/${customerStatus || "all"}`,
-        );
-        if (!response.ok) throw new Error("Failed to fetch customers");
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-        return [];
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-
   // Utility functions
   const formatCurrency = (amount: number) => {
-    return `${(amount || 0).toLocaleString()} ₫`;
+    return `${amount.toLocaleString()} ₫`;
   };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return "";
-    try {
-      return new Date(dateStr).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-    } catch (e) {
-      console.error("Invalid date string:", dateStr, e);
-      return dateStr; // Return original string if parsing fails
-    }
+    return new Date(dateStr).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   const getPaymentMethodLabel = (method: string) => {
@@ -265,7 +231,16 @@ export function SalesChartReport() {
       return null;
     }
 
-    // Use dashboardData directly for stats, ensuring fallback to 0 or defaults
+    console.log("Sales Chart Dashboard Debug from API:", {
+      totalOrders: dashboardData.orders?.length || 0,
+      startDate,
+      endDate,
+      periodRevenue: dashboardData.periodRevenue,
+      periodOrderCount: dashboardData.periodOrderCount,
+      periodCustomerCount: dashboardData.periodCustomerCount,
+      filteredCompletedOrders: dashboardData.filteredCompletedOrders?.length || 0,
+    });
+
     return {
       periodRevenue: dashboardData.periodRevenue || 0,
       periodOrderCount: dashboardData.periodOrderCount || 0,
@@ -283,15 +258,10 @@ export function SalesChartReport() {
 
   // Function to export data to Excel
   const exportToExcel = (dataToExport: any[], fileName: string) => {
-    try {
-      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-      XLSX.writeFile(workbook, `${fileName}.xlsx`);
-    } catch (error) {
-      console.error("Error exporting to Excel:", error);
-      alert("Có lỗi xảy ra khi xuất file Excel.");
-    }
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
   };
 
   // Sales Report Component Logic using dashboard stats
@@ -342,6 +312,11 @@ export function SalesChartReport() {
       [date: string]: { orders: number; revenue: number; customers: number };
     } = {};
 
+    console.log("Processing filtered completed orders:", {
+      count: filteredCompletedOrders.length,
+      sampleOrder: filteredCompletedOrders[0]
+    });
+
     filteredCompletedOrders.forEach((order: any) => {
       try {
         // Use correct date field from order
@@ -378,10 +353,19 @@ export function SalesChartReport() {
         dailySales[dateStr].revenue += revenue;
         dailySales[dateStr].customers += Number(order.customerCount || 1);
 
+        console.log("Processing order:", {
+          id: order.id,
+          date: dateStr,
+          total: orderTotal,
+          discount: orderDiscount,
+          revenue: revenue
+        });
       } catch (error) {
         console.warn("Error processing order for daily sales:", error, order);
       }
     });
+
+    console.log("Daily sales calculated:", dailySales);
 
     const paymentMethods: {
       [method: string]: { count: number; revenue: number };
@@ -399,6 +383,8 @@ export function SalesChartReport() {
       const discount = Number(order.discount || 0);
       paymentMethods[method].revenue += orderTotal - discount;
     });
+
+    console.log("Payment methods calculated:", paymentMethods);
 
     // Use dashboard stats directly for consistency
     const totalRevenue = dashboardStats.periodRevenue || 0;
@@ -1103,6 +1089,10 @@ export function SalesChartReport() {
     return renderSalesReport();
   };
 
+  // Employee Report with Pagination State
+  const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
+  const [employeePageSize, setEmployeePageSize] = useState(15);
+
   // Legacy Employee Report Component Logic
   const renderEmployeeReport = () => {
     if (isLoading) {
@@ -1122,6 +1112,19 @@ export function SalesChartReport() {
     }
 
     try {
+      console.log("Employee Report - orders data:", {
+        ordersLength: orders.length,
+        sampleOrder: orders[0]
+          ? {
+              id: orders[0].id,
+              status: orders[0].status,
+              employeeName: orders[0].employeeName,
+              cashierName: orders[0].cashierName,
+              total: orders[0].total,
+            }
+          : null,
+      });
+
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
@@ -1135,9 +1138,9 @@ export function SalesChartReport() {
         // Try multiple possible date fields (EXACT same as dashboard)
         const orderDate = new Date(
           order.orderedAt ||
-          order.createdAt ||
-          order.created_at ||
-          order.paidAt,
+            order.createdAt ||
+            order.created_at ||
+            order.paidAt,
         );
 
         // Skip if date is invalid (EXACT same as dashboard)
@@ -1204,6 +1207,26 @@ export function SalesChartReport() {
           status: order.status,
         }),
       );
+
+      console.log("Employee Report Debug:", {
+        totalOrders: orders.length,
+        startDate,
+        endDate,
+        completedOrders: orders.filter(
+          (o: any) => o.status === "completed" || o.status === "paid",
+        ).length,
+        filteredCompletedOrders: filteredCompletedOrders.length,
+        selectedEmployee,
+        sampleOrderDates: orders.slice(0, 3).map((o: any) => ({
+          id: o.id,
+          status: o.status,
+          employeeName: o.employeeName || o.cashierName,
+          orderedAt: o.orderedAt,
+          createdAt: o.createdAt,
+          created_at: o.created_at,
+          paidAt: o.paidAt,
+        })),
+      });
 
       // Calculate employee sales using proper data structure
       const employeeSales: {
@@ -1558,10 +1581,10 @@ export function SalesChartReport() {
                                         `TXN-${transaction.id}`}
                                     </TableCell>
                                     <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                      {formatDate(
+                                      {new Date(
                                         transaction.createdAt ||
                                           transaction.created_at,
-                                      )}{" "}
+                                      ).toLocaleDateString("vi-VN")}{" "}
                                       {new Date(
                                         transaction.createdAt ||
                                           transaction.created_at,
@@ -1834,6 +1857,10 @@ export function SalesChartReport() {
     }
   };
 
+  // Customer Report with Pagination State
+  // const [customerCurrentPage, setCustomerCurrentPage] = useState(1); // Moved up
+  // const [customerPageSize, setCustomerPageSize] = useState(15); // Moved up
+
   // Legacy Customer Report Component Logic
   const renderCustomerReport = () => {
     if (isLoading) {
@@ -1905,7 +1932,7 @@ export function SalesChartReport() {
       }
 
       return (
-        dateMatch && customerMatch && statusMatch && (order.status === "paid" || order.status === "completed")
+        dateMatch && customerMatch && statusMatch && order.status === "paid"
       );
     });
 
@@ -1931,7 +1958,7 @@ export function SalesChartReport() {
 
       if (!customerSales[customerId]) {
         customerSales[customerId] = {
-          customerId: customerId === "walk-in" ? "KL-001" : customerId, // Use a placeholder if no ID
+          customerId: customerId === "guest" ? "KL-001" : customerId,
           customerName: customerName,
           customerGroup: t("common.regularCustomer"), // Default group
           orders: 0,
@@ -1995,7 +2022,7 @@ export function SalesChartReport() {
                 exportToExcel(
                   paginatedData.map((item) => ({
                     "Mã KH": item.customerId,
-                    "Tên KH": item.customerName, // Corrected key to customerName
+                    "Tên KH": item.customer,
                     "Nhóm KH": item.customerGroup,
                     "Số đơn": item.orders,
                     "Tổng tiền": formatCurrency(item.totalAmount),
@@ -2136,9 +2163,9 @@ export function SalesChartReport() {
                                       `ORD-${order.id}`}
                                   </TableCell>
                                   <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                    {formatDate(
+                                    {new Date(
                                       order.orderedAt || order.created_at,
-                                    )}{" "}
+                                    ).toLocaleDateString("vi-VN")}{" "}
                                     {new Date(
                                       order.orderedAt || order.created_at,
                                     ).toLocaleTimeString("vi-VN", {
@@ -2156,7 +2183,7 @@ export function SalesChartReport() {
                                     {formatCurrency(
                                       Number(
                                         order.subtotal ||
-                                        Number(order.total) * 1.1,
+                                          Number(order.total) * 1.1,
                                       ),
                                     )}
                                   </TableCell>
@@ -2164,7 +2191,7 @@ export function SalesChartReport() {
                                     {formatCurrency(
                                       Number(
                                         order.subtotal ||
-                                        Number(order.total) * 1.1,
+                                          Number(order.total) * 1.1,
                                       ) - Number(order.total),
                                     )}
                                   </TableCell>
@@ -2313,7 +2340,7 @@ export function SalesChartReport() {
           </CardContent>
         </Card>
       );
-    };
+  };
 
   // Sales Channel Report Component Logic
   const renderSalesChannelReport = () => {
@@ -2336,6 +2363,11 @@ export function SalesChartReport() {
     }
 
     const { filteredCompletedOrders } = dashboardStats;
+
+    console.log("Sales Channel Report Debug:", {
+      filteredCompletedOrders: filteredCompletedOrders.length,
+      sampleOrder: filteredCompletedOrders[0],
+    });
 
     // Group data by sales method (Dine In vs Takeaway) - use EXACT same logic as dashboard
     const salesMethodData: {
@@ -2381,6 +2413,8 @@ export function SalesChartReport() {
         console.warn("Error processing item for sales method:", error);
       }
     });
+
+    console.log("Sales Method Data:", salesMethodData);
 
     return (
       <Card>
@@ -2506,7 +2540,7 @@ export function SalesChartReport() {
                         0,
                       )}
                     </TableCell>
-                    <TableCell className="text-center border font-medium">
+                    <TableCell className="text-center border font-bold">
                       {Object.values(salesMethodData).reduce(
                         (sum, data) => sum + data.totalOrders,
                         0,
@@ -2528,7 +2562,7 @@ export function SalesChartReport() {
                         ),
                       )}
                     </TableCell>
-                    <TableCell className="text-right border font-medium">
+                    <TableCell className="text-right border font-bold">
                       {formatCurrency(
                         Object.values(salesMethodData).reduce(
                           (sum, data) => sum + data.totalRevenue,
@@ -2583,6 +2617,18 @@ export function SalesChartReport() {
 
         const filteredOrders = dashboardStats.filteredCompletedOrders;
 
+        console.log("Chart data generation:", {
+          filteredOrdersCount: filteredOrders.length,
+          sampleOrder: filteredOrders[0]
+            ? {
+                id: filteredOrders[0].id,
+                total: filteredOrders[0].total,
+                orderedAt: filteredOrders[0].orderedAt,
+                status: filteredOrders[0].status,
+              }
+            : null,
+        });
+
         // Calculate daily sales from filtered completed orders
         const dailySales: {
           [date: string]: { revenue: number; orders: number };
@@ -2591,10 +2637,10 @@ export function SalesChartReport() {
         filteredOrders.forEach((order: any) => {
           const orderDate = new Date(
             order.orderedAt ||
-            order.createdAt ||
-            order.created_at ||
-            order.paidAt ||
-            order.date
+              order.createdAt ||
+              order.created_at ||
+              order.paidAt ||
+              order.date
           );
 
           if (isNaN(orderDate.getTime())) {
@@ -2623,16 +2669,15 @@ export function SalesChartReport() {
         const chartData = Object.entries(dailySales)
           .map(([date, data]) => ({
             name: formatDate(date), // Format date for display
-            date: date,
             revenue: data.revenue,
             orders: data.orders,
-            value: data.revenue // Use value for pie chart
           }))
           .sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+            (a, b) => new Date(a.name).getTime() - new Date(b.name).getTime(),
           ) // Sort by date
           .slice(0, 10);
 
+        console.log("Generated chart data:", chartData);
         return chartData;
 
       case "product":
@@ -2656,9 +2701,9 @@ export function SalesChartReport() {
 
             const orderDate = new Date(
               order.orderedAt ||
-              order.createdAt ||
-              order.created_at ||
-              order.paidAt,
+                order.createdAt ||
+                order.created_at ||
+                order.paidAt,
             );
             const orderDateOnly = new Date(orderDate);
             orderDateOnly.setHours(0, 0, 0, 0);
@@ -2672,7 +2717,7 @@ export function SalesChartReport() {
                 const productId = item.productId?.toString();
                 if (!productId) return;
 
-                // Check if this product is in our products list
+                // Kiểm tra product có tồn tại trong danh sách products không
                 const product = products.find(
                   (p) => p.id.toString() === productId,
                 );
@@ -2734,6 +2779,9 @@ export function SalesChartReport() {
 
                 const quantity = Number(item.quantity || 0);
                 const total = Number(item.total || 0);
+                const unitPrice = Number(item.price || 0);
+                const totalAmount = quantity * unitPrice;
+                const discount = Math.max(0, totalAmount - total);
 
                 productSales[productId].quantity += quantity;
                 productSales[productId].revenue += total;
@@ -2748,13 +2796,6 @@ export function SalesChartReport() {
               quantity: 0,
               revenue: 0,
             };
-            // Find category name
-            const categoryName =
-              categories && Array.isArray(categories)
-                ? categories.find((cat) => cat.id === product.categoryId)?.name ||
-                  ""
-                : "";
-
             return {
               name:
                 product.name.length > 15
@@ -2762,8 +2803,6 @@ export function SalesChartReport() {
                   : product.name,
               revenue: sales.revenue,
               quantity: sales.quantity,
-              value: sales.revenue, // for pie chart
-              categoryName: categoryName,
             };
           })
           .filter((item) => item.quantity > 0)
@@ -2790,9 +2829,9 @@ export function SalesChartReport() {
             // Try multiple possible date fields (EXACT same as dashboard)
             const orderDate = new Date(
               order.orderedAt ||
-              order.createdAt ||
-              order.created_at ||
-              order.paidAt,
+                order.createdAt ||
+                order.created_at ||
+                order.paidAt,
             );
 
             // Skip if date is invalid
@@ -2838,7 +2877,8 @@ export function SalesChartReport() {
               const orderDiscount = Number(order.discount || 0);
               const revenue = orderTotal - orderDiscount;
 
-              if (revenue >= 0) { // Allow 0 revenue orders
+              if (revenue >= 0) {
+                // Allow 0 revenue orders
                 employeeData[cashier].revenue += revenue;
                 employeeData[cashier].orders += 1;
               }
@@ -2855,11 +2895,16 @@ export function SalesChartReport() {
                   : name || "Unknown",
               revenue: Math.max(0, data.revenue || 0), // Ensure no negative values
               orders: Math.max(0, data.orders || 0), // Ensure no negative values
-              value: Math.max(0, data.revenue || 0), // For pie chart
             }))
             .filter((item) => item.revenue > 0 || item.orders > 0) // Only show employees with data
             .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
             .slice(0, 10);
+
+          console.log("Employee chart data generated:", {
+            filteredOrdersCount: empFilteredOrders.length,
+            employeeDataKeys: Object.keys(employeeData),
+            result,
+          });
 
           return result;
         } catch (error) {
@@ -2881,7 +2926,7 @@ export function SalesChartReport() {
           return (
             orderDate >= custStart &&
             orderDate <= custEnd &&
-            (order.status === "paid" || order.status === "completed")
+            order.status === "paid"
           );
         });
 
@@ -2955,7 +3000,6 @@ export function SalesChartReport() {
                 : data.customerName,
             revenue: data.revenue,
             orders: data.orders,
-            value: data.revenue, // for pie chart
           }))
           .sort((a, b) => b.revenue - a.revenue)
           .slice(0, 10);
@@ -2998,6 +3042,15 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
+      console.log("Product Report Debug:", {
+        startDate,
+        endDate,
+        start: start.toISOString(),
+        end: end.toISOString(),
+        ordersLength: orders?.length || 0,
+        transactionsLength: transactions?.length || 0,
+      });
+
       const productSales: {
         [productId: string]: {
           quantity: number;
@@ -3018,9 +3071,9 @@ export function SalesChartReport() {
           // Try multiple possible date fields (EXACT same as dashboard)
           const orderDate = new Date(
             order.orderedAt ||
-            order.createdAt ||
-            order.created_at ||
-            order.paidAt,
+              order.createdAt ||
+              order.created_at ||
+              order.paidAt,
           );
 
           // Skip if date is invalid
@@ -3035,6 +3088,20 @@ export function SalesChartReport() {
           endOfDay.setHours(23, 59, 59, 999);
 
           return orderDate >= startOfDay && orderDate <= endOfDay;
+        });
+
+        console.log("Filtered Orders for Product Report:", {
+          totalOrders: orders.length,
+          filteredOrders: filteredOrders.length,
+          sampleOrder: filteredOrders[0]
+            ? {
+                id: filteredOrders[0].id,
+                status: filteredOrders[0].status,
+                orderedAt: filteredOrders[0].orderedAt,
+                createdAt: filteredOrders[0].createdAt,
+                items: filteredOrders[0].items?.length || 0,
+              }
+            : null,
         });
 
         filteredOrders.forEach((order: any) => {
@@ -3068,6 +3135,16 @@ export function SalesChartReport() {
               productSales[productId].totalAmount += totalAmount;
               productSales[productId].discount += discount;
               productSales[productId].revenue += total;
+
+              console.log("Processing order item:", {
+                productId,
+                productName: product.name,
+                quantity,
+                total,
+                unitPrice,
+                totalAmount,
+                discount,
+              });
             });
           }
         });
@@ -3086,6 +3163,11 @@ export function SalesChartReport() {
           const transactionDateOnly = new Date(transactionDate);
           transactionDateOnly.setHours(0, 0, 0, 0);
           return transactionDateOnly >= start && transactionDateOnly <= end;
+        });
+
+        console.log("Fallback to transactions:", {
+          totalTransactions: transactions.length,
+          filteredTransactions: filteredTransactions.length,
         });
 
         filteredTransactions.forEach((transaction: any) => {
@@ -3124,6 +3206,8 @@ export function SalesChartReport() {
         });
       }
 
+      console.log("Product Sales Summary:", productSales);
+
       return filteredProducts
         .map((product: any) => {
           const sales = productSales[product.id.toString()] || {
@@ -3133,7 +3217,7 @@ export function SalesChartReport() {
             revenue: 0,
           };
 
-          // Find category name
+          // Tìm category name
           const categoryName =
             categories && Array.isArray(categories)
               ? categories.find((cat) => cat.id === product.categoryId)?.name ||
@@ -3332,532 +3416,692 @@ export function SalesChartReport() {
       );
     };
 
-  // Render Chart component
-  const renderChart = () => {
-    try {
-      // Function to get chart data based on analysis type
-      const getChartDataForType = () => {
-        let dataPoints: { name: string; value: number; orders?: number }[] = [];
+    // Render Chart component
+    const renderChart = () => {
+      try {
+        const chartData = getChartData();
+
+        console.log("Chart data for", analysisType, ":", chartData);
+
+        // Always render the chart container, even with no data
+        return (
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
+              <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-white/90 text-sm font-normal">
+                    {t("reports.chartView")}
+                  </div>
+                  <div className="text-white font-semibold">
+                    {getReportTitle()}
+                  </div>
+                </div>
+              </CardTitle>
+              <CardDescription className="text-blue-100 mt-2">
+                {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
+                {formatDate(startDate)} {t("reports.toDate")}:{" "}
+                {formatDate(endDate)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
+              {!chartData || chartData.length === 0 ? (
+                <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 flex flex-col justify-center items-center">
+                  <div className="text-gray-500 mb-4 text-center">
+                    <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <div className="text-lg font-medium mb-2">
+                      {t("reports.noDataDescription")}
+                    </div>
+                    <div className="text-sm text-orange-600 mb-2">
+                      📊 Không có dữ liệu trong khoảng thời gian đã chọn
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      ({formatDate(startDate)} - {formatDate(endDate)})
+                    </div>
+                    <div className="text-xs text-gray-400 mt-2">
+                      Thử chọn khoảng thời gian khác hoặc kiểm tra dữ liệu đơn
+                      hàng và hóa đơn
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-purple-50/20 rounded-xl"></div>
+                  <ChartContainer
+                    config={chartConfig}
+                    className="h-full w-full relative z-10"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={chartData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                      >
+                        <defs>
+                          <linearGradient
+                            id="revenueGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#10b981"
+                              stopOpacity={0.9}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#10b981"
+                              stopOpacity={0.6}
+                            />
+                          </linearGradient>
+                          <linearGradient
+                            id="ordersGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#3b82f6"
+                              stopOpacity={0.9}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#3b82f6"
+                              stopOpacity={0.6}
+                            />
+                          </linearGradient>
+                          <linearGradient
+                            id="quantityGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#f59e0b"
+                              stopOpacity={0.9}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#f59e0b"
+                              stopOpacity={0.6}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="#e5e7eb"
+                          opacity={0.5}
+                        />
+                        <XAxis
+                          dataKey="name"
+                          stroke="#6b7280"
+                          fontSize={12}
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                          interval={0}
+                        />
+                        <YAxis stroke="#6b7280" fontSize={12} />
+                        <ChartTooltip
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-lg">
+                                  <p className="font-semibold text-gray-800 mb-2">
+                                    {label}
+                                  </p>
+                                  {payload.map((entry, index) => {
+                                    const translatedName =
+                                      entry.dataKey === "revenue"
+                                        ? t("reports.revenue")
+                                        : entry.dataKey === "orders"
+                                          ? t("reports.orders")
+                                          : entry.dataKey === "quantity"
+                                            ? t("reports.quantity")
+                                            : entry.name;
+                                    return (
+                                      <p
+                                        key={index}
+                                        className="text-sm"
+                                        style={{ color: entry.color }}
+                                      >
+                                        {translatedName}:{" "}
+                                        {entry.dataKey === "revenue" ||
+                                        entry.dataKey === "netRevenue"
+                                          ? formatCurrency(Number(entry.value))
+                                          : entry.value}
+                                      </p>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+
+                        {/* Revenue bar - always show */}
+                        <Bar
+                          dataKey="revenue"
+                          fill="url(#revenueGradient)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+
+                        {/* Additional bars based on analysis type */}
+                        {analysisType === "time" && (
+                          <Bar
+                            dataKey="orders"
+                            fill="url(#ordersGradient)"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={60}
+                          />
+                        )}
+
+                        {analysisType === "product" && (
+                          <Bar
+                            dataKey="quantity"
+                            fill="url(#quantityGradient)"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={60}
+                          />
+                        )}
+
+                        {(analysisType === "employee" ||
+                          analysisType === "customer" ||
+                          analysisType === "channel" ||
+                          analysisType === "salesDetail") && (
+                          <Bar
+                            dataKey="orders"
+                            fill="url(#ordersGradient)"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={60}
+                          />
+                        )}
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      } catch (error) {
+        console.error("Error in renderChart:", error);
+        return (
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-red-50/50 to-pink-50/30">
+            <CardHeader className="bg-gradient-to-r from-red-600 to-pink-600 rounded-t-lg">
+              <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-white/90 text-sm font-normal">
+                    {t("reports.chartView")}
+                  </div>
+                  <div className="text-white font-semibold">
+                    Lỗi hiển thị biểu đồ
+                  </div>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
+              <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 flex flex-col justify-center items-center">
+                <div className="text-red-500 text-center">
+                  <p className="text-lg font-medium mb-2">
+                    Lỗi khi hiển thị biểu đồ
+                  </p>
+                  <p className="text-sm">{error?.message || "Unknown error"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      }
+    };
+
+    // Main render function
+    const renderReportContent = () => {
+      try {
+        console.log(
+          "Rendering report content for analysisType:",
+          analysisType,
+          "concernType:",
+          concernType,
+        );
 
         switch (analysisType) {
           case "time":
-            const dashboardStats = getDashboardStats();
-            if (!dashboardStats || !dashboardStats.filteredCompletedOrders) return [];
-
-            const dailySalesTime: { [date: string]: { revenue: number; orders: number } } = {};
-            dashboardStats.filteredCompletedOrders.forEach((order: any) => {
-              const orderDate = new Date(order.orderedAt || order.createdAt || order.paidAt);
-              if (isNaN(orderDate.getTime())) return;
-              const dateStr = orderDate.toISOString().split('T')[0];
-              if (!dailySalesTime[dateStr]) dailySalesTime[dateStr] = { revenue: 0, orders: 0 };
-              dailySalesTime[dateStr].revenue += Number(order.total || 0);
-              dailySalesTime[dateStr].orders += 1;
-            });
-
-            dataPoints = Object.entries(dailySalesTime)
-              .map(([date, stats]) => ({
-                name: formatDate(date),
-                value: stats.revenue,
-                orders: stats.orders
-              }))
-              .sort((a, b) => a.name.localeCompare(b.name)) // Sort by date string
-              .slice(0, 10);
-            break;
-
+            // Handle concernType for time-based analysis
+            if (concernType === "employee") {
+              return renderEmployeeReport();
+            } else if (concernType === "salesDetail") {
+              return renderSalesDetailReport();
+            }
+            return renderSalesReport();
           case "product":
-            const productData = getSalesDataForProductChart(); // Assuming this function exists and returns formatted product data
-            dataPoints = productData.map(p => ({ name: p.name, value: p.revenue, orders: p.quantity }));
-            break;
-
+            return renderProductReport();
           case "employee":
-            const employeeData = getSalesDataForEmployeeChart(); // Assuming this function exists
-            dataPoints = employeeData.map(e => ({ name: e.name, value: e.revenue, orders: e.orders }));
-            break;
-
+            return renderEmployeeReport();
           case "customer":
-            const customerData = getSalesDataForCustomerChart(); // Assuming this function exists
-            dataPoints = customerData.map(c => ({ name: c.name, value: c.revenue, orders: c.orders }));
-            break;
-
+            return renderCustomerReport();
+          case "channel":
+            return renderSalesChannelReport();
+          case "salesDetail":
+            return renderSalesDetailReport();
           default:
-            dataPoints = [];
+            return renderSalesReport();
         }
-        return dataPoints;
-      };
-
-      const chartData = getChartDataForType();
-
-      if (!chartData || chartData.length === 0) {
+      } catch (error) {
+        console.error("Error in renderReportContent:", error);
         return (
-          <div className="text-center py-12">
-            <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg font-medium mb-2">Không có dữ liệu biểu đồ</p>
-            <p className="text-gray-400 text-sm">
-              Chọn khoảng thời gian có dữ liệu bán hàng để xem biểu đồ
-            </p>
+          <div className="flex justify-center py-8">
+            <div className="text-red-500">
+              <p>Có lỗi xảy ra khi hiển thị báo cáo</p>
+              <p className="text-sm">{error.message}</p>
+            </div>
           </div>
         );
       }
+    };
 
-      const height = 400;
-
-      const renderSpecificChart = () => {
-        switch (chartType) {
-          case "bar":
-            return (
-              <ResponsiveContainer width="100%" height={height}>
-                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="value" fill="#8884d8" name={analysisType === "time" ? "Doanh thu" : "Giá trị"} />
-                  {analysisType === "time" && <Bar dataKey="orders" fill="#82ca9d" name="Đơn hàng" />}
-                </BarChart>
-              </ResponsiveContainer>
-            );
-          case "line":
-            return (
-              <ResponsiveContainer width="100%" height={height}>
-                <RechartsLineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} name={analysisType === "time" ? "Doanh thu" : "Giá trị"} />
-                  {analysisType === "time" && <Line type="monotone" dataKey="orders" stroke="#82ca9d" strokeWidth={2} name="Đơn hàng" />}
-                </RechartsLineChart>
-              </ResponsiveContainer>
-            );
-          case "area":
-            return (
-              <ResponsiveContainer width="100%" height={height}>
-                <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="value" stackId="1" stroke="#8884d8" fill="#8884d8" name={analysisType === "time" ? "Doanh thu" : "Giá trị"} />
-                </AreaChart>
-              </ResponsiveContainer>
-            );
-          case "pie":
-            return (
-              <ResponsiveContainer width="100%" height={height}>
-                <PieChart>
-                  <Pie
-                    data={chartData.slice(0, 8)} // Limit to 8 items for readability
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={120}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {chartData.slice(0, 8).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            );
-          default:
-            return null;
-        }
-      };
-      return (
-        <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
-            <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-              <div className="p-2 bg-white/20 rounded-lg">
-                {analysisType === "time" && <TrendingUp className="w-6 h-6" />}
-                {analysisType === "product" && <Package className="w-6 h-6" />}
-                {analysisType === "employee" && <Users className="w-6 h-6" />}
-                {analysisType === "customer" && <DollarSign className="w-6 h-6" />}
-              </div>
+    return (
+      <div className="space-y-6">
+        {/* Filters */}
+        <Card>
+          <CardContent className="pt-4">
+            {/* Main Filter Row */}
+            <div className="grid grid-cols-4 gap-4 mb-4">
+              {/* Analysis Type */}
               <div>
-                <div className="text-white/90 text-sm font-normal">
-                  {t("reports.chartView")}
-                </div>
-                <div className="text-white font-semibold">
-                  {getReportTitle()}
-                </div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.analyzeBy")}
+                </Label>
+                <Select
+                  value={analysisType}
+                  onValueChange={(value) => {
+                    setAnalysisType(value);
+                    // Reset concernType when analysisType changes if necessary
+                    if (value === "time") {
+                      setConcernType("time"); // Default for time analysis
+                    } else if (value === "salesDetail") {
+                      setConcernType("sales"); // Default for sales detail analysis
+                    } else {
+                      // If moving away from 'time', ensure concernType is sensible or reset
+                      setConcernType("sales"); // Or a more appropriate default
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="time">
+                      {t("reports.timeAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="product">
+                      {t("reports.productAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="employee">
+                      {t("reports.employeeAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="customer">
+                      {t("reports.customerAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="channel">
+                      {t("reports.channelAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="salesDetail">
+                      {t("reports.salesDetailReport")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardTitle>
-            <CardDescription className="text-blue-100 mt-2">
-              {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
-              {formatDate(startDate)} {t("reports.toDate")}:{" "}
-              {formatDate(endDate)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
-            {renderSpecificChart()}
-          </CardContent>
-        </Card>
-      );
-    } catch (error) {
-      console.error("Error in renderChart:", error);
-      return (
-        <Card className="shadow-xl border-0 bg-gradient-to-br from-red-50/50 to-pink-50/30">
-          <CardHeader className="bg-gradient-to-r from-red-600 to-pink-600 rounded-t-lg">
-            <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-white/90 text-sm font-normal">
-                  {t("reports.chartView")}
-                </div>
-                <div className="text-white font-semibold">
-                  Lỗi hiển thị biểu đồ
-                </div>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
-            <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 flex flex-col justify-center items-center">
-              <div className="text-red-500 text-center">
-                <p className="text-lg font-medium mb-2">
-                  Lỗi khi hiển thị biểu đồ
-                </p>
-                <p className="text-sm">{error?.message || "Unknown error"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-  };
 
-  // Main render function
-  const renderReportContent = () => {
-    try {
-      switch (analysisType) {
-        case "time":
-          // Handle concernType for time-based analysis
-          if (concernType === "employee") {
-            return renderEmployeeReport();
-          } else if (concernType === "salesDetail") {
-            return renderSalesDetailReport(); // This seems redundant if salesDetail is handled separately
-          }
-          return renderSalesReport();
-        case "product":
-          return renderProductReport();
-        case "employee":
-          return renderEmployeeReport();
-        case "customer":
-          return renderCustomerReport();
-        case "channel":
-          return renderSalesChannelReport();
-        case "salesDetail": // Explicitly handle salesDetail
-          return renderSalesDetailReport();
-        default:
-          return renderSalesReport();
-      }
-    } catch (error) {
-      console.error("Error in renderReportContent:", error);
-      return (
-        <div className="flex justify-center py-8">
-          <div className="text-red-500">
-            <p>Có lỗi xảy ra khi hiển thị báo cáo</p>
-            <p className="text-sm">{error.message}</p>
-          </div>
-        </div>
-      );
-    }
-  };
-
-  // Helper functions for chart data (placeholder, need implementation based on actual data structure)
-  const getSalesDataForProductChart = () => {
-    // This function should return data structured for charts, similar to getChartDataForType's output
-    // Example: [{ name: 'Product A', value: 1500, orders: 20 }, ...]
-    console.warn("getSalesDataForProductChart needs implementation");
-    return []; // Return empty array as placeholder
-  };
-  const getSalesDataForEmployeeChart = () => {
-    console.warn("getSalesDataForEmployeeChart needs implementation");
-    return [];
-  };
-  const getSalesDataForCustomerChart = () => {
-    console.warn("getSalesDataForCustomerChart needs implementation");
-    return [];
-  };
-
-  // Custom tooltip for charts
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border rounded-lg shadow-md">
-          <p className="font-semibold text-gray-800 mb-2">{`${label}`}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} style={{ color: entry.color }}>
-              {`${entry.name}: ${entry.name === 'value' ? formatCurrency(Number(entry.value)) : entry.value}`}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const handleRefresh = () => {
-    refetchDashboard(); // Use refetch for dashboard data
-    // Invalidate other queries if necessary, though dashboard data might cover most
-    queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Header and Filters */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <CardTitle className="text-xl font-bold text-blue-700 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
-                {t('reports.salesChartTab') || 'Biểu đồ bán hàng'}
-              </CardTitle>
-              <CardDescription className="text-gray-600">
-                {t('reports.visualRepresentation') || 'Trực quan hóa dữ liệu bán hàng'}
-              </CardDescription>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4">
               {/* Date Range */}
-              <div className="flex items-center gap-2">
-                <Label htmlFor="start-date" className="text-sm whitespace-nowrap">
-                  {t('reports.startDate') || 'Từ ngày'}:
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.startDate")}
                 </Label>
                 <Input
-                  id="start-date"
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-auto"
+                  className="h-9 text-sm"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="end-date" className="text-sm whitespace-nowrap">
-                  {t('reports.endDate') || 'Đến ngày'}:
+
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.endDate")}
                 </Label>
                 <Input
-                  id="end-date"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-auto"
+                  className="h-9 text-sm"
                 />
               </div>
-
-              <Button
-                onClick={handleRefresh}
-                variant="outline"
-                size="sm"
-                disabled={isLoading}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {t("reports.refresh") || "Làm mới"}
-              </Button>
-            </div>
-          </div>
-
-          {/* Analysis and Chart Type Controls */}
-          <div className="flex flex-wrap items-center gap-4 pt-4 border-t">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <Label className="text-sm font-medium text-gray-700">
-                {t("reports.analysisType") || "Phân tích theo"}:
-              </Label>
-              <Select value={analysisType} onValueChange={setAnalysisType}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="time">
-                    {t("reports.timeAnalysis") || "Thời gian"}
-                  </SelectItem>
-                  <SelectItem value="product">
-                    {t("reports.productAnalysis") || "Sản phẩm"}
-                  </SelectItem>
-                  <SelectItem value="employee">
-                    {t("reports.employeeAnalysis") || "Nhân viên"}
-                  </SelectItem>
-                  <SelectItem value="customer">
-                    {t("reports.customerAnalysis") || "Khách hàng"}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Chart Type Icon */}
-              {chartType === "bar" && <BarChart3 className="w-4 h-4 text-gray-500" />}
-              {chartType === "line" && <LineChart className="w-4 h-4 text-gray-500" />}
-              {chartType === "area" && <AreaChartIcon className="w-4 h-4 text-gray-500" />}
-              {chartType === "pie" && <PieChartIcon className="w-4 h-4 text-gray-500" />}
-              <Label className="text-sm font-medium text-gray-700">
-                {t("reports.chartView") || "Loại biểu đồ"}:
-              </Label>
-              <Select value={chartType} onValueChange={setChartType}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bar">Cột</SelectItem>
-                  <SelectItem value="line">Đường</SelectItem>
-                  <SelectItem value="area">Vùng</SelectItem>
-                  <SelectItem value="pie">Tròn</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+            {/* Secondary Filter Row - Show based on analysis type */}
+            {analysisType === "employee" && (
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4 border-t border-gray-200">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.employeeFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.employeeFilterPlaceholder")}
+                      value={selectedEmployee === "all" ? "" : selectedEmployee}
+                      onChange={(e) =>
+                        setSelectedEmployee(e.target.value || "all")
+                      }
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
-      {/* Loading or Error State */}
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="text-gray-500">{t("reports.loading") || "Đang tải..."}</div>
+            {analysisType === "customer" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.customerFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.customerFilterPlaceholder")}
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.status")}
+                  </Label>
+                  <Select
+                    value={customerStatus}
+                    onValueChange={setCustomerStatus}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      <SelectItem value="active">
+                        {t("reports.active")}
+                      </SelectItem>
+                      <SelectItem value="inactive">
+                        {t("reports.inactive")}
+                      </SelectItem>
+                      <SelectItem value="vip">{t("reports.vip")}</SelectItem>
+                      <SelectItem value="new">
+                        {t("reports.newCustomer")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {analysisType === "product" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.productFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.productFilterPlaceholder")}
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.productType")}
+                  </Label>
+                  <Select value={productType} onValueChange={setProductType}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      <SelectItem value="combo">{t("reports.combo")}</SelectItem>
+                      <SelectItem value="product">
+                        {t("reports.product")}
+                      </SelectItem>
+                      <SelectItem value="service">
+                        {t("reports.service")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.productGroup")}
+                  </Label>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={setSelectedCategory}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder={t("reports.productGroup")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      {categories &&
+                        Array.isArray(categories) &&
+                        categories.map((category: any) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id.toString()}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {analysisType === "channel" && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Sales Method */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">
+                      {t("reports.salesMethod")}
+                    </Label>
+                    <Select value={salesMethod} onValueChange={setSalesMethod}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="no_delivery">
+                          Không giao hàng
+                        </SelectItem>
+                        <SelectItem value="delivery">Có giao hàng</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Filters for Time Analysis and Sales Detail Report */}
+            {(analysisType === "time" || concernType === "salesDetail") && (
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4 border-t border-gray-200">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.employeeFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.employeeFilterPlaceholder")}
+                      value={selectedEmployee === "all" ? "" : selectedEmployee}
+                      onChange={(e) =>
+                        setSelectedEmployee(e.target.value || "all")
+                      }
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sales Detail Report Filters */}
+            {analysisType === "salesDetail" && (
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                {/* Employee and Order Code */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      {t("reports.employeeFilter")}
+                    </Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder={t("reports.employeeFilterPlaceholder")}
+                        value={selectedEmployee === "all" ? "" : selectedEmployee}
+                        onChange={(e) =>
+                          setSelectedEmployee(e.target.value || "all")
+                        }
+                        className="pl-10 h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      {t("reports.orderCode")}
+                    </Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder={t("reports.searchOrderCode")}
+                        className="pl-10 h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Product and Product Group */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      {t("reports.productFilter")}
+                    </Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder={t("reports.productFilterPlaceholder")}
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className="pl-10 h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      {t("reports.productGroup")}
+                    </Label>
+                    <Select
+                      value={selectedCategory}
+                      onValueChange={setSelectedCategory}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder={t("reports.productGroup")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        {categories &&
+                          Array.isArray(categories) &&
+                          categories.map((category: any) => (
+                            <SelectItem
+                              key={category.id}
+                              value={category.id.toString()}
+                            >
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Status only */}
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      {t("reports.status")}
+                    </Label>
+                    <Select defaultValue="all">
+                      <SelectTrigger className="h-9 text-sm w-full md:w-1/2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="completed">
+                          {t("reports.completed")}
+                        </SelectItem>
+                        <SelectItem value="pending">
+                          {t("reports.pending")}
+                        </SelectItem>
+                        <SelectItem value="cancelled">
+                          {t("reports.cancelled")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Report Content */}
+        <div className="space-y-6">
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-gray-500">{t("reports.loading")}...</div>
+            </div>
+          ) : (
+            <>
+              {/* Chart Display */}
+              {(analysisType === "time" ||
+                analysisType === "product" ||
+                analysisType === "employee" ||
+                analysisType === "customer" ||
+                analysisType === "channel") &&
+                renderChart()}
+
+              {/* Data Tables */}
+              {renderReportContent()}
+            </>
+          )}
         </div>
-      ) : hasError ? (
-        <div className="flex justify-center py-8">
-          <div className="text-red-500">
-            Lỗi tải dữ liệu: {dashboardError?.message || "Unknown error"}
-            <Button
-              onClick={handleRefresh}
-              variant="outline"
-              size="sm"
-              className="ml-4"
-            >
-              Thử lại
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {t("reports.totalRevenue") || "Tổng doanh thu"}
-                    </p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(dashboardData?.periodRevenue || 0)}
-                    </p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {t("reports.totalOrders") || "Tổng đơn hàng"}
-                    </p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {dashboardData?.periodOrderCount || 0}
-                    </p>
-                  </div>
-                  <Calendar className="w-8 h-8 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {t("reports.totalItems") || "Tổng sản phẩm"}
-                    </p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {dashboardData?.totalItems || 0}
-                    </p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-purple-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {/* Dynamic Icon based on analysis type */}
-                {analysisType === "time" && <TrendingUp className="w-5 h-5" />}
-                {analysisType === "product" && <Package className="w-5 h-5" />}
-                {analysisType === "employee" && <Users className="w-5 h-5" />}
-                {analysisType === "customer" && <DollarSign className="w-5 h-5" />}
-                {t("reports.chartData") || "Biểu đồ dữ liệu"} - {
-                  analysisType === "time" ? "Theo thời gian" :
-                  analysisType === "product" ? "Theo sản phẩm" :
-                  analysisType === "employee" ? "Theo nhân viên" :
-                  "Theo khách hàng"
-                }
-              </CardTitle>
-              <CardDescription>
-                {t("reports.analyzeRevenue") || "Phân tích doanh thu và hiệu suất"} ({startDate} - {endDate})
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderChart()}
-            </CardContent>
-          </Card>
-
-          {/* Render specific report table based on analysisType */}
-          {renderReportContent()}
-
-        </>
-      )}
-    </div>
-  );
-};
-
-// Placeholder functions for chart data (need actual implementation based on fetched data)
-const getSalesDataForProductChart = () => {
-  console.warn("getSalesDataForProductChart needs implementation based on fetched products and sales data.");
-  return [];
-};
-
-const getSalesDataForEmployeeChart = () => {
-  console.warn("getSalesDataForEmployeeChart needs implementation.");
-  return [];
-};
-
-const getSalesDataForCustomerChart = () => {
-  console.warn("getSalesDataForCustomerChart needs implementation.");
-  return [];
-};
-
-// Mock Table component if not globally available or imported separately
-const Table = ({ children, ...props }: any) => (
-  <table {...props}>{children}</table>
-);
-const TableHeader = ({ children, ...props }: any) => (
-  <thead {...props}>{children}</thead>
-);
-const TableBody = ({ children, ...props }: any) => (
-  <tbody {...props}>{children}</tbody>
-);
-const TableRow = ({ children, ...props }: any) => (
-  <tr {...props}>{children}</tr>
-);
-const TableCell = ({ children, ...props }: any) => (
-  <td {...props}>{children}</td>
-);
-const TableHead = ({ children, ...props }: any) => (
-  <th {...props}>{children}</th>
-);
+      </div>
+    );
+  }
