@@ -1128,6 +1128,7 @@ export default function SalesOrders() {
                                     {getInvoiceStatusBadge(item.displayStatus)}
                                   </td>
                                 </tr>
+                                )}
                                 {selectedInvoice && selectedInvoice.id === item.id && selectedInvoice.type === item.type && (
                                   <tr>
                                     <td colSpan={16} className="p-0">
