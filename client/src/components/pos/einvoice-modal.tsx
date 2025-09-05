@@ -1301,7 +1301,6 @@ export function EInvoiceModal({
              // This logic might be redundant or need adjustment.
         }
 
-
       } else {
         // If invoice publishing failed, still try to create a transaction for the payment
         console.warn("Invoice publishing failed, proceeding to create transaction for payment.");
