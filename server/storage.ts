@@ -9,7 +9,7 @@ import {
   attendanceRecords,
   tables,
   orders,
-  orderItems,
+  orderItems as orderItemsTable,
   storeSettings,
   suppliers,
   customers,
@@ -19,7 +19,7 @@ import {
   inventoryTransactions,
   invoices,
   invoiceItems,
-} from "@shared/schema";
+} from "@shared/schema";</old_str>
 import { db } from "./db";
 import { eq, ilike, and, gte, lte, or, sql, desc, not, like } from "drizzle-orm";
 
@@ -514,8 +514,8 @@ export class DatabaseStorage implements IStorage {
       // Check if product exists in order items
       const orderItemsCheck = await database
         .select()
-        .from(orderItems)
-        .where(eq(orderItems.productId, id))
+        .from(orderItemsTable)
+        .where(eq(orderItemsTable.productId, id))
         .limit(1);
 
       if (orderItemsCheck.length > 0) {
@@ -1415,9 +1415,9 @@ export class DatabaseStorage implements IStorage {
 
         console.log(`Storage: Inserting ${itemsToInsert.length} order items`);
         const insertedItems = await database
-          .insert(orderItems)
+          .insert(orderItemsTable)
           .values(itemsToInsert)
-          .returning();
+          .returning();</old_str>
 
         console.log(`Storage: ${insertedItems.length} order items created`);
 
@@ -1975,7 +1975,7 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`Database connection is not available`);
     }
     const itemsWithOrderId = items.map((item) => ({ ...item, orderId }));
-    return await this.db.insert(orderItems).values(itemsWithOrderId).returning();
+    return await this.db.insert(orderItemsTable).values(itemsWithOrderId).returning();
   }
 
   async removeOrderItem(itemId: number): Promise<boolean> {
@@ -1983,7 +1983,7 @@ export class DatabaseStorage implements IStorage {
       console.error(`❌ Database is undefined in removeOrderItem`);
       throw new Error(`Database connection is not available`);
     }
-    const result = await this.db.delete(orderItems).where(eq(orderItems.id, itemId));
+    const result = await this.db.delete(orderItemsTable).where(eq(orderItemsTable.id, itemId));
     return (result.rowCount ?? 0) > 0;
   }
 
@@ -1993,9 +1993,9 @@ export class DatabaseStorage implements IStorage {
       console.error(`❌ Database is undefined in deleteOrderItem`);
       throw new Error(`Database connection is not available`);
     }
-    const result = await database.delete(orderItems).where(eq(orderItems.id, itemId));
+    const result = await database.delete(orderItemsTable).where(eq(orderItemsTable.id, itemId));
     return (result.rowCount ?? 0) > 0;
-  }
+  }</old_str>
 
   async getOrderItems(orderId: number, tenantDb?: any): Promise<OrderItem[]> {
     const database = tenantDb || this.db;
@@ -2014,19 +2014,19 @@ export class DatabaseStorage implements IStorage {
 
       const items = await database
         .select({
-          id: orderItems.id,
-          orderId: orderItems.orderId,
-          productId: orderItems.productId,
-          quantity: orderItems.quantity,
-          unitPrice: orderItems.unitPrice,
-          total: orderItems.total,
-          notes: orderItems.notes,
+          id: orderItemsTable.id,
+          orderId: orderItemsTable.orderId,
+          productId: orderItemsTable.productId,
+          quantity: orderItemsTable.quantity,
+          unitPrice: orderItemsTable.unitPrice,
+          total: orderItemsTable.total,
+          notes: orderItemsTable.notes,
           productName: products.name,
           productSku: products.sku,
         })
-        .from(orderItems)
-        .leftJoin(products, eq(orderItems.productId, products.id))
-        .where(eq(orderItems.orderId, orderId));
+        .from(orderItemsTable)
+        .leftJoin(products, eq(orderItemsTable.productId, products.id))
+        .where(eq(orderItemsTable.orderId, orderId));
 
       console.log(`✅ Storage: Found ${items.length} order items for order ${orderId}`);
       return Array.isArray(items) ? items : [];
