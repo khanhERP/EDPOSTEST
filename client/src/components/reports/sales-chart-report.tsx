@@ -541,7 +541,7 @@ export function SalesChartReport() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    Tổng doanh thu
+                    {t("reports.totalRevenue")}
                   </p>
                   <p className="text-2xl font-bold text-green-600">
                     {formatCurrency(totalRevenue)}
@@ -551,6 +551,27 @@ export function SalesChartReport() {
                   </p>
                 </div>
                 <DollarSign className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    Tổng doanh thu
+                  </p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(dashboardStats.monthRevenue)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {startDate === endDate
+                      ? formatDate(startDate)
+                      : `${formatDate(startDate)} - ${formatDate(endDate)}`}
+                  </p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
@@ -587,27 +608,6 @@ export function SalesChartReport() {
                   </p>
                 </div>
                 <Users className="w-8 h-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    {t("reports.monthRevenue")}
-                  </p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(dashboardStats.monthRevenue)}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {startDate === endDate
-                      ? formatDate(startDate)
-                      : `${formatDate(startDate)} - ${formatDate(endDate)}`}
-                  </p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
