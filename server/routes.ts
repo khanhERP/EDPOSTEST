@@ -3224,29 +3224,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Query transaction items with proper Drizzle ORM
-      const transactionResults = await db
-        .select({
-          productId: transactionItemsTable.productId,
-          productName: products.name,
-          categoryId: products.categoryId,
-          categoryName: categories.name,
-          totalQuantity: sql<number>`SUM(${transactionItemsTable.quantity})`,
-          totalRevenue: sql<number>`SUM(CAST(${transactionItemsTable.unitPrice} AS DECIMAL(10,2)) * ${transactionItemsTable.quantity})`,
-        })
-        .from(transactionItemsTable)
-        .innerJoin(
-          transactionsTable,
-          eq(transactionItemsTable.transactionId, transactionsTable.id),
-        )
-        .innerJoin(products, eq(transactionItemsTable.productId, products.id))
-        .leftJoin(categories, eq(products.categoryId, categories.id))
-        .where(and(...dateConditions, ...categoryConditions))
-        .groupBy(
-          transactionItemsTable.productId,
-          products.name,
-          products.categoryId,
-          categories.name,
-        );
+      let transactionResults = [];
+      try {
+        transactionResults = await db
+          .select({
+            productId: transactionItemsTable.productId,
+            productName: products.name,
+            categoryId: products.categoryId,
+            categoryName: categories.name,
+            totalQuantity: sql<number>`SUM(${transactionItemsTable.quantity})`,
+            totalRevenue: sql<number>`SUM(CAST(${transactionItemsTable.unitPrice} AS NUMERIC) * ${transactionItemsTable.quantity})`,
+          })
+          .from(transactionItemsTable)
+          .innerJoin(
+            transactionsTable,
+            eq(transactionItemsTable.transactionId, transactionsTable.id),
+          )
+          .innerJoin(products, eq(transactionItemsTable.productId, products.id))
+          .leftJoin(categories, eq(products.categoryId, categories.id))
+          .where(and(...dateConditions, ...categoryConditions))
+          .groupBy(
+            transactionItemsTable.productId,
+            products.name,
+            products.categoryId,
+            categories.name,
+          );
+      } catch (error) {
+        console.error("Error querying transaction items:", error);
+        transactionResults = [];
+      }
 
       // Query order items with proper Drizzle ORM
       const orderDateConditions = [];
@@ -3267,32 +3273,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderDateConditions.push(lte(orders.orderedAt, endDateTime));
       }
 
-      const orderResults = await db
-        .select({
-          productId: orderItemsTable.productId,
-          productName: products.name,
-          categoryId: products.categoryId,
-          categoryName: categories.name,
-          totalQuantity: sql<number>`SUM(${orderItemsTable.quantity})`,
-          totalRevenue: sql<number>`SUM(CAST(${orderItemsTable.unitPrice} AS DECIMAL(10,2)) * ${orderItemsTable.quantity})`,
-        })
-        .from(orderItemsTable)
-        .innerJoin(orders, eq(orderItemsTable.orderId, orders.id))
-        .innerJoin(products, eq(orderItemsTable.productId, products.id))
-        .leftJoin(categories, eq(products.categoryId, categories.id))
-        .where(
-          and(
-            eq(orders.status, "paid"),
-            ...orderDateConditions,
-            ...categoryConditions,
-          ),
-        )
-        .groupBy(
-          orderItemsTable.productId,
-          products.name,
-          products.categoryId,
-          categories.name,
-        );
+      let orderResults = [];
+      try {
+        orderResults = await db
+          .select({
+            productId: orderItemsTable.productId,
+            productName: products.name,
+            categoryId: products.categoryId,
+            categoryName: categories.name,
+            totalQuantity: sql<number>`SUM(${orderItemsTable.quantity})`,
+            totalRevenue: sql<number>`SUM(CAST(${orderItemsTable.unitPrice} AS NUMERIC) * ${orderItemsTable.quantity})`,
+          })
+          .from(orderItemsTable)
+          .innerJoin(orders, eq(orderItemsTable.orderId, orders.id))
+          .innerJoin(products, eq(orderItemsTable.productId, products.id))
+          .leftJoin(categories, eq(products.categoryId, categories.id))
+          .where(
+            and(
+              or(eq(orders.status, "paid"), eq(orders.status, "completed")),
+              ...orderDateConditions,
+              ...categoryConditions,
+            ),
+          )
+          .groupBy(
+            orderItemsTable.productId,
+            products.name,
+            products.categoryId,
+            categories.name,
+          );
+      } catch (error) {
+        console.error("Error querying order items:", error);
+        orderResults = [];
+      }
 
       console.log("Transaction stats:", transactionResults.length, "items");
       console.log("Order stats:", orderResults.length, "items");

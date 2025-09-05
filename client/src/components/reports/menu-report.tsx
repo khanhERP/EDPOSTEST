@@ -302,8 +302,8 @@ function MenuReport() {
               </div>
             </div>
             <div className="flex items-end">
-              <Button 
-                onClick={handleRefresh} 
+              <Button
+                onClick={handleRefresh}
                 className="flex items-center gap-2"
                 disabled={analysisLoading}
               >
@@ -416,8 +416,8 @@ function MenuReport() {
               <p className="text-gray-400 text-sm">
                 Chọn khoảng thời gian có dữ liệu bán hàng để xem biểu đồ
               </p>
-              <Button 
-                onClick={handleRefresh} 
+              <Button
+                onClick={handleRefresh}
                 className="mt-4 flex items-center gap-2 mx-auto"
                 variant="outline"
               >
@@ -456,17 +456,17 @@ function MenuReport() {
                               <Cell key={`cell-${index}`} fill={`hsl(${(index * 137.508) % 360}, 70%, 60%)`} />
                             ))}
                           </Pie>
-                          <Tooltip 
+                          <Tooltip
                             formatter={(value) => [formatCurrency(Number(value)) + ' ₫', 'Doanh thu']}
-                            contentStyle={{ 
-                              backgroundColor: 'white', 
+                            contentStyle={{
+                              backgroundColor: 'white',
                               border: '1px solid #e5e7eb',
                               borderRadius: '8px',
                               fontSize: '12px'
                             }}
                           />
-                          <Legend 
-                            verticalAlign="bottom" 
+                          <Legend
+                            verticalAlign="bottom"
                             height={36}
                             wrapperStyle={{ fontSize: '12px' }}
                           />
@@ -480,19 +480,19 @@ function MenuReport() {
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <Package className="w-4 h-4 text-blue-600" />
-                    {t("reports.quantity") || "Số lượng"} bán theo danh mục
+                    {t("reports.quantity") || "Số lượng"} theo danh mục
                   </h4>
-                  <div className="h-80 relative border rounded-lg bg-gradient-to-br from-blue-50/30 to-indigo-50/20">
+                  <div className="h-80 relative border rounded-lg bg-gradient-to-br from-blue-50/30 to-sky-50/20">
                     <div className="absolute inset-0 bg-white/50 rounded-lg"></div>
                     <div className="relative z-10 h-full p-4">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={menuAnalysis.categoryStats.map((cat, index) => ({
+                            data={menuAnalysis?.categoryStats?.length > 0 ? menuAnalysis.categoryStats.map((cat, index) => ({
                               name: cat.categoryName || `Danh mục ${cat.categoryId}`,
                               value: Number(cat.totalQuantity || 0),
-                              fill: `hsl(${200 + (index * 137.508) % 160}, 70%, 60%)`
-                            }))}
+                              fill: `hsl(${(index * 137.508 + 180) % 360}, 70%, 60%)`
+                            })) : [{ name: "Không có dữ liệu", value: 1, fill: "#e0e0e0" }]}
                             cx="50%"
                             cy="50%"
                             innerRadius={40}
@@ -500,24 +500,15 @@ function MenuReport() {
                             paddingAngle={2}
                             dataKey="value"
                           >
-                            {menuAnalysis.categoryStats.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={`hsl(${200 + (index * 137.508) % 160}, 70%, 60%)`} />
-                            ))}
+                            <Cell />
                           </Pie>
-                          <Tooltip 
-                            formatter={(value) => [Number(value).toLocaleString('vi-VN'), 'Số lượng']}
-                            contentStyle={{ 
-                              backgroundColor: 'white', 
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px',
-                              fontSize: '12px'
-                            }}
+                          <Tooltip
+                            formatter={(value, name) => [
+                              `${Number(value).toLocaleString()}`,
+                              name
+                            ]}
                           />
-                          <Legend 
-                            verticalAlign="bottom" 
-                            height={36}
-                            wrapperStyle={{ fontSize: '12px' }}
-                          />
+                          <Legend />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
