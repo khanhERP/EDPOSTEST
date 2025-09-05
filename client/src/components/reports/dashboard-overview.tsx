@@ -21,7 +21,7 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export default function DashboardOverview() {
+export function DashboardOverview() {
   const { t } = useTranslation();
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
@@ -509,3 +509,5 @@ export default function DashboardOverview() {
     </div>
   );
 }
+
+export default DashboardOverview;
