@@ -26,7 +26,7 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export default function SalesReport() {
+export function SalesReport() {
   const { t } = useTranslation();
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
@@ -649,3 +649,5 @@ export default function SalesReport() {
     </div>
   );
 }
+
+export default SalesReport;
