@@ -52,6 +52,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import * as XLSX from "xlsx"; // Import xlsx for Excel export
+import { Button } from "@/components/ui/button";
 
 export function SalesChartReport() {
   const { t } = useTranslation();
@@ -168,12 +169,31 @@ export function SalesChartReport() {
     queryKey: ["/api/customers", customerSearch, customerStatus],
     queryFn: async () => {
       const response = await fetch(
-        `/api/customers/${customerSearch || ""}/${customerStatus || "all"}`,
+        `/api/customers/${customerSearch || "all"}/${customerStatus}`,
       );
       if (!response.ok) throw new Error("Failed to fetch customers");
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  // Product Analysis Data from new API
+  const { data: productAnalysisData, isLoading: productAnalysisLoading } = useQuery({
+    queryKey: ["/api/product-analysis", startDate, endDate, selectedCategory, productType, productSearch],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate,
+        endDate,
+        categoryId: selectedCategory,
+        productType,
+        productSearch: productSearch || "",
+      });
+      const response = await fetch(`/api/product-analysis?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch product analysis");
+      return response.json();
+    },
+    enabled: analysisType === "product",
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: suppliers } = useQuery({
@@ -433,7 +453,7 @@ export function SalesChartReport() {
 
   // Sales Report Component Logic using dashboard stats
   const renderSalesReport = () => {
-    if (isLoading) {
+    if (ordersLoading || orderItemsLoading) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
@@ -648,7 +668,7 @@ export function SalesChartReport() {
               <span>
                 Báo cáo chi tiết về doanh số và phân tích theo thời gian
               </span>
-              <button
+              <Button
                 onClick={() => {
                   const dataWithSummary = [
                     ...Object.entries(dailySales).map(([date, data]) => ({
@@ -675,7 +695,7 @@ export function SalesChartReport() {
               >
                 <Download className="w-4 h-4" />
                 Xuất Excel
-              </button>
+              </Button>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1274,7 +1294,7 @@ export function SalesChartReport() {
 
   // Legacy Employee Report Component Logic
   const renderEmployeeReport = () => {
-    if (isLoading) {
+    if (ordersLoading) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
@@ -1486,7 +1506,7 @@ export function SalesChartReport() {
                 {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
                 {t("reports.toDate")}: {formatDate(endDate)}
               </span>
-              <button
+              <Button
                 onClick={() => {
                   const dataWithSummary = [
                     ...data.map((item) => ({
@@ -1529,7 +1549,7 @@ export function SalesChartReport() {
               >
                 <Download className="w-4 h-4" />
                 Xuất Excel
-              </button>
+              </Button>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -2061,7 +2081,7 @@ export function SalesChartReport() {
 
   // Legacy Customer Report Component Logic
   const renderCustomerReport = () => {
-    if (isLoading) {
+    if (ordersLoading) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
@@ -2215,7 +2235,7 @@ export function SalesChartReport() {
               {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
               {t("reports.toDate")}: {formatDate(endDate)}
             </span>
-            <button
+            <Button
               onClick={() =>
                 exportToExcel(
                   data.map((item) => ({
@@ -2236,7 +2256,7 @@ export function SalesChartReport() {
             >
               <Download className="w-4 h-4" />
               Xuất Excel
-            </button>
+            </Button>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -2543,7 +2563,7 @@ export function SalesChartReport() {
 
   // Sales Channel Report Component Logic
   const renderSalesChannelReport = () => {
-    if (isLoading) {
+    if (ordersLoading) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
@@ -2637,7 +2657,7 @@ export function SalesChartReport() {
               {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
               {t("reports.toDate")}: {formatDate(endDate)}
             </span>
-            <button
+            <Button
               onClick={() => {
                 // Prepare data with summary row
                 const dataWithSummary = [
@@ -2663,7 +2683,7 @@ export function SalesChartReport() {
             >
               <Download className="w-4 h-4" />
               Xuất Excel
-            </button>
+            </Button>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -2824,68 +2844,78 @@ export function SalesChartReport() {
   const getChartData = () => {
     switch (analysisType) {
       case "time":
-        // Use dashboard stats to get filtered orders
-        const dashboardStats = getDashboardStats();
-        if (!dashboardStats || !dashboardStats.filteredCompletedOrders) {
-          return [];
-        }
+        const timeStart = new Date(startDate);
+        const timeEnd = new Date(endDate);
+        timeEnd.setHours(23, 59, 59, 999);
 
-        const filteredOrders = dashboardStats.filteredCompletedOrders;
+        // Group orders by date using EXACT same logic as dashboard
+        const dailyData: { [date: string]: { revenue: number; orders: number } } =
+          {};
 
-        console.log("Chart data generation:", {
-          filteredOrdersCount: filteredOrders.length,
-          sampleOrder: filteredOrders[0]
-            ? {
-                id: filteredOrders[0].id,
-                total: filteredOrders[0].total,
-                orderedAt: filteredOrders[0].orderedAt,
-                status: filteredOrders[0].status,
-              }
-            : null,
+        console.log("Time Analysis Debug:", {
+          startDate,
+          endDate,
+          timeStart: timeStart.toISOString(),
+          timeEnd: timeEnd.toISOString(),
+          ordersLength: orders?.length || 0,
         });
 
-        // Calculate daily sales from filtered completed orders
-        const dailySales: {
-          [date: string]: { revenue: number; orders: number };
-        } = {};
+        if (orders && Array.isArray(orders)) {
+          // Use EXACT same filtering logic as dashboard
+          const filteredOrders = orders.filter((order: any) => {
+            // EXACT same status check as dashboard
+            if (
+              order.status !== "paid" &&
+              order.status !== "completed" &&
+              order.status !== "served" &&
+              order.status !== "confirmed"
+            ) {
+              return false;
+            }
 
-        filteredOrders.forEach((order: any) => {
-          const orderDate = new Date(
-            order.orderedAt ||
-              order.createdAt ||
-              order.created_at ||
-              order.paidAt ||
-              order.date,
+            // EXACT same date parsing as dashboard
+            const orderDate = new Date(
+              order.orderedAt ||
+                order.paidAt ||
+                order.createdAt ||
+                order.created_at,
+            );
+
+            if (isNaN(orderDate.getTime())) {
+              return false;
+            }
+
+            const dateMatch = orderDate >= timeStart && orderDate <= timeEnd;
+            return dateMatch;
+          });
+
+          console.log(
+            `Time analysis: ${filteredOrders.length} orders after filtering`,
           );
 
-          if (isNaN(orderDate.getTime())) {
-            console.warn("Invalid date in chart data generation:", order.id);
-            return;
-          }
+          filteredOrders.forEach((order: any) => {
+            const orderDate = new Date(
+              order.orderedAt ||
+                order.paidAt ||
+                order.createdAt ||
+                order.created_at,
+            );
+            const dateKey = orderDate.toISOString().split("T")[0];
 
-          const year = orderDate.getFullYear();
-          const month = (orderDate.getMonth() + 1).toString().padStart(2, "0");
-          const day = orderDate.getDate().toString().padStart(2, "0");
-          const date = `${year}-${month}-${day}`;
+            if (!dailyData[dateKey]) {
+              dailyData[dateKey] = { revenue: 0, orders: 0 };
+            }
 
-          if (!dailySales[date]) {
-            dailySales[date] = { revenue: 0, orders: 0 };
-          }
+            dailyData[dateKey].revenue += Number(order.total || 0);
+            dailyData[dateKey].orders += 1;
+          });
+        }
 
-          // Use exact same revenue calculation as dashboard
-          const orderTotal = Number(order.total || order.amount || 0);
-          const orderDiscount = Number(order.discount || 0);
-          const revenue = orderTotal - orderDiscount;
-
-          dailySales[date].revenue += revenue;
-          dailySales[date].orders += 1;
-        });
-
-        const chartData = Object.entries(dailySales)
-          .map(([date, data]) => ({
+        const chartData = Object.keys(dailyData)
+          .map((date) => ({
             name: formatDate(date), // Format date for display
-            revenue: data.revenue,
-            orders: data.orders,
+            revenue: dailyData[date].revenue,
+            orders: dailyData[date].orders,
           }))
           .sort(
             (a, b) => new Date(a.name).getTime() - new Date(b.name).getTime(),
@@ -2896,135 +2926,25 @@ export function SalesChartReport() {
         return chartData;
 
       case "product":
-        if (!products || !Array.isArray(products)) return [];
+        // Use the new productAnalysisData
+        if (productAnalysisLoading) return [];
+        if (!productAnalysisData || !productAnalysisData.productStats) return [];
 
-        const productStart = new Date(startDate);
-        const productEnd = new Date(endDate);
-        productEnd.setHours(23, 59, 59, 999);
-
-        const productSales: {
-          [productId: string]: { quantity: number; revenue: number };
-        } = {};
-
-        // Get dữ liệu từ orders có items sẵn có
-        if (orders && Array.isArray(orders)) {
-          // Filter orders theo ngày và status
-          const filteredOrders = orders.filter((order: any) => {
-            // Chỉ lấy orders đã hoàn thành/thanh toán
-            if (order.status !== "completed" && order.status !== "paid")
-              return false;
-
-            const orderDate = new Date(
-              order.orderedAt ||
-                order.createdAt ||
-                order.created_at ||
-                order.paidAt,
-            );
-            const orderDateOnly = new Date(orderDate);
-            orderDateOnly.setHours(0, 0, 0, 0);
-            return orderDateOnly >= productStart && orderDateOnly <= productEnd;
-          });
-
-          // Xử lý từng order để lấy order items từ order.items nếu có
-          filteredOrders.forEach((order: any) => {
-            if (order.items && Array.isArray(order.items)) {
-              order.items.forEach((item: any) => {
-                const productId = item.productId?.toString();
-                if (!productId) return;
-
-                // Kiểm tra product có tồn tại trong danh sách products không
-                const product = products.find(
-                  (p) => p.id.toString() === productId,
-                );
-                if (!product) return;
-
-                if (!productSales[productId]) {
-                  productSales[productId] = {
-                    quantity: 0,
-                    revenue: 0,
-                  };
-                }
-
-                const quantity = Number(item.quantity || 0);
-                const total = Number(item.total || 0);
-
-                productSales[productId].quantity += quantity;
-                productSales[productId].revenue += total;
-              });
-            }
-          });
-        }
-
-        // Fallback: Process transaction items from transactions if available
-        if (
-          transactions &&
-          Array.isArray(transactions) &&
-          Object.keys(productSales).length === 0
-        ) {
-          const filteredTransactions = transactions.filter(
-            (transaction: any) => {
-              const transactionDate = new Date(
-                transaction.createdAt || transaction.created_at,
-              );
-              const transactionDateOnly = new Date(transactionDate);
-              transactionDateOnly.setHours(0, 0, 0, 0);
-              return (
-                transactionDateOnly >= productStart &&
-                transactionDateOnly <= productEnd
-              );
-            },
-          );
-
-          filteredTransactions.forEach((transaction: any) => {
-            if (transaction.items && Array.isArray(transaction.items)) {
-              transaction.items.forEach((item: any) => {
-                const productId = item.productId?.toString();
-                if (!productId) return;
-
-                // Check if this product is in our products list
-                const product = products.find(
-                  (p) => p.id.toString() === productId,
-                );
-                if (!product) return;
-
-                if (!productSales[productId]) {
-                  productSales[productId] = {
-                    quantity: 0,
-                    revenue: 0,
-                  };
-                }
-
-                const quantity = Number(item.quantity || 0);
-                const total = Number(item.total || 0);
-                const unitPrice = Number(item.unitPrice || item.price || 0);
-                const totalAmount = quantity * unitPrice;
-                const discount = Math.max(0, totalAmount - total);
-
-                productSales[productId].quantity += quantity;
-                productSales[productId].revenue += total;
-              });
-            }
-          });
-        }
-
-        return products
-          .map((product: any) => {
-            const sales = productSales[product.id.toString()] || {
-              quantity: 0,
-              revenue: 0,
-            };
-            return {
-              name:
-                product.name.length > 15
-                  ? product.name.substring(0, 15) + "..."
-                  : product.name,
-              revenue: sales.revenue,
-              quantity: sales.quantity,
-            };
-          })
+        const productChartData = (productAnalysisData.productStats || [])
+          .map((product: any) => ({
+            name:
+              product.productName.length > 15
+                ? product.productName.substring(0, 15) + "..."
+                : product.productName,
+            revenue: product.totalRevenue,
+            quantity: product.totalQuantity,
+          }))
           .filter((item) => item.quantity > 0)
           .sort((a, b) => b.revenue - a.revenue)
           .slice(0, 10);
+
+        console.log("Generated product chart data:", productChartData);
+        return productChartData;
 
       case "employee":
         try {
@@ -3037,7 +2957,7 @@ export function SalesChartReport() {
           const empEnd = new Date(endDate);
           empEnd.setHours(23, 59, 59, 999);
 
-          // Use EXACT same filtering logic as dashboard for orders
+          // Use EXACT same filtering logic as dashboard
           const empFilteredOrders = orders.filter((order: any) => {
             // Check if order is completed/paid (EXACT same as dashboard)
             if (order.status !== "completed" && order.status !== "paid")
@@ -3227,232 +3147,26 @@ export function SalesChartReport() {
 
   // Product Report Logic (Moved up to be before renderChart)
   const renderProductReport = () => {
-    const getFilteredProducts = () => {
-      if (!products || !Array.isArray(products)) return [];
+    if (productAnalysisLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
 
-      return products.filter((product: any) => {
-        const searchMatch =
-          !productSearch ||
-          product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-          (product.sku &&
-            product.sku.toLowerCase().includes(productSearch.toLowerCase()));
+    if (!productAnalysisData || !productAnalysisData.productStats) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">Không có dữ liệu sản phẩm</div>
+        </div>
+      );
+    }
 
-        const categoryMatch =
-          selectedCategory === "all" ||
-          product.categoryId?.toString() === selectedCategory;
-
-        const typeMatch =
-          productType === "all" ||
-          (productType === "combo" && product.productType === 3) ||
-          (productType === "product" && product.productType === 1) ||
-          (productType === "service" && product.productType === 2);
-
-        return searchMatch && categoryMatch && typeMatch;
-      });
-    };
+    const { productStats, totalRevenue, totalQuantity, totalProducts } = productAnalysisData;
 
     const getSalesData = () => {
-      const filteredProducts = getFilteredProducts();
-      if (!filteredProducts.length) return [];
-
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
-      console.log("Product Report Debug:", {
-        startDate,
-        endDate,
-        start: start.toISOString(),
-        end: end.toISOString(),
-        ordersLength: orders?.length || 0,
-        transactionsLength: transactions?.length || 0,
-      });
-
-      const productSales: {
-        [productId: string]: {
-          quantity: number;
-          totalAmount: number;
-          discount: number;
-          revenue: number;
-        };
-      } = {};
-
-      // Process order items from orders first (main data source)
-      if (orders && Array.isArray(orders)) {
-        // Use EXACT same filtering logic as other reports
-        const filteredOrders = orders.filter((order: any) => {
-          // Check if order is completed/paid (EXACT same as dashboard)
-          if (order.status !== "completed" && order.status !== "paid")
-            return false;
-
-          // Try multiple possible date fields (EXACT same as dashboard)
-          const orderDate = new Date(
-            order.orderedAt ||
-              order.createdAt ||
-              order.created_at ||
-              order.paidAt,
-          );
-
-          // Skip if date is invalid
-          if (isNaN(orderDate.getTime())) {
-            return false;
-          }
-
-          // Fix date comparison - ensure we're comparing dates correctly
-          const startOfDay = new Date(start);
-          startOfDay.setHours(0, 0, 0, 0);
-          const endOfDay = new Date(end);
-          endOfDay.setHours(23, 59, 59, 999);
-
-          return orderDate >= startOfDay && orderDate <= endOfDay;
-        });
-
-        console.log("Filtered Orders for Product Report:", {
-          totalOrders: orders.length,
-          filteredOrders: filteredOrders.length,
-          sampleOrder: filteredOrders[0]
-            ? {
-                id: filteredOrders[0].id,
-                status: filteredOrders[0].status,
-                orderedAt: filteredOrders[0].orderedAt,
-                createdAt: filteredOrders[0].createdAt,
-                items: filteredOrders[0].items?.length || 0,
-              }
-            : null,
-        });
-
-        filteredOrders.forEach((order: any) => {
-          if (order.items && Array.isArray(order.items)) {
-            order.items.forEach((item: any) => {
-              const productId = item.productId?.toString();
-              if (!productId) return;
-
-              // Check if this product is in our filtered products list
-              const product = filteredProducts.find(
-                (p) => p.id.toString() === productId,
-              );
-              if (!product) return;
-
-              if (!productSales[productId]) {
-                productSales[productId] = {
-                  quantity: 0,
-                  totalAmount: 0,
-                  discount: 0,
-                  revenue: 0,
-                };
-              }
-
-              const quantity = Number(item.quantity || 0);
-              const total = Number(item.total || 0);
-              const unitPrice = Number(item.unitPrice || item.price || 0);
-              const totalAmount = quantity * unitPrice;
-              const discount = Math.max(0, totalAmount - total); // Ensure discount is not negative
-
-              productSales[productId].quantity += quantity;
-              productSales[productId].totalAmount += totalAmount;
-              productSales[productId].discount += discount;
-              productSales[productId].revenue += total;
-
-              console.log("Processing order item:", {
-                productId,
-                productName: product.name,
-                quantity,
-                total,
-                unitPrice,
-                totalAmount,
-                discount,
-              });
-            });
-          }
-        });
-      }
-
-      // Fallback: Process transaction items from transactions if no order data
-      if (
-        transactions &&
-        Array.isArray(transactions) &&
-        Object.keys(productSales).length === 0
-      ) {
-        const filteredTransactions = transactions.filter((transaction: any) => {
-          const transactionDate = new Date(
-            transaction.createdAt || transaction.created_at,
-          );
-          const transactionDateOnly = new Date(transactionDate);
-          transactionDateOnly.setHours(0, 0, 0, 0);
-          return transactionDateOnly >= start && transactionDateOnly <= end;
-        });
-
-        console.log("Fallback to transactions:", {
-          totalTransactions: transactions.length,
-          filteredTransactions: filteredTransactions.length,
-        });
-
-        filteredTransactions.forEach((transaction: any) => {
-          if (transaction.items && Array.isArray(transaction.items)) {
-            transaction.items.forEach((item: any) => {
-              const productId = item.productId?.toString();
-              if (!productId) return;
-
-              // Check if this product is in our filtered products list
-              const product = filteredProducts.find(
-                (p) => p.id.toString() === productId,
-              );
-              if (!product) return;
-
-              if (!productSales[productId]) {
-                productSales[productId] = {
-                  quantity: 0,
-                  totalAmount: 0,
-                  discount: 0,
-                  revenue: 0,
-                };
-              }
-
-              const quantity = Number(item.quantity || 0);
-              const total = Number(item.total || 0);
-              const unitPrice = Number(item.price || 0);
-              const totalAmount = quantity * unitPrice;
-              const discount = Math.max(0, totalAmount - total);
-
-              productSales[productId].quantity += quantity;
-              productSales[productId].totalAmount += totalAmount;
-              productSales[productId].discount += discount;
-              productSales[productId].revenue += total;
-            });
-          }
-        });
-      }
-
-      console.log("Product Sales Summary:", productSales);
-
-      return filteredProducts
-        .map((product: any) => {
-          const sales = productSales[product.id.toString()] || {
-            quantity: 0,
-            totalAmount: 0,
-            discount: 0,
-            revenue: 0,
-          };
-
-          // Tìm category name
-          const categoryName =
-            categories && Array.isArray(categories)
-              ? categories.find((cat) => cat.id === product.categoryId)?.name ||
-                ""
-              : "";
-
-          return {
-            productCode: product.sku || "",
-            productName: product.name || "",
-            unit: "", // Đơn vị tính - để trống vì không có trong database
-            quantitySold: sales.quantity,
-            totalAmount: sales.totalAmount,
-            discount: sales.discount,
-            revenue: sales.revenue,
-            categoryName: categoryName,
-          };
-        })
-        .filter((item) => item !== null);
+      return productStats || [];
     };
 
     const data = getSalesData();
@@ -3473,39 +3187,38 @@ export function SalesChartReport() {
               {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
               {t("reports.toDate")}: {formatDate(endDate)}
             </span>
-            <button
+            <Button
               onClick={() => {
-                // Prepare data with summary row
                 const dataWithSummary = [
-                  ...data.map((item) => ({
-                    "Mã SP": item.productCode,
-                    "Tên SP": item.productName,
-                    "Đơn vị": item.unit,
-                    "Số lượng": item.quantitySold,
-                    "Tổng tiền": formatCurrency(item.totalAmount),
-                    "Giảm giá": formatCurrency(item.discount),
-                    "Doanh thu": formatCurrency(item.revenue),
-                    "Nhóm SP": item.categoryName,
+                  ...data.map((product: any) => ({
+                    "Mã sản phẩm": product.productSku || "",
+                    "Tên sản phẩm": product.productName,
+                    "Danh mục": product.categoryName || "",
+                    "Số lượng bán": product.totalQuantity,
+                    "Doanh thu": formatCurrency(product.totalRevenue),
+                    "Số đơn hàng": product.orderCount || 0,
+                    "Giá trị đơn TB": formatCurrency(product.averageOrderValue || 0),
+                    "Mức độ bán": product.totalQuantity > 50 ? "Cao" : product.totalQuantity > 10 ? "Trung bình" : "Thấp",
                   })),
                   // Add summary row
                   {
-                    "Mã SP": "TỔNG CỘNG",
-                    "Tên SP": `${data.length} sản phẩm`,
-                    "Đơn vị": "",
-                    "Số lượng": data.reduce((sum, item) => sum + item.quantitySold, 0),
-                    "Tổng tiền": formatCurrency(data.reduce((sum, item) => sum + item.totalAmount, 0)),
-                    "Giảm giá": formatCurrency(data.reduce((sum, item) => sum + item.discount, 0)),
-                    "Doanh thu": formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0)),
-                    "Nhóm SP": "",
+                    "Mã sản phẩm": "TỔNG CỘNG",
+                    "Tên sản phẩm": `${totalProducts} sản phẩm`,
+                    "Danh mục": "-",
+                    "Số lượng bán": totalQuantity,
+                    "Doanh thu": formatCurrency(totalRevenue),
+                    "Số đơn hàng": data.reduce((sum: number, product: any) => sum + (product.orderCount || 0), 0),
+                    "Giá trị đơn TB": formatCurrency(totalProducts > 0 ? totalRevenue / totalProducts : 0),
+                    "Mức độ bán": "-",
                   }
                 ];
-                exportToExcel(dataWithSummary, `ProductSales_${startDate}_to_${endDate}`);
+                exportToExcel(dataWithSummary, `ProductAnalysis_${startDate}_to_${endDate}`);
               }}
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
             >
               <Download className="w-4 h-4" />
               Xuất Excel
-            </button>
+            </Button>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -3514,46 +3227,52 @@ export function SalesChartReport() {
               <Table className="w-full min-w-[1000px] xl:min-w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t("reports.productCode")}</TableHead>
                     <TableHead>{t("reports.productName")}</TableHead>
-                    <TableHead>{t("reports.unit")}</TableHead>
+                    <TableHead>{t("reports.productCode")}</TableHead>
+                    <TableHead>{t("reports.categoryName")}</TableHead>
                     <TableHead className="text-center">
                       {t("reports.quantitySold")}
                     </TableHead>
                     <TableHead className="text-right">
-                      {t("reports.totalAmount")}
+                      {t("reports.totalRevenue")}
                     </TableHead>
-                    <TableHead className="text-right">
-                      {t("reports.discount")}
-                    </TableHead>
-                    <TableHead className="text-right">
-                      {t("reports.revenue")}
-                    </TableHead>
-                    <TableHead>{t("reports.categoryName")}</TableHead>
+                    <TableHead className="text-right">{t("reports.orderCount")}</TableHead>
+                    <TableHead className="text-right">{t("reports.averageOrderValue")}</TableHead>
+                    <TableHead className="text-center">{t("reports.salesLevel")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedData.length > 0 ? (
-                    paginatedData.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">
-                          {item.productCode}
+                    paginatedData.map((product: any, index: number) => (
+                      <TableRow key={product.productId || index}>
+                        <TableCell>{product.productName}</TableCell>
+                        <TableCell>{product.productSku || "-"}</TableCell>
+                        <TableCell>{product.categoryName || "-"}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {product.totalQuantity} {t("common.count")}
+                          </Badge>
                         </TableCell>
-                        <TableCell>{item.productName}</TableCell>
-                        <TableCell>{item.unit}</TableCell>
-                        <TableCell className="text-center">
-                          {item.quantitySold}
+                        <TableCell className="font-semibold text-green-600">
+                          {formatCurrency(product.totalRevenue)}
                         </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(item.totalAmount)}
+                        <TableCell>{product.orderCount || 0}</TableCell>
+                        <TableCell>
+                          {formatCurrency(product.averageOrderValue || 0)}
                         </TableCell>
-                        <TableCell className="text-right text-red-600">
-                          {formatCurrency(item.discount)}
+                        <TableCell>
+                          <Badge
+                            variant={
+                              (product.totalQuantity || 0) > 10 ? "default" : "outline"
+                            }
+                          >
+                            {product.totalQuantity > 50
+                              ? t("reports.high")
+                              : product.totalQuantity > 10
+                                ? t("reports.medium")
+                                : t("reports.low")}
+                          </Badge>
                         </TableCell>
-                        <TableCell className="text-right text-green-600 font-medium">
-                          {formatCurrency(item.revenue)}
-                        </TableCell>
-                        <TableCell>{item.categoryName}</TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -3638,12 +3357,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
+            )}
+          </CardContent>
+        </Card>
+      );
+    };
 
   // Render Chart component
   const renderChart = () => {

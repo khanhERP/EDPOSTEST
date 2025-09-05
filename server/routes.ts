@@ -3667,6 +3667,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Product Analysis API - using orders and order_items data
+  app.get("/api/product-analysis", async (req: TenantRequest, res) => {
+    try {
+      const { startDate, endDate, categoryId, productType, productSearch } = req.query;
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log("Product Analysis API called with params:", {
+        startDate,
+        endDate,
+        categoryId,
+        productType,
+        productSearch,
+      });
+
+      // Build date conditions
+      const dateConditions = [];
+      if (startDate && endDate) {
+        const startDateTime = new Date(startDate as string);
+        const endDateTime = new Date(endDate as string);
+        endDateTime.setHours(23, 59, 59, 999);
+        dateConditions.push(
+          gte(orders.orderedAt, startDateTime),
+          lte(orders.orderedAt, endDateTime),
+        );
+      }
+
+      // Build category conditions for products
+      const categoryConditions = [];
+      if (categoryId && categoryId !== "all") {
+        categoryConditions.push(
+          eq(products.categoryId, parseInt(categoryId as string)),
+        );
+      }
+
+      // Build product type conditions
+      const typeConditions = [];
+      if (productType && productType !== "all") {
+        const typeMap = {
+          combo: 3,
+          product: 1,
+          service: 2,
+        };
+        const typeValue = typeMap[productType as keyof typeof typeMap];
+        if (typeValue) {
+          typeConditions.push(eq(products.productType, typeValue));
+        }
+      }
+
+      // Build search conditions
+      const searchConditions = [];
+      if (productSearch && productSearch !== "" && productSearch !== "all") {
+        const searchTerm = `%${productSearch}%`;
+        searchConditions.push(
+          or(
+            ilike(products.name, searchTerm),
+            ilike(products.sku, searchTerm),
+          ),
+        );
+      }
+
+      // Query order items with product details from completed/paid orders
+      const productSalesData = await db
+        .select({
+          productId: orderItemsTable.productId,
+          productName: products.name,
+          productSku: products.sku,
+          categoryId: products.categoryId,
+          categoryName: categories.name,
+          productType: products.productType,
+          unitPrice: orderItemsTable.unitPrice,
+          quantity: orderItemsTable.quantity,
+          total: orderItemsTable.total,
+          orderId: orderItemsTable.orderId,
+          orderDate: orders.orderedAt,
+          orderStatus: orders.status,
+        })
+        .from(orderItemsTable)
+        .innerJoin(orders, eq(orderItemsTable.orderId, orders.id))
+        .innerJoin(products, eq(orderItemsTable.productId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(
+          and(
+            or(eq(orders.status, "paid"), eq(orders.status, "completed")),
+            ...dateConditions,
+            ...categoryConditions,
+            ...typeConditions,
+            ...searchConditions,
+          ),
+        )
+        .orderBy(desc(orders.orderedAt));
+
+      console.log(`Found ${productSalesData.length} product sales records`);
+
+      // Group and aggregate data by product
+      const productMap = new Map();
+
+      productSalesData.forEach((item) => {
+        const productId = item.productId;
+        const quantity = Number(item.quantity || 0);
+        const revenue = Number(item.total || 0);
+
+        if (productMap.has(productId)) {
+          const existing = productMap.get(productId);
+          existing.totalQuantity += quantity;
+          existing.totalRevenue += revenue;
+          existing.orderCount += 1;
+        } else {
+          productMap.set(productId, {
+            productId: item.productId,
+            productName: item.productName,
+            productSku: item.productSku,
+            categoryId: item.categoryId,
+            categoryName: item.categoryName,
+            productType: item.productType,
+            totalQuantity: quantity,
+            totalRevenue: revenue,
+            averagePrice: Number(item.unitPrice || 0),
+            orderCount: 1,
+          });
+        }
+      });
+
+      // Convert to array and calculate final metrics
+      const productStats = Array.from(productMap.values()).map((product) => ({
+        ...product,
+        averageOrderValue: product.orderCount > 0 ? product.totalRevenue / product.orderCount : 0,
+      }));
+
+      // Calculate totals
+      const totalRevenue = productStats.reduce((sum, p) => sum + p.totalRevenue, 0);
+      const totalQuantity = productStats.reduce((sum, p) => sum + p.totalQuantity, 0);
+      const totalProducts = productStats.length;
+
+      // Sort by revenue (descending)
+      productStats.sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+      const result = {
+        productStats,
+        totalRevenue,
+        totalQuantity,
+        totalProducts,
+        summary: {
+          topSellingProduct: productStats[0] || null,
+          averageRevenuePerProduct: totalProducts > 0 ? totalRevenue / totalProducts : 0,
+        },
+      };
+
+      console.log("Product Analysis Results:", {
+        totalRevenue,
+        totalQuantity,
+        totalProducts,
+        topProduct: result.summary.topSellingProduct?.productName,
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Product analysis error:", error);
+      res.status(500).json({
+        error: "Failed to fetch product analysis",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
   // Enhanced API endpoints for sales chart report - using same data source as dashboard
   app.get(
     "/api/dashboard-data/:startDate/:endDate",
