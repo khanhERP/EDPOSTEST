@@ -1419,8 +1419,6 @@ export class DatabaseStorage implements IStorage {
           .values(itemsToInsert)
           .returning();
 
-        console.log(`Storage: ${insertedItems.length} order items created`);</old_str>
-
         console.log(`Storage: ${insertedItems.length} order items created`);
 
         // Update product stock for items that track inventory
@@ -1747,7 +1745,7 @@ export class DatabaseStorage implements IStorage {
       const [order] = updateResult;
 
       const queryEndTime = Date.now();
-      console.log(`⏱️ DATABASE QUERY COMPLETED in ${queryEndTime - queryStartTime}ms`);
+      console.log(`⏱️ DATABASE QUERY COMPLETED in ${queryEndTime - queryEndTime}ms`);
       console.log(`🔍 Database query execution result:`, {
         queryDuration: `${queryEndTime - queryStartTime}ms`,
         rowsAffected: order ? 1 : 0,
@@ -1997,7 +1995,7 @@ export class DatabaseStorage implements IStorage {
     }
     const result = await database.delete(orderItemsTable).where(eq(orderItemsTable.id, itemId));
     return (result.rowCount ?? 0) > 0;
-  }</old_str>
+  }
 
   async getOrderItems(orderId: number, tenantDb?: any): Promise<OrderItem[]> {
     const database = tenantDb || this.db;
