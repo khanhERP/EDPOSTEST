@@ -329,16 +329,7 @@ export function TableReport() {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="w-auto"
               />
-              <Button
-                onClick={handleRefresh}
-                size="sm"
-                variant="outline"
-                className="ml-2"
-                disabled={isLoading}
-              >
-                <Search className="w-4 h-4 mr-1" />
-                {t("reports.refresh") || "Làm mới"}
-              </Button>
+              
             </div>
           </div>
         </CardHeader>
