@@ -646,7 +646,7 @@ function MenuReport() {
                 <table className="w-full min-w-[800px]">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2 px-4">{t("common.product") || "Sản phẩm"}</th>
+                      <th className="text-left py-2 px-4">{t("reports.product") || "Sản phẩm"}</th>
                       <th className="text-right py-2 px-4">{t("reports.quantitySold") || "Số lượng bán"}</th>
                       <th className="text-right py-2 px-4">{t("reports.totalRevenue") || "Tổng doanh thu"}</th>
                       <th className="text-right py-2 px-4">{t("reports.averagePrice") || "Giá trung bình"}</th>
