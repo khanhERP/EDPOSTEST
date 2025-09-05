@@ -137,7 +137,7 @@ export function EInvoiceModal({
 
 
   // Log the pre-selected payment method for debugging
-  console.log("💳 E-Invoice modal received payment method:", selectedPaymentMethod);
+  console.log("💳 E-invoice modal received payment method:", selectedPaymentMethod);
 
   // Mutation để hoàn tất thanh toán và cập nhật trạng thái
   const completePaymentMutation = useMutation({
@@ -700,7 +700,7 @@ export function EInvoiceModal({
     }
 
     setIsPublishing(true);
-    
+
     // Debug log current cart items
     console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
     console.log("cartItems received:", cartItems);
@@ -869,7 +869,7 @@ export function EInvoiceModal({
 
       const cartTotal = cartSubtotal + cartTaxAmount;
 
-      console.log("💰 E-Invoice totals calculated from real cart data:", {
+      console.log("💰 E-invoice totals calculated from real cart data:", {
         subtotal: cartSubtotal,
         tax: cartTaxAmount,
         total: cartTotal,
@@ -956,7 +956,7 @@ export function EInvoiceModal({
       const result = await response.json();
       console.log("Invoice published successfully:", result);
 
-      let invoiceResult = { success: false, invoice: null, message: "" };
+      let invoiceResult = { success: false, invoice: null, message: "", receipt: null };
       if (result.success) {
         console.log(
           "✅ E-invoice published successfully, now saving invoice and order to database",
@@ -970,7 +970,50 @@ export function EInvoiceModal({
             tradeNumber: result.data?.invoiceNo, // Assuming tradeNumber is the same as invoiceNo
           },
           message: result.message,
+          receipt: { // Include receipt data here
+            transactionId: result.data?.invoiceNo || `TXN-${Date.now()}`,
+            items: cartItems.map((item) => {
+              const itemPrice =
+                typeof item.price === "string"
+                  ? parseFloat(item.price)
+                  : item.price;
+              const itemQuantity =
+                typeof item.quantity === "string"
+                  ? parseInt(item.quantity)
+                  : item.quantity;
+              const itemTaxRate =
+                typeof item.taxRate === "string"
+                  ? parseFloat(item.taxRate || "0")
+                  : item.taxRate || 0;
+              const itemSubtotal = itemPrice * itemQuantity;
+              const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+              return {
+                id: item.id,
+                productId: item.id,
+                productName: item.name,
+                price: itemPrice.toFixed(2),
+                quantity: itemQuantity,
+                total: (itemSubtotal + itemTax).toFixed(2),
+                sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+                taxRate: itemTaxRate,
+              };
+            }),
+            subtotal: cartSubtotal.toFixed(2),
+            tax: cartTaxAmount.toFixed(2),
+            total: total.toFixed(2),
+            paymentMethod: "einvoice",
+            originalPaymentMethod: selectedPaymentMethod,
+            amountReceived: total.toFixed(2),
+            change: "0.00",
+            cashierName: "System User",
+            createdAt: new Date().toISOString(),
+            invoiceNumber: result.data?.invoiceNo || null,
+            customerName: formData.customerName,
+            customerTaxCode: formData.taxCode,
+          }
         };
+
 
         // Map order totals to variables for invoice saving
         const orderSubtotal = cartSubtotal;
@@ -1112,62 +1155,13 @@ export function EInvoiceModal({
           description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
         });
 
-        // Tạo receipt data ngay sau khi phát hành thành công
-        const receiptData = {
-          transactionId: result.data?.invoiceNo || `TXN-${Date.now()}`,
-          items: cartItems.map((item) => {
-            const itemPrice =
-              typeof item.price === "string"
-                ? parseFloat(item.price)
-                : item.price;
-            const itemQuantity =
-              typeof item.quantity === "string"
-                ? parseInt(item.quantity)
-                : item.quantity;
-            const itemTaxRate =
-              typeof item.taxRate === "string"
-                ? parseFloat(item.taxRate || "0")
-                : item.taxRate || 0;
-            const itemSubtotal = itemPrice * itemQuantity;
-            const itemTax = (itemSubtotal * itemTaxRate) / 100;
-
-            return {
-              id: item.id,
-              productId: item.id,
-              productName: item.name,
-              price: itemPrice.toFixed(2),
-              quantity: itemQuantity,
-              total: (itemSubtotal + itemTax).toFixed(2),
-              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-              taxRate: itemTaxRate,
-            };
-          }),
-          subtotal: orderSubtotal.toFixed(2),
-          tax: orderTax.toFixed(2),
-          total: total.toFixed(2),
-          paymentMethod: "einvoice",
-          originalPaymentMethod: selectedPaymentMethod, // Add original payment method
-          amountReceived: total.toFixed(2),
-          change: "0.00",
-          cashierName: "System User",
-          createdAt: new Date().toISOString(),
-          invoiceNumber: result.data?.invoiceNo || null,
-          customerName: formData.customerName,
-          customerTaxCode: formData.taxCode,
-        };
-
-        console.log(
-          "📄 Created receipt data for published e-invoice:",
-          receiptData,
-        );
-
         // Prepare comprehensive invoice data with all necessary flags
         const completeInvoiceData = {
           success: true, // Add success flag
           paymentMethod: selectedPaymentMethod, // Use original payment method
           originalPaymentMethod: selectedPaymentMethod,
           publishLater: true,
-          receipt: receiptData, // Receipt data to display receipt modal
+          receipt: invoiceResult.receipt, // Receipt data to display receipt modal
           customerName: formData.customerName,
           taxCode: formData.taxCode,
           showReceiptModal: true, // Flag for parent component to show receipt modal
@@ -1191,123 +1185,12 @@ export function EInvoiceModal({
 
         console.log("--------------------------------------------------");
       } else {
-        throw new Error(
-          result.message || "Có lỗi xảy ra khi phát hành hóa đơn",
-        );
-      }
-      // CRITICAL: Always create transaction for every payment, regardless of invoice type
-        console.log("📄 Creating transaction for payment...");
-
-        // Calculate subtotal, tax, and total for transaction creation
-        let subtotal = 0;
-        let tax = 0;
-
-        cartItems.forEach(item => {
-            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
-
-            const itemSubtotal = itemPrice * itemQuantity;
-            const itemTax = (itemSubtotal * itemTaxRate) / 100;
-
-            subtotal += itemSubtotal;
-            tax += itemTax;
-        });
-
-        const transactionTotal = total; // Use the total passed to the modal
-
-
-        const transactionData = {
-          transaction: {
-            transactionId: `TXN-${Date.now()}`,
-            subtotal: subtotal.toString(),
-            tax: tax.toString(),
-            total: transactionTotal.toString(),
-            paymentMethod: getPaymentMethodName(selectedPaymentMethod),
-            cashierName: "POS User",
-            notes: invoiceResult.success ? "Hóa đơn đã phát hành" : "Thanh toán POS",
-            invoiceId: invoiceResult?.invoice?.id || null,
-            invoiceNumber: invoiceResult?.invoice?.tradeNumber || null,
-          },
-          items: cartItems.map(item => ({
-            productId: item.id,
-            productName: item.name,
-            price: typeof item.price === 'string' ? item.price : item.price.toString(),
-            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-            total: (
-              (typeof item.price === 'string' ? parseFloat(item.price) : item.price) *
-              (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)
-            ).toString()
-          }))
-        };
-
-        try {
-          const transactionResponse = await fetch("/api/transactions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(transactionData),
-          });
-
-          if (transactionResponse.ok) {
-            const transactionResult = await transactionResponse.json();
-            console.log("✅ Transaction created successfully:", transactionResult);
-
-            // Include transaction data in the receipt
-            // Ensure receiptData is accessible here or re-created if necessary
-            // For simplicity, let's assume receiptData is available in this scope or passed as argument.
-            // If not, it needs to be created here.
-            if (typeof onConfirm === 'function') {
-              const receiptDataForTransaction = {
-                transactionId: transactionData.transaction.transactionId,
-                transaction: transactionResult, // Add the transaction result
-                // Include other relevant details for receipt display if needed
-                subtotal: subtotal.toFixed(2),
-                tax: tax.toFixed(2),
-                total: transactionTotal.toFixed(2),
-                paymentMethod: getPaymentMethodName(selectedPaymentMethod),
-                cashierName: transactionData.transaction.cashierName,
-                notes: transactionData.transaction.notes,
-                invoiceId: transactionData.transaction.invoiceId,
-                invoiceNumber: transactionData.transaction.invoiceNumber,
-                cartItems: cartItems, // Include cart items
-              };
-              // This part needs careful integration with how onConfirm is used.
-              // If onConfirm is primarily for invoice results, this might need a different callback or structure.
-              // For now, assuming we want to pass transaction details along with invoice confirmation.
-              // A better approach might be to have a separate callback for transaction confirmation or merge them.
-              // Let's pass the transaction ID to the receipt data.
-              if (invoiceResult.success) {
-                // Assuming invoiceResult is defined and contains receipt data
-                invoiceResult.receipt.transactionId = transactionData.transaction.transactionId;
-              }
-            }
-          } else {
-            const errorText = await transactionResponse.text();
-            console.error("❌ Failed to create transaction:", errorText);
-            // Continue with payment flow even if transaction creation fails
-          }
-        } catch (transactionError) {
-          console.error("❌ Error creating transaction:", transactionError);
-          // Continue with payment flow even if transaction creation fails
-        }
-
-
-        // Call onConfirm only after transaction creation attempt (for published invoices)
-        // If it was a publish later, onConfirm was already called.
-        if (invoiceResult.success && !true /* Not publishLater */) {
-             // This part needs to be re-evaluated as onConfirm is called for both publish and publishLater
-             // If publishLater is true, onConfirm has already been called.
-             // This logic might be redundant or need adjustment.
-        }
-      } else {
         // If invoice publishing failed, still try to create a transaction for the payment
         console.warn("Invoice publishing failed, proceeding to create transaction for payment.");
 
-        // Re-calculate values if needed, or reuse from above if scope permits
-        subtotal = 0;
-        tax = 0;
+        // Calculate values for failed invoice transaction
+        let subtotal = 0;
+        let tax = 0;
         cartItems.forEach(item => {
             const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
             const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
@@ -1357,9 +1240,6 @@ export function EInvoiceModal({
           if (transactionResponse.ok) {
             const transactionResult = await transactionResponse.json();
             console.log("✅ Transaction created successfully for failed invoice:", transactionResult);
-             // If invoice publishing failed, and we still want to trigger a receipt modal or similar,
-             // we would need to construct a different payload for onConfirm.
-             // For now, focusing on ensuring the transaction is created.
           } else {
             const errorText = await transactionResponse.text();
             console.error("❌ Failed to create transaction for failed invoice:", errorText);
