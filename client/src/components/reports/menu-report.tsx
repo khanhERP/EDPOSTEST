@@ -619,10 +619,10 @@ function MenuReport() {
         )}
       </div>
 
-      {/* Product List */}
+      {/* Product Sales Analysis from Orders */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("reports.menuItemAnalysis") || "Phân tích sản phẩm"}</CardTitle>
+          <CardTitle>{t("reports.menuItemAnalysis") || "Phân tích sản phẩm theo đơn hàng"}</CardTitle>
         </CardHeader>
         <CardContent>
           {analysisLoading ? (
@@ -630,60 +630,105 @@ function MenuReport() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
               <p className="mt-2 text-gray-500">Đang tải dữ liệu...</p>
             </div>
-          ) : filteredProducts.length === 0 ? (
+          ) : !menuAnalysis?.productStats || menuAnalysis.productStats.length === 0 ? (
             <div className="text-center py-8">
               <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">{t("common.noData") || "Không có dữ liệu"}</p>
+              <p className="text-gray-500">{t("common.noData") || "Không có dữ liệu bán hàng"}</p>
               <p className="text-sm text-gray-400 mt-2">
-                Thử thay đổi bộ lọc để xem kết quả khác
+                Chọn khoảng thời gian có dữ liệu bán hàng để xem phân tích
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4">{t("common.product") || "Sản phẩm"}</th>
-                    <th className="text-left py-2 px-4">{t("common.sku") || "SKU"}</th>
-                    <th className="text-left py-2 px-4">{t("common.category") || "Danh mục"}</th>
-                    <th className="text-left py-2 px-4">{t("common.type") || "Loại"}</th>
-                    <th className="text-right py-2 px-4">{t("common.price") || "Giá"}</th>
-                    <th className="text-right py-2 px-4">{t("common.stock") || "Tồn kho"}</th>
-                    <th className="text-center py-2 px-4">{t("common.status") || "Trạng thái"}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.map((product: Product) => {
-                    const category = categories.find((c: Category) => c.id === product.categoryId);
-                    return (
-                      <tr key={product.id} className="border-b hover:bg-gray-50">
-                        <td className="py-2 px-4 font-medium">{product.name}</td>
-                        <td className="py-2 px-4 font-mono text-sm">{product.sku}</td>
-                        <td className="py-2 px-4">{category?.name || 'N/A'}</td>
-                        <td className="py-2 px-4">
-                          <Badge variant="outline">
-                            {getProductTypeName(product.productType)}
-                          </Badge>
-                        </td>
-                        <td className="py-2 px-4 text-right font-medium">
-                          {formatCurrency(product.price)} ₫
-                        </td>
-                        <td className="py-2 px-4 text-right">
-                          <span className={`${product.stock <= 10 ? 'text-red-600' : 'text-gray-900'}`}>
-                            {product.stock}
-                          </span>
-                        </td>
-                        <td className="py-2 px-4 text-center">
-                          <Badge variant={product.isActive ? "default" : "secondary"}>
-                            {product.isActive ? t("common.active") || "Hoạt động" : t("common.inactive") || "Không hoạt động"}
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[800px]">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-4">{t("common.product") || "Sản phẩm"}</th>
+                      <th className="text-right py-2 px-4">{t("reports.quantitySold") || "Số lượng bán"}</th>
+                      <th className="text-right py-2 px-4">{t("reports.totalRevenue") || "Tổng doanh thu"}</th>
+                      <th className="text-right py-2 px-4">{t("reports.averagePrice") || "Giá trung bình"}</th>
+                      <th className="text-right py-2 px-4">{t("reports.contribution") || "% Đóng góp"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {menuAnalysis.productStats
+                      .sort((a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0))
+                      .map((product, index) => {
+                        const contribution = menuAnalysis.totalRevenue > 0 
+                          ? ((product.totalRevenue || 0) / menuAnalysis.totalRevenue * 100)
+                          : 0;
+                        
+                        return (
+                          <tr key={`${product.productId}-${index}`} className="border-b hover:bg-gray-50">
+                            <td className="py-2 px-4 font-medium">
+                              {product.productName || `Sản phẩm ${product.productId}`}
+                            </td>
+                            <td className="py-2 px-4 text-right">
+                              <span className="font-medium text-blue-600">
+                                {(product.totalQuantity || 0).toLocaleString('vi-VN')}
+                              </span>
+                            </td>
+                            <td className="py-2 px-4 text-right font-medium">
+                              <span className="text-green-600">
+                                {formatCurrency(product.totalRevenue || 0)} ₫
+                              </span>
+                            </td>
+                            <td className="py-2 px-4 text-right">
+                              {formatCurrency(product.averagePrice || 0)} ₫
+                            </td>
+                            <td className="py-2 px-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <div className="w-12 bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-blue-600 h-2 rounded-full" 
+                                    style={{ width: `${Math.min(contribution, 100)}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-sm font-medium">
+                                  {contribution.toFixed(1)}%
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Summary Stats */}
+              <div className="mt-4 pt-4 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                  <div className="text-center">
+                    <p className="text-gray-500">Tổng sản phẩm</p>
+                    <p className="font-bold text-lg">{menuAnalysis.productStats.length}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-gray-500">Tổng số lượng bán</p>
+                    <p className="font-bold text-lg text-blue-600">
+                      {menuAnalysis.totalQuantity.toLocaleString('vi-VN')}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-gray-500">Tổng doanh thu</p>
+                    <p className="font-bold text-lg text-green-600">
+                      {formatCurrency(menuAnalysis.totalRevenue)} ₫
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-gray-500">Giá trung bình</p>
+                    <p className="font-bold text-lg">
+                      {formatCurrency(
+                        menuAnalysis.totalQuantity > 0 
+                          ? menuAnalysis.totalRevenue / menuAnalysis.totalQuantity 
+                          : 0
+                      )} ₫
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
