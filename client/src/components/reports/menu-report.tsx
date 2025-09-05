@@ -381,10 +381,10 @@ function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.uniqueProducts") || "Sản phẩm"}
+                  {t("reports.uniqueProducts") || "Tổng số lượng đã bán"}
                 </p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {filteredProducts.length.toLocaleString('vi-VN')}
+                  {(menuAnalysis?.productStats?.reduce((total, product) => total + (product.totalQuantity || 0), 0) || 0).toLocaleString('vi-VN')}
                 </p>
               </div>
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
