@@ -700,10 +700,10 @@ export function EInvoiceModal({
     }
 
     setIsPublishing(true);
-    try {
-      // Debug log current cart items
-      console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
-      console.log("cartItems received:", cartItems);
+    
+    // Debug log current cart items
+    console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
+    console.log("cartItems received:", cartItems);
       console.log("cartItems length:", cartItems?.length || 0);
       console.log("cartItems detailed:", JSON.stringify(cartItems, null, 2));
       console.log("total amount:", total);

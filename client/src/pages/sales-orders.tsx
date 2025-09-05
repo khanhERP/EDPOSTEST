@@ -633,7 +633,7 @@ export default function SalesOrders() {
 
     return (
       <Badge className={statusColors[status as keyof typeof statusColors] || statusColors[0]}>
-        {statusLabels[status as keyof typeof statusLabels] || "Không xác định"}
+        {statusLabels[status as keyof typeof statusColors] || "Không xác định"}
       </Badge>
     );
   };
@@ -1025,8 +1025,9 @@ export default function SalesOrders() {
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="w-6 h-6 text-green-600" />
-              <h1 className="text-2xl font-bold text-gray-800">Danh sách đơn hàng bán</h1>
+              <h1 className="text-2xl font-bold text-gray-800">Quản lý đơn hàng</h1>
             </div>
+            <p className="text-gray-600 mb-4">Quản lý tất cả đơn hàng từ bàn và bán hàng trực tiếp</p>
           </div>
 
           {/* Filters */}

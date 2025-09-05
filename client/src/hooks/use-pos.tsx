@@ -20,57 +20,111 @@ export function usePOS() {
 
   const checkoutMutation = useMutation({
     mutationFn: async ({ paymentData }: { paymentData: any }) => {
-      const transactionId = `TXN-${Date.now()}`;
+      const orderNumber = `ORD-${Date.now()}`;
       const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-      const taxRate = 0.0825;
-      const tax = subtotal * taxRate;
+      
+      // Calculate tax from products with afterTaxPrice
+      let tax = 0;
+      cart.forEach(item => {
+        if (item.afterTaxPrice) {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          const price = parseFloat(item.price);
+          const taxPerUnit = afterTaxPrice - price;
+          tax += taxPerUnit * item.quantity;
+        }
+      });
+      
       const total = subtotal + tax;
 
-      const transaction = {
-        transactionId,
+      const orderData = {
+        orderNumber,
+        tableId: null, // POS orders don't have tables
+        employeeId: null,
+        status: paymentData.paymentMethod === 'einvoice' ? 'served' : 'paid', // E-invoice orders start as served
+        customerName: "Khách hàng",
+        customerCount: 1,
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
-        paymentMethod: paymentData.paymentMethod === 'einvoice' ? 'einvoice' : paymentData.paymentMethod,
-        originalPaymentMethod: paymentData.originalPaymentMethod || paymentData.paymentMethod,
-        amountReceived: paymentData.amountReceived?.toFixed(2) || null,
-        change: paymentData.change?.toFixed(2) || null,
-        cashierName: "John Smith",
+        paymentMethod: paymentData.paymentMethod === 'einvoice' ? paymentData.originalPaymentMethod || 'cash' : paymentData.paymentMethod,
+        paymentStatus: paymentData.paymentMethod === 'einvoice' ? 'pending' : 'paid',
+        salesChannel: 'pos', // Mark as POS order
+        einvoiceStatus: paymentData.einvoiceStatus || 0,
+        notes: `POS Order - ${paymentData.cashierName || 'System'}`,
+        paidAt: paymentData.paymentMethod !== 'einvoice' ? new Date() : null,
       };
 
       const items = cart.map(item => ({
         productId: item.id,
         productName: item.name,
-        price: item.price,
         quantity: item.quantity,
+        unitPrice: item.price,
         total: item.total,
+        notes: null,
       }));
 
-      const response = await fetch("/api/transactions", {
+      const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transaction, items }),
+        body: JSON.stringify({ order: orderData, items }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to process transaction");
+        throw new Error(error.message || "Failed to process order");
       }
 
       return response.json();
     },
-    onSuccess: (receipt) => {
+    onSuccess: (order) => {
+      // Convert order to receipt format for compatibility
+      const receipt = {
+        id: order.id,
+        transactionId: order.orderNumber,
+        subtotal: order.subtotal,
+        tax: order.tax,
+        total: order.total,
+        paymentMethod: order.paymentMethod,
+        cashierName: "POS System",
+        notes: order.notes,
+        createdAt: order.orderedAt,
+        items: cart.map((item, index) => ({
+          id: index + 1,
+          transactionId: order.id,
+          productId: item.id,
+          productName: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          total: item.total,
+        })),
+      };
+      
       setLastReceipt(receipt);
       updateActiveOrderCart([]);
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      
+      // Dispatch events for real-time updates
+      if (typeof window !== 'undefined') {
+        const events = [
+          new CustomEvent('newOrderCreated', {
+            detail: { orderId: order.id, salesChannel: 'pos' }
+          }),
+          new CustomEvent('refreshOrders', {
+            detail: { immediate: true }
+          })
+        ];
+        events.forEach(event => window.dispatchEvent(event));
+      }
+      
       toast({
-        title: "Transaction Complete",
-        description: `Transaction ${receipt.transactionId} processed successfully`,
+        title: "Đơn hàng hoàn tất",
+        description: `Đơn hàng ${order.orderNumber} đã được xử lý thành công`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Transaction Failed",
+        title: "Đơn hàng thất bại",
         description: error.message,
         variant: "destructive",
       });
@@ -256,8 +310,8 @@ export function usePOS() {
   const processCheckout = async (paymentData: any): Promise<Receipt | null> => {
     if (cart.length === 0) {
       toast({
-        title: "Empty Cart",
-        description: "Cannot process checkout with empty cart",
+        title: "Giỏ hàng trống",
+        description: "Không thể thanh toán với giỏ hàng trống",
         variant: "destructive",
       });
       return null;
@@ -265,7 +319,28 @@ export function usePOS() {
 
     try {
       const result = await checkoutMutation.mutateAsync({ paymentData });
-      return result;
+      // Convert order to receipt format
+      const receipt = {
+        id: result.id,
+        transactionId: result.orderNumber,
+        subtotal: result.subtotal,
+        tax: result.tax,
+        total: result.total,
+        paymentMethod: result.paymentMethod,
+        cashierName: "POS System",
+        notes: result.notes,
+        createdAt: result.orderedAt,
+        items: cart.map((item, index) => ({
+          id: index + 1,
+          transactionId: result.id,
+          productId: item.id,
+          productName: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          total: item.total,
+        })),
+      };
+      return receipt;
     } catch (error) {
       return null;
     }

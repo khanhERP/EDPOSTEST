@@ -422,6 +422,20 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
 
                   <div className="border-t border-gray-200 my-2"></div>
 
+                  <Link href="/sales-orders">
+                    <button
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/sales-orders"
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-3" />
+                      Danh sách đơn hàng
+                    </button>
+                  </Link>
+
                   <Link href="/employees">
                     <button
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${

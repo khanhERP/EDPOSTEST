@@ -66,25 +66,35 @@ export function OrderManagement() {
     }
   }, [showReceiptModal, selectedReceipt, orderForPayment]);
 
+  // Query orders by date range
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
     refetchInterval: 2000, // Faster polling - every 2 seconds
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchIntervalInBackground: true, // Continue refetching in background
     staleTime: 0, // Always consider data fresh to force immediate updates
-    onSuccess: (data) => {
-      console.log(`🔍 DEBUG: Orders query onSuccess called:`, {
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/orders');
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+      const data = await response.json();
+      console.log(`🔍 DEBUG: Orders query completed:`, {
         ordersCount: data?.length || 0,
         timestamp: new Date().toISOString(),
+        tableOrders: data?.filter((o: any) => o.salesChannel === 'table').length || 0,
+        posOrders: data?.filter((o: any) => o.salesChannel === 'pos').length || 0,
         firstFewOrders: data?.slice(0, 3)?.map((o: any) => ({
           id: o.id,
           orderNumber: o.orderNumber,
           status: o.status,
+          salesChannel: o.salesChannel,
           tableId: o.tableId,
           storedTotal: o.total,
-          calculatedTotal: o.calculatedTotal // Log calculated total from API
+          calculatedTotal: o.calculatedTotal
         }))
       });
+      return data;
     },
     onError: (error) => {
       console.error(`❌ DEBUG: Orders query onError:`, error);
@@ -2348,7 +2358,7 @@ export function OrderManagement() {
                 </p>
                 {mixedPaymentData && (
                   <p className="text-sm text-blue-600">
-                    Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P (-{(mixedPaymentData.pointsToUse * 1000).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫)
+                    Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P ( -{(mixedPaymentData.pointsToUse * 1000).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫)
                   </p>
                 )}
               </div>
