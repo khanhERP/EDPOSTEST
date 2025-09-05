@@ -2475,7 +2475,7 @@ export function SalesChartReport() {
             )}
           </CardContent>
         </Card>
-      )
+      );
     } catch (error) {
       console.error("Error in renderSalesChannelReport:", error);
       return (
