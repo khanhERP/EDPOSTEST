@@ -19,7 +19,7 @@ import {
   inventoryTransactions,
   invoices,
   invoiceItems,
-} from "@shared/schema";</old_str>
+} from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, and, gte, lte, or, sql, desc, not, like } from "drizzle-orm";
 
