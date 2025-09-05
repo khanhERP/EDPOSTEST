@@ -579,6 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: validatedTransaction.paymentMethod,
         paymentStatus: "paid",
         salesChannel: "pos", // Mark as POS order
+        einvoiceStatus: 0, // Default e-invoice status
         invoiceId: validatedTransaction.invoiceId || null,
         invoiceNumber: validatedTransaction.invoiceNumber || null,
         notes: validatedTransaction.notes || `POS Transaction by ${validatedTransaction.cashierName}`,

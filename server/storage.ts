@@ -1385,39 +1385,19 @@ export class DatabaseStorage implements IStorage {
     try {
       const database = this.getSafeDatabase(tenantDb, 'createOrder');
 
-      console.log(`Storage: Creating order with data:`, {
-        orderNumber: orderData.orderNumber,
-        tableId: orderData.tableId,
-        salesChannel: orderData.salesChannel,
-        total: orderData.total,
-        itemCount: orderItems.length
-      });
+      console.log(`📝 Creating order with data:`, orderData);
+
+      // Ensure salesChannel is set properly
+      if (!orderData.salesChannel) {
+        orderData.salesChannel = orderData.tableId ? 'table' : 'pos';
+      }
+
+      console.log(`📝 Final order data with salesChannel: ${orderData.salesChannel}`, orderData);
 
       // Create the order
       const [order] = await database
         .insert(orders)
-        .values({
-          orderNumber: orderData.orderNumber,
-          tableId: orderData.tableId,
-          employeeId: orderData.employeeId,
-          status: orderData.status || "pending",
-          customerName: orderData.customerName,
-          customerCount: orderData.customerCount,
-          subtotal: orderData.subtotal,
-          tax: orderData.tax,
-          total: orderData.total,
-          paymentMethod: orderData.paymentMethod,
-          paymentStatus: orderData.paymentStatus || "pending",
-          einvoiceStatus: orderData.einvoiceStatus || 0,
-          templateNumber: orderData.templateNumber,
-          symbol: orderData.symbol,
-          invoiceNumber: orderData.invoiceNumber,
-          salesChannel: orderData.salesChannel || "table",
-          notes: orderData.notes,
-          orderedAt: orderData.orderedAt || new Date(),
-          servedAt: orderData.servedAt,
-          paidAt: orderData.paidAt,
-        })
+        .values(orderData)
         .returning();
 
       console.log(`Storage: Order created with ID ${order.id}, sales channel: ${order.salesChannel}`);

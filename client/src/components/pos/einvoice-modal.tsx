@@ -1063,10 +1063,11 @@ export function EInvoiceModal({
           const publishType = "publish"; // Indicate that this is a direct publish
           const einvoiceStatus = 1; // 1 = Đã phát hành
 
-          // Create order data
+          // Create order data for POS E-invoice order
           const orderData = {
             orderNumber: `ORD-${Date.now()}`,
             tableId: null, // No table for POS orders
+            salesChannel: 'pos', // ALWAYS pos for POS e-invoice orders
             customerName: formData.customerName,
             customerPhone: formData.phoneNumber || null,
             customerEmail: formData.email || null,

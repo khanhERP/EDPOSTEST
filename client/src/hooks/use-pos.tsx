@@ -48,8 +48,11 @@ export function usePOS() {
         total: total.toFixed(2),
         paymentMethod: paymentData.paymentMethod === 'einvoice' ? paymentData.originalPaymentMethod || 'cash' : paymentData.paymentMethod,
         paymentStatus: paymentData.paymentMethod === 'einvoice' ? 'pending' : 'paid',
-        salesChannel: 'pos', // Mark as POS order
+        salesChannel: 'pos', // Mark as POS order - ALWAYS pos for POS transactions
         einvoiceStatus: paymentData.einvoiceStatus || 0,
+        templateNumber: paymentData.templateNumber || null,
+        symbol: paymentData.symbol || null,
+        invoiceNumber: paymentData.invoiceNumber || null,
         notes: `POS Order - ${paymentData.cashierName || 'System'}`,
         paidAt: paymentData.paymentMethod !== 'einvoice' ? new Date() : null,
       };
