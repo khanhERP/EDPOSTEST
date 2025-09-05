@@ -2475,7 +2475,18 @@ export function SalesChartReport() {
             )}
           </CardContent>
         </Card>
+      )
+    } catch (error) {
+      console.error("Error in renderSalesChannelReport:", error);
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-red-500">
+            <p>Có lỗi xảy ra khi hiển thị báo cáo kênh bán hàng</p>
+            <p className="text-sm">{error?.message || "Unknown error"}</p>
+          </div>
+        </div>
       );
+    }
   };
 
   // Sales Channel Report Component Logic
@@ -2565,168 +2576,179 @@ export function SalesChartReport() {
 
       console.log("Sales Method Data:", salesMethodData);
 
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            {t("reports.channelSalesReport")}
-          </CardTitle>
-          <CardDescription className="flex items-center justify-between">
-            <span>
-              {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-              {t("reports.toDate")}: {formatDate(endDate)}
-            </span>
-            <button
-              onClick={() =>
-                exportToExcel(
-                  Object.entries(salesMethodData).map(([method, data]) => ({
-                    "Phương thức bán hàng": method,
-                    "Đơn đã hoàn thành": data.completedOrders,
-                    "Doanh thu đã hoàn thành": formatCurrency(
-                      data.completedRevenue,
-                    ),
-                    "Tổng đơn": data.totalOrders,
-                    "Tổng doanh thu": formatCurrency(data.totalRevenue),
-                  })),
-                  `SalesChannel_` + `${startDate}_to_${endDate}`,
-                )
-              }
-              className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Xuất Excel
-            </button>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="w-full">
-            <div className="overflow-x-visible">
-              <Table className="w-full min-w-[800px] xl:min-w-full">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead
-                      className="text-center font-bold bg-green-100 border"
-                      rowSpan={2}
-                    >
-                      {t("reports.salesMethod")}
-                    </TableHead>
-                    <TableHead
-                      className="text-center font-bold bg-green-100 border"
-                      colSpan={3}
-                    >
-                      {t("reports.totalOrders")}
-                    </TableHead>
-                    <TableHead
-                      className="text-center font-bold bg-green-100 border"
-                      colSpan={3}
-                    >
-                      {t("reports.revenue")}
-                    </TableHead>
-                  </TableRow>
-                  <TableRow>
-                    <TableHead className="text-center bg-green-50 border">
-                      {t("reports.completed")}
-                    </TableHead>
-                    <TableHead className="text-center bg-green-50 border">
-                      {t("reports.cancelled")}
-                    </TableHead>
-                    <TableHead className="text-center bg-green-50 border">
-                      {t("common.total")}
-                    </TableHead>
-                    <TableHead className="text-center bg-green-50 border">
-                      {t("reports.completed")}
-                    </TableHead>
-                    <TableHead className="text-center bg-green-50 border">
-                      {t("reports.cancelled")}
-                    </TableHead>
-                    <TableHead className="text-center bg-green-50 border">
-                      {t("common.total")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Object.entries(salesMethodData).map(([method, data]) => (
-                    <TableRow key={method} className="hover:bg-gray-50">
-                      <TableCell className="font-medium text-center border bg-blue-50">
-                        {method}
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              {t("reports.channelSalesReport")}
+            </CardTitle>
+            <CardDescription className="flex items-center justify-between">
+              <span>
+                {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+                {t("reports.toDate")}: {formatDate(endDate)}
+              </span>
+              <button
+                onClick={() =>
+                  exportToExcel(
+                    Object.entries(salesMethodData).map(([method, data]) => ({
+                      "Phương thức bán hàng": method,
+                      "Đơn đã hoàn thành": data.completedOrders,
+                      "Doanh thu đã hoàn thành": formatCurrency(
+                        data.completedRevenue,
+                      ),
+                      "Tổng đơn": data.totalOrders,
+                      "Tổng doanh thu": formatCurrency(data.totalRevenue),
+                    })),
+                    `SalesChannel_` + `${startDate}_to_${endDate}`,
+                  )
+                }
+                className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Xuất Excel
+              </button>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full">
+              <div className="overflow-x-visible">
+                <Table className="w-full min-w-[800px] xl:min-w-full">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead
+                        className="text-center font-bold bg-green-100 border"
+                        rowSpan={2}
+                      >
+                        {t("reports.salesMethod")}
+                      </TableHead>
+                      <TableHead
+                        className="text-center font-bold bg-green-100 border"
+                        colSpan={3}
+                      >
+                        {t("reports.totalOrders")}
+                      </TableHead>
+                      <TableHead
+                        className="text-center font-bold bg-green-100 border"
+                        colSpan={3}
+                      >
+                        {t("reports.revenue")}
+                      </TableHead>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead className="text-center bg-green-50 border">
+                        {t("reports.completed")}
+                      </TableHead>
+                      <TableHead className="text-center bg-green-50 border">
+                        {t("reports.cancelled")}
+                      </TableHead>
+                      <TableHead className="text-center bg-green-50 border">
+                        {t("common.total")}
+                      </TableHead>
+                      <TableHead className="text-center bg-green-50 border">
+                        {t("reports.completed")}
+                      </TableHead>
+                      <TableHead className="text-center bg-green-50 border">
+                        {t("reports.cancelled")}
+                      </TableHead>
+                      <TableHead className="text-center bg-green-50 border">
+                        {t("common.total")}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(salesMethodData).map(([method, data]) => (
+                      <TableRow key={method} className="hover:bg-gray-50">
+                        <TableCell className="font-medium text-center border bg-blue-50">
+                          {method}
+                        </TableCell>
+                        <TableCell className="text-center border">
+                          {data.completedOrders}
+                        </TableCell>
+                        <TableCell className="text-center border">
+                          {data.cancelledOrders}
+                        </TableCell>
+                        <TableCell className="text-center border font-medium">
+                          {data.totalOrders}
+                        </TableCell>
+                        <TableCell className="text-right border">
+                          {formatCurrency(data.completedRevenue)}
+                        </TableCell>
+                        <TableCell className="text-right border">
+                          {formatCurrency(data.cancelledRevenue)}
+                        </TableCell>
+                        <TableCell className="text-right border font-medium">
+                          {formatCurrency(data.totalRevenue)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+
+                    {/* Summary Row */}
+                    <TableRow className="bg-green-100 font-bold border-t-2">
+                      <TableCell className="text-center border font-bold">
+                        {t("common.total")}
                       </TableCell>
                       <TableCell className="text-center border">
-                        {data.completedOrders}
+                        {Object.values(salesMethodData).reduce(
+                          (sum, data) => sum + data.completedOrders,
+                          0,
+                        )}
                       </TableCell>
                       <TableCell className="text-center border">
-                        {data.cancelledOrders}
+                        {Object.values(salesMethodData).reduce(
+                          (sum, data) => sum + data.cancelledOrders,
+                          0,
+                        )}
                       </TableCell>
-                      <TableCell className="text-center border font-medium">
-                        {data.totalOrders}
+                      <TableCell className="text-center border font-bold">
+                        {Object.values(salesMethodData).reduce(
+                          (sum, data) => sum + data.totalOrders,
+                          0,
+                        )}
                       </TableCell>
                       <TableCell className="text-right border">
-                        {formatCurrency(data.completedRevenue)}
+                        {formatCurrency(
+                          Object.values(salesMethodData).reduce(
+                            (sum, data) => sum + data.completedRevenue,
+                            0,
+                          ),
+                        )}
                       </TableCell>
                       <TableCell className="text-right border">
-                        {formatCurrency(data.cancelledRevenue)}
+                        {formatCurrency(
+                          Object.values(salesMethodData).reduce(
+                            (sum, data) => sum + data.cancelledRevenue,
+                            0,
+                          ),
+                        )}
                       </TableCell>
-                      <TableCell className="text-right border font-medium">
-                        {formatCurrency(data.totalRevenue)}
+                      <TableCell className="text-right border font-bold">
+                        {formatCurrency(
+                          Object.values(salesMethodData).reduce(
+                            (sum, data) => sum + data.totalRevenue,
+                            0,
+                          ),
+                        )}
                       </TableCell>
                     </TableRow>
-                  ))}
-
-                  {/* Summary Row */}
-                  <TableRow className="bg-green-100 font-bold border-t-2">
-                    <TableCell className="text-center border font-bold">
-                      {t("common.total")}
-                    </TableCell>
-                    <TableCell className="text-center border">
-                      {Object.values(salesMethodData).reduce(
-                        (sum, data) => sum + data.completedOrders,
-                        0,
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center border">
-                      {Object.values(salesMethodData).reduce(
-                        (sum, data) => sum + data.cancelledOrders,
-                        0,
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center border font-bold">
-                      {Object.values(salesMethodData).reduce(
-                        (sum, data) => sum + data.totalOrders,
-                        0,
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right border">
-                      {formatCurrency(
-                        Object.values(salesMethodData).reduce(
-                          (sum, data) => sum + data.completedRevenue,
-                          0,
-                        ),
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right border">
-                      {formatCurrency(
-                        Object.values(salesMethodData).reduce(
-                          (sum, data) => sum + data.cancelledRevenue,
-                          0,
-                        ),
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right border font-bold">
-                      {formatCurrency(
-                        Object.values(salesMethodData).reduce(
-                          (sum, data) => sum + data.totalRevenue,
-                          0,
-                        ),
-                      )}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
+          </CardContent>
+        </Card>
+      );
+    } catch (error) {
+      console.error("Error in renderSalesChannelReport:", error);
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-red-500">
+            <p>Có lỗi xảy ra khi hiển thị báo cáo kênh bán hàng</p>
+            <p className="text-sm">{error?.message || "Unknown error"}</p>
           </div>
-        </CardContent>
-      </Card>
-    );
+        </div>
+      );
+    }
   };
 
   // Chart configurations for each analysis type
