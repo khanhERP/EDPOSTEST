@@ -1561,9 +1561,9 @@ export default function SalesOrders() {
                                 )}
                               </>
                             );
-                            })
-                          )}
-                        )}
+                            });
+                          })
+                        ) : null}
                       </tbody>
                     </table>
                     </div>
