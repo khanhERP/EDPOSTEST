@@ -1417,9 +1417,7 @@ export class DatabaseStorage implements IStorage {
         const insertedItems = await database
           .insert(orderItemsTable)
           .values(itemsToInsert)
-          .returning();
-
-        console.log(`Storage: ${insertedItems.length} order items created`);</old_str>
+          .returning();</old_str>
 
         console.log(`Storage: ${insertedItems.length} order items created`);
 
