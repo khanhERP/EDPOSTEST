@@ -66,24 +66,23 @@ export function OrderManagement() {
     }
   }, [showReceiptModal, selectedReceipt, orderForPayment]);
 
-  // Query orders by date range
+  // Query orders by date range - filter only table orders
   const { data: orders, isLoading: ordersLoading } = useQuery({
-    queryKey: ['/api/orders'],
+    queryKey: ['/api/orders', 'table'],
     refetchInterval: 2000, // Faster polling - every 2 seconds
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchIntervalInBackground: true, // Continue refetching in background
     staleTime: 0, // Always consider data fresh to force immediate updates
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/orders');
+      const response = await apiRequest('GET', '/api/orders?salesChannel=table');
       if (!response.ok) {
-        throw new Error('Failed to fetch orders');
+        throw new Error('Failed to fetch table orders');
       }
       const data = await response.json();
-      console.log(`🔍 DEBUG: Orders query completed:`, {
+      console.log(`🔍 DEBUG: Table orders query completed:`, {
         ordersCount: data?.length || 0,
         timestamp: new Date().toISOString(),
         tableOrders: data?.filter((o: any) => o.salesChannel === 'table').length || 0,
-        posOrders: data?.filter((o: any) => o.salesChannel === 'pos').length || 0,
         firstFewOrders: data?.slice(0, 3)?.map((o: any) => ({
           id: o.id,
           orderNumber: o.orderNumber,
@@ -94,10 +93,11 @@ export function OrderManagement() {
           calculatedTotal: o.calculatedTotal
         }))
       });
-      return data;
+      // Filter to ensure only table orders are returned
+      return Array.isArray(data) ? data.filter((order: any) => order.salesChannel === 'table') : [];
     },
     onError: (error) => {
-      console.error(`❌ DEBUG: Orders query onError:`, error);
+      console.error(`❌ DEBUG: Table orders query onError:`, error);
     }
   });
 
@@ -1668,8 +1668,8 @@ export function OrderManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
-          <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
+          <h2 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng bàn</h2>
+          <p className="text-gray-600">Theo dõi trạng thái đơn hàng từ bàn trong thời gian thực</p>
         </div>
         <div className="flex items-center gap-4">
           <Badge variant="secondary" className="text-lg px-4 py-2">
