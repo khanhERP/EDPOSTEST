@@ -1394,10 +1394,31 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`📝 Final order data with salesChannel: ${orderData.salesChannel}`, orderData);
 
-      // Create the order
+      // Create the order - ensure proper field mapping
+      const orderInsertData = {
+        orderNumber: orderData.orderNumber,
+        tableId: orderData.tableId,
+        employeeId: orderData.employeeId || null,
+        status: orderData.status,
+        customerName: orderData.customerName,
+        customerCount: orderData.customerCount,
+        subtotal: orderData.subtotal,
+        tax: orderData.tax,
+        total: orderData.total,
+        paymentMethod: orderData.paymentMethod,
+        paymentStatus: orderData.paymentStatus,
+        einvoiceStatus: orderData.einvoiceStatus || 0,
+        salesChannel: orderData.salesChannel,
+        notes: orderData.notes,
+        paidAt: orderData.paidAt,
+        orderedAt: new Date()
+      };
+
+      console.log(`📝 Final order insert data:`, orderInsertData);
+
       const [order] = await database
         .insert(orders)
-        .values(orderData)
+        .values(orderInsertData)
         .returning();
 
       console.log(`Storage: Order created with ID ${order.id}, sales channel: ${order.salesChannel}`);

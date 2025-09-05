@@ -153,7 +153,7 @@ export const orders = pgTable("orders", {
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull().default("0.00"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: text("payment_method"), // "cash", "card", "mobile"
+  paymentMethod: text("payment_method"), // "cash", "card", "mobile", "einvoice"
   paymentStatus: text("payment_status").notNull().default("pending"), // "pending", "paid", "refunded"
   einvoiceStatus: integer("einvoice_status").notNull().default(0), // 0=Chưa phát hành, 1=Đã phát hành, 2=Tạo nháp, 3=Đã duyệt, 4=Đã bị thay thế (hủy), 5=Thay thế tạm, 6=Thay thế, 7=Đã bị điều chỉnh, 8=Điều chỉnh tạm, 9=Điều chỉnh, 10=Đã hủy
   templateNumber: varchar("template_number", { length: 50 }),
@@ -282,7 +282,7 @@ export const insertOrderSchema = createInsertSchema(orders)
         errorMap: () => ({ message: "Invalid order status" }),
       },
     ),
-    paymentMethod: z.enum(["cash", "card", "mobile", "einvoice"]).optional(),
+    paymentMethod: z.string().optional(),
     paymentStatus: z.enum(["pending", "paid", "refunded"], {
       errorMap: () => ({ message: "Invalid payment status" }),
     }),
