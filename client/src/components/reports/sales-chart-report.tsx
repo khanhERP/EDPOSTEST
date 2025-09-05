@@ -913,14 +913,16 @@ export function SalesChartReport() {
                                         </div>
                                       </TableCell>
                                       <TableCell className="font-medium text-center border-r bg-blue-50 text-blue-600 text-sm min-w-[120px] px-4">
-                                        {new Date(
-                                          transaction.createdAt ||
-                                            transaction.created_at,
-                                        ).toLocaleTimeString("vi-VN", {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })}
-                                        <div className="text-xs text-gray-500 font-normal">
+                                        <div>
+                                          {new Date(
+                                            transaction.createdAt ||
+                                              transaction.created_at,
+                                          ).toLocaleTimeString("vi-VN", {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })}
+                                        </div>
+                                        <div className="text-xs text-gray-500 font-normal mt-1">
                                           {getPaymentMethodLabel(
                                             transaction.paymentMethod,
                                           )}
