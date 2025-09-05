@@ -154,7 +154,7 @@ export default function SalesOrders() {
   const [printReceiptData, setPrintReceiptData] = useState<any>(null);
 
 
-  // Query orders by date range
+  // Query orders by date range - load all orders regardless of salesChannel
   const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ["/api/orders/date-range", startDate, endDate, currentPage, itemsPerPage],
     queryFn: async () => {
@@ -164,7 +164,13 @@ export default function SalesOrders() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Sales Orders - Orders loaded by date:', data?.length || 0);
+        console.log('Sales Orders - All orders loaded by date:', {
+          total: data?.length || 0,
+          tableOrders: data?.filter((o: any) => o.salesChannel === 'table').length || 0,
+          posOrders: data?.filter((o: any) => o.salesChannel === 'pos').length || 0,
+          onlineOrders: data?.filter((o: any) => o.salesChannel === 'online').length || 0,
+          deliveryOrders: data?.filter((o: any) => o.salesChannel === 'delivery').length || 0,
+        });
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching orders by date:', error);
@@ -838,7 +844,7 @@ export default function SalesOrders() {
               <FileText className="w-6 h-6 text-green-600" />
               <h1 className="text-2xl font-bold text-gray-800">Quản lý đơn hàng</h1>
             </div>
-            <p className="text-gray-600 mb-4">Quản lý tất cả đơn hàng từ bàn và bán hàng trực tiếp</p>
+            <p className="text-gray-600 mb-4">Quản lý tất cả đơn hàng từ mọi nguồn: bàn, POS, online và giao hàng</p>
           </div>
 
           <Card className="mb-6">
@@ -965,8 +971,8 @@ export default function SalesOrders() {
                           <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
                             <div className="leading-tight">Ngày đơn bán</div>
                           </th>
-                          <th className="w-[60px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                            <div className="leading-tight">Bàn</div>
+                          <th className="w-[80px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Nguồn đơn</div>
                           </th>
                           <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
                             <div className="leading-tight">Mã khách hàng</div>
@@ -1066,7 +1072,18 @@ export default function SalesOrders() {
                                   </td>
                                   <td className="px-3 py-3">
                                     <div className="text-sm">
-                                      {getItemType(item) === 'order' && item.tableId ? `Bàn ${item.tableId}` : ''}
+                                      {(() => {
+                                        if (item.salesChannel === 'table') {
+                                          return item.tableId ? `Bàn ${item.tableId}` : 'Bàn';
+                                        } else if (item.salesChannel === 'pos') {
+                                          return 'POS';
+                                        } else if (item.salesChannel === 'online') {
+                                          return 'Online';
+                                        } else if (item.salesChannel === 'delivery') {
+                                          return 'Giao hàng';
+                                        }
+                                        return 'POS'; // default fallback
+                                      })()}
                                     </div>
                                   </td>
                                   <td className="px-3 py-3">
@@ -1199,9 +1216,23 @@ export default function SalesOrders() {
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Thu ngân:</td>
                                                       <td className="py-1 pr-6">Nguyễn Văn A</td>
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Hình thức bán:</td>
-                                                      <td className="py-1 pr-6">{getItemType(selectedInvoice) === 'order' ? 'Bán tại bàn' : 'Bán tại cửa hàng'}</td>
+                                                      <td className="py-1 pr-6">
+                                                        {(() => {
+                                                          const salesChannel = selectedInvoice.salesChannel;
+                                                          if (salesChannel === 'table') return 'Bán tại bàn';
+                                                          if (salesChannel === 'pos') return 'Bán tại quầy';
+                                                          if (salesChannel === 'online') return 'Bán online';
+                                                          if (salesChannel === 'delivery') return 'Giao hàng';
+                                                          return 'Bán tại quầy'; // default
+                                                        })()}
+                                                      </td>
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Bàn:</td>
-                                                      <td className="py-1 pr-6">{getItemType(selectedInvoice) === 'order' && selectedInvoice.tableId ? `Tầng 2 - Bàn ${selectedInvoice.tableId}` : '-'}</td>
+                                                      <td className="py-1 pr-6">
+                                                        {selectedInvoice.salesChannel === 'table' && selectedInvoice.tableId ? 
+                                                          `Bàn ${selectedInvoice.tableId}` : 
+                                                          selectedInvoice.salesChannel === 'table' ? 'Bàn' : '-'
+                                                        }
+                                                      </td>
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">Ký hiệu hóa đơn:</td>
                                                       <td className="py-1 pr-6">
                                                         {isEditing && editableInvoice ? (
