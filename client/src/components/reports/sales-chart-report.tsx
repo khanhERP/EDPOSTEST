@@ -649,9 +649,9 @@ export function SalesChartReport() {
                 Báo cáo chi tiết về doanh số và phân tích theo thời gian
               </span>
               <button
-                onClick={() =>
-                  exportToExcel(
-                    Object.entries(dailySales).map(([date, data]) => ({
+                onClick={() => {
+                  const dataWithSummary = [
+                    ...Object.entries(dailySales).map(([date, data]) => ({
                       Ngày: formatDate(date),
                       "Tổng số đơn hàng": data.orders,
                       "Doanh thu": formatCurrency(data.revenue),
@@ -659,9 +659,18 @@ export function SalesChartReport() {
                       "Thành tiền": formatCurrency(data.revenue),
                       "Khách hàng": data.customers,
                     })),
-                    `DailySales_${startDate}_to_${endDate}`,
-                  )
-                }
+                    // Add summary row
+                    {
+                      Ngày: "TỔNG CỘNG",
+                      "Tổng số đơn hàng": Object.values(dailySales).reduce((sum, data) => sum + data.orders, 0),
+                      "Doanh thu": formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0)),
+                      Thuế: formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue * 0.1, 0)),
+                      "Thành tiền": formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0)),
+                      "Khách hàng": Object.values(dailySales).reduce((sum, data) => sum + data.customers, 0),
+                    }
+                  ];
+                  exportToExcel(dataWithSummary, `DailySales_${startDate}_to_${endDate}`);
+                }}
                 className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
                 <Download className="w-4 h-4" />
@@ -1478,10 +1487,9 @@ export function SalesChartReport() {
                 {t("reports.toDate")}: {formatDate(endDate)}
               </span>
               <button
-                onClick={() =>
-                  exportToExcel(
-                    data.map((item) => ({
-                      // Changed to export all data (data instead of paginatedData)
+                onClick={() => {
+                  const dataWithSummary = [
+                    ...data.map((item) => ({
                       "Mã NV": item.employeeCode,
                       "Tên NV": item.employeeName,
                       "Số đơn": item.orderCount,
@@ -1498,9 +1506,25 @@ export function SalesChartReport() {
                       ),
                       "Tổng thanh toán": formatCurrency(item.total),
                     })),
-                    `EmployeeSales_${startDate}_to_${endDate}`,
-                  )
-                }
+                    // Add summary row
+                    {
+                      "Mã NV": "TỔNG CỘNG",
+                      "Tên NV": `${data.length} nhân viên`,
+                      "Số đơn": data.reduce((sum, item) => sum + item.orderCount, 0),
+                      "Doanh thu": formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0)),
+                      Thuế: formatCurrency(data.reduce((sum, item) => sum + item.tax, 0)),
+                      "Tổng cộng": formatCurrency(data.reduce((sum, item) => sum + item.total, 0)),
+                      ...Object.fromEntries(
+                        paymentMethodsArray.map((method) => [
+                          getPaymentMethodLabel(method),
+                          formatCurrency(data.reduce((sum, item) => sum + (item.paymentMethods[method] || 0), 0)),
+                        ]),
+                      ),
+                      "Tổng thanh toán": formatCurrency(data.reduce((sum, item) => sum + item.total, 0)),
+                    }
+                  ];
+                  exportToExcel(dataWithSummary, `EmployeeSales_${startDate}_to_${endDate}`);
+                }}
                 className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
                 <Download className="w-4 h-4" />
