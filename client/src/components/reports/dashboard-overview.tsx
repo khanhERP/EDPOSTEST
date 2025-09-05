@@ -166,10 +166,11 @@ export function DashboardOverview() {
         } : null
       });
 
-      // Calculate revenue from completed orders using actual order totals
+      // Calculate revenue from completed orders using actual order totals (includes tax)
       const periodRevenue = completedOrders.reduce((sum: number, order: any) => {
-        const total = Number(order.total || 0);
-        return sum + total;
+        // Use storedTotal if available (includes tax), otherwise fall back to total
+        const totalWithTax = Number(order.storedTotal || order.total || 0);
+        return sum + totalWithTax;
       }, 0);
 
       // Total count from completed orders only
