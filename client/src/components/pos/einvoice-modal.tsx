@@ -937,6 +937,12 @@ export function EInvoiceModal({
           "✅ E-invoice published successfully, now saving invoice and order to database",
         );
 
+        // Map order totals to variables for invoice saving
+        const orderSubtotal = cartSubtotal;
+        const orderTax = cartTaxAmount;
+        const orderTotal = cartTotal;
+
+
         // Lưu thông tin hóa đơn vào bảng invoices với mapping phương thức thanh toán
         try {
           // Map phương thức thanh toán theo yêu cầu
@@ -951,9 +957,9 @@ export function EInvoiceModal({
             customerAddress: formData.address || null,
             customerPhone: formData.phoneNumber || null,
             customerEmail: formData.email || null,
-            subtotal: cartSubtotal.toFixed(2),
-            tax: cartTaxAmount.toFixed(2),
-            total: cartTotal.toFixed(2),
+            subtotal: orderSubtotal.toFixed(2),
+            tax: orderTax.toFixed(2),
+            total: orderTotal.toFixed(2),
             paymentMethod: paymentMethodCode, // Sử dụng mã số thay vì text
             invoiceDate: new Date(),
             status: "published",
@@ -1029,9 +1035,9 @@ export function EInvoiceModal({
             customerName: formData.customerName,
             customerPhone: formData.phoneNumber || null,
             customerEmail: formData.email || null,
-            subtotal: cartSubtotal.toFixed(2),
-            tax: cartTaxAmount.toFixed(2),
-            total: cartTotal.toFixed(2),
+            subtotal: orderSubtotal.toFixed(2),
+            tax: orderTax.toFixed(2),
+            total: orderTotal.toFixed(2),
             status: orderStatus,
             paymentMethod: publishType === "publish" ? "cash" : null, // Use 'cash' for published, null for draft
             paymentStatus: publishType === "publish" ? "paid" : "pending",
@@ -1100,8 +1106,8 @@ export function EInvoiceModal({
               taxRate: itemTaxRate,
             };
           }),
-          subtotal: cartSubtotal.toFixed(2),
-          tax: cartTaxAmount.toFixed(2),
+          subtotal: orderSubtotal.toFixed(2),
+          tax: orderTax.toFixed(2),
           total: total.toFixed(2),
           paymentMethod: "einvoice",
           amountReceived: total.toFixed(2),
