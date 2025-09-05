@@ -514,131 +514,51 @@ export function PaymentMethodModal({
       const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
 
       if (isTemporaryOrder) {
-        console.log(`🔄 TEMPORARY ORDER DETECTED - creating order in database for ${method} payment on order ${orderInfo.id}`);
+        console.log(`📝 Creating POS ${method} order:`, orderData);
+        console.log("📦 Order items:", orderItems);
 
-        try {
-          // Create actual order in database for POS direct sales
-          const orderData = {
-            orderNumber: `ORD-${Date.now()}`,
-            tableId: null, // POS orders don't have tables
-            salesChannel: 'pos', // Mark as POS order
-            customerName: orderInfo.customerName || "Khách hàng lẻ",
-            customerCount: 1,
-            status: "paid", // Mark as paid immediately
-            paymentMethod: method,
-            paymentStatus: "paid",
-            subtotal: orderInfo.subtotal?.toString() || "0",
-            tax: orderInfo.tax?.toString() || "0", 
-            total: orderInfo.total?.toString() || "0",
-            notes: `POS ${method} Payment`,
-            paidAt: new Date().toISOString()
-          };
+        // Calculate subtotal, tax, and total for POS orders
+        let calculatedSubtotal = 0;
+        let calculatedTax = 0;
+        let calculatedTotal = 0;
 
-          // Prepare order items
-          const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
-            productId: item.productId || item.id,
-            quantity: parseInt(item.quantity?.toString() || "1"),
-            unitPrice: item.unitPrice || item.price?.toString() || "0",
-            total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
-            notes: null
-          }));
+        const itemsToProcess = orderInfo.items || cartItems || [];
 
-          console.log(`📝 Creating POS ${method} order:`, orderData);
-          console.log("📦 Order items:", orderItems);
+        itemsToProcess.forEach((item: any) => {
+          const price = parseFloat(item.price?.toString() || "0");
+          const quantity = parseInt(item.quantity?.toString() || "1");
+          const taxRate = item.taxRate || 0;
 
-          // Create order via API
-          const createResponse = await fetch('/api/orders', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              order: orderData,
-              items: orderItems
-            }),
-          });
+          const itemSubtotal = price * quantity;
+          const itemTax = itemSubtotal * (taxRate / 100);
+          const itemTotal = itemSubtotal + itemTax;
 
-          if (createResponse.ok) {
-            const createdOrder = await createResponse.json();
-            console.log(`✅ POS ${method} order created successfully:`, createdOrder);
-
-            // Update orderInfo with the real order ID for E-Invoice
-            orderInfo.id = createdOrder.id;
-            orderInfo.orderNumber = createdOrder.orderNumber;
-
-            setSelectedPaymentMethod(method);
-            setShowEInvoice(true);
-            console.log(`🔥 SHOWING E-INVOICE MODAL for created POS ${method} order ${createdOrder.id}`);
-          } else {
-            const errorText = await createResponse.text();
-            console.error(`❌ Failed to create POS ${method} order:`, errorText);
-            alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
-          }
-        } catch (error) {
-          console.error(`❌ Error creating POS ${method} order:`, error);
-          alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
-        }
-        return;
-      }
-
-      // For other payment methods (card, digital wallets) on real orders, update order status first
-      console.log(`🚀 REAL ORDER OTHER PAYMENT METHOD (${method}) - updating order status to 'paid' for order ${orderInfo.id}`);
-
-      try {
-        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'paid'
-          }),
+          calculatedSubtotal += itemSubtotal;
+          calculatedTax += itemTax;
+          calculatedTotal += itemTotal;
         });
 
-        if (statusResponse.ok) {
-          const data = await statusResponse.json();
-          console.log(`✅ Order status updated to paid successfully:`, data);
-
-          // Lưu phương thức thanh toán và hiển thị E-Invoice modal
-          setSelectedPaymentMethod(method);
-          setShowEInvoice(true);
-          console.log(`🔥 SHOWING E-INVOICE MODAL after successful ${method} payment`);
-        } else {
-          const errorText = await statusResponse.text();
-          console.error(`❌ Failed to update order status:`, errorText);
-          alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+        // Add tax to total if it's not already included in item totals, and if tax rate is applied
+        const taxIncludedInTotal = Math.abs(calculatedTotal - (calculatedSubtotal + calculatedTax)) < 0.01;
+        if (!taxIncludedInTotal && calculatedTax > 0) {
+           // If tax is not implicitly included, add it to the total.
+           // This logic might need refinement based on how 'total' is calculated elsewhere.
+           // For now, we ensure the final total reflects subtotal + tax.
         }
-      } catch (error) {
-        console.error(`❌ Error updating order status:`, error);
-        alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
-      }
-    }
-  };
-
-  const handleQRComplete = async () => {
-    console.log(`🚀 QR PAYMENT COMPLETE - checking order type for order ${orderInfo.id}`);
-
-    // Check if this is a real order or temporary order
-    const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
-
-    if (isTemporaryOrder) {
-      console.log(`🔄 TEMPORARY ORDER DETECTED - creating order in database for QR payment ${orderInfo.id}`);
-
-      try {
-        // Create actual order in database for POS direct sales
+        
         const orderData = {
           orderNumber: `ORD-${Date.now()}`,
           tableId: null, // POS orders don't have tables
           salesChannel: 'pos', // Mark as POS order
           customerName: orderInfo.customerName || "Khách hàng lẻ",
           customerCount: 1,
-          status: "paid", // Mark as paid immediately for QR
-          paymentMethod: "qrCode",
+          status: "paid", // Mark as paid immediately
+          paymentMethod: method,
           paymentStatus: "paid",
-          subtotal: orderInfo.subtotal?.toString() || "0",
-          tax: orderInfo.tax?.toString() || "0", 
-          total: orderInfo.total?.toString() || "0",
-          notes: `POS QR Payment - Transaction: ${currentTransactionUuid || 'N/A'}`,
+          subtotal: calculatedSubtotal.toString(),
+          tax: calculatedTax.toString(),
+          total: calculatedTotal.toString(),
+          notes: `POS ${method} Payment`,
           paidAt: new Date().toISOString()
         };
 
@@ -650,9 +570,6 @@ export function PaymentMethodModal({
           total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
           notes: null
         }));
-
-        console.log("📝 Creating POS QR order:", orderData);
-        console.log("📦 Order items:", orderItems);
 
         // Create order via API
         const createResponse = await fetch('/api/orders', {
@@ -668,64 +585,181 @@ export function PaymentMethodModal({
 
         if (createResponse.ok) {
           const createdOrder = await createResponse.json();
-          console.log(`✅ POS QR order created successfully:`, createdOrder);
+          console.log(`✅ POS ${method} order created successfully:`, createdOrder);
 
           // Update orderInfo with the real order ID for E-Invoice
           orderInfo.id = createdOrder.id;
           orderInfo.orderNumber = createdOrder.orderNumber;
 
-          setShowQRCode(false);
-          setQrCodeUrl("");
-          setSelectedPaymentMethod("qrCode");
+          setSelectedPaymentMethod(method);
           setShowEInvoice(true);
-          console.log(`🔥 SHOWING E-INVOICE MODAL for created POS QR order ${createdOrder.id}`);
+          console.log(`🔥 SHOWING E-INVOICE MODAL for created POS ${method} order ${createdOrder.id}`);
         } else {
           const errorText = await createResponse.text();
-          console.error(`❌ Failed to create POS QR order:`, errorText);
+          console.error(`❌ Failed to create POS ${method} order:`, errorText);
           alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
         }
-      } catch (error) {
-        console.error(`❌ Error creating POS QR order:`, error);
-        alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+      } else {
+        // For other payment methods (card, digital wallets) on real orders, update order status first
+        console.log(`🚀 REAL ORDER OTHER PAYMENT METHOD (${method}) - updating order status to 'paid' for order ${orderInfo.id}`);
+
+        try {
+          const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: 'paid'
+            }),
+          });
+
+          if (statusResponse.ok) {
+            const data = await statusResponse.json();
+            console.log(`✅ Order status updated to paid successfully:`, data);
+
+            // Lưu phương thức thanh toán và hiển thị E-Invoice modal
+            setSelectedPaymentMethod(method);
+            setShowEInvoice(true);
+            console.log(`🔥 SHOWING E-INVOICE MODAL after successful ${method} payment`);
+          } else {
+            const errorText = await statusResponse.text();
+            console.error(`❌ Failed to update order status:`, errorText);
+            alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+          }
+        } catch (error) {
+          console.error(`❌ Error updating order status:`, error);
+          alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+        }
       }
-      return;
     }
+  };
 
-    // For real orders, update order status to 'paid'
-    console.log(`🚀 REAL ORDER QR PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
+  const handleQRComplete = async () => {
+    console.log(`🚀 QR PAYMENT COMPLETE - checking order type for order ${orderInfo.id}`);
 
-    try {
-      console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
+    // Check if this is a real order or temporary order
+    const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
 
-      const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-        method: 'PUT',
+    if (isTemporaryOrder) {
+      console.log(`🔄 TEMPORARY ORDER DETECTED - creating order in database for QR payment ${orderInfo.id}`);
+
+      // Calculate subtotal, tax, and total for POS orders
+      let calculatedSubtotal = 0;
+      let calculatedTax = 0;
+      let calculatedTotal = 0;
+
+      const itemsToProcess = orderInfo.items || cartItems || [];
+
+      itemsToProcess.forEach((item: any) => {
+        const price = parseFloat(item.price?.toString() || "0");
+        const quantity = parseInt(item.quantity?.toString() || "1");
+        const taxRate = item.taxRate || 0;
+
+        const itemSubtotal = price * quantity;
+        const itemTax = itemSubtotal * (taxRate / 100);
+        const itemTotal = itemSubtotal + itemTax;
+
+        calculatedSubtotal += itemSubtotal;
+        calculatedTax += itemTax;
+        calculatedTotal += itemTotal;
+      });
+      
+      const orderData = {
+        orderNumber: `ORD-${Date.now()}`,
+        tableId: null, // POS orders don't have tables
+        salesChannel: 'pos', // Mark as POS order
+        customerName: orderInfo.customerName || "Khách hàng lẻ",
+        customerCount: 1,
+        status: "paid", // Mark as paid immediately for QR
+        paymentMethod: "qrCode",
+        paymentStatus: "paid",
+        subtotal: calculatedSubtotal.toString(),
+        tax: calculatedTax.toString(),
+        total: calculatedTotal.toString(),
+        notes: `POS QR Payment - Transaction: ${currentTransactionUuid || 'N/A'}`,
+        paidAt: new Date().toISOString()
+      };
+
+      // Prepare order items
+      const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
+        productId: item.productId || item.id,
+        quantity: parseInt(item.quantity?.toString() || "1"),
+        unitPrice: item.unitPrice || item.price?.toString() || "0",
+        total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
+        notes: null
+      }));
+
+      console.log("📝 Creating POS QR order:", orderData);
+      console.log("📦 Order items:", orderItems);
+
+      // Create order via API
+      const createResponse = await fetch('/api/orders', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'paid'
+          order: orderData,
+          items: orderItems
         }),
       });
 
-      if (statusResponse.ok) {
-        const data = await statusResponse.json();
-        console.log(`✅ Order status updated to paid successfully:`, data);
+      if (createResponse.ok) {
+        const createdOrder = await createResponse.json();
+        console.log(`✅ POS QR order created successfully:`, createdOrder);
+
+        // Update orderInfo with the real order ID for E-Invoice
+        orderInfo.id = createdOrder.id;
+        orderInfo.orderNumber = createdOrder.orderNumber;
 
         setShowQRCode(false);
         setQrCodeUrl("");
-
-        // Set payment method and show E-Invoice modal directly
         setSelectedPaymentMethod("qrCode");
         setShowEInvoice(true);
-        console.log(`🔥 SHOWING E-INVOICE MODAL after successful QR payment`);
+        console.log(`🔥 SHOWING E-INVOICE MODAL for created POS QR order ${createdOrder.id}`);
       } else {
-        const errorText = await statusResponse.text();
-        console.error(`❌ Failed to update order status:`, errorText);
+        const errorText = await createResponse.text();
+        console.error(`❌ Failed to create POS QR order:`, errorText);
+        alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+      }
+    } else {
+      // For real orders, update order status to 'paid'
+      console.log(`🚀 REAL ORDER QR PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
+
+      try {
+        console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
+
+        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'paid'
+          }),
+        });
+
+        if (statusResponse.ok) {
+          const data = await statusResponse.json();
+          console.log(`✅ Order status updated to paid successfully:`, data);
+
+          setShowQRCode(false);
+          setQrCodeUrl("");
+
+          // Set payment method and show E-Invoice modal directly
+          setSelectedPaymentMethod("qrCode");
+          setShowEInvoice(true);
+          console.log(`🔥 SHOWING E-INVOICE MODAL after successful QR payment`);
+        } else {
+          const errorText = await statusResponse.text();
+          console.error(`❌ Failed to update order status:`, errorText);
+          alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+        }
+      } catch (error) {
+        console.error(`❌ Error updating order status:`, error);
         alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
       }
-    } catch (error) {
-      console.error(`❌ Error updating order status:`, error);
-      alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
     }
   };
 
@@ -801,112 +835,126 @@ export function PaymentMethodModal({
     if (isTemporaryOrder) {
       console.log(`🔄 TEMPORARY ORDER DETECTED - creating order in database for POS payment ${orderInfo.id}`);
 
-      try {
-        // Create actual order in database for POS direct sales
-        const orderData = {
-          orderNumber: `ORD-${Date.now()}`,
-          tableId: null, // POS orders don't have tables
-          salesChannel: 'pos', // Mark as POS order
-          customerName: orderInfo.customerName || "Khách hàng lẻ",
-          customerCount: 1,
-          status: "paid", // Mark as paid immediately for cash
-          paymentMethod: "cash",
-          paymentStatus: "paid",
-          subtotal: orderInfo.subtotal?.toString() || "0",
-          tax: orderInfo.tax?.toString() || "0", 
-          total: orderInfo.total?.toString() || "0",
-          notes: `POS Cash Payment - Amount: ${receivedAmount}, Change: ${finalChange}`,
-          paidAt: new Date().toISOString()
-        };
+      // Calculate subtotal, tax, and total for POS orders
+      let calculatedSubtotal = 0;
+      let calculatedTax = 0;
+      let calculatedTotal = 0;
 
-        // Prepare order items
-        const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
-          productId: item.productId || item.id,
-          quantity: parseInt(item.quantity?.toString() || "1"),
-          unitPrice: item.unitPrice || item.price?.toString() || "0",
-          total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
-          notes: null
-        }));
+      const itemsToProcess = orderInfo.items || cartItems || [];
 
-        console.log("📝 Creating POS order:", orderData);
-        console.log("📦 Order items:", orderItems);
+      itemsToProcess.forEach((item: any) => {
+        const price = parseFloat(item.price?.toString() || "0");
+        const quantity = parseInt(item.quantity?.toString() || "1");
+        const taxRate = item.taxRate || 0;
 
-        // Create order via API
-        const createResponse = await fetch('/api/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            order: orderData,
-            items: orderItems
-          }),
-        });
+        const itemSubtotal = price * quantity;
+        const itemTax = itemSubtotal * (taxRate / 100);
+        const itemTotal = itemSubtotal + itemTax;
 
-        if (createResponse.ok) {
-          const createdOrder = await createResponse.json();
-          console.log(`✅ POS order created successfully:`, createdOrder);
+        calculatedSubtotal += itemSubtotal;
+        calculatedTax += itemTax;
+        calculatedTotal += itemTotal;
+      });
+      
+      const orderData = {
+        orderNumber: `ORD-${Date.now()}`,
+        tableId: null, // POS orders don't have tables
+        salesChannel: 'pos', // Mark as POS order
+        customerName: orderInfo.customerName || "Khách hàng lẻ",
+        customerCount: 1,
+        status: "paid", // Mark as paid immediately for cash
+        paymentMethod: "cash",
+        paymentStatus: "paid",
+        subtotal: calculatedSubtotal.toString(),
+        tax: calculatedTax.toString(),
+        total: calculatedTotal.toString(),
+        notes: `POS Cash Payment - Amount: ${cashAmountInput}, Change: ${finalChange}`,
+        paidAt: new Date(),
+      };
 
-          // Update orderInfo with the real order ID for E-Invoice
-          orderInfo.id = createdOrder.id;
-          orderInfo.orderNumber = createdOrder.orderNumber;
+      // Prepare order items
+      const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
+        productId: item.productId || item.id,
+        quantity: parseInt(item.quantity?.toString() || "1"),
+        unitPrice: item.unitPrice || item.price?.toString() || "0",
+        total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
+        notes: null
+      }));
 
-          // Reset form states
-          setShowCashPayment(false);
-          setAmountReceived("");
-          setCashAmountInput("");
-          setSelectedPaymentMethod("cash");
-          setShowEInvoice(true);
-          console.log(`🔥 SHOWING E-INVOICE MODAL for created POS order ${createdOrder.id}`);
-        } else {
-          const errorText = await createResponse.text();
-          console.error(`❌ Failed to create POS order:`, errorText);
-          alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
-        }
-      } catch (error) {
-        console.error(`❌ Error creating POS order:`, error);
-        alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
-      }
-      return;
-    }
+      console.log("📝 Creating POS order:", orderData);
+      console.log("📦 Order items:", orderItems);
 
-    // For real orders, update order status to 'paid' when cash payment is completed
-    console.log(`🚀 REAL ORDER CASH PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
-
-    try {
-      console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
-
-      const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-        method: 'PUT',
+      // Create order via API
+      const createResponse = await fetch('/api/orders', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'paid'
+          order: orderData,
+          items: orderItems
         }),
       });
 
-      if (statusResponse.ok) {
-        const data = await statusResponse.json();
-        console.log(`✅ Order status updated to paid successfully:`, data);
+      if (createResponse.ok) {
+        const createdOrder = await createResponse.json();
+        console.log(`✅ POS order created successfully:`, createdOrder);
 
-        // Reset trạng thái và đóng form tiền mặt
+        // Update orderInfo with the real order ID for E-Invoice
+        orderInfo.id = createdOrder.id;
+        orderInfo.orderNumber = createdOrder.orderNumber;
+
+        // Reset form states
         setShowCashPayment(false);
         setAmountReceived("");
         setCashAmountInput("");
-
-        // Lưu phương thức thanh toán và hiển thị E-Invoice modal
         setSelectedPaymentMethod("cash");
         setShowEInvoice(true);
-        console.log(`🔥 SHOWING E-INVOICE MODAL after successful cash payment`);
+        console.log(`🔥 SHOWING E-INVOICE MODAL for created POS order ${createdOrder.id}`);
       } else {
-        const errorText = await statusResponse.text();
-        console.error(`❌ Failed to update order status:`, errorText);
+        const errorText = await createResponse.text();
+        console.error(`❌ Failed to create POS order:`, errorText);
+        alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+      }
+    } else {
+      // For real orders, update order status to 'paid' when cash payment is completed
+      console.log(`🚀 REAL ORDER CASH PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
+
+      try {
+        console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
+
+        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'paid'
+          }),
+        });
+
+        if (statusResponse.ok) {
+          const data = await statusResponse.json();
+          console.log(`✅ Order status updated to paid successfully:`, data);
+
+          // Reset trạng thái và đóng form tiền mặt
+          setShowCashPayment(false);
+          setAmountReceived("");
+          setCashAmountInput("");
+
+          // Lưu phương thức thanh toán và hiển thị E-Invoice modal
+          setSelectedPaymentMethod("cash");
+          setShowEInvoice(true);
+          console.log(`🔥 SHOWING E-INVOICE MODAL after successful cash payment`);
+        } else {
+          const errorText = await statusResponse.text();
+          console.error(`❌ Failed to update order status:`, errorText);
+          alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+        }
+      } catch (error) {
+        console.error(`❌ Error updating order status:`, error);
         alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
       }
-    } catch (error) {
-      console.error(`❌ Error updating order status:`, error);
-      alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
     }
   };
 
