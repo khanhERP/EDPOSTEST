@@ -234,7 +234,7 @@ function MenuReport() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">
                 {t("reports.fromDate") || "Từ ngày"}
@@ -274,30 +274,7 @@ function MenuReport() {
               </Select>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("common.search") || "Tìm kiếm"}
-              </label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder={t("common.searchProduct") || "Tìm kiếm sản phẩm"}
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <div className="flex items-end">
-              <Button
-                onClick={handleRefresh}
-                className="flex items-center gap-2"
-                disabled={analysisLoading}
-              >
-                <RefreshCw className={`w-4 h-4 ${analysisLoading ? 'animate-spin' : ''}`} />
-                {analysisLoading ? 'Đang tải...' : 'Làm mới'}
-              </Button>
-            </div>
+            
           </div>
 
         </CardContent>
