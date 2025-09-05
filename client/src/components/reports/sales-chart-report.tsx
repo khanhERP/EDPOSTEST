@@ -962,9 +962,7 @@ export function SalesChartReport() {
                                       {(() => {
                                         const transactionMethod =
                                           transaction.paymentMethod || "cash";
-                                        const amount = Number(
-                                          transaction.total,
-                                        );
+                                        const amount = Number(transaction.total);
 
                                         // Get all unique payment methods from all transactions
                                         const allPaymentMethods = new Set();
@@ -2471,7 +2469,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
