@@ -2158,7 +2158,7 @@ export function SalesChartReport() {
                 exportToExcel(
                   paginatedData.map((item) => ({
                     "Mã KH": item.customerId,
-                    "Tên KH": item.customer,
+                    "Tên KH": item.customerName,
                     "Nhóm KH": item.customerGroup,
                     "Số đơn": item.orders,
                     "Tổng tiền": formatCurrency(item.totalAmount),
@@ -2471,7 +2471,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
