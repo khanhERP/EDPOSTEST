@@ -234,31 +234,6 @@ export function DashboardOverview() {
         "12",
       );
 
-      // Calculate days difference for average
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const daysDiff = Math.max(
-        1,
-        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
-      );
-      const dailyAverageRevenue = periodRevenue / daysDiff;
-
-      // Month revenue: same as period revenue for the selected date range
-      const monthRevenue = periodRevenue;
-
-      // Average order value
-      const averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
-
-      // Active orders from all current orders (not date-filtered)
-      const activeOrders = Array.isArray(allCurrentOrders) ? allCurrentOrders.filter((order: any) => 
-        order.status === 'pending' || order.status === 'in_progress' || order.status === 'confirmed' || 
-        order.status === 'preparing' || order.status === 'ready' || order.status === 'served'
-      ).length : 0;
-
-      const occupiedTables = validTables.filter(
-        (table: TableType) => table.status === "occupied",
-      );
-
       const finalStats = {
         periodRevenue,
         periodOrderCount,
