@@ -2494,248 +2494,232 @@ export function SalesChartReport() {
       );
     }
 
-    try {
-      const validOrders = Array.isArray(orders) ? orders : [];
+    const validOrders = Array.isArray(orders) ? orders : [];
 
-      // Filter completed/paid orders only
-      const completedOrders = validOrders.filter((order: any) => 
-        order.status === 'paid' || order.status === 'completed'
-      );
+    // Filter completed/paid orders only
+    const completedOrders = validOrders.filter((order: any) => 
+      order.status === 'paid' || order.status === 'completed'
+    );
 
-      console.log("Sales Channel Report Debug:", {
-        totalOrders: validOrders.length,
-        completedOrders: completedOrders.length,
-        dateRange: `${startDate} to ${endDate}`,
-        sampleOrder: completedOrders[0] ? {
-          id: completedOrders[0].id,
-          tableId: completedOrders[0].tableId,
-          total: completedOrders[0].total,
-          salesChannel: completedOrders[0].salesChannel
-        } : null
-      });
+    console.log("Sales Channel Report Debug:", {
+      totalOrders: validOrders.length,
+      completedOrders: completedOrders.length,
+      dateRange: `${startDate} to ${endDate}`,
+      sampleOrder: completedOrders[0] ? {
+        id: completedOrders[0].id,
+        tableId: completedOrders[0].tableId,
+        total: completedOrders[0].total,
+        salesChannel: completedOrders[0].salesChannel
+      } : null
+    });
 
-      // Group data by sales method (Dine In vs Takeaway)
-      const salesMethodData: {
-        [method: string]: {
-          completedOrders: number;
-          cancelledOrders: number;
-          totalOrders: number;
-          completedRevenue: number;
-          cancelledRevenue: number;
-          totalRevenue: number;
-        };
-      } = {
-        [t("reports.dineIn")]: {
-          completedOrders: 0,
-          cancelledOrders: 0,
-          totalOrders: 0,
-          completedRevenue: 0,
-          cancelledRevenue: 0,
-          totalRevenue: 0,
-        },
-        [t("reports.takeaway")]: {
-          completedOrders: 0,
-          cancelledOrders: 0,
-          totalOrders: 0,
-          completedRevenue: 0,
-          cancelledRevenue: 0,
-          totalRevenue: 0,
-        },
+    // Group data by sales method (Dine In vs Takeaway)
+    const salesMethodData: {
+      [method: string]: {
+        completedOrders: number;
+        cancelledOrders: number;
+        totalOrders: number;
+        completedRevenue: number;
+        cancelledRevenue: number;
+        totalRevenue: number;
       };
+    } = {
+      [t("reports.dineIn")]: {
+        completedOrders: 0,
+        cancelledOrders: 0,
+        totalOrders: 0,
+        completedRevenue: 0,
+        cancelledRevenue: 0,
+        totalRevenue: 0,
+      },
+      [t("reports.takeaway")]: {
+        completedOrders: 0,
+        cancelledOrders: 0,
+        totalOrders: 0,
+        completedRevenue: 0,
+        cancelledRevenue: 0,
+        totalRevenue: 0,
+      },
+    };
 
-      // Process completed orders ONLY
-      completedOrders.forEach((order: any) => {
-        try {
-          // Check tableId or salesChannel to determine method
-          const isDineIn = order.tableId && order.tableId !== null;
-          const method = isDineIn ? t("reports.dineIn") : t("reports.takeaway");
+    // Process completed orders ONLY
+    completedOrders.forEach((order: any) => {
+      // Check tableId or salesChannel to determine method
+      const isDineIn = order.tableId && order.tableId !== null;
+      const method = isDineIn ? t("reports.dineIn") : t("reports.takeaway");
 
-          if (salesMethodData[method]) {
-            salesMethodData[method].completedOrders += 1;
-            salesMethodData[method].completedRevenue += Number(order.total || 0);
-            salesMethodData[method].totalOrders += 1;
-            salesMethodData[method].totalRevenue += Number(order.total || 0);
-          }
-        } catch (error) {
-          console.warn("Error processing order for sales method:", error);
-        }
-      });
+      if (salesMethodData[method]) {
+        salesMethodData[method].completedOrders += 1;
+        salesMethodData[method].completedRevenue += Number(order.total || 0);
+        salesMethodData[method].totalOrders += 1;
+        salesMethodData[method].totalRevenue += Number(order.total || 0);
+      }
+    });
 
-      console.log("Sales Method Data:", salesMethodData);
+    console.log("Sales Method Data:", salesMethodData);
 
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              {t("reports.channelSalesReport")}
-            </CardTitle>
-            <CardDescription className="flex items-center justify-between">
-              <span>
-                {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-                {t("reports.toDate")}: {formatDate(endDate)}
-              </span>
-              <button
-                onClick={() =>
-                  exportToExcel(
-                    Object.entries(salesMethodData).map(([method, data]) => ({
-                      "Phương thức bán hàng": method,
-                      "Đơn đã hoàn thành": data.completedOrders,
-                      "Doanh thu đã hoàn thành": formatCurrency(
-                        data.completedRevenue,
-                      ),
-                      "Tổng đơn": data.totalOrders,
-                      "Tổng doanh thu": formatCurrency(data.totalRevenue),
-                    })),
-                    `SalesChannel_` + `${startDate}_to_${endDate}`,
-                  )
-                }
-                className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Xuất Excel
-              </button>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="w-full">
-              <div className="overflow-x-visible">
-                <Table className="w-full min-w-[800px] xl:min-w-full">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead
-                        className="text-center font-bold bg-green-100 border"
-                        rowSpan={2}
-                      >
-                        {t("reports.salesMethod")}
-                      </TableHead>
-                      <TableHead
-                        className="text-center font-bold bg-green-100 border"
-                        colSpan={3}
-                      >
-                        {t("reports.totalOrders")}
-                      </TableHead>
-                      <TableHead
-                        className="text-center font-bold bg-green-100 border"
-                        colSpan={3}
-                      >
-                        {t("reports.revenue")}
-                      </TableHead>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("reports.completed")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("reports.cancelled")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("common.total")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("reports.completed")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("reports.cancelled")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("common.total")}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(salesMethodData).map(([method, data]) => (
-                      <TableRow key={method} className="hover:bg-gray-50">
-                        <TableCell className="font-medium text-center border bg-blue-50">
-                          {method}
-                        </TableCell>
-                        <TableCell className="text-center border">
-                          {data.completedOrders}
-                        </TableCell>
-                        <TableCell className="text-center border">
-                          {data.cancelledOrders}
-                        </TableCell>
-                        <TableCell className="text-center border font-medium">
-                          {data.totalOrders}
-                        </TableCell>
-                        <TableCell className="text-right border">
-                          {formatCurrency(data.completedRevenue)}
-                        </TableCell>
-                        <TableCell className="text-right border">
-                          {formatCurrency(data.cancelledRevenue)}
-                        </TableCell>
-                        <TableCell className="text-right border font-medium">
-                          {formatCurrency(data.totalRevenue)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-
-                    {/* Summary Row */}
-                    <TableRow className="bg-green-100 font-bold border-t-2">
-                      <TableCell className="text-center border font-bold">
-                        {t("common.total")}
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            {t("reports.channelSalesReport")}
+          </CardTitle>
+          <CardDescription className="flex items-center justify-between">
+            <span>
+              {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+              {t("reports.toDate")}: {formatDate(endDate)}
+            </span>
+            <button
+              onClick={() =>
+                exportToExcel(
+                  Object.entries(salesMethodData).map(([method, data]) => ({
+                    "Phương thức bán hàng": method,
+                    "Đơn đã hoàn thành": data.completedOrders,
+                    "Doanh thu đã hoàn thành": formatCurrency(
+                      data.completedRevenue,
+                    ),
+                    "Tổng đơn": data.totalOrders,
+                    "Tổng doanh thu": formatCurrency(data.totalRevenue),
+                  })),
+                  `SalesChannel_` + `${startDate}_to_${endDate}`,
+                )
+              }
+              className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Xuất Excel
+            </button>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="w-full">
+            <div className="overflow-x-visible">
+              <Table className="w-full min-w-[800px] xl:min-w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead
+                      className="text-center font-bold bg-green-100 border"
+                      rowSpan={2}
+                    >
+                      {t("reports.salesMethod")}
+                    </TableHead>
+                    <TableHead
+                      className="text-center font-bold bg-green-100 border"
+                      colSpan={3}
+                    >
+                      {t("reports.totalOrders")}
+                    </TableHead>
+                    <TableHead
+                      className="text-center font-bold bg-green-100 border"
+                      colSpan={3}
+                    >
+                      {t("reports.revenue")}
+                    </TableHead>
+                  </TableRow>
+                  <TableRow>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("reports.completed")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("reports.cancelled")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("common.total")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("reports.completed")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("reports.cancelled")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("common.total")}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(salesMethodData).map(([method, data]) => (
+                    <TableRow key={method} className="hover:bg-gray-50">
+                      <TableCell className="font-medium text-center border bg-blue-50">
+                        {method}
                       </TableCell>
                       <TableCell className="text-center border">
-                        {Object.values(salesMethodData).reduce(
-                          (sum, data) => sum + data.completedOrders,
-                          0,
-                        )}
+                        {data.completedOrders}
                       </TableCell>
                       <TableCell className="text-center border">
-                        {Object.values(salesMethodData).reduce(
-                          (sum, data) => sum + data.cancelledOrders,
-                          0,
-                        )}
+                        {data.cancelledOrders}
                       </TableCell>
-                      <TableCell className="text-center border font-bold">
-                        {Object.values(salesMethodData).reduce(
-                          (sum, data) => sum + data.totalOrders,
-                          0,
-                        )}
+                      <TableCell className="text-center border font-medium">
+                        {data.totalOrders}
                       </TableCell>
                       <TableCell className="text-right border">
-                        {formatCurrency(
-                          Object.values(salesMethodData).reduce(
-                            (sum, data) => sum + data.completedRevenue,
-                            0,
-                          ),
-                        )}
+                        {formatCurrency(data.completedRevenue)}
                       </TableCell>
                       <TableCell className="text-right border">
-                        {formatCurrency(
-                          Object.values(salesMethodData).reduce(
-                            (sum, data) => sum + data.cancelledRevenue,
-                            0,
-                          ),
-                        )}
+                        {formatCurrency(data.cancelledRevenue)}
                       </TableCell>
-                      <TableCell className="text-right border font-bold">
-                        {formatCurrency(
-                          Object.values(salesMethodData).reduce(
-                            (sum, data) => sum + data.totalRevenue,
-                            0,
-                          ),
-                        )}
+                      <TableCell className="text-right border font-medium">
+                        {formatCurrency(data.totalRevenue)}
                       </TableCell>
                     </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+
+                  {/* Summary Row */}
+                  <TableRow className="bg-green-100 font-bold border-t-2">
+                    <TableCell className="text-center border font-bold">
+                      {t("common.total")}
+                    </TableCell>
+                    <TableCell className="text-center border">
+                      {Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.completedOrders,
+                        0,
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center border">
+                      {Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.cancelledOrders,
+                        0,
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center border font-bold">
+                      {Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.totalOrders,
+                        0,
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right border">
+                      {formatCurrency(
+                        Object.values(salesMethodData).reduce(
+                          (sum, data) => sum + data.completedRevenue,
+                          0,
+                        ),
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right border">
+                      {formatCurrency(
+                        Object.values(salesMethodData).reduce(
+                          (sum, data) => sum + data.cancelledRevenue,
+                          0,
+                        ),
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right border font-bold">
+                      {formatCurrency(
+                        Object.values(salesMethodData).reduce(
+                          (sum, data) => sum + data.totalRevenue,
+                          0,
+                        ),
+                      )}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
-          </CardContent>
-        </Card>
-      );
-    } catch (error) {
-      console.error("Error in renderSalesChannelReport:", error);
-      return (
-        <div className="flex justify-center py-8">
-          <div className="text-red-500">
-            <p>Có lỗi xảy ra khi hiển thị báo cáo kênh bán hàng</p>
-            <p className="text-sm">{error?.message || "Unknown error"}</p>
           </div>
-        </div>
-      );
-    }
+        </CardContent>
+      </Card>
+    );
   };
 
   // Chart configurations for each analysis type
