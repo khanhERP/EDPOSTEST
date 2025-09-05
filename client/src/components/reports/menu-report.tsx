@@ -1,266 +1,422 @@
-import { useState, useEffect } from "react";
+
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, TrendingUp, Package, DollarSign, Search, RefreshCw } from "lucide-react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
-import { useTranslation } from "@/lib/i18n";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { CalendarIcon, Search, RotateCcw, TrendingUp, Package, DollarSign, ShoppingCart } from "lucide-react";
+import { format, startOfDay, endOfDay } from "date-fns";
+import { cn } from "@/lib/utils";
 
-interface Product {
-  id: number;
-  name: string;
-  sku: string;
-  price: string;
-  stock: number;
-  categoryId: number;
-  categoryName?: string;
-  productType: number;
-  taxRate: string;
-  isActive: boolean;
-}
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
-interface Category {
-  id: number;
-  name: string;
-  icon: string;
-}
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
 
-interface MenuAnalysisData {
-  totalRevenue: number;
-  totalQuantity: number;
-  categoryStats: Array<{
-    categoryId: number;
-    categoryName: string;
-    totalQuantity: number;
-    totalRevenue: number;
-    productCount: number;
-  }>;
-  productStats: Array<{
-    productId: number;
-    productName: string;
-    totalQuantity: number;
-    totalRevenue: number;
-    averagePrice: number;
-  }>;
-  topSellingProducts: Array<{
-    productId: number;
-    productName: string;
-    totalQuantity: number;
-    totalRevenue: number;
-  }>;
-  topRevenueProducts: Array<{
-    productId: number;
-    productName: string;
-    totalQuantity: number;
-    totalRevenue: number;
-  }>;
-}
-
-function MenuReport() {
-  const { t } = useTranslation();
-  const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
-  const [endDate, setEndDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+export default function MenuReport() {
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(new Date());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [productType, setProductType] = useState<string>("all");
-  const [productSearch, setProductSearch] = useState("");
+  const [productSearch, setProductSearch] = useState<string>("");
 
   // Query categories
   const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
     queryFn: async () => {
-      try {
-        const response = await apiRequest("GET", "/api/categories");
-        if (!response.ok) throw new Error("Failed to fetch categories");
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        return [];
+      const response = await fetch("/api/categories");
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories");
       }
+      return response.json();
     },
     retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnWindowFocus: false,
   });
 
-  // Query products
+  // Query products - optimized with better caching
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products", selectedCategory, productType, productSearch],
     queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory && selectedCategory !== "all") {
+        params.append("categoryId", selectedCategory);
+      }
+      if (productType && productType !== "all") {
+        params.append("productType", productType);
+      }
+      if (productSearch) {
+        params.append("search", productSearch);
+      }
+
+      const response = await fetch(`/api/products?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+      const data = await response.json();
+      
+      console.log("Raw products from API:", data);
+      console.log("Total products received:", data.length);
+      
+      return data;
+    },
+    retry: 2,
+    retryDelay: 2000,
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchInterval: false, // Disable auto refetch
+    refetchOnWindowFocus: false, // Disable refetch on focus
+  });
+
+  // Query orders by date range - optimized with longer cache time
+  const { data: orders = [] } = useQuery({
+    queryKey: ["/api/orders/date-range", startDate, endDate],
+    queryFn: async () => {
       try {
-        const searchParam = productSearch ? encodeURIComponent(productSearch) : "";
-        const response = await apiRequest(
-          "GET",
-          `/api/products/${selectedCategory}/${productType}/${searchParam}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch products");
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
+        const params = new URLSearchParams({
+          startDate: startOfDay(startDate).toISOString(),
+          endDate: endOfDay(endDate).toISOString(),
+        });
+
+        const response = await fetch(`/api/orders/date-range?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch orders: ${response.statusText}`);
+        }
+        return response.json();
       } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error("Orders fetch error:", error);
         return [];
       }
     },
     retry: 2,
+    retryDelay: 2000,
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchInterval: false, // Disable auto refetch
+    refetchOnWindowFocus: false, // Disable refetch on focus
   });
 
-  // Query menu analysis data
-  const { data: menuAnalysis, isLoading: analysisLoading, error: analysisError, refetch } = useQuery({
-    queryKey: ["/api/menu-analysis", startDate, endDate, selectedCategory],
+  // Query transactions by date range - optimized with longer cache time
+  const { data: transactions = [] } = useQuery({
+    queryKey: ["/api/transactions", startDate, endDate],
     queryFn: async () => {
       try {
         const params = new URLSearchParams({
-          startDate,
-          endDate,
-          ...(selectedCategory !== "all" && { categoryId: selectedCategory })
+          startDate: startOfDay(startDate).toISOString(),
+          endDate: endOfDay(endDate).toISOString(),
         });
 
-        const response = await apiRequest("GET", `/api/menu-analysis?${params.toString()}`);
+        const response = await fetch(`/api/transactions?${params.toString()}`);
         if (!response.ok) {
-          console.error("Menu analysis API error:", response.status, response.statusText);
-          throw new Error(`Failed to fetch menu analysis: ${response.status}`);
+          throw new Error(`Failed to fetch transactions: ${response.statusText}`);
         }
-
-        const data = await response.json();
-        console.log("Menu analysis data received:", data);
-
-        // Ensure data structure is correct
-        return {
-          totalRevenue: Number(data.totalRevenue || 0),
-          totalQuantity: Number(data.totalQuantity || 0),
-          categoryStats: Array.isArray(data.categoryStats) ? data.categoryStats : [],
-          productStats: Array.isArray(data.productStats) ? data.productStats : [],
-          topSellingProducts: Array.isArray(data.topSellingProducts) ? data.topSellingProducts : [],
-          topRevenueProducts: Array.isArray(data.topRevenueProducts) ? data.topRevenueProducts : [],
-        } as MenuAnalysisData;
+        return response.json();
       } catch (error) {
-        console.error("Error fetching menu analysis:", error);
-        // Return fallback data structure
-        return {
-          totalRevenue: 0,
-          totalQuantity: 0,
-          categoryStats: [],
-          productStats: [],
-          topSellingProducts: [],
-          topRevenueProducts: [],
-        } as MenuAnalysisData;
+        console.error("Transactions fetch error:", error);
+        return [];
       }
     },
     retry: 2,
-    retryDelay: 1000,
+    retryDelay: 2000,
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchInterval: false, // Disable auto refetch
+    refetchOnWindowFocus: false, // Disable refetch on focus
   });
 
-  // Filter products for display
-  const filteredProducts = products.filter((product: Product) => {
-    if (!product || !product.name) return false;
+  // Query invoices by date range - optimized with longer cache time
+  const { data: invoices = [] } = useQuery({
+    queryKey: ["/api/invoices/date-range", startDate, endDate],
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams({
+          startDate: startOfDay(startDate).toISOString(),
+          endDate: endOfDay(endDate).toISOString(),
+        });
 
-    const searchMatch = !productSearch ||
-      product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-      (product.sku && product.sku.toLowerCase().includes(productSearch.toLowerCase()));
-
-    const categoryMatch = selectedCategory === "all" ||
-      product.categoryId === parseInt(selectedCategory);
-
-    const typeMatch = productType === "all" ||
-      (productType === "combo" && product.productType === 3) ||
-      (productType === "product" && product.productType === 1) ||
-      (productType === "service" && product.productType === 2);
-
-    return searchMatch && categoryMatch && typeMatch;
+        const response = await fetch(`/api/invoices/date-range?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch invoices: ${response.statusText}`);
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Invoices fetch error:", error);
+        return [];
+      }
+    },
+    retry: 2,
+    retryDelay: 2000,
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchInterval: false, // Disable auto refetch
+    refetchOnWindowFocus: false, // Disable refetch on focus
   });
 
-  const formatCurrency = (amount: number | string | undefined | null): string => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    if (typeof num !== 'number' || isNaN(num)) {
-      return '0';
+  // Calculate menu analysis data from real orders, transactions, and invoices
+  const menuAnalysis = useMemo(() => {
+    try {
+      // Combine all order items from orders, transactions, and invoices
+      const allOrderItems = [];
+
+      // Add order items from orders
+      orders.forEach(order => {
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach(item => {
+            allOrderItems.push({
+              ...item,
+              source: 'order',
+              sourceId: order.id,
+              date: order.createdAt || order.date,
+              total: order.total || 0
+            });
+          });
+        }
+      });
+
+      // Add order items from transactions
+      transactions.forEach(transaction => {
+        if (transaction.items && Array.isArray(transaction.items)) {
+          transaction.items.forEach(item => {
+            allOrderItems.push({
+              ...item,
+              source: 'transaction',
+              sourceId: transaction.id,
+              date: transaction.createdAt || transaction.date,
+              total: transaction.total || 0
+            });
+          });
+        }
+      });
+
+      // Add order items from invoices
+      invoices.forEach(invoice => {
+        if (invoice.items && Array.isArray(invoice.items)) {
+          invoice.items.forEach(item => {
+            allOrderItems.push({
+              ...item,
+              source: 'invoice',
+              sourceId: invoice.id,
+              date: invoice.createdAt || invoice.date,
+              total: invoice.total || 0
+            });
+          });
+        }
+      });
+
+      // Calculate product statistics
+      const productStats = new Map();
+      const categoryStats = new Map();
+
+      allOrderItems.forEach(item => {
+        const productKey = item.productId || item.sku || item.name;
+        const categoryId = item.categoryId || 'unknown';
+        const quantity = parseInt(item.quantity) || 0;
+        const price = parseFloat(item.price) || 0;
+        const revenue = quantity * price;
+
+        // Product statistics
+        if (!productStats.has(productKey)) {
+          productStats.set(productKey, {
+            productId: item.productId,
+            productName: item.name || item.productName,
+            sku: item.sku,
+            categoryId: categoryId,
+            totalQuantity: 0,
+            totalRevenue: 0,
+            orderCount: 0
+          });
+        }
+
+        const productStat = productStats.get(productKey);
+        productStat.totalQuantity += quantity;
+        productStat.totalRevenue += revenue;
+        productStat.orderCount += 1;
+
+        // Category statistics
+        if (!categoryStats.has(categoryId)) {
+          const category = categories.find(cat => cat.id == categoryId);
+          categoryStats.set(categoryId, {
+            categoryId: categoryId,
+            categoryName: category?.name || `Category ${categoryId}`,
+            totalQuantity: 0,
+            totalRevenue: 0,
+            productCount: 0
+          });
+        }
+
+        const categoryStat = categoryStats.get(categoryId);
+        categoryStat.totalQuantity += quantity;
+        categoryStat.totalRevenue += revenue;
+      });
+
+      // Update product count for categories
+      categoryStats.forEach(categoryStat => {
+        categoryStat.productCount = Array.from(productStats.values())
+          .filter(p => p.categoryId == categoryStat.categoryId).length;
+      });
+
+      // Convert to arrays and sort
+      const productStatsArray = Array.from(productStats.values());
+      const categoryStatsArray = Array.from(categoryStats.values());
+
+      // Calculate totals
+      const totalRevenue = productStatsArray.reduce((sum, product) => sum + product.totalRevenue, 0);
+      const totalQuantity = productStatsArray.reduce((sum, product) => sum + product.totalQuantity, 0);
+
+      // Top selling products (by quantity)
+      const topSellingProducts = productStatsArray
+        .sort((a, b) => b.totalQuantity - a.totalQuantity)
+        .slice(0, 10);
+
+      // Top revenue products
+      const topRevenueProducts = productStatsArray
+        .sort((a, b) => b.totalRevenue - a.totalRevenue)
+        .slice(0, 10);
+
+      const result = {
+        totalRevenue,
+        totalQuantity,
+        categoryStats: categoryStatsArray,
+        productStats: productStatsArray,
+        topSellingProducts,
+        topRevenueProducts,
+      };
+
+      console.log("Menu Analysis Debug - Real Product Data:", {
+        totalOrders: orders.length,
+        completedOrders: orders.filter(o => o.status === 'paid' || o.status === 'completed').length,
+        totalTransactions: transactions.length,
+        completedTransactions: transactions.filter(t => t.status === 'completed').length,
+        totalInvoices: invoices.length,
+        publishedInvoices: invoices.filter(i => i.status === 1).length,
+        totalRevenue,
+        totalQuantity,
+        productCount: productStatsArray.length,
+        categoryStats: categoryStatsArray.length,
+        topSellingProduct: topSellingProducts[0]?.productName || 'None',
+        dateRange: `${format(startDate, 'yyyy-MM-dd')} to ${format(endDate, 'yyyy-MM-dd')}`,
+        sampleProductStats: Array.from(productStats.entries()).slice(0, 3)
+      });
+
+      return result;
+    } catch (error) {
+      console.error("Menu analysis calculation error:", error);
+      return {
+        totalRevenue: 0,
+        totalQuantity: 0,
+        categoryStats: [],
+        productStats: [],
+        topSellingProducts: [],
+        topRevenueProducts: [],
+      };
     }
-    return Math.floor(num).toLocaleString('vi-VN');
-  };
+  }, [orders, transactions, invoices, categories, startDate, endDate]);
 
-  const getProductTypeName = (type: number): string => {
-    switch (type) {
-      case 1: return t("reports.product") || "Sản phẩm";
-      case 2: return t("reports.service") || "Dịch vụ";
-      case 3: return t("reports.combo") || "Combo";
-      default: return t("reports.product") || "Sản phẩm";
-    }
+  const resetFilters = () => {
+    setStartDate(new Date());
+    setEndDate(new Date());
+    setSelectedCategory("all");
+    setProductType("all");
+    setProductSearch("");
   };
-
-  const handleRefresh = () => {
-    refetch();
-  };
-
-  if (analysisError) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center py-8">
-          <div className="text-red-500 mb-4">
-            <BarChart3 className="w-12 h-12 mx-auto mb-2" />
-            <p className="font-medium">Lỗi tải dữ liệu phân tích menu</p>
-          </div>
-          <p className="text-gray-500 mb-4">
-            {analysisError instanceof Error ? analysisError.message : "Không thể tải dữ liệu phân tích"}
-          </p>
-          <Button onClick={handleRefresh} className="flex items-center gap-2">
-            <RefreshCw className="w-4 h-4" />
-            Thử lại
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
-      {/* Date Range and Filters */}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Phân tích menu
+        </h1>
+        <Button onClick={resetFilters} variant="outline" size="sm">
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Đặt lại
+        </Button>
+      </div>
+
+      {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            {t("reports.menuAnalysis") || "Phân tích menu"}
-          </CardTitle>
+          <CardTitle>Bộ lọc</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("reports.fromDate") || "Từ ngày"}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Date Range */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Ngày bắt đầu
               </label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "dd/MM/yyyy") : "Chọn ngày"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("reports.toDate") || "Đến ngày"}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Ngày kết thúc
               </label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "dd/MM/yyyy") : "Chọn ngày"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("common.category") || "Danh mục"}
+
+            {/* Category Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Danh mục
               </label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("common.selectCategory") || "Chọn danh mục"} />
+                  <SelectValue placeholder="Chọn danh mục" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("common.all") || "Tất cả"}</SelectItem>
-                  {categories.map((category: Category) => (
+                  <SelectItem value="all">Tất cả danh mục</SelectItem>
+                  {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
                     </SelectItem>
@@ -268,434 +424,217 @@ function MenuReport() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("reports.productType") || "Loại sản phẩm"}
+
+            {/* Product Type Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Loại sản phẩm
               </label>
               <Select value={productType} onValueChange={setProductType}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("common.selectType") || "Chọn loại"} />
+                  <SelectValue placeholder="Chọn loại" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("common.all") || "Tất cả"}</SelectItem>
-                  <SelectItem value="product">{t("reports.product") || "Sản phẩm"}</SelectItem>
-                  <SelectItem value="combo">{t("reports.combo") || "Combo"}</SelectItem>
-                  <SelectItem value="service">{t("reports.service") || "Dịch vụ"}</SelectItem>
+                  <SelectItem value="all">Tất cả loại</SelectItem>
+                  <SelectItem value="1">Sản phẩm</SelectItem>
+                  <SelectItem value="2">Dịch vụ</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("common.search") || "Tìm kiếm"}
+
+            {/* Product Search */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Tìm kiếm
               </label>
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={t("common.searchProduct") || "Tìm kiếm sản phẩm"}
+                  placeholder="Tìm sản phẩm..."
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  className="pl-8"
+                  className="pl-9"
                 />
               </div>
             </div>
-            <div className="flex items-end">
-              <Button 
-                onClick={handleRefresh} 
-                className="flex items-center gap-2"
-                disabled={analysisLoading}
-              >
-                <RefreshCw className={`w-4 h-4 ${analysisLoading ? 'animate-spin' : ''}`} />
-                {analysisLoading ? 'Đang tải...' : 'Làm mới'}
-              </Button>
-            </div>
           </div>
-
         </CardContent>
       </Card>
 
-      {/* Summary Statistics */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalRevenue") || "Tổng doanh thu"}
+                  Tổng doanh thu (chưa trừ thuế & giảm giá)
                 </p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(menuAnalysis?.totalRevenue || 0)} ₫
                 </p>
               </div>
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-green-600" />
-              </div>
+              <DollarSign className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalSales") || "Tổng số lượng đã bán"}
+                  Tổng số lượng
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {(menuAnalysis?.totalQuantity || 0).toLocaleString('vi-VN')}
+                  {menuAnalysis?.totalQuantity || 0}
                 </p>
               </div>
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Package className="w-4 h-4 text-blue-600" />
-              </div>
+              <ShoppingCart className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.averagePrice") || "Giá trung bình"}
-                </p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {formatCurrency(
-                    menuAnalysis?.totalQuantity && menuAnalysis.totalQuantity > 0
-                      ? menuAnalysis.totalRevenue / menuAnalysis.totalQuantity
-                      : 0
-                  )} ₫
-                </p>
-              </div>
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.uniqueProducts") || "Sản phẩm"}
+                  Sản phẩm độc đáo
                 </p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {filteredProducts.length.toLocaleString('vi-VN')}
+                  {menuAnalysis?.productStats?.length || 0}
                 </p>
               </div>
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-4 h-4 text-purple-600" />
+              <Package className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Danh mục
+                </p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {menuAnalysis?.categoryStats?.length || 0}
+                </p>
               </div>
+              <TrendingUp className="h-8 w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Category Performance Charts */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            {t("reports.categoryPerformance") || "Hiệu suất danh mục"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {analysisLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-500">Đang tải dữ liệu biểu đồ...</p>
-            </div>
-          ) : !menuAnalysis?.categoryStats || menuAnalysis.categoryStats.length === 0 ? (
-            <div className="text-center py-12">
-              <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg font-medium mb-2">Không có dữ liệu biểu đồ</p>
-              <p className="text-gray-400 text-sm">
-                Chọn khoảng thời gian có dữ liệu bán hàng để xem biểu đồ
-              </p>
-              <Button 
-                onClick={handleRefresh} 
-                className="mt-4 flex items-center gap-2 mx-auto"
-                variant="outline"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Làm mới dữ liệu
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {/* Revenue Pie Chart */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-green-600" />
-                    {t("reports.revenue") || "Doanh thu"} theo danh mục
-                  </h4>
-                  <div className="h-80 relative border rounded-lg bg-gradient-to-br from-green-50/30 to-emerald-50/20">
-                    <div className="absolute inset-0 bg-white/50 rounded-lg"></div>
-                    <div className="relative z-10 h-full p-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={menuAnalysis.categoryStats.map((cat, index) => ({
-                              name: cat.categoryName || `Danh mục ${cat.categoryId}`,
-                              value: Number(cat.totalRevenue || 0),
-                              fill: `hsl(${(index * 137.508) % 360}, 70%, 60%)`
-                            }))}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={40}
-                            outerRadius={80}
-                            paddingAngle={2}
-                            dataKey="value"
-                          >
-                            {menuAnalysis.categoryStats.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={`hsl(${(index * 137.508) % 360}, 70%, 60%)`} />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            formatter={(value) => [formatCurrency(Number(value)) + ' ₫', 'Doanh thu']}
-                            contentStyle={{ 
-                              backgroundColor: 'white', 
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px',
-                              fontSize: '12px'
-                            }}
-                          />
-                          <Legend 
-                            verticalAlign="bottom" 
-                            height={36}
-                            wrapperStyle={{ fontSize: '12px' }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
+      {/* Charts and Tables */}
+      <Tabs defaultValue="products" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="products">Sản phẩm bán chạy</TabsTrigger>
+          <TabsTrigger value="revenue">Doanh thu theo sản phẩm</TabsTrigger>
+          <TabsTrigger value="categories">Phân tích danh mục</TabsTrigger>
+        </TabsList>
 
-                {/* Quantity Pie Chart */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <Package className="w-4 h-4 text-blue-600" />
-                    {t("reports.quantity") || "Số lượng"} bán theo danh mục
-                  </h4>
-                  <div className="h-80 relative border rounded-lg bg-gradient-to-br from-blue-50/30 to-indigo-50/20">
-                    <div className="absolute inset-0 bg-white/50 rounded-lg"></div>
-                    <div className="relative z-10 h-full p-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={menuAnalysis.categoryStats.map((cat, index) => ({
-                              name: cat.categoryName || `Danh mục ${cat.categoryId}`,
-                              value: Number(cat.totalQuantity || 0),
-                              fill: `hsl(${200 + (index * 137.508) % 160}, 70%, 60%)`
-                            }))}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={40}
-                            outerRadius={80}
-                            paddingAngle={2}
-                            dataKey="value"
-                          >
-                            {menuAnalysis.categoryStats.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={`hsl(${200 + (index * 137.508) % 160}, 70%, 60%)`} />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            formatter={(value) => [Number(value).toLocaleString('vi-VN'), 'Số lượng']}
-                            contentStyle={{ 
-                              backgroundColor: 'white', 
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px',
-                              fontSize: '12px'
-                            }}
-                          />
-                          <Legend 
-                            verticalAlign="bottom" 
-                            height={36}
-                            wrapperStyle={{ fontSize: '12px' }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Category Performance Table - Only show when data exists */}
-          {menuAnalysis?.categoryStats && menuAnalysis.categoryStats.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px]">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4">{t("common.category") || "Danh mục"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.productCount") || "Số sản phẩm"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.quantity") || "Số lượng"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.revenue") || "Doanh thu"}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {menuAnalysis.categoryStats.map((category, index) => (
-                    <tr key={category.categoryId || index} className="border-b">
-                      <td className="py-2 px-4 font-medium">
-                        {category.categoryName || `Danh mục ${category.categoryId}`}
-                      </td>
-                      <td className="py-2 px-4 text-right">
-                        {(category.productCount || 0).toLocaleString('vi-VN')}
-                      </td>
-                      <td className="py-2 px-4 text-right">
-                        {(category.totalQuantity || 0).toLocaleString('vi-VN')}
-                      </td>
-                      <td className="py-2 px-4 text-right font-medium">
-                        {formatCurrency(category.totalRevenue || 0)} ₫
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Top Products */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Selling Products */}
-        {menuAnalysis?.topSellingProducts && menuAnalysis.topSellingProducts.length > 0 && (
+        <TabsContent value="products" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{t("reports.topSellingItems") || "Sản phẩm bán chạy"}</CardTitle>
+              <CardTitle>Top 10 sản phẩm bán chạy nhất</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {menuAnalysis.topSellingProducts.slice(0, 10).map((product, index) => (
-                  <div key={product.productId || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-blue-600">{index + 1}</span>
+              <div className="space-y-4">
+                {menuAnalysis?.topSellingProducts?.length > 0 ? (
+                  <div className="grid gap-4">
+                    {menuAnalysis.topSellingProducts.map((product, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <Badge variant="secondary">#{index + 1}</Badge>
+                          <div>
+                            <p className="font-medium">{product.productName}</p>
+                            <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">{product.totalQuantity} đã bán</p>
+                          <p className="text-sm text-green-600">{formatCurrency(product.totalRevenue)} ₫</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{product.productName || `Sản phẩm ${product.productId}`}</p>
-                        <p className="text-sm text-gray-500">
-                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatCurrency(product.totalRevenue || 0)} ₫</p>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p className="text-center text-gray-500 py-8">Không có dữ liệu sản phẩm</p>
+                )}
               </div>
             </CardContent>
           </Card>
-        )}
+        </TabsContent>
 
-        {/* Top Revenue Products */}
-        {menuAnalysis?.topRevenueProducts && menuAnalysis.topRevenueProducts.length > 0 && (
+        <TabsContent value="revenue" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{t("reports.topRevenueItems") || "Sản phẩm doanh thu cao"}</CardTitle>
+              <CardTitle>Top 10 sản phẩm doanh thu cao nhất</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {menuAnalysis.topRevenueProducts.slice(0, 10).map((product, index) => (
-                  <div key={product.productId || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-green-600">{index + 1}</span>
+              <div className="space-y-4">
+                {menuAnalysis?.topRevenueProducts?.length > 0 ? (
+                  <div className="grid gap-4">
+                    {menuAnalysis.topRevenueProducts.map((product, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <Badge variant="secondary">#{index + 1}</Badge>
+                          <div>
+                            <p className="font-medium">{product.productName}</p>
+                            <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-green-600">{formatCurrency(product.totalRevenue)} ₫</p>
+                          <p className="text-sm text-gray-500">{product.totalQuantity} đã bán</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{product.productName || `Sản phẩm ${product.productId}`}</p>
-                        <p className="text-sm text-gray-500">
-                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-green-600">{formatCurrency(product.totalRevenue || 0)} ₫</p>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p className="text-center text-gray-500 py-8">Không có dữ liệu doanh thu</p>
+                )}
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
+        </TabsContent>
 
-      {/* Product List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("reports.menuItemAnalysis") || "Phân tích sản phẩm"}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {analysisLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-2 text-gray-500">Đang tải dữ liệu...</p>
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-8">
-              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">{t("common.noData") || "Không có dữ liệu"}</p>
-              <p className="text-sm text-gray-400 mt-2">
-                Thử thay đổi bộ lọc để xem kết quả khác
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4">{t("common.product") || "Sản phẩm"}</th>
-                    <th className="text-left py-2 px-4">{t("common.sku") || "SKU"}</th>
-                    <th className="text-left py-2 px-4">{t("common.category") || "Danh mục"}</th>
-                    <th className="text-left py-2 px-4">{t("common.type") || "Loại"}</th>
-                    <th className="text-right py-2 px-4">{t("common.price") || "Giá"}</th>
-                    <th className="text-right py-2 px-4">{t("common.stock") || "Tồn kho"}</th>
-                    <th className="text-center py-2 px-4">{t("common.status") || "Trạng thái"}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.map((product: Product) => {
-                    const category = categories.find((c: Category) => c.id === product.categoryId);
-                    return (
-                      <tr key={product.id} className="border-b hover:bg-gray-50">
-                        <td className="py-2 px-4 font-medium">{product.name}</td>
-                        <td className="py-2 px-4 font-mono text-sm">{product.sku}</td>
-                        <td className="py-2 px-4">{category?.name || 'N/A'}</td>
-                        <td className="py-2 px-4">
-                          <Badge variant="outline">
-                            {getProductTypeName(product.productType)}
-                          </Badge>
-                        </td>
-                        <td className="py-2 px-4 text-right font-medium">
-                          {formatCurrency(product.price)} ₫
-                        </td>
-                        <td className="py-2 px-4 text-right">
-                          <span className={`${product.stock <= 10 ? 'text-red-600' : 'text-gray-900'}`}>
-                            {product.stock}
-                          </span>
-                        </td>
-                        <td className="py-2 px-4 text-center">
-                          <Badge variant={product.isActive ? "default" : "secondary"}>
-                            {product.isActive ? t("common.active") || "Hoạt động" : t("common.inactive") || "Không hoạt động"}
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <TabsContent value="categories" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Phân tích theo danh mục</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  {menuAnalysis?.categoryStats?.length > 0 ? (
+                    menuAnalysis.categoryStats.map((category, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="font-medium">{category.categoryName}</p>
+                          <p className="text-sm text-gray-500">{category.productCount} sản phẩm</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-green-600">{formatCurrency(category.totalRevenue)} ₫</p>
+                          <p className="text-sm text-gray-500">{category.totalQuantity} đã bán</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-500 py-8">Không có dữ liệu danh mục</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
-export default MenuReport;
+// Named export for compatibility
 export { MenuReport };
