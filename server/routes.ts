@@ -3232,8 +3232,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             productName: products.name,
             categoryId: products.categoryId,
             categoryName: categories.name,
-            totalQuantity: sql<number>`SUM(${transactionItemsTable.quantity})`,
-            totalRevenue: sql<number>`SUM(CAST(${transactionItemsTable.unitPrice} AS NUMERIC) * ${transactionItemsTable.quantity})`,
+            totalQuantity: sql<number>`SUM("${transactionItemsTable.quantity}")`,
+            totalRevenue: sql<number>`SUM(CAST("${transactionItemsTable.unitPrice}" AS NUMERIC) * "${transactionItemsTable.quantity}")`,
           })
           .from(transactionItemsTable)
           .innerJoin(
@@ -3281,8 +3281,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             productName: products.name,
             categoryId: products.categoryId,
             categoryName: categories.name,
-            totalQuantity: sql<number>`SUM(${orderItemsTable.quantity})`,
-            totalRevenue: sql<number>`SUM(CAST(${orderItemsTable.unitPrice} AS NUMERIC) * ${orderItemsTable.quantity})`,
+            totalQuantity: sql<number>`SUM("${orderItemsTable.quantity}")`,
+            totalRevenue: sql<number>`SUM(CAST("${orderItemsTable.unitPrice}" AS NUMERIC) * "${orderItemsTable.quantity}")`,
           })
           .from(orderItemsTable)
           .innerJoin(orders, eq(orderItemsTable.orderId, orders.id))
