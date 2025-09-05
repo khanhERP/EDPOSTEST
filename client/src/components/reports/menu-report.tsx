@@ -557,30 +557,52 @@ function MenuReport() {
       </Card>
 
       {/* Top Products */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {/* Top Selling Products */}
         {menuAnalysis?.topSellingProducts && menuAnalysis.topSellingProducts.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("reports.topSellingItems") || "Sản phẩm bán chạy"}</CardTitle>
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-blue-50/30 to-indigo-50/20">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Package className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">{t("reports.topSellingItems") || "Sản phẩm bán chạy nhất"}</h3>
+                  <p className="text-sm text-gray-500 font-normal mt-1">Top {menuAnalysis.topSellingProducts.slice(0, 10).length} sản phẩm bán nhiều nhất</p>
+                </div>
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+            <CardContent className="pt-0">
+              <div className="space-y-4">
                 {menuAnalysis.topSellingProducts.slice(0, 10).map((product, index) => (
-                  <div key={product.productId || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-blue-600">{index + 1}</span>
+                  <div key={product.productId || index} className="group hover:bg-white/60 transition-colors rounded-xl p-4 border border-gray-100/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="flex-shrink-0">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                            index === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-200' :
+                            index === 1 ? 'bg-gray-100 text-gray-700 ring-2 ring-gray-200' :
+                            index === 2 ? 'bg-orange-100 text-orange-700 ring-2 ring-orange-200' :
+                            'bg-blue-100 text-blue-600'
+                          }`}>
+                            {index + 1}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-800 truncate group-hover:text-blue-600 transition-colors">
+                            {product.productName || `Sản phẩm ${product.productId}`}
+                          </h4>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="inline-flex items-center gap-1 text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-lg font-medium">
+                              <Package className="w-3 h-3" />
+                              {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{product.productName || `Sản phẩm ${product.productId}`}</p>
-                        <p className="text-sm text-gray-500">
-                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
-                        </p>
+                      <div className="text-right flex-shrink-0 ml-4">
+                        <p className="font-bold text-gray-800 text-lg">{formatCurrency(product.totalRevenue || 0)}<span className="text-gray-500 font-normal ml-1">₫</span></p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatCurrency(product.totalRevenue || 0)} ₫</p>
                     </div>
                   </div>
                 ))}
@@ -591,27 +613,49 @@ function MenuReport() {
 
         {/* Top Revenue Products */}
         {menuAnalysis?.topRevenueProducts && menuAnalysis.topRevenueProducts.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("reports.topRevenueItems") || "Sản phẩm doanh thu cao"}</CardTitle>
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-green-50/30 to-emerald-50/20">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">{t("reports.topRevenueItems") || "Sản phẩm doanh thu cao nhất"}</h3>
+                  <p className="text-sm text-gray-500 font-normal mt-1">Top {menuAnalysis.topRevenueProducts.slice(0, 10).length} sản phẩm doanh thu cao nhất</p>
+                </div>
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+            <CardContent className="pt-0">
+              <div className="space-y-4">
                 {menuAnalysis.topRevenueProducts.slice(0, 10).map((product, index) => (
-                  <div key={product.productId || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-green-600">{index + 1}</span>
+                  <div key={product.productId || index} className="group hover:bg-white/60 transition-colors rounded-xl p-4 border border-gray-100/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="flex-shrink-0">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                            index === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-200' :
+                            index === 1 ? 'bg-gray-100 text-gray-700 ring-2 ring-gray-200' :
+                            index === 2 ? 'bg-orange-100 text-orange-700 ring-2 ring-orange-200' :
+                            'bg-green-100 text-green-600'
+                          }`}>
+                            {index + 1}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-800 truncate group-hover:text-green-600 transition-colors">
+                            {product.productName || `Sản phẩm ${product.productId}`}
+                          </h4>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="inline-flex items-center gap-1 text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded-lg font-medium">
+                              <Package className="w-3 h-3" />
+                              {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{product.productName || `Sản phẩm ${product.productId}`}</p>
-                        <p className="text-sm text-gray-500">
-                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
-                        </p>
+                      <div className="text-right flex-shrink-0 ml-4">
+                        <p className="font-bold text-green-600 text-lg">{formatCurrency(product.totalRevenue || 0)}<span className="text-gray-500 font-normal ml-1">₫</span></p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-green-600">{formatCurrency(product.totalRevenue || 0)} ₫</p>
                     </div>
                   </div>
                 ))}
