@@ -85,20 +85,21 @@ export function SalesChartReport() {
   const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
   const [customerPageSize, setCustomerPageSize] = useState(15);
 
-  // Use dashboard data API - EXACT same data source as dashboard
-  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
-    queryKey: ["/api/dashboard-data", startDate, endDate],
+  // Query orders by date range - using proper order data
+  const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
+    queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/dashboard-data/${startDate}/${endDate}`);
+        const response = await fetch(`/api/orders/date-range/${startDate}/${endDate}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        return data;
+        console.log("Sales Chart - Orders loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        return null;
+        console.error('Sales Chart - Error fetching orders:', error);
+        return [];
       }
     },
     retry: 3,
@@ -106,14 +107,34 @@ export function SalesChartReport() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Use data from dashboard API response
-  const transactions = dashboardData?.transactions || [];
-  const orders = dashboardData?.orders || [];
-  const invoices = dashboardData?.invoices || [];
-  const tables = dashboardData?.tables || [];
+  // Query order items for all orders
+  const { data: orderItems = [], isLoading: orderItemsLoading } = useQuery({
+    queryKey: ["/api/order-items"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/order-items");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Sales Chart - Order items loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Sales Chart - Error fetching order items:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: tables } = useQuery({
+    queryKey: ["/api/tables"],
+  });
 
   // Combined loading state
-  const isLoading = dashboardLoading;
+  const isLoading = ordersLoading || orderItemsLoading;
 
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
@@ -225,35 +246,154 @@ export function SalesChartReport() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
 
-  // Get dashboard stats from API response
+  // Get dashboard stats from orders data
   const getDashboardStats = () => {
-    if (!dashboardData) {
-      return null;
+    try {
+      if (ordersLoading || orderItemsLoading) {
+        return {
+          periodRevenue: 0,
+          periodOrderCount: 0,
+          periodCustomerCount: 0,
+          dailyAverageRevenue: 0,
+          activeOrders: 0,
+          occupiedTables: 0,
+          monthRevenue: 0,
+          averageOrderValue: 0,
+          peakHour: 12,
+          totalTables: Array.isArray(tables) ? tables.length : 0,
+          filteredCompletedOrders: [],
+        };
+      }
+
+      // Ensure we have valid arrays
+      const validOrders = Array.isArray(orders) ? orders : [];
+      const validOrderItems = Array.isArray(orderItems) ? orderItems : [];
+      const validTables = Array.isArray(tables) ? tables : [];
+
+      // Filter completed/paid orders only
+      const completedOrders = validOrders.filter((order: any) => 
+        order.status === 'paid' || order.status === 'completed'
+      );
+
+      console.log("Sales Chart Debug - Raw Data:", {
+        totalOrders: validOrders.length,
+        completedOrders: completedOrders.length,
+        totalOrderItems: validOrderItems.length,
+        dateRange: `${startDate} to ${endDate}`,
+        sampleCompletedOrder: completedOrders[0] ? {
+          id: completedOrders[0].id,
+          total: completedOrders[0].total,
+          status: completedOrders[0].status,
+          date: completedOrders[0].orderedAt || completedOrders[0].createdAt
+        } : null
+      });
+
+      // Calculate revenue from completed orders using actual order totals
+      const periodRevenue = completedOrders.reduce((sum: number, order: any) => {
+        const total = Number(order.total || 0);
+        return sum + total;
+      }, 0);
+
+      // Total count from completed orders only
+      const periodOrderCount = completedOrders.length;
+
+      // Count unique customers from completed orders
+      const uniqueCustomers = new Set();
+      
+      completedOrders.forEach((order: any) => {
+        if (order.customerId) {
+          uniqueCustomers.add(order.customerId);
+        } else if (order.customerName && order.customerName !== 'Khách hàng lẻ') {
+          uniqueCustomers.add(order.customerName);
+        } else {
+          uniqueCustomers.add(`order_${order.id}`);
+        }
+      });
+
+      const periodCustomerCount = uniqueCustomers.size;
+
+      // Calculate days difference for average
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const daysDiff = Math.max(
+        1,
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+      );
+      const dailyAverageRevenue = periodRevenue / daysDiff;
+
+      // Active orders (pending/in-progress orders only from all current orders)
+      const activeOrders = validOrders.filter((order: any) => 
+        order.status === 'pending' || order.status === 'in_progress' || order.status === 'confirmed' || 
+        order.status === 'preparing' || order.status === 'ready' || order.status === 'served'
+      ).length;
+
+      const occupiedTables = validTables.filter(
+        (table: any) => table.status === "occupied",
+      );
+
+      // Month revenue: same as period revenue for the selected date range
+      const monthRevenue = periodRevenue;
+
+      // Average order value
+      const averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
+
+      // Peak hours analysis from completed orders only
+      const hourlyOrders: { [key: number]: number } = {};
+      
+      completedOrders.forEach((order: any) => {
+        const orderDate = new Date(order.orderedAt || order.createdAt);
+        if (!isNaN(orderDate.getTime())) {
+          const hour = orderDate.getHours();
+          hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
+        }
+      });
+
+      const peakHour = Object.keys(hourlyOrders).reduce(
+        (peak, hour) =>
+          hourlyOrders[parseInt(hour)] > (hourlyOrders[parseInt(peak)] || 0)
+            ? hour
+            : peak,
+        "12",
+      );
+
+      const finalStats = {
+        periodRevenue,
+        periodOrderCount,
+        periodCustomerCount,
+        dailyAverageRevenue,
+        activeOrders,
+        occupiedTables: occupiedTables.length,
+        monthRevenue,
+        averageOrderValue,
+        peakHour: parseInt(peakHour),
+        totalTables: validTables.length,
+        filteredCompletedOrders: completedOrders,
+      };
+
+      console.log("Sales Chart Debug - Final Stats:", {
+        periodRevenue,
+        periodOrderCount,
+        periodCustomerCount,
+        dateRange: `${startDate} to ${endDate}`
+      });
+
+      return finalStats;
+    } catch (error) {
+      console.error("Error in getDashboardStats:", error);
+      return {
+        periodRevenue: 0,
+        periodOrderCount: 0,
+        periodCustomerCount: 0,
+        dailyAverageRevenue: 0,
+        activeOrders: 0,
+        occupiedTables: 0,
+        monthRevenue: 0,
+        averageOrderValue: 0,
+        peakHour: 12,
+        totalTables: 0,
+        filteredCompletedOrders: [],
+      };
     }
-
-    console.log("Sales Chart Dashboard Debug from API:", {
-      totalOrders: dashboardData.orders?.length || 0,
-      startDate,
-      endDate,
-      periodRevenue: dashboardData.periodRevenue,
-      periodOrderCount: dashboardData.periodOrderCount,
-      periodCustomerCount: dashboardData.periodCustomerCount,
-      filteredCompletedOrders: dashboardData.filteredCompletedOrders?.length || 0,
-    });
-
-    return {
-      periodRevenue: dashboardData.periodRevenue || 0,
-      periodOrderCount: dashboardData.periodOrderCount || 0,
-      periodCustomerCount: dashboardData.periodCustomerCount || 0,
-      dailyAverageRevenue: dashboardData.dailyAverageRevenue || 0,
-      activeOrders: dashboardData.activeOrders || 0,
-      occupiedTables: dashboardData.occupiedTables || 0,
-      monthRevenue: dashboardData.monthRevenue || 0,
-      averageOrderValue: dashboardData.averageOrderValue || 0,
-      peakHour: dashboardData.peakHour || 12,
-      totalTables: dashboardData.totalTables || 0,
-      filteredCompletedOrders: dashboardData.filteredCompletedOrders || [],
-    };
   };
 
   // Function to export data to Excel
@@ -2352,69 +2492,82 @@ export function SalesChartReport() {
       );
     }
 
-    const dashboardStats = getDashboardStats();
-
-    if (!dashboardStats) {
+    if (!orders || !Array.isArray(orders)) {
       return (
         <div className="flex justify-center py-8">
-          <div className="text-gray-500">Không có dữ liệu</div>
+          <div className="text-gray-500">Không có dữ liệu đơn hàng</div>
         </div>
       );
     }
 
-    const { filteredCompletedOrders } = dashboardStats;
+    try {
+      const validOrders = Array.isArray(orders) ? orders : [];
 
-    console.log("Sales Channel Report Debug:", {
-      filteredCompletedOrders: filteredCompletedOrders.length,
-      sampleOrder: filteredCompletedOrders[0],
-    });
+      // Filter completed/paid orders only
+      const completedOrders = validOrders.filter((order: any) => 
+        order.status === 'paid' || order.status === 'completed'
+      );
 
-    // Group data by sales method (Dine In vs Takeaway) - use EXACT same logic as dashboard
-    const salesMethodData: {
-      [method: string]: {
-        completedOrders: number;
-        cancelledOrders: number;
-        totalOrders: number;
-        completedRevenue: number;
-        cancelledRevenue: number;
-        totalRevenue: number;
+      console.log("Sales Channel Report Debug:", {
+        totalOrders: validOrders.length,
+        completedOrders: completedOrders.length,
+        dateRange: `${startDate} to ${endDate}`,
+        sampleOrder: completedOrders[0] ? {
+          id: completedOrders[0].id,
+          tableId: completedOrders[0].tableId,
+          total: completedOrders[0].total,
+          salesChannel: completedOrders[0].salesChannel
+        } : null
+      });
+
+      // Group data by sales method (Dine In vs Takeaway)
+      const salesMethodData: {
+        [method: string]: {
+          completedOrders: number;
+          cancelledOrders: number;
+          totalOrders: number;
+          completedRevenue: number;
+          cancelledRevenue: number;
+          totalRevenue: number;
+        };
+      } = {
+        [t("reports.dineIn")]: {
+          completedOrders: 0,
+          cancelledOrders: 0,
+          totalOrders: 0,
+          completedRevenue: 0,
+          cancelledRevenue: 0,
+          totalRevenue: 0,
+        },
+        [t("reports.takeaway")]: {
+          completedOrders: 0,
+          cancelledOrders: 0,
+          totalOrders: 0,
+          completedRevenue: 0,
+          cancelledRevenue: 0,
+          totalRevenue: 0,
+        },
       };
-    } = {
-      [t("reports.dineIn")]: {
-        completedOrders: 0,
-        cancelledOrders: 0,
-        totalOrders: 0,
-        completedRevenue: 0,
-        cancelledRevenue: 0,
-        totalRevenue: 0,
-      },
-      [t("reports.takeaway")]: {
-        completedOrders: 0,
-        cancelledOrders: 0,
-        totalOrders: 0,
-        completedRevenue: 0,
-        cancelledRevenue: 0,
-        totalRevenue: 0,
-      },
-    };
 
-    // Process completed orders ONLY
-    filteredCompletedOrders.forEach((item: any) => {
-      try {
-        // Use EXACT same logic as dashboard - check tableId to determine method
-        const isDineIn = item.tableId && item.tableId !== null;
-        const method = isDineIn ? t("reports.dineIn") : t("reports.takeaway");
+      // Process completed orders ONLY
+      completedOrders.forEach((order: any) => {
+        try {
+          // Check tableId or salesChannel to determine method
+          const isDineIn = order.tableId && order.tableId !== null;
+          const method = isDineIn ? t("reports.dineIn") : t("reports.takeaway");
 
-        if (salesMethodData[method]) {
-          salesMethodData[method].completedOrders += 1;
-          salesMethodData[method].completedRevenue += Number(item.amount || 0);
+          if (salesMethodData[method]) {
+            salesMethodData[method].completedOrders += 1;
+            salesMethodData[method].completedRevenue += Number(order.total || 0);
+            salesMethodData[method].totalOrders += 1;
+            salesMethodData[method].totalRevenue += Number(order.total || 0);
+          }
+        } catch (error) {
+          console.warn("Error processing order for sales method:", error);
         }
-      } catch (error) {
-        console.warn("Error processing item for sales method:", error);
-      }
-    });
+      });
 
-    console.log("Sales Method Data:", salesMethodData);
+      console.log("Sales Method Data:", salesMethodData);
 
     return (
       <Card>
