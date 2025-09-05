@@ -68,6 +68,7 @@ export function SalesChartReport() {
 
   const [analysisType, setAnalysisType] = useState("time");
   const [concernType, setConcernType] = useState("time"); // Keep concernType for potential future use or different report types
+  const [chartType, setChartType] = useState("bar"); // Add missing chartType state
 
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0],
