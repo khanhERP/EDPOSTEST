@@ -273,8 +273,8 @@ function MenuReport() {
                 </SelectContent>
               </Select>
             </div>
-            
-            
+
+
           </div>
 
         </CardContent>
@@ -663,17 +663,17 @@ function MenuReport() {
                     {(() => {
                       const sortedProducts = menuAnalysis.productStats
                         .sort((a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0));
-                      
+
                       const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
                       const startIndex = (currentPage - 1) * itemsPerPage;
                       const endIndex = startIndex + itemsPerPage;
                       const currentProducts = sortedProducts.slice(startIndex, endIndex);
-                      
+
                       return currentProducts.map((product, index) => {
-                        const contribution = menuAnalysis.totalRevenue > 0 
+                        const contribution = menuAnalysis.totalRevenue > 0
                           ? ((product.totalRevenue || 0) / menuAnalysis.totalRevenue * 100)
                           : 0;
-                        
+
                         return (
                           <tr key={`${product.productId}-${index}`} className="border-b hover:bg-gray-50">
                             <td className="py-2 px-4 font-medium">
@@ -695,8 +695,8 @@ function MenuReport() {
                             <td className="py-2 px-4 text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <div className="w-12 bg-gray-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-blue-600 h-2 rounded-full" 
+                                  <div
+                                    className="bg-blue-600 h-2 rounded-full"
                                     style={{ width: `${Math.min(contribution, 100)}%` }}
                                   ></div>
                                 </div>
@@ -720,7 +720,7 @@ function MenuReport() {
                 const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
                 const startIndex = (currentPage - 1) * itemsPerPage;
                 const endIndex = startIndex + itemsPerPage;
-                
+
                 return totalPages > 1 && (
                   <div className="flex items-center justify-between py-4 border-t">
                     <div className="text-sm text-gray-500">
