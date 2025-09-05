@@ -587,10 +587,12 @@ export default function SalesOrders() {
       return false;
     }
   }).sort((a: any, b: any) => {
-    const createdAtA = new Date(a.createdAt || a.date || a.orderedAt || a.invoiceDate);
-    const createdAtB = new Date(b.createdAt || b.date || b.orderedAt || b.invoiceDate);
+    // Sắp xếp theo ngày tạo mới nhất lên đầu
+    const dateA = new Date(a.orderedAt || a.createdAt || a.date || a.invoiceDate);
+    const dateB = new Date(b.orderedAt || b.createdAt || b.date || b.invoiceDate);
 
-    return createdAtB.getTime() - createdAtA.getTime();
+    // Đảm bảo đơn hàng mới nhất (dateB) lớn hơn đơn hàng cũ hơn (dateA)
+    return dateB.getTime() - dateA.getTime();
   }) : [];
 
   const formatCurrency = (amount: string | number | undefined | null): string => {
