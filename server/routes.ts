@@ -1264,7 +1264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("🔍 GET /api/orders - Starting request processing");
       const { salesChannel } = req.query;
-      
+
       let tenantDb;
       try {
         tenantDb = await getTenantDatabase(req);
@@ -1947,7 +1947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("🔍 GET /api/orders/pos - Fetching POS orders");
       const tenantDb = await getTenantDatabase(req);
-      
+
       const posOrders = await storage.getOrders(undefined, undefined, tenantDb, "pos");
       console.log(`✅ Successfully fetched ${posOrders.length} POS orders`);
       res.json(posOrders);
@@ -1962,7 +1962,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("🔍 GET /api/orders/table - Fetching table orders");
       const tenantDb = await getTenantDatabase(req);
-      
+
       const tableOrders = await storage.getOrders(undefined, undefined, tenantDb, "table");
       console.log(`✅ Successfully fetched ${tableOrders.length} table orders`);
       res.json(tableOrders);
@@ -2198,7 +2198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousStock: product.stock,
         newStock,
         notes: notes || null,
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       });
 
       res.json({ success: true, newStock });
