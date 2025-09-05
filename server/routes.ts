@@ -485,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantDb = await getTenantDatabase(req);
 
       console.log(
-        "Received POS transaction data (will create order):",
+        "💰 POS Transaction API: Creating order for POS payment:",
         JSON.stringify({ transaction, items }, null, 2),
       );
 
@@ -523,12 +523,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ message: `Product with ID ${item.productId} not found` });
         }
 
-        // Check stock availability
+        // Check stock availability but don't block POS sales
         if (product.trackInventory && product.stock < item.quantity) {
           const errorMsg = `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`;
-          console.log(`❌ ${errorMsg}`);
+          console.log(`⚠️ ${errorMsg} - Allowing POS sale to proceed`);
           stockValidationErrors.push(errorMsg);
-          continue;
         }
 
         const itemSubtotal = parseFloat(item.price) * item.quantity;
@@ -560,7 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (stockValidationErrors.length > 0) {
-        console.warn("⚠️ Stock validation warnings (allowing POS transaction to proceed):", stockValidationErrors);
+        console.warn("⚠️ Stock validation warnings (POS sale proceeding):", stockValidationErrors);
       }
 
       const total = subtotal + tax;
@@ -578,29 +577,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total: total.toFixed(2),
         paymentMethod: validatedTransaction.paymentMethod,
         paymentStatus: "paid",
-        salesChannel: "pos", // Mark as POS order
+        salesChannel: "pos", // ALWAYS mark as POS order
         einvoiceStatus: 0, // Default e-invoice status
-        invoiceId: validatedTransaction.invoiceId || null,
+        templateNumber: null,
+        symbol: null,
         invoiceNumber: validatedTransaction.invoiceNumber || null,
-        notes: validatedTransaction.notes || `POS Transaction by ${validatedTransaction.cashierName}`,
-        paidAt: new Date(),
+        notes: validatedTransaction.notes || `POS Payment by ${validatedTransaction.cashierName}`,
+        orderedAt: new Date(),
+        paidAt: new Date(), // Mark as paid immediately
       };
 
-      console.log(`💰 Creating POS order with data:`, {
+      console.log(`💰 Creating POS order in database:`, {
         orderNumber: orderData.orderNumber,
         total: orderData.total,
         paymentMethod: orderData.paymentMethod,
         salesChannel: orderData.salesChannel,
+        status: orderData.status,
         itemsCount: orderItems.length,
       });
 
       // Create order using existing order creation logic
       const order = await storage.createOrder(orderData, orderItems, tenantDb);
 
+      console.log(`✅ POS order saved to database successfully:`, {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        total: order.total,
+        salesChannel: order.salesChannel,
+        status: order.status,
+        paymentMethod: order.paymentMethod,
+        paidAt: order.paidAt,
+      });
+
+      // Update product inventory if tracking enabled
+      for (const item of validatedItems) {
+        const product = products.find((p) => p.id === item.productId);
+        if (product && product.trackInventory) {
+          try {
+            const newStock = Math.max(0, product.stock - item.quantity);
+            await db
+              .update(products)
+              .set({ stock: newStock })
+              .where(eq(products.id, item.productId));
+
+            console.log(`📦 Updated inventory for ${product.name}: ${product.stock} -> ${newStock}`);
+          } catch (inventoryError) {
+            console.error(`❌ Failed to update inventory for ${product.name}:`, inventoryError);
+          }
+        }
+      }
+
       // Return in transaction format for compatibility
       const receipt = {
         id: order.id,
         transactionId: order.orderNumber,
+        orderId: order.id, // Include orderId for reference
         subtotal: order.subtotal,
         tax: order.tax,
         total: order.total,
@@ -609,6 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: order.notes,
         invoiceId: order.invoiceId,
         invoiceNumber: order.invoiceNumber,
+        salesChannel: order.salesChannel,
         createdAt: order.orderedAt,
         items: orderItems.map((item, index) => ({
           id: index + 1,
@@ -621,16 +653,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })),
       };
 
-      console.log(`✅ POS order created successfully:`, {
-        id: order.id,
+      console.log(`✅ POS order completed and saved to orders table:`, {
+        orderId: order.id,
         orderNumber: order.orderNumber,
-        total: order.total,
         salesChannel: order.salesChannel,
+        status: order.status,
       });
 
       res.status(201).json(receipt);
     } catch (error) {
-      console.error("POS transaction creation error:", error);
+      console.error("❌ POS transaction creation error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: "Invalid transaction data",
