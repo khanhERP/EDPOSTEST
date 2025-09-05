@@ -1024,7 +1024,7 @@ export default function SalesOrders() {
                             </td>
                           </tr>
                         ) : (
-                      filteredInvoices.map((item, index) => {
+                          filteredInvoices.map((item, index) => {
                             const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
                             const discount = 0;
                             const tax = parseFloat(item.tax || '0');
@@ -1040,6 +1040,7 @@ export default function SalesOrders() {
                             const itemSymbol = item.symbol || item.templateNumber || '';
 
                             return (
+                              <>
                                 <tr
                                   key={`${item.type}-${item.id}`}
                                   className={`hover:bg-gray-50 ${
@@ -1561,9 +1562,8 @@ export default function SalesOrders() {
                                 )}
                               </>
                             );
-                            });
                           })
-                        ) : null}
+                        )}
                       </tbody>
                     </table>
                     </div>
