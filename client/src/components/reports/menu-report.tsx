@@ -557,7 +557,7 @@ function MenuReport() {
       </Card>
 
       {/* Top Products */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Selling Products */}
         {menuAnalysis?.topSellingProducts && menuAnalysis.topSellingProducts.length > 0 && (
           <Card className="shadow-sm border-0 bg-gradient-to-br from-blue-50/30 to-indigo-50/20">
