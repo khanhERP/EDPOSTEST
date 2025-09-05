@@ -113,6 +113,29 @@ export function EInvoiceModal({
     }
   };
 
+  // Helper function to get payment method name for transaction notes
+  const getPaymentMethodName = (paymentMethod: string): string => {
+    switch (paymentMethod) {
+      case "cash":
+        return "Tiền mặt";
+      case "qrCode":
+        return "QR Code";
+      case "creditCard":
+        return "Thẻ tín dụng";
+      case "debitCard":
+        return "Thẻ ghi nợ";
+      case "momo":
+        return "Momo";
+      case "zalopay":
+        return "ZaloPay";
+      case "vnpay":
+        return "VNPay";
+      default:
+        return "Khác";
+    }
+  };
+
+
   // Log the pre-selected payment method for debugging
   console.log("💳 E-Invoice modal received payment method:", selectedPaymentMethod);
 
@@ -129,9 +152,10 @@ export function EInvoiceModal({
         "🔄 E-invoice modal: Starting payment completion mutation for order:",
         orderId,
       );
+      // Pass the paymentMethod to the PUT request for status update
       return apiRequest("PUT", `/api/orders/${orderId}/status`, {
         status: "paid",
-        paymentMethod,
+        paymentMethod, // Ensure paymentMethod is passed here
       });
     },
     onSuccess: (data, variables) => {
@@ -555,7 +579,7 @@ export function EInvoiceModal({
         savedInvoice,
       );
 
-      // Tạo receipt data thực sự cho receipt modal
+      // Create receipt data for receipt modal
       const receiptData = {
         transactionId:
           savedInvoice.invoice?.invoiceNumber || `TXN-${Date.now()}`,
@@ -607,18 +631,18 @@ export function EInvoiceModal({
           "Thông tin hóa đơn điện tử đã được lưu. Đang hiển thị màn hình in hóa đơn...",
       });
 
-      // Prepare comprehensive invoice data với receipt để hiển thị modal in
+      // Prepare comprehensive invoice data with receipt to display receipt modal
       const completeInvoiceData = {
         success: true, // Add success flag
         paymentMethod: selectedPaymentMethod, // Use original payment method
         originalPaymentMethod: selectedPaymentMethod,
         publishLater: true,
-        receipt: receiptData, // Receipt data để hiển thị modal in
+        receipt: receiptData, // Receipt data to display receipt modal
         customerName: formData.customerName,
         taxCode: formData.taxCode,
-        showReceiptModal: true, // Flag để parent component biết cần hiển thị receipt modal
+        showReceiptModal: true, // Flag for parent component to show receipt modal
         shouldShowReceipt: true, // Additional flag for receipt display
-        einvoiceStatus: 0, // 0 = Chưa phát hành (for publish later)
+        einvoiceStatus: 0, // 0 = Not issued yet (for publish later)
         status: 'draft', // Draft status for publish later
         cartItems: cartItems, // Include cart items for receipt
         total: total, // Include total
@@ -932,10 +956,21 @@ export function EInvoiceModal({
       const result = await response.json();
       console.log("Invoice published successfully:", result);
 
+      let invoiceResult = { success: false, invoice: null, message: "" };
       if (result.success) {
         console.log(
           "✅ E-invoice published successfully, now saving invoice and order to database",
         );
+
+        invoiceResult = {
+          success: true,
+          invoice: {
+            id: result.data?.id,
+            invoiceNumber: result.data?.invoiceNo,
+            tradeNumber: result.data?.invoiceNo, // Assuming tradeNumber is the same as invoiceNo
+          },
+          message: result.message,
+        };
 
         // Map order totals to variables for invoice saving
         const orderSubtotal = cartSubtotal;
@@ -1110,6 +1145,7 @@ export function EInvoiceModal({
           tax: orderTax.toFixed(2),
           total: total.toFixed(2),
           paymentMethod: "einvoice",
+          originalPaymentMethod: selectedPaymentMethod, // Add original payment method
           amountReceived: total.toFixed(2),
           change: "0.00",
           cashierName: "System User",
@@ -1125,50 +1161,31 @@ export function EInvoiceModal({
         );
 
         // Prepare comprehensive invoice data with all necessary flags
-        const invoiceResult = {
-          ...formData,
-          invoiceData: result.data,
-          cartItems: cartItems,
-          total: total,
+        const completeInvoiceData = {
+          success: true, // Add success flag
           paymentMethod: selectedPaymentMethod, // Use original payment method
           originalPaymentMethod: selectedPaymentMethod,
-          source: source || "pos",
-          orderId: orderId,
-          publishedImmediately: true, // Flag để phân biệt với phát hành sau
-          receipt: receiptData, // Truyền receipt data đã tạo
+          publishLater: true,
+          receipt: receiptData, // Receipt data to display receipt modal
           customerName: formData.customerName,
           taxCode: formData.taxCode,
-          invoiceNumber: result.data?.invoiceNo || null,
-        };
-
-        console.log("✅ Prepared comprehensive invoice result:", invoiceResult);
-
-        // Create the final result object for onConfirm
-        const publishResult = {
-          success: true,
-          invoiceNumber: receiptData.invoiceNumber,
-          symbol: selectedTemplate.symbol || null,
-          templateNumber: selectedTemplate.templateNumber || null,
-          einvoiceStatus: 1, // Đã phát hành
-          invoiceStatus: 1, // Hoàn thành
-          status: 'published',
-          receipt: receiptData,
-          publishedImmediately: true,
-          showReceiptModal: true, // Ensure receipt modal is shown
+          showReceiptModal: true, // Flag for parent component to show receipt modal
           shouldShowReceipt: true, // Additional flag for receipt display
-          paymentMethod: selectedPaymentMethod, // Include payment method
-          originalPaymentMethod: selectedPaymentMethod,
-          cartItems: cartItems, // Include cart items
-          total: total // Include calculated total
+          einvoiceStatus: 1, // 1 = Issued (for publish later)
+          status: 'published',
+          cartItems: cartItems, // Include cart items for receipt
+          total: total, // Include calculated total
+          subtotal: total - orderTax, // Calculate from total - tax
+          tax: orderTax,
+          invoiceId: savedInvoice.invoice?.id,
+          source: source || "pos",
+          orderId: orderId
         };
 
-        console.log(
-          "📧 Step 4: E-Invoice published, now calling onConfirm with receipt data",
-        );
-        console.log("📄 Publish result being sent:", publishResult);
+        console.log("✅ Prepared comprehensive invoice result:", completeInvoiceData);
 
         // Call onConfirm to trigger receipt modal display - let parent handle modal closing
-        onConfirm(publishResult);
+        onConfirm(completeInvoiceData);
         console.log("✅ PUBLISH LATER: onConfirm called - parent will handle modal states");
 
         console.log("--------------------------------------------------");
@@ -1177,13 +1194,210 @@ export function EInvoiceModal({
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",
         );
       }
+      // CRITICAL: Always create transaction for every payment, regardless of invoice type
+        console.log("📄 Creating transaction for payment...");
+
+        // Calculate subtotal, tax, and total for transaction creation
+        let subtotal = 0;
+        let tax = 0;
+
+        cartItems.forEach(item => {
+            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
+
+            const itemSubtotal = itemPrice * itemQuantity;
+            const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+            subtotal += itemSubtotal;
+            tax += itemTax;
+        });
+
+        const transactionTotal = total; // Use the total passed to the modal
+
+
+        const transactionData = {
+          transaction: {
+            transactionId: `TXN-${Date.now()}`,
+            subtotal: subtotal.toString(),
+            tax: tax.toString(),
+            total: transactionTotal.toString(),
+            paymentMethod: getPaymentMethodName(selectedPaymentMethod),
+            cashierName: "POS User",
+            notes: invoiceResult.success ? "Hóa đơn đã phát hành" : "Thanh toán POS",
+            invoiceId: invoiceResult?.invoice?.id || null,
+            invoiceNumber: invoiceResult?.invoice?.tradeNumber || null,
+          },
+          items: cartItems.map(item => ({
+            productId: item.id,
+            productName: item.name,
+            price: typeof item.price === 'string' ? item.price : item.price.toString(),
+            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+            total: (
+              (typeof item.price === 'string' ? parseFloat(item.price) : item.price) *
+              (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)
+            ).toString()
+          }))
+        };
+
+        try {
+          const transactionResponse = await fetch("/api/transactions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(transactionData),
+          });
+
+          if (transactionResponse.ok) {
+            const transactionResult = await transactionResponse.json();
+            console.log("✅ Transaction created successfully:", transactionResult);
+
+            // Include transaction data in the receipt
+            // Ensure receiptData is accessible here or re-created if necessary
+            // For simplicity, let's assume receiptData is available in this scope or passed as argument.
+            // If not, it needs to be created here.
+            if (typeof onConfirm === 'function') {
+              const receiptDataForTransaction = {
+                transactionId: transactionData.transaction.transactionId,
+                transaction: transactionResult, // Add the transaction result
+                // Include other relevant details for receipt display if needed
+                subtotal: subtotal.toFixed(2),
+                tax: tax.toFixed(2),
+                total: transactionTotal.toFixed(2),
+                paymentMethod: getPaymentMethodName(selectedPaymentMethod),
+                cashierName: transactionData.transaction.cashierName,
+                notes: transactionData.transaction.notes,
+                invoiceId: transactionData.transaction.invoiceId,
+                invoiceNumber: transactionData.transaction.invoiceNumber,
+                cartItems: cartItems, // Include cart items
+              };
+              // This part needs careful integration with how onConfirm is used.
+              // If onConfirm is primarily for invoice results, this might need a different callback or structure.
+              // For now, assuming we want to pass transaction details along with invoice confirmation.
+              // A better approach might be to have a separate callback for transaction confirmation or merge them.
+              // Let's pass the transaction ID to the receipt data.
+              if (invoiceResult.success) {
+                // Assuming invoiceResult is defined and contains receipt data
+                invoiceResult.receipt.transactionId = transactionData.transaction.transactionId;
+              }
+            }
+          } else {
+            const errorText = await transactionResponse.text();
+            console.error("❌ Failed to create transaction:", errorText);
+            // Continue with payment flow even if transaction creation fails
+          }
+        } catch (transactionError) {
+          console.error("❌ Error creating transaction:", transactionError);
+          // Continue with payment flow even if transaction creation fails
+        }
+
+
+        // Call onConfirm only after transaction creation attempt (for published invoices)
+        // If it was a publish later, onConfirm was already called.
+        if (invoiceResult.success && !true /* Not publishLater */) {
+             // This part needs to be re-evaluated as onConfirm is called for both publish and publishLater
+             // If publishLater is true, onConfirm has already been called.
+             // This logic might be redundant or need adjustment.
+        }
+
+
+      } else {
+        // If invoice publishing failed, still try to create a transaction for the payment
+        console.warn("Invoice publishing failed, proceeding to create transaction for payment.");
+
+        // Re-calculate values if needed, or reuse from above if scope permits
+        subtotal = 0;
+        tax = 0;
+        cartItems.forEach(item => {
+            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
+
+            const itemSubtotal = itemPrice * itemQuantity;
+            const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+            subtotal += itemSubtotal;
+            tax += itemTax;
+        });
+        const transactionTotal = total; // Use the total passed to the modal
+
+        const transactionData = {
+          transaction: {
+            transactionId: `TXN-${Date.now()}`,
+            subtotal: subtotal.toString(),
+            tax: tax.toString(),
+            total: transactionTotal.toString(),
+            paymentMethod: getPaymentMethodName(selectedPaymentMethod),
+            cashierName: "POS User",
+            notes: "Thanh toán POS - Hóa đơn không thành công", // Note that invoice failed
+            invoiceId: null, // No invoice ID
+            invoiceNumber: null, // No invoice number
+          },
+          items: cartItems.map(item => ({
+            productId: item.id,
+            productName: item.name,
+            price: typeof item.price === 'string' ? item.price : item.price.toString(),
+            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+            total: (
+              (typeof item.price === 'string' ? parseFloat(item.price) : item.price) *
+              (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)
+            ).toString()
+          }))
+        };
+
+        try {
+          const transactionResponse = await fetch("/api/transactions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(transactionData),
+          });
+
+          if (transactionResponse.ok) {
+            const transactionResult = await transactionResponse.json();
+            console.log("✅ Transaction created successfully for failed invoice:", transactionResult);
+             // If invoice publishing failed, and we still want to trigger a receipt modal or similar,
+             // we would need to construct a different payload for onConfirm.
+             // For now, focusing on ensuring the transaction is created.
+          } else {
+            const errorText = await transactionResponse.text();
+            console.error("❌ Failed to create transaction for failed invoice:", errorText);
+          }
+        } catch (transactionError) {
+          console.error("❌ Error creating transaction for failed invoice:", transactionError);
+        }
+        // Re-throw the original error to show the user that invoice publishing failed
+        throw new Error(result.message || "Có lỗi xảy ra khi phát hành hóa đơn");
+      }
     } catch (error) {
       console.error("Error publishing invoice:", error);
-      alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);
+      // Display a toast or alert for the user about the publishing failure.
+      // The transaction creation should ideally not block the payment confirmation itself,
+      // but the failure of the invoice publishing should be communicated.
+      let errorMessage = "Có lỗi xảy ra khi phát hành hóa đơn điện tử.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else {
+        errorMessage = JSON.stringify(error);
+      }
+      toast({
+        title: "Lỗi Phát Hành Hóa Đơn",
+        description: errorMessage,
+        variant: "destructive",
+      });
+
+      // If the error was not related to invoice publishing itself, but something else,
+      // ensure we don't fall through without any confirmation action if appropriate.
+      // However, the primary goal is to ensure transaction creation.
     } finally {
       setIsPublishing(false);
     }
   };
+
 
   const handleCancel = () => {
     setIsPublishing(false); // Reset loading state

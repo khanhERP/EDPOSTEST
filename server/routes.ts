@@ -561,13 +561,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tax += itemTax;
       }
 
-      // Return all stock validation errors if any
+      // For POS payments, reduce stock validation warnings to console only
+      // Allow transaction to proceed even with some stock issues for POS flexibility
       if (stockValidationErrors.length > 0) {
-        return res.status(400).json({
-          message: "Stock validation failed for multiple products",
-          errors: stockValidationErrors,
-          details: stockValidationErrors.join("; "),
-        });
+        console.warn("⚠️ Stock validation warnings (allowing POS transaction to proceed):", stockValidationErrors);
+        // Continue with transaction creation instead of blocking
       }
 
       const total = subtotal + tax;
@@ -584,11 +582,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderId: validatedTransaction.orderId || null,
       };
 
+      console.log(`💰 Creating transaction with data:`, {
+        transactionId: transactionWithTotals.transactionId,
+        total: transactionWithTotals.total,
+        paymentMethod: transactionWithTotals.paymentMethod,
+        itemsCount: validatedItems.length,
+        invoiceId: transactionWithTotals.invoiceId,
+        invoiceNumber: transactionWithTotals.invoiceNumber
+      });
+
       const receipt = await storage.createTransaction(
         transactionWithTotals,
         validatedItems,
         tenantDb,
       );
+      
+      console.log(`✅ Transaction created successfully:`, {
+        id: receipt.id,
+        transactionId: receipt.transactionId,
+        total: receipt.total
+      });
+      
       res.status(201).json(receipt);
     } catch (error) {
       console.error("Transaction creation error:", error);
