@@ -181,6 +181,11 @@ export function SalesChartReport() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: transactions } = useQuery({
+    queryKey: ["/api/transactions"],
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Utility functions
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
@@ -988,9 +993,7 @@ export function SalesChartReport() {
                                       {(() => {
                                         const transactionMethod =
                                           transaction.paymentMethod || "cash";
-                                        const amount = Number(
-                                          transaction.total,
-                                        );
+                                        const amount = Number(transaction.total);
 
                                         // Get all unique payment methods from all transactions
                                         const allPaymentMethods = new Set();
@@ -1057,9 +1060,10 @@ export function SalesChartReport() {
                           {t("common.total")}
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[100px] px-4">
-                          {Object.values(dailySales)
-                            .reduce((sum, data) => sum + data.orders, 0)
-                            .toLocaleString()}
+                          {Object.values(dailySales).reduce(
+                            (sum, data) => sum + data.orders,
+                            0,
+                          )}
                         </TableCell>
                         <TableCell className="text-right border-r min-w-[140px] px-4">
                           {formatCurrency(
@@ -2506,11 +2510,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
   };
 
   // Sales Channel Report Component Logic
@@ -2610,20 +2614,27 @@ export function SalesChartReport() {
               {t("reports.toDate")}: {formatDate(endDate)}
             </span>
             <button
-              onClick={() =>
-                exportToExcel(
-                  Object.entries(salesMethodData).map(([method, data]) => ({
+              onClick={() => {
+                // Prepare data with summary row
+                const dataWithSummary = [
+                  ...Object.entries(salesMethodData).map(([method, data]) => ({
                     "Phương thức bán hàng": method,
                     "Đơn đã hoàn thành": data.completedOrders,
-                    "Doanh thu đã hoàn thành": formatCurrency(
-                      data.completedRevenue,
-                    ),
+                    "Doanh thu đã hoàn thành": formatCurrency(data.completedRevenue),
                     "Tổng đơn": data.totalOrders,
                     "Tổng doanh thu": formatCurrency(data.totalRevenue),
                   })),
-                  `SalesChannel_${startDate}_to_${endDate}`,
-                )
-              }
+                  // Add summary row
+                  {
+                    "Phương thức bán hàng": "TỔNG CỘNG",
+                    "Đơn đã hoàn thành": Object.values(salesMethodData).reduce((sum, data) => sum + data.completedOrders, 0),
+                    "Doanh thu đã hoàn thành": formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.completedRevenue, 0)),
+                    "Tổng đơn": Object.values(salesMethodData).reduce((sum, data) => sum + data.totalOrders, 0),
+                    "Tổng doanh thu": formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.totalRevenue, 0)),
+                  }
+                ];
+                exportToExcel(dataWithSummary, `SalesChannel_${startDate}_to_${endDate}`);
+              }}
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
             >
               <Download className="w-4 h-4" />
@@ -2961,7 +2972,7 @@ export function SalesChartReport() {
 
                 const quantity = Number(item.quantity || 0);
                 const total = Number(item.total || 0);
-                const unitPrice = Number(item.price || 0);
+                const unitPrice = Number(item.unitPrice || item.price || 0);
                 const totalAmount = quantity * unitPrice;
                 const discount = Math.max(0, totalAmount - total);
 
@@ -3439,10 +3450,10 @@ export function SalesChartReport() {
               {t("reports.toDate")}: {formatDate(endDate)}
             </span>
             <button
-              onClick={() =>
-                exportToExcel(
-                  data.map((item) => ({
-                    // Changed to export all data (data instead of paginatedData)
+              onClick={() => {
+                // Prepare data with summary row
+                const dataWithSummary = [
+                  ...data.map((item) => ({
                     "Mã SP": item.productCode,
                     "Tên SP": item.productName,
                     "Đơn vị": item.unit,
@@ -3452,9 +3463,20 @@ export function SalesChartReport() {
                     "Doanh thu": formatCurrency(item.revenue),
                     "Nhóm SP": item.categoryName,
                   })),
-                  `ProductSales_${startDate}_to_${endDate}`,
-                )
-              }
+                  // Add summary row
+                  {
+                    "Mã SP": "TỔNG CỘNG",
+                    "Tên SP": `${data.length} sản phẩm`,
+                    "Đơn vị": "",
+                    "Số lượng": data.reduce((sum, item) => sum + item.quantitySold, 0),
+                    "Tổng tiền": formatCurrency(data.reduce((sum, item) => sum + item.totalAmount, 0)),
+                    "Giảm giá": formatCurrency(data.reduce((sum, item) => sum + item.discount, 0)),
+                    "Doanh thu": formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0)),
+                    "Nhóm SP": "",
+                  }
+                ];
+                exportToExcel(dataWithSummary, `ProductSales_${startDate}_to_${endDate}`);
+              }}
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
             >
               <Download className="w-4 h-4" />
