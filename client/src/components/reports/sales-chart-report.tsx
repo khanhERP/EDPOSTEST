@@ -2469,21 +2469,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
       );
-    } catch (error) {
-      console.error("Error in renderSalesChannelReport:", error);
-      return (
-        <div className="flex justify-center py-8">
-          <div className="text-red-500">
-            <p>Có lỗi xảy ra khi hiển thị báo cáo kênh bán hàng</p>
-            <p className="text-sm">{error?.message || "Unknown error"}</p>
-          </div>
-        </div>
-      );
-    }
   };
 
   // Sales Channel Report Component Logic
