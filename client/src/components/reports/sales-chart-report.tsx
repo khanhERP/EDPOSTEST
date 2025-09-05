@@ -632,7 +632,7 @@ export function SalesChartReport() {
                       "Thành tiền": formatCurrency(data.revenue),
                       "Khách hàng": data.customers,
                     })),
-                    `DailySales_` + `${startDate}_to_${endDate}`,
+                    `DailySales_${startDate}_to_${endDate}`,
                   )
                 }
                 className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
@@ -1445,7 +1445,7 @@ export function SalesChartReport() {
               <button
                 onClick={() =>
                   exportToExcel(
-                    paginatedData.map((item) => ({
+                    data.map((item) => ({ // Changed to export all data (data instead of paginatedData)
                       "Mã NV": item.employeeCode,
                       "Tên NV": item.employeeName,
                       "Số đơn": item.orderCount,
@@ -1462,7 +1462,7 @@ export function SalesChartReport() {
                       ),
                       "Tổng thanh toán": formatCurrency(item.total),
                     })),
-                    `EmployeeSales_` + `${startDate}_to_${endDate}`,
+                    `EmployeeSales_${startDate}_to_${endDate}`,
                   )
                 }
                 className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
@@ -2156,7 +2156,7 @@ export function SalesChartReport() {
             <button
               onClick={() =>
                 exportToExcel(
-                  paginatedData.map((item) => ({
+                  data.map((item) => ({ // Changed to export all data (data instead of paginatedData)
                     "Mã KH": item.customerId,
                     "Tên KH": item.customerName,
                     "Nhóm KH": item.customerGroup,
@@ -2166,7 +2166,7 @@ export function SalesChartReport() {
                     "Doanh thu": formatCurrency(item.revenue),
                     "Trạng thái": item.status,
                   })),
-                  `CustomerSales_` + `${startDate}_to_${endDate}`,
+                  `CustomerSales_${startDate}_to_${endDate}`,
                 )
               }
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
@@ -2471,7 +2471,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2584,7 +2583,7 @@ export function SalesChartReport() {
                     "Tổng đơn": data.totalOrders,
                     "Tổng doanh thu": formatCurrency(data.totalRevenue),
                   })),
-                  `SalesChannel_` + `${startDate}_to_${endDate}`,
+                  `SalesChannel_${startDate}_to_${endDate}`,
                 )
               }
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
@@ -3402,7 +3401,7 @@ export function SalesChartReport() {
             <button
               onClick={() =>
                 exportToExcel(
-                  paginatedData.map((item) => ({
+                  data.map((item) => ({ // Changed to export all data (data instead of paginatedData)
                     "Mã SP": item.productCode,
                     "Tên SP": item.productName,
                     "Đơn vị": item.unit,
@@ -3412,7 +3411,7 @@ export function SalesChartReport() {
                     "Doanh thu": formatCurrency(item.revenue),
                     "Nhóm SP": item.categoryName,
                   })),
-                  `ProductSales_` + `${startDate}_to_${endDate}`,
+                  `ProductSales_${startDate}_to_${endDate}`,
                 )
               }
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
@@ -3552,7 +3551,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
