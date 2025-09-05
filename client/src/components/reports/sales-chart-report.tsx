@@ -3571,7 +3571,7 @@ export function SalesChartReport() {
     // This function should return data structured for charts, similar to getChartDataForType's output
     // Example: [{ name: 'Product A', value: 1500, orders: 20 }, ...]
     console.warn("getSalesDataForProductChart needs implementation");
-    return [];
+    return []; // Return empty array as placeholder
   };
   const getSalesDataForEmployeeChart = () => {
     console.warn("getSalesDataForEmployeeChart needs implementation");
@@ -3823,24 +3823,19 @@ export function SalesChartReport() {
   );
 };
 
-// Placeholder functions for chart data that need actual implementation
-// These are needed if renderChart() relies on them for specific analysis types
+// Placeholder functions for chart data (need actual implementation based on fetched data)
 const getSalesDataForProductChart = () => {
   console.warn("getSalesDataForProductChart needs implementation based on fetched products and sales data.");
-  // Example implementation: fetch products, then aggregate sales data
-  // This would typically involve using the `products` query result and calculating sales from `orders` or `transactions`
-  return []; // Return empty array as placeholder
+  return [];
 };
 
 const getSalesDataForEmployeeChart = () => {
   console.warn("getSalesDataForEmployeeChart needs implementation.");
-  // Example implementation: aggregate sales data by employee from `orders`
   return [];
 };
 
 const getSalesDataForCustomerChart = () => {
   console.warn("getSalesDataForCustomerChart needs implementation.");
-  // Example implementation: aggregate sales data by customer from `orders`
   return [];
 };
 
