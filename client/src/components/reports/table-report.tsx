@@ -421,41 +421,6 @@ export function TableReport() {
               </CardTitle>
               <CardDescription>{t("reports.analyzeTableRevenueTrend")}</CardDescription>
             </div>
-            <Button
-              onClick={() => {
-                // Prepare data with summary row
-                const dataWithSummary = [
-                  ...tableData.tableStats.map((stats) => ({
-                    "Tên bàn": stats.tableName,
-                    "Trạng thái": getTableStatusBadge(stats.table.status).label,
-                    "Số đơn": stats.totalOrders,
-                    "Doanh thu": formatCurrency(stats.totalRevenue),
-                    "Số khách": stats.totalCustomers,
-                    "Giá trị đơn TB": stats.totalOrders > 0 ? formatCurrency(stats.averageOrderValue) : "-",
-                    "Tỷ lệ luân chuyển": `${stats.utilizationRate.toFixed(1)}%`,
-                    "Giờ cao điểm": getPeakHour(stats.peakHours) !== null ? `${getPeakHour(stats.peakHours)} giờ` : "-",
-                    "Số món bán": stats.itemsSold,
-                  })),
-                  // Add summary row
-                  {
-                    "Tên bàn": "TỔNG CỘNG",
-                    "Trạng thái": `${tableData.tableStats.length} bàn`,
-                    "Số đơn": tableData.totalOrders,
-                    "Doanh thu": formatCurrency(tableData.totalRevenue),
-                    "Số khách": tableData.totalCustomers,
-                    "Giá trị đơn TB": formatCurrency(tableData.totalRevenue / tableData.totalOrders || 0),
-                    "Tỷ lệ luân chuyển": `${tableData.averageUtilization.toFixed(1)} lần TB`,
-                    "Giờ cao điểm": "-",
-                    "Số món bán": tableData.tableStats.reduce((sum, stats) => sum + stats.itemsSold, 0),
-                  }
-                ];
-                exportToExcel(dataWithSummary, `TableAnalysis_${startDate}_to_${endDate}`);
-              }}
-              className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Xuất Excel
-            </Button></div>
             <div className="flex items-center gap-4">
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
                 <SelectTrigger className="w-32">
