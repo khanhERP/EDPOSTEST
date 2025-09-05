@@ -22,6 +22,7 @@ import { ReceiptModal } from "./receipt-modal";
 import { usePopupSignal } from "@/hooks/use-popup-signal";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 import { useToast } from "@/hooks/use-toast";
+import { PrintDialog } from "./print-dialog"; // Assuming PrintDialog is in the same directory
 
 // Helper function for API requests (assuming it exists and handles headers, etc.)
 // If not, you'll need to implement it or use fetch directly like in the original code.
@@ -146,7 +147,7 @@ export function PaymentMethodModal({
   // CRITICAL: Add state for receipt modal and its data
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptDataForModal, setReceiptDataForModal] = useState<any>(null);
-
+  const [showPrintDialog, setShowPrintDialog] = useState(false); // Add showPrintDialog state
 
   // Load payment methods from settings
   const getPaymentMethods = () => {
@@ -545,7 +546,7 @@ export function PaymentMethodModal({
            // This logic might need refinement based on how 'total' is calculated elsewhere.
            // For now, we ensure the final total reflects subtotal + tax.
         }
-        
+
         const orderData = {
           orderNumber: `ORD-${Date.now()}`,
           tableId: null, // POS orders don't have tables
@@ -664,7 +665,7 @@ export function PaymentMethodModal({
         calculatedTax += itemTax;
         calculatedTotal += itemTotal;
       });
-      
+
       const orderData = {
         orderNumber: `ORD-${Date.now()}`,
         tableId: null, // POS orders don't have tables
@@ -855,7 +856,7 @@ export function PaymentMethodModal({
         calculatedTax += itemTax;
         calculatedTotal += itemTotal;
       });
-      
+
       const orderData = {
         orderNumber: `ORD-${Date.now()}`,
         tableId: null, // POS orders don't have tables
@@ -1877,19 +1878,46 @@ export function PaymentMethodModal({
         shouldRenderEInvoice: showEInvoice && selectedPaymentMethod,
         showReceiptModal: showReceiptModal,
         receiptDataForModal: receiptDataForModal,
+        showPrintDialog: showPrintDialog, // Include showPrintDialog in debug log
         timestamp: new Date().toISOString()
       })}
     </Dialog>
 
-    {/* CRITICAL: Render Receipt Modal outside Dialog to prevent conflicts */}
+    {/* CRITICAL: Render Receipt Modal and PrintDialog outside Dialog to prevent conflicts */}
     {showReceiptModal && receiptDataForModal && (
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
+          console.log("🔒 Payment Modal: Receipt modal closed by user");
           setShowReceiptModal(false);
-          setReceiptDataForModal(null); // Clear data after closing
+          setReceiptDataForModal(null);
+          // Optionally, trigger print dialog here if needed after receipt modal closes
+          // console.log("Triggering print dialog after receipt modal close");
+          // setShowPrintDialog(true);
         }}
         receipt={receiptDataForModal}
+        onPrint={() => {
+          console.log("🖨️ Payment Modal: Print triggered from receipt modal");
+          // When print is triggered from ReceiptModal, we want to open the PrintDialog
+          setShowPrintDialog(true);
+          // Keep receipt modal open while print dialog is active if necessary, or close it
+          // For now, let's assume we want to close the receipt modal once print is triggered
+          // setShowReceiptModal(false); // Uncomment if you want to close receipt modal immediately
+        }}
+      />
+    )}
+
+    {/* Print Dialog */}
+    {showPrintDialog && receiptDataForModal && (
+      <PrintDialog
+        isOpen={showPrintDialog}
+        onClose={() => {
+          console.log("🔒 Payment Modal: Print dialog closed");
+          setShowPrintDialog(false);
+          // Reset receipt data after print dialog is closed
+          setReceiptDataForModal(null);
+        }}
+        receiptData={receiptDataForModal}
       />
     )}
   </>

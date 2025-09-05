@@ -1155,33 +1155,78 @@ export function EInvoiceModal({
           description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
         });
 
-        // Prepare comprehensive invoice data with all necessary flags
-        const completeInvoiceData = {
-          success: true, // Add success flag
-          paymentMethod: selectedPaymentMethod, // Use original payment method
+        // Create receipt data for printing
+        const receiptData = {
+          transactionId: result.data?.invoiceNo || `TXN-${Date.now()}`,
+          items: cartItems.map((item) => {
+            const itemPrice =
+              typeof item.price === "string"
+                ? parseFloat(item.price)
+                : item.price;
+            const itemQuantity =
+              typeof item.quantity === "string"
+                ? parseInt(item.quantity)
+                : item.quantity;
+            const itemTaxRate =
+              typeof item.taxRate === "string"
+                ? parseFloat(item.taxRate || "0")
+                : item.taxRate || 0;
+            const itemSubtotal = itemPrice * itemQuantity;
+            const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+            return {
+              id: item.id,
+              productId: item.id,
+              productName: item.name,
+              price: itemPrice.toFixed(2),
+              quantity: itemQuantity,
+              total: (itemSubtotal + itemTax).toFixed(2),
+              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+              taxRate: itemTaxRate,
+            };
+          }),
+          subtotal: cartSubtotal.toFixed(2),
+          tax: cartTaxAmount.toFixed(2),
+          total: total.toFixed(2),
+          paymentMethod: "einvoice",
           originalPaymentMethod: selectedPaymentMethod,
-          publishLater: true,
-          receipt: invoiceResult.receipt, // Receipt data to display receipt modal
+          amountReceived: total.toFixed(2),
+          change: "0.00",
+          cashierName: "System User",
+          createdAt: new Date().toISOString(),
+          invoiceNumber: result.data?.invoiceNo || null,
+          customerName: formData.customerName,
+          customerTaxCode: formData.taxCode,
+        };
+
+        // Prepare comprehensive invoice data with receipt
+        const completeInvoiceData = {
+          success: true,
+          paymentMethod: selectedPaymentMethod,
+          originalPaymentMethod: selectedPaymentMethod,
+          publishLater: false, // This is direct publish, not publish later
+          receipt: receiptData,
           customerName: formData.customerName,
           taxCode: formData.taxCode,
-          showReceiptModal: true, // Flag for parent component to show receipt modal
-          shouldShowReceipt: true, // Additional flag for receipt display
-          einvoiceStatus: 1, // 1 = Issued (for publish later)
+          showReceiptModal: true,
+          shouldShowReceipt: true,
+          einvoiceStatus: 1, // 1 = Issued
           status: 'published',
-          cartItems: cartItems, // Include cart items for receipt
-          total: total, // Include calculated total
-          subtotal: total - orderTax, // Calculate from total - tax
-          tax: orderTax,
-          invoiceId: savedInvoice.invoice?.id,
+          cartItems: cartItems,
+          total: total,
+          subtotal: cartSubtotal,
+          tax: cartTaxAmount,
+          invoiceId: result.data?.id,
+          invoiceNumber: result.data?.invoiceNo,
           source: source || "pos",
           orderId: orderId
         };
 
-        console.log("✅ Prepared comprehensive invoice result:", completeInvoiceData);
+        console.log("✅ Prepared comprehensive invoice result with receipt:", completeInvoiceData);
 
-        // Call onConfirm to trigger receipt modal display - let parent handle modal closing
+        // Call onConfirm to trigger receipt modal display
         onConfirm(completeInvoiceData);
-        console.log("✅ PUBLISH LATER: onConfirm called - parent will handle modal states");
+        console.log("✅ PUBLISH: onConfirm called - parent will handle modal states");
 
         console.log("--------------------------------------------------");
       } else {
