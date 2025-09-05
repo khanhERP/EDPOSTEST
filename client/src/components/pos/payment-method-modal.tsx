@@ -514,12 +514,70 @@ export function PaymentMethodModal({
       const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
 
       if (isTemporaryOrder) {
-        console.log(`🔄 TEMPORARY ORDER DETECTED - proceeding directly to E-Invoice for ${method} payment on order ${orderInfo.id}`);
+        console.log(`🔄 TEMPORARY ORDER DETECTED - creating order in database for ${method} payment on order ${orderInfo.id}`);
 
-        // For temporary orders (POS direct payments), skip database update and go directly to E-Invoice
-        setSelectedPaymentMethod(method);
-        setShowEInvoice(true);
-        console.log(`🔥 SHOWING E-INVOICE MODAL for temporary order with ${method} payment`);
+        try {
+          // Create actual order in database for POS direct sales
+          const orderData = {
+            orderNumber: `ORD-${Date.now()}`,
+            tableId: null, // POS orders don't have tables
+            salesChannel: 'pos', // Mark as POS order
+            customerName: orderInfo.customerName || "Khách hàng lẻ",
+            customerCount: 1,
+            status: "paid", // Mark as paid immediately
+            paymentMethod: method,
+            paymentStatus: "paid",
+            subtotal: orderInfo.subtotal?.toString() || "0",
+            tax: orderInfo.tax?.toString() || "0", 
+            total: orderInfo.total?.toString() || "0",
+            notes: `POS ${method} Payment`,
+            paidAt: new Date().toISOString()
+          };
+
+          // Prepare order items
+          const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
+            productId: item.productId || item.id,
+            quantity: parseInt(item.quantity?.toString() || "1"),
+            unitPrice: item.unitPrice || item.price?.toString() || "0",
+            total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
+            notes: null
+          }));
+
+          console.log(`📝 Creating POS ${method} order:`, orderData);
+          console.log("📦 Order items:", orderItems);
+
+          // Create order via API
+          const createResponse = await fetch('/api/orders', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              order: orderData,
+              items: orderItems
+            }),
+          });
+
+          if (createResponse.ok) {
+            const createdOrder = await createResponse.json();
+            console.log(`✅ POS ${method} order created successfully:`, createdOrder);
+
+            // Update orderInfo with the real order ID for E-Invoice
+            orderInfo.id = createdOrder.id;
+            orderInfo.orderNumber = createdOrder.orderNumber;
+
+            setSelectedPaymentMethod(method);
+            setShowEInvoice(true);
+            console.log(`🔥 SHOWING E-INVOICE MODAL for created POS ${method} order ${createdOrder.id}`);
+          } else {
+            const errorText = await createResponse.text();
+            console.error(`❌ Failed to create POS ${method} order:`, errorText);
+            alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+          }
+        } catch (error) {
+          console.error(`❌ Error creating POS ${method} order:`, error);
+          alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+        }
         return;
       }
 
@@ -564,14 +622,72 @@ export function PaymentMethodModal({
     const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
 
     if (isTemporaryOrder) {
-      console.log(`🔄 TEMPORARY ORDER DETECTED - proceeding directly to E-Invoice for order ${orderInfo.id}`);
+      console.log(`🔄 TEMPORARY ORDER DETECTED - creating order in database for QR payment ${orderInfo.id}`);
 
-      // For temporary orders (POS direct payments), skip database update and go directly to E-Invoice
-      setShowQRCode(false);
-      setQrCodeUrl("");
-      setSelectedPaymentMethod("qrCode");
-      setShowEInvoice(true);
-      console.log(`🔥 SHOWING E-INVOICE MODAL for temporary order`);
+      try {
+        // Create actual order in database for POS direct sales
+        const orderData = {
+          orderNumber: `ORD-${Date.now()}`,
+          tableId: null, // POS orders don't have tables
+          salesChannel: 'pos', // Mark as POS order
+          customerName: orderInfo.customerName || "Khách hàng lẻ",
+          customerCount: 1,
+          status: "paid", // Mark as paid immediately for QR
+          paymentMethod: "qrCode",
+          paymentStatus: "paid",
+          subtotal: orderInfo.subtotal?.toString() || "0",
+          tax: orderInfo.tax?.toString() || "0", 
+          total: orderInfo.total?.toString() || "0",
+          notes: `POS QR Payment - Transaction: ${currentTransactionUuid || 'N/A'}`,
+          paidAt: new Date().toISOString()
+        };
+
+        // Prepare order items
+        const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
+          productId: item.productId || item.id,
+          quantity: parseInt(item.quantity?.toString() || "1"),
+          unitPrice: item.unitPrice || item.price?.toString() || "0",
+          total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
+          notes: null
+        }));
+
+        console.log("📝 Creating POS QR order:", orderData);
+        console.log("📦 Order items:", orderItems);
+
+        // Create order via API
+        const createResponse = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            order: orderData,
+            items: orderItems
+          }),
+        });
+
+        if (createResponse.ok) {
+          const createdOrder = await createResponse.json();
+          console.log(`✅ POS QR order created successfully:`, createdOrder);
+
+          // Update orderInfo with the real order ID for E-Invoice
+          orderInfo.id = createdOrder.id;
+          orderInfo.orderNumber = createdOrder.orderNumber;
+
+          setShowQRCode(false);
+          setQrCodeUrl("");
+          setSelectedPaymentMethod("qrCode");
+          setShowEInvoice(true);
+          console.log(`🔥 SHOWING E-INVOICE MODAL for created POS QR order ${createdOrder.id}`);
+        } else {
+          const errorText = await createResponse.text();
+          console.error(`❌ Failed to create POS QR order:`, errorText);
+          alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+        }
+      } catch (error) {
+        console.error(`❌ Error creating POS QR order:`, error);
+        alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+      }
       return;
     }
 
@@ -683,15 +799,74 @@ export function PaymentMethodModal({
     const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
 
     if (isTemporaryOrder) {
-      console.log(`🔄 TEMPORARY ORDER DETECTED - proceeding directly to E-Invoice for order ${orderInfo.id}`);
+      console.log(`🔄 TEMPORARY ORDER DETECTED - creating order in database for POS payment ${orderInfo.id}`);
 
-      // For temporary orders (POS direct payments), skip database update and go directly to E-Invoice
-      setShowCashPayment(false);
-      setAmountReceived("");
-      setCashAmountInput("");
-      setSelectedPaymentMethod("cash");
-      setShowEInvoice(true);
-      console.log(`🔥 SHOWING E-INVOICE MODAL for temporary order`);
+      try {
+        // Create actual order in database for POS direct sales
+        const orderData = {
+          orderNumber: `ORD-${Date.now()}`,
+          tableId: null, // POS orders don't have tables
+          salesChannel: 'pos', // Mark as POS order
+          customerName: orderInfo.customerName || "Khách hàng lẻ",
+          customerCount: 1,
+          status: "paid", // Mark as paid immediately for cash
+          paymentMethod: "cash",
+          paymentStatus: "paid",
+          subtotal: orderInfo.subtotal?.toString() || "0",
+          tax: orderInfo.tax?.toString() || "0", 
+          total: orderInfo.total?.toString() || "0",
+          notes: `POS Cash Payment - Amount: ${receivedAmount}, Change: ${finalChange}`,
+          paidAt: new Date().toISOString()
+        };
+
+        // Prepare order items
+        const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
+          productId: item.productId || item.id,
+          quantity: parseInt(item.quantity?.toString() || "1"),
+          unitPrice: item.unitPrice || item.price?.toString() || "0",
+          total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
+          notes: null
+        }));
+
+        console.log("📝 Creating POS order:", orderData);
+        console.log("📦 Order items:", orderItems);
+
+        // Create order via API
+        const createResponse = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            order: orderData,
+            items: orderItems
+          }),
+        });
+
+        if (createResponse.ok) {
+          const createdOrder = await createResponse.json();
+          console.log(`✅ POS order created successfully:`, createdOrder);
+
+          // Update orderInfo with the real order ID for E-Invoice
+          orderInfo.id = createdOrder.id;
+          orderInfo.orderNumber = createdOrder.orderNumber;
+
+          // Reset form states
+          setShowCashPayment(false);
+          setAmountReceived("");
+          setCashAmountInput("");
+          setSelectedPaymentMethod("cash");
+          setShowEInvoice(true);
+          console.log(`🔥 SHOWING E-INVOICE MODAL for created POS order ${createdOrder.id}`);
+        } else {
+          const errorText = await createResponse.text();
+          console.error(`❌ Failed to create POS order:`, errorText);
+          alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+        }
+      } catch (error) {
+        console.error(`❌ Error creating POS order:`, error);
+        alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+      }
       return;
     }
 
