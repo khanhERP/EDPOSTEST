@@ -2511,11 +2511,10 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
-      );
-    }
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   // Sales Channel Report Component Logic
