@@ -366,7 +366,7 @@ export function DashboardOverview() {
                 {t('reports.dashboardTab')}
               </CardTitle>
               <CardDescription>
-                {t("reports.dashboardDescription")} (Dữ liệu từ hóa đơn và đơn hàng)
+                {t("reports.dashboardDescription")}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
