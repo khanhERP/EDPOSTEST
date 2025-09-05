@@ -388,15 +388,7 @@ export function DashboardOverview() {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="w-auto"
               />
-              <Button
-                onClick={handleRefresh}
-                size="sm"
-                variant="outline"
-                className="ml-2"
-              >
-                <Search className="w-4 h-4 mr-1" />
-                {t("reports.refresh")}
-              </Button>
+              
             </div>
           </div>
         </CardHeader>
