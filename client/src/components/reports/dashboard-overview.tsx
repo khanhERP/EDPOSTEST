@@ -9,7 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { CalendarIcon, DollarSign, ShoppingCart, Users, TrendingUp, Package, RotateCcw } from "lucide-react";
 import { format, startOfDay, endOfDay, isToday, isThisWeek, isThisMonth, subDays, subWeeks, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "@/lib/i18n";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FF6B6B', '#4ECDC4'];
 
