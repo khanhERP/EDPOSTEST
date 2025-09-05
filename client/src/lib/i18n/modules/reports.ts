@@ -372,7 +372,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     costAnalysis: "Phân tích chi phí",
     stockMovement: "Di chuyển tồn kho",
     menuAnalysisDescription: "Phân tích hiệu suất menu và sản phẩm bán chạy",
-    
+
     // Menu report specific translations
     menuItems: "Sản phẩm",
     itemsSold: "Đã bán",
@@ -385,10 +385,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     rank: "Xếp hạng",
     menuName: "Tên sản phẩm",
     salesCount: "Số lượng bán",
+    contribution: "% Đóng góp",
     noCategoryData: "Không có dữ liệu danh mục",
     noSalesData: "Không có dữ liệu bán hàng",
     noRevenueData: "Không có dữ liệu doanh thu",
-    
+
     // Additional menu report keys
     menuItemAnalysis: "Phân tích sản phẩm",
     totalSales: "Tổng bán",
@@ -1393,7 +1394,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     summaryReportTitle: "Summary Report",
 
     // Table detail headers
-    salesDetailsHeader: "Sales Details",
+    salesDetailsHeader: " Sales Details",
     revenueExpenseDetailsHeader: "Revenue Expense Details",
     inventoryDetailsHeader: "Inventory Details",
 
