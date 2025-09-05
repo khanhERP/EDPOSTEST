@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -27,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Utensils, Clock, Users, TrendingUp } from "lucide-react";
-import type { Order, Table as TableType, Invoice, Transaction } from "@shared/schema";
+import type { Order, Table as TableType } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 export function TableReport() {
@@ -41,12 +40,12 @@ export function TableReport() {
     new Date().toISOString().split("T")[0],
   );
 
-  // Fetch data using EXACT same pattern as other reports
+  // Fetch orders using real API
   const { data: orders = [], isLoading: ordersLoading } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
       try {
-        const response = await fetch("/api/orders");
+        const response = await fetch(`/api/orders/date-range/${startDate}/${endDate}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -55,46 +54,6 @@ export function TableReport() {
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Table Report - Error fetching orders:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-  });
-
-  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
-    queryKey: ["/api/invoices"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/invoices");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Table Report - Invoices loaded:", data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Table Report - Error fetching invoices:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-  });
-
-  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
-    queryKey: ["/api/transactions"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/transactions");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Table Report - Transactions loaded:", data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Table Report - Error fetching transactions:', error);
         return [];
       }
     },
@@ -122,7 +81,7 @@ export function TableReport() {
     retryDelay: 1000,
   });
 
-  // Fetch order items and transaction items for detailed analysis
+  // Fetch order items for detailed analysis
   const { data: orderItems = [], isLoading: orderItemsLoading } = useQuery({
     queryKey: ["/api/order-items"],
     queryFn: async () => {
@@ -143,92 +102,43 @@ export function TableReport() {
     retryDelay: 1000,
   });
 
-  const { data: transactionItems = [], isLoading: transactionItemsLoading } = useQuery({
-    queryKey: ["/api/transaction-items"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/transaction-items");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Table Report - Transaction items loaded:", data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Table Report - Error fetching transaction items:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-  });
-
   const getTableData = () => {
     if (!orders || !tables) return null;
 
-    // Use EXACT same combined data filtering as other reports
-    const combinedData = [
-      ...(Array.isArray(orders) ? orders.map((order: any) => ({
-        ...order,
-        type: 'order',
-        date: order.orderedAt,
-        amount: parseFloat(order.total || 0)
-      })) : []),
-      ...(Array.isArray(invoices) ? invoices.map((invoice: any) => ({
-        ...invoice,
-        type: 'invoice', 
-        date: invoice.createdAt,
-        amount: parseFloat(invoice.total || 0)
-      })) : []),
-      ...(Array.isArray(transactions) ? transactions.map((transaction: any) => ({
-        ...transaction,
-        type: 'transaction',
-        date: transaction.transactionDate,
-        amount: parseFloat(transaction.amount || 0)
-      })) : [])
-    ];
-
-    // Filter by date and status - EXACT same logic as other reports
-    const filteredCompletedItems = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
+    // Filter orders by date range and completion status
+    const filteredCompletedOrders = orders.filter((order: any) => {
       try {
-        if (!item || !item.date) return false;
+        if (!order.orderedAt && !order.createdAt) return false;
 
-        const itemDate = new Date(item.date);
-        if (isNaN(itemDate.getTime())) return false;
+        const orderDate = new Date(order.orderedAt || order.createdAt);
+        if (isNaN(orderDate.getTime())) return false;
 
-        // Normalize both dates to compare only date part (same as other reports)
-        const itemDateOnly = new Date(itemDate);
-        itemDateOnly.setHours(0, 0, 0, 0);
-        
+        // Normalize dates for comparison
+        const orderDateOnly = new Date(orderDate);
+        orderDateOnly.setHours(0, 0, 0, 0);
+
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
-        
-        const dateMatch = itemDateOnly >= start && itemDateOnly <= end;
-        
-        // Use EXACT same status logic as dashboard and sales report
-        const isCompleted = (item.type === 'invoice' && (item.invoiceStatus === 1 || item.displayStatus === 1)) ||
-                          (item.type === 'order' && (item.status === 'paid' || item.status === 'completed')) ||
-                          (item.type === 'transaction' && (item.status === 'completed' || item.status === 'paid'));
+
+        const dateMatch = orderDateOnly >= start && orderDateOnly <= end;
+        const isCompleted = order.status === 'paid' || order.status === 'completed';
 
         return dateMatch && isCompleted;
       } catch (error) {
-        console.error('Table Report - Error filtering item:', item, error);
+        console.error('Table Report - Error filtering order:', order, error);
         return false;
       }
-    }) : [];
+    });
 
-    console.log("Table Report Debug (Combined Data):", {
+    console.log("Table Report Debug:", {
       dateRange,
       startDate,
       endDate,
       totalOrders: orders?.length || 0,
-      totalInvoices: invoices?.length || 0, 
-      totalTransactions: transactions?.length || 0,
-      combinedDataLength: combinedData.length,
-      filteredCompletedItems: filteredCompletedItems.length,
-      sampleItem: filteredCompletedItems[0] || null
+      filteredCompletedOrders: filteredCompletedOrders.length,
+      sampleOrder: filteredCompletedOrders[0] || null
     });
 
     // Table performance analysis
@@ -259,42 +169,30 @@ export function TableReport() {
       };
     });
 
-    // Calculate stats from all completed items
-    filteredCompletedItems.forEach((item: any) => {
-      // For orders - direct table mapping
-      if (item.type === 'order' && item.tableId && tableStats[item.tableId]) {
-        const stats = tableStats[item.tableId];
+    // Calculate stats from completed orders
+    filteredCompletedOrders.forEach((order: any) => {
+      if (order.tableId && tableStats[order.tableId]) {
+        const stats = tableStats[order.tableId];
         stats.orderCount += 1;
-        stats.revenue += item.amount;
-        stats.customerCount += item.customerCount || 1;
+
+        const orderTotal = Number(order.total || 0);
+        const orderDiscount = Number(order.discount || 0);
+        const revenue = orderTotal - orderDiscount;
+
+        stats.revenue += revenue;
+        stats.customerCount += Number(order.customerCount || 1);
 
         // Track peak hours
-        const hour = new Date(item.date).getHours();
-        stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
+        const orderDate = new Date(order.orderedAt || order.createdAt);
+        if (!isNaN(orderDate.getTime())) {
+          const hour = orderDate.getHours();
+          stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
+        }
 
         // Count items sold from order_items
-        const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === item.id);
-        const itemsCount = relatedOrderItems.reduce((sum, oi) => sum + (oi.quantity || 0), 0);
+        const relatedOrderItems = orderItems.filter((item: any) => item.orderId === order.id);
+        const itemsCount = relatedOrderItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
         stats.itemsSold += itemsCount;
-      }
-      
-      // For transactions - if they have tableId, add to that table
-      if (item.type === 'transaction' && item.tableId && tableStats[item.tableId]) {
-        const stats = tableStats[item.tableId];
-        stats.revenue += item.amount;
-        stats.orderCount += 1; // Count as additional transaction
-
-        // Count items from transaction_items
-        const relatedTransactionItems = transactionItems.filter((ti: any) => ti.transactionId === item.id);
-        const itemsCount = relatedTransactionItems.reduce((sum, ti) => sum + (ti.quantity || 0), 0);
-        stats.itemsSold += itemsCount;
-      }
-      
-      // For invoices - if they have tableId, add to that table
-      if (item.type === 'invoice' && item.tableId && tableStats[item.tableId]) {
-        const stats = tableStats[item.tableId];
-        stats.revenue += item.amount;
-        stats.orderCount += 1;
       }
     });
 
@@ -441,7 +339,7 @@ export function TableReport() {
 
   const tableData = getTableData();
 
-  const isLoading = ordersLoading || invoicesLoading || transactionsLoading || tablesLoading || orderItemsLoading || transactionItemsLoading;
+  const isLoading = ordersLoading || tablesLoading || orderItemsLoading;
 
   if (isLoading) {
     return (
@@ -558,11 +456,13 @@ export function TableReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalCustomers")}
+                  {t("reports.totalRevenue")}
                 </p>
-                <p className="text-2xl font-bold">{tableData.totalCustomers}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrency(tableData.totalRevenue)}
+                </p>
                 <p className="text-xs text-gray-500">
-                  {t("reports.cumulativeVisitors")}
+                  {startDate} ~ {endDate}
                 </p>
               </div>
               <Users className="w-8 h-8 text-purple-500" />
@@ -575,230 +475,170 @@ export function TableReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalRevenue")}
+                  {t("reports.totalCustomers")}
                 </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(tableData.totalRevenue)}
-                </p>
+                <p className="text-2xl font-bold">{tableData.totalCustomers}</p>
                 <p className="text-xs text-gray-500">
-                  {t("reports.totalByTable")}
+                  Khách phục vụ
                 </p>
               </div>
-              <Utensils className="w-8 h-8 text-green-500" />
+              <Utensils className="w-8 h-8 text-orange-500" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Detailed Table Performance */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Utensils className="w-5 h-5" />
-            {t("reports.tableAnalysis")}
-          </CardTitle>
-          <CardDescription>
-            {t("reports.tableAnalysisDescription")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("common.table")}</TableHead>
-                <TableHead>{t("reports.currentStatus")}</TableHead>
-                <TableHead>{t("reports.orders")}</TableHead>
-                <TableHead>{t("reports.revenue")}</TableHead>
-                <TableHead>{t("reports.customerCount")}</TableHead>
-                <TableHead>{t("reports.averageOrderValue")}</TableHead>
-                <TableHead>{t("reports.turnoverRate")}</TableHead>
-                <TableHead>{t("reports.peakTime")}</TableHead>
-                <TableHead>Số món bán</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableData.tableStats
-                .sort((a, b) => b.revenue - a.revenue)
-                .map((stats) => {
+      {/* Table Performance Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Revenue Tables */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Bàn doanh thu cao nhất</CardTitle>
+            <CardDescription>
+              Top 10 bàn có doanh thu cao nhất trong khoảng thời gian
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bàn</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="text-right">Doanh thu</TableHead>
+                  <TableHead className="text-center">Đơn hàng</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tableData.topRevenueTables.slice(0, 10).map((stats) => {
                   const statusConfig = getTableStatusBadge(stats.table.status);
-                  const peakHour = getPeakHour(stats.peakHours);
-
                   return (
                     <TableRow key={stats.table.id}>
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-3 h-3 rounded-full ${
-                              stats.table.status === "occupied"
-                                ? "bg-red-500"
-                                : "bg-green-500"
-                            }`}
-                          ></div>
-                          {stats.table.tableNumber}
-                          <span className="text-xs text-gray-500">
-                            ({stats.table.capacity} {t("common.people")})
-                          </span>
-                        </div>
+                        {stats.table.tableNumber}
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusConfig.variant}>
                           {statusConfig.label}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {stats.orderCount} {t("common.count")}
-                      </TableCell>
-                      <TableCell className="font-semibold">
+                      <TableCell className="text-right font-medium text-green-600">
                         {formatCurrency(stats.revenue)}
                       </TableCell>
-                      <TableCell>
-                        {stats.customerCount} {t("common.people")}
-                      </TableCell>
-                      <TableCell>
-                        {stats.orderCount > 0
-                          ? formatCurrency(stats.averageOrderValue)
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            stats.turnoverRate > 1 ? "default" : "outline"
-                          }
-                        >
-                          {stats.turnoverRate.toFixed(1)}{" "}
-                          {t("reports.timesPerDay")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {peakHour !== null
-                          ? `${peakHour} ${t("reports.hour")}`
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {stats.itemsSold} món
-                        </Badge>
+                      <TableCell className="text-center">
+                        {stats.orderCount}
                       </TableCell>
                     </TableRow>
                   );
                 })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top Revenue Tables */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <TrendingUp className="w-4 h-4" />
-              {t("reports.topRevenueTables")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {tableData.topRevenueTables
-                .slice(0, 5)
-                .map((stats: any, index: number) => (
-                  <div
-                    key={stats.table.id}
-                    className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={index < 3 ? "default" : "outline"}
-                        className="text-xs"
-                      >
-                        {index + 1}
-                      </Badge>
-                      <span className="font-medium">
-                        {stats.table.tableNumber}
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold text-green-600">
-                      {formatCurrency(stats.revenue)}
-                    </span>
-                  </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Turnover Tables */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Clock className="w-4 h-4" />
-              {t("reports.topTurnoverTables")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {tableData.topTurnoverTables
-                .slice(0, 5)
-                .map((stats: any, index: number) => (
-                  <div
-                    key={stats.table.id}
-                    className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={index < 3 ? "default" : "outline"}
-                        className="text-xs"
-                      >
-                        {index + 1}
-                      </Badge>
-                      <span className="font-medium">
-                        {stats.table.tableNumber}
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold">
-                      {stats.turnoverRate.toFixed(1)} {t("reports.timesPerDay")}
-                    </span>
-                  </div>
-                ))}
-            </div>
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
         {/* Top Utilization Tables */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Users className="w-4 h-4" />
-              {t("reports.topUtilizationTables")}
-            </CardTitle>
+            <CardTitle>Bàn sử dụng nhiều nhất</CardTitle>
+            <CardDescription>
+              Top 10 bàn có số lượng đơn hàng nhiều nhất
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {tableData.topUtilizationTables
-                .slice(0, 5)
-                .map((stats: any, index: number) => (
-                  <div
-                    key={stats.table.id}
-                    className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={index < 3 ? "default" : "outline"}
-                        className="text-xs"
-                      >
-                        {index + 1}
-                      </Badge>
-                      <span className="font-medium">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bàn</TableHead>
+                  <TableHead className="text-center">Đơn hàng</TableHead>
+                  <TableHead className="text-center">Khách</TableHead>
+                  <TableHead className="text-center">Giờ cao điểm</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tableData.topUtilizationTables.slice(0, 10).map((stats) => {
+                  const peakHour = getPeakHour(stats.peakHours);
+                  return (
+                    <TableRow key={stats.table.id}>
+                      <TableCell className="font-medium">
                         {stats.table.tableNumber}
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold">
-                      {stats.orderCount} {t("common.count")}
-                    </span>
-                  </div>
-                ))}
-            </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {stats.orderCount}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {stats.customerCount}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {peakHour !== null ? `${peakHour}:00` : "N/A"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
+
+      {/* All Tables Performance */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Hiệu suất tất cả bàn</CardTitle>
+          <CardDescription>
+            Chi tiết hiệu suất của từng bàn trong khoảng thời gian được chọn
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Bàn</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead className="text-center">Đơn hàng</TableHead>
+                <TableHead className="text-right">Doanh thu</TableHead>
+                <TableHead className="text-center">Khách</TableHead>
+                <TableHead className="text-right">GT Trung bình</TableHead>
+                <TableHead className="text-center">Tỷ lệ xoay bàn</TableHead>
+                <TableHead className="text-center">Sản phẩm bán</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tableData.tableStats.map((stats) => {
+                const statusConfig = getTableStatusBadge(stats.table.status);
+                return (
+                  <TableRow key={stats.table.id}>
+                    <TableCell className="font-medium">
+                      {stats.table.tableNumber}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusConfig.variant}>
+                        {statusConfig.label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {stats.orderCount}
+                    </TableCell>
+                    <TableCell className="text-right font-medium text-green-600">
+                      {formatCurrency(stats.revenue)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {stats.customerCount}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(stats.averageOrderValue)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {stats.turnoverRate.toFixed(1)}/ngày
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {stats.itemsSold}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

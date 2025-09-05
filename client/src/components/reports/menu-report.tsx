@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,44 +41,26 @@ export default function MenuReport() {
       return response.json();
     },
     retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  // Query products - optimized with better caching
+  // Query products
   const { data: products = [] } = useQuery({
-    queryKey: ["/api/products", selectedCategory, productType, productSearch],
+    queryKey: ["/api/products"],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedCategory && selectedCategory !== "all") {
-        params.append("categoryId", selectedCategory);
-      }
-      if (productType && productType !== "all") {
-        params.append("productType", productType);
-      }
-      if (productSearch) {
-        params.append("search", productSearch);
-      }
-
-      const response = await fetch(`/api/products?${params.toString()}`);
+      const response = await fetch("/api/products");
       if (!response.ok) {
         throw new Error("Failed to fetch products");
       }
-      const data = await response.json();
-      
-      console.log("Raw products from API:", data);
-      console.log("Total products received:", data.length);
-      
-      return data;
+      return response.json();
     },
     retry: 2,
-    retryDelay: 2000,
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
-    refetchInterval: false, // Disable auto refetch
-    refetchOnWindowFocus: false, // Disable refetch on focus
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
-  // Query orders by date range - optimized with longer cache time
+  // Query orders by date range
   const { data: orders = [] } = useQuery({
     queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
@@ -89,7 +70,7 @@ export default function MenuReport() {
           endDate: endOfDay(endDate).toISOString(),
         });
 
-        const response = await fetch(`/api/orders/date-range?${params.toString()}`);
+        const response = await fetch(`/api/orders/date-range/${format(startDate, 'yyyy-MM-dd')}/${format(endDate, 'yyyy-MM-dd')}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch orders: ${response.statusText}`);
         }
@@ -101,133 +82,71 @@ export default function MenuReport() {
     },
     retry: 2,
     retryDelay: 2000,
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
-    refetchInterval: false, // Disable auto refetch
-    refetchOnWindowFocus: false, // Disable refetch on focus
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
-  // Query transactions by date range - optimized with longer cache time
-  const { data: transactions = [] } = useQuery({
-    queryKey: ["/api/transactions", startDate, endDate],
+  // Query order items to get detailed product sales data
+  const { data: orderItems = [] } = useQuery({
+    queryKey: ["/api/order-items"],
     queryFn: async () => {
       try {
-        const params = new URLSearchParams({
-          startDate: startOfDay(startDate).toISOString(),
-          endDate: endOfDay(endDate).toISOString(),
-        });
-
-        const response = await fetch(`/api/transactions?${params.toString()}`);
+        const response = await fetch("/api/order-items");
         if (!response.ok) {
-          throw new Error(`Failed to fetch transactions: ${response.statusText}`);
+          throw new Error("Failed to fetch order items");
         }
         return response.json();
       } catch (error) {
-        console.error("Transactions fetch error:", error);
+        console.error("Order items fetch error:", error);
         return [];
       }
     },
     retry: 2,
-    retryDelay: 2000,
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
-    refetchInterval: false, // Disable auto refetch
-    refetchOnWindowFocus: false, // Disable refetch on focus
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
-  // Query invoices by date range - optimized with longer cache time
-  const { data: invoices = [] } = useQuery({
-    queryKey: ["/api/invoices/date-range", startDate, endDate],
-    queryFn: async () => {
-      try {
-        const params = new URLSearchParams({
-          startDate: startOfDay(startDate).toISOString(),
-          endDate: endOfDay(endDate).toISOString(),
-        });
-
-        const response = await fetch(`/api/invoices/date-range?${params.toString()}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch invoices: ${response.statusText}`);
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Invoices fetch error:", error);
-        return [];
-      }
-    },
-    retry: 2,
-    retryDelay: 2000,
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
-    refetchInterval: false, // Disable auto refetch
-    refetchOnWindowFocus: false, // Disable refetch on focus
-  });
-
-  // Calculate menu analysis data from real orders, transactions, and invoices
+  // Calculate menu analysis from real order data
   const menuAnalysis = useMemo(() => {
     try {
-      // Combine all order items from orders, transactions, and invoices
-      const allOrderItems = [];
-
-      // Add order items from orders
-      orders.forEach(order => {
-        if (order.items && Array.isArray(order.items)) {
-          order.items.forEach(item => {
-            allOrderItems.push({
-              ...item,
-              source: 'order',
-              sourceId: order.id,
-              date: order.createdAt || order.date,
-              total: order.total || 0
-            });
-          });
-        }
+      // Filter completed orders by date range
+      const filteredOrders = orders.filter((order: any) => {
+        const orderDate = new Date(order.orderedAt || order.createdAt);
+        const isInDateRange = orderDate >= startOfDay(startDate) && orderDate <= endOfDay(endDate);
+        const isCompleted = order.status === 'paid' || order.status === 'completed';
+        return isInDateRange && isCompleted;
       });
 
-      // Add order items from transactions
-      transactions.forEach(transaction => {
-        if (transaction.items && Array.isArray(transaction.items)) {
-          transaction.items.forEach(item => {
-            allOrderItems.push({
-              ...item,
-              source: 'transaction',
-              sourceId: transaction.id,
-              date: transaction.createdAt || transaction.date,
-              total: transaction.total || 0
-            });
-          });
-        }
+      console.log("Menu Analysis Debug:", {
+        totalOrders: orders.length,
+        filteredOrders: filteredOrders.length,
+        dateRange: `${format(startDate, 'yyyy-MM-dd')} to ${format(endDate, 'yyyy-MM-dd')}`
       });
 
-      // Add order items from invoices
-      invoices.forEach(invoice => {
-        if (invoice.items && Array.isArray(invoice.items)) {
-          invoice.items.forEach(item => {
-            allOrderItems.push({
-              ...item,
-              source: 'invoice',
-              sourceId: invoice.id,
-              date: invoice.createdAt || invoice.date,
-              total: invoice.total || 0
-            });
-          });
-        }
-      });
+      // Get order items for filtered orders
+      const filteredOrderItems = orderItems.filter((item: any) => 
+        filteredOrders.some((order: any) => order.id === item.orderId)
+      );
 
-      // Calculate product statistics
+      // Calculate product statistics from real order items
       const productStats = new Map();
       const categoryStats = new Map();
 
-      allOrderItems.forEach(item => {
-        const productKey = item.productId || item.sku || item.name;
-        const categoryId = item.categoryId || 'unknown';
+      filteredOrderItems.forEach((item: any) => {
+        // Find product details
+        const product = products.find((p: any) => p.id === item.productId);
+        const productKey = item.productId || item.productName;
+        const categoryId = product?.categoryId || 'unknown';
         const quantity = parseInt(item.quantity) || 0;
-        const price = parseFloat(item.price) || 0;
-        const revenue = quantity * price;
+        const price = parseFloat(item.unitPrice) || 0;
+        const revenue = parseFloat(item.total) || (quantity * price);
 
         // Product statistics
         if (!productStats.has(productKey)) {
           productStats.set(productKey, {
             productId: item.productId,
-            productName: item.name || item.productName,
-            sku: item.sku,
+            productName: item.productName || product?.name || 'Unknown Product',
+            sku: product?.sku || item.productSku,
             categoryId: categoryId,
             totalQuantity: 0,
             totalRevenue: 0,
@@ -281,7 +200,7 @@ export default function MenuReport() {
         .sort((a, b) => b.totalRevenue - a.totalRevenue)
         .slice(0, 10);
 
-      const result = {
+      return {
         totalRevenue,
         totalQuantity,
         categoryStats: categoryStatsArray,
@@ -289,24 +208,6 @@ export default function MenuReport() {
         topSellingProducts,
         topRevenueProducts,
       };
-
-      console.log("Menu Analysis Debug - Real Product Data:", {
-        totalOrders: orders.length,
-        completedOrders: orders.filter(o => o.status === 'paid' || o.status === 'completed').length,
-        totalTransactions: transactions.length,
-        completedTransactions: transactions.filter(t => t.status === 'completed').length,
-        totalInvoices: invoices.length,
-        publishedInvoices: invoices.filter(i => i.status === 1).length,
-        totalRevenue,
-        totalQuantity,
-        productCount: productStatsArray.length,
-        categoryStats: categoryStatsArray.length,
-        topSellingProduct: topSellingProducts[0]?.productName || 'None',
-        dateRange: `${format(startDate, 'yyyy-MM-dd')} to ${format(endDate, 'yyyy-MM-dd')}`,
-        sampleProductStats: Array.from(productStats.entries()).slice(0, 3)
-      });
-
-      return result;
     } catch (error) {
       console.error("Menu analysis calculation error:", error);
       return {
@@ -318,7 +219,7 @@ export default function MenuReport() {
         topRevenueProducts: [],
       };
     }
-  }, [orders, transactions, invoices, categories, startDate, endDate]);
+  }, [orders, orderItems, products, categories, startDate, endDate]);
 
   const resetFilters = () => {
     setStartDate(new Date());
@@ -347,7 +248,7 @@ export default function MenuReport() {
           <CardTitle>Bộ lọc</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Date Range */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
@@ -425,23 +326,6 @@ export default function MenuReport() {
               </Select>
             </div>
 
-            {/* Product Type Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Loại sản phẩm
-              </label>
-              <Select value={productType} onValueChange={setProductType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn loại" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả loại</SelectItem>
-                  <SelectItem value="1">Sản phẩm</SelectItem>
-                  <SelectItem value="2">Dịch vụ</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Product Search */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
@@ -468,7 +352,7 @@ export default function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng doanh thu (chưa trừ thuế & giảm giá)
+                  Tổng doanh thu
                 </p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(menuAnalysis?.totalRevenue || 0)} ₫
@@ -588,8 +472,8 @@ export default function MenuReport() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-green-600">{formatCurrency(product.totalRevenue)} ₫</p>
-                          <p className="text-sm text-gray-500">{product.totalQuantity} đã bán</p>
+                          <p className="font-bold">{formatCurrency(product.totalRevenue)} ₫</p>
+                          <p className="text-sm text-blue-600">{product.totalQuantity} đã bán</p>
                         </div>
                       </div>
                     ))}
@@ -608,25 +492,27 @@ export default function MenuReport() {
               <CardTitle>Phân tích theo danh mục</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  {menuAnalysis?.categoryStats?.length > 0 ? (
-                    menuAnalysis.categoryStats.map((category, index) => (
+              <div className="space-y-4">
+                {menuAnalysis?.categoryStats?.length > 0 ? (
+                  <div className="grid gap-4">
+                    {menuAnalysis.categoryStats.map((category, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium">{category.categoryName}</p>
-                          <p className="text-sm text-gray-500">{category.productCount} sản phẩm</p>
+                        <div className="flex items-center space-x-3">
+                          <Badge variant="outline">{category.categoryName}</Badge>
+                          <div>
+                            <p className="text-sm text-gray-500">{category.productCount} sản phẩm</p>
+                          </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-green-600">{formatCurrency(category.totalRevenue)} ₫</p>
-                          <p className="text-sm text-gray-500">{category.totalQuantity} đã bán</p>
+                          <p className="font-bold">{formatCurrency(category.totalRevenue)} ₫</p>
+                          <p className="text-sm text-blue-600">{category.totalQuantity} đã bán</p>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-gray-500 py-8">Không có dữ liệu danh mục</p>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-8">Không có dữ liệu danh mục</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -635,6 +521,3 @@ export default function MenuReport() {
     </div>
   );
 }
-
-// Named export for compatibility
-export { MenuReport };

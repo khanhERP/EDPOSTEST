@@ -40,7 +40,7 @@ export function SalesReport() {
     new Date().toISOString().split("T")[0],
   );
 
-  // Query orders by date range
+  // Query orders by date range - using real order data
   const { data: orders = [], isLoading: ordersLoading, error: ordersError, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
@@ -53,46 +53,6 @@ export function SalesReport() {
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching orders:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-  });
-
-  // Query transactions by date range
-  const { data: transactions = [], isLoading: transactionsLoading, refetch: refetchTransactions } = useQuery({
-    queryKey: ["/api/transactions", startDate, endDate],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/transactions/${startDate}/${endDate}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-  });
-
-  // Query invoices by date range
-  const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery({
-    queryKey: ["/api/invoices/date-range", startDate, endDate],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/invoices/date-range/${startDate}/${endDate}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Error fetching invoices:', error);
         return [];
       }
     },
@@ -113,14 +73,12 @@ export function SalesReport() {
     };
 
     try {
-      // Combine all data sources - only paid/completed items
-      const combinedData = [
-        ...orders.filter((order: any) => order.status === 'paid'),
-        ...transactions.filter((tx: any) => tx.status === 'completed' || !tx.status),
-        ...invoices.filter((invoice: any) => invoice.invoiceStatus === 1)
-      ];
+      // Use only completed/paid orders
+      const completedOrders = orders.filter((order: any) => 
+        order.status === 'paid' || order.status === 'completed'
+      );
 
-      if (combinedData.length === 0) {
+      if (completedOrders.length === 0) {
         return defaultData;
       }
 
@@ -129,26 +87,26 @@ export function SalesReport() {
         [date: string]: { revenue: number; orders: number; customers: number };
       } = {};
 
-      combinedData.forEach((item: any) => {
+      completedOrders.forEach((order: any) => {
         try {
-          const itemDate = new Date(item.orderedAt || item.createdAt || item.invoiceDate);
-          if (isNaN(itemDate.getTime())) return;
+          const orderDate = new Date(order.orderedAt || order.createdAt);
+          if (isNaN(orderDate.getTime())) return;
 
-          const dateStr = itemDate.toISOString().split('T')[0];
+          const dateStr = orderDate.toISOString().split('T')[0];
 
           if (!dailySales[dateStr]) {
             dailySales[dateStr] = { revenue: 0, orders: 0, customers: 0 };
           }
 
-          const itemTotal = Number(item.total || 0);
-          const itemTax = Number(item.tax || 0);
-          const revenue = itemTotal - itemTax; // Revenue without tax
+          const orderTotal = Number(order.total || 0);
+          const orderDiscount = Number(order.discount || 0);
+          const revenue = orderTotal - orderDiscount;
 
           dailySales[dateStr].revenue += revenue;
           dailySales[dateStr].orders += 1;
-          dailySales[dateStr].customers += 1;
+          dailySales[dateStr].customers += Number(order.customerCount || 1);
         } catch (error) {
-          console.warn("Error processing item for daily sales:", error);
+          console.warn("Error processing order for daily sales:", error);
         }
       });
 
@@ -157,11 +115,19 @@ export function SalesReport() {
         [method: string]: { count: number; revenue: number };
       } = {};
 
-      combinedData.forEach((item: any) => {
+      completedOrders.forEach((order: any) => {
         try {
-          let method = item.paymentMethod || "cash";
+          let method = order.paymentMethod || "cash";
           if (typeof method === 'number') {
-            method = method.toString();
+            const methodMap: { [key: number]: string } = {
+              1: "cash",
+              2: "card", 
+              3: "transfer",
+              4: "momo",
+              5: "zalopay",
+              6: "vnpay"
+            };
+            method = methodMap[method] || "cash";
           }
 
           if (!paymentMethods[method]) {
@@ -170,47 +136,47 @@ export function SalesReport() {
 
           paymentMethods[method].count += 1;
 
-          const itemTotal = Number(item.total || 0);
-          const itemTax = Number(item.tax || 0);
-          const revenue = itemTotal - itemTax;
+          const orderTotal = Number(order.total || 0);
+          const orderDiscount = Number(order.discount || 0);
+          const revenue = orderTotal - orderDiscount;
 
           paymentMethods[method].revenue += revenue;
         } catch (error) {
-          console.warn("Error processing item for payment methods:", error);
+          console.warn("Error processing order for payment methods:", error);
         }
       });
 
       // Hourly breakdown
       const hourlySales: { [hour: number]: number } = {};
-      combinedData.forEach((item: any) => {
+      completedOrders.forEach((order: any) => {
         try {
-          const itemDate = new Date(item.orderedAt || item.createdAt || item.invoiceDate);
-          if (isNaN(itemDate.getTime())) return;
+          const orderDate = new Date(order.orderedAt || order.createdAt);
+          if (isNaN(orderDate.getTime())) return;
 
-          const hour = itemDate.getHours();
-          const itemTotal = Number(item.total || 0);
-          const itemTax = Number(item.tax || 0);
-          const revenue = itemTotal - itemTax;
+          const hour = orderDate.getHours();
+          const orderTotal = Number(order.total || 0);
+          const orderDiscount = Number(order.discount || 0);
+          const revenue = orderTotal - orderDiscount;
 
           if (!isNaN(revenue) && revenue > 0) {
             hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
           }
         } catch (error) {
-          console.warn("Error processing item for hourly sales:", error);
+          console.warn("Error processing order for hourly sales:", error);
         }
       });
 
       // Calculate totals
-      const totalRevenue = combinedData.reduce((total: number, item: any) => {
-        const itemTotal = Number(item.total || 0);
-        const itemTax = Number(item.tax || 0);
-        return total + (itemTotal - itemTax);
+      const totalRevenue = completedOrders.reduce((total: number, order: any) => {
+        const orderTotal = Number(order.total || 0);
+        const orderDiscount = Number(order.discount || 0);
+        return total + (orderTotal - orderDiscount);
       }, 0);
 
-      const totalOrders = combinedData.length;
-      const totalCustomers = new Set(combinedData.map((item: any) => 
-        item.customerId || item.customerName || `item_${item.id}`
-      )).size;
+      const totalOrders = completedOrders.length;
+      const totalCustomers = completedOrders.reduce((total: number, order: any) => {
+        return total + Number(order.customerCount || 1);
+      }, 0);
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       const paymentMethodsArray = Object.entries(paymentMethods).map(([method, data]) => ({
@@ -334,26 +300,17 @@ export function SalesReport() {
       shopeepay: "ShopeePay",
       grabpay: "GrabPay",
       mobile: "Di động",
-      1: "Tiền mặt",
-      2: "Thẻ",
-      3: "Chuyển khoản",
-      4: "MoMo",
-      5: "ZaloPay",
-      6: "VNPay",
-      7: "QR Code"
     };
     return labels[method as keyof typeof labels] || `Phương thức ${method}`;
   };
 
   const handleRefresh = () => {
     refetchOrders();
-    refetchTransactions();
-    refetchInvoices();
   };
 
   const salesData = getSalesData();
   const hasError = !!ordersError;
-  const isLoading = ordersLoading || transactionsLoading || invoicesLoading;
+  const isLoading = ordersLoading;
 
   const peakHour = salesData && Object.keys(salesData.hourlySales).length > 0
     ? Object.entries(salesData.hourlySales).reduce(
@@ -603,75 +560,39 @@ export function SalesReport() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {salesData?.paymentMethods && salesData.paymentMethods.length > 0 ? (
-                    salesData.paymentMethods.map((payment) => {
-                      const percentage =
-                        (salesData?.totalRevenue || 0) > 0
-                          ? (Number(payment.revenue) / Number(salesData?.totalRevenue || 1)) * 100
-                          : 0;
-
-                      return (
-                        <div key={payment.method} className="space-y-3 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <Badge variant="outline" className="font-semibold text-blue-700 border-blue-300 bg-blue-50">
-                                  {getPaymentMethodLabel(payment.method)}
-                                </Badge>
-                                <span className="text-sm font-medium text-gray-700 bg-white px-2 py-1 rounded">
-                                  Mã: {payment.method}
-                                </span>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="space-y-1">
-                                  <div className="text-gray-600">Số đơn hàng:</div>
-                                  <div className="font-semibold text-blue-600 text-lg">
-                                    {payment.count} đơn
-                                  </div>
-                                </div>
-                                <div className="space-y-1">
-                                  <div className="text-gray-600">Tổng tiền:</div>
-                                  <div className="font-bold text-green-600 text-lg">
-                                    {formatCurrency(payment.revenue)}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="mt-2 flex items-center gap-2">
-                                <span className="text-xs text-gray-500">Tỷ lệ:</span>
-                                <span className="text-sm font-semibold text-purple-600">
-                                  {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
-                                </span>
-                                <span className="text-xs text-gray-500">tổng doanh thu</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-xs text-gray-600">
-                              <span>Biểu đồ tỷ lệ</span>
-                              <span>{isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%</span>
-                            </div>
-                            <div className="w-full bg-gray-300 rounded-full h-3 overflow-hidden">
-                              <div
-                                className="bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 h-3 rounded-full transition-all duration-500 ease-out"
-                                style={{ width: `${Math.min(percentage, 100)}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center text-gray-500 py-8">
-                      <div className="bg-gray-50 rounded-lg p-6">
-                        <p className="text-gray-600 mb-2">{t("tables.noPaymentData")}</p>
-                        <p className="text-sm text-gray-500">{t("tables.noPaymentDataDescription")}</p>
-                      </div>
-                    </div>
-                  )}
+                <div className="max-h-96 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="sticky top-0 bg-white">Phương thức</TableHead>
+                        <TableHead className="sticky top-0 bg-white text-right">Số đơn</TableHead>
+                        <TableHead className="sticky top-0 bg-white text-right">Doanh thu</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {salesData?.paymentMethods && salesData.paymentMethods.length > 0 ? (
+                        salesData.paymentMethods.map((method, index) => (
+                          <TableRow key={index} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">
+                              <Badge variant="outline">
+                                {getPaymentMethodLabel(method.method)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">{method.count}</TableCell>
+                            <TableCell className="text-right font-medium text-green-600">
+                              {formatCurrency(method.revenue)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-gray-500 py-8">
+                            Không có dữ liệu phương thức thanh toán
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
