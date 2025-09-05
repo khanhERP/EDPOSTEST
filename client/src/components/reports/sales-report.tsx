@@ -60,39 +60,19 @@ export function SalesReport() {
     retryDelay: 1000,
   });
 
-  // Query transactions by date range
-  const { data: transactions = [], isLoading: transactionsLoading, refetch: refetchTransactions } = useQuery({
-    queryKey: ["/api/transactions", startDate, endDate],
+  // Query order items by date range
+  const { data: orderItems = [], isLoading: orderItemsLoading, refetch: refetchOrderItems } = useQuery({
+    queryKey: ["/api/order-items/date-range", startDate, endDate],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/transactions/${startDate}/${endDate}`);
+        const response = await fetch(`/api/order-items/${startDate}/${endDate}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Error fetching transactions:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-  });
-
-  // Query invoices by date range
-  const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery({
-    queryKey: ["/api/invoices/date-range", startDate, endDate],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/invoices/date-range/${startDate}/${endDate}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Error fetching invoices:', error);
+        console.error('Error fetching order items:', error);
         return [];
       }
     },
@@ -114,13 +94,35 @@ export function SalesReport() {
 
     try {
       // Combine all data sources - only paid/completed items
+      // Filter orders to include only those with status 'paid' or equivalent
+      const paidOrders = orders.filter((order: any) => order.status === 'paid');
+
+      // Group order items by order ID to avoid duplicates and ensure correct association
+      const orderItemsMap = new Map<string, any[]>();
+      orderItems.forEach((item: any) => {
+        if (!orderItemsMap.has(item.orderId)) {
+          orderItemsMap.set(item.orderId, []);
+        }
+        orderItemsMap.get(item.orderId)!.push(item);
+      });
+
+      // Create a unique set of order items to avoid duplicates
+      const uniqueOrderItems = Array.from(orderItemsMap.values()).flat();
+
       const combinedData = [
-        ...orders.filter((order: any) => order.status === 'paid'),
-        ...transactions.filter((tx: any) => tx.status === 'completed' || !tx.status),
-        ...invoices.filter((invoice: any) => invoice.invoiceStatus === 1)
+        ...paidOrders,
+        ...uniqueOrderItems.filter((item: any) => {
+          // Check if the order item belongs to a paid order
+          const correspondingOrder = paidOrders.find((order: any) => order.id === item.orderId);
+          return !!correspondingOrder;
+        }),
       ];
 
-      if (combinedData.length === 0) {
+      // Remove any potential duplicate orders from the combined list
+      const uniqueCombinedData = Array.from(new Map(combinedData.map(item => [item.id || item.orderId, item])).values());
+
+
+      if (uniqueCombinedData.length === 0) {
         return defaultData;
       }
 
@@ -129,9 +131,11 @@ export function SalesReport() {
         [date: string]: { revenue: number; orders: number; customers: number };
       } = {};
 
-      combinedData.forEach((item: any) => {
+      uniqueCombinedData.forEach((item: any) => {
         try {
-          const itemDate = new Date(item.orderedAt || item.createdAt || item.invoiceDate);
+          // Use orderedAt for orders, or createdAt/invoiceDate for other items if applicable,
+          // but the focus is on orders and order_items here.
+          const itemDate = new Date(item.orderedAt || item.createdAt);
           if (isNaN(itemDate.getTime())) return;
 
           const dateStr = itemDate.toISOString().split('T')[0];
@@ -140,13 +144,14 @@ export function SalesReport() {
             dailySales[dateStr] = { revenue: 0, orders: 0, customers: 0 };
           }
 
-          const itemTotal = Number(item.total || 0);
-          const itemTax = Number(item.tax || 0);
-          const revenue = itemTotal - itemTax; // Revenue without tax
+          // Assuming 'item.total' is the price for an order or order_item
+          const itemPrice = Number(item.price || item.total || 0);
+          const itemQuantity = Number(item.quantity || 1);
+          const revenue = itemPrice * itemQuantity;
 
           dailySales[dateStr].revenue += revenue;
-          dailySales[dateStr].orders += 1;
-          dailySales[dateStr].customers += 1;
+          dailySales[dateStr].orders += 1; // Each item processed contributes to an order count for that day
+          dailySales[dateStr].customers += 1; // Assuming each item is from a distinct customer interaction for simplicity here
         } catch (error) {
           console.warn("Error processing item for daily sales:", error);
         }
@@ -157,8 +162,9 @@ export function SalesReport() {
         [method: string]: { count: number; revenue: number };
       } = {};
 
-      combinedData.forEach((item: any) => {
+      uniqueCombinedData.forEach((item: any) => {
         try {
+          // Payment method is likely on the order itself
           let method = item.paymentMethod || "cash";
           if (typeof method === 'number') {
             method = method.toString();
@@ -168,13 +174,21 @@ export function SalesReport() {
             paymentMethods[method] = { count: 0, revenue: 0 };
           }
 
-          paymentMethods[method].count += 1;
+          // For order items, we associate the payment method of the parent order
+          const correspondingOrder = paidOrders.find((order: any) => order.id === item.orderId);
+          const orderPaymentMethod = correspondingOrder?.paymentMethod || method;
 
-          const itemTotal = Number(item.total || 0);
-          const itemTax = Number(item.tax || 0);
-          const revenue = itemTotal - itemTax;
+          if (!paymentMethods[orderPaymentMethod]) {
+            paymentMethods[orderPaymentMethod] = { count: 0, revenue: 0 };
+          }
 
-          paymentMethods[method].revenue += revenue;
+          paymentMethods[orderPaymentMethod].count += 1;
+
+          const itemPrice = Number(item.price || item.total || 0);
+          const itemQuantity = Number(item.quantity || 1);
+          const revenue = itemPrice * itemQuantity;
+
+          paymentMethods[orderPaymentMethod].revenue += revenue;
         } catch (error) {
           console.warn("Error processing item for payment methods:", error);
         }
@@ -182,15 +196,15 @@ export function SalesReport() {
 
       // Hourly breakdown
       const hourlySales: { [hour: number]: number } = {};
-      combinedData.forEach((item: any) => {
+      uniqueCombinedData.forEach((item: any) => {
         try {
-          const itemDate = new Date(item.orderedAt || item.createdAt || item.invoiceDate);
+          const itemDate = new Date(item.orderedAt || item.createdAt);
           if (isNaN(itemDate.getTime())) return;
 
           const hour = itemDate.getHours();
-          const itemTotal = Number(item.total || 0);
-          const itemTax = Number(item.tax || 0);
-          const revenue = itemTotal - itemTax;
+          const itemPrice = Number(item.price || item.total || 0);
+          const itemQuantity = Number(item.quantity || 1);
+          const revenue = itemPrice * itemQuantity;
 
           if (!isNaN(revenue) && revenue > 0) {
             hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
@@ -200,16 +214,17 @@ export function SalesReport() {
         }
       });
 
-      // Calculate totals
-      const totalRevenue = combinedData.reduce((total: number, item: any) => {
-        const itemTotal = Number(item.total || 0);
-        const itemTax = Number(item.tax || 0);
-        return total + (itemTotal - itemTax);
+      // Calculate totals based on unique combined data
+      const totalRevenue = uniqueCombinedData.reduce((total: number, item: any) => {
+        const itemPrice = Number(item.price || item.total || 0);
+        const itemQuantity = Number(item.quantity || 1);
+        return total + (itemPrice * itemQuantity);
       }, 0);
 
-      const totalOrders = combinedData.length;
-      const totalCustomers = new Set(combinedData.map((item: any) => 
-        item.customerId || item.customerName || `item_${item.id}`
+      // Total orders should be based on unique orders, not items
+      const totalOrders = paidOrders.length;
+      const totalCustomers = new Set(paidOrders.map((item: any) =>
+        item.customerId || item.customerName || `order_${item.id}`
       )).size;
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
@@ -347,13 +362,12 @@ export function SalesReport() {
 
   const handleRefresh = () => {
     refetchOrders();
-    refetchTransactions();
-    refetchInvoices();
+    refetchOrderItems();
   };
 
   const salesData = getSalesData();
   const hasError = !!ordersError;
-  const isLoading = ordersLoading || transactionsLoading || invoicesLoading;
+  const isLoading = ordersLoading || orderItemsLoading;
 
   const peakHour = salesData && Object.keys(salesData.hourlySales).length > 0
     ? Object.entries(salesData.hourlySales).reduce(

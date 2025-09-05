@@ -67,7 +67,7 @@ export function DashboardOverview() {
   );
   const queryClient = useQueryClient();
 
-  // Query orders by date range - same as sales-orders page
+  // Query orders by date range - using proper order data
   const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
@@ -89,42 +89,20 @@ export function DashboardOverview() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Query transactions by date range - same as sales-orders page
-  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
-    queryKey: ["/api/transactions", startDate, endDate],
+  // Query order items for all orders
+  const { data: orderItems = [], isLoading: orderItemsLoading } = useQuery({
+    queryKey: ["/api/order-items"],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/transactions/${startDate}/${endDate}`);
+        const response = await fetch("/api/order-items");
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Dashboard - Transactions loaded:", data?.length || 0);
+        console.log("Dashboard - Order items loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Dashboard - Error fetching transactions:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Query invoices by date range - same as sales-orders page
-  const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
-    queryKey: ["/api/invoices/date-range", startDate, endDate],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/invoices/date-range/${startDate}/${endDate}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Dashboard - Invoices loaded:", data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Dashboard - Error fetching invoices:', error);
+        console.error('Dashboard - Error fetching order items:', error);
         return [];
       }
     },
@@ -141,18 +119,16 @@ export function DashboardOverview() {
     // Refresh the queries to get the latest data for the selected date
     setStartDate(formatDateToYYYYMMDD(new Date()));
     setEndDate(formatDateToYYYYMMDD(new Date()));
-    queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
     queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
     queryClient.invalidateQueries({ queryKey: ["/api/orders/date-range"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/invoices/date-range"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
   };
 
   const getDashboardStats = () => {
     try {
       // Add proper loading and error checks
-      if (invoicesLoading || ordersLoading || transactionsLoading) {
+      if (ordersLoading || orderItemsLoading) {
         return {
           periodRevenue: 0,
           periodOrderCount: 0,
@@ -169,86 +145,39 @@ export function DashboardOverview() {
 
       // Ensure we have valid arrays
       const validOrders = Array.isArray(orders) ? orders : [];
-      const validTransactions = Array.isArray(transactions) ? transactions : [];
-      const validInvoices = Array.isArray(invoices) ? invoices : [];
+      const validOrderItems = Array.isArray(orderItems) ? orderItems : [];
       const validTables = Array.isArray(tables) ? tables : [];
 
-      // Filter completed/paid items only - data is already filtered by date range from API
-      const completedOrders = validOrders.filter((order: any) => order.status === 'paid');
-      const completedTransactions = validTransactions.filter((tx: any) => 
-        tx.status === 'completed' || tx.status === 'paid' || !tx.status
-      );
-      const publishedInvoices = validInvoices.filter((invoice: any) => 
-        invoice.invoiceStatus === 1 || invoice.status === 'published'
+      // Filter completed/paid orders only - data is already filtered by date range from API
+      const completedOrders = validOrders.filter((order: any) => 
+        order.status === 'paid' || order.status === 'completed'
       );
 
       console.log("Dashboard Debug - Raw Data:", {
         totalOrders: validOrders.length,
         completedOrders: completedOrders.length,
-        totalTransactions: validTransactions.length,
-        completedTransactions: completedTransactions.length,
-        totalInvoices: validInvoices.length,
-        publishedInvoices: publishedInvoices.length,
+        totalOrderItems: validOrderItems.length,
         dateRange: `${startDate} to ${endDate}`,
         sampleCompletedOrder: completedOrders[0] ? {
           id: completedOrders[0].id,
           total: completedOrders[0].total,
           status: completedOrders[0].status,
           date: completedOrders[0].orderedAt || completedOrders[0].createdAt
-        } : null,
-        sampleInvoice: publishedInvoices[0] ? {
-          id: publishedInvoices[0].id,
-          total: publishedInvoices[0].total,
-          status: publishedInvoices[0].invoiceStatus,
-          date: publishedInvoices[0].invoiceDate
         } : null
       });
 
-      // Calculate revenue from each source - use subtotal (before tax) as net revenue
-      const orderRevenue = completedOrders.reduce((sum: number, order: any) => {
-        // Use subtotal if available, otherwise calculate total - tax
-        const subtotal = Number(order.subtotal || 0);
+      // Calculate revenue from completed orders using actual order totals
+      const periodRevenue = completedOrders.reduce((sum: number, order: any) => {
         const total = Number(order.total || 0);
-        const tax = Number(order.tax || 0);
-        const discount = Number(order.discount || 0);
-        
-        // Net revenue = subtotal - discount (excluding tax)
-        const netRevenue = subtotal > 0 ? (subtotal - discount) : (total - tax - discount);
-        return sum + Math.max(0, netRevenue);
+        return sum + total;
       }, 0);
 
-      const transactionRevenue = completedTransactions.reduce((sum: number, tx: any) => {
-        const subtotal = Number(tx.subtotal || 0);
-        const total = Number(tx.total || tx.amount || 0);
-        const tax = Number(tx.tax || 0);
-        const discount = Number(tx.discount || 0);
-        
-        // Net revenue = subtotal - discount (excluding tax)
-        const netRevenue = subtotal > 0 ? (subtotal - discount) : (total - tax - discount);
-        return sum + Math.max(0, netRevenue);
-      }, 0);
+      // Total count from completed orders only
+      const periodOrderCount = completedOrders.length;
 
-      const invoiceRevenue = publishedInvoices.reduce((sum: number, invoice: any) => {
-        const subtotal = Number(invoice.subtotal || 0);
-        const total = Number(invoice.total || 0);
-        const tax = Number(invoice.tax || 0);
-        const discount = Number(invoice.discount || 0);
-        
-        // Net revenue = subtotal - discount (excluding tax)
-        const netRevenue = subtotal > 0 ? (subtotal - discount) : (total - tax - discount);
-        return sum + Math.max(0, netRevenue);
-      }, 0);
-
-      // Total revenue from all sources
-      const periodRevenue = orderRevenue + transactionRevenue + invoiceRevenue;
-
-      // Total count from all sources
-      const periodOrderCount = completedOrders.length + completedTransactions.length + publishedInvoices.length;
-
-      // Count unique customers
+      // Count unique customers from completed orders
       const uniqueCustomers = new Set();
       
-      // Add customers from orders
       completedOrders.forEach((order: any) => {
         if (order.customerId) {
           uniqueCustomers.add(order.customerId);
@@ -256,28 +185,6 @@ export function DashboardOverview() {
           uniqueCustomers.add(order.customerName);
         } else {
           uniqueCustomers.add(`order_${order.id}`);
-        }
-      });
-
-      // Add customers from transactions
-      completedTransactions.forEach((tx: any) => {
-        if (tx.customerId) {
-          uniqueCustomers.add(tx.customerId);
-        } else if (tx.customerName && tx.customerName !== 'Khách hàng lẻ') {
-          uniqueCustomers.add(tx.customerName);
-        } else {
-          uniqueCustomers.add(`transaction_${tx.id}`);
-        }
-      });
-
-      // Add customers from invoices
-      publishedInvoices.forEach((invoice: any) => {
-        if (invoice.customerId) {
-          uniqueCustomers.add(invoice.customerId);
-        } else if (invoice.customerName && invoice.customerName !== 'Khách hàng lẻ') {
-          uniqueCustomers.add(invoice.customerName);
-        } else {
-          uniqueCustomers.add(`invoice_${invoice.id}`);
         }
       });
 
@@ -308,42 +215,48 @@ export function DashboardOverview() {
       // Average order value
       const averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
-      // Peak hours analysis from all completed items
-      const hourlyItems: { [key: number]: number } = {};
+      // Peak hours analysis from completed orders only
+      const hourlyOrders: { [key: number]: number } = {};
       
-      // Analyze orders
       completedOrders.forEach((order: any) => {
-        const itemDate = new Date(order.orderedAt || order.createdAt);
-        if (!isNaN(itemDate.getTime())) {
-          const hour = itemDate.getHours();
-          hourlyItems[hour] = (hourlyItems[hour] || 0) + 1;
+        const orderDate = new Date(order.orderedAt || order.createdAt);
+        if (!isNaN(orderDate.getTime())) {
+          const hour = orderDate.getHours();
+          hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
         }
       });
 
-      // Analyze transactions
-      completedTransactions.forEach((tx: any) => {
-        const itemDate = new Date(tx.createdAt);
-        if (!isNaN(itemDate.getTime())) {
-          const hour = itemDate.getHours();
-          hourlyItems[hour] = (hourlyItems[hour] || 0) + 1;
-        }
-      });
-
-      // Analyze invoices
-      publishedInvoices.forEach((invoice: any) => {
-        const itemDate = new Date(invoice.invoiceDate || invoice.createdAt);
-        if (!isNaN(itemDate.getTime())) {
-          const hour = itemDate.getHours();
-          hourlyItems[hour] = (hourlyItems[hour] || 0) + 1;
-        }
-      });
-
-      const peakHour = Object.keys(hourlyItems).reduce(
+      const peakHour = Object.keys(hourlyOrders).reduce(
         (peak, hour) =>
-          hourlyItems[parseInt(hour)] > (hourlyItems[parseInt(peak)] || 0)
+          hourlyOrders[parseInt(hour)] > (hourlyOrders[parseInt(peak)] || 0)
             ? hour
             : peak,
         "12",
+      );
+
+      // Calculate days difference for average
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const daysDiff = Math.max(
+        1,
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+      );
+      const dailyAverageRevenue = periodRevenue / daysDiff;
+
+      // Month revenue: same as period revenue for the selected date range
+      const monthRevenue = periodRevenue;
+
+      // Average order value
+      const averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
+
+      // Active orders from all current orders (not date-filtered)
+      const activeOrders = Array.isArray(allCurrentOrders) ? allCurrentOrders.filter((order: any) => 
+        order.status === 'pending' || order.status === 'in_progress' || order.status === 'confirmed' || 
+        order.status === 'preparing' || order.status === 'ready' || order.status === 'served'
+      ).length : 0;
+
+      const occupiedTables = validTables.filter(
+        (table: TableType) => table.status === "occupied",
       );
 
       const finalStats = {
@@ -360,9 +273,6 @@ export function DashboardOverview() {
       };
 
       console.log("Dashboard Debug - Final Stats:", {
-        orderRevenue,
-        transactionRevenue,
-        invoiceRevenue,
         periodRevenue,
         periodOrderCount,
         periodCustomerCount,
@@ -435,7 +345,7 @@ export function DashboardOverview() {
   };
 
   // Show loading state
-  if (invoicesLoading || ordersLoading || transactionsLoading) {
+  if (ordersLoading || orderItemsLoading) {
     return (
       <div className="flex justify-center py-8">
         <div className="text-gray-500">{t("reports.loading")}</div>
@@ -444,11 +354,11 @@ export function DashboardOverview() {
   }
 
   // Show error state
-  if (invoicesError || ordersError) {
+  if (ordersError) {
     return (
       <div className="flex justify-center py-8">
         <div className="text-red-500">
-          Lỗi tải dữ liệu báo cáo: {invoicesError?.message || ordersError?.message || "Unknown error"}
+          Lỗi tải dữ liệu báo cáo: {ordersError?.message || "Unknown error"}
           <Button 
             onClick={handleRefresh} 
             variant="outline" 

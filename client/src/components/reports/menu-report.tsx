@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,7 @@ interface MenuAnalysisData {
 
 function MenuReport() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -195,7 +196,9 @@ function MenuReport() {
   };
 
   const handleRefresh = () => {
-    refetch();
+    // Refresh both orders and order items data
+    queryClient.invalidateQueries({ queryKey: ["/api/orders/date-range"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
   };
 
   if (analysisError) {
