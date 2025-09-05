@@ -130,7 +130,7 @@ export interface IStorage {
   deleteTable(id: number): Promise<boolean>;
 
   // Orders
-  getOrders(tableId?: number, status?: string): Promise<Order[]>;
+  getOrders(tableId?: number, status?: string, salesChannel?: string): Promise<Order[]>;
   getOrder(id: number): Promise<Order | undefined>;
   getOrderByNumber(orderNumber: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
@@ -609,9 +609,9 @@ export class DatabaseStorage implements IStorage {
         // Create inventory transaction record
         try {
           await database.execute(sql`
-            INSERT INTO inventory_transactions 
+            INSERT INTO inventory_transactions
             (product_id, type, quantity, previous_stock, new_stock, notes, created_at)
-            VALUES (${id}, 'subtract', ${Math.abs(quantity)}, ${currentStock}, ${newStock}, 
+            VALUES (${id}, 'subtract', ${Math.abs(quantity)}, ${currentStock}, ${newStock},
                    'Stock deduction from sale', ${new Date().toISOString()})
           `);
           console.log(`📝 Inventory transaction recorded for ${product.name}`);
@@ -1313,97 +1313,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders
-  async getOrders(tableId?: number, status?: string, tenantDb?: any): Promise<Order[]> {
-    const effectiveDb = tenantDb || this.db;
-
-    console.log('🔍 Getting safe database for operation: getOrders');
-    const db = this.getSafeDatabase(effectiveDb, 'getOrders');
-
+  async getOrders(
+    tableId?: number,
+    status?: string,
+    tenantDb?: any,
+    salesChannel?: string,
+  ): Promise<any[]> {
     try {
-      let query = db
-        .select()
-        .from(orders)
-        .orderBy(desc(orders.orderedAt), desc(orders.id));
+      const database = this.getSafeDatabase(tenantDb, 'getOrders');
+
+      let query = database.select().from(orders);
+
+      const conditions = [];
 
       if (tableId) {
-        query = query.where(eq(orders.tableId, tableId));
+        conditions.push(eq(orders.tableId, tableId));
       }
+
       if (status) {
-        query = query.where(eq(orders.status, status));
+        conditions.push(eq(orders.status, status));
       }
 
-      const ordersList = await query;
+      if (salesChannel) {
+        conditions.push(eq(orders.salesChannel, salesChannel));
+      }
 
-      // Calculate accurate totals for each order
-      const ordersWithCalculatedTotals = await Promise.all(
-        ordersList.map(async (order) => {
-          try {
-            // For final states (paid, cancelled), keep stored total
-            if (order.status === 'paid' || order.status === 'cancelled') {
-              return {
-                ...order,
-                calculatedTotal: Math.floor(Number(order.total || 0))
-              };
-            }
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
 
-            // For active orders, calculate from order items
-            const orderItemsResult = await db
-              .select()
-              .from(orderItems)
-              .where(eq(orderItems.orderId, order.id));
-
-            if (!orderItemsResult || orderItemsResult.length === 0) {
-              return {
-                ...order,
-                calculatedTotal: Math.floor(Number(order.total || 0))
-              };
-            }
-
-            // Get all products to calculate tax
-            const productsResult = await db
-              .select()
-              .from(products);
-
-            let subtotal = 0;
-            let taxAmount = 0;
-
-            orderItemsResult.forEach((item: any) => {
-              const unitPrice = Number(item.unitPrice || 0);
-              const quantity = Number(item.quantity || 0);
-              const product = productsResult.find((p: any) => p.id === item.productId);
-
-              // Calculate subtotal
-              subtotal += unitPrice * quantity;
-
-              // Calculate tax using afterTaxPrice if available
-              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-                taxAmount += taxPerUnit * quantity;
-              }
-            });
-
-            const calculatedTotal = Math.floor(subtotal + taxAmount);
-
-            return {
-              ...order,
-              calculatedTotal: calculatedTotal
-            };
-          } catch (calcError) {
-            console.warn(`Failed to calculate total for order ${order.id}:`, calcError);
-            return {
-              ...order,
-              calculatedTotal: Math.floor(Number(order.total || 0))
-            };
-          }
-        })
-      );
-
-      console.log(`✅ Successfully fetched ${ordersWithCalculatedTotals.length} orders with calculated totals`);
-      return ordersWithCalculatedTotals;
+      const result = await query.orderBy(desc(orders.orderedAt));
+      console.log(`Storage: getOrders returned ${result?.length || 0} orders${salesChannel ? ` for channel: ${salesChannel}` : ''}`);
+      return result || [];
     } catch (error) {
-      console.error('❌ Error fetching orders:', error);
-      throw error;
+      console.error('Storage: getOrders error:', error);
+      return [];
     }
   }
 
@@ -1437,36 +1381,99 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createOrder(
-    order: InsertOrder,
-    items: InsertOrderItem[],
-    tenantDb?: any,
-  ): Promise<Order> {
-    const database = tenantDb || this.db;
-
+  async createOrder(orderData: any, orderItems: any[], tenantDb?: any): Promise<any> {
     try {
-      this.validateDatabase(database, 'createOrder');
+      const database = this.getSafeDatabase(tenantDb, 'createOrder');
 
-      const [newOrder] = await database.insert(orders).values(order).returning();
+      console.log(`Storage: Creating order with data:`, {
+        orderNumber: orderData.orderNumber,
+        tableId: orderData.tableId,
+        salesChannel: orderData.salesChannel,
+        total: orderData.total,
+        itemCount: orderItems.length
+      });
 
-      if (items.length > 0) {
-        const itemsWithOrderId = items.map((item) => ({
-          ...item,
-          orderId: newOrder.id,
-          unitPrice: item.unitPrice.toString(),
-          total: item.total.toString(),
+      // Create the order
+      const [order] = await database
+        .insert(orders)
+        .values({
+          orderNumber: orderData.orderNumber,
+          tableId: orderData.tableId,
+          employeeId: orderData.employeeId,
+          status: orderData.status || "pending",
+          customerName: orderData.customerName,
+          customerCount: orderData.customerCount,
+          subtotal: orderData.subtotal,
+          tax: orderData.tax,
+          total: orderData.total,
+          paymentMethod: orderData.paymentMethod,
+          paymentStatus: orderData.paymentStatus || "pending",
+          einvoiceStatus: orderData.einvoiceStatus || 0,
+          templateNumber: orderData.templateNumber,
+          symbol: orderData.symbol,
+          invoiceNumber: orderData.invoiceNumber,
+          salesChannel: orderData.salesChannel || "table",
+          notes: orderData.notes,
+          orderedAt: orderData.orderedAt || new Date(),
+          servedAt: orderData.servedAt,
+          paidAt: orderData.paidAt,
+        })
+        .returning();
+
+      console.log(`Storage: Order created with ID ${order.id}, sales channel: ${order.salesChannel}`);
+
+      // Create order items
+      if (orderItems && orderItems.length > 0) {
+        const itemsToInsert = orderItems.map((item: any) => ({
+          orderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+          notes: item.notes,
         }));
-        await database.insert(orderItems).values(itemsWithOrderId);
+
+        console.log(`Storage: Inserting ${itemsToInsert.length} order items`);
+        const insertedItems = await database
+          .insert(orderItems)
+          .values(itemsToInsert)
+          .returning();
+
+        console.log(`Storage: ${insertedItems.length} order items created`);
+
+        // Update product stock for items that track inventory
+        for (const item of orderItems) {
+          const [product] = await database
+            .select()
+            .from(products)
+            .where(eq(products.id, item.productId))
+            .limit(1);
+
+          if (product && product.trackInventory) {
+            const newStock = Math.max(0, product.stock - item.quantity);
+            await database
+              .update(products)
+              .set({ stock: newStock })
+              .where(eq(products.id, item.productId));
+
+            console.log(`Storage: Updated stock for product ${item.productId}: ${product.stock} -> ${newStock}`);
+          }
+        }
       }
 
-      // Update table status to occupied
-      if (newOrder.tableId) {
-        await this.updateTableStatus(newOrder.tableId, "occupied");
+      // Update table status if this is a table order
+      if (orderData.tableId && orderData.salesChannel === "table") {
+        await database
+          .update(tables)
+          .set({ status: "occupied" })
+          .where(eq(tables.id, orderData.tableId));
+
+        console.log(`Storage: Updated table ${orderData.tableId} status to occupied`);
       }
 
-      return newOrder;
+      return order;
     } catch (error) {
-      console.error(`❌ Error in createOrder:`, error);
+      console.error('Storage: createOrder error:', error);
       throw error;
     }
   }
@@ -1927,8 +1934,7 @@ export class DatabaseStorage implements IStorage {
                 activeOrdersDetails: otherActiveOrders.map(o => ({
                   id: o.id,
                   orderNumber: o.orderNumber,
-                  status: o.status,
-                  orderedAt: o.orderedAt
+                  status: o.status
                 }))
               });
 

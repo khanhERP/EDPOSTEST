@@ -145,8 +145,7 @@ export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderNumber: text("order_number").notNull().unique(),
   tableId: integer("table_id")
-    .references(() => tables.id)
-    .notNull(),
+    .references(() => tables.id),
   employeeId: integer("employee_id").references(() => employees.id),
   status: text("status").notNull().default("pending"), // "pending", "confirmed", "preparing", "ready", "served", "paid", "cancelled"
   customerName: text("customer_name"),
@@ -160,6 +159,7 @@ export const orders = pgTable("orders", {
   templateNumber: varchar("template_number", { length: 50 }),
   symbol: varchar("symbol", { length: 20 }),
   invoiceNumber: varchar("invoice_number", { length: 50 }),
+  salesChannel: text("sales_channel").notNull().default("table"), // "table", "pos", "online", "delivery"
   notes: text("notes"),
   orderedAt: timestamp("ordered_at").defaultNow().notNull(),
   servedAt: timestamp("served_at"),
@@ -287,6 +287,7 @@ export const insertOrderSchema = createInsertSchema(orders)
       errorMap: () => ({ message: "Invalid payment status" }),
     }),
     einvoiceStatus: z.number().min(0).max(10).optional().default(0),
+    salesChannel: z.enum(["table", "pos", "online", "delivery"]).optional().default("table"),
   });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({

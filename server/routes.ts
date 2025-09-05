@@ -478,18 +478,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Transactions
+  // Transactions - Now creates orders instead for unified data storage
   app.post("/api/transactions", async (req: TenantRequest, res) => {
     try {
       const { transaction, items } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
       console.log(
-        "Received transaction data:",
+        "Received POS transaction data (will create order):",
         JSON.stringify({ transaction, items }, null, 2),
       );
 
-      // Transaction validation schema with proper nullable handling for invoiceNumber
+      // Transaction validation schema
       const transactionSchema = z.object({
         transactionId: z.string(),
         subtotal: z.string(),
@@ -498,27 +498,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: z.string(),
         cashierName: z.string(),
         notes: z.string().optional(),
-        invoiceNumber: z.string().nullable().optional(), // Allow null/undefined for publish later
-        invoiceId: z.number().nullable().optional(), // Also allow invoiceId to be null
+        invoiceNumber: z.string().nullable().optional(),
+        invoiceId: z.number().nullable().optional(),
         orderId: z.number().optional(),
       });
 
-      // Validate with original string format, then transform
       const validatedTransaction = transactionSchema.parse(transaction);
       const validatedItems = z.array(insertTransactionItemSchema).parse(items);
 
-      console.log(
-        "Validated data:",
-        JSON.stringify({ validatedTransaction, validatedItems }, null, 2),
-      );
-
-      // Fetch all products to access tax rates
+      // Fetch products for validation and tax calculation
       const products = await storage.getAllProducts(true, tenantDb);
 
-      // Validate stock availability and calculate totals
+      // Validate stock and calculate totals
       let subtotal = 0;
       let tax = 0;
       const stockValidationErrors = [];
+      const orderItems = [];
 
       for (const item of validatedItems) {
         const product = products.find((p) => p.id === item.productId);
@@ -528,22 +523,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ message: `Product with ID ${item.productId} not found` });
         }
 
-        // Check stock availability only for products that track inventory
+        // Check stock availability
         if (product.trackInventory && product.stock < item.quantity) {
           const errorMsg = `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`;
           console.log(`❌ ${errorMsg}`);
           stockValidationErrors.push(errorMsg);
-          continue; // Continue checking other items
+          continue;
         }
-
-        console.log(
-          `✅ Stock check passed for ${product.name}: Available=${product.stock}, Requested=${item.quantity}`,
-        );
 
         const itemSubtotal = parseFloat(item.price) * item.quantity;
         let itemTax = 0;
 
-        // Tax = (after_tax_price - price) * quantity
+        // Calculate tax
         if (
           product.afterTaxPrice &&
           product.afterTaxPrice !== null &&
@@ -552,60 +543,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const price = parseFloat(product.price);
           itemTax = (afterTaxPrice - price) * item.quantity;
-        } else {
-          // No afterTaxPrice means no tax
-          itemTax = 0;
         }
 
         subtotal += itemSubtotal;
         tax += itemTax;
+
+        // Prepare order item
+        orderItems.push({
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          total: (parseFloat(item.price) * item.quantity).toString(),
+          notes: null,
+        });
       }
 
-      // For POS payments, reduce stock validation warnings to console only
-      // Allow transaction to proceed even with some stock issues for POS flexibility
       if (stockValidationErrors.length > 0) {
         console.warn("⚠️ Stock validation warnings (allowing POS transaction to proceed):", stockValidationErrors);
-        // Continue with transaction creation instead of blocking
       }
 
       const total = subtotal + tax;
 
-      // Update the transaction with calculated totals and proper null handling
-      const transactionWithTotals = {
-        ...validatedTransaction,
+      // Create order data for POS transaction
+      const orderData = {
+        orderNumber: validatedTransaction.transactionId, // Use transaction ID as order number
+        tableId: null, // POS orders don't have tables
+        employeeId: null,
+        status: "paid", // POS transactions are immediately paid
+        customerName: "Khách hàng",
+        customerCount: 1,
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
+        paymentMethod: validatedTransaction.paymentMethod,
+        paymentStatus: "paid",
+        salesChannel: "pos", // Mark as POS order
         invoiceId: validatedTransaction.invoiceId || null,
         invoiceNumber: validatedTransaction.invoiceNumber || null,
-        notes: validatedTransaction.notes || null,
-        orderId: validatedTransaction.orderId || null,
+        notes: validatedTransaction.notes || `POS Transaction by ${validatedTransaction.cashierName}`,
+        paidAt: new Date(),
       };
 
-      console.log(`💰 Creating transaction with data:`, {
-        transactionId: transactionWithTotals.transactionId,
-        total: transactionWithTotals.total,
-        paymentMethod: transactionWithTotals.paymentMethod,
-        itemsCount: validatedItems.length,
-        invoiceId: transactionWithTotals.invoiceId,
-        invoiceNumber: transactionWithTotals.invoiceNumber
+      console.log(`💰 Creating POS order with data:`, {
+        orderNumber: orderData.orderNumber,
+        total: orderData.total,
+        paymentMethod: orderData.paymentMethod,
+        salesChannel: orderData.salesChannel,
+        itemsCount: orderItems.length,
       });
 
-      const receipt = await storage.createTransaction(
-        transactionWithTotals,
-        validatedItems,
-        tenantDb,
-      );
-      
-      console.log(`✅ Transaction created successfully:`, {
-        id: receipt.id,
-        transactionId: receipt.transactionId,
-        total: receipt.total
+      // Create order using existing order creation logic
+      const order = await storage.createOrder(orderData, orderItems, tenantDb);
+
+      // Return in transaction format for compatibility
+      const receipt = {
+        id: order.id,
+        transactionId: order.orderNumber,
+        subtotal: order.subtotal,
+        tax: order.tax,
+        total: order.total,
+        paymentMethod: order.paymentMethod,
+        cashierName: validatedTransaction.cashierName,
+        notes: order.notes,
+        invoiceId: order.invoiceId,
+        invoiceNumber: order.invoiceNumber,
+        createdAt: order.orderedAt,
+        items: orderItems.map((item, index) => ({
+          id: index + 1,
+          transactionId: order.id,
+          productId: item.productId,
+          productName: item.productName,
+          price: item.unitPrice,
+          quantity: item.quantity,
+          total: item.total,
+        })),
+      };
+
+      console.log(`✅ POS order created successfully:`, {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        total: order.total,
+        salesChannel: order.salesChannel,
       });
-      
+
       res.status(201).json(receipt);
     } catch (error) {
-      console.error("Transaction creation error:", error);
+      console.error("POS transaction creation error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: "Invalid transaction data",
@@ -614,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.status(500).json({
-        message: "Failed to create transaction",
+        message: "Failed to create POS transaction",
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1238,19 +1262,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
       console.log("🔍 GET /api/orders - Starting request processing");
+      const { salesChannel } = req.query;
+      
       let tenantDb;
       try {
         tenantDb = await getTenantDatabase(req);
         console.log("✅ Tenant database connection obtained");
       } catch (dbError) {
         console.error("❌ Failed to get tenant database:", dbError);
-        // Fall back to default storage without tenant DB
         console.log("🔄 Falling back to default database connection");
         tenantDb = null;
       }
 
-      const orders = await storage.getOrders(undefined, undefined, tenantDb);
-      console.log(`✅ Successfully fetched ${orders.length} orders`);
+      const orders = await storage.getOrders(undefined, undefined, tenantDb, salesChannel as string);
+      console.log(`✅ Successfully fetched ${orders.length} orders${salesChannel ? ` for channel: ${salesChannel}` : ''}`);
       res.json(orders);
     } catch (error) {
       console.error("❌ Error fetching orders:", error);
@@ -1340,14 +1365,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total: total.toFixed(2),
           paymentMethod: null,
           paymentStatus: "pending",
+          salesChannel: "pos",
           notes: "POS Order",
           orderedAt: new Date(),
-          salesChannel: "pos",
         };
 
         console.log("Created default order:", orderData);
       } else {
         orderData = insertOrderSchema.parse(order);
+        // Set salesChannel based on tableId if not explicitly provided
+        if (!orderData.salesChannel) {
+          orderData.salesChannel = orderData.tableId ? "table" : "pos";
+        }
       }
 
       const itemsData = items.map((item: any) =>
@@ -1909,6 +1938,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       });
+    }
+  });
+
+  // Get POS orders specifically
+  app.get("/api/orders/pos", tenantMiddleware, async (req: TenantRequest, res) => {
+    try {
+      console.log("🔍 GET /api/orders/pos - Fetching POS orders");
+      const tenantDb = await getTenantDatabase(req);
+      
+      const posOrders = await storage.getOrders(undefined, undefined, tenantDb, "pos");
+      console.log(`✅ Successfully fetched ${posOrders.length} POS orders`);
+      res.json(posOrders);
+    } catch (error) {
+      console.error("❌ Error fetching POS orders:", error);
+      res.status(500).json({ error: "Failed to fetch POS orders" });
+    }
+  });
+
+  // Get table orders specifically
+  app.get("/api/orders/table", tenantMiddleware, async (req: TenantRequest, res) => {
+    try {
+      console.log("🔍 GET /api/orders/table - Fetching table orders");
+      const tenantDb = await getTenantDatabase(req);
+      
+      const tableOrders = await storage.getOrders(undefined, undefined, tenantDb, "table");
+      console.log(`✅ Successfully fetched ${tableOrders.length} table orders`);
+      res.json(tableOrders);
+    } catch (error) {
+      console.error("❌ Error fetching table orders:", error);
+      res.status(500).json({ error: "Failed to fetch table orders" });
     }
   });
 
