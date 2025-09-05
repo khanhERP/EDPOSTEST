@@ -299,7 +299,7 @@ export function SalesChartReport() {
 
       // Count unique customers from completed orders
       const uniqueCustomers = new Set();
-      
+
       completedOrders.forEach((order: any) => {
         if (order.customerId) {
           uniqueCustomers.add(order.customerId);
@@ -339,7 +339,7 @@ export function SalesChartReport() {
 
       // Peak hours analysis from completed orders only
       const hourlyOrders: { [key: number]: number } = {};
-      
+
       completedOrders.forEach((order: any) => {
         const orderDate = new Date(order.orderedAt || order.createdAt);
         if (!isNaN(orderDate.getTime())) {
@@ -1031,9 +1031,7 @@ export function SalesChartReport() {
                           {t("common.total")}
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[100px] px-4">
-                          {Object.values(dailySales)
-                            .reduce((sum, data) => sum + data.orders, 0)
-                            .toLocaleString()}
+                          {Object.values(dailySales).reduce((sum, data) => sum + data.orders, 0).toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right border-r min-w-[140px] px-4">
                           {formatCurrency(
@@ -1339,8 +1337,6 @@ export function SalesChartReport() {
             order.createdAt ||
             order.created_at ||
             order.paidAt,
-          customerName: order.customerName,
-          customerId: order.customerId,
           cashierName: order.employeeName || order.cashierName,
           employeeId: order.employeeId,
           items: order.items || [],
@@ -2475,7 +2471,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -3562,7 +3557,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
