@@ -288,6 +288,12 @@ export const insertOrderSchema = createInsertSchema(orders)
     }),
     einvoiceStatus: z.number().min(0).max(10).optional().default(0),
     salesChannel: z.enum(["table", "pos", "online", "delivery"]).optional().default("table"),
+    paidAt: z.union([z.date(), z.string().datetime()]).optional().transform((val) => {
+      if (typeof val === 'string') {
+        return new Date(val);
+      }
+      return val;
+    }),
   });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
