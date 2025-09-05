@@ -234,7 +234,7 @@ function MenuReport() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">
                 {t("reports.fromDate") || "Từ ngày"}
@@ -273,22 +273,7 @@ function MenuReport() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("reports.productType") || "Loại sản phẩm"}
-              </label>
-              <Select value={productType} onValueChange={setProductType}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("common.selectType") || "Chọn loại"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("common.all") || "Tất cả"}</SelectItem>
-                  <SelectItem value="product">{t("reports.product") || "Sản phẩm"}</SelectItem>
-                  <SelectItem value="combo">{t("reports.combo") || "Combo"}</SelectItem>
-                  <SelectItem value="service">{t("reports.service") || "Dịch vụ"}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
             <div>
               <label className="block text-sm font-medium mb-2">
                 {t("common.search") || "Tìm kiếm"}
