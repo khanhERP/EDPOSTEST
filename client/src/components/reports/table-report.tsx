@@ -166,187 +166,135 @@ export function TableReport() {
   const getTableData = () => {
     if (!orders || !tables) return null;
 
-    // Use EXACT same combined data filtering as other reports
-    const combinedData = [
-      ...(Array.isArray(orders) ? orders.map((order: any) => ({
-        ...order,
-        type: 'order',
-        date: order.orderedAt,
-        amount: parseFloat(order.total || 0)
-      })) : []),
-      ...(Array.isArray(invoices) ? invoices.map((invoice: any) => ({
-        ...invoice,
-        type: 'invoice', 
-        date: invoice.createdAt,
-        amount: parseFloat(invoice.total || 0)
-      })) : []),
-      ...(Array.isArray(transactions) ? transactions.map((transaction: any) => ({
-        ...transaction,
-        type: 'transaction',
-        date: transaction.transactionDate,
-        amount: parseFloat(transaction.amount || 0)
-      })) : [])
-    ];
+    // Only use orders data - simplified approach
+    const validOrders = Array.isArray(orders) ? orders : [];
+    const validTables = Array.isArray(tables) ? tables : [];
 
-    // Filter by date and status - EXACT same logic as other reports
-    const filteredCompletedItems = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
+    // Filter completed/paid orders within date range
+    const completedOrders = validOrders.filter((order: any) => {
       try {
-        if (!item || !item.date) return false;
+        if (!order || !order.orderedAt) return false;
 
-        const itemDate = new Date(item.date);
-        if (isNaN(itemDate.getTime())) return false;
+        const orderDate = new Date(order.orderedAt);
+        if (isNaN(orderDate.getTime())) return false;
 
-        // Normalize both dates to compare only date part (same as other reports)
-        const itemDateOnly = new Date(itemDate);
-        itemDateOnly.setHours(0, 0, 0, 0);
+        // Normalize dates for comparison
+        const orderDateOnly = new Date(orderDate);
+        orderDateOnly.setHours(0, 0, 0, 0);
 
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
 
-        const dateMatch = itemDateOnly >= start && itemDateOnly <= end;
+        const dateMatch = orderDateOnly >= start && orderDateOnly <= end;
 
-        // Use EXACT same status logic as dashboard and sales report
-        const isCompleted = (item.type === 'invoice' && (item.invoiceStatus === 1 || item.displayStatus === 1)) ||
-                          (item.type === 'order' && (item.status === 'paid' || item.status === 'completed')) ||
-                          (item.type === 'transaction' && (item.status === 'completed' || item.status === 'paid'));
+        // Only include paid/completed orders
+        const isCompleted = order.status === 'paid' || order.status === 'completed';
 
         return dateMatch && isCompleted;
       } catch (error) {
-        console.error('Table Report - Error filtering item:', item, error);
+        console.error('Table Report - Error filtering order:', order, error);
         return false;
       }
-    }) : [];
+    });
 
-    console.log("Table Report Debug (Combined Data):", {
+    console.log("Table Report Debug (Orders Only):", {
       dateRange,
       startDate,
       endDate,
-      totalOrders: orders?.length || 0,
-      totalInvoices: invoices?.length || 0, 
-      totalTransactions: transactions?.length || 0,
-      combinedDataLength: combinedData.length,
-      filteredCompletedItems: filteredCompletedItems.length,
-      sampleItem: filteredCompletedItems[0] || null
+      totalOrders: validOrders.length,
+      completedOrders: completedOrders.length,
+      totalTables: validTables.length,
+      sampleOrder: completedOrders[0] || null
     });
 
-    // Table performance analysis
-    const tableStats: {
-      [tableId: number]: {
-        table: TableType;
-        orderCount: number;
-        revenue: number;
-        customerCount: number;
-        averageOrderValue: number;
-        turnoverRate: number;
-        peakHours: { [hour: number]: number };
-        itemsSold: number;
-      };
-    } = {};
+    // Initialize table stats map
+    const tableStatsMap = new Map();
 
-    // Initialize stats for all tables
-    (tables as TableType[]).forEach((table: TableType) => {
-      tableStats[table.id] = {
-        table,
-        orderCount: 0,
-        revenue: 0,
-        customerCount: 0,
+    // Add all tables to the map (including those with no orders)
+    validTables.forEach((table: any) => {
+      tableStatsMap.set(table.id, {
+        tableId: table.id,
+        tableName: table.tableNumber || table.name || `Bàn ${table.id}`,
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalCustomers: 0,
         averageOrderValue: 0,
-        turnoverRate: 0,
-        peakHours: {},
+        utilizationRate: 0,
+        peakHours: {} as { [hour: number]: number },
         itemsSold: 0,
-      };
+        table: table
+      });
     });
 
-    // Calculate stats from all completed items
-    filteredCompletedItems.forEach((item: any) => {
-      // For orders - direct table mapping
-      if (item.type === 'order' && item.tableId && tableStats[item.tableId]) {
-        const stats = tableStats[item.tableId];
-        stats.orderCount += 1;
-        stats.revenue += item.amount;
-        stats.customerCount += item.customerCount || 1;
+    // Process completed orders
+    completedOrders.forEach((order: any) => {
+      const tableId = order.tableId;
+      
+      // Only process orders with valid tableId
+      if (tableId && tableStatsMap.has(tableId)) {
+        const stats = tableStatsMap.get(tableId);
+        
+        stats.totalRevenue += parseFloat(order.total || 0);
+        stats.totalOrders += 1;
+        stats.totalCustomers += order.customerCount || 1;
 
         // Track peak hours
-        const hour = new Date(item.date).getHours();
+        const hour = new Date(order.orderedAt).getHours();
         stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
 
-        // Count items sold from order_items
-        const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === item.id);
-        const itemsCount = relatedOrderItems.reduce((sum, oi) => sum + (oi.quantity || 0), 0);
-        stats.itemsSold += itemsCount;
-      }
-
-      // For transactions - if they have tableId, add to that table
-      if (item.type === 'transaction' && item.tableId && tableStats[item.tableId]) {
-        const stats = tableStats[item.tableId];
-        stats.revenue += item.amount;
-        stats.orderCount += 1; // Count as additional transaction
-
-        // Count items from transaction_items
-        const relatedTransactionItems = transactionItems.filter((ti: any) => ti.transactionId === item.id);
-        const itemsCount = relatedTransactionItems.reduce((sum, ti) => sum + (ti.quantity || 0), 0);
-        stats.itemsSold += itemsCount;
-      }
-
-      // For invoices - if they have tableId, add to that table
-      if (item.type === 'invoice' && item.tableId && tableStats[item.tableId]) {
-        const stats = tableStats[item.tableId];
-        stats.revenue += item.amount;
-        stats.orderCount += 1;
+        // Count items sold from order_items if available
+        if (orderItems && Array.isArray(orderItems)) {
+          const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
+          const itemsCount = relatedOrderItems.reduce((sum, oi) => sum + (oi.quantity || 0), 0);
+          stats.itemsSold += itemsCount;
+        }
       }
     });
 
     // Calculate derived metrics
-    Object.values(tableStats).forEach((stats) => {
-      if (stats.orderCount > 0) {
-        stats.averageOrderValue = stats.revenue / stats.orderCount;
-        // Calculate turnover rate (orders per day over the period)
-        const days = Math.max(
-          1,
-          Math.ceil(
-            (new Date(endDate).getTime() - new Date(startDate).getTime()) /
-              (1000 * 60 * 60 * 24),
-          ),
-        );
-        stats.turnoverRate = stats.orderCount / days;
+    const daysDiff = Math.max(
+      1,
+      Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
+    );
+
+    tableStatsMap.forEach((stats) => {
+      if (stats.totalOrders > 0) {
+        stats.averageOrderValue = stats.totalRevenue / stats.totalOrders;
       }
+      stats.utilizationRate = (stats.totalOrders / daysDiff) * 100;
     });
 
-    // Sort tables by different metrics
-    const tableList = Object.values(tableStats);
-    const topRevenueTables = [...tableList].sort(
-      (a, b) => b.revenue - a.revenue,
-    );
-    const topTurnoverTables = [...tableList].sort(
-      (a, b) => b.turnoverRate - a.turnoverRate,
-    );
-    const topUtilizationTables = [...tableList].sort(
-      (a, b) => b.orderCount - a.orderCount,
-    );
+    // Convert to array and sort by revenue (desc), then by table ID for zero revenue tables
+    const tableStats = Array.from(tableStatsMap.values())
+      .sort((a, b) => {
+        if (b.totalRevenue !== a.totalRevenue) {
+          return b.totalRevenue - a.totalRevenue;
+        }
+        // If revenue is equal (including 0), sort by table ID
+        return a.tableId - b.tableId;
+      });
 
-    // Overall stats
-    const totalRevenue = tableList.reduce(
-      (sum, stats) => sum + stats.revenue,
-      0,
+    // Calculate totals
+    const totalRevenue = completedOrders.reduce((sum: number, order: any) => 
+      sum + parseFloat(order.total || 0), 0
     );
-    const totalOrders = tableList.reduce(
-      (sum, stats) => sum + stats.orderCount,
-      0,
+    const totalOrders = completedOrders.length;
+    const totalCustomers = completedOrders.reduce((sum: number, order: any) => 
+      sum + (order.customerCount || 1), 0
     );
-    const totalCustomers = tableList.reduce(
-      (sum, stats) => sum + stats.customerCount,
-      0,
-    );
-    const averageUtilization =
-      tableList.length > 0
-        ? tableList.reduce((sum, stats) => sum + stats.orderCount, 0) /
-          tableList.length
-        : 0;
+    const averageUtilization = tableStats.length > 0 
+      ? tableStats.reduce((sum, stats) => sum + stats.totalOrders, 0) / tableStats.length 
+      : 0;
+
+    // Sort tables by different metrics
+    const topRevenueTables = [...tableStats].sort((a, b) => b.totalRevenue - a.totalRevenue);
+    const topTurnoverTables = [...tableStats].sort((a, b) => b.utilizationRate - a.utilizationRate);
+    const topUtilizationTables = [...tableStats].sort((a, b) => b.totalOrders - a.totalOrders);
 
     return {
-      tableStats: tableList,
+      tableStats,
       topRevenueTables,
       topTurnoverTables,
       topUtilizationTables,
@@ -617,24 +565,21 @@ export function TableReport() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tableData.tableStats
-                .sort((a, b) => b.revenue - a.revenue)
-                .map((stats) => {
+              {tableData.tableStats.map((stats) => {
                   const statusConfig = getTableStatusBadge(stats.table.status);
                   const peakHour = getPeakHour(stats.peakHours);
 
                   return (
-                    <TableRow key={stats.table.id}>
+                    <TableRow key={stats.tableId}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <div
-                            className={`w-3 h-3 rounded-full ${
-                              stats.table.status === "occupied"
-                                ? "bg-red-500"
-                                : "bg-green-500"
-                            }`}
-                          ></div>
-                          {stats.table.tableNumber}
+                          <div className={`w-3 h-3 rounded-full ${
+                            stats.totalRevenue > 0 ? 'bg-green-500' : 'bg-gray-300'
+                          }`}></div>
+                          {stats.tableName}
+                          {stats.totalRevenue === 0 && (
+                            <span className="text-xs text-gray-400 ml-2">(Chưa có doanh thu)</span>
+                          )}
                           <span className="text-xs text-gray-500">
                             ({stats.table.capacity} {t("common.people")})
                           </span>
@@ -646,27 +591,26 @@ export function TableReport() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {stats.orderCount} {t("common.count")}
+                        {stats.totalOrders} {t("common.count")}
                       </TableCell>
                       <TableCell className="font-semibold">
-                        {formatCurrency(stats.revenue)}
+                        {formatCurrency(stats.totalRevenue)}
                       </TableCell>
                       <TableCell>
-                        {stats.customerCount} {t("common.people")}
+                        {stats.totalCustomers} {t("common.people")}
                       </TableCell>
                       <TableCell>
-                        {stats.orderCount > 0
+                        {stats.totalOrders > 0
                           ? formatCurrency(stats.averageOrderValue)
                           : "-"}
                       </TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            stats.turnoverRate > 1 ? "default" : "outline"
+                            stats.utilizationRate > 100 ? "default" : "outline"
                           }
                         >
-                          {stats.turnoverRate.toFixed(1)}{" "}
-                          {t("reports.timesPerDay")}
+                          {stats.utilizationRate.toFixed(1)}%
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -702,7 +646,7 @@ export function TableReport() {
                 .slice(0, 5)
                 .map((stats: any, index: number) => (
                   <div
-                    key={stats.table.id}
+                    key={stats.tableId}
                     className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
                   >
                     <div className="flex items-center gap-2">
@@ -713,11 +657,11 @@ export function TableReport() {
                         {index + 1}
                       </Badge>
                       <span className="font-medium">
-                        {stats.table.tableNumber}
+                        {stats.tableName}
                       </span>
                     </div>
                     <span className="text-sm font-semibold text-green-600">
-                      {formatCurrency(stats.revenue)}
+                      {formatCurrency(stats.totalRevenue)}
                     </span>
                   </div>
                 ))}
@@ -739,7 +683,7 @@ export function TableReport() {
                 .slice(0, 5)
                 .map((stats: any, index: number) => (
                   <div
-                    key={stats.table.id}
+                    key={stats.tableId}
                     className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
                   >
                     <div className="flex items-center gap-2">
@@ -750,11 +694,11 @@ export function TableReport() {
                         {index + 1}
                       </Badge>
                       <span className="font-medium">
-                        {stats.table.tableNumber}
+                        {stats.tableName}
                       </span>
                     </div>
                     <span className="text-sm font-semibold">
-                      {stats.turnoverRate.toFixed(1)} {t("reports.timesPerDay")}
+                      {stats.utilizationRate.toFixed(1)}%
                     </span>
                   </div>
                 ))}
@@ -776,7 +720,7 @@ export function TableReport() {
                 .slice(0, 5)
                 .map((stats: any, index: number) => (
                   <div
-                    key={stats.table.id}
+                    key={stats.tableId}
                     className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
                   >
                     <div className="flex items-center gap-2">
@@ -787,11 +731,11 @@ export function TableReport() {
                         {index + 1}
                       </Badge>
                       <span className="font-medium">
-                        {stats.table.tableNumber}
+                        {stats.tableName}
                       </span>
                     </div>
                     <span className="text-sm font-semibold">
-                      {stats.orderCount} {t("common.count")}
+                      {stats.totalOrders} {t("common.count")}
                     </span>
                   </div>
                 ))}
