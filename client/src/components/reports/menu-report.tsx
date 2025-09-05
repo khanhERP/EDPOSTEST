@@ -74,6 +74,8 @@ function MenuReport() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [productType, setProductType] = useState<string>("all");
   const [productSearch, setProductSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Query categories
   const { data: categories = [] } = useQuery({
@@ -652,9 +654,16 @@ function MenuReport() {
                     </tr>
                   </thead>
                   <tbody>
-                    {menuAnalysis.productStats
-                      .sort((a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0))
-                      .map((product, index) => {
+                    {(() => {
+                      const sortedProducts = menuAnalysis.productStats
+                        .sort((a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0));
+                      
+                      const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
+                      const startIndex = (currentPage - 1) * itemsPerPage;
+                      const endIndex = startIndex + itemsPerPage;
+                      const currentProducts = sortedProducts.slice(startIndex, endIndex);
+                      
+                      return currentProducts.map((product, index) => {
                         const contribution = menuAnalysis.totalRevenue > 0 
                           ? ((product.totalRevenue || 0) / menuAnalysis.totalRevenue * 100)
                           : 0;
@@ -692,42 +701,49 @@ function MenuReport() {
                             </td>
                           </tr>
                         );
-                      })}
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
-              
-              {/* Summary Stats */}
-              <div className="mt-4 pt-4 border-t">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                  <div className="text-center">
-                    <p className="text-gray-500">Tổng sản phẩm</p>
-                    <p className="font-bold text-lg">{menuAnalysis.productStats.length}</p>
+
+              {/* Pagination Controls */}
+              {(() => {
+                const sortedProducts = menuAnalysis.productStats
+                  .sort((a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0));
+                const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                
+                return totalPages > 1 && (
+                  <div className="flex items-center justify-between py-4 border-t">
+                    <div className="text-sm text-gray-500">
+                      {t("common.showing")} {startIndex + 1} - {Math.min(endIndex, sortedProducts.length)} {t("common.of")} {sortedProducts.length}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        {t("common.previous")}
+                      </Button>
+                      <span className="px-3 py-1 text-sm">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        {t("common.next")}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <p className="text-gray-500">Tổng số lượng bán</p>
-                    <p className="font-bold text-lg text-blue-600">
-                      {menuAnalysis.totalQuantity.toLocaleString('vi-VN')}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-gray-500">Tổng doanh thu</p>
-                    <p className="font-bold text-lg text-green-600">
-                      {formatCurrency(menuAnalysis.totalRevenue)} ₫
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-gray-500">Giá trung bình</p>
-                    <p className="font-bold text-lg">
-                      {formatCurrency(
-                        menuAnalysis.totalQuantity > 0 
-                          ? menuAnalysis.totalRevenue / menuAnalysis.totalQuantity 
-                          : 0
-                      )} ₫
-                    </p>
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
             </>
           )}
         </CardContent>
