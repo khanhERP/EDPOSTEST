@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/lib/i18n";
 import * as XLSX from 'xlsx';
 import { EInvoiceModal } from "@/components/pos/einvoice-modal";
+import { PrintDialog } from "@/components/pos/print-dialog";
 
 
 interface Invoice {
@@ -145,8 +146,8 @@ export default function SalesOrders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
-
-
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [printReceiptData, setPrintReceiptData] = useState<any>(null);
 
 
   // Query invoices by date range
@@ -376,96 +377,87 @@ export default function SalesOrders() {
       console.log('✅ E-invoice published successfully:', result);
 
       if (result.success && selectedInvoice) {
-        try {
-          // Determine the correct API endpoint based on item type
-          const updateEndpoint = getItemType(selectedInvoice) === 'order' 
-            ? `/api/orders/${selectedInvoice.id}`
-            : `/api/invoices/${selectedInvoice.id}`;
+          try {
+            // Determine the correct API endpoint based on item type
+            const updateEndpoint = getItemType(selectedInvoice) === 'order' 
+              ? `/api/orders/${selectedInvoice.id}`
+              : `/api/invoices/${selectedInvoice.id}`;
 
-          // Map API response data properly
-          const invoiceNo = result.data?.invoiceNo || result.invoiceNumber || null;
-          const symbol = result.data?.symbol || result.symbol || 'AA/25E';
-          const templateNumber = result.data?.templateNumber || result.templateNumber || '1C25TYY';
+            // Map API response data properly
+            const invoiceNo = result.data?.invoiceNo || result.invoiceNumber || null;
+            const symbol = result.data?.symbol || result.symbol || 'AA/25E';
+            const templateNumber = result.data?.templateNumber || result.templateNumber || '1C25TYY';
 
-          // Prepare update data with proper field mapping
-          const updateData = {
-            einvoiceStatus: 1, // Đã phát hành
-            invoiceStatus: 1, // Hoàn thành
-            status: 'published',
-            invoiceNumber: invoiceNo,
-            symbol: symbol,
-            templateNumber: templateNumber,
-            tradeNumber: invoiceNo || selectedInvoice.tradeNumber || selectedInvoice.displayNumber
-          };
-
-          console.log('🔄 API Response data:', {
-            success: result.success,
-            data: result.data,
-            invoiceNo: result.data?.invoiceNo,
-            symbol: result.data?.symbol,
-            templateNumber: result.data?.templateNumber
-          });
-
-          console.log('🔄 Updating item with data:', updateData);
-
-          // Update invoice/order with published status and invoice details
-          const updateResponse = await apiRequest("PUT", updateEndpoint, updateData);
-
-          if (updateResponse.ok) {
-            const updatedItem = await updateResponse.json();
-            console.log('✅ Update response:', updatedItem);
-
-            // Update local state
-            setSelectedInvoice({
-              ...selectedInvoice,
-              einvoiceStatus: 1,
-              invoiceStatus: 1,
+            // Prepare update data with proper field mapping
+            const updateData = {
+              einvoiceStatus: 1, // Đã phát hành
+              invoiceStatus: 1, // Hoàn thành
               status: 'published',
-              invoiceNumber: invoiceNo || selectedInvoice.invoiceNumber,
+              invoiceNumber: invoiceNo,
               symbol: symbol,
               templateNumber: templateNumber,
-              tradeNumber: invoiceNo || selectedInvoice.tradeNumber
-            });
+              tradeNumber: invoiceNo || selectedInvoice.orderNumber || `TXN-${Date.now()}`,
+              notes: `E-Invoice published - Invoice No: ${invoiceNo || 'N/A'}`
+            };
 
-            // Refresh data to ensure consistency
+            console.log(`Updating ${getItemType(selectedInvoice)} with data:`, updateData);
+
+            // Update the invoice/order status
+            const updateResponse = await apiRequest("PUT", updateEndpoint, updateData);
+            console.log('✅ Invoice/Order updated successfully after publish:', updateResponse);
+
+            // Create receipt data for printing
+            const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+            const receiptData = {
+              transactionId: invoiceNo || selectedInvoice.orderNumber || `TXN-${Date.now()}`,
+              orderId: selectedInvoice.id,
+              items: items.map(item => ({
+                id: item.id || item.productId,
+                productName: item.productName || item.name,
+                price: item.unitPrice || item.price || '0',
+                quantity: item.quantity || 1,
+                total: item.total || '0',
+                sku: item.sku || `SKU${item.productId || item.id}`,
+                taxRate: parseFloat(item.taxRate || '0'),
+              })),
+              subtotal: selectedInvoice.subtotal || '0',
+              tax: selectedInvoice.tax || '0',
+              total: selectedInvoice.total || '0',
+              paymentMethod: 'einvoice',
+              amountReceived: selectedInvoice.total || '0',
+              change: '0',
+              cashierName: 'System User',
+              createdAt: new Date().toISOString(),
+              invoiceNumber: invoiceNo,
+              customerName: selectedInvoice.customerName || 'Khách hàng',
+              customerTaxCode: selectedInvoice.customerTaxCode || null,
+            };
+
+            // Show print dialog after successful publishing
+            setPrintReceiptData(receiptData);
+            setShowPrintDialog(true);
+
+            // Refresh data
             queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
             queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
 
-            console.log('✅ Invoice/Order updated successfully with published status');
+            setShowPublishDialog(false);
+            setSelectedInvoice(null);
 
-            alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceNo || 'N/A'}\nKý hiệu: ${symbol || 'N/A'}`);
-          } else {
-            const errorText = await updateResponse.text();
-            console.error('❌ Failed to update invoice/order:', {
-              status: updateResponse.status,
-              statusText: updateResponse.statusText,
-              error: errorText,
-              updateData: updateData
+            alert(`Hóa đơn đã phát hành thành công!\nSố hóa đơn: ${invoiceNo || 'N/A'}\n\nMàn hình in hóa đơn sẽ hiển thị.`);
+          } catch (updateError) {
+            console.error('❌ Error updating invoice/order after publish:', {
+              error: updateError,
+              message: updateError?.message,
+              stack: updateError?.stack
             });
 
-            // Try to parse error as JSON for more details
-            try {
-              const errorJson = JSON.parse(errorText);
-              console.error('❌ Detailed error:', errorJson);
-              alert(`Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái: ${errorJson.error || errorJson.message || 'Lỗi không xác định'}`);
-            } catch (parseError) {
-              alert(`Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái: ${errorText || 'Lỗi kết nối database'}`);
-            }
+            const errorMessage = updateError?.message || updateError?.toString() || 'Lỗi không xác định';
+            alert(`Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái: ${errorMessage}`);
           }
-        } catch (error) {
-          console.error('❌ Error updating invoice/order after publish:', {
-            error: error,
-            message: error?.message,
-            stack: error?.stack
-          });
-
-          const errorMessage = error?.message || error?.toString() || 'Lỗi không xác định';
-          alert(`Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái: ${errorMessage}`);
+        } else {
+          alert(`Lỗi phát hành hóa đơn: ${result.message || 'Không xác định'}`);
         }
-      } else {
-        alert(`Lỗi phát hành hóa đơn: ${result.message || 'Không xác định'}`);
-      }
     },
     onError: (error) => {
       console.error('❌ Error publishing invoice:', error);
@@ -2200,7 +2192,17 @@ export default function SalesOrders() {
         </AlertDialogContent>
       </AlertDialog>
 
-
+      {/* Print Dialog */}
+      {showPrintDialog && printReceiptData && (
+        <PrintDialog
+          isOpen={showPrintDialog}
+          onClose={() => {
+            setShowPrintDialog(false);
+            setPrintReceiptData(null);
+          }}
+          receiptData={printReceiptData}
+        />
+      )}
     </div>
   );
 }
