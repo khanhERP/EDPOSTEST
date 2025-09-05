@@ -1249,31 +1249,7 @@ export function EInvoiceModal({
         }
         // Re-throw the original error to show the user that invoice publishing failed
         throw new Error(result.message || "Có lỗi xảy ra khi phát hành hóa đơn");
-      }
-    } catch (error) {
-      console.error("Error publishing invoice:", error);
-      // Display a toast or alert for the user about the publishing failure.
-      // The transaction creation should ideally not block the payment confirmation itself,
-      // but the failure of the invoice publishing should be communicated.
-      let errorMessage = "Có lỗi xảy ra khi phát hành hóa đơn điện tử.";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "string") {
-        errorMessage = error;
-      } else {
-        errorMessage = JSON.stringify(error);
-      }
-      toast({
-        title: "Lỗi Phát Hành Hóa Đơn",
-        description: errorMessage,
-        variant: "destructive",
-      });
-
-      // If the error was not related to invoice publishing itself, but something else,
-      // ensure we don't fall through without any confirmation action if appropriate.
-      // However, the primary goal is to ensure transaction creation.
-    } finally {
-      setIsPublishing(false);
+      
     }
   };
 
