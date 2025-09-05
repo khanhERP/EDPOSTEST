@@ -1,653 +1,604 @@
-
-import React, { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { CalendarIcon, Search, Download, RotateCcw, TrendingUp, DollarSign, ShoppingCart, Users } from "lucide-react";
-import { format, startOfDay, endOfDay } from "date-fns";
-import { cn } from "@/lib/utils";
+import { TrendingUp, Calendar, DollarSign, Users, RefreshCw, Filter } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FF6B6B', '#4ECDC4'];
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
+import { Button } from "@/components/ui/button";
 
 export function SalesReport() {
   const { t } = useTranslation();
-  const [startDate, setStartDate] = useState<Date>(new Date());
-  const [endDate, setEndDate] = useState<Date>(new Date());
-  const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
-  const [selectedCustomer, setSelectedCustomer] = useState<string>("all");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("all");
-  const [selectedSalesChannel, setSelectedSalesChannel] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Query orders by date range
-  const { data: orders = [] } = useQuery({
+  const [dateRange, setDateRange] = useState("today");
+  const [startDate, setStartDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
+  const [endDate, setEndDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
+
+  // Query orders by date range - using real order data
+  const { data: orders = [], isLoading: ordersLoading, error: ordersError, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/orders/date-range/${format(startDate, 'yyyy-MM-dd')}/${format(endDate, 'yyyy-MM-dd')}`);
+        const response = await fetch(`/api/orders/date-range/${startDate}/${endDate}`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch orders: ${response.statusText}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error("Orders fetch error:", error);
+        console.error('Error fetching orders:', error);
         return [];
       }
     },
-    retry: 2,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: 1000,
   });
 
-  // Query order items for detailed analysis
-  const { data: orderItems = [] } = useQuery({
-    queryKey: ["/api/order-items"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/order-items");
-        if (!response.ok) {
-          throw new Error("Failed to fetch order items");
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Order items fetch error:", error);
-        return [];
-      }
-    },
-    retry: 2,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
+  const getSalesData = () => {
+    // Default return structure for empty data
+    const defaultData = {
+      dailySales: [],
+      paymentMethods: [],
+      hourlySales: {},
+      totalRevenue: 0,
+      totalOrders: 0,
+      totalCustomers: 0,
+      averageOrderValue: 0,
+    };
 
-  // Query customers
-  const { data: customers = [] } = useQuery({
-    queryKey: ["/api/customers"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/customers");
-        if (!response.ok) {
-          throw new Error("Failed to fetch customers");
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Customers fetch error:", error);
-        return [];
-      }
-    },
-    retry: 2,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  // Query employees
-  const { data: employees = [] } = useQuery({
-    queryKey: ["/api/employees"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/employees");
-        if (!response.ok) {
-          throw new Error("Failed to fetch employees");
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Employees fetch error:", error);
-        return [];
-      }
-    },
-    retry: 2,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  // Calculate sales analytics from real order data
-  const salesAnalytics = useMemo(() => {
     try {
-      // Filter orders by date range and filters
-      const filteredOrders = orders.filter((order: any) => {
-        const orderDate = new Date(order.orderedAt || order.createdAt);
-        const isInDateRange = orderDate >= startOfDay(startDate) && orderDate <= endOfDay(endDate);
-        
-        // Apply filters
-        let matchesFilters = true;
-        
-        if (selectedEmployee !== "all" && order.employeeId != selectedEmployee) {
-          matchesFilters = false;
-        }
-        
-        if (selectedCustomer !== "all" && order.customerId != selectedCustomer) {
-          matchesFilters = false;
-        }
-        
-        if (selectedPaymentMethod !== "all" && order.paymentMethod !== selectedPaymentMethod) {
-          matchesFilters = false;
-        }
-        
-        if (selectedSalesChannel !== "all" && order.salesChannel !== selectedSalesChannel) {
-          matchesFilters = false;
-        }
-        
-        if (searchQuery && !order.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) &&
-            !order.customerName?.toLowerCase().includes(searchQuery.toLowerCase())) {
-          matchesFilters = false;
-        }
-        
-        return isInDateRange && matchesFilters;
-      });
-
-      const completedOrders = filteredOrders.filter((order: any) => 
+      // Use only completed/paid orders
+      const completedOrders = orders.filter((order: any) => 
         order.status === 'paid' || order.status === 'completed'
       );
 
-      // Calculate metrics
-      const totalRevenue = completedOrders.reduce((sum: number, order: any) => {
-        return sum + (parseFloat(order.total) || parseFloat(order.storedTotal) || 0);
+      if (completedOrders.length === 0) {
+        return defaultData;
+      }
+
+      // Daily sales breakdown
+      const dailySales: {
+        [date: string]: { revenue: number; orders: number; customers: number };
+      } = {};
+
+      completedOrders.forEach((order: any) => {
+        try {
+          const orderDate = new Date(order.orderedAt || order.createdAt);
+          if (isNaN(orderDate.getTime())) return;
+
+          const dateStr = orderDate.toISOString().split('T')[0];
+
+          if (!dailySales[dateStr]) {
+            dailySales[dateStr] = { revenue: 0, orders: 0, customers: 0 };
+          }
+
+          const orderTotal = Number(order.total || 0);
+          const orderDiscount = Number(order.discount || 0);
+          const revenue = orderTotal - orderDiscount;
+
+          dailySales[dateStr].revenue += revenue;
+          dailySales[dateStr].orders += 1;
+          dailySales[dateStr].customers += Number(order.customerCount || 1);
+        } catch (error) {
+          console.warn("Error processing order for daily sales:", error);
+        }
+      });
+
+      // Payment method breakdown
+      const paymentMethods: {
+        [method: string]: { count: number; revenue: number };
+      } = {};
+
+      completedOrders.forEach((order: any) => {
+        try {
+          let method = order.paymentMethod || "cash";
+          if (typeof method === 'number') {
+            const methodMap: { [key: number]: string } = {
+              1: "cash",
+              2: "card", 
+              3: "transfer",
+              4: "momo",
+              5: "zalopay",
+              6: "vnpay"
+            };
+            method = methodMap[method] || "cash";
+          }
+
+          if (!paymentMethods[method]) {
+            paymentMethods[method] = { count: 0, revenue: 0 };
+          }
+
+          paymentMethods[method].count += 1;
+
+          const orderTotal = Number(order.total || 0);
+          const orderDiscount = Number(order.discount || 0);
+          const revenue = orderTotal - orderDiscount;
+
+          paymentMethods[method].revenue += revenue;
+        } catch (error) {
+          console.warn("Error processing order for payment methods:", error);
+        }
+      });
+
+      // Hourly breakdown
+      const hourlySales: { [hour: number]: number } = {};
+      completedOrders.forEach((order: any) => {
+        try {
+          const orderDate = new Date(order.orderedAt || order.createdAt);
+          if (isNaN(orderDate.getTime())) return;
+
+          const hour = orderDate.getHours();
+          const orderTotal = Number(order.total || 0);
+          const orderDiscount = Number(order.discount || 0);
+          const revenue = orderTotal - orderDiscount;
+
+          if (!isNaN(revenue) && revenue > 0) {
+            hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
+          }
+        } catch (error) {
+          console.warn("Error processing order for hourly sales:", error);
+        }
+      });
+
+      // Calculate totals
+      const totalRevenue = completedOrders.reduce((total: number, order: any) => {
+        const orderTotal = Number(order.total || 0);
+        const orderDiscount = Number(order.discount || 0);
+        return total + (orderTotal - orderDiscount);
       }, 0);
 
-      const totalOrders = filteredOrders.length;
+      const totalOrders = completedOrders.length;
+      const totalCustomers = completedOrders.reduce((total: number, order: any) => {
+        return total + Number(order.customerCount || 1);
+      }, 0);
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-      // Sales by employee
-      const salesByEmployee = new Map();
-      completedOrders.forEach((order: any) => {
-        const employeeId = order.employeeId || 'unknown';
-        const employee = employees.find(emp => emp.id == employeeId);
-        const employeeName = employee?.name || `Employee ${employeeId}`;
-        
-        if (!salesByEmployee.has(employeeId)) {
-          salesByEmployee.set(employeeId, {
-            employeeId,
-            employeeName,
-            totalRevenue: 0,
-            totalOrders: 0,
-            averageOrderValue: 0
-          });
-        }
-        
-        const empData = salesByEmployee.get(employeeId);
-        empData.totalRevenue += parseFloat(order.total) || parseFloat(order.storedTotal) || 0;
-        empData.totalOrders += 1;
-        empData.averageOrderValue = empData.totalRevenue / empData.totalOrders;
-      });
-
-      // Sales by customer
-      const salesByCustomer = new Map();
-      completedOrders.forEach((order: any) => {
-        const customerId = order.customerId || 'walk-in';
-        const customer = customers.find(cust => cust.id == customerId);
-        const customerName = customer?.name || order.customerName || 'Walk-in Customer';
-        
-        if (!salesByCustomer.has(customerId)) {
-          salesByCustomer.set(customerId, {
-            customerId,
-            customerName,
-            totalRevenue: 0,
-            totalOrders: 0,
-            averageOrderValue: 0
-          });
-        }
-        
-        const custData = salesByCustomer.get(customerId);
-        custData.totalRevenue += parseFloat(order.total) || parseFloat(order.storedTotal) || 0;
-        custData.totalOrders += 1;
-        custData.averageOrderValue = custData.totalRevenue / custData.totalOrders;
-      });
-
-      // Sales by payment method
-      const salesByPaymentMethod = new Map();
-      completedOrders.forEach((order: any) => {
-        const method = order.paymentMethod || 'cash';
-        
-        if (!salesByPaymentMethod.has(method)) {
-          salesByPaymentMethod.set(method, {
-            method,
-            totalRevenue: 0,
-            totalOrders: 0,
-            percentage: 0
-          });
-        }
-        
-        const methodData = salesByPaymentMethod.get(method);
-        methodData.totalRevenue += parseFloat(order.total) || parseFloat(order.storedTotal) || 0;
-        methodData.totalOrders += 1;
-      });
-
-      // Calculate percentages for payment methods
-      salesByPaymentMethod.forEach(methodData => {
-        methodData.percentage = totalRevenue > 0 ? (methodData.totalRevenue / totalRevenue) * 100 : 0;
-      });
-
-      // Daily sales trend
-      const dailySales = new Map();
-      completedOrders.forEach((order: any) => {
-        const orderDate = new Date(order.orderedAt || order.createdAt);
-        const dateKey = format(orderDate, 'yyyy-MM-dd');
-        
-        if (!dailySales.has(dateKey)) {
-          dailySales.set(dateKey, {
-            date: dateKey,
-            revenue: 0,
-            orders: 0
-          });
-        }
-        
-        const dayData = dailySales.get(dateKey);
-        dayData.revenue += parseFloat(order.total) || parseFloat(order.storedTotal) || 0;
-        dayData.orders += 1;
-      });
+      const paymentMethodsArray = Object.entries(paymentMethods).map(([method, data]) => ({
+        method,
+        ...data,
+      }));
 
       return {
+        dailySales: Object.entries(dailySales)
+          .map(([date, data]) => ({
+            date,
+            ...data,
+          }))
+          .sort((a, b) => a.date.localeCompare(b.date)),
+        paymentMethods: paymentMethodsArray,
+        hourlySales,
         totalRevenue,
         totalOrders,
+        totalCustomers,
         averageOrderValue,
-        filteredOrders,
-        salesByEmployee: Array.from(salesByEmployee.values()).sort((a, b) => b.totalRevenue - a.totalRevenue),
-        salesByCustomer: Array.from(salesByCustomer.values()).sort((a, b) => b.totalRevenue - a.totalRevenue),
-        salesByPaymentMethod: Array.from(salesByPaymentMethod.values()).sort((a, b) => b.totalRevenue - a.totalRevenue),
-        dailySalesData: Array.from(dailySales.values()).sort((a, b) => a.date.localeCompare(b.date))
       };
     } catch (error) {
-      console.error("Sales analytics calculation error:", error);
-      return {
-        totalRevenue: 0,
-        totalOrders: 0,
-        averageOrderValue: 0,
-        filteredOrders: [],
-        salesByEmployee: [],
-        salesByCustomer: [],
-        salesByPaymentMethod: [],
-        dailySalesData: []
-      };
+      console.error("Error processing sales data:", error);
+      return defaultData;
     }
-  }, [orders, orderItems, customers, employees, startDate, endDate, selectedEmployee, selectedCustomer, selectedPaymentMethod, selectedSalesChannel, searchQuery]);
-
-  const resetFilters = () => {
-    setStartDate(new Date());
-    setEndDate(new Date());
-    setSelectedEmployee("all");
-    setSelectedCustomer("all");
-    setSelectedPaymentMethod("all");
-    setSelectedSalesChannel("all");
-    setSearchQuery("");
   };
 
-  const exportData = () => {
-    // Simple CSV export functionality
-    const csvData = salesAnalytics.filteredOrders.map(order => ({
-      orderNumber: order.orderNumber,
-      date: format(new Date(order.orderedAt || order.createdAt), 'dd/MM/yyyy HH:mm'),
-      customerName: order.customerName || 'Walk-in',
-      total: order.total || order.storedTotal,
-      paymentMethod: order.paymentMethod,
-      status: order.status
-    }));
-    
-    console.log("Export data:", csvData);
-    // In a real implementation, you would convert to CSV and download
+  const handleDateRangeChange = (range: string) => {
+    setDateRange(range);
+    const today = new Date();
+
+    const formatDate = (date: Date) => {
+      const y = date.getFullYear();
+      const m = (date.getMonth() + 1).toString().padStart(2, "0");
+      const d = date.getDate().toString().padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    };
+
+    switch (range) {
+      case "today":
+        const todayStr = formatDate(today);
+        setStartDate(todayStr);
+        setEndDate(todayStr);
+        break;
+
+      case "week":
+        const lastWeekEnd = new Date(today);
+        lastWeekEnd.setDate(today.getDate() - 1);
+        const lastWeekStart = new Date(today);
+        lastWeekStart.setDate(today.getDate() - 7);
+        setStartDate(formatDate(lastWeekStart));
+        setEndDate(formatDate(lastWeekEnd));
+        break;
+
+      case "month":
+        const lastMonth = new Date(today);
+        lastMonth.setMonth(today.getMonth() - 1);
+        const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
+        const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
+        setStartDate(formatDate(lastMonthStart));
+        setEndDate(formatDate(lastMonthEnd));
+        break;
+
+      case "thisWeek":
+        const currentDayOfWeek = today.getDay();
+        const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
+        const thisWeekMonday = new Date(today);
+        thisWeekMonday.setDate(today.getDate() - daysToMonday);
+        const thisWeekSunday = new Date(thisWeekMonday);
+        thisWeekSunday.setDate(thisWeekMonday.getDate() + 6);
+        setStartDate(formatDate(thisWeekMonday));
+        setEndDate(formatDate(thisWeekSunday));
+        break;
+
+      case "thisMonth":
+        const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        setStartDate(formatDate(thisMonthStart));
+        setEndDate(formatDate(thisMonthEnd));
+        break;
+
+      case "custom":
+        break;
+
+      default:
+        const defaultDate = formatDate(today);
+        setStartDate(defaultDate);
+        setEndDate(defaultDate);
+        break;
+    }
   };
+
+  const formatCurrency = (amount: number) => {
+    return `${amount.toLocaleString()} ₫`;
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      return date.toLocaleDateString("vi-VN");
+    } catch (error) {
+      return dateStr;
+    }
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    const labels = {
+      cash: "Tiền mặt",
+      card: "Thẻ",
+      creditCard: "Thẻ tín dụng",
+      credit_card: "Thẻ tín dụng",
+      debitCard: "Thẻ ghi nợ",
+      debit_card: "Thẻ ghi nợ",
+      transfer: "Chuyển khoản",
+      einvoice: "Hóa đơn điện tử",
+      momo: "MoMo",
+      zalopay: "ZaloPay",
+      vnpay: "VNPay",
+      qrCode: "QR Banking",
+      shopeepay: "ShopeePay",
+      grabpay: "GrabPay",
+      mobile: "Di động",
+    };
+    return labels[method as keyof typeof labels] || `Phương thức ${method}`;
+  };
+
+  const handleRefresh = () => {
+    refetchOrders();
+  };
+
+  const salesData = getSalesData();
+  const hasError = !!ordersError;
+  const isLoading = ordersLoading;
+
+  const peakHour = salesData && Object.keys(salesData.hourlySales).length > 0
+    ? Object.entries(salesData.hourlySales).reduce(
+        (peak, [hour, revenue]) =>
+          revenue > (salesData.hourlySales[parseInt(peak)] || 0) ? hour : peak,
+        "12",
+      )
+    : "12";
+
+  // Loading state component
+  const LoadingSkeleton = () => (
+    <div className="space-y-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="h-20 bg-gray-200 rounded animate-pulse"></div>
+      ))}
+    </div>
+  );
+
+  // Error state component
+  const ErrorState = () => (
+    <Card className="border-red-200">
+      <CardContent className="p-6">
+        <div className="text-center text-red-600">
+          <p className="mb-4">{t("common.errorLoadingData")}</p>
+          <p className="text-sm text-gray-600 mb-4">
+            {ordersError?.message || "Không thể tải dữ liệu đơn hàng"}
+          </p>
+          <Button onClick={handleRefresh} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            {t("tables.refresh")}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">
-          {t("reports.salesAnalysis")}
-        </h1>
-        <div className="flex gap-2">
-          <Button onClick={exportData} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            {t("common.export")}
-          </Button>
-          <Button onClick={resetFilters} variant="outline" size="sm">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            {t("common.reset")}
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("common.filters")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Date Range */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t("common.startDate")}
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "dd/MM/yyyy") : t("common.selectDate")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+      {/* Header with Filters */}
+      <Card className="border-green-200 shadow-sm">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <CardTitle className="text-xl font-bold text-green-700 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                {t('tables.salesAnalysis')}
+              </CardTitle>
+              <CardDescription className="text-gray-600">
+                {t('tables.analyzeRevenue')}
+              </CardDescription>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t("common.endDate")}
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "dd/MM/yyyy") : t("common.selectDate")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Employee Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t("reports.employee")}
-              </label>
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("reports.selectEmployee")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
-                      {employee.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Payment Method Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t("reports.paymentMethod")}
-              </label>
-              <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("reports.selectPaymentMethod")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="cash">{t("pos.cash")}</SelectItem>
-                  <SelectItem value="card">{t("pos.card")}</SelectItem>
-                  <SelectItem value="transfer">{t("pos.transfer")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Search */}
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium">
-                {t("common.search")}
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t("reports.searchOrderOrCustomer")}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <Select value={dateRange} onValueChange={handleDateRangeChange}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">{t("tables.toDay")}</SelectItem>
+                    <SelectItem value="thisWeek">Tuần này</SelectItem>
+                    <SelectItem value="week">Tuần trước</SelectItem>
+                    <SelectItem value="thisMonth">Tháng này</SelectItem>
+                    <SelectItem value="month">Tháng trước</SelectItem>
+                    <SelectItem value="custom">{t("tables.custom")}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              {dateRange === "custom" && (
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="startDate" className="text-sm whitespace-nowrap">
+                      {t('tables.startDate')}:
+                    </Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="endDate" className="text-sm whitespace-nowrap">
+                      {t('tables.endDate')}:
+                    </Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="sm"
+                disabled={isLoading}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                {t("tables.refresh")}
+              </Button>
             </div>
           </div>
-        </CardContent>
+        </CardHeader>
       </Card>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalRevenue")}
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(salesAnalytics.totalRevenue)} ₫
-                </p>
-              </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalOrders")}
-                </p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {salesAnalytics.totalOrders}
-                </p>
-              </div>
-              <ShoppingCart className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.averageOrderValue")}
-                </p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {formatCurrency(salesAnalytics.averageOrderValue)} ₫
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts and Tables */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">{t("reports.overview")}</TabsTrigger>
-          <TabsTrigger value="employee">{t("reports.byEmployee")}</TabsTrigger>
-          <TabsTrigger value="customer">{t("reports.byCustomer")}</TabsTrigger>
-          <TabsTrigger value="payment">{t("reports.byPaymentMethod")}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Daily Sales Trend */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("reports.dailyRevenue")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={salesAnalytics.dailySalesData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip 
-                      formatter={(value) => [formatCurrency(Number(value)) + " ₫", t("reports.revenue")]}
-                    />
-                    <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
+      {/* Content */}
+      {isLoading ? (
+        <LoadingSkeleton />
+      ) : hasError ? (
+        <ErrorState />
+      ) : (
+        <>
+          {/* Summary Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <Card className="border-green-200 hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {t("tables.totalRevenue")}
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {formatCurrency(salesData?.totalRevenue || 0)}
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-green-500" />
+                </div>
               </CardContent>
             </Card>
 
-            {/* Payment Method Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("reports.paymentMethodDistribution")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={salesAnalytics.salesByPaymentMethod}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ method, percentage }) => `${method} ${percentage.toFixed(1)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="totalRevenue"
-                    >
-                      {salesAnalytics.salesByPaymentMethod.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value) => [formatCurrency(Number(value)) + " ₫", t("reports.revenue")]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+            <Card className="border-blue-200 hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {t("tables.totalOrders")}
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {salesData?.totalOrders || 0}
+                    </p>
+                  </div>
+                  <Calendar className="w-8 h-8 text-blue-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-200 hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    {t("tables.averageOrderValue")}
+                  </p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {formatCurrency(salesData?.averageOrderValue || 0)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-orange-200 hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    {t("tables.totalCustomers")}
+                  </p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {salesData?.totalCustomers || 0}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {t("tables.peakHour")}: {peakHour}{t("tables.hour")}
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
 
-        <TabsContent value="employee" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("reports.salesByEmployee")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("reports.employeeName")}</TableHead>
-                    <TableHead>{t("reports.totalOrders")}</TableHead>
-                    <TableHead>{t("reports.totalRevenue")}</TableHead>
-                    <TableHead>{t("reports.averageOrderValue")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {salesAnalytics.salesByEmployee.map((emp, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{emp.employeeName}</TableCell>
-                      <TableCell>{emp.totalOrders}</TableCell>
-                      <TableCell>{formatCurrency(emp.totalRevenue)} ₫</TableCell>
-                      <TableCell>{formatCurrency(emp.averageOrderValue)} ₫</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          {/* Charts and Tables */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Daily Sales */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  {t("tables.dailySales")}
+                </CardTitle>
+                <CardDescription>{t("tables.analyzeRevenue")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-96 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="sticky top-0 bg-white">Ngày</TableHead>
+                        <TableHead className="sticky top-0 bg-white">{t("tables.revenue")}</TableHead>
+                        <TableHead className="sticky top-0 bg-white">Tổng đơn hàng</TableHead>
+                        <TableHead className="sticky top-0 bg-white">Tổng khách hàng</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {salesData?.dailySales && salesData.dailySales.length > 0 ? (
+                        salesData.dailySales.map((day) => (
+                          <TableRow key={day.date} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">{formatDate(day.date)}</TableCell>
+                            <TableCell className="font-medium text-green-600">
+                              {formatCurrency(day.revenue)}
+                            </TableCell>
+                            <TableCell>{day.orders}</TableCell>
+                            <TableCell>{day.customers}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-gray-500 py-8">
+                            {t("tables.noSalesData")}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
 
-        <TabsContent value="customer" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("reports.salesByCustomer")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("reports.customerName")}</TableHead>
-                    <TableHead>{t("reports.totalOrders")}</TableHead>
-                    <TableHead>{t("reports.totalRevenue")}</TableHead>
-                    <TableHead>{t("reports.averageOrderValue")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {salesAnalytics.salesByCustomer.slice(0, 20).map((cust, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{cust.customerName}</TableCell>
-                      <TableCell>{cust.totalOrders}</TableCell>
-                      <TableCell>{formatCurrency(cust.totalRevenue)} ₫</TableCell>
-                      <TableCell>{formatCurrency(cust.averageOrderValue)} ₫</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="payment" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("reports.salesByPaymentMethod")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("reports.paymentMethod")}</TableHead>
-                    <TableHead>{t("reports.totalOrders")}</TableHead>
-                    <TableHead>{t("reports.totalRevenue")}</TableHead>
-                    <TableHead>{t("common.percentage")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {salesAnalytics.salesByPaymentMethod.map((method, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{method.method}</TableCell>
-                      <TableCell>{method.totalOrders}</TableCell>
-                      <TableCell>{formatCurrency(method.totalRevenue)} ₫</TableCell>
-                      <TableCell>{method.percentage.toFixed(1)}%</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            {/* Payment Methods */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" />
+                  {t("tables.paymentMethods")}
+                </CardTitle>
+                <CardDescription>
+                  {t("tables.analyzeRevenue")}
+                  {salesData?.paymentMethods && salesData.paymentMethods.length > 0 && (
+                    <span className="ml-2 text-blue-600 font-medium">
+                      ({salesData.paymentMethods.length} phương thức • {salesData.totalOrders} đơn hàng)
+                    </span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-96 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="sticky top-0 bg-white">Phương thức</TableHead>
+                        <TableHead className="sticky top-0 bg-white text-right">Số đơn</TableHead>
+                        <TableHead className="sticky top-0 bg-white text-right">Doanh thu</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {salesData?.paymentMethods && salesData.paymentMethods.length > 0 ? (
+                        salesData.paymentMethods.map((method, index) => (
+                          <TableRow key={index} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">
+                              <Badge variant="outline">
+                                {getPaymentMethodLabel(method.method)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">{method.count}</TableCell>
+                            <TableCell className="text-right font-medium text-green-600">
+                              {formatCurrency(method.revenue)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-gray-500 py-8">
+                            Không có dữ liệu phương thức thanh toán
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   );
 }
-
-export default SalesReport;

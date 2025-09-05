@@ -35,7 +35,7 @@ import {
   ShoppingCart,
   BarChart3,
   Search,
-  Download,
+  Download, // Import Download icon
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import {
@@ -51,8 +51,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
-import * as XLSX from "xlsx";
-import { format, startOfDay, endOfDay } from "date-fns";
+import * as XLSX from "xlsx"; // Import xlsx for Excel export
 
 export function SalesChartReport() {
   const { t } = useTranslation();
@@ -86,70 +85,35 @@ export function SalesChartReport() {
   const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
   const [customerPageSize, setCustomerPageSize] = useState(15);
 
-  // Query orders by date range - lấy dữ liệu từ bảng order
-  const { data: orders = [], isLoading: ordersLoading } = useQuery({
-    queryKey: ["/api/orders/date-range", startDate, endDate],
+  // Use dashboard data API - EXACT same data source as dashboard
+  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
+    queryKey: ["/api/dashboard-data", startDate, endDate],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/orders/date-range/${startDate}/${endDate}`);
+        const response = await fetch(`/api/dashboard-data/${startDate}/${endDate}`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch orders: ${response.statusText}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Sales Chart - Orders loaded:", data?.length || 0);
-        return Array.isArray(data) ? data : [];
+        return data;
       } catch (error) {
-        console.error("Sales Chart - Orders fetch error:", error);
-        return [];
+        console.error("Error fetching dashboard data:", error);
+        return null;
       }
     },
-    retry: 2,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Query order items để lấy chi tiết sản phẩm
-  const { data: orderItems = [] } = useQuery({
-    queryKey: ["/api/order-items"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/order-items");
-        if (!response.ok) {
-          throw new Error("Failed to fetch order items");
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Order items fetch error:", error);
-        return [];
-      }
-    },
-    retry: 2,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  // Query transactions - chỉ dùng làm fallback
-  const { data: transactions = [] } = useQuery({
-    queryKey: ["/api/transactions"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/transactions");
-        if (!response.ok) {
-          throw new Error("Failed to fetch transactions");
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Transactions fetch error:", error);
-        return [];
-      }
-    },
-    retry: 2,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
+  // Use data from dashboard API response
+  const transactions = dashboardData?.transactions || [];
+  const orders = dashboardData?.orders || [];
+  const invoices = dashboardData?.invoices || [];
+  const tables = dashboardData?.tables || [];
 
   // Combined loading state
-  const isLoading = ordersLoading;
+  const isLoading = dashboardLoading;
 
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
@@ -261,85 +225,35 @@ export function SalesChartReport() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
 
-  // Tính toán stats từ dữ liệu orders
+  // Get dashboard stats from API response
   const getDashboardStats = () => {
-    if (!orders || !Array.isArray(orders)) {
+    if (!dashboardData) {
       return null;
     }
 
-    try {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+    console.log("Sales Chart Dashboard Debug from API:", {
+      totalOrders: dashboardData.orders?.length || 0,
+      startDate,
+      endDate,
+      periodRevenue: dashboardData.periodRevenue,
+      periodOrderCount: dashboardData.periodOrderCount,
+      periodCustomerCount: dashboardData.periodCustomerCount,
+      filteredCompletedOrders: dashboardData.filteredCompletedOrders?.length || 0,
+    });
 
-      // Filter orders trong khoảng thời gian và đã hoàn thành
-      const filteredCompletedOrders = orders.filter((order: any) => {
-        // Check if order is completed/paid
-        if (order.status !== "completed" && order.status !== "paid") return false;
-
-        // Check date range
-        const orderDate = new Date(
-          order.orderedAt || order.createdAt || order.created_at || order.paidAt
-        );
-        
-        if (isNaN(orderDate.getTime())) {
-          return false;
-        }
-
-        return orderDate >= start && orderDate <= end;
-      });
-
-      console.log("Sales Chart Dashboard Stats:", {
-        totalOrders: orders.length,
-        filteredCompletedOrders: filteredCompletedOrders.length,
-        startDate,
-        endDate,
-      });
-
-      // Tính toán các metrics
-      const periodOrderCount = filteredCompletedOrders.length;
-      const periodRevenue = filteredCompletedOrders.reduce((sum: number, order: any) => {
-        const total = Number(order.total || order.storedTotal || 0);
-        const discount = Number(order.discount || 0);
-        return sum + (total - discount);
-      }, 0);
-
-      const uniqueCustomers = new Set(
-        filteredCompletedOrders
-          .filter((order: any) => order.customerId)
-          .map((order: any) => order.customerId)
-      ).size;
-
-      const averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
-
-      // Tính toán peak hour
-      const hourCounts = Array.from({ length: 24 }, () => 0);
-      filteredCompletedOrders.forEach((order: any) => {
-        const orderDate = new Date(order.orderedAt || order.createdAt);
-        if (!isNaN(orderDate.getTime())) {
-          hourCounts[orderDate.getHours()]++;
-        }
-      });
-      const peakHour = hourCounts.indexOf(Math.max(...hourCounts));
-
-      return {
-        periodRevenue,
-        periodOrderCount,
-        periodCustomerCount: uniqueCustomers,
-        dailyAverageRevenue: periodRevenue / Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))),
-        averageOrderValue,
-        peakHour: peakHour || 12,
-        filteredCompletedOrders,
-        monthRevenue: periodRevenue, // Sử dụng period revenue làm month revenue
-        activeOrders: 0, // Không tính active orders trong báo cáo
-        occupiedTables: 0, // Không tính occupied tables trong báo cáo
-        totalTables: 0, // Không tính total tables trong báo cáo
-      };
-    } catch (error) {
-      console.error("Error calculating dashboard stats:", error);
-      return null;
-    }
+    return {
+      periodRevenue: dashboardData.periodRevenue || 0,
+      periodOrderCount: dashboardData.periodOrderCount || 0,
+      periodCustomerCount: dashboardData.periodCustomerCount || 0,
+      dailyAverageRevenue: dashboardData.dailyAverageRevenue || 0,
+      activeOrders: dashboardData.activeOrders || 0,
+      occupiedTables: dashboardData.occupiedTables || 0,
+      monthRevenue: dashboardData.monthRevenue || 0,
+      averageOrderValue: dashboardData.averageOrderValue || 0,
+      peakHour: dashboardData.peakHour || 12,
+      totalTables: dashboardData.totalTables || 0,
+      filteredCompletedOrders: dashboardData.filteredCompletedOrders || [],
+    };
   };
 
   // Function to export data to Excel

@@ -23,7 +23,7 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export function MenuReport() {
+export default function MenuReport() {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -521,5 +521,3 @@ export function MenuReport() {
     </div>
   );
 }
-
-export default MenuReport;

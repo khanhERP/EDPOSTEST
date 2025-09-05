@@ -1,17 +1,75 @@
-import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { CalendarIcon, DollarSign, ShoppingCart, Users, TrendingUp, Package, RotateCcw } from "lucide-react";
-import { format, startOfDay, endOfDay, isToday, isThisWeek, isThisMonth, subDays, subWeeks, subMonths } from "date-fns";
-import { cn } from "@/lib/utils";
+import {
+  TrendingUp,
+  DollarSign,
+  ShoppingCart,
+  Users,
+  Clock,
+  Target,
+  Search,
+  RefreshCw
+} from "lucide-react";
+import type { Order, Table as TableType } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
+import { apiRequest } from "@/lib/queryClient";
+import { format, startOfDay, endOfDay } from "date-fns";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FF6B6B', '#4ECDC4'];
+export function formatDateToYYYYMMDD(date: Date | string | number): string {
+  const d = new Date(date); // Ensure input is a Date
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  tradeNumber: string;
+  templateNumber: string;
+  symbol: string;
+  customerName: string;
+  customerTaxCode: string;
+  customerAddress: string;
+  customerPhone: string;
+  customerEmail: string;
+  subtotal: string;
+  tax: string;
+  total: string;
+  paymentMethod: number;
+  invoiceDate: string;
+  status: string;
+  einvoiceStatus: number;
+  invoiceStatus: number;
+  notes: string;
+  createdAt: string;
+}
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -21,337 +79,371 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
+
 export function DashboardOverview() {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
-  const [periodFilter, setPeriodFilter] = useState<string>("today");
-
-  // Update date range based on period filter
-  React.useEffect(() => {
-    const today = new Date();
-    switch (periodFilter) {
-      case "today":
-        setStartDate(today);
-        setEndDate(today);
-        break;
-      case "week":
-        setStartDate(subDays(today, 7));
-        setEndDate(today);
-        break;
-      case "month":
-        setStartDate(subDays(today, 30));
-        setEndDate(today);
-        break;
-      case "custom":
-        // Keep current dates
-        break;
-      default:
-        setStartDate(today);
-        setEndDate(today);
-    }
-  }, [periodFilter]);
+  const queryClient = useQueryClient();
 
   // Query orders by date range
-  const { data: orders = [] } = useQuery({
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
       try {
         const response = await fetch(`/api/orders/date-range/${format(startDate, 'yyyy-MM-dd')}/${format(endDate, 'yyyy-MM-dd')}`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch orders: ${response.statusText}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        const data = await response.json();
+        console.log("Dashboard - Orders loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error("Orders fetch error:", error);
+        console.error('Dashboard - Error fetching orders:', error);
         return [];
       }
     },
-    retry: 2,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Query tables
+  const { data: tables = [], isLoading: tablesLoading } = useQuery({
+    queryKey: ["/api/tables"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/tables");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Dashboard - Tables loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Dashboard - Error fetching tables:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Query order items for detailed analysis
-  const { data: orderItems = [] } = useQuery({
+  const { data: orderItems = [], isLoading: orderItemsLoading } = useQuery({
     queryKey: ["/api/order-items"],
     queryFn: async () => {
       try {
         const response = await fetch("/api/order-items");
         if (!response.ok) {
-          throw new Error("Failed to fetch order items");
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        const data = await response.json();
+        console.log("Dashboard - Order Items loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error("Order items fetch error:", error);
+        console.error('Dashboard - Error fetching order items:', error);
         return [];
       }
     },
-    retry: 2,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  // Query customers
-  const { data: customers = [] } = useQuery({
-    queryKey: ["/api/customers"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/customers");
-        if (!response.ok) {
-          throw new Error("Failed to fetch customers");
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Customers fetch error:", error);
-        return [];
-      }
-    },
-    retry: 2,
+    retry: 3,
+    retryDelay: 1000,
     staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
-  // Query products for inventory analysis
-  const { data: products = [] } = useQuery({
+  // Query products for product analysis
+  const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ["/api/products"],
     queryFn: async () => {
       try {
         const response = await fetch("/api/products");
         if (!response.ok) {
-          throw new Error("Failed to fetch products");
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        const data = await response.json();
+        console.log("Dashboard - Products loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error("Products fetch error:", error);
+        console.error('Dashboard - Error fetching products:', error);
         return [];
       }
     },
-    retry: 2,
+    retry: 3,
+    retryDelay: 1000,
     staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
-  // Calculate dashboard metrics from real order data
-  const dashboardMetrics = useMemo(() => {
+  // Calculate dashboard data from real orders
+  const dashboardData = useMemo(() => {
     try {
-      // Filter orders by date range and status
+      // Filter completed orders by date range
       const filteredOrders = orders.filter((order: any) => {
         const orderDate = new Date(order.orderedAt || order.createdAt);
         const isInDateRange = orderDate >= startOfDay(startDate) && orderDate <= endOfDay(endDate);
-        return isInDateRange;
+        const isCompleted = order.status === 'paid' || order.status === 'completed';
+        return isInDateRange && isCompleted;
       });
 
-      // Calculate basic metrics
-      const totalOrders = filteredOrders.length;
-      const completedOrders = filteredOrders.filter((order: any) => 
-        order.status === 'paid' || order.status === 'completed'
-      );
+      console.log("Dashboard Debug:", {
+        totalOrders: orders.length,
+        filteredOrders: filteredOrders.length,
+        dateRange: `${format(startDate, 'yyyy-MM-dd')} to ${format(endDate, 'yyyy-MM-dd')}`
+      });
 
-      const totalRevenue = completedOrders.reduce((sum: number, order: any) => {
-        return sum + (parseFloat(order.total) || parseFloat(order.storedTotal) || 0);
+      // Calculate totals
+      const totalRevenue = filteredOrders.reduce((total: number, order: any) => {
+        const orderTotal = Number(order.total || 0);
+        const orderDiscount = Number(order.discount || 0);
+        return total + (orderTotal - orderDiscount);
       }, 0);
 
-      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+      const totalOrdersCount = filteredOrders.length;
+      const totalCustomers = filteredOrders.reduce((total: number, order: any) => {
+        return total + Number(order.customerCount || 1);
+      }, 0);
+      const averageOrderValue = totalOrdersCount > 0 ? totalRevenue / totalOrdersCount : 0;
 
-      // Get unique customers
-      const uniqueCustomers = new Set(
-        filteredOrders
-          .filter((order: any) => order.customerId)
-          .map((order: any) => order.customerId)
-      ).size;
+      // Calculate daily sales
+      const dailySales: { [date: string]: { revenue: number; orders: number } } = {};
 
-      // Calculate hourly sales data for charts
-      const hourlySales = Array.from({ length: 24 }, (_, hour) => ({ hour, revenue: 0, orders: 0 }));
-
-      completedOrders.forEach((order: any) => {
+      filteredOrders.forEach((order: any) => {
         const orderDate = new Date(order.orderedAt || order.createdAt);
-        const hour = orderDate.getHours();
-        hourlySales[hour].revenue += parseFloat(order.total) || parseFloat(order.storedTotal) || 0;
-        hourlySales[hour].orders += 1;
+        const dateStr = format(orderDate, 'dd/MM');
+
+        if (!dailySales[dateStr]) {
+          dailySales[dateStr] = { revenue: 0, orders: 0 };
+        }
+
+        const orderTotal = Number(order.total || 0);
+        const orderDiscount = Number(order.discount || 0);
+        const revenue = orderTotal - orderDiscount;
+
+        dailySales[dateStr].revenue += revenue;
+        dailySales[dateStr].orders += 1;
       });
 
-      // Calculate daily sales for the period
-      const dailySales = new Map();
-      completedOrders.forEach((order: any) => {
-        const orderDate = new Date(order.orderedAt || order.createdAt);
-        const dateKey = format(orderDate, 'yyyy-MM-dd');
-        if (!dailySales.has(dateKey)) {
-          dailySales.set(dateKey, { date: dateKey, revenue: 0, orders: 0 });
+      const salesData = Object.entries(dailySales).map(([date, data]) => ({
+        date,
+        ...data,
+      }));
+
+      // Payment method breakdown
+      const paymentMethodStats: { [method: string]: { value: number; count: number } } = {};
+
+      filteredOrders.forEach((order: any) => {
+        let method = order.paymentMethod || "cash";
+        if (typeof method === 'number') {
+          const methodMap: { [key: number]: string } = {
+            1: "cash",
+            2: "card", 
+            3: "transfer",
+            4: "momo",
+            5: "zalopay",
+            6: "vnpay"
+          };
+          method = methodMap[method] || "cash";
         }
-        const dayData = dailySales.get(dateKey);
-        dayData.revenue += parseFloat(order.total) || parseFloat(order.storedTotal) || 0;
-        dayData.orders += 1;
+
+        const methodLabel = {
+          cash: "Tiền mặt",
+          card: "Thẻ",
+          transfer: "Chuyển khoản",
+          momo: "MoMo",
+          zalopay: "ZaloPay",
+          vnpay: "VNPay"
+        }[method] || "Khác";
+
+        if (!paymentMethodStats[methodLabel]) {
+          paymentMethodStats[methodLabel] = { value: 0, count: 0 };
+        }
+
+        const orderTotal = Number(order.total || 0);
+        const orderDiscount = Number(order.discount || 0);
+        const revenue = orderTotal - orderDiscount;
+
+        paymentMethodStats[methodLabel].value += revenue;
+        paymentMethodStats[methodLabel].count += 1;
       });
 
-      // Payment method distribution
-      const paymentMethods = new Map();
-      completedOrders.forEach((order: any) => {
-        const method = order.paymentMethod || 'cash';
-        if (!paymentMethods.has(method)) {
-          paymentMethods.set(method, { method, count: 0, revenue: 0 });
+      const paymentMethods = Object.entries(paymentMethodStats).map(([method, stats]) => ({
+        method,
+        value: stats.value,
+        percentage: totalRevenue > 0 ? Math.round((stats.value / totalRevenue) * 100) : 0,
+      }));
+
+      // Top products analysis
+      const productStats: { [productId: string]: { name: string; quantity: number; revenue: number } } = {};
+
+      const filteredOrderItems = orderItems.filter((item: any) => 
+        filteredOrders.some((order: any) => order.id === item.orderId)
+      );
+
+      filteredOrderItems.forEach((item: any) => {
+        const product = products.find((p: any) => p.id === item.productId);
+        const productKey = item.productId || item.productName;
+        const quantity = parseInt(item.quantity) || 0;
+        const revenue = parseFloat(item.total) || (quantity * parseFloat(item.unitPrice || '0'));
+
+        if (!productStats[productKey]) {
+          productStats[productKey] = {
+            name: item.productName || product?.name || 'Unknown Product',
+            quantity: 0,
+            revenue: 0
+          };
         }
-        const methodData = paymentMethods.get(method);
-        methodData.count += 1;
-        methodData.revenue += parseFloat(order.total) || parseFloat(order.storedTotal) || 0;
+
+        productStats[productKey].quantity += quantity;
+        productStats[productKey].revenue += revenue;
       });
 
-      // Sales channel distribution
-      const salesChannels = new Map();
-      completedOrders.forEach((order: any) => {
-        const channel = order.salesChannel || 'pos';
-        if (!salesChannels.has(channel)) {
-          salesChannels.set(channel, { channel, count: 0, revenue: 0 });
-        }
-        const channelData = salesChannels.get(channel);
-        channelData.count += 1;
-        channelData.revenue += parseFloat(order.total) || parseFloat(order.storedTotal) || 0;
-      });
+      const topProducts = Object.values(productStats)
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+      // Table status
+      const occupiedTables = tables.filter((table: any) => table.status === 'occupied').length;
+      const totalTables = tables.length;
+
+      // Pending orders
+      const pendingOrders = orders.filter((order: any) => 
+        order.status === 'pending' || order.status === 'confirmed'
+      ).length;
 
       return {
         totalRevenue,
-        totalOrders,
+        totalOrders: totalOrdersCount,
+        totalCustomers,
         averageOrderValue,
-        uniqueCustomers,
-        completedOrders: completedOrders.length,
-        hourlySalesData: hourlySales.filter(h => h.revenue > 0 || h.orders > 0),
-        dailySalesData: Array.from(dailySales.values()),
-        paymentMethodData: Array.from(paymentMethods.values()),
-        salesChannelData: Array.from(salesChannels.values()),
+        occupiedTables,
+        totalTables,
+        pendingOrders,
+        salesData,
+        paymentMethods,
+        topProducts,
       };
     } catch (error) {
-      console.error("Dashboard metrics calculation error:", error);
+      console.error("Dashboard calculation error:", error);
       return {
         totalRevenue: 0,
         totalOrders: 0,
+        totalCustomers: 0,
         averageOrderValue: 0,
-        uniqueCustomers: 0,
-        completedOrders: 0,
-        hourlySalesData: [],
-        dailySalesData: [],
-        paymentMethodData: [],
-        salesChannelData: [],
+        occupiedTables: 0,
+        totalTables: 0,
+        pendingOrders: 0,
+        salesData: [],
+        paymentMethods: [],
+        topProducts: [],
       };
     }
-  }, [orders, startDate, endDate]);
+  }, [orders, orderItems, products, tables, startDate, endDate]);
 
   const resetFilters = () => {
-    setPeriodFilter("today");
     setStartDate(new Date());
     setEndDate(new Date());
+    queryClient.invalidateQueries({ queryKey: ["/api/orders/date-range"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/products"] });
   };
+
+  const isLoading = ordersLoading || tablesLoading || orderItemsLoading || productsLoading;
+
+  const formatDate = (dateStr: string) => {
+    try {
+      // Map translation language codes to locale codes
+      const localeMap = {
+        ko: "ko-KR",
+        en: "en-US", 
+        vi: "vi-VN"
+      };
+
+      const locale = localeMap[currentLanguage] || "ko-KR";
+
+      return new Date(dateStr).toLocaleDateString(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return dateStr || "";
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="ml-3 text-gray-500">Đang tải dữ liệu dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">
-          {t("reports.dashboard")}
+          {t('reports.dashboard')}
         </h1>
         <Button onClick={resetFilters} variant="outline" size="sm">
-          <RotateCcw className="h-4 w-4 mr-2" />
-          {t("common.reset")}
+          <RefreshCw className="h-4 w-4 mr-2" />
+          {t('common.refresh')}
         </Button>
       </div>
 
-      {/* Filters */}
+      {/* Date Selector */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("common.filters")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t("common.period")}
-              </label>
-              <Select value={periodFilter} onValueChange={setPeriodFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("common.selectPeriod")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">{t("common.today")}</SelectItem>
-                  <SelectItem value="week">{t("common.thisWeek")}</SelectItem>
-                  <SelectItem value="month">{t("common.thisMonth")}</SelectItem>
-                  <SelectItem value="custom">{t("common.customRange")}</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-lg font-semibold text-gray-900">
+                {t('reports.dashboardTab')}
+              </CardTitle>
+              <CardDescription>
+                {t("reports.dashboardDescription")}
+              </CardDescription>
             </div>
-
-            {periodFilter === "custom" && (
-              <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    {t("common.startDate")}
-                  </label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !startDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "dd/MM/yyyy") : t("common.selectDate")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    {t("common.endDate")}
-                  </label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !endDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {endDate ? format(endDate, "dd/MM/yyyy") : t("common.selectDate")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={setEndDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </>
-            )}
+            <div className="flex items-center gap-2">
+              <Label htmlFor="start-date-picker">
+                {t("reports.startDate")}:
+              </Label>
+              <Input
+                id="start-date-picker"
+                type="date"
+                value={format(startDate, 'yyyy-MM-dd')}
+                onChange={(e) => setStartDate(new Date(e.target.value))}
+                className="w-auto"
+              />
+              <Label htmlFor="end-date-picker">{t("reports.endDate")}:</Label>
+              <Input
+                id="end-date-picker"
+                type="date"
+                value={format(endDate, 'yyyy-MM-dd')}
+                onChange={(e) => setEndDate(new Date(e.target.value))}
+                className="w-auto"
+              />
+            </div>
           </div>
-        </CardContent>
+        </CardHeader>
       </Card>
 
-      {/* Summary Cards */}
+      {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalRevenue")}
+                  {t('reports.totalRevenue')}
                 </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(dashboardMetrics.totalRevenue)} ₫
+                  {formatCurrency(dashboardData.totalRevenue)} ₫
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {format(startDate, 'dd/MM/yyyy')} ~ {format(endDate, 'dd/MM/yyyy')}
                 </p>
               </div>
               <DollarSign className="h-8 w-8 text-green-600" />
@@ -364,10 +456,14 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalOrders")}
+                  {t('reports.totalOrders')}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {dashboardMetrics.totalOrders}
+                  {dashboardData.totalOrders}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t("reports.averageOrderValue")}{" "}
+                  {formatCurrency(dashboardData.averageOrderValue)} ₫
                 </p>
               </div>
               <ShoppingCart className="h-8 w-8 text-blue-600" />
@@ -380,10 +476,14 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.averageOrderValue")}
+                  {t('reports.averageOrderValue')}
                 </p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {formatCurrency(dashboardMetrics.averageOrderValue)} ₫
+                  {formatCurrency(dashboardData.averageOrderValue)} ₫
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t("reports.peakHour")} {dashboardData.peakHour}{" "}
+                  <span>{t("reports.hour")}</span>
                 </p>
               </div>
               <TrendingUp className="h-8 w-8 text-purple-600" />
@@ -396,10 +496,14 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalCustomers")}
+                  {t('reports.totalCustomers')}
                 </p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {dashboardMetrics.uniqueCustomers}
+                  {dashboardData.totalCustomers}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t("reports.peakHour")} {dashboardData.peakHour}{" "}
+                  <span>{t("reports.hour")}</span>
                 </p>
               </div>
               <Users className="h-8 w-8 text-orange-600" />
@@ -408,106 +512,181 @@ export function DashboardOverview() {
         </Card>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Daily Revenue Chart */}
+      {/* Current Status & Performance Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{t("reports.dailyRevenue")}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              {t("reports.realTimeStatus")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">
+                {t("reports.occupiedTables")}
+              </span>
+              <Badge
+                variant={dashboardData.occupiedTables > 0 ? "destructive" : "outline"}
+              >
+                {dashboardData.occupiedTables}/{dashboardData.totalTables}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">
+                {t("reports.tableUtilization")}
+              </span>
+              <Badge variant="secondary">
+                {dashboardData.totalTables > 0 ? Math.round((dashboardData.occupiedTables / dashboardData.totalTables) * 100) : 0} %
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">
+                {t("reports.pendingOrders")}
+              </span>
+              <Badge variant="destructive">
+                {dashboardData.pendingOrders}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5" />
+              {t("reports.performanceMetrics")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{t("reports.salesAchievementRate")}</span>
+                <span className="font-medium">
+                  {dashboardData.totalTables > 0 ? Math.round((dashboardData.totalRevenue / 500000) * 100) : 0}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-green-500 h-2 rounded-full transition-all"
+                  style={{
+                    width: `${Math.min((dashboardData.totalRevenue / 500000) * 100, 100)}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{t("reports.tableTurnoverRate")}</span>
+                <span className="font-medium">
+                  {dashboardData.totalTables > 0
+                    ? (dashboardData.totalOrders / dashboardData.totalTables).toFixed(1)
+                    : 0}{" "}
+                  {t("reports.times")}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all"
+                  style={{
+                    width: `${Math.min((dashboardData.totalOrders / dashboardData.totalTables / 5) * 100, 100)}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t">
+              <div className="text-xs text-gray-500">
+                {t("reports.targetAverageDailySales")
+                  .replace("{amount}", formatCurrency(500000))
+                  .replace("{turnovers}", "5")}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('reports.dailySales')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dashboardMetrics.dailySalesData}>
+              <BarChart data={dashboardData.salesData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value) => [formatCurrency(Number(value)) + " ₫", t("reports.revenue")]}
+                  formatter={(value, name) => [
+                    name === 'revenue' ? `${formatCurrency(Number(value))} ₫` : value,
+                    name === 'revenue' ? 'Doanh thu' : 'Đơn hàng'
+                  ]}
                 />
-                <Bar dataKey="revenue" fill="#8884d8" />
+                <Bar dataKey="revenue" fill="#059669" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Payment Method Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>{t("reports.paymentMethodDistribution")}</CardTitle>
+            <CardTitle>{t('reports.paymentMethods')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={dashboardMetrics.paymentMethodData}
+                  data={dashboardData.paymentMethods}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ method, percent }) => `${method} ${(percent * 100).toFixed(0)}%`}
+                  label={({ method, percentage }) => `${method} (${percentage}%)`}
                   outerRadius={80}
                   fill="#8884d8"
-                  dataKey="count"
+                  dataKey="value"
                 >
-                  {dashboardMetrics.paymentMethodData.map((entry, index) => (
+                  {dashboardData.paymentMethods.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Hourly Revenue Trend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("reports.hourlyRevenue")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={dashboardMetrics.hourlySalesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value) => [formatCurrency(Number(value)) + " ₫", t("reports.revenue")]}
-                />
-                <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Sales Channel Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("reports.salesChannel")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={dashboardMetrics.salesChannelData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ channel, percent }) => `${channel} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#82ca9d"
-                  dataKey="count"
-                >
-                  {dashboardMetrics.salesChannelData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value) => `${formatCurrency(Number(value))} ₫`} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
+
+      {/* Top Products */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('reports.topProducts')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {dashboardData.topProducts && dashboardData.topProducts.length > 0 ? (
+              dashboardData.topProducts.map((product, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Badge variant="secondary">#{index + 1}</Badge>
+                    <div>
+                      <p className="font-medium">{product.name}</p>
+                      <p className="text-sm text-gray-500">{product.quantity} đã bán</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-green-600">{formatCurrency(product.revenue)} ₫</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-gray-500 py-8">Không có dữ liệu sản phẩm</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
-export default DashboardOverview;
