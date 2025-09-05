@@ -2471,6 +2471,7 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
@@ -2723,7 +2724,6 @@ export function SalesChartReport() {
               </Table>
             </div>
           </div>
-          {/* No pagination needed for sales channel report - it's a summary table */}
         </CardContent>
       </Card>
     );
