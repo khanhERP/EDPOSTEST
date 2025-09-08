@@ -988,7 +988,7 @@ export default function SalesOrders() {
                             <div className="leading-tight">{t("orders.customerName")}</div>
                           </th>
                           <th className="w-[100px] px-3 py-3 text-right font-medium text-sm text-gray-600">
-                            <div className="leading-tight">Thành tiền</div>
+                            <div className="leading-tight">{t("common.subtotalAmount")}</div>
                           </th>
                           <th className="w-[80px] px-3 py-3 text-right font-medium text-sm text-gray-600">
                             <div className="leading-tight">Giảm giá</div>
