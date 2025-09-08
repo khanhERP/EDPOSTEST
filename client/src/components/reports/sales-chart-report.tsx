@@ -3028,9 +3028,439 @@ export function SalesChartReport() {
               }
 
               // Use EXACT same calculation as dashboard: total - discount
-              The code has been updated to correctly render payment methods and fix duplicate keys in the employee report, resolving the `ReferenceError`.
-<replit_final_file>
-import React, { useState, useEffect, useMemo, Fragment } from "react";
+              const orderTotal = Number(order.total || 0);
+              const discount = Number(order.discount || 0);
+              employeeData[cashier].revenue += orderTotal - discount;
+              employeeData[cashier].orders += 1;
+            } catch (error) {
+              console.warn("Error processing order for employee data:", error);
+            }
+          });
+
+          const chartData = Object.keys(employeeData)
+            .map((cashier) => ({
+              name:
+                cashier.length > 15
+                  ? cashier.substring(0, 15) + "..."
+                  : cashier,
+              revenue: employeeData[cashier].revenue,
+              orders: employeeData[cashier].orders,
+            }))
+            .filter((item) => item.orders > 0)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 10);
+
+          console.log("Employee chart data generated:", {
+            filteredOrdersCount: empFilteredOrders.length,
+            employeeDataKeys: Object.keys(employeeData),
+            result: chartData,
+          });
+
+          return chartData;
+        } catch (error) {
+          console.error("Error in employee chart data generation:", error);
+          return [];
+        }
+
+      case "customer":
+        try {
+          if (!orders || !Array.isArray(orders)) {
+            console.warn("Customer chart: No orders data available");
+            return [];
+          }
+
+          const custStart = new Date(startDate);
+          const custEnd = new Date(endDate);
+          custEnd.setHours(23, 59, 59, 999);
+
+          const custFilteredOrders = orders.filter((order: any) => {
+            if (order.status !== "completed" && order.status !== "paid")
+              return false;
+
+            const orderDate = new Date(
+              order.orderedAt ||
+                order.createdAt ||
+                order.created_at ||
+                order.paidAt,
+            );
+
+            if (isNaN(orderDate.getTime())) return false;
+
+            return orderDate >= custStart && orderDate <= custEnd;
+          });
+
+          const customerData: {
+            [customer: string]: { revenue: number; orders: number };
+          } = {};
+
+          custFilteredOrders.forEach((order: any) => {
+            try {
+              const customer =
+                order.customerName || order.customerId || "Khách hàng lẻ";
+              if (!customerData[customer]) {
+                customerData[customer] = { revenue: 0, orders: 0 };
+              }
+
+              const orderTotal = Number(order.total || 0);
+              const discount = Number(order.discount || 0);
+              customerData[customer].revenue += orderTotal - discount;
+              customerData[customer].orders += 1;
+            } catch (error) {
+              console.warn("Error processing order for customer data:", error);
+            }
+          });
+
+          const chartData = Object.keys(customerData)
+            .map((customer) => ({
+              name:
+                customer.length > 15
+                  ? customer.substring(0, 15) + "..."
+                  : customer,
+              revenue: customerData[customer].revenue,
+              orders: customerData[customer].orders,
+            }))
+            .filter((item) => item.orders > 0)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 10);
+
+          return chartData;
+        } catch (error) {
+          console.error("Error in customer chart data generation:", error);
+          return [];
+        }
+
+      default:
+        return [];
+    }
+  };
+
+  // Dashboard stats - using chart data for consistency
+  const dashboardStats = getDashboardStats();
+
+  // Loading state for charts
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="text-gray-500 text-lg">{t("reports.loading")}...</div>
+      </div>
+    );
+  }
+
+  // Main render content based on analysis type
+  const renderReportContent = () => {
+    try {
+      console.log(
+        "Rendering report content for analysisType:",
+        analysisType,
+        "concernType:",
+        concernType,
+      );
+
+      switch (analysisType) {
+        case "time":
+          if (concernType === "salesDetail") {
+            return renderSalesDetailReport();
+          }
+          return renderSalesReport();
+
+        case "product":
+          return renderProductReport();
+
+        case "employee":
+          return renderEmployeeReport();
+
+        case "customer":
+          return renderCustomerReport();
+
+        case "channel":
+          return renderSalesChannelReport();
+
+        default:
+          return renderSalesReport();
+      }
+    } catch (error) {
+      console.error("Error in renderReportContent:", error);
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-red-500">
+            <p>Có lỗi xảy ra khi hiển thị báo cáo</p>
+            <p className="text-sm">{error?.message || "Unknown error"}</p>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  // Product Report Component Logic
+  const renderProductReport = () => {
+    if (productAnalysisLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
+    if (!productAnalysisData || !productAnalysisData.productStats) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">Không có dữ liệu sản phẩm</div>
+        </div>
+      );
+    }
+
+    const data = productAnalysisData.productStats || [];
+
+    // Pagination logic
+    const totalPages = Math.ceil(data.length / productPageSize);
+    const startIndex = (productCurrentPage - 1) * productPageSize;
+    const endIndex = startIndex + productPageSize;
+    const paginatedData = data.slice(startIndex, endIndex);
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="w-5 h-5" />
+            {t("reports.inventoryReport")}
+          </CardTitle>
+          <CardDescription className="flex items-center justify-between">
+            <span>
+              {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+              {t("reports.toDate")}: {formatDate(endDate)}
+            </span>
+            <Button
+              onClick={() =>
+                exportToExcel(
+                  data.map((item) => ({
+                    "Mã sản phẩm": item.productCode || item.productId,
+                    "Tên sản phẩm": item.productName,
+                    "Danh mục": item.categoryName || "N/A",
+                    "Số lượng bán": item.totalQuantity,
+                    "Doanh thu": formatCurrency(item.totalRevenue),
+                    "Giá trung bình": formatCurrency(
+                      item.totalQuantity > 0
+                        ? item.totalRevenue / item.totalQuantity
+                        : 0,
+                    ),
+                  })),
+                  `ProductSales_${startDate}_to_${endDate}`,
+                )
+              }
+              className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Xuất Excel
+            </Button>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="w-full">
+            <div className="overflow-x-auto xl:overflow-x-visible">
+              <Table className="w-full min-w-[800px] xl:min-w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-center border-r bg-green-50 min-w-[120px]">
+                      {t("reports.productCode")}
+                    </TableHead>
+                    <TableHead className="text-center border-r bg-green-50 min-w-[200px]">
+                      {t("reports.productName")}
+                    </TableHead>
+                    <TableHead className="text-center border-r min-w-[150px]">
+                      {t("reports.category")}
+                    </TableHead>
+                    <TableHead className="text-center border-r min-w-[100px]">
+                      {t("reports.quantitySold")}
+                    </TableHead>
+                    <TableHead className="text-right border-r min-w-[140px]">
+                      {t("reports.revenue")}
+                    </TableHead>
+                    <TableHead className="text-right min-w-[120px]">
+                      {t("reports.averagePrice")}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((item, index) => (
+                      <TableRow
+                        key={`${item.productId}-${index}`}
+                        className="hover:bg-gray-50"
+                      >
+                        <TableCell className="text-center border-r bg-green-50 font-medium min-w-[120px] px-4">
+                          {item.productCode || `P-${item.productId}`}
+                        </TableCell>
+                        <TableCell className="text-center border-r bg-green-50 min-w-[200px] px-4">
+                          {item.productName}
+                        </TableCell>
+                        <TableCell className="text-center border-r min-w-[150px] px-4">
+                          {item.categoryName || "N/A"}
+                        </TableCell>
+                        <TableCell className="text-center border-r min-w-[100px] px-4">
+                          {item.totalQuantity}
+                        </TableCell>
+                        <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
+                          {formatCurrency(item.totalRevenue)}
+                        </TableCell>
+                        <TableCell className="text-right min-w-[120px] px-4">
+                          {formatCurrency(
+                            item.totalQuantity > 0
+                              ? item.totalRevenue / item.totalQuantity
+                              : 0,
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-gray-500 py-8"
+                      >
+                        {t("reports.noDataDescription")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {/* Summary Row */}
+                  {data.length > 0 && (
+                    <TableRow className="bg-gray-100 font-bold border-t-2">
+                      <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
+                        {t("common.total")}
+                      </TableCell>
+                      <TableCell className="text-center border-r bg-green-100 min-w-[200px] px-4">
+                        {data.length} sản phẩm
+                      </TableCell>
+                      <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
+                      <TableCell className="text-center border-r min-w-[100px] px-4">
+                        {data
+                          .reduce((sum, item) => sum + item.totalQuantity, 0)
+                          .toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
+                        {formatCurrency(
+                          data.reduce((sum, item) => sum + item.totalRevenue, 0),
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right min-w-[120px] px-4">
+                        {formatCurrency(
+                          data.length > 0
+                            ? data.reduce((sum, item) => sum + item.totalRevenue, 0) /
+                                data.reduce((sum, item) => sum + item.totalQuantity, 0)
+                            : 0,
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Pagination Controls for Product Report */}
+          {data.length > 0 && (
+            <div className="flex items-center justify-between space-x-6 py-4">
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">{t("common.show")} </p>
+                <Select
+                  value={productPageSize.toString()}
+                  onValueChange={(value) => {
+                    setProductPageSize(Number(value));
+                    setProductCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    <SelectItem value="15">15</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm font-medium"> {t("common.rows")}</p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">
+                  {t("common.page")} {productCurrentPage} / {totalPages}
+                </p>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setProductCurrentPage(1)}
+                    disabled={productCurrentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    «
+                  </button>
+                  <button
+                    onClick={() =>
+                      setProductCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={productCurrentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() =>
+                      setProductCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
+                    }
+                    disabled={productCurrentPage === totalPages}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ›
+                  </button>
+                  <button
+                    onClick={() => setProductCurrentPage(totalPages)}
+                    disabled={productCurrentPage === totalPages}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Chart configuration with consistent theme
+  const chartConfig = {
+    revenue: {
+      label: t("reports.revenue"),
+      color: "#10b981",
+    },
+    netRevenue: {
+      label: t("reports.netRevenue"),
+      color: "#3b82f6",
+    },
+    returnValue: {
+      label: t("reports.returnValue"),
+      color: "#ef4444",
+    },
+    quantity: {
+      label: t("reports.quantity"),
+      color: "#f59e0b",
+    },
+    profit: {
+      label: t("reports.profit"),
+      color: "#8b5cf6",
+    },
+    orders: {
+      label: t("reports.orders"),
+      color: "#06b6d4",
+    },
+  };
+
+  const chartData = getChartData();
+  console.log("Chart data for", analysisType, ":", chartData);
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
