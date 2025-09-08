@@ -786,47 +786,7 @@ function MenuReport() {
             </div>
           ) : (
             <>
-              {/* Product search results */}
-              {productSearch && (
-                <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">
-                    Kết quả tìm kiếm cho "{productSearch}" ({filteredProducts.length} sản phẩm)
-                  </h4>
-                  {filteredProducts.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {filteredProducts.slice(0, 9).map((product: Product) => (
-                        <div
-                          key={product.id}
-                          className="p-3 bg-white rounded-lg border hover:shadow-sm transition-shadow"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1 min-w-0">
-                              <h5 className="font-medium text-gray-800 truncate">
-                                {product.name}
-                              </h5>
-                              <p className="text-sm text-gray-500 truncate">
-                                {product.sku}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary" className="text-xs">
-                                  {getProductTypeName(product.productType)}
-                                </Badge>
-                                <span className="text-sm font-medium text-green-600">
-                                  {formatCurrency(product.price)} ₫
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-sm">
-                      Không tìm thấy sản phẩm nào phù hợp
-                    </p>
-                  )}
-                </div>
-              )}
+              
               
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[800px]">
