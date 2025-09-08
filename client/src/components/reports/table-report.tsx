@@ -363,14 +363,14 @@ export function TableReport() {
 
   const getTableStatusBadge = (status: string) => {
     const statusConfig = {
-      available: { label: t("common.available"), variant: "default" as const },
+      available: { label: t("tables.available"), variant: "default" as const },
       occupied: {
-        label: t("common.occupied"),
+        label: t("tables.occupied"),
         variant: "destructive" as const,
       },
-      reserved: { label: t("common.reserved"), variant: "secondary" as const },
+      reserved: { label: t("tables.reserved"), variant: "secondary" as const },
       maintenance: {
-        label: t("common.maintenance"),
+        label: t("tables.outOfService"),
         variant: "outline" as const,
       },
     };
