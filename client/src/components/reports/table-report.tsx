@@ -578,7 +578,7 @@ export function TableReport() {
                           }`}></div>
                           {stats.tableName}
                           {stats.totalRevenue === 0 && (
-                            <span className="text-xs text-gray-400 ml-2">(Chưa có doanh thu)</span>
+                            <span className="text-xs text-gray-400 ml-2">({t("reports.noRevenue")})</span>
                           )}
                           <span className="text-xs text-gray-500">
                             ({stats.table.capacity} {t("common.people")})

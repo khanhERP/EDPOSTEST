@@ -516,6 +516,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     loadingData: "Đang tải dữ liệu...",
     errorLoadingData: "Lỗi khi tải dữ liệu",
     itemsSold: "đã bán",
+    noRevenue: "Chưa có doanh thu",
   },
 
   ko: {
@@ -1022,6 +1023,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataAvailable: "데이터 없음",
     loadingData: "데이터 로딩 중...",
     errorLoadingData: "데이터 로딩 오류",
+    noRevenue: "수익 없음",
   },
 
   en: {
@@ -1531,5 +1533,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataAvailable: "No data available",
     loadingData: "Loading data...",
     errorLoadingData: "Error loading data",
+    noRevenue: "No revenue yet",
   },
 };
