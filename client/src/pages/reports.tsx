@@ -49,6 +49,7 @@ export default function ReportsPage() {
       setActiveTab(tab);
     }
   }, [search]);
+  const style = "max-width: 95rem";
   return (
     <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
@@ -58,7 +59,7 @@ export default function ReportsPage() {
       <RightSidebar />
 
       <div className="main-content pt-16 px-6">
-        <div className="mx-auto py-8" style={maxWidth: "95rem"}>
+        <div className="mx-auto py-8" style={style}>
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
