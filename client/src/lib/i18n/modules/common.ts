@@ -226,7 +226,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "발행되지 않음",
       published: "발행됨",
-      error: "발행 오류"
+      error: "발행 오류",
     },
 
     // Combo values
@@ -454,7 +454,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "Not Published",
       published: "Published",
-      error: "Publish Error"
+      error: "Publish Error",
     },
 
     // Combo values
@@ -483,6 +483,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       ready: "Ready",
       served: "Served",
       paid: "Paid",
+      all: "All",
       cancelled: "Cancelled",
       completed: "Completed",
 
@@ -685,7 +686,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "Chưa phát hành",
       published: "Đã phát hành",
-      error: "Lỗi phát hành"
+      error: "Lỗi phát hành",
     },
 
     // Combo values
@@ -723,6 +724,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       snack: "Đồ ăn nhẹ",
       price: "Giá",
       name: "Tên",
+      all: "Tất cả",
       dessert: "Tráng miệng",
 
       // Table status
