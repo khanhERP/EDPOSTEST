@@ -986,7 +986,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
   },
 
   en: {
-    title: "Tổng thu từ bán hàng",
+    title: "Reports",
     description: "View sales and operational reports",
     dashboard: "Dashboard",
     dashboardDescription: "Dashboard of total sales and operational status",
