@@ -517,6 +517,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     errorLoadingData: "Lỗi khi tải dữ liệu",
     itemsSold: "đã bán",
     noRevenue: "Chưa có doanh thu",
+    contribution: "% Đóng góp",
   },
 
   ko: {
@@ -1024,6 +1025,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     loadingData: "데이터 로딩 중...",
     errorLoadingData: "데이터 로딩 오류",
     noRevenue: "수익 없음",
+    contribution: "% 기여도",
   },
 
   en: {
@@ -1534,5 +1536,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     loadingData: "Loading data...",
     errorLoadingData: "Error loading data",
     noRevenue: "No revenue yet",
+    contribution: "% Contribution",
   },
 };

@@ -761,7 +761,7 @@ function MenuReport() {
                       <th className="text-right py-2 px-4">
                         {t("reports.averagePrice") || "Giá trung bình"}
                       </th>
-                      <th className="text-right py-2 px-4">% Đóng góp</th>
+                      <td className="py-2 px-4 text-right">{t("reports.contribution")}</td>
                     </tr>
                   </thead>
                   <tbody>
