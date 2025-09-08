@@ -421,7 +421,7 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalSalesRevenue")}
+                  {t("reports.salesReportTotalRevenue")}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {formatCurrency(stats.monthRevenue)}
