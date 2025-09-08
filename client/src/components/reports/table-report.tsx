@@ -247,8 +247,12 @@ export function TableReport() {
         // Count items sold from order_items if available
         if (orderItems && Array.isArray(orderItems)) {
           const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
-          const itemsCount = relatedOrderItems.reduce((sum, oi) => sum + (oi.quantity || 0), 0);
+          const itemsCount = relatedOrderItems.reduce((sum, oi) => sum + (parseInt(oi.quantity) || 0), 0);
           stats.itemsSold += itemsCount;
+        } else {
+          // Fallback: estimate based on order total (each 50k = 1 item approximately)
+          const estimatedItems = Math.max(1, Math.floor(parseFloat(order.total || 0) / 50000));
+          stats.itemsSold += estimatedItems;
         }
       }
     });
@@ -553,15 +557,15 @@ export function TableReport() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("common.table")}</TableHead>
-                <TableHead>{t("reports.currentStatus")}</TableHead>
-                <TableHead>{t("reports.orders")}</TableHead>
-                <TableHead>{t("reports.totalRevenue")}</TableHead>
-                <TableHead>{t("reports.customerCount")}</TableHead>
-                <TableHead>{t("reports.averageOrderValue")}</TableHead>
-                <TableHead>{t("reports.turnoverRate")}</TableHead>
-                <TableHead>{t("reports.peakTime")}</TableHead>
-                <TableHead>{t("reports.soldItems")}</TableHead>
+                <TableHead>{t("common.table") || "Bàn"}</TableHead>
+                <TableHead>{t("reports.currentStatus") || "Trạng thái hiện tại"}</TableHead>
+                <TableHead>{t("reports.orders") || "Đơn hàng"}</TableHead>
+                <TableHead>{t("reports.totalRevenue") || "Tổng doanh thu"}</TableHead>
+                <TableHead>{t("reports.customerCount") || "Số khách hàng"}</TableHead>
+                <TableHead>{t("reports.averageOrderValue") || "Giá trị đơn hàng TB"}</TableHead>
+                <TableHead>{t("reports.turnoverRate") || "Tỷ lệ luân chuyển"}</TableHead>
+                <TableHead>{t("reports.peakTime") || "Giờ cao điểm"}</TableHead>
+                <TableHead>{t("reports.soldItems") || "Số món bán"}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -578,10 +582,10 @@ export function TableReport() {
                           }`}></div>
                           {stats.tableName}
                           {stats.totalRevenue === 0 && (
-                            <span className="text-xs text-gray-400 ml-2">({t("reports.noRevenue")})</span>
+                            <span className="text-xs text-gray-400 ml-2">({t("reports.noRevenue") || "Chưa có doanh thu"})</span>
                           )}
                           <span className="text-xs text-gray-500">
-                            ({stats.table.capacity} {t("common.people")})
+                            ({stats.table.capacity} {t("common.people") || "người"})
                           </span>
                         </div>
                       </TableCell>
@@ -591,13 +595,13 @@ export function TableReport() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {stats.totalOrders} {t("common.count")}
+                        {stats.totalOrders} {t("common.count") || "đơn"}
                       </TableCell>
                       <TableCell className="font-semibold">
                         {formatCurrency(stats.totalRevenue)}
                       </TableCell>
                       <TableCell>
-                        {stats.totalCustomers} {t("common.people")}
+                        {stats.totalCustomers} {t("common.people") || "người"}
                       </TableCell>
                       <TableCell>
                         {stats.totalOrders > 0
@@ -615,12 +619,12 @@ export function TableReport() {
                       </TableCell>
                       <TableCell>
                         {peakHour !== null
-                          ? `${peakHour} ${t("reports.hour")}`
+                          ? `${peakHour} ${t("reports.hour") || "giờ"}`
                           : "-"}
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">
-                          {stats.itemsSold} {t("reports.items")}
+                          {stats.itemsSold} {t("reports.items") || "món"}
                         </Badge>
                       </TableCell>
                     </TableRow>
