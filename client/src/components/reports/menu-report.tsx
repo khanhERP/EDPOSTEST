@@ -318,7 +318,7 @@ function MenuReport() {
           </CardContent>
         </Card>
 
-        
+
 
         <Card>
           <CardContent className="p-6">
