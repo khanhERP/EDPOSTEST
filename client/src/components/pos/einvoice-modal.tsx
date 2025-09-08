@@ -1466,7 +1466,7 @@ export function EInvoiceModal({
               </div>
 
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("einvoice.email")}</Label>
                 <Input
                   id="email"
                   type="email"

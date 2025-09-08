@@ -28,6 +28,7 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     processing: "처리 중...",
     publishLater: "나중에 발행",
     virtualKeyboard: "가상 키보드 표시",
+    email: "이메일",
   },
   en: {
     title: "Issue Electronic Invoice",
@@ -56,6 +57,7 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     processing: "Processing...",
     publishLater: "Publish Later",
     virtualKeyboard: "Show Virtual Keyboard",
+    email: "Email",
   },
   vi: {
     title: "Phát hành hóa đơn điện tử",
