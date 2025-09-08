@@ -391,8 +391,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     topProductsByRevenue: "Top sản phẩm doanh thu cao nhất",
 
     // Menu report specific translations
-    menuItems: "Sản phẩm",
-    itemsSold: "Đã bán",
+    menuItems: "Mặt hàng đã bán",
+    itemsSold: "đã bán",
     revenueShare: "Phần doanh thu",
     salesShare: "Phần bán hàng",
     popularMenuByQuantity: "Sản phẩm bán chạy theo số lượng",
