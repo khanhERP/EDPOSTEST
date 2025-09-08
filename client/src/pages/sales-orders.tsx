@@ -1159,7 +1159,7 @@ export default function SalesOrders() {
                                       <div className="p-4 border-l-4 border-blue-500 bg-gray-50">
                                         <Card className="shadow-lg">
                                           <CardHeader className="pb-3">
-                                            <CardTitle className="text-lg text-blue-700">Chi tiết đơn hàng</CardTitle>
+                                            <CardTitle className="text-lg text-blue-700">{t("common.orderDetails")}</CardTitle>
                                           </CardHeader>
                                           <CardContent className="space-y-4">
                                             <div className="bg-white p-4 rounded-lg overflow-x-auto">
@@ -1167,7 +1167,7 @@ export default function SalesOrders() {
                                                 <table className="w-full text-sm border-collapse">
                                                   <tbody>
                                                     <tr>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Số đơn bán:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.orderCode")}:</td>
                                                       <td className="py-1 pr-6 text-blue-600 font-medium">
                                                         {isEditing && editableInvoice ? (
                                                           <Input
@@ -1179,7 +1179,7 @@ export default function SalesOrders() {
                                                           selectedInvoice.displayNumber
                                                         )}
                                                       </td>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Ngày:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.orderDate")}:</td>
                                                       <td className="py-1 pr-6">
                                                         {isEditing && editableInvoice ? (
                                                           <Input
@@ -1192,7 +1192,7 @@ export default function SalesOrders() {
                                                           formatDate(selectedInvoice.date)
                                                         )}
                                                       </td>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Khách hàng:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.customer")}:</td>
                                                       <td className="py-1 pr-6 text-blue-600 font-medium">
                                                         {isEditing && editableInvoice ? (
                                                           <Input
@@ -1204,7 +1204,7 @@ export default function SalesOrders() {
                                                           selectedInvoice.customerName
                                                         )}
                                                       </td>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Điện thoại:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.phone")}:</td>
                                                       <td className="py-1 pr-6">
                                                         {isEditing && editableInvoice ? (
                                                           <Input
@@ -1216,31 +1216,31 @@ export default function SalesOrders() {
                                                           selectedInvoice.customerPhone || '-'
                                                         )}
                                                       </td>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Trạng thái:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.status")}:</td>
                                                       <td className="py-1">{getInvoiceStatusBadge(selectedInvoice.displayStatus)}</td>
                                                     </tr>
                                                     <tr>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Thu ngân:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.cashier")}:</td>
                                                       <td className="py-1 pr-6">Nguyễn Văn A</td>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Hình thức bán:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.salesType")}:</td>
                                                       <td className="py-1 pr-6">
                                                         {(() => {
                                                           const salesChannel = selectedInvoice.salesChannel;
-                                                          if (salesChannel === 'table') return 'Bán tại bàn';
+                                                          if (salesChannel === 'table') return t("common.dineIn");
                                                           if (salesChannel === 'pos') return 'Bán tại quầy';
                                                           if (salesChannel === 'online') return 'Bán online';
                                                           if (salesChannel === 'delivery') return 'Giao hàng';
                                                           return 'Bán tại quầy'; // default
                                                         })()}
                                                       </td>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Bàn:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.tableOrder")}:</td>
                                                       <td className="py-1 pr-6">
                                                         {selectedInvoice.salesChannel === 'table' && selectedInvoice.tableId ? 
                                                           `Bàn ${selectedInvoice.tableId}` : 
                                                           selectedInvoice.salesChannel === 'table' ? 'Bàn' : '-'
                                                         }
                                                       </td>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Ký hiệu hóa đơn:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.invoiceSymbol")}:</td>
                                                       <td className="py-1 pr-6">
                                                         {isEditing && editableInvoice ? (
                                                           <Input
@@ -1252,7 +1252,7 @@ export default function SalesOrders() {
                                                           selectedInvoice.einvoiceStatus !== 0 ? (selectedInvoice.symbol || '') : '-'
                                                         )}
                                                       </td>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Số hóa đơn:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.invoiceNumber")}:</td>
                                                       <td className="py-1 pr-6">
                                                         {isEditing && editableInvoice ? (
                                                           <Input
@@ -1273,17 +1273,17 @@ export default function SalesOrders() {
                                             </div>
 
                                             <div>
-                                              <h4 className="font-medium mb-3">Danh sách hàng hóa</h4>
+                                              <h4 className="font-medium mb-3">{t("common.itemList")}</h4>
                                               <div className="border rounded-lg overflow-hidden">
                                                 <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2">
                                                   <div className="col-span-1">STT</div>
-                                                  <div className="col-span-3">Mã hàng</div>
-                                                  <div className="col-span-3">Tên hàng</div>
-                                                  <div className="col-span-1">ĐVT</div>
-                                                  <div className="col-span-1">SL</div>
-                                                  <div className="col-span-1">Đơn giá</div>
-                                                  <div className="col-span-1">Thành tiền</div>
-                                                  <div className="col-span-1">Thuế GTGT</div>
+                                                  <div className="col-span-3">{t("common.itemCode")}</div>
+                                                  <div className="col-span-3">{t("common.itemName")}</div>
+                                                  <div className="col-span-1">{t("common.unit")}</div>
+                                                  <div className="col-span-1">{t("common.quantity")}</div>
+                                                  <div className="col-span-1">{t("common.unitPrice")}</div>
+                                                  <div className="col-span-1">{t("common.totalAmount")}</div>
+                                                  <div className="col-span-1">{t("common.taxVAT")}</div>
                                                 </div>
                                                 {(() => {
                                                   const items = orderItems;
@@ -1321,19 +1321,19 @@ export default function SalesOrders() {
                                                     return (
                                                       <>
                                                         <div className="flex justify-between">
-                                                          <span>Tổng tiền thanh toán:</span>
+                                                          <span>{t("common.totalPayment")}:</span>
                                                           <span className="font-bold">{formatCurrency(totalPayment)}</span>
                                                         </div>
                                                         <div className="flex justify-between">
-                                                          <span>Thành tiền:</span>
+                                                          <span>{t("common.subtotalAmount")}:</span>
                                                           <span className="font-bold">{formatCurrency(subtotal)}</span>
                                                         </div>
                                                         <div className="flex justify-between text-red-600">
-                                                          <span>Giảm giá:</span>
+                                                          <span>{t("common.discount")}:</span>
                                                           <span>{formatCurrency(discount)}</span>
                                                         </div>
                                                         <div className="flex justify-between">
-                                                          <span>Thuế GTGT:</span>
+                                                          <span>{t("common.totalTax")}:</span>
                                                           <span className="font-bold">{formatCurrency(tax)}</span>
                                                         </div>
                                                       </>
@@ -1351,23 +1351,23 @@ export default function SalesOrders() {
                                                     return (
                                                       <>
                                                         <div className="flex justify-between">
-                                                          <span>Khách hàng trả:</span>
+                                                          <span>{t("common.customerPaid")}:</span>
                                                           <span className="font-bold">{formatCurrency(paidAmount)}</span>
                                                         </div>
                                                         <div className="flex justify-between">
-                                                          <span>Tiền mặt:</span>
+                                                          <span>{t("common.cashPayment")}:</span>
                                                           <span className="font-bold">
                                                             {isPaid && paymentMethod === 1 ? formatCurrency(paidAmount) : '0'}
                                                           </span>
                                                         </div>
                                                         <div className="flex justify-between">
-                                                          <span>Chuyển khoản:</span>
+                                                          <span>{t("common.bankTransfer")}:</span>
                                                           <span className="font-bold">
                                                             {isPaid && paymentMethod === 2 ? formatCurrency(paidAmount) : '0'}
                                                           </span>
                                                         </div>
                                                         <div className="flex justify-between">
-                                                          <span>QR Code InfoCAMS:</span>
+                                                          <span>{t("common.qrPayment")}:</span>
                                                           <span className="font-bold">
                                                             {isPaid && paymentMethod === 3 ? formatCurrency(paidAmount) : '0'}
                                                           </span>
@@ -1380,7 +1380,7 @@ export default function SalesOrders() {
                                             </div>
 
                                             <div>
-                                              <label className="block text-sm font-medium mb-2">Ghi chú</label>
+                                              <label className="block text-sm font-medium mb-2">{t("common.notes")}</label>
                                               {isEditing && editableInvoice ? (
                                                 <textarea
                                                   value={editableInvoice.notes || ''}
@@ -1390,7 +1390,7 @@ export default function SalesOrders() {
                                                 />
                                               ) : (
                                                 <div className="p-3 bg-gray-50 rounded border min-h-[80px]">
-                                                  {selectedInvoice.notes || 'Không có ghi chú'}
+                                                  {selectedInvoice.notes || t("common.noNotes")}
                                                 </div>
                                               )}
                                             </div>
@@ -1418,7 +1418,7 @@ export default function SalesOrders() {
                                                     onClick={handleEditOrder}
                                                   >
                                                     <FileText className="w-4 h-4" />
-                                                    Sửa đơn
+                                                    {t("common.editOrder")}
                                                   </Button>
                                                   <Button
                                                     size="sm"
@@ -1432,7 +1432,7 @@ export default function SalesOrders() {
                                                     disabled={selectedInvoice?.einvoiceStatus !== 0}
                                                   >
                                                     <Mail className="w-4 h-4" />
-                                                    {selectedInvoice?.einvoiceStatus === 0 ? 'Phát hành HĐ điện tử' : 'Đã phát hành'}
+                                                    {selectedInvoice?.einvoiceStatus === 0 ? t("common.publishEInvoice") : 'Đã phát hành'}
                                                   </Button>
                                                   <Button
                                                     size="sm"
@@ -1517,7 +1517,7 @@ export default function SalesOrders() {
                                                     }}
                                                   >
                                                     <Printer className="w-4 h-4" />
-                                                    In hóa đơn
+                                                    {t("common.printInvoice")}
                                                   </Button>
                                                 </>
                                               ) : (
@@ -1558,7 +1558,7 @@ export default function SalesOrders() {
                                                 }}
                                               >
                                                 <X className="w-4 h-4" />
-                                                Đóng
+                                                {t("common.close")}
                                               </Button>
                                             </div>
                                           </CardContent>
