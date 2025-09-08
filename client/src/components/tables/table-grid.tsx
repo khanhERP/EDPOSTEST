@@ -2429,7 +2429,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                         `Sản phẩm #${item.productId}`}
                                     </p>
                                     <p className="text-sm text-gray-600">
-                                      Số lượng:{" "}
+                                      {t("pos.quantity")}:{" "}
                                       <span className="font-medium">
                                         {item.quantity}
                                       </span>
