@@ -26,7 +26,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalRevenue: "Tổng thu từ bán hàng",
     salesReportTotalRevenue: "Tổng doanh thu",
     totalOrders: "Tổng đơn hàng",
-    totalQuantitySold: "Tổng số lượng bán",
+    totalQuantitySold: "Tổng số lượng đã bán",
     averageOrderValue: "Giá trị đơn hàng trung bình",
     periodRevenue: "Doanh thu kỳ",
     occupiedTables: "Bàn đang sử dụng",
