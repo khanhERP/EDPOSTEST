@@ -16,17 +16,19 @@ export default function EmployeesPage() {
     <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
       <POSHeader />
-      
+
       {/* Right Sidebar */}
       <RightSidebar />
-      
+
       <div className="main-content pt-16 px-6">
-        <div className="max-w-5xl mx-auto py-8">
+        <div className="mx-auto py-8">
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{t('employees.title')}</h1>
-              <p className="mt-2 text-gray-600">{t('employees.description')}</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {t("employees.title")}
+              </h1>
+              <p className="mt-2 text-gray-600">{t("employees.description")}</p>
             </div>
             <div className="flex gap-4">
               <Link href="/">
@@ -37,7 +39,7 @@ export default function EmployeesPage() {
               </Link>
               <Button onClick={() => setShowAddModal(true)}>
                 <UserPlus className="w-4 h-4 mr-2" />
-                {t('employees.addEmployee')}
+                {t("employees.addEmployee")}
               </Button>
             </div>
           </div>
