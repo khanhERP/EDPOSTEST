@@ -115,6 +115,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderNumber: "Order Number",
     orderInfo: "Order Information",
     orderItems: "Order Items",
+    orderNotes: "Order Notes",
+    showingItems: "Showing {{count}} items - Order {{orderNumber}}",
     orderStatus: "Order Status",
     orderTime: "Order Time",
     orderStatusUpdated: "Order status updated successfully",
@@ -177,7 +179,6 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderUpdateSuccessDesc:
       "New items have been successfully added to the order",
     updateAndRefresh: "Update & Refresh",
-    showingItems: "Showing {{count}} items in order {{orderNumber}}",
     pointsPaymentDialog: {
       title: "Points Payment",
       description: "Select customer and use points to pay for the order",
@@ -225,7 +226,9 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderDetails: "Chi tiết đơn hàng",
     orderNumber: "Số đơn hàng",
     orderInfo: "Thông tin đơn hàng",
-    orderItems: "Món trong đơn",
+    orderItems: "Các món đã đặt",
+    orderNotes: "Ghi chú đơn hàng",
+    showingItems: "Hiển thị {{count}} món - Đơn hàng {{orderNumber}}",
     orderStatus: "Trạng thái đơn hàng",
     orderTime: "Thời gian đặt",
     orderStatusUpdated: "Cập nhật trạng thái đơn hàng thành công",
@@ -288,7 +291,6 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderUpdateSuccess: "Cập nhật đơn hàng",
     orderUpdateSuccessDesc: "Đã thêm món mới vào đơn hàng thành công",
     updateAndRefresh: "Cập nhật & Làm mới",
-    showingItems: "Hiển thị {{count}} món trong đơn hàng {{orderNumber}}",
     pointsPaymentDialog: {
       title: "Thanh toán bằng điểm",
       description: "Chọn khách hàng và số điểm để thanh toán đơn hàng",
