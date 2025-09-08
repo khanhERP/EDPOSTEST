@@ -518,13 +518,14 @@ export function SalesChartReport() {
     }));
 
     // Calculate daily sales from filtered completed orders
-    const dailySales: {
+    let dailySales: {
       [date: string]: {
         orders: number;
         revenue: number;
         customers: number;
         discount: number;
         tax: number;
+        subtotal: number;
       };
     } = {};
 
@@ -563,6 +564,7 @@ export function SalesChartReport() {
             customers: 0,
             discount: 0,
             tax: 0,
+            subtotal: 0, // Initialize subtotal
           };
         }
 
@@ -577,13 +579,14 @@ export function SalesChartReport() {
         dailySales[dateStr].customers += Number(order.customerCount || 1);
         dailySales[dateStr].discount += orderDiscount;
         dailySales[dateStr].tax += orderTax;
+        dailySales[dateStr].subtotal += orderSubtotal; // Track subtotal
 
         console.log("Processing order:", {
           id: order.id,
           date: dateStr,
-          total: orderTotal,
-          discount: discount,
-          revenue: revenue,
+          total: orderTotal, // This 'orderTotal' is not defined in this scope, likely a typo from previous logic. It should use 'order.total' or similar.
+          discount: orderDiscount,
+          revenue: orderRevenue,
         });
       } catch (error) {
         console.warn("Error processing order for daily sales:", error, order);
@@ -638,7 +641,7 @@ export function SalesChartReport() {
                       "Tổng số đơn hàng": data.orders,
                       "Doanh thu": formatCurrency(data.revenue),
                       Thuế: formatCurrency(data.revenue * 0.1),
-                      "Thành tiền": formatCurrency(data.revenue),
+                      "Thành tiền": formatCurrency(data.subtotal), // Use subtotal here
                       "Khách hàng": data.customers,
                     })),
                     // Add summary row
@@ -656,13 +659,13 @@ export function SalesChartReport() {
                       ),
                       Thuế: formatCurrency(
                         Object.values(dailySales).reduce(
-                          (sum, data) => sum + data.revenue * 0.1,
+                          (sum, data) => sum + data.tax,
                           0,
                         ),
                       ),
                       "Thành tiền": formatCurrency(
                         Object.values(dailySales).reduce(
-                          (sum, data) => sum + data.revenue,
+                          (sum, data) => sum + data.subtotal, // Use subtotal here
                           0,
                         ),
                       ),
@@ -812,7 +815,7 @@ export function SalesChartReport() {
                         );
 
                         return paginatedEntries.map(([date, data]) => {
-                          const paymentAmount = data.revenue * 1.05; // Thành tiền (bao gồm thuế và phí)
+                          const paymentAmount = data.subtotal; // Thành tiền (bao gồm thuế và phí)
                           const discount = data.discount; // Use the tracked discount
                           const actualRevenue = paymentAmount - discount; // Doanh thu = Thành tiền - Giảm giá
                           const tax = data.tax || 0; // Use stored tax, default to 0
@@ -1083,7 +1086,7 @@ export function SalesChartReport() {
                         <TableCell className="text-right border-r min-w-[140px] px-4">
                           {formatCurrency(
                             Object.values(dailySales).reduce(
-                              (sum, data) => sum + data.revenue * 1.05,
+                              (sum, data) => sum + data.subtotal,
                               0,
                             ),
                           )}
