@@ -187,6 +187,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     change: "거스름돈",
     insufficient: "부족",
     generatingQr: "QR 생성 중...",
+    showVirtualKeyboard: "가상 키보드 표시",
+    hideVirtualKeyboard: "가상 키보드 숨기기",
+    hideKeyboard: "키보드 숨기기",
+    showKeyboard: "가상 키보드 표시",
 
     // Payment method names
     cash: "현금",
@@ -420,6 +424,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     change: "Change",
     insufficient: "Insufficient",
     generatingQr: "Generating QR...",
+    showVirtualKeyboard: "Show Virtual Keyboard",
+    hideVirtualKeyboard: "Hide Virtual Keyboard",
+    hideKeyboard: "Hide Keyboard",
+    showKeyboard: "Show Virtual Keyboard",
 
     // Payment method names
     cash: "Cash",
@@ -652,6 +660,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     change: "Tiền thối",
     insufficient: "Không đủ",
     generatingQr: "Đang tạo mã QR...",
+    showVirtualKeyboard: "Hiện bàn phím ảo",
+    hideVirtualKeyboard: "Ẩn bàn phím ảo",
+    hideKeyboard: "Ẩn bàn phím",
+    showKeyboard: "Hiện bàn phím ảo",
 
     // Payment method names
     cash: "Tiền mặt",
