@@ -1294,7 +1294,7 @@ export function EInvoiceModal({
         }
         // Re-throw the original error to show the user that invoice publishing failed
         throw new Error(result.message || "Có lỗi xảy ra khi phát hành hóa đơn");
-      
+
     }
   };
 
@@ -1346,7 +1346,7 @@ export function EInvoiceModal({
               </div>
               <div>
                 <Label htmlFor="invoiceTemplate">
-                  Mẫu số Hóa đơn GTGT
+                  {t("einvoice.invoiceTemplate")}
                 </Label>
                 <Select
                   value={formData.selectedTemplateId}
@@ -1355,7 +1355,7 @@ export function EInvoiceModal({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn mẫu số hóa đơn" />
+                    <SelectValue placeholder={t("einvoice.selectTemplate")} />
                   </SelectTrigger>
                   <SelectContent>
                     {invoiceTemplates.map((template) => (
