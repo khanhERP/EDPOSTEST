@@ -922,7 +922,7 @@ export function ShoppingCart({
             disabled={cart.length === 0 || isProcessing}
             className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 text-lg"
           >
-            {isProcessing ? t("tables.placing") : "Thanh toán"}
+            {isProcessing ? t("tables.placing") : t("einvoice.checkout")}
           </Button>
         </div>
       )}
