@@ -991,7 +991,7 @@ export default function SalesOrders() {
                             <div className="leading-tight">{t("common.subtotalAmount")}</div>
                           </th>
                           <th className="w-[80px] px-3 py-3 text-right font-medium text-sm text-gray-600">
-                            <div className="leading-tight">Giảm giá</div>
+                            <div className="leading-tight">{t("common.discount")}</div>
                           </th>
                           <th className="w-[90px] px-3 py-3 text-right font-medium text-sm text-gray-600">
                             <div className="leading-tight">Tiền thuế</div>
