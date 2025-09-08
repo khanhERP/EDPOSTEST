@@ -1042,7 +1042,7 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r text-red-600 text-sm min-w-[120px] px-4">
                                         {formatCurrency(
-                                          Number(order.discount || 0),
+                                          Number(transaction.discount || 0),
                                         )}
                                       </TableCell>
                                       <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
