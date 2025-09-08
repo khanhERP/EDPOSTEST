@@ -120,7 +120,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     vatTax: "Thuế GTGT",
     tableName: "Bàn",
     employeeName: "Tên nhân viên",
-    totalCustomerPayment: "Tổng thanh toán khách hàng",
+    totalCustomerPayment: "Khách đã thanh toán",
     combo: "Combo",
     service: "Dịch vụ",
     productFilterPlaceholder: "Tìm theo tên hoặc mã",
