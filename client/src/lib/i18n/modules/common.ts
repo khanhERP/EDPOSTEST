@@ -365,7 +365,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     filters: "Filters",
     customerPaid: "Customer Paid",
     bankTransfer: "Bank Transfer",
-    
+    itemName: "Item Name",
+    unit: "Unit",
+    unitPrice: "Unit Price",
     qrPayment: "QR Payment",
     orderDetails: "Order Details",
     orderCode: "Order Code",
