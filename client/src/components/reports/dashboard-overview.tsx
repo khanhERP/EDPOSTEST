@@ -490,7 +490,7 @@ export function DashboardOverview() {
       </div>
 
       {/* Current Status */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -498,79 +498,86 @@ export function DashboardOverview() {
               {t("reports.realTimeStatus")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">
-                {t("reports.occupiedTables")}
-              </span>
-              <Badge
-                variant={stats.occupiedTables > 0 ? "destructive" : "outline"}
-              >
-                {stats.occupiedTables} / {stats.totalTables}
-              </Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">
-                {t("reports.tableUtilization")}
-              </span>
-              <Badge variant="secondary">
-                {stats.totalTables > 0 ? Math.round((stats.occupiedTables / stats.totalTables) * 100) : 0} %
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5" />
-              {t("reports.performanceMetrics")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{t("reports.salesAchievementRate")}</span>
-                <span className="font-medium">
-                  {Math.round((stats.dailyAverageRevenue / 500000) * 100)}%
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">
+                  {t("reports.occupiedTables")}
                 </span>
+                <Badge
+                  variant={stats.occupiedTables > 0 ? "destructive" : "outline"}
+                >
+                  {stats.occupiedTables} / {stats.totalTables}
+                </Badge>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-green-500 h-2 rounded-full transition-all"
-                  style={{
-                    width: `${Math.min((stats.dailyAverageRevenue / 500000) * 100, 100)}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{t("reports.tableTurnoverRate")}</span>
-                <span className="font-medium">
-                  {stats.totalTables > 0
-                    ? (stats.periodOrderCount / stats.totalTables).toFixed(1)
-                    : 0}{" "}
-                  {t("reports.times")}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">
+                  {t("reports.tableUtilization")}
                 </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full transition-all"
-                  style={{
-                    width: `${Math.min((stats.periodOrderCount / stats.totalTables / 5) * 100, 100)}%`,
-                  }}
-                ></div>
+                <Badge variant="secondary">
+                  {stats.totalTables > 0 ? Math.round((stats.occupiedTables / stats.totalTables) * 100) : 0} %
+                </Badge>
               </div>
             </div>
-
-            <div className="pt-2 border-t">
-              <div className="text-xs text-gray-500">
-                {t("reports.targetAverageDailySales")
-                  .replace("{amount}", formatCurrency(500000))
-                  .replace("{turnovers}", "5")}
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">
+                  {t("reports.activeOrders")}
+                </span>
+                <Badge variant={stats.activeOrders > 0 ? "default" : "secondary"}>
+                  {stats.activeOrders}
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">
+                  Đơn hàng hôm nay
+                </span>
+                <Badge variant="outline">
+                  {stats.periodOrderCount}
+                </Badge>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">
+                  Doanh thu trung bình/ngày
+                </span>
+                <div className="text-right">
+                  <div className="font-medium text-green-600">
+                    {formatCurrency(stats.dailyAverageRevenue)}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">
+                  Giá trị đơn hàng TB
+                </span>
+                <div className="text-right">
+                  <div className="font-medium text-blue-600">
+                    {formatCurrency(stats.averageOrderValue)}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">
+                  Giờ cao điểm
+                </span>
+                <Badge variant="outline">
+                  {stats.peakHour}:00
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">
+                  Khách hàng
+                </span>
+                <Badge variant="secondary">
+                  {stats.periodCustomerCount}
+                </Badge>
               </div>
             </div>
           </CardContent>
