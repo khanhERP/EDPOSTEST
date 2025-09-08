@@ -58,7 +58,7 @@ export default function ReportsPage() {
       <RightSidebar />
 
       <div className="main-content pt-16 px-6">
-        <div className="max-w-7xl mx-auto py-8 pl-5 pr-5">
+        <div className="mx-auto py-8" style={maxWidth: "95rem"}>
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
