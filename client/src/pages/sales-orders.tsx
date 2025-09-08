@@ -879,7 +879,7 @@ export default function SalesOrders() {
                 <div>
                   <label className="block text-sm font-medium mb-2">{t("orders.customer")}</label>
                   <Input
-                    placeholder="Tìm theo tên khách hàng"
+                    placeholder={t("reports.customerFilterPlaceholder")}
                     value={customerSearch}
                     onChange={(e) => setCustomerSearch(e.target.value)}
                     className="w-full"
@@ -888,7 +888,7 @@ export default function SalesOrders() {
                 <div>
                   <label className="block text-sm font-medium mb-2">{t("reports.customerCode")}</label>
                   <Input
-                    placeholder="Tìm theo mã khách hàng"
+                    placeholder={t("reports.customerCodePlaceholder")}
                     value={customerCodeSearch}
                     onChange={(e) => setCustomerCodeSearch(e.target.value)}
                     className="w-full"
@@ -899,7 +899,7 @@ export default function SalesOrders() {
                 <div>
                   <label className="block text-sm font-medium mb-2">{t("orders.orderNumber")}</label>
                   <Input
-                    placeholder="Tìm theo số đơn bán"
+                    placeholder={t("reports.orderNumberPlaceholder")}
                     value={orderNumberSearch}
                     onChange={(e) => setOrderNumberSearch(e.target.value)}
                     className="w-full"
