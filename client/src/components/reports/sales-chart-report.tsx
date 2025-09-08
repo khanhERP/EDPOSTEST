@@ -552,7 +552,7 @@ export function SalesChartReport() {
         // Fix discount calculation logic
         const orderTotal = Number(order.total || 0);
         const discount = Number(order.discount || 0); // Get actual discount from database
-        const revenue = orderTotal; // Revenue is the total amount paid
+        const revenue = orderTotal - discount; // Revenue is total minus discount
 
         dailySales[dateStr].orders += 1;
         dailySales[dateStr].revenue += revenue;
@@ -1037,10 +1037,10 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r text-sm min-w-[140px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.total) * 1.05,
+                                          Number(transaction.subtotal || transaction.total),
                                         )}
                                       </TableCell>
-                                      <TableCell className="text-right border-r text-red-600 text-sm min-w-[120px] px-4">
+                                      <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
                                         {formatCurrency(
                                           Number(transaction.discount || 0),
                                         )}
