@@ -496,7 +496,7 @@ export function SalesReport() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      Tổng thu từ bán hàng
+                      {t("reports.totalSalesRevenue")}
                     </p>
                     <p className="text-2xl font-bold text-green-600">
                       {formatCurrency(salesData?.totalRevenue || 0)}
@@ -512,7 +512,7 @@ export function SalesReport() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      Tổng số lượng đã bán
+                      {t("reports.totalQuantitySold")}
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
                       {salesData?.totalOrders || 0}
@@ -569,10 +569,10 @@ export function SalesReport() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="sticky top-0 bg-white">Ngày</TableHead>
-                        <TableHead className="sticky top-0 bg-white">{t("tables.revenue")}</TableHead>
-                        <TableHead className="sticky top-0 bg-white">Tổng đơn hàng</TableHead>
-                        <TableHead className="sticky top-0 bg-white">Tổng khách hàng</TableHead>
+                        <TableHead className="sticky top-0 bg-white">{t("reports.date")}</TableHead>
+                        <TableHead className="sticky top-0 bg-white">{t("reports.revenue")}</TableHead>
+                        <TableHead className="sticky top-0 bg-white">{t("reports.totalOrders")}</TableHead>
+                        <TableHead className="sticky top-0 bg-white">{t("reports.totalCustomers")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -611,7 +611,7 @@ export function SalesReport() {
                   {t("tables.analyzeRevenue")}
                   {salesData?.paymentMethods && salesData.paymentMethods.length > 0 && (
                     <span className="ml-2 text-blue-600 font-medium">
-                      ({salesData.paymentMethods.length} phương thức • {salesData.totalOrders} đơn hàng)
+                      ({salesData.paymentMethods.length} {t("reports.paymentMethods").toLowerCase()} • {salesData.totalOrders} {t("reports.orders").toLowerCase()})
                     </span>
                   )}
                 </CardDescription>
@@ -634,19 +634,19 @@ export function SalesReport() {
                                   {getPaymentMethodLabel(payment.method)}
                                 </Badge>
                                 <span className="text-sm font-medium text-gray-700 bg-white px-2 py-1 rounded">
-                                  Mã: {payment.method}
+                                  {t("common.code")}: {payment.method}
                                 </span>
                               </div>
 
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div className="space-y-1">
-                                  <div className="text-gray-600">Số đơn hàng:</div>
+                                  <div className="text-gray-600">{t("reports.orderCount")}:</div>
                                   <div className="font-semibold text-blue-600 text-lg">
-                                    {payment.count} đơn
+                                    {payment.count} {t("reports.orders").toLowerCase()}
                                   </div>
                                 </div>
                                 <div className="space-y-1">
-                                  <div className="text-gray-600">Tổng tiền:</div>
+                                  <div className="text-gray-600">{t("reports.total")}:</div>
                                   <div className="font-bold text-green-600 text-lg">
                                     {formatCurrency(payment.revenue)}
                                   </div>
@@ -654,18 +654,18 @@ export function SalesReport() {
                               </div>
 
                               <div className="mt-2 flex items-center gap-2">
-                                <span className="text-xs text-gray-500">Tỷ lệ:</span>
+                                <span className="text-xs text-gray-500">{t("common.percentage")}:</span>
                                 <span className="text-sm font-semibold text-purple-600">
                                   {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
                                 </span>
-                                <span className="text-xs text-gray-500">tổng doanh thu</span>
+                                <span className="text-xs text-gray-500">{t("reports.totalRevenue").toLowerCase()}</span>
                               </div>
                             </div>
                           </div>
 
                           <div className="space-y-2">
                             <div className="flex justify-between text-xs text-gray-600">
-                              <span>Biểu đồ tỷ lệ</span>
+                              <span>{t("reports.percentage")}</span>
                               <span>{isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%</span>
                             </div>
                             <div className="w-full bg-gray-300 rounded-full h-3 overflow-hidden">
