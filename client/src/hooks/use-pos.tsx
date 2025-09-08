@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { CartItem, Receipt } from "@shared/schema";
 import { v4 as uuidv4 } from 'uuid';
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "@/lib/i18n";
 
 interface Order {
   id: string;
