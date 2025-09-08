@@ -530,7 +530,7 @@ function MenuReport() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">{t("reports.topSellingItems") || "Sản phẩm bán chạy nhất"}</h3>
-                  <p className="text-sm text-gray-500 font-normal mt-1">Top {menuAnalysis.topSellingProducts.slice(0, 10).length} sản phẩm bán nhiều nhất</p>
+                  <p className="text-sm text-gray-500 font-normal mt-1">{t("reports.topProductsByQuantity") || "Top sản phẩm bán nhiều nhất"} ({menuAnalysis.topSellingProducts.slice(0, 10).length})</p>
                 </div>
               </CardTitle>
             </CardHeader>
@@ -583,7 +583,7 @@ function MenuReport() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">{t("reports.topRevenueItems") || "Sản phẩm doanh thu cao nhất"}</h3>
-                  <p className="text-sm text-gray-500 font-normal mt-1">Top {menuAnalysis.topRevenueProducts.slice(0, 10).length} sản phẩm doanh thu cao nhất</p>
+                  <p className="text-sm text-gray-500 font-normal mt-1">{t("reports.topProductsByRevenue") || "Top sản phẩm doanh thu cao nhất"} ({menuAnalysis.topRevenueProducts.slice(0, 10).length})</p>
                 </div>
               </CardTitle>
             </CardHeader>
