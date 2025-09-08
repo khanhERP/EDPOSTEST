@@ -750,7 +750,7 @@ function MenuReport() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-2 px-4">
-                        {t("common.product") || "Sản phẩm"}
+                        {t("common.name") || "Sản phẩm"}
                       </th>
                       <th className="text-right py-2 px-4">
                         {t("reports.quantitySold") || "Số lượng bán"}
