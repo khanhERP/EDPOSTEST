@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useTranslation } from "@/lib/i18n"
 
 import type {
   ToastActionElement,
@@ -193,23 +194,24 @@ export { useToast, toast }
 // Hook tiện ích để sử dụng toast với translations
 export const useTranslatedToast = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   return {
     success: (message: string) => toast({
-      title: "Thành công",
+      title: t("common.success"),
       description: message,
     }),
     error: (message: string) => toast({
-      title: "Lỗi", 
+      title: t("common.error"), 
       description: message,
       variant: "destructive",
     }),
     warning: (message: string) => toast({
-      title: "Cảnh báo",
+      title: t("common.warning"),
       description: message,
     }),
     info: (message: string) => toast({
-      title: "Thông tin",
+      title: t("common.info"),
       description: message,
     })
   };
