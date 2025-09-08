@@ -1626,7 +1626,7 @@ export function PaymentMethodModal({
                                              orderInfo?.total ??
                                              total;
                             const changeAmount = receivedAmount - orderTotal;
-                            return changeAmount >= 0 ? "Tiền thối:" : t("common.insufficient") + ":";
+                            return changeAmount >= 0 ? t("common.change") : t("common.insufficient") + ":";
                           })()}
                         </span>
                         <span className={`text-lg font-bold ${
