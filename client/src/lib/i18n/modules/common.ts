@@ -364,7 +364,13 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     items: " items",
     filters: "Filters",
     orderList: "Order List",
-    subtotalAmount
+    subtotalAmount: "Subtotal Amount",
+    cancelOrder: "Cancel Order",
+    exportExcel: "Export Excel",
+    employeeCode: "Employee Code",
+    employeeName: "Employee Name",
+    invoiceSymbol: "Invoice Symbol",
+    
     category: "Category",
     status: "Status",
     active: "Active",
