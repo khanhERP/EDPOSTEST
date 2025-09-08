@@ -10,9 +10,24 @@ import { OrderReport } from "@/components/reports/order-report";
 import { InventoryReport } from "@/components/reports/inventory-report";
 import { CustomerReport } from "@/components/reports/customer-report";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, ShoppingCart } from "lucide-react";
+import {
+  BarChart3,
+  PieChart,
+  TrendingUp,
+  Utensils,
+  Package,
+  Users,
+  Calendar,
+  ShoppingCart,
+} from "lucide-react";
 import { Link, useSearch } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 import { EmployeeReport } from "@/components/reports/employee-report";
@@ -26,8 +41,11 @@ export default function ReportsPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(search);
-    const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'menu', 'table', 'saleschart'].includes(tab)) {
+    const tab = params.get("tab");
+    if (
+      tab &&
+      ["overview", "sales", "menu", "table", "saleschart"].includes(tab)
+    ) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -40,26 +58,30 @@ export default function ReportsPage() {
       <RightSidebar />
 
       <div className="main-content pt-16 px-6">
-        <div className="mx-auto py-8">
+        <div className="max-w-7xl mx-auto py-8 pl-5 pr-5">
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{t('reports.title')}</h1>
-              <p className="mt-2 text-gray-600">{t('reports.description')}</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {t("reports.title")}
+              </h1>
+              <p className="mt-2 text-gray-600">{t("reports.description")}</p>
             </div>
             <div className="flex gap-4">
               <Link href="/">
                 <Button variant="outline">
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {t('nav.pos')}
+                  {t("nav.pos")}
                 </Button>
               </Link>
             </div>
           </div>
 
-
-
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-6"
+          >
             <div className="w-full overflow-x-auto">
               <TabsList className="h-auto min-h-[40px] items-center justify-start rounded-md p-2 text-muted-foreground flex flex-wrap gap-1 bg-white border border-green-200 w-full shadow-sm">
                 <TabsTrigger
@@ -67,38 +89,36 @@ export default function ReportsPage() {
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('reports.dashboard')}</span>
+                  <span>{t("reports.dashboard")}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="sales"
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('reports.salesAnalysis')}</span>
+                  <span>{t("reports.salesAnalysis")}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="menu"
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <PieChart className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('reports.menuAnalysis')}</span>
+                  <span>{t("reports.menuAnalysis")}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="table"
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <Utensils className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('reports.tableAnalysis')}</span>
+                  <span>{t("reports.tableAnalysis")}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="saleschart"
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('reports.salesReport')}</span>
+                  <span>{t("reports.salesReport")}</span>
                 </TabsTrigger>
-                
-                
               </TabsList>
             </div>
 
@@ -121,10 +141,6 @@ export default function ReportsPage() {
             <TabsContent value="saleschart">
               <SalesChartReport />
             </TabsContent>
-
-            
-
-            
           </Tabs>
         </div>
       </div>
