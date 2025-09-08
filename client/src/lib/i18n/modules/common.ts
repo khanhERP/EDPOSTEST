@@ -226,7 +226,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "발행되지 않음",
       published: "발행됨",
-      error: "발행 오류"
+      error: "발행 오류",
     },
 
     // Combo values
@@ -362,6 +362,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     tax: "Tax",
     discount: "Discount",
     items: " items",
+    filters: "Filters",
+    orderList: "Order List",
+    subtotalAmount
     category: "Category",
     status: "Status",
     active: "Active",
@@ -461,7 +464,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "Not Published",
       published: "Published",
-      error: "Publish Error"
+      error: "Publish Error",
     },
 
     // Combo values
@@ -708,7 +711,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "Chưa phát hành",
       published: "Đã phát hành",
-      error: "Lỗi phát hành"
+      error: "Lỗi phát hành",
     },
 
     // Combo values
