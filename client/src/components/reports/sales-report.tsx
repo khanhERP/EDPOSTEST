@@ -442,7 +442,7 @@ export function SalesReport() {
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex items-center gap-2">
                     <Label htmlFor="startDate" className="text-sm whitespace-nowrap">
-                      {t('tables.startDate')}:
+                      {t('reports.startDate')}:
                     </Label>
                     <Input
                       id="startDate"
@@ -454,7 +454,7 @@ export function SalesReport() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Label htmlFor="endDate" className="text-sm whitespace-nowrap">
-                      {t('tables.endDate')}:
+                      {t('reports.endDate')}:
                     </Label>
                     <Input
                       id="endDate"
@@ -527,7 +527,7 @@ export function SalesReport() {
               <CardContent className="p-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {t("tables.averageOrderValue")}
+                    {t("reports.averageOrderValue")}
                   </p>
                   <p className="text-2xl font-bold text-purple-600">
                     {formatCurrency(salesData?.averageOrderValue || 0)}
@@ -540,13 +540,13 @@ export function SalesReport() {
               <CardContent className="p-6">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {t("tables.totalCustomers")}
+                    {t("reports.totalCustomers")}
                   </p>
                   <p className="text-2xl font-bold text-orange-600">
                     {salesData?.totalCustomers || 0}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {t("tables.peakHour")}: {peakHour}{t("tables.hour")}
+                    {t("reports.peakHour")}: {peakHour}{t("reports.hour")}
                   </p>
                 </div>
               </CardContent>
@@ -560,9 +560,9 @@ export function SalesReport() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="w-5 h-5" />
-                  {t("tables.dailySales")}
+                  {t("reports.dailySales")}
                 </CardTitle>
-                <CardDescription>{t("tables.analyzeRevenue")}</CardDescription>
+                <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="max-h-96 overflow-y-auto">
@@ -590,7 +590,7 @@ export function SalesReport() {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center text-gray-500 py-8">
-                            {t("tables.noSalesData")}
+                            {t("reports.noSalesData")}
                           </TableCell>
                         </TableRow>
                       )}
@@ -605,10 +605,10 @@ export function SalesReport() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
-                  {t("tables.paymentMethods")}
+                  {t("reports.paymentMethods")}
                 </CardTitle>
                 <CardDescription>
-                  {t("tables.analyzeRevenue")}
+                  {t("reports.analyzeRevenue")}
                   {salesData?.paymentMethods && salesData.paymentMethods.length > 0 && (
                     <span className="ml-2 text-blue-600 font-medium">
                       ({salesData.paymentMethods.length} {t("reports.paymentMethods").toLowerCase()} • {salesData.totalOrders} {t("reports.orders").toLowerCase()})
@@ -681,8 +681,8 @@ export function SalesReport() {
                   ) : (
                     <div className="text-center text-gray-500 py-8">
                       <div className="bg-gray-50 rounded-lg p-6">
-                        <p className="text-gray-600 mb-2">{t("tables.noPaymentData")}</p>
-                        <p className="text-sm text-gray-500">{t("tables.noPaymentDataDescription")}</p>
+                        <p className="text-gray-600 mb-2">{t("reports.noPaymentData")}</p>
+                        <p className="text-sm text-gray-500">{t("reports.noPaymentDataDescription")}</p>
                       </div>
                     </div>
                   )}
