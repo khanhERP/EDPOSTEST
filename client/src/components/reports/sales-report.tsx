@@ -334,30 +334,30 @@ export function SalesReport() {
 
   const getPaymentMethodLabel = (method: string) => {
     const labels = {
-      cash: "Tiền mặt",
-      card: "Thẻ",
-      creditCard: "Thẻ tín dụng",
-      credit_card: "Thẻ tín dụng",
-      debitCard: "Thẻ ghi nợ",
-      debit_card: "Thẻ ghi nợ",
-      transfer: "Chuyển khoản",
-      einvoice: "Hóa đơn điện tử",
-      momo: "MoMo",
-      zalopay: "ZaloPay",
-      vnpay: "VNPay",
-      qrCode: "QR Banking",
-      shopeepay: "ShopeePay",
-      grabpay: "GrabPay",
-      mobile: "Di động",
-      1: "Tiền mặt",
-      2: "Thẻ",
-      3: "Chuyển khoản",
-      4: "MoMo",
-      5: "ZaloPay",
-      6: "VNPay",
-      7: "QR Code"
+      cash: t("common.cash"),
+      card: t("common.creditCard"),
+      creditCard: t("common.creditCard"),
+      credit_card: t("common.creditCard"),
+      debitCard: t("common.debitCard"),
+      debit_card: t("common.debitCard"),
+      transfer: t("common.transfer"),
+      einvoice: t("reports.einvoice"),
+      momo: t("common.momo"),
+      zalopay: t("common.zalopay"),
+      vnpay: t("common.vnpay"),
+      qrCode: t("common.qrCode"),
+      shopeepay: t("common.shopeepay"),
+      grabpay: t("common.grabpay"),
+      mobile: "Mobile",
+      1: t("common.cash"),
+      2: t("common.creditCard"),
+      3: t("common.transfer"),
+      4: t("common.momo"),
+      5: t("common.zalopay"),
+      6: t("common.vnpay"),
+      7: t("common.qrCode")
     };
-    return labels[method as keyof typeof labels] || `Phương thức ${method}`;
+    return labels[method as keyof typeof labels] || `${t("common.paymentMethod")} ${method}`;
   };
 
   const handleRefresh = () => {
