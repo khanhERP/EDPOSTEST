@@ -1448,7 +1448,7 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="phoneNumber">Số CMND/CCCD</Label>
+                <Label htmlFor="phoneNumber">{t("einvoice.idCardNumber")}</Label>
                 <Input
                   id="phoneNumber"
                   ref={(el) => {
