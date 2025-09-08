@@ -1574,7 +1574,7 @@ export function EInvoiceModal({
             </Button>
             <Button variant="outline" onClick={handleCancel} className="flex-1">
               <span className="mr-2">❌</span>
-              Hủy bỏ
+              {t("einvoice.cancel")}
             </Button>
           </div>
         </div>
