@@ -496,7 +496,7 @@ export function SalesReport() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {t("reports.salesReportTotalRevenue")}
+                      {t("reports.totalRevenue")}
                     </p>
                     <p className="text-2xl font-bold text-green-600">
                       {formatCurrency(salesData?.totalRevenue || 0)}
