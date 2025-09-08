@@ -23,6 +23,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Dashboard metrics
     totalRevenue: "Tổng thu từ bán hàng",
+    totalSalesRevenue: "Tổng doanh thu",
     totalOrders: "Tổng đơn hàng",
     totalQuantitySold: "Tổng số lượng bán",
     averageOrderValue: "Giá trị đơn hàng trung bình",
@@ -182,6 +183,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     orderTime: "Thời gian đặt",
     orderQuantity: "Số lượng đặt",
     orderValue: "Giá trị đơn hàng",
+    productType: "Loại sản phẩm",
     productGroup: "Nhóm sản phẩm",
 
     // Purchase Report specific
@@ -209,7 +211,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     taxRate: "Thuế suất",
     taxAmount: "Số tiền thuế",
     group: "Nhóm",
-    note: "Ghi chú",
     channel: "Kênh",
     employeeReport: "Báo cáo nhân viên",
     customerReport: "Báo cáo khách hàng",
@@ -390,13 +391,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noSalesData: "Không có dữ liệu bán hàng",
     noRevenueData: "Không có dữ liệu doanh thu",
 
-    // Additional menu report keys
-    menuItemAnalysis: "Phân tích sản phẩm",
-    totalSales: "Tổng bán",
-    averagePrice: "Giá trung bình",
-    productCount: "Số sản phẩm",
-    productType: "Loại sản phẩm",
-    product: "Sản phẩm",
     // Table analysis
     tablePerformance: "Hiệu suất bàn",
     utilizationRate: "Tỷ lệ sử dụng",
@@ -481,14 +475,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional menu items
     warehouseReport: "Báo cáo kho",
-    
+
     // Sales level indicators
     salesLevel: "Mức độ bán",
     high: "Cao",
     medium: "Trung bình",
     low: "Thấp",
     orderCount: "Số đơn hàng",
-    
+
     // Chart and filter labels
     selectDateRange: "Chọn khoảng thời gian",
     applyFilter: "Áp dụng bộ lọc",
@@ -970,7 +964,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional menu items
     warehouseReport: "창고 보고서",
-    
+
     // Sales level indicators
     salesLevel: "판매 수준",
     high: "높음",
@@ -1467,11 +1461,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional menu items
     warehouseReport: "Warehouse Report",
-    
+
     // Sales level indicators
     salesLevel: "Sales Level",
     high: "High",
-    medium: "Medium", 
+    medium: "Medium",
     low: "Low",
     orderCount: "Order Count",
 
