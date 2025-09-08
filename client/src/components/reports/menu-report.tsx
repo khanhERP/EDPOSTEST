@@ -296,16 +296,6 @@ function MenuReport() {
               <BarChart3 className="w-5 h-5" />
               {t("reports.menuAnalysis") || "Phân tích menu"}
             </div>
-            <Button
-              onClick={() => refetch()}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              disabled={analysisLoading}
-            >
-              <RefreshCw className={`w-4 h-4 ${analysisLoading ? 'animate-spin' : ''}`} />
-              {t("common.refresh") || "Tải lại"}
-            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
