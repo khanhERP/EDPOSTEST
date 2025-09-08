@@ -158,6 +158,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     undo: "실행 취소",
     redo: "다시 실행",
     filters: "필터",
+    subtotalLabel: "소계:",
+    tax
     items: "개",
     count: "개수",
     people: "명",
