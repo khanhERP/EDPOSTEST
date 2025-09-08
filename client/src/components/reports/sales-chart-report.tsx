@@ -620,7 +620,7 @@ export function SalesChartReport() {
 
     return (
       <>
-        
+
 
         {/* Daily Sales */}
         <Card>
