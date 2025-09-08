@@ -559,7 +559,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     refresh: "Làm mới",
     back: "Quay lại",
     next: "Tiếp theo",
-    previous: "Trước đó",
+    previous: "Trước đó", 
     all: "Tất cả",
     none: "Không có",
     other: "Khác",
