@@ -421,7 +421,7 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng doanh thu
+                  {t("reports.monthRevenue")}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {formatCurrency(stats.monthRevenue)}
@@ -443,7 +443,7 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng đơn hàng
+                  {t("reports.totalOrders")}
                 </p>
                 <p className="text-2xl font-bold">{stats.periodOrderCount}</p>
                 <p className="text-xs text-gray-500 mt-1">
@@ -461,7 +461,7 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng khách hàng
+                  {t("reports.totalCustomers")}
                 </p>
                 <p className="text-2xl font-bold">
                   {stats.periodCustomerCount}
