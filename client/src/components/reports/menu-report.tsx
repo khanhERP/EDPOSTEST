@@ -490,7 +490,7 @@ function MenuReport() {
                   <tr className="border-b">
                     <th className="text-left py-2 px-4">{t("common.category") || "Danh mục"}</th>
                     <th className="text-right py-2 px-4">{t("reports.itemCount") || "Số sản phẩm"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.totalQuantity") || "Số lượng"}</th>
+                    <th className="text-right py-2 px-4">{t("reports.quantitySold") || "Số lượng"}</th>
                     <th className="text-right py-2 px-4">{t("reports.totalRevenue") || "Doanh thu"}</th>
                   </tr>
                 </thead>
