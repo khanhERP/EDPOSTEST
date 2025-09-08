@@ -2022,9 +2022,9 @@ export function OrderManagement() {
                               type: typeof selectedOrder.einvoiceStatus
                             });
 
-                            if (selectedOrder.einvoiceStatus === 1) return "Đã phát hành";
-                            if (selectedOrder.einvoiceStatus === 2) return "Lỗi phát hành";
-                            return "Chưa phát hành";
+                            if (selectedOrder.einvoiceStatus === 1) return t('common.einvoiceStatus.published');
+                            if (selectedOrder.einvoiceStatus === 2) return t('common.einvoiceStatus.error');
+                            return t('common.einvoiceStatus.notPublished');
                           })()}
                         </Badge>
                       </div>

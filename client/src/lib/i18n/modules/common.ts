@@ -219,6 +219,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
     // E-invoice status
     einvoiceStatus: "전자세금계산서 상태:",
+    einvoiceStatus: {
+      notPublished: "발행되지 않음",
+      published: "발행됨",
+      error: "발행 오류"
+    },
 
     // Combo values
     comboValues: {
@@ -295,6 +300,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     delete: "Delete",
     edit: "Edit",
     add: "Add",
+    remove: "Delete",
     confirm: "Confirm",
     yes: "Yes",
     no: "No",
@@ -443,6 +449,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
     // E-invoice status
     einvoiceStatus: "E-Invoice Status:",
+    einvoiceStatus: {
+      notPublished: "Not Published",
+      published: "Published",
+      error: "Publish Error"
+    },
 
     // Combo values
     comboValues: {
@@ -667,6 +678,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
     // E-invoice status
     einvoiceStatus: "Trạng thái hóa đơn điện tử:",
+    einvoiceStatus: {
+      notPublished: "Chưa phát hành",
+      published: "Đã phát hành",
+      error: "Lỗi phát hành"
+    },
 
     // Combo values
     comboValues: {
