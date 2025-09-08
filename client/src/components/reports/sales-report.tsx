@@ -615,7 +615,7 @@ export function SalesReport() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="sticky top-0 bg-white">{t("reports.date")}</TableHead>
-                        <TableHead className="sticky top-0 bg-white">{t("reports.revenue")}</TableHead>
+                        <TableHead className="sticky top-0 bg-white">{t("reports.totalRevenue")}</TableHead>
                         <TableHead className="sticky top-0 bg-white">{t("reports.totalOrders")}</TableHead>
                         <TableHead className="sticky top-0 bg-white">{t("reports.totalCustomers")}</TableHead>
                       </TableRow>
