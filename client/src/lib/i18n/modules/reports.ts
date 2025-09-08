@@ -409,6 +409,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     topProductsByRevenue: "Sản phẩm doanh thu cao nhất",
     averagePrice: "Giá trung bình",
     contribution: "% Đóng góp",
+    totalCustomers: "Tổng khách hàng",
 
     // Table analysis
     tablePerformance: "Hiệu suất bàn",
@@ -917,6 +918,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     combo: "콤보",
     product: "상품",
     service: "서비스",
+    totalCustomers: "총 고객",
 
     // Table analysis
     tablePerformance: "테이블 성과",
@@ -1432,6 +1434,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     combo: "Combo",
     product: "Product",
     service: "Service",
+    totalCustomers: "Total Customers",
 
     // Table analysis
     tablePerformance: "Table Performance",

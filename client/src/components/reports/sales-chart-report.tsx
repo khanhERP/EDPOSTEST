@@ -600,14 +600,14 @@ export function SalesChartReport() {
 
     return (
       <>
-        {/* Summary Stats - Using Dashboard Style */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        {/* Summary Stats - Match Dashboard Format */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {t("reports.totalRevenue")}
+                    {t("reports.periodRevenue")}
                   </p>
                   <p className="text-2xl font-bold text-green-600">
                     {formatCurrency(totalRevenue)}
@@ -622,11 +622,11 @@ export function SalesChartReport() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    Tổng doanh thu
+                    {t("reports.monthRevenue")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
                     {formatCurrency(dashboardStats.monthRevenue)}
@@ -643,11 +643,11 @@ export function SalesChartReport() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    Tổng đơn hàng
+                    {t("reports.totalOrders")}
                   </p>
                   <p className="text-2xl font-bold">{totalOrders}</p>
                   <p className="text-xs text-gray-500 mt-1">
@@ -661,11 +661,11 @@ export function SalesChartReport() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    Tổng khách hàng
+                    {t("reports.totalCustomers")}
                   </p>
                   <p className="text-2xl font-bold">{totalCustomers}</p>
                   <p className="text-xs text-gray-500 mt-1">
