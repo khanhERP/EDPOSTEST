@@ -915,10 +915,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noCategoryData: "카테고리 데이터 없음",
     noSalesData: "판매 데이터 없음",
     noRevenueData: "매출 데이터 없음",
-    productType: "상품 유형",
-    combo: "콤보",
-    product: "상품",
-    service: "서비스",
 
     // Table analysis
     tablePerformance: "테이블 성과",
@@ -1013,7 +1009,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     high: "높음",
     medium: "보통",
     low: "낮음",
-    orderCount: "주문 수",
 
     // Chart and filter labels
     selectDateRange: "날짜 범위 선택",
@@ -1027,7 +1022,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataAvailable: "데이터 없음",
     loadingData: "데이터 로딩 중...",
     errorLoadingData: "데이터 로딩 오류",
-    itemsSold: "판매됨",
   },
 
   en: {
@@ -1431,10 +1425,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noCategoryData: "No category data",
     noSalesData: "No sales data",
     noRevenueData: "No revenue data",
-    productType: "Product Type",
-    combo: "Combo",
-    product: "Product",
-    service: "Service",
 
     // Table analysis
     tablePerformance: "Table Performance",
@@ -1528,7 +1518,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     high: "High",
     medium: "Medium",
     low: "Low",
-    orderCount: "Order Count",
 
     // Chart and filter labels
     selectDateRange: "Select Date Range",
@@ -1542,6 +1531,5 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataAvailable: "No data available",
     loadingData: "Loading data...",
     errorLoadingData: "Error loading data",
-    itemsSold: "sold",
   },
 };
