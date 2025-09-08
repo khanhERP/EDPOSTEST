@@ -518,6 +518,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Dashboard metrics
     totalRevenue: "총 매출",
+    salesReportTotalRevenue: "총 매출액",
     totalOrders: "총 주문",
     totalQuantitySold: "총 판매량",
     averageOrderValue: "평균 주문 가치",
@@ -984,8 +985,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataAvailable: "데이터 없음",
     loadingData: "데이터 로딩 중...",
     errorLoadingData: "데이터 로딩 오류",
-    totalSalesRevenue: "총 판매 수익",
-  },
+    },
 
   en: {
     title: "Reports",
@@ -1009,6 +1009,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Dashboard metrics
     totalRevenue: "Total Sales Revenue",
+    salesReportTotalRevenue: "Total Sales Revenue",
     totalOrders: "Total Orders",
     totalQuantitySold: "Total Quantity Sold",
     averageOrderValue: "Average Order Value",
