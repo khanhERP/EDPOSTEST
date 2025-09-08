@@ -88,6 +88,7 @@ export interface POSTranslations {
   notes: string;
   addedToCartShort: string;
   hasBeenAddedToOrder: string;
+  addedToOrderToast: string;
   receiptPreview: string;
   cancel: string;
   confirmAndSelectPayment: string;
@@ -229,6 +230,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     notes: "메모",
     addedToCartShort: "장바구니에 추가됨",
     hasBeenAddedToOrder: "이(가) 주문에 추가되었습니다",
+    addedToOrderToast: "이(가) 주문에 추가되었습니다",
     receiptPreview: "영수증 미리보기",
     cancel: "취소",
     confirmAndSelectPayment: "확인 및 결제 선택",
@@ -366,6 +368,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     notes: "Notes",
     addedToCartShort: "Added to cart",
     hasBeenAddedToOrder: " has been added to order",
+    addedToOrderToast: " has been added to order",
     receiptPreview: "Receipt Preview",
     cancel: "Cancel",
     confirmAndSelectPayment: "Confirm & Select Payment",
@@ -505,6 +508,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     notes: "Ghi chú",
     addedToCartShort: "Đã thêm vào giỏ",
     hasBeenAddedToOrder: " đã được thêm vào đơn hàng",
+    addedToOrderToast: " đã được thêm vào đơn hàng",
     receiptPreview: "Xem trước hóa đơn",
     cancel: "Hủy",
     confirmAndSelectPayment: "Xác nhận & Chọn thanh toán",
