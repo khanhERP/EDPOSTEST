@@ -384,7 +384,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     stockMovement: "Di chuyển tồn kho",
     menuAnalysisDescription: "Phân tích hiệu suất menu và sản phẩm bán chạy",
     revenueByCategory: "Doanh thu",
-    quantityByCategory: "Số lượng theo danh mục",
+    quantityByCategory: "Số lượng",
     itemCount: "Số sản phẩm",
     menuItemAnalysis: "Phân tích sản phẩm theo đơn hàng",
     topProductsByQuantity: "Top sản phẩm bán nhiều nhất",
