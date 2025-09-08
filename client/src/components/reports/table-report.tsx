@@ -556,7 +556,7 @@ export function TableReport() {
                 <TableHead>{t("common.table")}</TableHead>
                 <TableHead>{t("reports.currentStatus")}</TableHead>
                 <TableHead>{t("reports.orders")}</TableHead>
-                <TableHead>{t("reports.revenue")}</TableHead>
+                <TableHead>{t("reports.totalRevenue")}</TableHead>
                 <TableHead>{t("reports.customerCount")}</TableHead>
                 <TableHead>{t("reports.averageOrderValue")}</TableHead>
                 <TableHead>{t("reports.turnoverRate")}</TableHead>
