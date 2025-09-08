@@ -101,6 +101,11 @@ function MenuReport() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Reset pagination when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [productSearch]);
+
   // Query categories
   const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
@@ -809,7 +814,13 @@ function MenuReport() {
                   </thead>
                   <tbody>
                     {(() => {
-                      const sortedProducts = menuAnalysis.productStats.sort(
+                      // Filter products based on search term
+                      const filteredStats = menuAnalysis.productStats.filter(product =>
+                        !productSearch || 
+                        (product.productName && product.productName.toLowerCase().includes(productSearch.toLowerCase()))
+                      );
+
+                      const sortedProducts = filteredStats.sort(
                         (a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0),
                       );
 
@@ -880,7 +891,13 @@ function MenuReport() {
 
               {/* Pagination Controls */}
               {(() => {
-                const sortedProducts = menuAnalysis.productStats.sort(
+                // Use same filtering logic as table
+                const filteredStats = menuAnalysis.productStats.filter(product =>
+                  !productSearch || 
+                  (product.productName && product.productName.toLowerCase().includes(productSearch.toLowerCase()))
+                );
+                
+                const sortedProducts = filteredStats.sort(
                   (a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0),
                 );
                 const totalPages = Math.ceil(
@@ -896,6 +913,11 @@ function MenuReport() {
                         {t("common.showing")} {startIndex + 1} -{" "}
                         {Math.min(endIndex, sortedProducts.length)}{" "}
                         {t("common.of")} {sortedProducts.length}
+                        {productSearch && (
+                          <span className="ml-2 text-blue-600">
+                            (lọc theo "{productSearch}")
+                          </span>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <Button
