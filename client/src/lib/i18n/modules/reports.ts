@@ -358,6 +358,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     resetFilters: "Đặt lại bộ lọc",
     uniqueProducts: "Sản phẩm độc đáo",
     categoryGroup: "Nhóm hàng",
+    totalSalesRevenue: "Tổng doanh thu bán hàng",
+    salesRevenue: "Doanh thu bán hàng",
+    revenueAmount: "Số tiền doanh thu",
 
     // Chart specific
     value: "Giá trị",
@@ -858,6 +861,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     resetFilters: "필터 초기화",
     uniqueProducts: "고유 제품",
     categoryGroup: "상품 그룹",
+    totalSalesRevenue: "총 매출액",
+    salesRevenue: "매출액",
+    revenueAmount: "수익 금액",
 
     // Chart specific
     value: "값",
@@ -1364,6 +1370,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     resetFilters: "Reset Filters",
     uniqueProducts: "Unique Products",
     categoryGroup: "Product Group",
+    totalSalesRevenue: "Total Sales Revenue",
+    salesRevenue: "Sales Revenue", 
+    revenueAmount: "Revenue Amount",
 
     // Chart specific
     value: "Value",
