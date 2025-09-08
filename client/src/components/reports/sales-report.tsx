@@ -413,10 +413,10 @@ export function SalesReport() {
             <div>
               <CardTitle className="text-xl font-bold text-green-700 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                {t('tables.salesAnalysis')}
+                {t('reports.salesAnalysis')}
               </CardTitle>
               <CardDescription className="text-gray-600">
-                {t('tables.analyzeRevenue')}
+                {t('reports.analyzeRevenue')}
               </CardDescription>
             </div>
 
@@ -428,7 +428,7 @@ export function SalesReport() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="today">{t("tables.toDay")}</SelectItem>
+                    <SelectItem value="today">{t("reports.toDay")}</SelectItem>
                     <SelectItem value="thisWeek">Tuần này</SelectItem>
                     <SelectItem value="week">Tuần trước</SelectItem>
                     <SelectItem value="thisMonth">Tháng này</SelectItem>
