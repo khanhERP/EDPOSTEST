@@ -913,7 +913,7 @@ export default function SalesOrders() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Danh sách đơn hàng</CardTitle>
+                  <CardTitle className="text-lg">{t("common.orderList")}</CardTitle>
                   <div className="flex gap-2">
                     <Button
                       size="sm"

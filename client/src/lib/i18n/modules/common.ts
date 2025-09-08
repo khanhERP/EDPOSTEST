@@ -567,6 +567,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     employeeName: "Tên nhân viên",
     invoiceSymbol: "Ký hiệu hóa đơn",
     invoiceNumber: "Số hóa đơn",
+    orderList: "Danh sách đơn hàng",
     showVirtualKeyboard: "Hiện bàn phím ảo",
     hideVirtualKeyboard: "Ẩn bàn phím ảo",
     success: "Thành công",
