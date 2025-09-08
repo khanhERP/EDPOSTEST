@@ -1433,7 +1433,7 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="address">Địa chỉ</Label>
+                <Label htmlFor="address">{t("einvoice.address")}</Label>
                 <Input
                   id="address"
                   ref={(el) => {
