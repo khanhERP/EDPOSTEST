@@ -620,7 +620,7 @@ export function TableReport() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">
-                          {stats.itemsSold} món
+                          {stats.itemsSold} {t("reports.items")}
                         </Badge>
                       </TableCell>
                     </TableRow>

@@ -519,6 +519,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noRevenue: "Chưa có doanh thu",
     contribution: "% Đóng góp",
     soldItems: "Số món bán",
+    items: "món",
   },
 
   ko: {
@@ -1028,6 +1029,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noRevenue: "수익 없음",
     contribution: "% 기여도",
     soldItems: "판매된 품목 수",
+    items: "품목",
   },
 
   en: {
@@ -1540,5 +1542,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noRevenue: "No revenue yet",
     contribution: "% Contribution",
     soldItems: "Items Sold",
+    items: "items",
   },
 };
