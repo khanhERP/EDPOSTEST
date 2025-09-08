@@ -148,7 +148,9 @@ export function SalesReport() {
           const itemPrice = Number(item.price || item.total || 0);
           const itemQuantity = Number(item.quantity || 1);
           const revenue = itemPrice * itemQuantity;
-          const discountAmount = Number(item.discount || 0);
+          
+          // Get discount from database, default to 0 if no data
+          const discountAmount = item.discount !== undefined && item.discount !== null ? Number(item.discount) : 0;
 
           dailySales[dateStr].revenue += revenue;
           dailySales[dateStr].orders += 1; // Each item processed contributes to an order count for that day
@@ -189,7 +191,9 @@ export function SalesReport() {
           const itemPrice = Number(item.price || item.total || 0);
           const itemQuantity = Number(item.quantity || 1);
           const revenue = itemPrice * itemQuantity;
-          const discountAmount = Number(item.discount || 0);
+          
+          // Get discount from database, default to 0 if no data
+          const discountAmount = item.discount !== undefined && item.discount !== null ? Number(item.discount) : 0;
 
           paymentMethods[orderPaymentMethod].revenue += revenue;
         } catch (error) {
@@ -208,7 +212,9 @@ export function SalesReport() {
           const itemPrice = Number(item.price || item.total || 0);
           const itemQuantity = Number(item.quantity || 1);
           const revenue = itemPrice * itemQuantity;
-          const discountAmount = Number(item.discount || 0);
+          
+          // Get discount from database, default to 0 if no data
+          const discountAmount = item.discount !== undefined && item.discount !== null ? Number(item.discount) : 0;
 
           if (!isNaN(revenue) && revenue > 0) {
             hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
@@ -222,7 +228,10 @@ export function SalesReport() {
       const totalRevenue = uniqueCombinedData.reduce((total: number, item: any) => {
         const itemPrice = Number(item.price || item.total || 0);
         const itemQuantity = Number(item.quantity || 1);
-        const discountAmount = Number(item.discount || 0);
+        
+        // Get discount from database, default to 0 if no data
+        const discountAmount = item.discount !== undefined && item.discount !== null ? Number(item.discount) : 0;
+        
         return total + (itemPrice * itemQuantity);
       }, 0);
 
