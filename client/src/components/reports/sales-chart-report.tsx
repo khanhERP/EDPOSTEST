@@ -3433,64 +3433,6 @@ export function SalesChartReport() {
 
   const chartData = getChartData();
   console.log("Chart data for", analysisType, ":", chartData);
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  TrendingUp,
-  FileText,
-  Calendar,
-  Package,
-  DollarSign,
-  Users,
-  ShoppingCart,
-  BarChart3,
-  Search,
-  Download, // Import Download icon
-} from "lucide-react";
-import { useTranslation } from "@/lib/i18n";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
-import * as XLSX from "xlsx"; // Import xlsx for Excel export
-import { Button } from "@/components/ui/button";
-
-export function SalesChartReport() {
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
 
   const [analysisType, setAnalysisType] = useState("time");
   const [concernType, setConcernType] = useState("time");
