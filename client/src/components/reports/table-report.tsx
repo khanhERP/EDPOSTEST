@@ -565,7 +565,7 @@ export function TableReport() {
                 <TableHead>{t("reports.averageOrderValue") || "Giá trị đơn hàng TB"}</TableHead>
                 <TableHead>{t("reports.turnoverRate") || "Tỷ lệ luân chuyển"}</TableHead>
                 <TableHead>{t("reports.peakTime") || "Giờ cao điểm"}</TableHead>
-                <TableHead>{t("reports.soldItems") || "Số món bán"}</TableHead>
+                <TableHead>{t("reports.items") || "Số món bán"}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
