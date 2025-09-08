@@ -34,7 +34,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     realTimeStatus: "Trạng thái thời gian thực",
     pendingOrders: "Đơn hàng đang chờ",
     count: "đơn",
-    tableUtilization: "Sử dụng bàn",
+    tableUtilization: "Tỷ lệ sử dụng bàn",
     performanceMetrics: "Chỉ số hiệu suất",
     salesAchievementRate: "Tỷ lệ đạt mục tiêu bán hàng",
     tableTurnoverRate: "Tỷ lệ luân chuyển bàn",
