@@ -557,7 +557,7 @@ export function TableReport() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("common.table") || "Bàn"}</TableHead>
+                <TableHead>{t("tables.tableNumber") || "Bàn"}</TableHead>
                 <TableHead>{t("reports.currentStatus") || "Trạng thái hiện tại"}</TableHead>
                 <TableHead>{t("reports.orders") || "Đơn hàng"}</TableHead>
                 <TableHead>{t("reports.totalRevenue") || "Tổng doanh thu"}</TableHead>
