@@ -357,6 +357,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     applyFilters: "Áp dụng bộ lọc",
     resetFilters: "Đặt lại bộ lọc",
     uniqueProducts: "Sản phẩm độc đáo",
+    categoryGroup: "Nhóm hàng",
 
     // Chart specific
     value: "Giá trị",
@@ -1362,6 +1363,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     applyFilters: "Apply Filters",
     resetFilters: "Reset Filters",
     uniqueProducts: "Unique Products",
+    categoryGroup: "Product Group",
 
     // Chart specific
     value: "Value",
