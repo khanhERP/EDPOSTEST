@@ -399,7 +399,7 @@ export function FinancialReport() {
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-600 truncate">{t("reports.totalIncome")}</p>
+                    <p className="text-sm font-medium text-gray-600 truncate">{t("reports.totalRevenue")}</p>
                     <p className="text-xl sm:text-2xl font-bold text-green-600 mt-1 break-all">
                       {formatCurrency(financialSummary.totalIncome)}
                     </p>

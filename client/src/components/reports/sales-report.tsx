@@ -87,6 +87,7 @@ export function SalesReport() {
       paymentMethods: [],
       hourlySales: {},
       totalRevenue: 0,
+      subtotalRevenue: 0,
       totalOrders: 0,
       totalCustomers: 0,
       averageOrderValue: 0,
@@ -235,6 +236,19 @@ export function SalesReport() {
         return total + (itemPrice * itemQuantity);
       }, 0);
 
+      // Calculate subtotal revenue (excluding tax)
+      const subtotalRevenue = uniqueCombinedData.reduce((total: number, item: any) => {
+        // For orders, use subtotal if available, otherwise calculate from price
+        if (item.subtotal !== undefined && item.subtotal !== null) {
+          return total + Number(item.subtotal);
+        }
+        
+        const itemPrice = Number(item.price || 0);
+        const itemQuantity = Number(item.quantity || 1);
+        
+        return total + (itemPrice * itemQuantity);
+      }, 0);
+
       // Total orders should be based on unique orders, not items
       const totalOrders = paidOrders.length;
       const totalCustomers = new Set(paidOrders.map((item: any) =>
@@ -257,6 +271,7 @@ export function SalesReport() {
         paymentMethods: paymentMethodsArray,
         hourlySales,
         totalRevenue,
+        subtotalRevenue,
         totalOrders,
         totalCustomers,
         averageOrderValue,
@@ -504,7 +519,7 @@ export function SalesReport() {
       ) : (
         <>
           {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             <Card className="border-green-200 hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -517,6 +532,22 @@ export function SalesReport() {
                     </p>
                   </div>
                   <DollarSign className="w-8 h-8 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-200 hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {t("reports.salesReportTotalRevenue")}
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {formatCurrency(salesData?.subtotalRevenue || 0)}
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-blue-500" />
                 </div>
               </CardContent>
             </Card>
