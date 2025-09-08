@@ -856,7 +856,7 @@ export default function SalesOrders() {
 
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-lg">Bộ lọc</CardTitle>
+              <CardTitle className="text-lg">{t("common.filters")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
