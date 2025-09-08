@@ -130,7 +130,8 @@ export function DashboardOverview() {
       // Add proper loading and error checks
       if (ordersLoading || orderItemsLoading) {
         return {
-          periodRevenue: 0,
+          totalSalesRevenue: 0,
+          subtotalRevenue: 0,
           periodOrderCount: 0,
           periodCustomerCount: 0,
           dailyAverageRevenue: 0,
@@ -161,24 +162,32 @@ export function DashboardOverview() {
         sampleCompletedOrder: completedOrders[0] ? {
           id: completedOrders[0].id,
           total: completedOrders[0].total,
+          subtotal: completedOrders[0].subtotal,
           status: completedOrders[0].status,
           date: completedOrders[0].orderedAt || completedOrders[0].createdAt
         } : null
       });
 
-      // Calculate revenue from completed orders using actual order totals (includes tax)
-      const periodRevenue = completedOrders.reduce((sum: number, order: any) => {
+      // Calculate total revenue from completed orders using actual order totals (includes tax)
+      const totalSalesRevenue = completedOrders.reduce((sum: number, order: any) => {
         // Use storedTotal if available (includes tax), otherwise fall back to total
         const totalWithTax = Number(order.storedTotal || order.total || 0);
         return sum + totalWithTax;
       }, 0);
+
+      // Calculate subtotal revenue from completed orders (excludes tax)
+      const subtotalRevenue = completedOrders.reduce((sum: number, order: any) => {
+        const subtotal = Number(order.subtotal || 0);
+        return sum + subtotal;
+      }, 0);
+
 
       // Total count from completed orders only
       const periodOrderCount = completedOrders.length;
 
       // Count unique customers from completed orders
       const uniqueCustomers = new Set();
-      
+
       completedOrders.forEach((order: any) => {
         if (order.customerId) {
           uniqueCustomers.add(order.customerId);
@@ -198,7 +207,7 @@ export function DashboardOverview() {
         1,
         Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
       );
-      const dailyAverageRevenue = periodRevenue / daysDiff;
+      const dailyAverageRevenue = totalSalesRevenue / daysDiff;
 
       // Active orders (pending/in-progress orders only from all current orders, not date-filtered)
       const activeOrders = Array.isArray(allCurrentOrders) ? allCurrentOrders.filter((order: any) => 
@@ -211,14 +220,14 @@ export function DashboardOverview() {
       );
 
       // Month revenue: same as period revenue for the selected date range
-      const monthRevenue = periodRevenue;
+      const monthRevenue = totalSalesRevenue;
 
       // Average order value
-      const averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
+      const averageOrderValue = periodOrderCount > 0 ? totalSalesRevenue / periodOrderCount : 0;
 
       // Peak hours analysis from completed orders only
       const hourlyOrders: { [key: number]: number } = {};
-      
+
       completedOrders.forEach((order: any) => {
         const orderDate = new Date(order.orderedAt || order.createdAt);
         if (!isNaN(orderDate.getTime())) {
@@ -236,7 +245,8 @@ export function DashboardOverview() {
       );
 
       const finalStats = {
-        periodRevenue,
+        totalSalesRevenue,
+        subtotalRevenue,
         periodOrderCount,
         periodCustomerCount,
         dailyAverageRevenue,
@@ -249,7 +259,8 @@ export function DashboardOverview() {
       };
 
       console.log("Dashboard Debug - Final Stats:", {
-        periodRevenue,
+        totalSalesRevenue,
+        subtotalRevenue,
         periodOrderCount,
         periodCustomerCount,
         dateRange: `${startDate} to ${endDate}`
@@ -259,7 +270,8 @@ export function DashboardOverview() {
     } catch (error) {
       console.error("Error in getDashboardStats:", error);
       return {
-        periodRevenue: 0,
+        totalSalesRevenue: 0,
+        subtotalRevenue: 0,
         periodOrderCount: 0,
         periodCustomerCount: 0,
         dailyAverageRevenue: 0,
@@ -389,7 +401,7 @@ export function DashboardOverview() {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="w-auto"
               />
-              
+
             </div>
           </div>
         </CardHeader>
@@ -405,7 +417,7 @@ export function DashboardOverview() {
                   {t("reports.totalRevenue")}
                 </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(stats.periodRevenue)}
+                  {formatCurrency(stats.totalSalesRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   {startDate} ~ {endDate}
@@ -424,7 +436,7 @@ export function DashboardOverview() {
                   {t("reports.salesReportTotalRevenue")}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(stats.monthRevenue)}
+                  {formatCurrency(stats.subtotalRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   {startDate === endDate 
