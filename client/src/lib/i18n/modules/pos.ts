@@ -547,7 +547,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     date: "Ngày:",
     cashier: "Thu ngân:",
     subtotal: "Tạm tính:",
-    tax: "Thuế (8.25%):",
+    tax: "Thuế:",
     total: "Tổng cộng:",
     paymentMethodLabel: "Phương thức thanh toán:",
     amountReceivedLabel: "Số tiền nhận:",

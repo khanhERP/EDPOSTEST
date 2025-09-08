@@ -872,7 +872,7 @@ export function ShoppingCart({
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="pos-text-secondary">{t("tables.tax")}:</span>
+              <span className="pos-text-secondary">{t("pos.tax")}:</span>
               <span className="font-medium">
                 {Math.round(tax).toLocaleString("vi-VN")} ₫
               </span>
