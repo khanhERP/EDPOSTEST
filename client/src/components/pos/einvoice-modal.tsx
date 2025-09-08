@@ -1408,7 +1408,7 @@ export function EInvoiceModal({
                         Đang tải...
                       </>
                     ) : (
-                      "Lấy thông tin"
+                      t("einvoice.getInfo")
                     )}
                   </Button>
                 </div>
