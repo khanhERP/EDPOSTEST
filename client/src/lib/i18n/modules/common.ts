@@ -226,7 +226,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "발행되지 않음",
       published: "발행됨",
-      error: "발행 오류",
+      error: "발행 오류"
     },
 
     // Combo values
@@ -373,6 +373,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     occupied: "Occupied",
     reserved: "Reserved",
     maintenance: "Maintenance",
+    noData: "No data available",
     count: "Count",
     people: "People",
     table: "Table",
@@ -386,6 +387,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     actions: "Action",
     invoiceErrorIssuedDelete:
       "Cannot delete an invoice that has already been issued.",
+    success: "Success",
+    error: "Error",
+    warning: "Warning",
+    info: "Information",
     restaurant: "Restaurant",
     tableDeleteConfirm: "Are you sure you want to delete this table?",
     tableDeleteError: "Cannot delete a table that has been used.",
@@ -417,6 +422,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     change: "Change:",
     insufficient: "Insufficient",
     generatingQr: "Generating QR...",
+    showVirtualKeyboard: "Show Virtual Keyboard",
+    hideVirtualKeyboard: "Hide Virtual Keyboard",
     hideKeyboard: "Hide Keyboard",
     showKeyboard: "Show Virtual Keyboard",
 
@@ -454,7 +461,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "Not Published",
       published: "Published",
-      error: "Publish Error",
+      error: "Publish Error"
     },
 
     // Combo values
@@ -483,7 +490,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       ready: "Ready",
       served: "Served",
       paid: "Paid",
-      all: "All",
       cancelled: "Cancelled",
       completed: "Completed",
 
@@ -560,6 +566,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     employeeCode: "Mã nhân viên",
     employeeName: "Tên nhân viên",
     invoiceSymbol: "Ký hiệu hóa đơn",
+    invoiceNumber: "Số hóa đơn",
     showVirtualKeyboard: "Hiện bàn phím ảo",
     hideVirtualKeyboard: "Ẩn bàn phím ảo",
     success: "Thành công",
@@ -605,6 +612,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     occupied: "Occupied",
     reserved: "Reserved",
     maintenance: "Maintenance",
+    noData: "No data available",
     count: "Count",
     people: "People",
     table: "Table",
@@ -618,6 +626,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     actions: "Action",
     invoiceErrorIssuedDelete:
       "Cannot delete an invoice that has already been issued.",
+    success: "Success",
+    error: "Error",
+    warning: "Warning",
+    info: "Information",
     restaurant: "Restaurant",
     tableDeleteConfirm: "Are you sure you want to delete this table?",
     tableDeleteError: "Cannot delete a table that has been used.",
@@ -649,6 +661,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     change: "Tiền thối:",
     insufficient: "Còn thiếu",
     generatingQr: "Đang tạo QR...",
+    showVirtualKeyboard: "Hiện bàn phím ảo",
+    hideVirtualKeyboard: "Ẩn bàn phím ảo",
     hideKeyboard: "Ẩn bàn phím",
     showKeyboard: "Hiện bàn phím ảo",
 
@@ -686,7 +700,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "Chưa phát hành",
       published: "Đã phát hành",
-      error: "Lỗi phát hành",
+      error: "Lỗi phát hành"
     },
 
     // Combo values
@@ -722,9 +736,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       food: "Thức ăn",
       beverage: "Đồ uống",
       snack: "Đồ ăn nhẹ",
-      price: "Giá",
-      name: "Tên",
-      all: "Tất cả",
       dessert: "Tráng miệng",
 
       // Table status

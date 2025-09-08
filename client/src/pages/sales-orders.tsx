@@ -1009,7 +1009,7 @@ export default function SalesOrders() {
                             <div className="leading-tight">{t("common.invoiceSymbol")}</div>
                           </th>
                           <th className="w-[110px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                            <div className="leading-tight">Số hóa đơn</div>
+                            <div className="leading-tight">{t("common.invoiceNumber")}</div>
                           </th>
                           <th className="w-[200px] px-3 py-3 text-left font-medium text-sm text-gray-600">
                             <div className="leading-tight">Ghi chú</div>
