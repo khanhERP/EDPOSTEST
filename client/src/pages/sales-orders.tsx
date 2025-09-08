@@ -973,7 +973,7 @@ export default function SalesOrders() {
                             />
                           </th>
                           <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                            <div className="leading-tight">Số đơn bán</div>
+                            <div className="leading-tight">{t("orders.orderCode")}</div>
                           </th>
                           <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
                             <div className="leading-tight">Ngày đơn bán</div>
