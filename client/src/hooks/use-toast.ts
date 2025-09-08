@@ -189,3 +189,28 @@ function useToast() {
 }
 
 export { useToast, toast }
+
+// Hook tiện ích để sử dụng toast với translations
+export const useTranslatedToast = () => {
+  const { toast } = useToast();
+  
+  return {
+    success: (message: string) => toast({
+      title: "Thành công",
+      description: message,
+    }),
+    error: (message: string) => toast({
+      title: "Lỗi", 
+      description: message,
+      variant: "destructive",
+    }),
+    warning: (message: string) => toast({
+      title: "Cảnh báo",
+      description: message,
+    }),
+    info: (message: string) => toast({
+      title: "Thông tin",
+      description: message,
+    })
+  };
+};

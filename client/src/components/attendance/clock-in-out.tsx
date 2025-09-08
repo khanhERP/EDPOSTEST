@@ -33,22 +33,22 @@ export function ClockInOut() {
   });
 
   const clockInMutation = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/attendance/clock-in', { 
-      employeeId: selectedEmployeeId, 
-      notes 
+    mutationFn: () => apiRequest('POST', '/api/attendance/clock-in', {
+      employeeId: selectedEmployeeId,
+      notes
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
       setNotes("");
       toast({
-        title: t('attendance.clockInSuccess'),
+        title: t("common.successTitle"),
         description: t('attendance.clockInSuccessDesc'),
       });
     },
     onError: () => {
       toast({
-        title: t('common.error'),
+        title: t("common.errorTitle"),
         description: t('attendance.clockInError'),
         variant: "destructive",
       });
@@ -61,13 +61,13 @@ export function ClockInOut() {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
       toast({
-        title: t('attendance.clockOutSuccess'),
+        title: t("common.successTitle"),
         description: t('attendance.clockOutSuccessDesc'),
       });
     },
     onError: () => {
       toast({
-        title: t('common.error'),
+        title: t("common.errorTitle"),
         description: t('attendance.clockOutError'),
         variant: "destructive",
       });
@@ -80,13 +80,13 @@ export function ClockInOut() {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
       toast({
-        title: t('attendance.breakStartSuccess'),
+        title: t("common.successTitle"),
         description: t('attendance.breakStartSuccessDesc'),
       });
     },
     onError: () => {
       toast({
-        title: t('common.error'),
+        title: t("common.errorTitle"),
         description: t('attendance.breakStartError'),
         variant: "destructive",
       });
@@ -99,13 +99,13 @@ export function ClockInOut() {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
       toast({
-        title: t('attendance.breakEndSuccess'),
+        title: t("common.successTitle"),
         description: t('attendance.breakEndSuccessDesc'),
       });
     },
     onError: () => {
       toast({
-        title: t('common.error'),
+        title: t("common.errorTitle"),
         description: t('attendance.breakEndError'),
         variant: "destructive",
       });
@@ -154,7 +154,7 @@ export function ClockInOut() {
       setIsQRModalOpen(true);
     } catch (error) {
       toast({
-        title: t('common.error'),
+        title: t("common.errorTitle"),
         description: "QR 코드 생성에 실패했습니다.",
         variant: "destructive",
       });
@@ -347,9 +347,9 @@ export function ClockInOut() {
           <div className="flex flex-col items-center space-y-4 py-4">
             {qrCodeUrl && (
               <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-                <img 
-                  src={qrCodeUrl} 
-                  alt="QR Code for Attendance" 
+                <img
+                  src={qrCodeUrl}
+                  alt="QR Code for Attendance"
                   className="w-64 h-64"
                 />
               </div>
@@ -368,7 +368,7 @@ export function ClockInOut() {
                 onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/attendance-qr`);
                   toast({
-                    title: t('attendance.copySuccess'),
+                    title: t("common.successTitle"),
                     description: t('attendance.copySuccessDesc'),
                   });
                 }}

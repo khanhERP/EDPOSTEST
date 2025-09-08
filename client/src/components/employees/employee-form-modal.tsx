@@ -129,7 +129,7 @@ export function EmployeeFormModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
       toast({
-        title: t("common.success"),
+        title: t("common.successTitle"),
         description: t("employees.addEmployeeSuccess"),
       });
       onClose();
@@ -162,7 +162,7 @@ export function EmployeeFormModal({
         }
       }
       toast({
-        title: t("common.error"),
+        title: t("common.errorTitle"),
         description: errorMessage,
         variant: "destructive",
       });
@@ -185,7 +185,7 @@ export function EmployeeFormModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
       toast({
-        title: t("common.success"),
+        title: t("common.successTitle"),
         description: t("employees.updateEmployeeSuccess"),
       });
       onClose();
@@ -203,7 +203,7 @@ export function EmployeeFormModal({
       }
 
       toast({
-        title: t("common.error"),
+        title: t("common.errorTitle"),
         description: errorMessage,
         variant: "destructive",
       });

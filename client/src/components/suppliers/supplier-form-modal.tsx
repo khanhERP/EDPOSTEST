@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -36,6 +35,8 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const isEdit = !!supplier;
 
   useEffect(() => {
     if (supplier) {
@@ -77,15 +78,15 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
       toast({
-        title: t('suppliers.createSuccess'),
-        description: t('suppliers.createSuccessDesc'),
+        title: t("common.successTitle"),
+        description: t("suppliers.createSuccess"),
       });
       onClose();
     },
     onError: () => {
       toast({
-        title: t('suppliers.createFailed'),
-        description: t('suppliers.createFailedDesc'),
+        title: t("common.errorTitle"),
+        description: t("suppliers.createFailed"),
         variant: "destructive",
       });
     },
@@ -99,15 +100,15 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
       toast({
-        title: t('suppliers.updateSuccess'),
-        description: t('suppliers.updateSuccessDesc'),
+        title: t("common.successTitle"),
+        description: t("suppliers.updateSuccess"),
       });
       onClose();
     },
     onError: () => {
       toast({
-        title: t('suppliers.updateFailed'),
-        description: t('suppliers.updateFailedDesc'),
+        title: t("common.errorTitle"),
+        description: t("suppliers.updateFailed"),
         variant: "destructive",
       });
     },
@@ -115,7 +116,7 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.code) {
       toast({
         title: t('suppliers.validationError'),
@@ -280,8 +281,8 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
             <Button type="button" variant="outline" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
             >
               {supplier ? t('common.update') : t('common.create')}

@@ -610,7 +610,7 @@ export function ShoppingCart({
       });
     } else {
       toast({
-        title: "Thành công", 
+        title: "Thành công",
         description: "Hóa đơn điện tử đã được phát hành thành công",
       });
     }
