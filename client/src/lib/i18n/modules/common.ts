@@ -574,6 +574,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     subtotalAmount: "Tổng tiền hàng",
     totalTax: "Tổng thuế",
     grandTotal: "Tổng cộng",
+    itemsPerPage: "Số hàng mỗi trang",
     showVirtualKeyboard: "Hiện bàn phím ảo",
     hideVirtualKeyboard: "Ẩn bàn phím ảo",
     success: "Thành công",

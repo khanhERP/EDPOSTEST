@@ -1576,7 +1576,7 @@ export default function SalesOrders() {
                     </div>
                     <div className="flex justify-between items-center mt-4">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-600">Số hàng mỗi trang:</span>
+                        <span className="text-sm text-gray-600">{t("common.itemsPerPage")}:</span>
                         <select
                           value={itemsPerPage}
                           onChange={(e) => {
