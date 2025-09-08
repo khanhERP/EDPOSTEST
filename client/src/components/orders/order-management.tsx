@@ -1673,7 +1673,7 @@ export function OrderManagement() {
         </div>
         <div className="flex items-center gap-4">
           <Badge variant="secondary" className="text-lg px-4 py-2">
-            {totalOrders} {t('orders.ordersInProgress')}
+            {totalOrders} đơn đang xử lý
           </Badge>
           {totalPages > 1 && (
             <Badge variant="outline" className="text-sm px-3 py-1">

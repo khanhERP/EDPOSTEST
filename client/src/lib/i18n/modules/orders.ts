@@ -248,7 +248,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     statusAndTime: "Trạng thái & Thời gian",
     realTimeOrderStatus:
       "Kiểm tra và quản lý tình trạng đơn hàng theo thời gian thực",
-    ordersInProgress: " đơn đang xử lý",
+    ordersInProgress: "đơn đang xử lý",
     noActiveOrders: "Không có đơn hàng đang hoạt động",
     newOrdersWillAppearHere: "Đơn hàng mới sẽ xuất hiện ở đây",
     selectPaymentMethod: "Chọn phương thức thanh toán",
