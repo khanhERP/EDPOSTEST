@@ -373,7 +373,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Menu analysis
     productPerformance: "Hiệu suất sản phẩm",
-    categoryPerformance: "Hiệu suất danh mục",
+    categoryPerformance: "Phân tích theo nhóm hàng",
     topSellingItems: "Sản phẩm bán chạy nhất",
     topRevenueItems: "Sản phẩm doanh thu cao nhất",
     categoryBreakdown: "Phân tích theo danh mục",
