@@ -2295,7 +2295,7 @@ export interface TablesTranslations {
 }
 
 // Supported languages
-export type Language = 'ko' | 'en' | 'vi';
+export type Language = "ko" | "en" | "vi";
 
 // Common translations interface
 export interface CommonTranslations {
@@ -2370,6 +2370,7 @@ export interface CommonTranslations {
   startDate: string;
   endDate: string;
   dateRange: string;
+  filters: string;
 
   // Status translations
   statuses: {
