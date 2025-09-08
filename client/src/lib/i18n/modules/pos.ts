@@ -271,7 +271,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     date: "날짜:",
     cashier: "계산원:",
     subtotal: "소계:",
-    tax: "세금 (8.25%):",
+    tax: "세금:",
     total: "총계:",
     phone: "전화:",
   },
