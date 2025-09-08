@@ -849,9 +849,9 @@ export default function SalesOrders() {
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="w-6 h-6 text-green-600" />
-              <h1 className="text-2xl font-bold text-gray-800">Quản lý đơn hàng</h1>
+              <h1 className="text-2xl font-bold text-gray-800">{t("orders.orderManagement")}</h1>
             </div>
-            <p className="text-gray-600 mb-4">Quản lý tất cả đơn hàng từ mọi nguồn: bàn, POS, online và giao hàng</p>
+            <p className="text-gray-600 mb-4">{t("orders.realTimeOrderStatus")}</p>
           </div>
 
           <Card className="mb-6">
