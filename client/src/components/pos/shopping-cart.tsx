@@ -793,7 +793,7 @@ export function ShoppingCart({
                     </p>
                     {item.taxRate && parseFloat(item.taxRate) > 0 && (
                       <p className="text-xs text-orange-600">
-                        Thuế:{" "}
+                        {t("pos.tax")}:{" "}
                         {(() => {
                             const basePrice = parseFloat(item.price);
 
