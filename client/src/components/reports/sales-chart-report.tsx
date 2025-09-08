@@ -291,12 +291,14 @@ export function SalesChartReport() {
       if (ordersLoading || orderItemsLoading) {
         return {
           periodRevenue: 0,
+          periodSubtotalRevenue: 0,
           periodOrderCount: 0,
           periodCustomerCount: 0,
           dailyAverageRevenue: 0,
           activeOrders: 0,
           occupiedTables: 0,
           monthRevenue: 0,
+          monthSubtotalRevenue: 0,
           averageOrderValue: 0,
           peakHour: 12,
           totalTables: Array.isArray(tables) ? tables.length : 0,
@@ -323,6 +325,7 @@ export function SalesChartReport() {
           ? {
               id: completedOrders[0].id,
               total: completedOrders[0].total,
+              subtotal: completedOrders[0].subtotal,
               status: completedOrders[0].status,
               date:
                 completedOrders[0].orderedAt || completedOrders[0].createdAt,
@@ -330,11 +333,20 @@ export function SalesChartReport() {
           : null,
       });
 
-      // Calculate revenue from completed orders using actual order totals
+      // Calculate total sales revenue (sum of total) - Tổng thu từ bán hàng
       const periodRevenue = completedOrders.reduce(
         (sum: number, order: any) => {
           const total = Number(order.total || 0);
           return sum + total;
+        },
+        0,
+      );
+
+      // Calculate subtotal revenue (sum of subtotal) - Tổng doanh thu
+      const periodSubtotalRevenue = completedOrders.reduce(
+        (sum: number, order: any) => {
+          const subtotal = Number(order.subtotal || 0);
+          return sum + subtotal;
         },
         0,
       );
@@ -387,6 +399,7 @@ export function SalesChartReport() {
 
       // Month revenue: same as period revenue for the selected date range
       const monthRevenue = periodRevenue;
+      const monthSubtotalRevenue = periodSubtotalRevenue;
 
       // Average order value
       const averageOrderValue =
@@ -413,12 +426,14 @@ export function SalesChartReport() {
 
       const finalStats = {
         periodRevenue,
+        periodSubtotalRevenue,
         periodOrderCount,
         periodCustomerCount,
         dailyAverageRevenue,
         activeOrders,
         occupiedTables: occupiedTables.length,
         monthRevenue,
+        monthSubtotalRevenue,
         averageOrderValue,
         peakHour: parseInt(peakHour),
         totalTables: validTables.length,
@@ -593,7 +608,8 @@ export function SalesChartReport() {
     console.log("Payment methods calculated:", paymentMethods);
 
     // Use dashboard stats directly for consistency
-    const totalRevenue = dashboardStats.periodRevenue || 0;
+    const totalRevenue = dashboardStats.periodRevenue || 0; // Tổng thu từ bán hàng (sum of total)
+    const subtotalRevenue = dashboardStats.periodSubtotalRevenue || 0; // Tổng doanh thu (sum of subtotal)
     const totalOrders = dashboardStats.periodOrderCount || 0;
     const totalCustomers = dashboardStats.periodCustomerCount || 0;
     const averageOrderValue = dashboardStats.averageOrderValue || 0;
@@ -607,7 +623,7 @@ export function SalesChartReport() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {t("reports.totalRevenue")}
+                    Tổng thu từ bán hàng
                   </p>
                   <p className="text-2xl font-bold text-green-600">
                     {formatCurrency(totalRevenue)}
@@ -629,7 +645,7 @@ export function SalesChartReport() {
                     Tổng doanh thu
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(dashboardStats.monthRevenue)}
+                    {formatCurrency(dashboardStats.monthSubtotalRevenue || dashboardStats.periodSubtotalRevenue)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {startDate === endDate
