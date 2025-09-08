@@ -721,6 +721,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       food: "Thức ăn",
       beverage: "Đồ uống",
       snack: "Đồ ăn nhẹ",
+      price: "Giá",
+      name: "Tên",
       dessert: "Tráng miệng",
 
       // Table status
