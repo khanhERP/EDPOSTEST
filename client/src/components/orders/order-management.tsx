@@ -2704,13 +2704,13 @@ export function OrderManagement() {
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => setMixedPaymentOpen(false)}>
-                  {t('common.cancel')}
+                  {t('orders.cancel')}
                 </Button>
                 <Button
                   onClick={() => setMixedPaymentOpen(true)}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
-                  {t('orders.mixedPaymentTitle')}
+                  {t('orders.mixedPaymentButton')}
                 </Button>
               </div>
             </div>
