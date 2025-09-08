@@ -102,16 +102,18 @@ export function SalesChartReport() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Sales Chart - Orders loaded:", data?.length || 0);
+        // console.log("Sales Chart - Orders loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error("Sales Chart - Error fetching orders:", error);
         return [];
       }
     },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
+    retry: 2,
+    retryDelay: 500,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Query order items for all orders
@@ -124,16 +126,19 @@ export function SalesChartReport() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Sales Chart - Order items loaded:", data?.length || 0);
+        // console.log("Sales Chart - Order items loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error("Sales Chart - Error fetching order items:", error);
         return [];
       }
     },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
+    retry: 2,
+    retryDelay: 500,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: analysisType === "product", // Only fetch when needed
   });
 
   const { data: tables } = useQuery({
