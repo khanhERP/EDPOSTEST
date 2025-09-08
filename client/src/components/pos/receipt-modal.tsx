@@ -562,13 +562,13 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               <div className="flex justify-between text-sm">
-                <span>Tạm tính</span>
+                <span>{t("pos.subtotal")}</span>
                 <span>
                   {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Thuế:</span>
+                <span>{t("pos.tax")}</span>
                 <span>
                   {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
                 </span>
@@ -725,13 +725,13 @@ export function ReceiptModal({
                 return (
                   <>
                     <div className="flex justify-between text-sm">
-                      <span>Tạm tính</span>
+                      <span>{t("pos.subtotal")}</span>
                       <span>
                         {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Thuế:</span>
+                      <span>{t("pos.tax")}</span>
                       <span>
                         {Math.floor(tax).toLocaleString("vi-VN")} ₫
                       </span>
