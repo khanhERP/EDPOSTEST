@@ -396,7 +396,7 @@ function MenuReport() {
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600" />
-                    {t("reports.revenue") || "Doanh thu"} theo danh mục
+                    {t("reports.revenueByCategory") || "Doanh thu theo danh mục"}
                   </h4>
                   <div className="h-80 relative border rounded-lg bg-gradient-to-br from-green-50/30 to-emerald-50/20">
                     <div className="absolute inset-0 bg-white/50 rounded-lg"></div>
@@ -444,7 +444,7 @@ function MenuReport() {
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <Package className="w-4 h-4 text-blue-600" />
-                    {t("reports.quantity") || "Số lượng"} theo danh mục
+                    {t("reports.quantityByCategory") || "Số lượng theo danh mục"}
                   </h4>
                   <div className="h-80 relative border rounded-lg bg-gradient-to-br from-blue-50/30 to-sky-50/20">
                     <div className="absolute inset-0 bg-white/50 rounded-lg"></div>
@@ -489,9 +489,9 @@ function MenuReport() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-2 px-4">{t("common.category") || "Danh mục"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.productCount") || "Số sản phẩm"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.quantity") || "Số lượng"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.revenue") || "Doanh thu"}</th>
+                    <th className="text-right py-2 px-4">{t("reports.itemCount") || "Số sản phẩm"}</th>
+                    <th className="text-right py-2 px-4">{t("reports.totalQuantity") || "Số lượng"}</th>
+                    <th className="text-right py-2 px-4">{t("reports.totalRevenue") || "Doanh thu"}</th>
                   </tr>
                 </thead>
                 <tbody>
