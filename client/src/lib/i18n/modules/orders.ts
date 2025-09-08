@@ -15,9 +15,9 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderItems: "주문 항목",
     orderStatus: "주문 상태",
     orderTime: "주문 시간",
-    orderStatusUpdated: "주문 상태가 업데이트되었습니다",
+    orderStatusUpdated: "주문 상태 업데이트에 실패했습니다",
     orderStatusUpdateFailed: "주문 상태 업데이트에 실패했습니다",
-    viewDetails: "상세 보기",
+    viewDetails: "세부 정보 보기",
     confirm: "확인",
     startCooking: "조리 시작",
     ready: "준비 완료",
@@ -114,6 +114,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       delivering: "배송중",
       completed: "완료됨",
     },
+    orderCount: "주문",
   },
   en: {
     orderManagement: "Order Management",
@@ -231,6 +232,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       delivering: "Delivering",
       completed: "Completed",
     },
+    orderCount: "orders",
   },
   vi: {
     orderManagement: "Quản lý đơn hàng",
@@ -348,5 +350,6 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       delivering: "Đang giao hàng",
       completed: "Hoàn thành",
     },
+    orderCount: "đơn",
   },
 };
