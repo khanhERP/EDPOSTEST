@@ -84,6 +84,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesMethod: "Phương thức bán hàng",
     salesChannel: "Kênh bán hàng",
     productFilter: "Sản phẩm",
+    productFilterPlaceholder: "Tìm theo tên hoặc mã",
     customerFilter: "Khách hàng",
     customerFilterPlaceholder: "Tìm theo tên, số điện thoại hoặc mã",
     employeeFilter: "Tìm kiếm nhân viên",
@@ -1512,7 +1513,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataAvailable: "No data available",
     loadingData: "Loading data...",
     errorLoadingData: "Error loading data",
-    totalSalesRevenue: "Total Sales Revenue",
     itemsSold: "sold",
   },
 };

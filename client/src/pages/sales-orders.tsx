@@ -861,7 +861,7 @@ export default function SalesOrders() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Từ ngày</label>
+                  <label className="block text-sm font-medium mb-2">{t("reports.startDate")}</label>
                   <Input
                     type="date"
                     value={startDate}
@@ -869,7 +869,7 @@ export default function SalesOrders() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Đến ngày</label>
+                  <label className="block text-sm font-medium mb-2">{t("reports.endDate")}</label>
                   <Input
                     type="date"
                     value={endDate}
@@ -877,7 +877,7 @@ export default function SalesOrders() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Khách hàng</label>
+                  <label className="block text-sm font-medium mb-2">{t("orders.customer")}</label>
                   <Input
                     placeholder="Tìm theo tên khách hàng"
                     value={customerSearch}
@@ -886,7 +886,7 @@ export default function SalesOrders() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Mã khách hàng</label>
+                  <label className="block text-sm font-medium mb-2">{t("reports.customerCode")}</label>
                   <Input
                     placeholder="Tìm theo mã khách hàng"
                     value={customerCodeSearch}
@@ -897,7 +897,7 @@ export default function SalesOrders() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Số đơn bán</label>
+                  <label className="block text-sm font-medium mb-2">{t("orders.orderNumber")}</label>
                   <Input
                     placeholder="Tìm theo số đơn bán"
                     value={orderNumberSearch}
