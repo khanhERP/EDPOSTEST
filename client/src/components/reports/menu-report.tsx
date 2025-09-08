@@ -257,7 +257,7 @@ function MenuReport() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">
-                {t("common.category") || "Danh mục"}
+                {t("reports.categoryGroup") || "Nhóm hàng"}
               </label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>

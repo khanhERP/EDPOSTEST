@@ -397,7 +397,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     rank: "Xếp hạng",
     menuName: "Tên sản phẩm",
     salesCount: "Số lượng bán",
-    contribution: "% Đóng góp",
     noCategoryData: "Không có dữ liệu danh mục",
     noSalesData: "Không có dữ liệu bán hàng",
     noRevenueData: "Không có dữ liệu doanh thu",
@@ -855,8 +854,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     peakHour: "피크 시간",
     filters: "필터",
     applyFilters: "필터 적용",
-    resetFilters: "필터 재설정",
-    uniqueProducts: "고유 상품",
+    resetFilters: "필터 초기화",
+    uniqueProducts: "고유 제품",
+    categoryGroup: "상품 그룹",
 
     // Chart specific
     value: "값",
