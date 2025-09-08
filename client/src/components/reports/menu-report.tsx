@@ -305,7 +305,7 @@ function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalSales") || "Tổng số lượng đã bán"}
+                  {t("reports.totalQuantitySold") || "Tổng số lượng đã bán"}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {(menuAnalysis?.totalQuantity || 0).toLocaleString('vi-VN')}
@@ -323,7 +323,7 @@ function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.averagePrice") || "Giá trung bình"}
+                  {t("reports.averageOrderValue") || "Giá trung bình"}
                 </p>
                 <p className="text-2xl font-bold text-orange-600">
                   {formatCurrency(
@@ -345,10 +345,10 @@ function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.uniqueProducts") || "Tổng số lượng đã bán"}
+                  {t("reports.menuItems") || "Sản phẩm"}
                 </p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {(menuAnalysis?.productStats?.reduce((total, product) => total + (product.totalQuantity || 0), 0) || 0).toLocaleString('vi-VN')}
+                  {(menuAnalysis?.productStats?.length || 0).toLocaleString('vi-VN')}
                 </p>
               </div>
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
