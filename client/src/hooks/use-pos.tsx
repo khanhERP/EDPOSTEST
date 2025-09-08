@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { CartItem, Receipt } from "@shared/schema";
 import { v4 as uuidv4 } from 'uuid';
+import { useTranslation } from "react-i18next";
 
 interface Order {
   id: string;
@@ -15,6 +16,7 @@ export function usePOS() {
   const [activeOrderId, setActiveOrderId] = useState<string>(orders[0].id);
   const [lastReceipt, setLastReceipt] = useState<Receipt | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const cart = orders.find(order => order.id === activeOrderId)?.cart || [];
 
@@ -252,8 +254,7 @@ export function usePOS() {
 
         // Show success toast once
         toast({
-          title: "Đã thêm vào giỏ hàng",
-          description: `${product.name} đã được thêm vào đơn hàng`,
+          description: `${product.name}${t("pos.hasBeenAddedToOrder")}`,
         });
       }
     } catch (error) {
