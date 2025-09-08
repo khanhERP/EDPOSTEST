@@ -286,9 +286,21 @@ function MenuReport() {
       {/* Date Range and Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            {t("reports.menuAnalysis") || "Phân tích menu"}
+          <CardTitle className="text-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              {t("reports.menuAnalysis") || "Phân tích menu"}
+            </div>
+            <Button
+              onClick={() => refetch()}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              disabled={analysisLoading}
+            >
+              <RefreshCw className={`w-4 h-4 ${analysisLoading ? 'animate-spin' : ''}`} />
+              {t("common.refresh") || "Tải lại"}
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -735,9 +747,24 @@ function MenuReport() {
       {/* Product Sales Analysis from Orders */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            {t("reports.menuAnalysis") ||
-              "Phân tích theo menu"}
+          <CardTitle className="flex items-center justify-between">
+            <span>
+              {t("reports.menuAnalysis") ||
+                "Phân tích theo menu"}
+            </span>
+            <Button
+              onClick={() => {
+                refetch();
+                queryClient.invalidateQueries({ queryKey: ["/api/menu-analysis"] });
+              }}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              disabled={analysisLoading}
+            >
+              <RefreshCw className={`w-4 h-4 ${analysisLoading ? 'animate-spin' : ''}`} />
+              {t("common.refresh") || "Tải lại"}
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
