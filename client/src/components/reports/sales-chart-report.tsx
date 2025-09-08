@@ -178,23 +178,31 @@ export function SalesChartReport() {
   });
 
   // Product Analysis Data from new API
-  const { data: productAnalysisData, isLoading: productAnalysisLoading } = useQuery({
-    queryKey: ["/api/product-analysis", startDate, endDate, selectedCategory, productType, productSearch],
-    queryFn: async () => {
-      const params = new URLSearchParams({
+  const { data: productAnalysisData, isLoading: productAnalysisLoading } =
+    useQuery({
+      queryKey: [
+        "/api/product-analysis",
         startDate,
         endDate,
-        categoryId: selectedCategory,
+        selectedCategory,
         productType,
-        productSearch: productSearch || "",
-      });
-      const response = await fetch(`/api/product-analysis?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch product analysis");
-      return response.json();
-    },
-    enabled: analysisType === "product",
-    staleTime: 2 * 60 * 1000,
-  });
+        productSearch,
+      ],
+      queryFn: async () => {
+        const params = new URLSearchParams({
+          startDate,
+          endDate,
+          categoryId: selectedCategory,
+          productType,
+          productSearch: productSearch || "",
+        });
+        const response = await fetch(`/api/product-analysis?${params}`);
+        if (!response.ok) throw new Error("Failed to fetch product analysis");
+        return response.json();
+      },
+      enabled: analysisType === "product",
+      staleTime: 2 * 60 * 1000,
+    });
 
   const { data: suppliers } = useQuery({
     queryKey: ["/api/suppliers"],
@@ -496,7 +504,12 @@ export function SalesChartReport() {
 
     // Calculate daily sales from filtered completed orders
     const dailySales: {
-      [date: string]: { orders: number; revenue: number; customers: number, discount: number };
+      [date: string]: {
+        orders: number;
+        revenue: number;
+        customers: number;
+        discount: number;
+      };
     } = {};
 
     console.log("Processing filtered completed orders:", {
@@ -528,7 +541,12 @@ export function SalesChartReport() {
         const dateStr = orderDate.toISOString().split("T")[0];
 
         if (!dailySales[dateStr]) {
-          dailySales[dateStr] = { orders: 0, revenue: 0, customers: 0, discount: 0 };
+          dailySales[dateStr] = {
+            orders: 0,
+            revenue: 0,
+            customers: 0,
+            discount: 0,
+          };
         }
 
         // Fix discount calculation logic
@@ -683,14 +701,38 @@ export function SalesChartReport() {
                     // Add summary row
                     {
                       Ngày: "TỔNG CỘNG",
-                      "Tổng số đơn hàng": Object.values(dailySales).reduce((sum, data) => sum + data.orders, 0),
-                      "Doanh thu": formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0)),
-                      Thuế: formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue * 0.1, 0)),
-                      "Thành tiền": formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0)),
-                      "Khách hàng": Object.values(dailySales).reduce((sum, data) => sum + data.customers, 0),
-                    }
+                      "Tổng số đơn hàng": Object.values(dailySales).reduce(
+                        (sum, data) => sum + data.orders,
+                        0,
+                      ),
+                      "Doanh thu": formatCurrency(
+                        Object.values(dailySales).reduce(
+                          (sum, data) => sum + data.revenue,
+                          0,
+                        ),
+                      ),
+                      Thuế: formatCurrency(
+                        Object.values(dailySales).reduce(
+                          (sum, data) => sum + data.revenue * 0.1,
+                          0,
+                        ),
+                      ),
+                      "Thành tiền": formatCurrency(
+                        Object.values(dailySales).reduce(
+                          (sum, data) => sum + data.revenue,
+                          0,
+                        ),
+                      ),
+                      "Khách hàng": Object.values(dailySales).reduce(
+                        (sum, data) => sum + data.customers,
+                        0,
+                      ),
+                    },
                   ];
-                  exportToExcel(dataWithSummary, `DailySales_${startDate}_to_${endDate}`);
+                  exportToExcel(
+                    dataWithSummary,
+                    `DailySales_${startDate}_to_${endDate}`,
+                  );
                 }}
                 className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
@@ -1000,8 +1042,9 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r text-red-600 text-sm min-w-[120px] px-4">
                                         {formatCurrency(
-                                          Number(order.discount || 0)
-                                        )}</TableCell>
+                                          Number(order.discount || 0),
+                                        )}
+                                      </TableCell>
                                       <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                         {formatCurrency(
                                           Number(transaction.total),
@@ -1020,7 +1063,9 @@ export function SalesChartReport() {
                                       {(() => {
                                         const transactionMethod =
                                           transaction.paymentMethod || "cash";
-                                        const amount = Number(transaction.total);
+                                        const amount = Number(
+                                          transaction.total,
+                                        );
 
                                         // Get all unique payment methods from all transactions
                                         const allPaymentMethods = new Set();
@@ -1465,10 +1510,9 @@ export function SalesChartReport() {
 
         stats.orderCount += 1;
         stats.revenue += revenue;
-        stats.tax += (revenue * 0.1); // Tax is 10% of revenue
+        stats.tax += revenue * 0.1; // Tax is 10% of revenue
         stats.total += orderTotal;
         stats.discount = (stats.discount || 0) + orderDiscount;
-
 
         const paymentMethod = order.paymentMethod || "cash";
         stats.paymentMethods[paymentMethod] =
@@ -1532,21 +1576,43 @@ export function SalesChartReport() {
                     {
                       "Mã NV": "TỔNG CỘNG",
                       "Tên NV": `${data.length} nhân viên`,
-                      "Số đơn": data.reduce((sum, item) => sum + item.orderCount, 0),
-                      "Doanh thu": formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0)),
-                      "Giảm giá": formatCurrency(data.reduce((sum, item) => sum + item.discount, 0)),
-                      Thuế: formatCurrency(data.reduce((sum, item) => sum + item.tax, 0)),
-                      "Tổng cộng": formatCurrency(data.reduce((sum, item) => sum + item.total, 0)),
+                      "Số đơn": data.reduce(
+                        (sum, item) => sum + item.orderCount,
+                        0,
+                      ),
+                      "Doanh thu": formatCurrency(
+                        data.reduce((sum, item) => sum + item.revenue, 0),
+                      ),
+                      "Giảm giá": formatCurrency(
+                        data.reduce((sum, item) => sum + item.discount, 0),
+                      ),
+                      Thuế: formatCurrency(
+                        data.reduce((sum, item) => sum + item.tax, 0),
+                      ),
+                      "Tổng cộng": formatCurrency(
+                        data.reduce((sum, item) => sum + item.total, 0),
+                      ),
                       ...Object.fromEntries(
                         paymentMethodsArray.map((method) => [
                           getPaymentMethodLabel(method),
-                          formatCurrency(data.reduce((sum, item) => sum + (item.paymentMethods[method] || 0), 0)),
+                          formatCurrency(
+                            data.reduce(
+                              (sum, item) =>
+                                sum + (item.paymentMethods[method] || 0),
+                              0,
+                            ),
+                          ),
                         ]),
                       ),
-                      "Tổng thanh toán": formatCurrency(data.reduce((sum, item) => sum + item.total, 0)),
-                    }
+                      "Tổng thanh toán": formatCurrency(
+                        data.reduce((sum, item) => sum + item.total, 0),
+                      ),
+                    },
                   ];
-                  exportToExcel(dataWithSummary, `EmployeeSales_${startDate}_to_${endDate}`);
+                  exportToExcel(
+                    dataWithSummary,
+                    `EmployeeSales_${startDate}_to_${endDate}`,
+                  );
                 }}
                 className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
@@ -2218,7 +2284,7 @@ export function SalesChartReport() {
       customerSales[customerId].orders += 1;
       customerSales[customerId].totalAmount += orderSubtotal;
       customerSales[customerId].discount += orderDiscount;
-      customerSales[customerId].revenue += (orderTotal - orderDiscount);
+      customerSales[customerId].revenue += orderTotal - orderDiscount;
       customerSales[customerId].orderDetails.push(order);
 
       // Determine customer group based on total spending
@@ -2570,11 +2636,12 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      );
-    };
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Sales Channel Report Component Logic
   const renderSalesChannelReport = () => {
@@ -2679,20 +2746,41 @@ export function SalesChartReport() {
                   ...Object.entries(salesMethodData).map(([method, data]) => ({
                     "Phương thức bán hàng": method,
                     "Đơn đã hoàn thành": data.completedOrders,
-                    "Doanh thu đã hoàn thành": formatCurrency(data.completedRevenue),
+                    "Doanh thu đã hoàn thành": formatCurrency(
+                      data.completedRevenue,
+                    ),
                     "Tổng đơn": data.totalOrders,
                     "Tổng doanh thu": formatCurrency(data.totalRevenue),
                   })),
                   // Add summary row
                   {
                     "Phương thức bán hàng": "TỔNG CỘNG",
-                    "Đơn đã hoàn thành": Object.values(salesMethodData).reduce((sum, data) => sum + data.completedOrders, 0),
-                    "Doanh thu đã hoàn thành": formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.completedRevenue, 0)),
-                    "Tổng đơn": Object.values(salesMethodData).reduce((sum, data) => sum + data.totalOrders, 0),
-                    "Tổng doanh thu": formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.totalRevenue, 0)),
-                  }
+                    "Đơn đã hoàn thành": Object.values(salesMethodData).reduce(
+                      (sum, data) => sum + data.completedOrders,
+                      0,
+                    ),
+                    "Doanh thu đã hoàn thành": formatCurrency(
+                      Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.completedRevenue,
+                        0,
+                      ),
+                    ),
+                    "Tổng đơn": Object.values(salesMethodData).reduce(
+                      (sum, data) => sum + data.totalOrders,
+                      0,
+                    ),
+                    "Tổng doanh thu": formatCurrency(
+                      Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.totalRevenue,
+                        0,
+                      ),
+                    ),
+                  },
                 ];
-                exportToExcel(dataWithSummary, `SalesChannel_${startDate}_to_${endDate}`);
+                exportToExcel(
+                  dataWithSummary,
+                  `SalesChannel_${startDate}_to_${endDate}`,
+                );
               }}
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
             >
@@ -2864,8 +2952,9 @@ export function SalesChartReport() {
         timeEnd.setHours(23, 59, 59, 999);
 
         // Group orders by date using EXACT same logic as dashboard
-        const dailyData: { [date: string]: { revenue: number; orders: number } } =
-          {};
+        const dailyData: {
+          [date: string]: { revenue: number; orders: number };
+        } = {};
 
         console.log("Time Analysis Debug:", {
           startDate,
@@ -2945,7 +3034,8 @@ export function SalesChartReport() {
       case "product":
         // Use the new productAnalysisData
         if (productAnalysisLoading) return [];
-        if (!productAnalysisData || !productAnalysisData.productStats) return [];
+        if (!productAnalysisData || !productAnalysisData.productStats)
+          return [];
 
         const productChartData = (productAnalysisData.productStats || [])
           .map((product: any) => ({
@@ -3125,7 +3215,7 @@ export function SalesChartReport() {
           customerData[customerId].orders += 1;
           customerData[customerId].totalAmount += orderSubtotal;
           customerData[customerId].discount += orderDiscount;
-          customerData[customerId].revenue += (orderTotal - orderDiscount);
+          customerData[customerId].revenue += orderTotal - orderDiscount;
           customerData[customerId].orderDetails.push(order);
 
           // Determine customer group based on total spending
@@ -3180,7 +3270,8 @@ export function SalesChartReport() {
       );
     }
 
-    const { productStats, totalRevenue, totalQuantity, totalProducts } = productAnalysisData;
+    const { productStats, totalRevenue, totalQuantity, totalProducts } =
+      productAnalysisData;
 
     const getSalesData = () => {
       return productStats || [];
@@ -3214,8 +3305,15 @@ export function SalesChartReport() {
                     "Số lượng bán": product.totalQuantity,
                     "Doanh thu": formatCurrency(product.totalRevenue),
                     "Số đơn hàng": product.orderCount || 0,
-                    "Giá trị đơn TB": formatCurrency(product.averageOrderValue || 0),
-                    "Mức độ bán": product.totalQuantity > 50 ? "Cao" : product.totalQuantity > 10 ? "Trung bình" : "Thấp",
+                    "Giá trị đơn TB": formatCurrency(
+                      product.averageOrderValue || 0,
+                    ),
+                    "Mức độ bán":
+                      product.totalQuantity > 50
+                        ? "Cao"
+                        : product.totalQuantity > 10
+                          ? "Trung bình"
+                          : "Thấp",
                   })),
                   // Add summary row
                   {
@@ -3224,12 +3322,21 @@ export function SalesChartReport() {
                     "Danh mục": "-",
                     "Số lượng bán": totalQuantity,
                     "Doanh thu": formatCurrency(totalRevenue),
-                    "Số đơn hàng": data.reduce((sum: number, product: any) => sum + (product.orderCount || 0), 0),
-                    "Giá trị đơn TB": formatCurrency(totalProducts > 0 ? totalRevenue / totalProducts : 0),
+                    "Số đơn hàng": data.reduce(
+                      (sum: number, product: any) =>
+                        sum + (product.orderCount || 0),
+                      0,
+                    ),
+                    "Giá trị đơn TB": formatCurrency(
+                      totalProducts > 0 ? totalRevenue / totalProducts : 0,
+                    ),
                     "Mức độ bán": "-",
-                  }
+                  },
                 ];
-                exportToExcel(dataWithSummary, `ProductAnalysis_${startDate}_to_${endDate}`);
+                exportToExcel(
+                  dataWithSummary,
+                  `ProductAnalysis_${startDate}_to_${endDate}`,
+                );
               }}
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
             >
@@ -3253,8 +3360,12 @@ export function SalesChartReport() {
                     <TableHead className="text-right">
                       {t("reports.totalRevenue")}
                     </TableHead>
-                    <TableHead className="text-right">{t("reports.orders")}</TableHead>
-                    <TableHead className="text-right">{t("reports.averageOrderValue")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("reports.orders")}
+                    </TableHead>
+                    <TableHead className="text-right">
+                      {t("reports.averageOrderValue")}
+                    </TableHead>
                     <TableHead className="text-center">Mức độ bán</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -3273,14 +3384,18 @@ export function SalesChartReport() {
                         <TableCell className="font-semibold text-green-600">
                           {formatCurrency(product.totalRevenue)}
                         </TableCell>
-                        <TableCell className="text-center">{product.orderCount || 0}</TableCell>
+                        <TableCell className="text-center">
+                          {product.orderCount || 0}
+                        </TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(product.averageOrderValue || 0)}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge
                             variant={
-                              (product.totalQuantity || 0) > 10 ? "default" : "outline"
+                              (product.totalQuantity || 0) > 10
+                                ? "default"
+                                : "outline"
                             }
                           >
                             {product.totalQuantity > 50
@@ -3362,7 +3477,8 @@ export function SalesChartReport() {
                     }
                     disabled={productCurrentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                  >>
+                  >
+                    {">"}
                   </button>
                   <button
                     onClick={() => setProductCurrentPage(totalPages)}
@@ -3509,7 +3625,7 @@ export function SalesChartReport() {
                         fontSize={12}
                         angle={-45}
                         textAnchor="end"
-                                height={80}
+                        height={80}
                         interval={0}
                       />
                       <YAxis stroke="#6b7280" fontSize={12} />
