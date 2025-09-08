@@ -22,7 +22,7 @@ export function usePOS() {
     mutationFn: async ({ paymentData }: { paymentData: any }) => {
       const orderNumber = `ORD-${Date.now()}`;
       const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-      
+
       // Calculate tax from products with afterTaxPrice
       let tax = 0;
       cart.forEach(item => {
@@ -33,7 +33,7 @@ export function usePOS() {
           tax += taxPerUnit * item.quantity;
         }
       });
-      
+
       const total = subtotal + tax;
 
       const orderData = {
@@ -101,12 +101,12 @@ export function usePOS() {
           total: item.total,
         })),
       };
-      
+
       setLastReceipt(receipt);
       updateActiveOrderCart([]);
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      
+
       // Dispatch events for real-time updates
       if (typeof window !== 'undefined') {
         const events = [
@@ -119,7 +119,7 @@ export function usePOS() {
         ];
         events.forEach(event => window.dispatchEvent(event));
       }
-      
+
       toast({
         title: "Đơn hàng hoàn tất",
         description: `Đơn hàng ${order.orderNumber} đã được xử lý thành công`,
@@ -173,80 +173,91 @@ export function usePOS() {
   };
 
   const addToCart = async (productId: number) => {
-    // Ensure we have a valid active order
-    const activeOrder = orders.find(order => order.id === activeOrderId);
-    if (!activeOrder) {
-      toast({
-        title: "Lỗi",
-        description: "Không tìm thấy đơn hàng hiện tại",
-        variant: "destructive",
-      });
+    if (typeof productId !== 'number') {
+      console.error('Invalid productId:', productId);
       return;
     }
 
-    try {
-      // Fetch product data by ID
-      const response = await fetch(`/api/products/${productId}`);
-      if (!response.ok) throw new Error('Product not found');
-      const product = await response.json();
+    console.log("usePOS: Adding product to cart:", productId);
 
+    try {
+      // Fetch product details
+      const response = await fetch(`/api/products/${productId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch product');
+      }
+
+      const product = await response.json();
       console.log("Fetched product for cart:", product);
 
-      const currentCart = activeOrder.cart || [];
-      const existingItem = currentCart.find(item => item.id === product.id);
-
-      // Check if product has stock tracking enabled and if so, check stock
+      // Check inventory
       if (product.trackInventory !== false && product.stock <= 0) {
+        console.warn(`Product ${product.name} is out of stock`);
         toast({
-          title: "Không thể thêm",
-          description: "Sản phẩm đã hết hàng",
+          title: "Hết hàng",
+          description: `${product.name} hiện đang hết hàng`,
           variant: "destructive",
         });
         return;
       }
 
-      let newCart;
+      // Find current cart for active order
+      const currentCart = activeOrderId && orders.find(o => o.id === activeOrderId)?.cart || cart;
+      const existingItem = currentCart.find(item => item.id === productId);
+
       if (existingItem) {
-        if (product.trackInventory !== false && existingItem.quantity >= product.stock) {
+        // Update quantity
+        updateQuantity(productId, existingItem.quantity + 1);
+        toast({
+          title: "Đã cập nhật",
+          description: `Đã tăng số lượng ${product.name}`,
+        });
+      } else {
+        // Add new item
+        const cartItem = {
+          id: product.id,
+          name: product.name,
+          price: product.price.toString(),
+          quantity: 1,
+          total: product.price.toString(),
+          stock: product.stock,
+          taxRate: product.taxRate?.toString() || "0",
+          afterTaxPrice: product.afterTaxPrice
+        };
+
+        console.log("Creating cart item:", cartItem);
+
+        if (activeOrderId) {
+          // Add to specific order
+          setOrders(prev => prev.map(order =>
+            order.id === activeOrderId
+              ? { ...order, cart: [...order.cart, cartItem] }
+              : order
+          ));
+        } else {
+          // Add to main cart
+          // This part might be problematic if `cart` is not a state variable that can be set.
+          // Assuming `cart` is derived from `orders` state, direct modification of `cart` is incorrect.
+          // The correct way is to update the `orders` state for the active order.
+          // If there's no active order, this logic needs clarification or a default behavior.
+          // For now, we assume activeOrderId is always set when this function is called correctly.
+          console.error("Attempted to add to cart without an active order.");
           toast({
-            title: "Không thể thêm",
-            description: "Đã đạt số lượng tối đa trong kho",
+            title: "Lỗi",
+            description: "Không có đơn hàng nào đang hoạt động",
             variant: "destructive",
           });
           return;
         }
-        newCart = currentCart.map(item =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-                total: (parseFloat(item.price) * (item.quantity + 1)).toFixed(2)
-              }
-            : item
-        );
-      } else {
-        const cartItem = {
-          id: product.id,
-          name: product.name,
-          price: parseFloat(product.price).toFixed(2),
-          quantity: 1,
-          total: parseFloat(product.price).toFixed(2),
-          stock: product.stock,
-          taxRate: product.taxRate || "0",
-          afterTaxPrice: product.afterTaxPrice || undefined
-        };
 
-        console.log("Creating cart item:", cartItem);
-        newCart = [...currentCart, cartItem];
+        // Show success toast once
+        toast({
+          title: "Đã thêm vào giỏ hàng",
+          description: `${product.name} đã được thêm vào đơn hàng`,
+        });
       }
-
-      updateActiveOrderCart(newCart);
-      toast({
-        title: "Đã thêm vào giỏ",
-        description: `${product.name} đã được thêm vào đơn hàng`,
-      });
     } catch (error) {
-      console.error("Error adding to cart:", error);
+      console.error('Failed to add product to cart:', error);
       toast({
         title: "Lỗi",
         description: "Không thể thêm sản phẩm vào giỏ hàng",
@@ -345,6 +356,7 @@ export function usePOS() {
       };
       return receipt;
     } catch (error) {
+      // The error toast is already handled in checkoutMutation's onError
       return null;
     }
   };

@@ -107,13 +107,8 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     console.log("Product afterTaxPrice is empty string?", product.afterTaxPrice === "");
 
     // Pass productId to onAddToCart as expected by the interface
+    // Toast notification will be handled by the usePOS hook
     onAddToCart(product.id);
-
-    // Trigger toast notification for successful add to cart
-    toast({
-      title: t('pos.addedToCartShort'),
-      description: `${product.name}${t('pos.hasBeenAddedToOrder')}`,
-    });
   };
   
   // Mock updateCart function to demonstrate the change
