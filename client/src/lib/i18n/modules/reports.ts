@@ -23,7 +23,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Dashboard metrics
     totalRevenue: "Tổng thu từ bán hàng",
-    totalSalesRevenue: "Tổng doanh thu",
+    salesReportTotalRevenue: "Tổng doanh thu bán hàng",
     totalOrders: "Tổng đơn hàng",
     totalQuantitySold: "Tổng số lượng bán",
     averageOrderValue: "Giá trị đơn hàng trung bình",
