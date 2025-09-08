@@ -1375,7 +1375,7 @@ export function EInvoiceModal({
           {/* Customer Information */}
           <div>
             <h3 className="text-base font-medium mb-4">
-              Thông tin khách hàng
+              {t("einvoice.customerInfo")}
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>

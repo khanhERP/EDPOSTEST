@@ -396,7 +396,7 @@ export interface ReportsTranslations {
   openingPrice: string;
   closingStock: string;
   closingValue: string;
-  
+
   // Sales level indicators
   salesLevel: string;
   high: string;
@@ -1893,8 +1893,8 @@ export interface AttendanceTranslations {
   effort: string;
   endeavor: string;
   attempt: string;
+  try: string;
   trial: string;
-  experiment: string;
   test: string;
   check: string;
   examination: string;
@@ -3440,7 +3440,7 @@ export interface CommonTranslations {
   startDate: string;
   endDate: string;
   dateRange: string;
-  
+
   // Status translations
   statuses: {
     // Order status
