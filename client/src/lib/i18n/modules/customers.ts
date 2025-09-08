@@ -134,6 +134,7 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     pointsUpdateFailed: "포인트 업데이트 실패",
     pointsUpdateError: "포인트 업데이트 중 오류가 발생했습니다",
     noRegisteredCustomers: "등록된 고객이 없습니다",
+    people: "명",
   },
   en: {
     title: "Customer Management",
@@ -268,6 +269,7 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     pointsUpdateFailed: "Points Update Failed",
     pointsUpdateError: "An error occurred while updating points",
     noRegisteredCustomers: "No registered customers",
+    people: "people",
   },
   vi: {
     title: "Quản lý khách hàng",
@@ -402,5 +404,6 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     pointsUpdateFailed: "Cập nhật điểm thất bại",
     pointsUpdateError: "Đã xảy ra lỗi khi cập nhật điểm",
     noRegisteredCustomers: "Chưa có khách hàng nào được đăng ký",
+    people: "người",
   },
 };
