@@ -370,7 +370,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     employeeCode: "Employee Code",
     employeeName: "Employee Name",
     invoiceSymbol: "Invoice Symbol",
-    
+    invoiceNumber: "Invoice Number",
+    itemsPerPage: "Items per page",
+    totalTax: "Total Tax",
+    grandTotal: "Grand Total",
     category: "Category",
     status: "Status",
     active: "Active",
