@@ -1012,7 +1012,7 @@ export default function SalesOrders() {
                             <div className="leading-tight">{t("common.invoiceNumber")}</div>
                           </th>
                           <th className="w-[200px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                            <div className="leading-tight">Ghi chú</div>
+                            <div className="leading-tight">{t("common.notes")}</div>
                           </th>
                           <th className="w-[100px] px-3 py-3 text-center font-medium text-sm text-gray-600">
                             <div className="leading-tight">Trạng thái</div>
