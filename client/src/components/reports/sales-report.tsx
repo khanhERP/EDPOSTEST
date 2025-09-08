@@ -634,7 +634,7 @@ export function SalesReport() {
                                   {getPaymentMethodLabel(payment.method)}
                                 </Badge>
                                 <span className="text-sm font-medium text-gray-700 bg-white px-2 py-1 rounded">
-                                  {t("common.code")}: {payment.method}
+                                  {t("reports.code")}: {payment.method}
                                 </span>
                               </div>
 

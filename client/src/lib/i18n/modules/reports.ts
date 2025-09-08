@@ -490,6 +490,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     clearFilter: "Xóa bộ lọc",
     exportData: "Xuất dữ liệu",
     percentage: "Tỷ lệ",
+    code: "Mã",
 
     // Data display
     noDataAvailable: "Không có dữ liệu",
@@ -982,6 +983,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     clearFilter: "필터 지우기",
     exportData: "데이터 내보내기",
     percentage: "비율",
+    code: "코드",
 
     // Data display
     noDataAvailable: "데이터 없음",
@@ -1481,6 +1483,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     clearFilter: "Clear Filter",
     exportData: "Export Data",
     percentage: "Percentage",
+    code: "Code",
 
     // Data display
     noDataAvailable: "No Data Available",
