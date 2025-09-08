@@ -3431,34 +3431,6 @@ export function SalesChartReport() {
     );
   };
 
-  // Chart configuration with consistent theme
-  const chartConfig = {
-    revenue: {
-      label: t("reports.revenue"),
-      color: "#10b981",
-    },
-    netRevenue: {
-      label: t("reports.netRevenue"),
-      color: "#3b82f6",
-    },
-    returnValue: {
-      label: t("reports.returnValue"),
-      color: "#ef4444",
-    },
-    quantity: {
-      label: t("reports.quantity"),
-      color: "#f59e0b",
-    },
-    profit: {
-      label: t("reports.profit"),
-      color: "#8b5cf6",
-    },
-    orders: {
-      label: t("reports.orders"),
-      color: "#06b6d4",
-    },
-  };
-
   const chartData = getChartData();
   console.log("Chart data for", analysisType, ":", chartData);
 import { useQuery, useQueryClient } from "@tanstack/react-query";
