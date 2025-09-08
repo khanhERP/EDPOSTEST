@@ -1000,7 +1000,7 @@ export default function SalesOrders() {
                             <div className="leading-tight">{t("common.paid")}</div>
                           </th>
                           <th className="w-[110px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                            <div className="leading-tight">Mã nhân viên</div>
+                            <div className="leading-tight">{t("common.employeeCode")}</div>
                           </th>
                           <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
                             <div className="leading-tight">Tên nhân viên</div>

@@ -563,6 +563,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     all: "Tất cả",
     none: "Không có",
     other: "Khác",
+    employeeCode: "Mã nhân viên",
     showVirtualKeyboard: "Hiện bàn phím ảo",
     hideVirtualKeyboard: "Ẩn bàn phím ảo",
     success: "Thành công",
