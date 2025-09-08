@@ -397,7 +397,7 @@ export function SalesReport() {
           </p>
           <Button onClick={handleRefresh} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
-            {t("tables.refresh")}
+            {t("reports.refresh")}
           </Button>
         </div>
       </CardContent>
@@ -475,7 +475,7 @@ export function SalesReport() {
                 className="flex items-center gap-2"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {t("tables.refresh")}
+                {t("reports.refresh")}
               </Button>
             </div>
           </div>
