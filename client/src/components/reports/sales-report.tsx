@@ -654,7 +654,7 @@ export function SalesReport() {
                               </div>
 
                               <div className="mt-2 flex items-center gap-2">
-                                <span className="text-xs text-gray-500">{t("common.percentage")}:</span>
+                                <span className="text-xs text-gray-500">{t("reports.percentage")}:</span>
                                 <span className="text-sm font-semibold text-purple-600">
                                   {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
                                 </span>
