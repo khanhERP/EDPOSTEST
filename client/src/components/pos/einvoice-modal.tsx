@@ -1568,7 +1568,7 @@ export function EInvoiceModal({
               ) : (
                 <>
                   <span className="mr-2">⏳</span>
-                  Phát hành sau
+                  {t("einvoice.publishLater")}
                 </>
               )}
             </Button>
