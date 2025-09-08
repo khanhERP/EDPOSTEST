@@ -1311,7 +1311,7 @@ export function EInvoiceModal({
       <DialogContent className="max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg">
-            Thông tin nhà cung cấp hóa đơn điện tử
+            {t("einvoice.dialogTitle")}
           </DialogTitle>
         </DialogHeader>
 

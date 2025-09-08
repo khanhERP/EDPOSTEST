@@ -3,6 +3,7 @@ import { EInvoiceTranslations } from "../types";
 export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
   ko: {
     title: "전자 인보이스 발행",
+    dialogTitle: "전자 인보이스 제공업체 정보",
     providerInfo: "전자 인보이스 제공업체 정보",
     providerUnit: "전자 인보이스 업체",
     selectProvider: "전자 인보이스 업체 선택",
@@ -27,6 +28,7 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
   },
   en: {
     title: "Issue Electronic Invoice",
+    dialogTitle: "Electronic Invoice Provider Information",
     providerInfo: "Electronic Invoice Provider Information",
     providerUnit: "E-Invoice Provider",
     selectProvider: "Select E-Invoice Provider",
@@ -51,6 +53,7 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
   },
   vi: {
     title: "Phát hành hóa đơn điện tử",
+    dialogTitle: "Thông tin nhà cung cấp hóa đơn điện tử",
     providerInfo: "Thông tin nhà cung cấp hóa đơn điện tử",
     providerUnit: "Đơn vị HĐĐT",
     selectProvider: "Chọn đơn vị HĐĐT",
