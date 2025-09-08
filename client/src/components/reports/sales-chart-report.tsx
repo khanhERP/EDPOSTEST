@@ -496,7 +496,7 @@ export function SalesChartReport() {
 
     // Calculate daily sales from filtered completed orders
     const dailySales: {
-      [date: string]: { orders: number; revenue: number; customers: number };
+      [date: string]: { orders: number; revenue: number; customers: number, discount: number };
     } = {};
 
     console.log("Processing filtered completed orders:", {
@@ -528,7 +528,7 @@ export function SalesChartReport() {
         const dateStr = orderDate.toISOString().split("T")[0];
 
         if (!dailySales[dateStr]) {
-          dailySales[dateStr] = { orders: 0, revenue: 0, customers: 0 };
+          dailySales[dateStr] = { orders: 0, revenue: 0, customers: 0, discount: 0 };
         }
 
         const orderTotal = Number(order.total || 0);
@@ -538,6 +538,7 @@ export function SalesChartReport() {
         dailySales[dateStr].orders += 1;
         dailySales[dateStr].revenue += revenue;
         dailySales[dateStr].customers += Number(order.customerCount || 1);
+        dailySales[dateStr].discount += discount;
 
         console.log("Processing order:", {
           id: order.id,
@@ -826,7 +827,7 @@ export function SalesChartReport() {
 
                         return paginatedEntries.map(([date, data]) => {
                           const paymentAmount = data.revenue * 1.05; // Thành tiền (bao gồm thuế và phí)
-                          const discount = data.revenue * 0.05; // Giảm giá (5% trung bình)
+                          const discount = data.discount; // Use the tracked discount
                           const actualRevenue = paymentAmount - discount; // Doanh thu = Thành tiền - Giảm giá
                           const tax = actualRevenue * 0.1; // Thuế tính trên doanh thu
                           const customerPayment = actualRevenue; // Khách thanh toán = doanh thu
@@ -1104,7 +1105,7 @@ export function SalesChartReport() {
                         <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
                           {formatCurrency(
                             Object.values(dailySales).reduce(
-                              (sum, data) => sum + data.revenue * 1.05 * 0.05,
+                              (sum, data) => sum + data.discount, // Use the tracked discount
                               0,
                             ),
                           )}
