@@ -19,6 +19,145 @@ import QRCodeLib from "qrcode";
 import type { Order, Table, Product, OrderItem } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+// OrderCard component - moved inside the same file
+interface OrderCardProps {
+  order: Order & { tableName?: string };
+  onStatusUpdate: (orderId: number, status: string) => void;
+  onViewDetails: (order: Order) => void;
+  onProcessPayment: (order: Order) => void;
+}
+
+function OrderCard({ order, onStatusUpdate, onViewDetails, onProcessPayment }: OrderCardProps) {
+  const { t } = useTranslation();
+
+  const getOrderStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { label: t('orders.status.pending'), variant: "secondary" as const },
+      confirmed: { label: t('orders.status.confirmed'), variant: "default" as const },
+      preparing: { label: t('orders.status.preparing'), variant: "destructive" as const },
+      ready: { label: t('orders.status.ready'), variant: "outline" as const },
+      served: { label: t('orders.status.served'), variant: "outline" as const },
+      paid: { label: t('orders.status.paid'), variant: "outline" as const },
+      cancelled: { label: t('orders.status.cancelled'), variant: "destructive" as const },
+    };
+
+    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+  };
+
+  const formatCurrency = (amount: number) => {
+    if (typeof amount !== 'number' || isNaN(amount)) {
+      return '0 ₫';
+    }
+    return `${Math.floor(amount).toLocaleString('vi-VN')} ₫`;
+  };
+
+  const formatTime = (dateString: string | Date) => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return date.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
+  const getNextStatus = (currentStatus: string) => {
+    switch (currentStatus) {
+      case 'pending': return 'confirmed';
+      case 'confirmed': return 'preparing';
+      case 'preparing': return 'ready';
+      case 'ready': return 'served';
+      case 'served': return 'paid';
+      default: return null;
+    }
+  };
+
+  const getStatusUpdateLabel = (currentStatus: string) => {
+    const nextStatus = getNextStatus(currentStatus);
+    if (!nextStatus) return '';
+    if (nextStatus === 'paid') return t('orders.payment');
+    return t(`orders.${nextStatus}`);
+  };
+
+  return (
+    <Card className="h-full flex flex-col transition-all duration-200 hover:shadow-lg border-l-4"
+          style={{ borderLeftColor: getOrderStatusBadge(order.status).color?.replace('bg-', '#') || '#777' }}>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-base font-semibold text-gray-900 truncate">
+              {order.orderNumber}
+            </CardTitle>
+            <CardDescription className="text-xs text-gray-600">
+              Bàn {order.tableName || order.tableId} • {formatTime(order.orderedAt)}
+            </CardDescription>
+          </div>
+          <Badge variant={getOrderStatusBadge(order.status).variant} className="ml-2 text-xs">
+            {getOrderStatusBadge(order.status).label}
+          </Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-0 pb-3 flex-1 flex flex-col">
+        <div className="space-y-2 text-xs text-gray-600 flex-1">
+          {order.customerName && (
+            <div className="flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              <span className="truncate">{order.customerName}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            <span>{order.customerCount || 1} người</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Tổng tiền:</span>
+            <span className="font-semibold text-green-600">
+              {formatCurrency(Number(order.total || 0))}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex gap-1.5 mt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onViewDetails(order)}
+            className="flex-1 text-xs h-8"
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            Chi tiết
+          </Button>
+
+          {order.status === 'served' ? (
+            <Button
+              size="sm"
+              onClick={() => onProcessPayment(order)}
+              className="flex-1 text-xs h-8 bg-green-600 hover:bg-green-700 text-white"
+            >
+              <CreditCard className="w-3 h-3 mr-1" />
+              Thanh toán
+            </Button>
+          ) : order.status !== 'paid' && order.status !== 'cancelled' && getNextStatus(order.status) && (
+            <Button
+              size="sm"
+              onClick={() => {
+                const nextStatus = getNextStatus(order.status);
+                if (nextStatus) {
+                  onStatusUpdate(order.id, nextStatus);
+                }
+              }}
+              className="flex-1 text-xs h-8"
+            >
+              <CheckCircle2 className="w-3 h-3 mr-1" />
+              {getStatusUpdateLabel(order.status)}
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
@@ -42,13 +181,12 @@ export function OrderManagement() {
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const [shouldOpenReceiptPreview, setShouldOpenReceiptPreview] = useState(false);
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(12);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<string>("all"); // State for status filter
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
@@ -2707,6 +2845,7 @@ export function OrderManagement() {
             setOrderForPayment(null);
             setOrderDetailsOpen(false);
             setSelectedOrder(null);
+            setShowReceiptPreview(false);
             setPreviewReceipt(null);
 
             // Only show receipt if explicitly provided and not already shown
@@ -2825,7 +2964,7 @@ export function OrderManagement() {
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={async () => {
-          console.log('🔴 Order Management: Closing final receipt modal safely');
+          console.log('✅ Order Management: Receipt modal closed safely with gradual state clearing');
 
           try {
             // Step 1: Close modal immediately
@@ -2867,8 +3006,6 @@ export function OrderManagement() {
                 detail: { source: 'receipt_modal_close', timestamp: new Date().toISOString() }
               }));
             }
-
-            console.log('✅ Order Management: Receipt modal closed safely with gradual state clearing');
 
           } catch (error) {
             console.error('❌ Error during receipt modal close:', error);
