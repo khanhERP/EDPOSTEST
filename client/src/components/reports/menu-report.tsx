@@ -557,7 +557,7 @@ function MenuReport() {
                           <div className="flex items-center gap-3 mt-1">
                             <span className="inline-flex items-center gap-1 text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-lg font-medium">
                               <Package className="w-3 h-3" />
-                              {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
+                              {(product.totalQuantity || 0).toLocaleString('vi-VN')} {t("reports.itemsSold") || "đã bán"}
                             </span>
                           </div>
                         </div>
@@ -610,7 +610,7 @@ function MenuReport() {
                           <div className="flex items-center gap-3 mt-1">
                             <span className="inline-flex items-center gap-1 text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded-lg font-medium">
                               <Package className="w-3 h-3" />
-                              {(product.totalQuantity || 0).toLocaleString('vi-VN')} đã bán
+                              {(product.totalQuantity || 0).toLocaleString('vi-VN')} {t("reports.itemsSold") || "đã bán"}
                             </span>
                           </div>
                         </div>
