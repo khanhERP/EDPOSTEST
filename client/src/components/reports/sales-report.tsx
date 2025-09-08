@@ -429,11 +429,11 @@ export function SalesReport() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="today">{t("reports.toDay")}</SelectItem>
-                    <SelectItem value="thisWeek">Tuần này</SelectItem>
-                    <SelectItem value="week">Tuần trước</SelectItem>
-                    <SelectItem value="thisMonth">Tháng này</SelectItem>
-                    <SelectItem value="month">Tháng trước</SelectItem>
-                    <SelectItem value="custom">{t("tables.custom")}</SelectItem>
+                    <SelectItem value="thisWeek">{t("reports.thisWeek")}</SelectItem>
+                    <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
+                    <SelectItem value="thisMonth">{t("reports.thisMonth")}</SelectItem>
+                    <SelectItem value="month">{t("reports.lastMonth")}</SelectItem>
+                    <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
