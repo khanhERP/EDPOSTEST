@@ -923,7 +923,7 @@ export default function SalesOrders() {
                       onClick={() => setShowBulkCancelDialog(true)}
                     >
                       <X className="w-4 h-4" />
-                      Hủy đơn ({selectedOrderIds.size})
+                      {t("common.cancelOrder")} ({selectedOrderIds.size})
                     </Button>
                     <Button
                       size="sm"
@@ -933,7 +933,7 @@ export default function SalesOrders() {
                       onClick={exportSelectedOrdersToExcel}
                     >
                       <Download className="w-4 h-4" />
-                      Xuất excel ({selectedOrderIds.size})
+                      {t("common.exportExcel")} ({selectedOrderIds.size})
                     </Button>
                   </div>
                 </div>
