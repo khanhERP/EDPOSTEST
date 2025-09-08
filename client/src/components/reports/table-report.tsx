@@ -561,7 +561,7 @@ export function TableReport() {
                 <TableHead>{t("reports.averageOrderValue")}</TableHead>
                 <TableHead>{t("reports.turnoverRate")}</TableHead>
                 <TableHead>{t("reports.peakTime")}</TableHead>
-                <TableHead>Số món bán</TableHead>
+                <TableHead>{t("reports.soldItems")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
