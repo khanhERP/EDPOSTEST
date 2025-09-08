@@ -292,6 +292,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     days90: "90일",
     days180: "180일",
     days365: "365일",
+
+    // Unit indicators
+    perUnit: "개당",
   },
   en: {
     loading: "Loading...",
@@ -522,6 +525,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     days90: "90 days",
     days180: "180 days",
     days365: "365 days",
+
+    // Unit indicators
+    perUnit: "per item",
   },
   vi: {
     loading: "Đang tải...",
@@ -750,6 +756,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       days90: "90 ngày",
       days180: "180 ngày",
       days365: "365 ngày",
+
+      // Unit indicators
+      perUnit: "món",
     },
   },
 };

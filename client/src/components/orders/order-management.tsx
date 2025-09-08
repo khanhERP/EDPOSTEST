@@ -2063,7 +2063,7 @@ export function OrderManagement() {
                                 </span>
                               </div>
                               <div className="text-xs text-gray-600 mt-1">
-                                {formatCurrency(Number(item.unitPrice || 0))}/món
+                                {formatCurrency(Number(item.unitPrice || 0))}/{t('common.perUnit')}
                               </div>
                               {(() => {
                                 // Calculate tax based on afterTaxPrice if available, otherwise use taxRate
