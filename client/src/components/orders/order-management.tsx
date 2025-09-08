@@ -2010,7 +2010,7 @@ export function OrderManagement() {
                         </Badge>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span>{t('common.einvoiceStatus')}</span>
+                        <span>{t('common.einvoiceStatusLabel')}</span>
                         <Badge variant={
                           selectedOrder.einvoiceStatus === 1 ? "default" :
                           selectedOrder.einvoiceStatus === 2 ? "destructive" :

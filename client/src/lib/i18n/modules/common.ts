@@ -218,7 +218,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     usageStatus: "사용 상태:",
 
     // E-invoice status
-    einvoiceStatus: "전자세금계산서 상태:",
+    einvoiceStatusLabel: "전자세금계산서 상태:",
     einvoiceStatus: {
       notPublished: "발행되지 않음",
       published: "발행됨",
@@ -448,7 +448,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     usageStatus: "Usage Status:",
 
     // E-invoice status
-    einvoiceStatus: "E-Invoice Status:",
+    einvoiceStatusLabel: "E-Invoice Status:",
     einvoiceStatus: {
       notPublished: "Not Published",
       published: "Published",
@@ -677,7 +677,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     usageStatus: "Trạng thái sử dụng:",
 
     // E-invoice status
-    einvoiceStatus: "Trạng thái hóa đơn điện tử:",
+    einvoiceStatusLabel: "Trạng thái hóa đơn điện tử:",
     einvoiceStatus: {
       notPublished: "Chưa phát hành",
       published: "Đã phát hành",
