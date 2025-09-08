@@ -7,6 +7,18 @@ export interface CommonTranslations {
   cancel: string;
   delete: string;
   edit: string;
+  export: string;
+  download: string;
+  upload: string;
+  refresh: string;
+  showVirtualKeyboard: string;
+  hideVirtualKeyboard: string;
+  creating: string;
+  help: string;
+  print: string;
+  import: string;
+  noData: string;
+  view: string;
   add: string;
   update: string;
   create: string;
