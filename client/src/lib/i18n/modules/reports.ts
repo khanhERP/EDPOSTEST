@@ -181,6 +181,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     orderReportByTransaction: "Báo cáo đơn hàng theo giao dịch",
     orderReportByProduct: "Báo cáo đơn hàng theo sản phẩm",
     orderCode: "Mã đơn hàng",
+    customerCode: "Mã khách hàng",
     orderTime: "Thời gian đặt",
     orderQuantity: "Số lượng đặt",
     orderValue: "Giá trị đơn hàng",
@@ -374,9 +375,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     costAnalysis: "Phân tích chi phí",
     stockMovement: "Di chuyển tồn kho",
     menuAnalysisDescription: "Phân tích hiệu suất menu và sản phẩm bán chạy",
-    revenueByCategory: "카테고리별 매출",
-    quantityByCategory: "카테고리별 수량",
-    itemCount: "제품 수",
+    revenueByCategory: "Doanh thu theo danh mục",
+    quantityByCategory: "Số lượng theo danh mục",
+    itemCount: "Số sản phẩm",
+    menuItemAnalysis: "Phân tích sản phẩm theo đơn hàng",
 
     // Menu report specific translations
     menuItems: "Sản phẩm",
@@ -871,6 +873,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueByCategory: "카테고리별 매출",
     quantityByCategory: "카테고리별 수량",
     itemCount: "제품 수",
+    menuItemAnalysis: "메뉴 항목 분석",
 
     // Table Analysis
 
@@ -1371,6 +1374,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueByCategory: "카테고리별 매출",
     quantityByCategory: "카테고리별 수량",
     itemCount: "제품 수",
+    menuItemAnalysis: "메뉴 항목 분석",
 
     // Table Analysis
 
