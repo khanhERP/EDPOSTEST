@@ -1324,7 +1324,7 @@ export function EInvoiceModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="invoiceProvider">
-                  Đơn vị HĐĐT
+                  {t("einvoice.providerUnit")}
                 </Label>
                 <Select
                   value={formData.invoiceProvider}
