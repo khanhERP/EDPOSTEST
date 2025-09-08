@@ -462,39 +462,7 @@ function MenuReport() {
             </>
           )}
 
-          {/* Category Performance Table - Only show when data exists */}
-          {menuAnalysis?.categoryStats && menuAnalysis.categoryStats.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px]">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4">{t("common.category") || "Danh mục"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.itemCount") || "Số sản phẩm"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.quantitySold") || "Số lượng"}</th>
-                    <th className="text-right py-2 px-4">{t("reports.totalRevenue") || "Doanh thu"}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {menuAnalysis.categoryStats.map((category, index) => (
-                    <tr key={category.categoryId || index} className="border-b">
-                      <td className="py-2 px-4 font-medium">
-                        {category.categoryName || `Danh mục ${category.categoryId}`}
-                      </td>
-                      <td className="py-2 px-4 text-right">
-                        {(category.productCount || 0).toLocaleString('vi-VN')}
-                      </td>
-                      <td className="py-2 px-4 text-right">
-                        {(category.totalQuantity || 0).toLocaleString('vi-VN')}
-                      </td>
-                      <td className="py-2 px-4 text-right font-medium">
-                        {formatCurrency(category.totalRevenue || 0)} ₫
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          
         </CardContent>
       </Card>
 
