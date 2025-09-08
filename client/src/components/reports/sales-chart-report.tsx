@@ -567,7 +567,7 @@ export function SalesChartReport() {
         // Fix discount calculation logic
         const orderTotal = Number(order.total || 0);
         const discount = Number(order.discount || 0); // Get actual discount from database
-        const revenue = orderTotal - discount; // Revenue is total minus discount
+        const revenue = orderTotal - discount; // Doanh thu = Thành tiền - Giảm giá
 
         dailySales[dateStr].orders += 1;
         dailySales[dateStr].revenue += revenue;
