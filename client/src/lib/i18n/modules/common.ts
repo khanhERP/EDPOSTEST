@@ -370,6 +370,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     phone: "Phone",
     cashier: "Cashier",
     salesType: "Sales Type",
+    dineIn: "Dine In",
+    tableOrder: "Table Order",
+    itemList: "Item List",
+    itemCode: "Item Code",
     
     orderList: "Order List",
     subtotalAmount: "Subtotal Amount",
