@@ -363,7 +363,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     discount: "Discount",
     items: " items",
     filters: "Filters",
-    OrderDetails: "Order Details",
+    orderDetails: "Order Details",
     orderCode: "Order Code",
     orderDate: "Order Date",
     customer: "Customer",
@@ -374,7 +374,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     tableOrder: "Table Order",
     itemList: "Item List",
     itemCode: "Item Code",
-    
+    totalAmount: "Total Amount",
+    taxVAT: "Tax VAT",
+    totalPayment: "Total Payment",
+    no
     orderList: "Order List",
     subtotalAmount: "Subtotal Amount",
     cancelOrder: "Cancel Order",
