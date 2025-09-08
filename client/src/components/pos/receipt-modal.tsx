@@ -520,7 +520,7 @@ export function ReceiptModal({
               )}
               {receipt?.customerTaxCode && (
                 <div className="flex justify-between text-sm">
-                  <span>Mã số thuế:</span>
+                  <span>{t("einvoice.taxCode")}</span>
                   <span>{receipt.customerTaxCode}</span>
                 </div>
               )}

@@ -3,6 +3,7 @@ import type { OrdersTranslations } from "../types";
 export const ordersTranslations: { [key: string]: OrdersTranslations } = {
   ko: {
     orderManagement: "주문 관리",
+    realTimeOrderStatus: "실시간 주문 현황을 확인하고 관리하세요",
     orderDetails: "주문 상세",
     orderNumber: "주문 번호",
     orderInfo: "주문 정보",
