@@ -2072,21 +2072,21 @@ export function OrderManagement() {
                                   const price = parseFloat(product.price);
                                   const itemTax = (afterTaxPrice - price) * Number(item.quantity || 0);
                                   return (
-                                    <div className="text-xs text-green-600">
-                                      Thuế: {formatCurrency(itemTax)}
+                                    <div className="text-xs text-green-600 mt-1">
+                                      {t('orders.tax')}: {formatCurrency(itemTax)}
                                     </div>
                                   );
                                 } else {
                                   return (
-                                    <div className="text-xs text-gray-500">
-                                      Thuế: {formatCurrency(0)}
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {t('orders.tax')}: {formatCurrency(0)}
                                     </div>
                                   );
                                 }
                               })()}
                               {item.notes && (
                                 <div className="text-xs text-blue-600 italic mt-1">
-                                  Ghi chú: {item.notes}
+                                  {t('common.notes')}: {item.notes}
                                 </div>
                               )}
                             </div>
