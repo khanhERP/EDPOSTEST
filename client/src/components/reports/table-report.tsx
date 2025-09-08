@@ -595,7 +595,7 @@ export function TableReport() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {stats.totalOrders} {t("common.count") || "đơn"}
+                        {stats.totalOrders} {t("orders.orderCount") || "đơn"}
                       </TableCell>
                       <TableCell className="font-semibold">
                         {formatCurrency(stats.totalRevenue)}
