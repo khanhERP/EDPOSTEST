@@ -257,11 +257,11 @@ function MenuReport() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">
-                Nhóm hàng
+                {t("reports.categoryGroup")}
               </label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn danh mục" />
+                  <SelectValue placeholder={t("common.selectCategory") || "Chọn danh mục"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("common.all") || "Tất cả"}</SelectItem>
