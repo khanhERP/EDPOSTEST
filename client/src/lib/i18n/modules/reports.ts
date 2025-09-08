@@ -407,6 +407,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noRevenueData: "Không có dữ liệu doanh thu",
     topProductsByQuantity: "Sản phẩm bán nhiều nhất theo số lượng",
     topProductsByRevenue: "Sản phẩm doanh thu cao nhất",
+    averagePrice: "Giá trung bình",
+    contribution: "% Đóng góp",
 
     // Table analysis
     tablePerformance: "Hiệu suất bàn",
@@ -911,6 +913,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noCategoryData: "카테고리 데이터 없음",
     noSalesData: "판매 데이터 없음",
     noRevenueData: "매출 데이터 없음",
+    productType: "상품 유형",
+    combo: "콤보",
+    product: "상품",
+    service: "서비스",
 
     // Table analysis
     tablePerformance: "테이블 성과",
@@ -1373,7 +1379,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     uniqueProducts: "Unique Products",
     categoryGroup: "Product Group",
     totalSalesRevenue: "Total Sales Revenue",
-    salesRevenue: "Sales Revenue", 
+    salesRevenue: "Sales Revenue",
     revenueAmount: "Revenue Amount",
     revenueTotal: "Revenue",
 
