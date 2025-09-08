@@ -854,7 +854,7 @@ export function ReceiptModal({
                 variant="outline"
                 className="ml-2"
               >
-                Đóng
+                {t("common.close")}
               </Button>
             </div>
           )}
