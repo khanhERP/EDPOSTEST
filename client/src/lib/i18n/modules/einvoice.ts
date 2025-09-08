@@ -29,6 +29,7 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     publishLater: "나중에 발행",
     virtualKeyboard: "가상 키보드 표시",
     email: "이메일",
+    customer: "고객",
   },
   en: {
     title: "Issue Electronic Invoice",
@@ -53,11 +54,12 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     publishing: "Publishing...",
     notes: "Ghi chú",
     newOrder: "+ Đơn mới",
-    checkout: "Thanh toán",
+    checkout: "Checkout",
     processing: "Processing...",
     publishLater: "Publish Later",
     virtualKeyboard: "Show Virtual Keyboard",
     email: "Email",
+    customer: "Customer",
   },
   vi: {
     title: "Phát hành hóa đơn điện tử",
@@ -93,5 +95,6 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     emailField: "Email",
     processing: "Đang xử lý...",
     publishLater: "Phát hành sau",
+    customer: "Khách hàng",
   },
 };

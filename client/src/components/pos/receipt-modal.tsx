@@ -514,7 +514,7 @@ export function ReceiptModal({
               </div>
               {receipt?.customerName && (
                 <div className="flex justify-between text-sm">
-                  <span>Khách hàng:</span>
+                  <span>{t("einvoice.customer")}:</span>
                   <span>{receipt.customerName}</span>
                 </div>
               )}
