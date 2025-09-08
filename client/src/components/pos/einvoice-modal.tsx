@@ -1546,12 +1546,12 @@ export function EInvoiceModal({
               {isPublishing ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  Đang phát hành...
+                  {t("einvoice.publishing")}
                 </>
               ) : (
                 <>
                   <span className="mr-2">✅</span>
-                  Phát hành
+                  {t("einvoice.publish")}
                 </>
               )}
             </Button>
@@ -1563,7 +1563,7 @@ export function EInvoiceModal({
               {isPublishing ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  Đang xử lý...
+                  {t("einvoice.publishing")}
                 </>
               ) : (
                 <>
