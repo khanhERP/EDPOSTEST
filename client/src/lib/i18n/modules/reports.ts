@@ -394,6 +394,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noCategoryData: "Không có dữ liệu danh mục",
     noSalesData: "Không có dữ liệu bán hàng",
     noRevenueData: "Không có dữ liệu doanh thu",
+    topProductsByQuantity: "Sản phẩm bán nhiều nhất theo số lượng",
+    topProductsByRevenue: "Sản phẩm doanh thu cao nhất",
 
     // Table analysis
     tablePerformance: "Hiệu suất bàn",
