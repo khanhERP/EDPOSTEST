@@ -206,7 +206,9 @@ export function TableReport() {
       totalOrders: validOrders.length,
       completedOrders: completedOrders.length,
       totalTables: validTables.length,
-      sampleOrder: completedOrders[0] || null
+      orderItemsCount: orderItems?.length || 0,
+      sampleOrder: completedOrders[0] || null,
+      sampleOrderItems: orderItems?.slice(0, 3) || []
     });
 
     // Initialize table stats map
@@ -247,10 +249,16 @@ export function TableReport() {
         // Count items sold from order_items if available
         if (orderItems && Array.isArray(orderItems)) {
           const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
-          const itemsCount = relatedOrderItems.reduce((sum, oi) => sum + (parseInt(oi.quantity) || 0), 0);
-          stats.itemsSold += itemsCount;
+          if (relatedOrderItems.length > 0) {
+            const itemsCount = relatedOrderItems.reduce((sum, oi) => sum + (parseInt(oi.quantity) || 0), 0);
+            stats.itemsSold += itemsCount;
+          } else {
+            // Fallback: estimate based on order total (each 50k = 1 item approximately)
+            const estimatedItems = Math.max(1, Math.floor(parseFloat(order.total || 0) / 50000));
+            stats.itemsSold += estimatedItems;
+          }
         } else {
-          // Fallback: estimate based on order total (each 50k = 1 item approximately)
+          // Fallback: estimate based on order total (each 50k = 1 item approximately)  
           const estimatedItems = Math.max(1, Math.floor(parseFloat(order.total || 0) / 50000));
           stats.itemsSold += estimatedItems;
         }
