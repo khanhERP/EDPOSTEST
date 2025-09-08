@@ -3434,63 +3434,6 @@ export function SalesChartReport() {
   const chartData = getChartData();
   console.log("Chart data for", analysisType, ":", chartData);
 
-  // Query orders by date range - using proper order data
-  const {
-    data: orders = [],
-    isLoading: ordersLoading,
-    error: ordersError,
-  } = useQuery({
-    queryKey: ["/api/orders/date-range", startDate, endDate],
-    queryFn: async () => {
-      try {
-        const response = await fetch(
-          `/api/orders/date-range/${startDate}/${endDate}`,
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Sales Chart - Orders loaded:", data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error("Sales Chart - Error fetching orders:", error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Query order items for all orders
-  const { data: orderItems = [], isLoading: orderItemsLoading } = useQuery({
-    queryKey: ["/api/order-items"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/order-items");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Sales Chart - Order items loaded:", data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error("Sales Chart - Error fetching order items:", error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: tables } = useQuery({
-    queryKey: ["/api/tables"],
-  });
-
-  // Combined loading state
-  const isLoading = ordersLoading || orderItemsLoading;
-
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
     staleTime: 5 * 60 * 1000,
