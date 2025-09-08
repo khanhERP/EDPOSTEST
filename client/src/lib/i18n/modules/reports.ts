@@ -379,6 +379,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     quantityByCategory: "Số lượng theo danh mục",
     itemCount: "Số sản phẩm",
     menuItemAnalysis: "Phân tích sản phẩm theo đơn hàng",
+    topProductsByQuantity: "Top sản phẩm bán nhiều nhất",
+    topProductsByRevenue: "Top sản phẩm doanh thu cao nhất",
 
     // Menu report specific translations
     menuItems: "Sản phẩm",
@@ -874,6 +876,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     quantityByCategory: "카테고리별 수량",
     itemCount: "제품 수",
     menuItemAnalysis: "메뉴 항목 분석",
+    topProductsByQuantity: "수량별 최고 판매 상품",
+    topProductsByRevenue: "매출별 최고 상품",
 
     // Table Analysis
 
@@ -1362,24 +1366,26 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productPerformance: "제품 성과",
     categoryPerformance: "카테고리 성과",
     topSellingItems: "최고 판매 상품",
-    topRevenueItems: "최고 매출 상품",
-    categoryBreakdown: "카테고리별 분석",
-    itemPerformance: "상품 성과",
-    salesTrend: "판매 트렌드",
-    profitMargin: "이rt률",
-    costAnalysis: "비용 분석",
-    stockMovement: "재고 움직임",
+    topRevenueItems: "Top Revenue Items",
+    categoryBreakdown: "Category Breakdown",
+    itemPerformance: "Item Performance",
+    salesTrend: "Sales Trend",
+    profitMargin: "Profit Margin",
+    costAnalysis: "Cost Analysis",
+    stockMovement: "Stock Movement",
     menuAnalysisDescription:
       "Detailed analysis of menu and product performance",
-    revenueByCategory: "카테고리별 매출",
-    quantityByCategory: "카테고리별 수량",
-    itemCount: "제품 수",
-    menuItemAnalysis: "메뉴 항목 분석",
+    revenueByCategory: "Revenue by Category",
+    quantityByCategory: "Quantity by Category",
+    itemCount: "Item Count",
+    menuItemAnalysis: "Menu Item Analysis",
+    topProductsByQuantity: "Top Products by Quantity",
+    topProductsByRevenue: "Top Products by Revenue",
 
     // Table Analysis
 
     // Missing keys for menu report
-    menuItems: "메뉴 항목",
+    menuItems: "Menu Items",
     itemsSold: "판매됨",
     revenueShare: "매출 점유율",
     salesShare: "판매 점유율",
