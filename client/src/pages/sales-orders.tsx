@@ -982,7 +982,7 @@ export default function SalesOrders() {
                             <div className="leading-tight">{t("orders.orderSource")}</div>
                           </th>
                           <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                            <div className="leading-tight">Mã khách hàng</div>
+                            <div className="leading-tight">{t("orders.customerCode")}</div>
                           </th>
                           <th className="w-[150px] px-3 py-3 text-left font-medium text-sm text-gray-600">
                             <div className="leading-tight">Tên khách hàng</div>
