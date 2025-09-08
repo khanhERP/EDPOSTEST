@@ -756,7 +756,7 @@ function MenuReport() {
                         {t("reports.quantitySold") || "Số lượng bán"}
                       </th>
                       <th className="text-right py-2 px-4">
-                        {t("reports.totalRevenue") || "Tổng doanh thu"}
+                        {t("reports.revenue") || "Tổng doanh thu"}
                       </th>
                       <th className="text-right py-2 px-4">
                         {t("reports.averagePrice") || "Giá trung bình"}

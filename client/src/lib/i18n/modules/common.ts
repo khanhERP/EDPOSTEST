@@ -377,7 +377,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     totalAmount: "Total Amount",
     taxVAT: "Tax VAT",
     totalPayment: "Total Payment",
-    no
+    notes: "Notes",
+    noNotes: "No Notes",
+    editOrder: "Edit Order",
+    publishEInvoice: "Publish E-Invoice",
+    printInvoice: "Print Invoice",
+
     orderList: "Order List",
     subtotalAmount: "Subtotal Amount",
     cancelOrder: "Cancel Order",
