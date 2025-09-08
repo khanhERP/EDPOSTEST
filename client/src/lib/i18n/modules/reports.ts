@@ -379,6 +379,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryBreakdown: "Phân tích theo danh mục",
     itemPerformance: "Hiệu suất sản phẩm",
     salesTrend: "Xu hướng bán hàng",
+    averagePrice: "Giá trung bình",
     profitMargin: "Tỷ suất lợi nhuận",
     costAnalysis: "Phân tích chi phí",
     stockMovement: "Di chuyển tồn kho",
