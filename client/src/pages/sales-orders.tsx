@@ -587,11 +587,16 @@ export default function SalesOrders() {
       return false;
     }
   }).sort((a: any, b: any) => {
-    // Sắp xếp theo ngày tạo mới nhất lên đầu
+    // Sắp xếp theo ngày tạo mới nhất lên đầu tiên
     const dateA = new Date(a.orderedAt || a.createdAt || a.date || a.invoiceDate);
     const dateB = new Date(b.orderedAt || b.createdAt || b.date || b.invoiceDate);
 
-    // Đảm bảo đơn hàng mới nhất (dateB) lớn hơn đơn hàng cũ hơn (dateA)
+    // Kiểm tra tính hợp lệ của ngày
+    if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+    if (isNaN(dateA.getTime())) return 1;
+    if (isNaN(dateB.getTime())) return -1;
+
+    // Sắp xếp giảm dần (mới nhất lên đầu)
     return dateB.getTime() - dateA.getTime();
   }) : [];
 
