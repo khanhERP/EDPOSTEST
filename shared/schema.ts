@@ -152,6 +152,7 @@ export const orders = pgTable("orders", {
   customerCount: integer("customer_count").default(1),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  discount: decimal("discount", { precision: 10, scale: 2 }).notNull().default("0.00"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method"), // "cash", "card", "mobile", "einvoice"
   paymentStatus: text("payment_status").notNull().default("pending"), // "pending", "paid", "refunded"
