@@ -3434,34 +3434,6 @@ export function SalesChartReport() {
   const chartData = getChartData();
   console.log("Chart data for", analysisType, ":", chartData);
 
-  const [analysisType, setAnalysisType] = useState("time");
-  const [concernType, setConcernType] = useState("time");
-
-  const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
-  );
-  const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
-  );
-  const [salesMethod, setSalesMethod] = useState("all");
-  const [salesChannel, setSalesChannel] = useState("all");
-
-  // Additional filters from legacy reports
-  const [selectedEmployee, setSelectedEmployee] = useState("all");
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [productSearch, setProductSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [productType, setProductType] = useState("all");
-  const [customerStatus, setCustomerStatus] = useState("all");
-
-  // Pagination state for product report
-  const [productCurrentPage, setProductCurrentPage] = useState(1);
-  const [productPageSize, setProductPageSize] = useState(15);
-
-  // Customer Report with Pagination State
-  const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
-  const [customerPageSize, setCustomerPageSize] = useState(15);
-
   // Query orders by date range - using proper order data
   const {
     data: orders = [],
