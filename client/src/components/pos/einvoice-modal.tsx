@@ -1487,7 +1487,7 @@ export function EInvoiceModal({
           {/* Total Amount Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="font-medium">Tổng tiền hóa đơn:</span>
+              <span className="font-medium">{t("einvoice.totalAmount")}</span>
               <span className="text-lg font-bold text-blue-600">
                 {Math.floor(total).toLocaleString("vi-VN")} ₫
               </span>
