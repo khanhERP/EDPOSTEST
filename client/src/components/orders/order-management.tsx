@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Eye, Clock, CheckCircle2, DollarSign, Users, CreditCard, QrCode, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Clock, CheckCircle2, DollarSign, Users, CreditCard, QrCode, Search, ChevronLeft, ChevronRight, RefreshCw, ClipboardList, Utensils } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
@@ -17,6 +17,7 @@ import { EInvoiceModal } from "@/components/pos/einvoice-modal";
 import { ReceiptModal } from "@/components/pos/receipt-modal";
 import QRCodeLib from "qrcode";
 import type { Order, Table, Product, OrderItem } from "@shared/schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -47,6 +48,7 @@ export function OrderManagement() {
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState<string>("all"); // State for status filter
 
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
@@ -1296,12 +1298,26 @@ export function OrderManagement() {
     }
   }, [orders]);
 
+  // Filter orders based on search term and status
+  const filteredOrders = React.useMemo(() => {
+    return allOrders.filter(order => {
+      const matchesSearchTerm = order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (order.tableId && getTableInfo(order.tableId)?.tableNumber.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchesStatusFilter = statusFilter === "all" || order.status === statusFilter;
+
+      return matchesSearchTerm && matchesStatusFilter;
+    });
+  }, [allOrders, searchTerm, statusFilter, getTableInfo]);
+
+
   // Pagination calculations
-  const totalOrders = allOrders.length;
+  const totalOrders = filteredOrders.length;
   const totalPages = Math.ceil(totalOrders / ordersPerPage);
   const startIndex = (currentPage - 1) * ordersPerPage;
   const endIndex = startIndex + ordersPerPage;
-  const currentOrders = allOrders.slice(startIndex, endIndex);
+  const currentOrders = filteredOrders.slice(startIndex, endIndex);
 
   // Reset to page 1 if current page exceeds total pages
   React.useEffect(() => {
@@ -1321,8 +1337,8 @@ export function OrderManagement() {
       console.log(`🔄 Preloading totals for ${preloadOrders.length} orders around current page ${currentPage}`);
 
       // Batch preload in background with low priority
-      const preloadBatch = preloadOrders.filter(order => 
-        !calculatedTotals.has(order.id) && 
+      const preloadBatch = preloadOrders.filter(order =>
+        !calculatedTotals.has(order.id) &&
         order.status !== 'cancelled' &&
         !currentOrders.some(currentOrder => currentOrder.id === order.id) // Don't duplicate current page
       );
@@ -1645,14 +1661,18 @@ export function OrderManagement() {
   // CONDITIONAL RENDER AFTER ALL HOOKS - Show loading state only if really needed
   if (ordersLoading && (!orders || orders.length === 0)) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
-            <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
+      <div className="space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              {t("orders.orderManagement")}
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              {t("orders.realTimeOrderStatus")}
+            </p>
           </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            0 {t('orders.ordersInProgress')}
+          <Badge variant="secondary" className="text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 whitespace-nowrap">
+            0 {t("orders.ordersInProgress")}
           </Badge>
         </div>
         <div className="flex items-center justify-center py-8">
@@ -1663,300 +1683,193 @@ export function OrderManagement() {
     );
   }
 
+  // Helper to get the next status for button display
+  const getNextStatus = (currentStatus: string) => {
+    switch (currentStatus) {
+      case 'pending': return 'confirmed';
+      case 'confirmed': return 'preparing';
+      case 'preparing': return 'ready';
+      case 'ready': return 'served';
+      case 'served': return 'paid'; // For payment button
+      default: return null;
+    }
+  };
+
+  // Helper to get the label for status update buttons
+  const getStatusUpdateLabel = (currentStatus: string) => {
+    const nextStatus = getNextStatus(currentStatus);
+    if (!nextStatus) return '';
+    if (nextStatus === 'paid') return t('orders.payment'); // Special case for payment
+    return t(`orders.${nextStatus}`);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full bg-gray-50">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng bàn</h2>
-          <p className="text-gray-600">Theo dõi trạng thái đơn hàng từ bàn trong thời gian thực</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {totalOrders} {t('orders.ordersInProgress')}
-          </Badge>
-          {totalPages > 1 && (
-            <Badge variant="outline" className="text-sm px-3 py-1">
-              Trang {currentPage}/{totalPages}
+      <div className="bg-white border-b px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              {t("orders.orderManagement")}
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              {t("orders.realTimeOrderStatus")}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+            <Badge
+              variant="secondary"
+              className="text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 whitespace-nowrap"
+            >
+              {totalOrders} {t("orders.ordersInProgress")}
             </Badge>
-          )}
+            {totalPages > 1 && (
+              <Badge variant="outline" className="text-xs sm:text-sm px-2 sm:px-3 py-1">
+                Trang {currentPage}/{totalPages}
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Orders Grid */}
-      {totalOrders === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('orders.noActiveOrders')}</h3>
-            <p className="text-gray-600">{t('orders.newOrdersWillAppearHere')}</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {currentOrders.map((order: Order) => {
-              const statusConfig = getOrderStatusBadge(order.status);
-              const tableInfo = getTableInfo(order.tableId);
+      {/* Search and Filter */}
+      <div className="bg-white border-b px-4 sm:px-6 py-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder={t("orders.searchOrders")}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-sm sm:text-base"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-48 min-w-0">
+              <SelectValue placeholder={t("orders.statusFilter")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("orders.allOrders")}</SelectItem>
+              <SelectItem value="pending">{t("orders.pending")}</SelectItem>
+              <SelectItem value="confirmed">{t("orders.confirmed")}</SelectItem>
+              <SelectItem value="preparing">{t("orders.preparing")}</SelectItem>
+              <SelectItem value="ready">{t("orders.ready")}</SelectItem>
+              <SelectItem value="served">{t("orders.served")}</SelectItem>
+              <SelectItem value="paid">{t("orders.paid")}</SelectItem>
+              <SelectItem value="cancelled">{t("orders.cancelled")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-              return (
-                <Card key={order.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg font-medium">
-                          {order.orderNumber}
-                        </CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {tableInfo?.tableNumber || t('orders.noTableInfo')}
-                        </p>
-                      </div>
-                      <Badge variant={statusConfig.variant}>
-                        {statusConfig.label}
-                      </Badge>
-                    </div>
-                  </CardHeader>
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        {totalOrders === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 px-4 py-12">
+            <ClipboardList className="w-16 h-16 mb-4 text-gray-300" />
+            <h3 className="text-lg font-medium mb-2 text-center">{t("orders.noActiveOrders")}</h3>
+            <p className="text-center text-sm sm:text-base">{t("orders.newOrdersWillAppearHere")}</p>
+          </div>
+        ) : (
+          <div className="p-4 sm:p-6 overflow-y-auto h-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 sm:gap-6">
+              {currentOrders.map((order: Order) => {
+                const tableInfo = getTableInfo(order.tableId);
+                return (
+                  <OrderCard
+                    key={order.id}
+                    order={{ ...order, tableName: tableInfo?.tableNumber }}
+                    onStatusUpdate={handleStatusUpdate}
+                    onViewDetails={(order) => {
+                      console.log('📋 Order Management: View details clicked for order:', order.id);
+                      setSelectedOrder(order);
+                      setOrderDetailsOpen(true);
+                    }}
+                    onProcessPayment={(order) => {
+                      console.log('💳 Order Management: Process payment clicked for order:', order.id);
+                      handlePaymentClick(order);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
-                <CardContent>
-                  <div className="space-y-3">
-                    {/* Order Info */}
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <Users className="w-4 h-4 mr-1" />
-                        {order.customerCount || 1} {t('orders.people')}
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {formatTime(order.orderedAt)}
-                      </div>
-                    </div>
-
-                    {/* Total Amount */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
-                      <span className="text-lg font-bold text-green-600">
-                        {(() => {
-                          // CRITICAL: For all final states (paid, cancelled), ALWAYS use stored total
-                          // These orders are finalized and should never be recalculated
-                          if (order.status === 'paid' || order.status === 'cancelled') {
-                            const storedTotal = Math.floor(Number(order.total || 0));
-                            console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - using STORED total ONLY: ${storedTotal}`);
-
-                            return (
-                              <span className="text-green-600">
-                                {formatCurrency(storedTotal)}
-                              </span>
-                            );
-                          }
-
-                          // For active orders only, use calculation logic
-                          const apiCalculatedTotal = (order as any).calculatedTotal;
-                          const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
-                          const hasCachedTotal = calculatedTotals.has(order.id);
-
-                          // Priority 1: Use API calculated total if available
-                          if (hasApiTotal) {
-                            const displayTotal = Math.floor(Number(apiCalculatedTotal));
-                            console.log(`💰 Active order ${order.orderNumber} - using API calculated total: ${displayTotal}`);
-                            return (
-                              <span className="text-green-600">
-                                {formatCurrency(displayTotal)}
-                              </span>
-                            );
-                          }
-
-                          // Priority 2: Use cached calculated total
-                          if (hasCachedTotal) {
-                            const cachedTotal = calculatedTotals.get(order.id)!;
-                            console.log(`💰 Active order ${order.orderNumber} - using cached calculated total: ${cachedTotal}`);
-                            return (
-                              <span className="text-green-600">
-                                {formatCurrency(cachedTotal)}
-                              </span>
-                            );
-                          }
-
-                          // Priority 3: Use stored total as fallback for active orders
-                          const storedTotal = Math.floor(Number(order.total || 0));
-                          if (storedTotal > 0) {
-                            console.log(`💰 Active order ${order.orderNumber} - using stored total as fallback: ${storedTotal}`);
-                            return (
-                              <span className="text-orange-600">
-                                {formatCurrency(storedTotal)}
-                              </span>
-                            );
-                          }
-
-                          // Show loading state only if no total is available
-                          console.log(`💰 Active order ${order.orderNumber} - showing loading state`);
-                          return (
-                            <span className="text-sm text-gray-500 italic animate-pulse">
-                              Đang tính...
-                            </span>
-                          );
-                        })()}
-                      </span>
-                    </div>
-
-                    {/* Customer Info */}
-                    {order.customerName && (
-                      <div className="text-sm">
-                        <span className="text-gray-600">{t('orders.customer')}: </span>
-                        <span className="font-medium">{order.customerName}</span>
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewOrder(order)}
-                        className="flex-1"
-                      >
-                        <Eye className="w-3 h-3 mr-1" />
-                        {t('orders.viewDetails')}
-                      </Button>
-
-                      {order.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'confirmed')}
-                          className="flex-1"
-                        >
-                          {t('orders.confirm')}
-                        </Button>
-                      )}
-
-                      {order.status === 'confirmed' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'preparing')}
-                          className="flex-1"
-                        >
-                          {t('orders.startCooking')}
-                        </Button>
-                      )}
-
-                      {order.status === 'preparing' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'ready')}
-                          className="flex-1"
-                        >
-                          {t('orders.ready')}
-                        </Button>
-                      )}
-
-                      {order.status === 'ready' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'served')}
-                          className="flex-1"
-                        >
-                          {t('orders.served')}
-                        </Button>
-                      )}
-
-                      {order.status === 'served' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handlePaymentClick(order)}
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                        >
-                          <CreditCard className="w-3 h-3 mr-1" />
-                          {t('orders.payment')}
-                        </Button>
-                      )}
-
-                      {(order.status === 'paid' || order.status === 'cancelled') && (
-                        <Badge variant="outline" className="flex-1 justify-center">
-                          {order.status === 'paid' ? t('orders.status.completed') : t('orders.status.cancelled')}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              );
-            })}
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6 p-4 sm:px-6">
+          <div className="text-sm text-gray-600">
+            Hiển thị {startIndex + 1}-{Math.min(endIndex, totalOrders)} của {totalOrders} đơn hàng
           </div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-gray-600">
-                Hiển thị {startIndex + 1}-{Math.min(endIndex, totalOrders)} của {totalOrders} đơn hàng
-              </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Trước
+            </Button>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="flex items-center gap-1"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Trước
-                </Button>
+            <div className="flex items-center gap-1">
+              {/* Show page numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNumber;
+                if (totalPages <= 5) {
+                  pageNumber = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNumber = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNumber = totalPages - 4 + i;
+                } else {
+                  pageNumber = currentPage - 2 + i;
+                }
 
-                <div className="flex items-center gap-1">
-                  {/* Show page numbers */}
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNumber;
-                    if (totalPages <= 5) {
-                      pageNumber = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNumber = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNumber = totalPages - 4 + i;
-                    } else {
-                      pageNumber = currentPage - 2 + i;
-                    }
+                return (
+                  <Button
+                    key={pageNumber}
+                    variant={currentPage === pageNumber ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNumber)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
 
-                    return (
-                      <Button
-                        key={pageNumber}
-                        variant={currentPage === pageNumber ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNumber)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNumber}
-                      </Button>
-                    );
-                  })}
-
-                  {totalPages > 5 && currentPage < totalPages - 2 && (
-                    <>
-                      <span className="px-2 text-gray-500">...</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(totalPages)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {totalPages}
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="flex items-center gap-1"
-                >
-                  Sau
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
+              {totalPages > 5 && currentPage < totalPages - 2 && (
+                <>
+                  <span className="px-2 text-gray-500">...</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {totalPages}
+                  </Button>
+                </>
+              )}
             </div>
-          )}
-        </>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1"
+            >
+              Sau
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Order Details Dialog */}
@@ -1973,7 +1886,7 @@ export function OrderManagement() {
             <ScrollArea className="max-h-[60vh]">
               <div className="space-y-4">
                 {/* Order Info */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-medium mb-2">{t('orders.orderInfo')}</h4>
                     <div className="space-y-1 text-sm">
@@ -2696,26 +2609,15 @@ export function OrderManagement() {
                     {qrLoading && (
                       <div className="ml-auto">
                         <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
-                      </div>
-                    )}
-                  </Button>
-                </div>
-              </div>
+                      </div>            )
+          }
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setMixedPaymentOpen(false)}>
-                  {t('common.cancel')}
-                </Button>
-                <Button
-                  onClick={() => setMixedPaymentOpen(true)}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  {t('orders.mixedPaymentTitle')}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setMixedPaymentOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+          </div>
+        </div>
       </Dialog>
 
       {/* Receipt Modal - Step 1: "Xem trước hóa đơn" */}
