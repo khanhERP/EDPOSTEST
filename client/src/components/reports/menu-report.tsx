@@ -759,7 +759,7 @@ function MenuReport() {
                         {t("reports.totalRevenue") || "Tổng doanh thu"}
                       </th>
                       <th className="text-right py-2 px-4">
-                        {t("common.price") || "Giá trung bình"}
+                        {t("reports.averagePrice") || "Giá trung bình"}
                       </th>
                       <th className="text-right py-2 px-4">% Đóng góp</th>
                     </tr>
