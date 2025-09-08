@@ -25,6 +25,9 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     notes: "Ghi chú",
     newOrder: "+ Đơn mới",
     checkout: "Thanh toán",
+    processing: "처리 중...",
+    publishLater: "나중에 발행",
+    virtualKeyboard: "가상 키보드 표시",
   },
   en: {
     title: "Issue Electronic Invoice",
@@ -50,6 +53,9 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     notes: "Ghi chú",
     newOrder: "+ Đơn mới",
     checkout: "Thanh toán",
+    processing: "Processing...",
+    publishLater: "Publish Later",
+    virtualKeyboard: "Show Virtual Keyboard",
   },
   vi: {
     title: "Phát hành hóa đơn điện tử",

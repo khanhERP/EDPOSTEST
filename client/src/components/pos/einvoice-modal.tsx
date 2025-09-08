@@ -1503,7 +1503,7 @@ export function EInvoiceModal({
               className={`${showVirtualKeyboard ? "bg-blue-100 border-blue-300" : ""}`}
             >
               <Keyboard className="w-4 h-4 mr-2" />
-              {showVirtualKeyboard ? "Ẩn bàn phím" : "Hiện bàn phím ảo"}
+              {showVirtualKeyboard ? "Ẩn bàn phím" : t("einvoice.virtualKeyboard")}
             </Button>
           </div>
 
