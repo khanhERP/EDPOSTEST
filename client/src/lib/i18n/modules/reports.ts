@@ -417,7 +417,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     averageRevenue: "Doanh thu trung bình",
     peakHours: "Giờ cao điểm",
     revenuePerTable: "Doanh thu mỗi bàn",
-    ordersPerTable: "Đn hàng mỗi bàn",
+    ordersPerTable: "Số đơn hàng mỗi bàn",
 
     // Sales report specific
     salesReportDescription: "Phân tích chi tiết về doanh số bán hàng",
@@ -886,6 +886,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryBreakdown: "카테고리별 분석",
     itemPerformance: "상품 성과",
     salesTrend: "판매 트렌드",
+    averagePrice: "평균 가격",
     profitMargin: "이rt률",
     costAnalysis: "비용 분석",
     stockMovement: "재고 움직임",
@@ -1400,6 +1401,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryBreakdown: "Category Breakdown",
     itemPerformance: "Item Performance",
     salesTrend: "Sales Trend",
+    averagePrice: "Average Price",
     profitMargin: "Profit Margin",
     costAnalysis: "Cost Analysis",
     stockMovement: "Stock Movement",
