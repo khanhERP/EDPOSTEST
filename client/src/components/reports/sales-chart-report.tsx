@@ -524,6 +524,7 @@ export function SalesChartReport() {
         revenue: number;
         customers: number;
         discount: number;
+        tax: number;
       };
     } = {};
 
@@ -561,18 +562,21 @@ export function SalesChartReport() {
             revenue: 0,
             customers: 0,
             discount: 0,
+            tax: 0,
           };
         }
 
         // Fix discount calculation logic
         const orderTotal = Number(order.total || 0);
         const discount = Number(order.discount || 0); // Get actual discount from database
+        const tax = Number(order.tax || 0); // Ensure tax defaults to 0
         const revenue = orderTotal - discount; // Doanh thu = Thành tiền - Giảm giá
 
         dailySales[dateStr].orders += 1;
         dailySales[dateStr].revenue += revenue;
         dailySales[dateStr].customers += Number(order.customerCount || 1);
         dailySales[dateStr].discount += discount;
+        dailySales[dateStr].tax += tax;
 
         console.log("Processing order:", {
           id: order.id,
@@ -888,7 +892,7 @@ export function SalesChartReport() {
                           const paymentAmount = data.revenue * 1.05; // Thành tiền (bao gồm thuế và phí)
                           const discount = data.discount; // Use the tracked discount
                           const actualRevenue = paymentAmount - discount; // Doanh thu = Thành tiền - Giảm giá
-                          const tax = actualRevenue * 0.1; // Thuế tính trên doanh thu
+                          const tax = data.tax || 0; // Use stored tax, default to 0
                           const customerPayment = actualRevenue; // Khách thanh toán = doanh thu
 
                           // Get transactions for this date
@@ -1180,7 +1184,7 @@ export function SalesChartReport() {
                         <TableCell className="text-right border-r min-w-[120px] px-4">
                           {formatCurrency(
                             Object.values(dailySales).reduce(
-                              (sum, data) => sum + data.revenue * 0.1,
+                              (sum, data) => sum + (data.tax || 0),
                               0,
                             ),
                           )}
