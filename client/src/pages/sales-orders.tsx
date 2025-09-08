@@ -1407,7 +1407,7 @@ export default function SalesOrders() {
                                                 disabled={selectedInvoice?.status === 'cancelled' || cancelOrderMutation.isPending}
                                               >
                                                 <X className="w-4 h-4" />
-                                                {cancelOrderMutation.isPending ? 'Đang hủy...' : 'Hủy đơn'}
+                                                {cancelOrderMutation.isPending ? 'Đang hủy...' : t("common.cancelOrder")}
                                               </Button>
                                               {!isEditing ? (
                                                 <>

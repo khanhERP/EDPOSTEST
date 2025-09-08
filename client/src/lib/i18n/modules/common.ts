@@ -639,6 +639,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     cashPayment: "Tiền mặt",
     bankTransfer: "Chuyển khoản",
     qrPayment: "QR Code InfoCAMS",
+    cancelOrder: "Hủy đơn",
     editOrder: "Sửa đơn",
     publishEInvoice: "Phát hành HĐ điện tử",
     printInvoice: "In hóa đơn",
