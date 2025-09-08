@@ -1,0 +1,2905 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Eye, Clock, CheckCircle2, DollarSign, Users, CreditCard, QrCode, Search, ChevronLeft, ChevronRight, RefreshCw, ClipboardList, Utensils } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/lib/i18n";
+import { apiRequest } from "@/lib/queryClient";
+import { PaymentMethodModal } from "@/components/pos/payment-method-modal";
+import { EInvoiceModal } from "@/components/pos/einvoice-modal";
+import { ReceiptModal } from "@/components/pos/receipt-modal";
+import QRCodeLib from "qrcode";
+import type { Order, Table, Product, OrderItem } from "@shared/schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+export function OrderManagement() {
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [orderForPayment, setOrderForPayment] = useState<Order | null>(null);
+  const [paymentMethodsOpen, setPaymentMethodsOpen] = useState(false);
+  const [showQRPayment, setShowQRPayment] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
+  const [pointsPaymentOpen, setPointsPaymentOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [pointsAmount, setPointsAmount] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
+  const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
+  const [shouldOpenReceiptPreview, setShouldOpenReceiptPreview] = useState(false);
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(12);
+  const { toast } = useToast();
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState<string>("all"); // State for status filter
+
+  // Effect to handle opening the receipt preview modal
+  useEffect(() => {
+    if (shouldOpenReceiptPreview && previewReceipt && orderForPayment) {
+      console.log('🚀 Receipt preview modal should now be open');
+      setShowReceiptPreview(true);
+      setShouldOpenReceiptPreview(false); // Reset the flag
+    }
+  }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
+
+  // Prevent automatic receipt modal reopening after payment completion
+  useEffect(() => {
+    if (showReceiptModal && selectedReceipt && !orderForPayment) {
+      console.log('🔒 Order Management: Preventing receipt modal from reopening after payment completion');
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
+    }
+  }, [showReceiptModal, selectedReceipt, orderForPayment]);
+
+  // Query orders by date range - filter only table orders
+  const { data: orders, isLoading: ordersLoading } = useQuery({
+    queryKey: ['/api/orders', 'table'],
+    refetchInterval: 2000, // Faster polling - every 2 seconds
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchIntervalInBackground: true, // Continue refetching in background
+    staleTime: 0, // Always consider data fresh to force immediate updates
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/orders?salesChannel=table');
+      if (!response.ok) {
+        throw new Error('Failed to fetch table orders');
+      }
+      const data = await response.json();
+      console.log(`🔍 DEBUG: Table orders query completed:`, {
+        ordersCount: data?.length || 0,
+        timestamp: new Date().toISOString(),
+        tableOrders: data?.filter((o: any) => o.salesChannel === 'table').length || 0,
+        firstFewOrders: data?.slice(0, 3)?.map((o: any) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          salesChannel: o.salesChannel,
+          tableId: o.tableId,
+          storedTotal: o.total,
+          calculatedTotal: o.calculatedTotal
+        }))
+      });
+      // Filter to ensure only table orders are returned
+      return Array.isArray(data) ? data.filter((order: any) => order.salesChannel === 'table') : [];
+    },
+    onError: (error) => {
+      console.error(`❌ DEBUG: Table orders query onError:`, error);
+    }
+  });
+
+  // Create a map to store calculated totals for orders with items
+  const [calculatedTotals, setCalculatedTotals] = useState<Map<number, number>>(new Map());
+
+  const { data: tables } = useQuery({
+    queryKey: ['/api/tables'],
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ['/api/products'],
+  });
+
+  const { data: customers } = useQuery({
+    queryKey: ['/api/customers'],
+    enabled: pointsPaymentOpen,
+  });
+
+  const { data: orderItems, isLoading: orderItemsLoading } = useQuery({
+    queryKey: ['/api/order-items', selectedOrder?.id],
+    enabled: !!selectedOrder?.id && orderDetailsOpen,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    gcTime: 20 * 60 * 1000, // Keep in cache for 20 minutes
+    queryFn: async () => {
+      if (!selectedOrder?.id) return [];
+      try {
+        const response = await apiRequest('GET', `/api/order-items/${selectedOrder.id}`);
+        if (!response.ok) {
+          console.error(`API error fetching order items: ${response.status} ${response.statusText}`);
+          return [];
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching order items:', error);
+        return [];
+      }
+    },
+  });
+
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: ({ orderId, status }: { orderId: number; status: string }) =>
+      apiRequest('PUT', `/api/orders/${orderId}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      toast({
+        title: t('common.success'),
+        description: t('orders.orderStatusUpdated'),
+      });
+    },
+    onError: () => {
+      toast({
+        title: t('common.error'),
+        description: t('orders.orderStatusUpdateFailed'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const completePaymentMutation = useMutation({
+    mutationFn: async ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) => {
+      console.log('🎯 completePaymentMutation called - using centralized payment completion');
+      console.log('📋 Order Management: Starting payment completion for order:', orderId);
+      return await completeOrderPayment(orderId, { paymentMethod });
+    },
+    onSuccess: async (result, variables) => {
+      console.log('🎯 Order Management completePaymentMutation.onSuccess called');
+
+      // Force immediate refresh
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
+
+      // Close ALL modals immediately and permanently
+      setOrderDetailsOpen(false);
+      setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      setSelectedOrder(null);
+      setOrderForPayment(null);
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
+
+      toast({
+        title: 'Thanh toán thành công',
+        description: 'Đơn hàng đã được thanh toán thành công',
+      });
+
+      // Dispatch UI refresh events
+      if (typeof window !== 'undefined') {
+        const events = [
+          new CustomEvent('orderStatusUpdated', {
+            detail: {
+              orderId: variables.orderId,
+              status: 'paid',
+              timestamp: new Date().toISOString()
+            }
+          }),
+          new CustomEvent('paymentCompleted', {
+            detail: {
+              orderId: variables.orderId,
+              paymentMethod: variables.paymentMethod,
+              timestamp: new Date().toISOString()
+            }
+          })
+        ];
+
+        events.forEach(event => {
+          window.dispatchEvent(event);
+        });
+      }
+
+      console.log('✅ Order Management: Payment completed, all modals permanently closed');
+    },
+    onError: (error) => {
+      console.log('❌ Order Management completePaymentMutation.onError called:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hoàn tất thanh toán',
+        variant: "destructive",
+      });
+      setOrderForPayment(null);
+    },
+  });
+
+  const pointsPaymentMutation = useMutation({
+    mutationFn: async ({ customerId, points, orderId, paymentMethod, remainingAmount }: {
+      customerId: number;
+      points: number;
+      orderId: number;
+      paymentMethod?: string;
+      remainingAmount?: number;
+    }) => {
+      // First redeem points
+      await apiRequest('POST', '/api/customers/redeem-points', {
+        customerId,
+        points
+      });
+
+      // Then mark order as paid
+      await apiRequest('PUT', `/api/orders/${orderId}/status`, {
+        status: 'paid',
+        paymentMethod: paymentMethod || 'points',
+        customerId,
+        remainingAmount: remainingAmount || 0
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      setOrderDetailsOpen(false);
+      setPointsPaymentOpen(false);
+      setSelectedCustomer(null);
+      setPointsAmount("");
+      setSearchTerm("");
+      toast({
+        title: t('common.success'),
+        description: t('orders.pointsPaymentTitle'),
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hoàn tất thanh toán bằng điểm',
+        variant: "destructive",
+      });
+    },
+  });
+
+  const mixedPaymentMutation = useMutation({
+    mutationFn: async ({ customerId, points, orderId, paymentMethod }: {
+      customerId: number;
+      points: number;
+      orderId: number;
+      paymentMethod: string;
+    }) => {
+      // First redeem all available points
+      await apiRequest('POST', '/api/customers/redeem-points', {
+        customerId,
+        points
+      });
+
+      // Then mark order as paid with mixed payment
+      await apiRequest('PUT', `/api/orders/${orderId}/status`, {
+        status: 'paid',
+        paymentMethod: `points + ${paymentMethod}`,
+        customerId
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      setOrderDetailsOpen(false);
+      setMixedPaymentOpen(false);
+      setMixedPaymentData(null);
+      setSelectedCustomer(null);
+      setPointsAmount("");
+      setSearchTerm("");
+      toast({
+        title: 'Thanh toán thành công',
+        description: 'Đơn hàng đã được thanh toán bằng điểm + tiền mặt/chuyển khoản',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hoàn tất thanh toán hỗn hợp',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const getOrderStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { label: t('orders.status.pending'), variant: "secondary" as const, color: "bg-yellow-500" },
+      confirmed: { label: t('orders.status.confirmed'), variant: "default" as const, color: "bg-blue-500" },
+      preparing: { label: t('orders.status.preparing'), variant: "destructive" as const, color: "bg-orange-500" },
+      ready: { label: t('orders.status.ready'), variant: "outline" as const, color: "bg-green-500" },
+      served: { label: t('orders.status.served'), variant: "outline" as const, color: "bg-green-600" },
+      paid: { label: t('orders.status.paid'), variant: "outline" as const, color: "bg-gray-500" },
+      cancelled: { label: t('orders.status.cancelled'), variant: "destructive" as const, color: "bg-red-500" },
+    };
+
+    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+  };
+
+  const getTableInfo = (tableId: number) => {
+    if (!tables) return null;
+    return (tables as Table[]).find((table: Table) => table.id === tableId);
+  };
+
+  const getProductInfo = (productId: number) => {
+    if (!products) return null;
+    return (products as Product[]).find((product: Product) => product.id === productId);
+  };
+
+  // CENTRALIZED payment completion function - all payment flows go through here
+  const completeOrderPayment = async (orderId: number, paymentData: any) => {
+    console.log('🎯 CENTRALIZED Payment Completion - Order ID:', orderId, 'Payment Data:', paymentData);
+
+    try {
+      // Step 1: Update order status to 'paid' - THIS IS THE CRITICAL STEP
+      console.log('📋 Step 1: Updating order status to PAID for order:', orderId);
+
+      console.log('🔍 API Call Details:', {
+        url: `/api/orders/${orderId}/status`,
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'paid' })
+      });
+
+      const statusResponse = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid' });
+
+      console.log('🔍 API Response Status:', statusResponse.status, statusResponse.statusText);
+
+      if (!statusResponse.ok) {
+        const errorText = await statusResponse.text();
+        console.error('❌ API Response Error:', errorText);
+        throw new Error(`Failed to update order status: ${errorText}`);
+      }
+
+      const updatedOrder = await statusResponse.json();
+      console.log('✅ Step 1 COMPLETED: Order status updated to PAID:', {
+        orderId: updatedOrder.id,
+        orderNumber: updatedOrder.orderNumber,
+        tableId: updatedOrder.tableId,
+        status: updatedOrder.status,
+        paidAt: updatedOrder.paidAt,
+        updated: updatedOrder.updated,
+        previousStatus: updatedOrder.previousStatus
+      });
+
+      // Step 2: Update additional payment details
+      console.log('📋 Step 2: Updating payment details for order:', orderId);
+
+      const paymentDetailsResponse = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: paymentData.paymentMethod || 'cash',
+          einvoiceStatus: paymentData.einvoiceStatus || 0,
+          paidAt: new Date().toISOString(),
+          invoiceNumber: paymentData.invoiceNumber || null,
+          symbol: paymentData.symbol || null,
+          templateNumber: paymentData.templateNumber || null
+        })
+      });
+
+      if (!paymentDetailsResponse.ok) {
+        console.warn('⚠️ Step 2 FAILED: Could not update payment details, but order is already PAID');
+      } else {
+        console.log('✅ Step 2 COMPLETED: Payment details updated');
+      }
+
+      // Step 3: Refresh UI and trigger events
+      console.log('📋 Step 3: Refreshing UI and triggering events');
+
+      // Force immediate refresh with multiple attempts (5 times)
+      for (let i = 0; i < 5; i++) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+        ]);
+
+        if (i < 4) {
+          await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms between attempts
+        }
+      }
+
+      // Force additional refreshes with different intervals
+      const intervals = [300, 600, 1000, 1500, 2000];
+      intervals.forEach((delay, index) => {
+        setTimeout(async () => {
+          await Promise.all([
+            queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+            queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+          ]);
+          console.log(`🔄 Delayed refresh ${index + 1} completed after ${delay}ms`);
+        }, delay);
+      });
+
+      // Dispatch events for real-time updates
+      if (typeof window !== 'undefined') {
+        const events = [
+          new CustomEvent('orderStatusUpdated', {
+            detail: {
+              orderId,
+              status: 'paid',
+              previousStatus: updatedOrder.previousStatus || 'served',
+              tableId: updatedOrder.tableId,
+              timestamp: new Date().toISOString()
+            }
+          }),
+          new CustomEvent('refreshOrders', {
+            detail: { immediate: true, orderId, newStatus: 'paid' }
+          }),
+          new CustomEvent('refreshTables', {
+            detail: { immediate: true, tableId: updatedOrder.tableId }
+          }),
+          new CustomEvent('paymentCompleted', {
+            detail: { orderId, tableId: updatedOrder.tableId }
+          }),
+          new CustomEvent('tableStatusUpdate', {
+            detail: { tableId: updatedOrder.tableId, checkForRelease: true }
+          }),
+          new CustomEvent('forceRefresh', {
+            detail: { reason: 'payment_completed', orderId }
+          })
+        ];
+
+        events.forEach(event => {
+          console.log("📡 Dispatching event:", event.type, event.detail);
+          window.dispatchEvent(event);
+        });
+      }
+
+      console.log('✅ Step 3 COMPLETED: UI refreshed and events dispatched');
+      console.log('🎉 PAYMENT COMPLETION SUCCESS - Order', orderId, 'is now PAID');
+
+      return { success: true, order: updatedOrder };
+
+    } catch (error) {
+      console.error('❌ PAYMENT COMPLETION FAILED for order', orderId, ':', error);
+      throw error;
+    }
+  };
+
+  // Handle E-invoice confirmation and complete payment
+  const handleEInvoiceConfirm = async (invoiceData: any) => {
+    console.log('🎯 Order Management handleEInvoiceConfirm called with data:', invoiceData);
+
+    if (!orderForPayment) {
+      console.error('❌ No order for payment found');
+      toast({
+        title: 'Lỗi',
+        description: 'Không tìm thấy đơn hàng để thanh toán',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      // Use centralized payment completion function
+      await completeOrderPayment(orderForPayment.id, {
+        paymentMethod: invoiceData.originalPaymentMethod || 'einvoice',
+        einvoiceStatus: invoiceData.publishLater ? 0 : 1,
+        invoiceNumber: invoiceData.invoiceNumber,
+        symbol: invoiceData.symbol,
+        templateNumber: invoiceData.templateNumber
+      });
+
+      toast({
+        title: 'Thành công',
+        description: invoiceData.publishLater
+          ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
+          : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
+      });
+
+      // Close all modals immediately and permanently
+      setShowEInvoiceModal(false);
+      setShowPaymentMethodModal(false);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      setOrderDetailsOpen(false);
+      setSelectedOrder(null);
+      setOrderForPayment(null);
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
+
+      // DO NOT show receipt modal automatically after E-Invoice
+      // User can access receipt through other means if needed
+      console.log('✅ Order Management: Payment completed, all modals closed');
+
+    } catch (error) {
+      console.error('❌ Error during payment completion:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+
+      // Reset states
+      setOrderForPayment(null);
+      setShowEInvoiceModal(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    if (typeof amount !== 'number' || isNaN(amount)) {
+      return '0 ₫';
+    }
+    // Always round to integer and format without decimals
+    return `${Math.floor(amount).toLocaleString('vi-VN')} ₫`;
+  };
+
+  // Memoize expensive calculations - using EXACT same logic as Table Grid
+  const orderDetailsCalculation = React.useMemo(() => {
+    if (!selectedOrder || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+      return { subtotal: 0, tax: 0, total: 0 };
+    }
+
+    let subtotal = 0;
+    let taxAmount = 0;
+
+    console.log(`🧮 Order Details: Calculating totals for ${orderItems.length} items using table-grid logic`);
+
+    orderItems.forEach((item: any) => {
+      const unitPrice = Number(item.unitPrice || 0);
+      const quantity = Number(item.quantity || 0);
+      const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+      if (unitPrice <= 0 || quantity <= 0) {
+        console.warn(`⚠️ Order Details: Invalid item data: unitPrice=${unitPrice}, quantity=${quantity}`);
+        return;
+      }
+
+      console.log(`📊 Order Details: Processing item ${item.id}:`, {
+        productId: item.productId,
+        productName: item.productName,
+        unitPrice,
+        quantity,
+        productFound: !!product
+      });
+
+      // Calculate subtotal (base price * quantity)
+      const itemSubtotal = unitPrice * quantity;
+      subtotal += itemSubtotal;
+
+      // Calculate tax using afterTaxPrice if available (EXACT same logic as table-grid)
+      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        const afterTaxPrice = parseFloat(product.afterTaxPrice);
+        const taxPerUnit = afterTaxPrice - unitPrice;
+        const itemTax = taxPerUnit * quantity;
+        taxAmount += itemTax;
+
+        console.log(`💸 Order Details: Tax calculated for ${item.productName}:`, {
+          afterTaxPrice,
+          unitPrice,
+          taxPerUnit,
+          quantity,
+          itemTax
+        });
+      }
+    });
+
+    const finalTotal = Math.floor(subtotal + taxAmount);
+
+    console.log(`💰 Order Details: Final calculation (table-grid logic):`, {
+      subtotal: subtotal,
+      tax: taxAmount,
+      finalTotal: finalTotal,
+      itemsProcessed: orderItems.length
+    });
+
+    return {
+      subtotal: subtotal,
+      tax: taxAmount,
+      total: finalTotal
+    };
+  }, [selectedOrder, orderItems, products]);
+
+  // Function to get order total - use consistent calculation logic
+  const getOrderTotal = React.useCallback((order: Order) => {
+    // CRITICAL: For all final states (paid, cancelled), ALWAYS use stored total only
+    // These orders are finalized and should NEVER be recalculated
+    if (order.status === 'paid' || order.status === 'cancelled') {
+      const storedTotal = Math.floor(Number(order.total || 0));
+      console.log(`💰 FINAL STATE Order ${order.orderNumber} (${order.status}) - using STORED total ONLY: ${storedTotal}`);
+      return storedTotal;
+    }
+
+    // For active orders only (pending, confirmed, preparing, ready, served), use calculation priority
+    console.log(`💰 ACTIVE Order ${order.orderNumber} (${order.status}) - using calculation priority`);
+
+    // Priority 1: API calculated total (most accurate)
+    const apiCalculatedTotal = (order as any).calculatedTotal;
+    if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
+      const total = Math.floor(Number(apiCalculatedTotal));
+      console.log(`💰 Priority 1 - API calculated total for ${order.orderNumber}: ${total}`);
+      return total;
+    }
+
+    // Priority 2: Cached calculated total
+    if (calculatedTotals.has(order.id)) {
+      const cachedTotal = calculatedTotals.get(order.id)!;
+      console.log(`💰 Priority 2 - Cached calculated total for ${order.orderNumber}: ${cachedTotal}`);
+      return cachedTotal;
+    }
+
+    // Priority 3: Stored total as fallback
+    const storedTotal = Math.floor(Number(order.total || 0));
+    console.log(`💰 Priority 3 - Stored total fallback for ${order.orderNumber}: ${storedTotal}`);
+    return storedTotal;
+  }, [calculatedTotals]);
+
+  const formatTime = (dateString: string | Date) => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    const currentLanguage = localStorage.getItem('language') || 'ko';
+
+    const localeMap = {
+      ko: 'ko-KR',
+      en: 'en-US',
+      vi: 'vi-VN'
+    };
+
+    return date.toLocaleTimeString(localeMap[currentLanguage as keyof typeof localeMap] || 'ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setOrderDetailsOpen(true);
+  };
+
+  const handleStatusUpdate = async (orderId: number, newStatus: string) => {
+    try {
+      console.log(`🔄 Order Management: Updating order ${orderId} status to ${newStatus}`);
+      console.log(`🔍 DEBUG: Frontend status update details:`, {
+        orderId: orderId,
+        orderIdType: typeof orderId,
+        orderIdValid: !isNaN(orderId) && orderId > 0,
+        newStatus: newStatus,
+        statusType: typeof newStatus,
+        statusValid: newStatus && newStatus.trim().length > 0,
+        timestamp: new Date().toISOString()
+      });
+
+      console.log(`🔍 DEBUG: Current orders state before update:`, {
+        ordersCount: orders?.length || 0,
+        currentOrderInState: orders?.find((o: any) => o.id === orderId),
+        timestamp: new Date().toISOString()
+      });
+
+      console.log(`🚀 STARTING API CALL: updateOrderStatus for order ${orderId} to status ${newStatus}`);
+      console.log(`🔍 DEBUG: About to call API endpoint: PUT /api/orders/${orderId}/status`);
+      console.log(`🔍 DEBUG: Request payload:`, { status: newStatus });
+      console.log(`🔍 DEBUG: Making API request to update order status...`);
+
+      const startTime = Date.now();
+      const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: newStatus });
+      const endTime = Date.now();
+
+      console.log(`⏱️ API CALL COMPLETED in ${endTime - startTime}ms for order ${orderId}`);
+
+      console.log(`🔍 DEBUG: API Response details:`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      if (response.ok) {
+        const updatedOrder = await response.json();
+        console.log(`✅ Order Management: Status updated successfully:`, updatedOrder);
+        console.log(`🔍 DEBUG: Updated order details:`, {
+          orderId: updatedOrder.id,
+          orderNumber: updatedOrder.orderNumber,
+          previousStatus: updatedOrder.previousStatus,
+          newStatus: updatedOrder.status,
+          tableId: updatedOrder.tableId,
+          paidAt: updatedOrder.paidAt,
+          updateTimestamp: updatedOrder.updateTimestamp
+        });
+
+        // CRITICAL: Force immediate query refresh and UI update
+        console.log(`🔄 FORCING immediate UI refresh after status update...`);
+
+        // Invalidate and refetch queries immediately
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+        ]);
+
+        console.log(`✅ Queries refreshed after status update`);
+
+        // Force component re-render by checking if state was actually updated
+        setTimeout(() => {
+          console.log(`🔍 POST-UPDATE: Checking if orders state was updated:`, {
+            ordersCount: orders?.length || 0,
+            updatedOrderInState: orders?.find((o: any) => o.id === orderId),
+            expectedStatus: newStatus,
+            timestamp: new Date().toISOString()
+          });
+        }, 1000);
+
+        toast({
+          title: "Thành công",
+          description: `Trạng thái đơn hàng đã được cập nhật thành ${newStatus}`,
+        });
+      } else {
+        const errorText = await response.text();
+        console.error(`❌ Order Management: Failed to update status:`, errorText);
+        console.log(`🔍 DEBUG: API Error details:`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText,
+          orderId: orderId,
+          requestedStatus: newStatus
+        });
+
+        toast({
+          title: "Lỗi",
+          description: "Không thể cập nhật trạng thái đơn hàng: " + errorText,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('❌ Order Management: Error updating order status:', error);
+      console.log(`🔍 DEBUG: Exception details:`, {
+        errorType: error?.constructor?.name,
+        errorMessage: error?.message,
+        errorStack: error?.stack,
+        orderId: orderId,
+        requestedStatus: newStatus,
+        timestamp: new Date().toISOString()
+      });
+
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePaymentClick = async (order: Order) => {
+    console.log('🎯 Payment button clicked for order:', order.id, order.orderNumber);
+
+    try {
+      // Step 1: Fetch order items for calculation
+      console.log('📦 Fetching order items for order:', order.id);
+      const orderItemsResponse = await apiRequest('GET', `/api/order-items/${order.id}`);
+
+      if (!orderItemsResponse.ok) {
+        throw new Error('Failed to fetch order items');
+      }
+
+      const orderItemsData = await orderItemsResponse.json();
+      console.log('📦 Order items fetched:', orderItemsData.length, 'items');
+
+      if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
+        toast({
+          title: 'Lỗi',
+          description: 'Không tìm thấy món ăn trong đơn hàng này',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Step 2: Calculate totals using EXACT same logic as Order Details display
+      let calculatedSubtotal = 0;
+      let calculatedTax = 0;
+
+      console.log('💰 Calculating totals for', orderItemsData.length, 'items');
+      console.log('📦 Products available:', Array.isArray(products) ? products.length : 0);
+
+      const processedItems = orderItemsData.map((item: any) => {
+        const unitPrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+        console.log(`📊 Processing item ${item.id}:`, {
+          productId: item.productId,
+          productName: item.productName,
+          unitPrice,
+          quantity,
+          productFound: !!product
+        });
+
+        // Subtotal = unitPrice * quantity
+        const itemSubtotal = unitPrice * quantity;
+        calculatedSubtotal += itemSubtotal;
+
+        // Tax calculation from afterTaxPrice if available
+        let itemTax = 0;
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const originalPrice = parseFloat(product.price || unitPrice);
+          const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
+          itemTax = taxPerUnit * quantity;
+          calculatedTax += itemTax;
+          console.log(`💸 Tax calculated for ${item.productName}:`, {
+            afterTaxPrice,
+            originalPrice,
+            taxPerUnit,
+            quantity,
+            itemTax
+          });
+        }
+
+        return {
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName || 'Unknown Product',
+          quantity: quantity,
+          unitPrice: unitPrice,
+          price: unitPrice,
+          total: itemSubtotal,
+          sku: item.productSku || product?.sku || `SP${item.productId}`,
+          taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
+          afterTaxPrice: product?.afterTaxPrice || null
+        };
+      });
+
+      const finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
+
+      console.log('💰 Final calculation results:', {
+        subtotal: calculatedSubtotal,
+        tax: calculatedTax,
+        absTax: Math.abs(calculatedTax),
+        finalTotal: finalTotal,
+        itemsProcessed: processedItems.length,
+        orderItemsData: orderItemsData.length,
+        productsAvailable: Array.isArray(products) ? products.length : 0
+      });
+
+      // CRITICAL CHECK: Verify calculated values are valid
+      if (calculatedSubtotal === 0 && finalTotal === 0) {
+        console.error('❌ CALCULATION ERROR: All calculated values are 0!', {
+          orderItemsData: orderItemsData,
+          products: Array.isArray(products) ? products.slice(0, 3) : null,
+          processedItems: processedItems
+        });
+        toast({
+          title: 'Lỗi tính toán',
+          description: 'Không thể tính toán tổng tiền đơn hàng. Vui lòng kiểm tra dữ liệu sản phẩm.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Step 3: Create comprehensive order data for payment
+      const orderForPaymentData = {
+        ...order,
+        id: order.id,
+        orderItems: processedItems,
+        processedItems: processedItems,
+        calculatedSubtotal: calculatedSubtotal,
+        calculatedTax: calculatedTax,
+        calculatedTotal: finalTotal,
+        total: finalTotal
+      };
+
+      // Step 4: Create receipt preview data
+      const receiptPreview = {
+        id: order.id,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        tableId: order.tableId,
+        customerCount: order.customerCount,
+        customerName: order.customerName,
+        items: processedItems,
+        orderItems: processedItems,
+        subtotal: calculatedSubtotal.toString(),
+        tax: calculatedTax.toString(),
+        total: finalTotal.toString(),
+        exactSubtotal: calculatedSubtotal,
+        exactTax: calculatedTax,
+        exactTotal: finalTotal,
+        paymentMethod: 'preview',
+        amountReceived: finalTotal.toString(),
+        change: '0.00',
+        cashierName: 'Order Management',
+        createdAt: new Date().toISOString(),
+        transactionId: `TXN-PREVIEW-${Date.now()}`,
+        calculatedSubtotal: calculatedSubtotal,
+        calculatedTax: calculatedTax,
+        calculatedTotal: finalTotal
+      };
+
+      console.log('✅ Payment data prepared:', {
+        orderId: orderForPaymentData.id,
+        calculatedTotal: orderForPaymentData.calculatedTotal,
+        itemsCount: processedItems.length,
+        receiptTotal: receiptPreview.total,
+        receiptExactTotal: receiptPreview.exactTotal
+      });
+
+      // Step 5: Close order details modal and show receipt preview
+      setOrderDetailsOpen(false);
+      setSelectedOrder(order);
+      setOrderForPayment(orderForPaymentData);
+      setPreviewReceipt(receiptPreview);
+      setShowReceiptPreview(true);
+
+      console.log('🚀 Order Management: Hiển thị receipt preview modal');
+
+    } catch (error) {
+      console.error('❌ Error preparing payment data:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể chuẩn bị dữ liệu thanh toán. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handlePaymentMethodSelect = async (method: string, data?: any) => {
+    console.log("🎯 Order Management payment method selected:", method, data);
+
+    if (method === "paymentCompleted" && data?.success) {
+      console.log('✅ Order Management: Payment completed successfully', data);
+
+      try {
+        // Force immediate refresh
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+        ]);
+
+        // Close all modals immediately and prevent any reopening
+        setShowPaymentMethodModal(false);
+        setOrderForPayment(null);
+        setOrderDetailsOpen(false);
+        setSelectedOrder(null);
+        setShowReceiptPreview(false);
+        setPreviewReceipt(null);
+        setShowReceiptModal(false);
+        setSelectedReceipt(null);
+
+        toast({
+          title: 'Thành công',
+          description: 'Đơn hàng đã được thanh toán thành công',
+        });
+
+        // DO NOT show receipt modal automatically after payment completion
+        console.log('✅ Order Management: Payment completed, no automatic receipt display');
+
+      } catch (error) {
+        console.error('❌ Error refreshing data after payment:', error);
+      }
+
+      return;
+    }
+
+    if (method === "paymentError" && data) {
+      console.error("❌ Order Management: Payment failed", data);
+
+      toast({
+        title: 'Lỗi',
+        description: data.error || 'Không thể hoàn tất thanh toán',
+        variant: 'destructive',
+      });
+
+      setShowPaymentMethodModal(false);
+      return;
+    }
+
+    // For direct payment methods (cash, card, etc.) - handle immediately
+    if (!orderForPayment?.id) {
+      console.error('❌ No order for payment found');
+      toast({
+        title: 'Lỗi',
+        description: 'Không tìm thấy đơn hàng để thanh toán',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      console.log('💳 Order Management: Processing direct payment for order:', orderForPayment.id);
+
+      // Use centralized payment completion
+      await completeOrderPayment(orderForPayment.id, {
+        paymentMethod: typeof method === 'string' ? method : method.nameKey,
+      });
+
+      // Force immediate UI refresh
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
+
+      // Close all modals immediately - no receipt display for direct payments
+      setShowPaymentMethodModal(false);
+      setOrderForPayment(null);
+      setOrderDetailsOpen(false);
+      setSelectedOrder(null);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+
+      toast({
+        title: 'Thành công',
+        description: 'Đơn hàng đã được thanh toán thành công',
+      });
+
+    } catch (error) {
+      console.error('❌ Payment failed:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getPaymentMethods = () => {
+    // Get payment methods from localStorage (saved from settings)
+    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+
+    // Default payment methods if none saved
+    const defaultPaymentMethods = [
+      { id: 1, nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
+      { id: 2, nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
+      { id: 3, nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
+      { id: 4, nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
+      { id: 5, nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
+      { id: 6, nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 7, nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
+      { id: 8, nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
+      { id: 9, nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
+    ];
+
+    const paymentMethods = savedPaymentMethods
+      ? JSON.parse(savedPaymentMethods)
+      : defaultPaymentMethods;
+
+    // Filter to only return enabled payment methods
+    return paymentMethods.filter(method => method.enabled);
+  };
+
+  const handlePayment = async (paymentMethodKey: string) => {
+    if (!selectedOrder) return;
+
+    const method = getPaymentMethods().find(m => m.nameKey === paymentMethodKey);
+    if (!method) return;
+
+    // If cash payment, proceed directly
+    if (paymentMethodKey === "cash") {
+      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod: paymentMethodKey });
+      return;
+    }
+
+    // For QR Code payment, use CreateQRPos API
+    if (paymentMethodKey === "qrCode") {
+      try {
+        setQrLoading(true);
+        const { createQRPosAsync, CreateQRPosRequest } = await import("@/lib/api");
+
+        const transactionUuid = `TXN-${Date.now()}`;
+        const depositAmt = Number(selectedOrder.total);
+
+        const qrRequest: CreateQRPosRequest = {
+          transactionUuid,
+          depositAmt: depositAmt,
+          posUniqueId: "ER002",
+          accntNo: "0900993023",
+          posfranchiseeName: "DOOKI-HANOI",
+          posCompanyName: "HYOJUNG",
+          posBillNo: `BILL-${Date.now()}`
+        };
+
+        const bankCode = "79616001";
+        const clientID = "91a3a3668724e631e1baf4f8526524f3";
+
+        console.log('Calling CreateQRPos API with:', { qrRequest, bankCode, clientID });
+
+        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
+
+        console.log('CreateQRPos API response:', qrResponse);
+
+        // Generate QR code from the received QR data
+        if (qrResponse.qrData) {
+          // Use qrData directly for QR code generation
+          let qrContent = qrResponse.qrData;
+          try {
+            // Try to decode if it's base64 encoded
+            qrContent = atob(qrResponse.qrData);
+          } catch (e) {
+            // If decode fails, use the raw qrData
+            console.log('Using raw qrData as it is not base64 encoded');
+          }
+
+          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
+        } else {
+          console.error('No QR data received from API');
+          // Fallback to mock QR code
+          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
+        }
+      } catch (error) {
+        console.error('Error calling CreateQRPos API:', error);
+        // Fallback to mock QR code on error
+        try {
+          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
+        } catch (fallbackError) {
+          console.error('Error generating fallback QR code:', fallbackError);
+          toast({
+            title: 'Lỗi',
+            description: 'Không thể tạo mã QR',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        setQrLoading(false);
+      }
+      return;
+    }
+  };
+
+  const handleQRPaymentConfirm = () => {
+    if (selectedOrder && selectedPaymentMethod) {
+      // Check if this is a mixed payment (points + transfer/qr)
+      if (mixedPaymentData) {
+        // Use mixed payment mutation to handle both points deduction and payment
+        mixedPaymentMutation.mutate({
+          customerId: mixedPaymentData.customerId,
+          points: mixedPaymentData.pointsToUse,
+          orderId: selectedOrder.id,
+          paymentMethod: selectedPaymentMethod.key === 'transfer' ? 'transfer' : selectedPaymentMethod.key
+        });
+      } else {
+        // Regular payment without points
+        completePaymentMutation.mutate({
+          orderId: selectedOrder.id,
+          paymentMethod: selectedPaymentMethod.key
+        });
+      }
+      setShowQRPayment(false);
+      setQrCodeUrl("");
+      setSelectedPaymentMethod(null);
+    }
+  };
+
+  const handleQRPaymentClose = () => {
+    setShowQRPayment(false);
+    setQrCodeUrl("");
+    setSelectedPaymentMethod(null);
+    setPaymentMethodsOpen(true);
+  };
+
+  const handlePointsPayment = () => {
+    if (!selectedCustomer || !selectedOrder) {
+      toast({
+        title: 'Lỗi',
+        description: 'Vui lòng chọn khách hàng',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const currentPoints = selectedCustomer.points || 0;
+    const orderTotal = getOrderTotal(selectedOrder);
+    const pointsValue = currentPoints * 1000; // 1 điểm = 1000đ
+
+    if (pointsValue >= orderTotal) {
+      // Đủ điểm để thanh toán toàn bộ
+      const pointsNeeded = Math.ceil(orderTotal / 1000);
+      pointsPaymentMutation.mutate({
+        customerId: selectedCustomer.id,
+        points: pointsNeeded,
+        orderId: selectedOrder.id,
+        paymentMethod: 'points',
+        remainingAmount: 0
+      });
+    } else {
+      // Không đủ điểm, cần thanh toán hỗn hợp
+      const remainingAmount = orderTotal - pointsValue;
+      setMixedPaymentData({
+        customerId: selectedCustomer.id,
+        pointsToUse: currentPoints,
+        remainingAmount: remainingAmount,
+        orderId: selectedOrder.id
+      });
+      setPointsPaymentOpen(false);
+      setMixedPaymentOpen(true);
+    }
+  };
+
+  const filteredCustomers = customers?.filter(customer => {
+    const searchLower = searchTerm.toLowerCase();
+    return customer.name?.toLowerCase().includes(searchLower) ||
+           customer.customerId?.toLowerCase().includes(searchLower) ||
+           customer.phone?.toLowerCase().includes(searchLower);
+  }) || [];
+
+  // Safe order processing with error handling and pagination - MOVE ALL HOOKS BEFORE CONDITIONAL RETURNS
+  const allOrders = React.useMemo(() => {
+    try {
+      if (!orders || !Array.isArray(orders)) {
+        console.warn('Order Management: Invalid orders data:', orders);
+        return [];
+      }
+
+      return (orders as Order[])
+        .filter(order => order && order.id && order.orderedAt) // Filter out invalid orders
+        .sort((a: Order, b: Order) => {
+          try {
+            // Sort by orderedAt descending (newest first)
+            return new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime();
+          } catch (error) {
+            console.error('Error sorting orders:', error);
+            return 0;
+          }
+        });
+    } catch (error) {
+      console.error('Error processing orders:', error);
+      return [];
+    }
+  }, [orders]);
+
+  // Filter orders based on search term and status
+  const filteredOrders = React.useMemo(() => {
+    return allOrders.filter(order => {
+      const matchesSearchTerm = order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (order.tableId && getTableInfo(order.tableId)?.tableNumber.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchesStatusFilter = statusFilter === "all" || order.status === statusFilter;
+
+      return matchesSearchTerm && matchesStatusFilter;
+    });
+  }, [allOrders, searchTerm, statusFilter, getTableInfo]);
+
+
+  // Pagination calculations
+  const totalOrders = filteredOrders.length;
+  const totalPages = Math.ceil(totalOrders / ordersPerPage);
+  const startIndex = (currentPage - 1) * ordersPerPage;
+  const endIndex = startIndex + ordersPerPage;
+  const currentOrders = filteredOrders.slice(startIndex, endIndex);
+
+  // Reset to page 1 if current page exceeds total pages
+  React.useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
+  // Preload totals for next/previous pages for better UX (optional background loading)
+  useEffect(() => {
+    if (allOrders && allOrders.length > 0 && products && products.length > 0) {
+      // Calculate range for preloading (current page + 1 page before and after)
+      const preloadStartIndex = Math.max(0, (currentPage - 2) * ordersPerPage);
+      const preloadEndIndex = Math.min(allOrders.length, (currentPage + 1) * ordersPerPage);
+      const preloadOrders = allOrders.slice(preloadStartIndex, preloadEndIndex);
+
+      console.log(`🔄 Preloading totals for ${preloadOrders.length} orders around current page ${currentPage}`);
+
+      // Batch preload in background with low priority
+      const preloadBatch = preloadOrders.filter(order =>
+        !calculatedTotals.has(order.id) &&
+        order.status !== 'cancelled' &&
+        !currentOrders.some(currentOrder => currentOrder.id === order.id) // Don't duplicate current page
+      );
+
+      if (preloadBatch.length > 0) {
+        // Use setTimeout to make this low priority
+        setTimeout(() => {
+          preloadBatch.forEach(order => {
+            // Note: We are no longer calling calculateOrderTotal here,
+            // as the API now provides the calculated total.
+            // This section can be removed or adapted if pre-calculating from API response is needed.
+          });
+        }, 500); // 500ms delay to not interfere with current page loading
+      }
+    }
+  }, [allOrders, products, currentPage, ordersPerPage, currentOrders, calculatedTotals]);
+
+  // Function to refresh data with error handling
+  const refreshData = React.useCallback(async () => {
+    console.log('🔄 Order Management: Refreshing data...');
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+      ]);
+      console.log('✅ Order Management: Data refreshed successfully');
+    } catch (error) {
+      console.error('❌ Order Management: Error refreshing data:', error);
+      // Try again after a delay
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      }, 1000);
+    }
+  }, [queryClient]);
+
+  // Cleanup calculated totals for orders no longer in the dataset
+  useEffect(() => {
+    if (allOrders && allOrders.length > 0 && calculatedTotals.size > 0) {
+      const currentOrderIds = new Set(allOrders.map(order => order.id));
+      const calculatedOrderIds = Array.from(calculatedTotals.keys());
+
+      // Remove calculated totals for orders that no longer exist
+      const toRemove = calculatedOrderIds.filter(id => !currentOrderIds.has(id));
+
+      if (toRemove.length > 0) {
+        console.log(`🧹 Cleaning up calculated totals for ${toRemove.length} removed orders`);
+        setCalculatedTotals(prev => {
+          const newMap = new Map(prev);
+          toRemove.forEach(id => newMap.delete(id));
+          return newMap;
+        });
+      }
+
+      // Also limit memory usage - keep only last 100 calculated totals
+      if (calculatedTotals.size > 100) {
+        console.log(`🧹 Memory cleanup: Removing old calculated totals (current: ${calculatedTotals.size})`);
+        const entries = Array.from(calculatedTotals.entries());
+        const toKeep = entries.slice(-50); // Keep last 50 entries
+        setCalculatedTotals(new Map(toKeep));
+      }
+    }
+  }, [allOrders, calculatedTotals]);
+
+  // Refresh data when tab becomes active or component mounts
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
+
+  // Set up periodic refresh
+  useEffect(() => {
+    const interval = setInterval(refreshData, 3000); // Refresh every 3 seconds
+    return () => clearInterval(interval);
+  }, [refreshData]);
+
+  // Trigger total calculations when current page orders data changes
+  useEffect(() => {
+    if (currentOrders && currentOrders.length > 0 && products && products.length > 0) {
+      console.log(`🧮 Current page orders changed, triggering total calculations for ${currentOrders.length} displayed orders (page ${currentPage})`);
+
+      // Calculate totals for orders that don't have API calculated totals
+      currentOrders.forEach(async (order) => {
+        const apiCalculatedTotal = (order as any).calculatedTotal;
+
+        // Skip if we already have a valid API calculated total or cached total
+        if ((apiCalculatedTotal && Number(apiCalculatedTotal) > 0) || calculatedTotals.has(order.id)) {
+          return;
+        }
+
+        // IMPORTANT: Skip calculation for cancelled and paid orders completely
+        // These orders must use stored totals only to maintain consistency
+        if (order.status === 'cancelled' || order.status === 'paid') {
+          console.log(`⏭️ SKIPPING calculation for ${order.status} order ${order.orderNumber} - stored total is final`);
+          return;
+        }
+
+        console.log(`🧮 Calculating total for order ${order.orderNumber} (ID: ${order.id})`);
+
+        try {
+          // Fetch order items for calculation
+          const response = await apiRequest('GET', `/api/order-items/${order.id}`);
+          if (!response.ok) {
+            console.warn(`❌ Failed to fetch order items for order ${order.id}`);
+            return;
+          }
+
+          const orderItemsData = await response.json();
+          if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
+            console.log(`⚪ No items found for order ${order.id}, using stored total`);
+            return;
+          }
+
+          // Calculate total using same logic as Order Details
+          let subtotal = 0;
+          let taxAmount = 0;
+
+          orderItemsData.forEach((item: any) => {
+            const unitPrice = Number(item.unitPrice || 0);
+            const quantity = Number(item.quantity || 0);
+            const product = products.find((p: any) => p.id === item.productId);
+
+            // Calculate subtotal
+            subtotal += unitPrice * quantity;
+
+            // Calculate tax using same logic as order details
+            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+              const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+              taxAmount += taxPerUnit * quantity;
+            }
+          });
+
+          const calculatedTotal = Math.floor(subtotal + taxAmount);
+
+          console.log(`💰 Calculated total for order ${order.orderNumber}:`, {
+            subtotal,
+            taxAmount,
+            calculatedTotal,
+            itemsCount: orderItemsData.length
+          });
+
+          // Cache the calculated total
+          setCalculatedTotals(prev => new Map(prev.set(order.id, calculatedTotal)));
+
+        } catch (error) {
+          console.error(`❌ Error calculating total for order ${order.id}:`, error);
+        }
+      });
+    }
+  }, [currentOrders, products, currentPage, calculatedTotals]);
+
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    let reconnectTimer: NodeJS.Timeout | null = null;
+    let isConnected = false;
+    let shouldReconnect = true;
+
+    const connectWebSocket = () => {
+      if (!shouldReconnect) return;
+
+      try {
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+
+        console.log('🔗 Order Management: Attempting WebSocket connection to:', wsUrl);
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('🔗 Order Management: WebSocket connected successfully');
+          isConnected = true;
+
+          // Clear any pending reconnect timer
+          if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+          }
+
+          // Send registration message
+          try {
+            ws?.send(JSON.stringify({
+              type: 'register_order_management',
+              timestamp: new Date().toISOString()
+            }));
+          } catch (error) {
+            console.error('❌ Error sending registration message:', error);
+          }
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('📨 Order Management: WebSocket message received:', data);
+
+            if (data.type === 'order_created' ||
+                data.type === 'order_updated' ||
+                data.type === 'table_status_changed' ||
+                data.type === 'orderStatusUpdated' ||
+                data.type === 'paymentCompleted') {
+              console.log('🔄 Order Management: Refreshing orders due to WebSocket update');
+              refreshData();
+            }
+          } catch (error) {
+            console.error('❌ Error parsing WebSocket message:', error);
+          }
+        };
+
+        ws.onclose = (event) => {
+          console.log('🔗 Order Management: WebSocket disconnected', { code: event.code, reason: event.reason });
+          isConnected = false;
+
+          // Only attempt reconnect if not manually closed and component is still mounted
+          if (shouldReconnect && event.code !== 1000) {
+            console.log('🔄 Order Management: Scheduling reconnect in 3 seconds...');
+            reconnectTimer = setTimeout(() => {
+              if (shouldReconnect) {
+                console.log('🔄 Order Management: Attempting to reconnect...');
+                connectWebSocket();
+              }
+            }, 3000);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('❌ Order Management: WebSocket error:', error);
+          isConnected = false;
+
+          // Close the connection to trigger onclose event
+          if (ws && ws.readyState === WebSocket.CONNECTING) {
+            ws.close();
+          }
+        };
+
+      } catch (error) {
+        console.error('❌ Error creating WebSocket connection:', error);
+
+        // Retry connection after delay if component is still mounted
+        if (shouldReconnect) {
+          reconnectTimer = setTimeout(() => {
+            if (shouldReconnect) {
+              connectWebSocket();
+            }
+          }, 5000);
+        }
+      }
+    };
+
+    // Start initial connection
+    connectWebSocket();
+
+    // Cleanup function
+    return () => {
+      console.log('🔗 Order Management: Cleaning up WebSocket connection');
+      shouldReconnect = false;
+
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+
+      if (ws) {
+        if (isConnected) {
+          ws.close(1000, 'Component unmounting');
+        } else {
+          ws.close();
+        }
+        ws = null;
+      }
+    };
+  }, [refreshData]);
+
+  // Listen for payment completion events from payment modal
+  useEffect(() => {
+    const handleOrderStatusUpdate = (event: CustomEvent) => {
+      console.log("🔄 Order Management: Received order status update event:", event.detail);
+      // Force immediate refresh when order status is updated
+      setTimeout(() => {
+        refreshData();
+      }, 100);
+    };
+
+    const handlePaymentCompleted = (event: CustomEvent) => {
+      console.log("💳 Order Management: Received payment completed event:", event.detail);
+      // Force immediate refresh when payment is completed
+      setTimeout(() => {
+        refreshData();
+      }, 100);
+    };
+
+    const handleRefreshOrders = (event: CustomEvent) => {
+      console.log("🔄 Order Management: Received refresh orders event:", event.detail);
+      if (event.detail?.immediate) {
+        refreshData();
+      }
+    };
+
+    const handleNewOrderFromTable = (event: CustomEvent) => {
+      console.log("🆕 Order Management: New order created from table:", event.detail);
+      // Immediate refresh for new orders
+      refreshData();
+    };
+
+    // Add event listeners
+    window.addEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
+    window.addEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
+    window.addEventListener('refreshOrders', handleRefreshOrders as EventListener);
+    window.addEventListener('newOrderCreated', handleNewOrderFromTable as EventListener);
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
+      window.removeEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
+      window.removeEventListener('refreshOrders', handleRefreshOrders as EventListener);
+      window.removeEventListener('newOrderCreated', handleNewOrderFromTable as EventListener);
+    };
+  }, [refreshData]);
+
+  // CONDITIONAL RENDER AFTER ALL HOOKS - Show loading state only if really needed
+  if (ordersLoading && (!orders || orders.length === 0)) {
+    return (
+      <div className="space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              {t("orders.orderManagement")}
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              {t("orders.realTimeOrderStatus")}
+            </p>
+          </div>
+          <Badge variant="secondary" className="text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 whitespace-nowrap">
+            0 {t("orders.ordersInProgress")}
+          </Badge>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          <span className="ml-2">Đang tải đơn hàng...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper to get the next status for button display
+  const getNextStatus = (currentStatus: string) => {
+    switch (currentStatus) {
+      case 'pending': return 'confirmed';
+      case 'confirmed': return 'preparing';
+      case 'preparing': return 'ready';
+      case 'ready': return 'served';
+      case 'served': return 'paid'; // For payment button
+      default: return null;
+    }
+  };
+
+  // Helper to get the label for status update buttons
+  const getStatusUpdateLabel = (currentStatus: string) => {
+    const nextStatus = getNextStatus(currentStatus);
+    if (!nextStatus) return '';
+    if (nextStatus === 'paid') return t('orders.payment'); // Special case for payment
+    return t(`orders.${nextStatus}`);
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              {t("orders.orderManagement")}
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              {t("orders.realTimeOrderStatus")}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+            <Badge
+              variant="secondary"
+              className="text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 whitespace-nowrap"
+            >
+              {totalOrders} {t("orders.ordersInProgress")}
+            </Badge>
+            {totalPages > 1 && (
+              <Badge variant="outline" className="text-xs sm:text-sm px-2 sm:px-3 py-1">
+                Trang {currentPage}/{totalPages}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="bg-white border-b px-4 sm:px-6 py-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder={t("orders.searchOrders")}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-sm sm:text-base"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-48 min-w-0">
+              <SelectValue placeholder={t("orders.statusFilter")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("orders.allOrders")}</SelectItem>
+              <SelectItem value="pending">{t("orders.pending")}</SelectItem>
+              <SelectItem value="confirmed">{t("orders.confirmed")}</SelectItem>
+              <SelectItem value="preparing">{t("orders.preparing")}</SelectItem>
+              <SelectItem value="ready">{t("orders.ready")}</SelectItem>
+              <SelectItem value="served">{t("orders.served")}</SelectItem>
+              <SelectItem value="paid">{t("orders.paid")}</SelectItem>
+              <SelectItem value="cancelled">{t("orders.cancelled")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        {totalOrders === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 px-4 py-12">
+            <ClipboardList className="w-16 h-16 mb-4 text-gray-300" />
+            <h3 className="text-lg font-medium mb-2 text-center">{t("orders.noActiveOrders")}</h3>
+            <p className="text-center text-sm sm:text-base">{t("orders.newOrdersWillAppearHere")}</p>
+          </div>
+        ) : (
+          <div className="p-4 sm:p-6 overflow-y-auto h-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 sm:gap-6">
+              {currentOrders.map((order: Order) => {
+                const tableInfo = getTableInfo(order.tableId);
+                return (
+                  <OrderCard
+                    key={order.id}
+                    order={{ ...order, tableName: tableInfo?.tableNumber }}
+                    onStatusUpdate={handleStatusUpdate}
+                    onViewDetails={(order) => {
+                      console.log('📋 Order Management: View details clicked for order:', order.id);
+                      setSelectedOrder(order);
+                      setOrderDetailsOpen(true);
+                    }}
+                    onProcessPayment={(order) => {
+                      console.log('💳 Order Management: Process payment clicked for order:', order.id);
+                      handlePaymentClick(order);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6 p-4 sm:px-6">
+          <div className="text-sm text-gray-600">
+            Hiển thị {startIndex + 1}-{Math.min(endIndex, totalOrders)} của {totalOrders} đơn hàng
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Trước
+            </Button>
+
+            <div className="flex items-center gap-1">
+              {/* Show page numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNumber;
+                if (totalPages <= 5) {
+                  pageNumber = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNumber = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNumber = totalPages - 4 + i;
+                } else {
+                  pageNumber = currentPage - 2 + i;
+                }
+
+                return (
+                  <Button
+                    key={pageNumber}
+                    variant={currentPage === pageNumber ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNumber)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
+
+              {totalPages > 5 && currentPage < totalPages - 2 && (
+                <>
+                  <span className="px-2 text-gray-500">...</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {totalPages}
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1"
+            >
+              Sau
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Order Details Dialog */}
+      <Dialog open={orderDetailsOpen} onOpenChange={setOrderDetailsOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>{t('orders.orderDetails')}</DialogTitle>
+            <DialogDescription>
+              {selectedOrder && `${t('orders.orderNumber')}: ${selectedOrder.orderNumber}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <ScrollArea className="max-h-[60vh]">
+              <div className="space-y-4">
+                {/* Order Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">{t('orders.orderInfo')}</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>{t('orders.orderNumber')}:</span>
+                        <span className="font-medium">{selectedOrder.orderNumber}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('orders.table')}:</span>
+                        <span className="font-medium">
+                          {getTableInfo(selectedOrder.tableId)?.tableNumber || t('orders.unknownTable')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('orders.customer')}:</span>
+                        <span className="font-medium">
+                          {selectedOrder.customerName || t('orders.noCustomerName')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('orders.customerCount')}:</span>
+                        <span className="font-medium">{selectedOrder.customerCount || 1} {t('orders.people')}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">{t('orders.statusAndTime')}</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span>{t('orders.orderStatus')}:</span>
+                        <Badge variant={getOrderStatusBadge(selectedOrder.status).variant}>
+                          {getOrderStatusBadge(selectedOrder.status).label}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>{t('common.einvoiceStatus')}</span>
+                        <Badge variant={
+                          selectedOrder.einvoiceStatus === 1 ? "default" :
+                          selectedOrder.einvoiceStatus === 2 ? "destructive" :
+                          "secondary"
+                        }>
+                          {(() => {
+                            console.log('🔍 Order Management: E-invoice status for order', selectedOrder.id, ':', {
+                              einvoiceStatus: selectedOrder.einvoiceStatus,
+                              type: typeof selectedOrder.einvoiceStatus
+                            });
+
+                            if (selectedOrder.einvoiceStatus === 1) return "Đã phát hành";
+                            if (selectedOrder.einvoiceStatus === 2) return "Lỗi phát hành";
+                            return "Chưa phát hành";
+                          })()}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('orders.orderTime')}:</span>
+                        <span className="font-medium">
+                          {formatTime(selectedOrder.orderedAt)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Order Items */}
+                <div>
+                  <h4 className="font-medium mb-3">{t('orders.orderItems')}</h4>
+                  <div className="space-y-2">
+                    {orderItemsLoading ? (
+                      <div className="text-center py-4 text-gray-500">
+                        {t('common.loading')}...
+                      </div>
+                    ) : orderItems && orderItems.length > 0 ? (
+                      orderItems.map((item: any, index: number) => {
+                        const product = getProductInfo(item.productId);
+                        return (
+                          <div key={item.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {product?.name || 'Unknown Product'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  x{item.quantity}
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                {formatCurrency(Number(item.unitPrice || 0))}/món
+                              </div>
+                              {(() => {
+                                // Calculate tax based on afterTaxPrice if available, otherwise use taxRate
+                                if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                  const price = parseFloat(product.price);
+                                  const itemTax = (afterTaxPrice - price) * Number(item.quantity || 0);
+                                  return (
+                                    <div className="text-xs text-green-600">
+                                      Thuế: {formatCurrency(itemTax)}
+                                    </div>
+                                  );
+                                } else {
+                                  return (
+                                    <div className="text-xs text-gray-500">
+                                      Thuế: {formatCurrency(0)}
+                                    </div>
+                                  );
+                                }
+                              })()}
+                              {item.notes && (
+                                <div className="text-xs text-blue-600 italic mt-1">
+                                  Ghi chú: {item.notes}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-green-600">
+                                {formatCurrency(Number(item.total || 0))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        {t('orders.noActiveOrders')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Order Summary */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">{t('orders.totalAmount')}</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>{t('common.subtotalLabel')}</span>
+                      <span>{formatCurrency(orderDetailsCalculation.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t('orders.tax')}</span>
+                      <span>{formatCurrency(orderDetailsCalculation.tax)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-medium">
+                      <span>{t('orders.totalAmount')}:</span>
+                      <span>{formatCurrency(orderDetailsCalculation.total)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status Update Actions */}
+                {selectedOrder.status !== 'paid' && selectedOrder.status !== 'cancelled' && (
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={() => {
+                        console.log('🎯 Order Management: Bắt đầu thanh toán - kiểm tra dữ liệu');
+
+                        if (!selectedOrder || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+                          console.error('❌ Thiếu dữ liệu đơn hàng:', {
+                            selectedOrder: !!selectedOrder,
+                            orderItems: orderItems?.length || 0,
+                            orderItemsArray: Array.isArray(orderItems)
+                          });
+                          toast({
+                            title: 'Lỗi',
+                            description: 'Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+
+                        // Use memoized calculations for better performance
+                        const { subtotal: calculatedSubtotal, tax: calculatedTax, total: finalTotal } = orderDetailsCalculation;
+
+                        console.log('💰 Using memoized calculation:', { calculatedSubtotal, calculatedTax, finalTotal });
+
+                        const processedItems = orderItems.map((item: any) => {
+                          const unitPrice = Number(item.unitPrice || 0);
+                          const quantity = Number(item.quantity || 0);
+                          const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+                          return {
+                            id: item.id,
+                            productId: item.productId,
+                            productName: item.productName || product?.name || 'Unknown Product',
+                            quantity: quantity,
+                            unitPrice: unitPrice,
+                            price: unitPrice,
+                            total: unitPrice * quantity,
+                            sku: item.productSku || product?.sku || `SP${item.productId}`,
+                            taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
+                            afterTaxPrice: product?.afterTaxPrice || null
+                          };
+                        });
+
+                        console.log('💰 Kết quả tính toán cuối:', {
+                          subtotal: calculatedSubtotal,
+                          tax: calculatedTax,
+                          finalTotal: finalTotal,
+                          itemsProcessed: processedItems.length
+                        });
+
+                        // Kiểm tra tổng tiền hợp lệ
+                        if (finalTotal <= 0) {
+                          console.error('❌ Tổng tiền không hợp lệ:', finalTotal);
+                          toast({
+                            title: 'Lỗi',
+                            description: 'Tổng tiền đơn hàng không hợp lệ. Vui lòng kiểm tra lại.',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+
+                        // Tạo receipt preview data với định dạng đúng
+                        const receiptPreview = {
+                          id: selectedOrder.id,
+                          orderId: selectedOrder.id,
+                          orderNumber: selectedOrder.orderNumber,
+                          tableId: selectedOrder.tableId,
+                          customerCount: selectedOrder.customerCount,
+                          customerName: selectedOrder.customerName,
+                          items: processedItems,
+                          orderItems: processedItems,
+                          subtotal: calculatedSubtotal.toString(),
+                          tax: calculatedTax.toString(),
+                          total: finalTotal.toString(),
+                          exactSubtotal: calculatedSubtotal,
+                          exactTax: calculatedTax,
+                          exactTotal: finalTotal,
+                          paymentMethod: 'preview',
+                          amountReceived: finalTotal.toString(),
+                          change: '0.00',
+                          cashierName: 'Order Management',
+                          createdAt: new Date().toISOString(),
+                          transactionId: `TXN-PREVIEW-${Date.now()}`,
+                          calculatedSubtotal: calculatedSubtotal,
+                          calculatedTax: calculatedTax,
+                          calculatedTotal: finalTotal
+                        };
+
+                        // Tạo order data đầy đủ cho payment flow
+                        const orderForPaymentData = {
+                          ...selectedOrder,
+                          id: selectedOrder.id, // Đảm bảo có ID
+                          orderItems: processedItems,
+                          processedItems: processedItems,
+                          calculatedSubtotal: calculatedSubtotal,
+                          calculatedTax: calculatedTax,
+                          calculatedTotal: finalTotal,
+                          total: finalTotal // Override total với calculated value
+                        };
+
+                        console.log('✅ Thiết lập dữ liệu để hiển thị preview:', {
+                          receiptTotal: receiptPreview.total,
+                          receiptExactTotal: receiptPreview.exactTotal,
+                          orderTotal: orderForPaymentData.calculatedTotal,
+                          orderId: orderForPaymentData.id
+                        });
+
+                        // Set states và hiển thị preview ngay lập tức
+                        setPreviewReceipt(receiptPreview);
+                        setOrderForPayment(orderForPaymentData);
+                        setShowReceiptPreview(true);
+                        console.log('🚀 Order Management: Đang hiển thị receipt preview modal');
+                      }}
+                      disabled={completePaymentMutation.isPending}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      {t('orders.payment')}
+                    </Button>
+                    <Button
+                      onClick={() => setPointsPaymentOpen(true)}
+                      disabled={completePaymentMutation.isPending}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      {t('customers.pointManagement')}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Final Status Display */}
+                {(selectedOrder.status === 'paid' || selectedOrder.status === 'cancelled') && (
+                  <div className="flex justify-center pt-4">
+                    {selectedOrder.status === 'paid' && (
+                      <Badge variant="outline" className="px-4 py-2 bg-green-100 text-green-800 border-green-300">
+                        ✅ {t('orders.status.completed')}
+                      </Badge>
+                    )}
+                    {selectedOrder.status === 'cancelled' && (
+                      <Badge variant="destructive" className="px-4 py-2">
+                        ❌ {t('orders.status.cancelled')}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Methods Dialog */}
+      <Dialog open={paymentMethodsOpen} onOpenChange={setPaymentMethodsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('orders.selectPaymentMethod')}</DialogTitle>
+            <DialogDescription>
+              {t('orders.selectPaymentMethodDesc')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-3">
+            {getPaymentMethods().map((method) => (
+              <Button
+                key={method.id}
+                variant="outline"
+                className="justify-start h-auto p-4"
+                onClick={() => handlePayment(method.nameKey)}
+                disabled={completePaymentMutation.isPending || (qrLoading && method.nameKey === 'qrCode')}
+              >
+                <span className="text-2xl mr-3">{method.icon}</span>
+                <div className="text-left">
+                  <p className="font-medium">
+                    {qrLoading && method.nameKey === 'qrCode' ? t('common.generatingQr') : t(`orders.paymentMethods.${method.nameKey}`)}
+                  </p>
+                </div>
+                {qrLoading && method.nameKey === 'qrCode' && (
+                  <div className="ml-auto">
+                    <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                  </div>
+                )}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setPaymentMethodsOpen(false)}>
+              {t('orders.cancel')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Payment Dialog */}
+      <Dialog open={showQRPayment} onOpenChange={setShowQRPayment}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="relative">
+            <DialogTitle className="flex items-center gap-2 text-center justify-center">
+              <QrCode className="w-5 h-5" />
+              Thanh toán {selectedPaymentMethod?.method?.name}
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleQRPaymentClose}
+              className="absolute right-0 top-0 h-6 w-6 p-0"
+            >
+              ✕
+            </Button>
+            <DialogDescription className="text-center">
+              Quét mã QR để hoàn tất thanh toán
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 p-4">
+            {/* Order Summary */}
+            {selectedOrder && (
+              <div className="text-center space-y-2">
+                <p className="text-sm text-gray-600">{t('orders.orderNumber')}: {selectedOrder.orderNumber}</p>
+                <p className="text-sm text-gray-600">Số tiền cần thanh toán:</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {mixedPaymentData ?
+                    formatCurrency(mixedPaymentData.remainingAmount) :
+                    formatCurrency(Number(selectedOrder.total))
+                  }
+                </p>
+                {mixedPaymentData && (
+                  <p className="text-sm text-blue-600">
+                    Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P ( -{(mixedPaymentData.pointsToUse * 1000).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫)
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* QR Code */}
+            {qrCodeUrl && (
+              <div className="flex justify-center">
+                <div className="bg-white p-4 rounded-lg border-2 border-gray-200 shadow-lg">
+                  <img
+                    src={qrCodeUrl}
+                    alt="QR Code for Payment"
+                    className="w-64 h-64"
+                  />
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-gray-600 text-center">
+              Sử dụng ứng dụng {selectedPaymentMethod?.method?.name} để quét mã QR và thực hiện thanh toán
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleQRPaymentClose}
+                className="flex-1"
+              >
+                Quay lại
+              </Button>
+              <Button
+                onClick={handleQRPaymentConfirm}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+              >
+                Xác nhận thanh toán
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Points Payment Dialog */}
+      <Dialog open={pointsPaymentOpen} onOpenChange={setPointsPaymentOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-blue-600" />
+              {t('orders.pointsPaymentTitle')}
+            </DialogTitle>
+            <DialogDescription>
+              {t('orders.pointsPaymentDesc')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Order Summary */}
+            {selectedOrder && (
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-gray-600">{t('orders.orderNumber')}: {selectedOrder.orderNumber}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {formatCurrency(getOrderTotal(selectedOrder))}
+                </p>
+                {selectedCustomer && (
+                  <div className="mt-2 pt-2 border-t border-blue-200">
+                    <p className="text-sm text-gray-600">
+                      Điểm có sẵn: {(selectedCustomer.points || 0).toLocaleString()}P
+                      <span className="ml-2 text-green-600">
+                        (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
+                      </span>
+                    </p>
+                    {((selectedCustomer.points || 0) * 1000) < getOrderTotal(selectedOrder) && (
+                      <p className="text-sm text-orange-600 mt-1">
+                        Cần thanh toán thêm: {(getOrderTotal(selectedOrder) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Customer Search */}
+            <div className="space-y-3">
+              <Label>{t('orders.searchCustomers')}</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder={t('customers.searchPlaceholder')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              {/* Customer List */}
+              <div className="max-h-64 overflow-y-auto border rounded-md">
+                {filteredCustomers.map((customer) => (
+                  <div
+                    key={customer.id}
+                    className={`p-3 cursor-pointer hover:bg-gray-50 border-b ${
+                      selectedCustomer?.id === customer.id ? 'bg-blue-50 border-blue-200' : ''
+                    }`}
+                    onClick={() => setSelectedCustomer(customer)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{customer.name}</p>
+                        <p className="text-sm text-gray-500">{customer.customerId}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-green-600">
+                          {(customer.points || 0).toLocaleString()}P
+                        </p>
+                        <p className="text-xs text-gray-500">{t('orders.availablePoints')}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {filteredCustomers.length === 0 && (
+                  <div className="p-8 text-center text-gray-500">
+                    Không tìm thấy khách hàng
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Payment Explanation */}
+            {selectedCustomer && selectedOrder && (
+              <div className="space-y-3">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium mb-2">Chi tiết thanh toán</h4>
+                  {(() => {
+                    const orderTotal = getOrderTotal(selectedOrder);
+                    const customerPointsValue = (selectedCustomer.points || 0) * 1000;
+
+                    return customerPointsValue >= orderTotal ? (
+                      <div className="text-green-600">
+                        <p className="text-sm">✓ Đủ điểm để thanh toán toàn bộ đơn hàng</p>
+                        <p className="text-sm">
+                          Sử dụng: {Math.ceil(orderTotal / 1000).toLocaleString()}P
+                        </p>
+                        <p className="text-sm">
+                          Còn lại: {((selectedCustomer.points || 0) - Math.ceil(orderTotal / 1000)).toLocaleString()}P
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-orange-600">
+                        <p className="text-sm">⚠ Không đủ điểm, cần thanh toán hỗn hợp</p>
+                        <p className="text-sm">
+                          Sử dụng tất cả: {(selectedCustomer.points || 0).toLocaleString()}P
+                          (≈ {customerPointsValue.toLocaleString()} ₫)
+                        </p>
+                        <p className="text-sm">
+                          Cần thanh toán thêm: {(orderTotal - customerPointsValue).toLocaleString()} ₫
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setPointsPaymentOpen(false)}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handlePointsPayment}
+              disabled={
+                !selectedCustomer ||
+                pointsPaymentMutation.isPending ||
+                (selectedCustomer.points || 0) === 0
+              }
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {pointsPaymentMutation.isPending ? 'Đang xử lý...' :
+               ((selectedCustomer?.points || 0) * 1000) >= getOrderTotal(selectedOrder || { id: 0, total: 0 } as any) ?
+               'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mixed Payment Dialog */}
+      <Dialog open={mixedPaymentOpen} onOpenChange={setMixedPaymentOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-orange-600" />
+              {t('orders.mixedPaymentTitle')}
+            </DialogTitle>
+            <DialogDescription>
+              {t('orders.mixedPaymentDesc')}
+            </DialogDescription>
+          </DialogHeader>
+
+          {mixedPaymentData && (
+            <div className="space-y-4">
+              {/* Payment Summary */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium mb-2">Tóm tắt thanh toán</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Tổng đơn hàng:</span>
+                    <span className="font-medium">{Number(selectedOrder?.total || 0).toLocaleString()} ₫</span>
+                  </div>
+                  <div className="flex justify-between text-blue-600">
+                    <span>Thanh toán bằng điểm:</span>
+                    <span className="font-medium">
+                      {mixedPaymentData.pointsToUse.toLocaleString()}P
+                      <span className="ml-1">(-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)</span>
+                    </span>
+                  </div>
+                  <div className="border-t pt-2 flex justify-between font-medium text-orange-600">
+                    <span>Cần thanh toán thêm:</span>
+                    <span>{mixedPaymentData.remainingAmount.toLocaleString()} ₫</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div className="space-y-3">
+                <h4 className="font-medium">Chọn phương thức thanh toán cho phần còn lại:</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={() => mixedPaymentMutation.mutate({
+                      customerId: mixedPaymentData.customerId,
+                      points: mixedPaymentData.pointsToUse,
+                      orderId: mixedPaymentData.orderId,
+                      paymentMethod: 'cash'
+                    })}
+                    disabled={mixedPaymentMutation.isPending}
+                  >
+                    <span className="text-2xl mr-3">💵</span>
+                    <div className="text-left">
+                      <p className="font-medium">{t('common.cash')}</p>
+                      <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={async () => {
+                      // Use CreateQRPos API for transfer payment like QR Code
+                      try {
+                        setQrLoading(true);
+                        const { createQRPosAsync, CreateQRPosRequest } = await import("@/lib/api");
+
+                        const transactionUuid = `TXN-TRANSFER-${Date.now()}`;
+                        const depositAmt = Number(mixedPaymentData.remainingAmount);
+
+                        const qrRequest: CreateQRPosRequest = {
+                          transactionUuid,
+                          depositAmt: depositAmt,
+                          posUniqueId: "ER002",
+                          accntNo: "0900993023",
+                          posfranchiseeName: "DOOKI-HANOI",
+                          posCompanyName: "HYOJUNG",
+                          posBillNo: `TRANSFER-${Date.now()}`
+                        };
+
+                        const bankCode = "79616001";
+                        const clientID = "91a3a3668724e631e1baf4f8526524f3";
+
+                        console.log('Calling CreateQRPos API for transfer payment:', { qrRequest, bankCode, clientID });
+
+                        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
+
+                        console.log('CreateQRPos API response for transfer:', qrResponse);
+
+                        // Generate QR code from the received QR data and show QR modal
+                        if (qrResponse.qrData) {
+                          let qrContent = qrResponse.qrData;
+                          try {
+                            // Try to decode if it's base64 encoded
+                            qrContent = atob(qrResponse.qrData);
+                          } catch (e) {
+                            // If decode fails, use the raw qrData
+                            console.log('Using raw qrData for transfer as it is not base64 encoded');
+                          }
+
+                          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
+                            width: 256,
+                            margin: 2,
+                            color: {
+                              dark: '#000000',
+                              light: '#FFFFFF'
+                            }
+                          });
+
+                          // Set QR code data and show QR payment modal
+                          setQrCodeUrl(qrUrl);
+                          setSelectedPaymentMethod({
+                            key: 'transfer',
+                            method: { name: 'Chuyển khoản', icon: '💳' }
+                          });
+                          setShowQRPayment(true);
+                          setMixedPaymentOpen(false);
+                        } else {
+                          console.error('No QR data received from API for transfer');
+                          // Fallback to direct payment
+                          mixedPaymentMutation.mutate({
+                            customerId: mixedPaymentData.customerId,
+                            points: mixedPaymentData.pointsToUse,
+                            orderId: mixedPaymentData.orderId,
+                            paymentMethod: 'transfer'
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Error calling CreateQRPos API for transfer:', error);
+                        // Fallback to direct payment on error
+                        mixedPaymentMutation.mutate({
+                          customerId: mixedPaymentData.customerId,
+                          points: mixedPaymentData.pointsToUse,
+                          orderId: mixedPaymentData.orderId,
+                          paymentMethod: 'transfer'
+                        });
+                      } finally {
+                        setQrLoading(false);
+                      }
+                    }}
+                    disabled={mixedPaymentMutation.isPending || qrLoading}
+                  >
+                    <span className="text-2xl mr-3">💳</span>
+                    <div className="text-left">
+                      <p className="font-medium">
+                        {qrLoading ? 'Đang tạo QR...' : t('orders.paymentMethods.vnpay')}
+                      </p>
+                      <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
+                    </div>
+                    {qrLoading && (
+                      <div className="ml-auto">
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setMixedPaymentOpen(false)}
+                >
+                  {t('common.cancel')}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setMixedPaymentOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Receipt Modal - Step 1: "Xem trước hóa đơn" */}
+      <ReceiptModal
+        isOpen={showReceiptPreview && !!previewReceipt}
+        onClose={() => {
+          console.log("🔴 Order Management: Closing receipt preview modal");
+          setShowReceiptPreview(false);
+          setPreviewReceipt(null);
+          // Ensure payment modal states are also cleared
+          setShowPaymentMethodModal(false);
+          setOrderForPayment(null);
+        }}
+        onConfirm={() => {
+          console.log("📄 Order Management: Receipt preview confirmed, starting payment flow");
+
+          if (!previewReceipt || !orderForPayment) {
+            console.error('❌ Missing preview data for payment flow');
+            toast({
+              title: 'Lỗi',
+              description: 'Không thể tiếp tục thanh toán. Vui lòng thử lại.',
+              variant: 'destructive',
+            });
+            return;
+          }
+
+          console.log('💳 Opening payment method modal with order:', {
+            orderId: orderForPayment.id,
+            calculatedTotal: orderForPayment.calculatedTotal
+          });
+
+          // Close preview and show payment method modal
+          setShowReceiptPreview(false);
+          setShowPaymentMethodModal(true);
+        }}
+        isPreview={true}
+        cartItems={previewReceipt?.items?.map((item: any) => ({
+          id: item.productId || item.id,
+          name: item.productName || item.name,
+          price: parseFloat(item.price || item.unitPrice || '0'),
+          quantity: item.quantity,
+          sku: item.sku || `SP${item.productId}`,
+          taxRate: parseFloat(item.taxRate || '0')
+        })) || []}
+        total={previewReceipt ? parseFloat(previewReceipt.total || '0') : 0}
+      />
+
+      {/* Payment Method Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentMethodModal}
+        onClose={() => {
+          console.log('🔴 Payment Method Modal closed');
+          setShowPaymentMethodModal(false);
+          setOrderForPayment(null);
+          setPreviewReceipt(null);
+        }}
+        onSelectMethod={(method, data) => {
+          console.log('🎯 Order Management payment method selected:', method, data);
+          console.log('🔍 Current orderForPayment state:', {
+            orderForPayment: !!orderForPayment,
+            orderForPaymentId: orderForPayment?.id,
+            calculatedTotal: orderForPayment?.calculatedTotal,
+            itemsCount: orderForPayment?.processedItems?.length || 0
+          });
+
+          setShowPaymentMethodModal(false);
+
+          // Handle different payment completion scenarios
+          if (method === "paymentCompleted" && data?.success) {
+            console.log('✅ Payment completed successfully from payment modal');
+
+            // Close all modals
+            setOrderForPayment(null);
+            setOrderDetailsOpen(false);
+            setSelectedOrder(null);
+            setPreviewReceipt(null);
+
+            // Only show receipt if explicitly provided and not already shown
+            if (data.receipt && data.shouldShowReceipt !== false) {
+              console.log('📄 Showing receipt from payment completion');
+              setSelectedReceipt(data.receipt);
+              setShowReceiptModal(true);
+            }
+
+            // Force UI refresh
+            queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+
+            toast({
+              title: 'Thành công',
+              description: 'Đơn hàng đã được thanh toán thành công',
+            });
+
+            return;
+          }
+
+          if (method === "paymentError" && data?.error) {
+            console.error('❌ Payment failed from payment modal:', data.error);
+
+            toast({
+              title: 'Lỗi thanh toán',
+              description: data.error || 'Không thể hoàn tất thanh toán',
+              variant: 'destructive',
+            });
+
+            return;
+          }
+
+          // For E-Invoice flows that already handled receipt display, don't show again
+          if (method === "einvoice" && data?.receiptAlreadyShown) {
+            console.log('📄 E-Invoice already handled receipt, skipping duplicate');
+            setOrderForPayment(null);
+            setPreviewReceipt(null);
+            return;
+          }
+
+          // If payment method returns receipt data (like from "phát hành sau"), handle it
+          if (data && data.receipt && !data.receiptAlreadyShown) {
+            console.log('📄 Order Management: Payment method returned receipt data, showing receipt');
+            setSelectedReceipt(data.receipt);
+            setShowReceiptModal(true);
+            setOrderForPayment(null);
+            setPreviewReceipt(null);
+          } else {
+            // For other payment methods, proceed with payment completion
+            console.log('💳 Processing payment for order:', {
+              orderId: orderForPayment?.id,
+              paymentMethod: method.nameKey || method,
+              calculatedTotal: orderForPayment?.calculatedTotal
+            });
+
+            if (orderForPayment?.id && orderForPayment?.calculatedTotal > 0) {
+              completePaymentMutation.mutate({
+                orderId: orderForPayment.id,
+                paymentMethod: method.nameKey || method,
+              });
+            } else {
+              console.error('❌ Invalid order data for payment:', {
+                orderId: orderForPayment?.id,
+                calculatedTotal: orderForPayment?.calculatedTotal
+              });
+              toast({
+                title: 'Lỗi',
+                description: 'Dữ liệu đơn hàng không hợp lệ để thanh toán',
+                variant: 'destructive',
+              });
+            }
+          }
+        }}
+        total={orderForPayment?.calculatedTotal ? Math.round(orderForPayment.calculatedTotal) : 0}
+        onShowEInvoice={() => setShowEInvoiceModal(true)}
+        cartItems={orderForPayment?.processedItems?.map((item: any) => ({
+          id: item.productId,
+          name: item.productName,
+          price: item.price,
+          quantity: item.quantity,
+          sku: item.sku,
+          taxRate: item.taxRate,
+          afterTaxPrice: item.afterTaxPrice
+        })) || []}
+        orderForPayment={orderForPayment}
+        products={products}
+        receipt={previewReceipt}
+      />
+
+      {/* E-Invoice Modal */}
+      {showEInvoiceModal && orderForPayment && (
+        <EInvoiceModal
+          isOpen={showEInvoiceModal}
+          onClose={() => {
+            setShowEInvoiceModal(false);
+            setOrderForPayment(null);
+          }}
+          onConfirm={handleEInvoiceConfirm}
+          total={orderForPayment?.calculatedTotal ? Math.round(orderForPayment.calculatedTotal) : 0}
+          cartItems={orderForPayment?.processedItems?.map((item: any) => ({
+            id: item.productId,
+            name: item.productName,
+            price: item.price,
+            quantity: item.quantity,
+            sku: item.sku,
+            taxRate: item.taxRate,
+            afterTaxPrice: item.afterTaxPrice
+          })) || []}
+          source="order-management"
+          orderId={orderForPayment.id}
+        />
+      )}
+
+      {/* Receipt Modal - Final receipt after payment */}
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={async () => {
+          console.log('🔴 Order Management: Closing final receipt modal safely');
+
+          try {
+            // Step 1: Close modal immediately
+            setShowReceiptModal(false);
+            setSelectedReceipt(null);
+
+            // Step 2: Force data refresh before clearing states
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+              queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+              queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+              queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+            ]);
+
+            // Step 3: Clear modal states gradually to prevent white screen
+            setTimeout(() => {
+              setOrderForPayment(null);
+              setShowPaymentMethodModal(false);
+              setShowEInvoiceModal(false);
+            }, 50);
+
+            setTimeout(() => {
+              setShowReceiptPreview(false);
+              setPreviewReceipt(null);
+              setOrderDetailsOpen(false);
+            }, 100);
+
+            setTimeout(() => {
+              setSelectedOrder(null);
+              setPaymentMethodsOpen(false);
+              setShowQRPayment(false);
+              setPointsPaymentOpen(false);
+              setMixedPaymentOpen(false);
+            }, 150);
+
+            // Step 4: Send global refresh signal
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('orderManagementRefresh', {
+                detail: { source: 'receipt_modal_close', timestamp: new Date().toISOString() }
+              }));
+            }
+
+            console.log('✅ Order Management: Receipt modal closed safely with gradual state clearing');
+
+          } catch (error) {
+            console.error('❌ Error during receipt modal close:', error);
+            // Fallback: just clear states without refresh
+            setOrderForPayment(null);
+            setShowPaymentMethodModal(false);
+            setShowEInvoiceModal(false);
+            setShowReceiptPreview(false);
+            setPreviewReceipt(null);
+            setOrderDetailsOpen(false);
+            setSelectedOrder(null);
+            setPaymentMethodsOpen(false);
+            setShowQRPayment(false);
+            setPointsPaymentOpen(false);
+            setMixedPaymentOpen(false);
+          }
+        }}
+        receipt={selectedReceipt}
+        cartItems={selectedReceipt?.items?.map((item: any) => ({
+          id: item.productId || item.id,
+          name: item.productName || item.name,
+          price: parseFloat(item.price || item.unitPrice || '0'),
+          quantity: item.quantity,
+          sku: item.sku || `SP${item.productId}`,
+          taxRate: (() => {
+            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+          })()
+        })) || []}
+        autoClose={true}
+      />
+    </div>
+  );
+}
