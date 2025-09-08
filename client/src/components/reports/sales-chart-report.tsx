@@ -566,17 +566,17 @@ export function SalesChartReport() {
           };
         }
 
-        // Fix discount calculation logic
-        const orderTotal = Number(order.total || 0);
-        const discount = Number(order.discount || 0); // Get actual discount from database
-        const tax = Number(order.tax || 0); // Ensure tax defaults to 0
-        const revenue = orderTotal - discount; // Doanh thu = Thành tiền - Giảm giá
+        // Use direct database values for faster calculation
+        const orderSubtotal = Number(order.subtotal || 0);
+        const orderDiscount = Number(order.discount || 0);
+        const orderTax = Number(order.tax || 0);
+        const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = Thành tiền - Giảm giá
 
         dailySales[dateStr].orders += 1;
-        dailySales[dateStr].revenue += revenue;
+        dailySales[dateStr].revenue += orderRevenue;
         dailySales[dateStr].customers += Number(order.customerCount || 1);
-        dailySales[dateStr].discount += discount;
-        dailySales[dateStr].tax += tax;
+        dailySales[dateStr].discount += orderDiscount;
+        dailySales[dateStr].tax += orderTax;
 
         console.log("Processing order:", {
           id: order.id,
@@ -868,7 +868,7 @@ export function SalesChartReport() {
                                   {formatCurrency(discount)}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
-                                  {formatCurrency(actualRevenue)}
+                                  {formatCurrency(data.revenue)}
                                 </TableCell>
                                 <TableCell className="text-right border-r min-w-[120px] px-4">
                                   {formatCurrency(tax)}
