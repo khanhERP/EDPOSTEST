@@ -642,7 +642,7 @@ export function SalesReport() {
                                 <div className="space-y-1">
                                   <div className="text-gray-600">{t("reports.orderCount")}:</div>
                                   <div className="font-semibold text-blue-600 text-lg">
-                                    {payment.count} {t("reports.orders").toLowerCase()}
+                                    {payment.count} {t("reports.orders")}
                                   </div>
                                 </div>
                                 <div className="space-y-1">
@@ -658,7 +658,7 @@ export function SalesReport() {
                                 <span className="text-sm font-semibold text-purple-600">
                                   {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
                                 </span>
-                                <span className="text-xs text-gray-500">{t("reports.totalRevenue").toLowerCase()}</span>
+                                <span className="text-xs text-gray-500">{t("reports.totalRevenue")}</span>
                               </div>
                             </div>
                           </div>
