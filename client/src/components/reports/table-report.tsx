@@ -585,7 +585,7 @@ export function TableReport() {
                             <span className="text-xs text-gray-400 ml-2">({t("reports.noRevenue") || "Chưa có doanh thu"})</span>
                           )}
                           <span className="text-xs text-gray-500">
-                            ({stats.table.capacity} {t("common.people") || "người"})
+                            ({stats.table.capacity} {t("customers.people") || "người"})
                           </span>
                         </div>
                       </TableCell>
@@ -601,7 +601,7 @@ export function TableReport() {
                         {formatCurrency(stats.totalRevenue)}
                       </TableCell>
                       <TableCell>
-                        {stats.totalCustomers} {t("common.people") || "người"}
+                        {stats.totalCustomers} {t("customers.people") || "người"}
                       </TableCell>
                       <TableCell>
                         {stats.totalOrders > 0
