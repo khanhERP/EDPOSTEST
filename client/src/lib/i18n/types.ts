@@ -396,6 +396,13 @@ export interface ReportsTranslations {
   openingPrice: string;
   closingStock: string;
   closingValue: string;
+  
+  // Sales level indicators
+  salesLevel: string;
+  high: string;
+  medium: string;
+  low: string;
+  orderCount: string;
 }
 
 // Settings translations interface

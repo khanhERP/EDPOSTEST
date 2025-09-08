@@ -481,6 +481,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional menu items
     warehouseReport: "Báo cáo kho",
+    
+    // Sales level indicators
+    salesLevel: "Mức độ bán",
+    high: "Cao",
+    medium: "Trung bình",
+    low: "Thấp",
+    orderCount: "Số đơn hàng",
+    
     // Chart and filter labels
     selectDateRange: "Chọn khoảng thời gian",
     applyFilter: "Áp dụng bộ lọc",
@@ -962,6 +970,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional menu items
     warehouseReport: "창고 보고서",
+    
+    // Sales level indicators
+    salesLevel: "판매 수준",
+    high: "높음",
+    medium: "보통",
+    low: "낮음",
+    orderCount: "주문 수",
 
     // Chart and filter labels
     selectDateRange: "날짜 범위 선택",
@@ -1452,6 +1467,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional menu items
     warehouseReport: "Warehouse Report",
+    
+    // Sales level indicators
+    salesLevel: "Sales Level",
+    high: "High",
+    medium: "Medium", 
+    low: "Low",
+    orderCount: "Order Count",
 
     // Chart and filter labels
     selectDateRange: "Select Date Range",

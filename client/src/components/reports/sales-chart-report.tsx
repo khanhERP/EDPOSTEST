@@ -3236,9 +3236,9 @@ export function SalesChartReport() {
                     <TableHead className="text-right">
                       {t("reports.totalRevenue")}
                     </TableHead>
-                    <TableHead className="text-right">{t("reports.orderCount")}</TableHead>
+                    <TableHead className="text-right">{t("reports.orders")}</TableHead>
                     <TableHead className="text-right">{t("reports.averageOrderValue")}</TableHead>
-                    <TableHead className="text-center">{t("reports.salesLevel")}</TableHead>
+                    <TableHead className="text-center">Mức độ bán</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -3256,21 +3256,21 @@ export function SalesChartReport() {
                         <TableCell className="font-semibold text-green-600">
                           {formatCurrency(product.totalRevenue)}
                         </TableCell>
-                        <TableCell>{product.orderCount || 0}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">{product.orderCount || 0}</TableCell>
+                        <TableCell className="text-right">
                           {formatCurrency(product.averageOrderValue || 0)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
                           <Badge
                             variant={
                               (product.totalQuantity || 0) > 10 ? "default" : "outline"
                             }
                           >
                             {product.totalQuantity > 50
-                              ? t("reports.high")
+                              ? "Cao"
                               : product.totalQuantity > 10
-                                ? t("reports.medium")
-                                : t("reports.low")}
+                                ? "Trung bình"
+                                : "Thấp"}
                           </Badge>
                         </TableCell>
                       </TableRow>
