@@ -783,7 +783,7 @@ export function SalesChartReport() {
                         className="text-center border-r min-w-[140px]"
                         rowSpan={2}
                       >
-                        {t("reports.subtotal")}
+                        {t("reports.total")}
                       </TableHead>
                       <TableHead
                         className="text-center border-r min-w-[120px]"
