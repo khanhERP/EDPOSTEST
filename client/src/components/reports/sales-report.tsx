@@ -128,7 +128,7 @@ export function SalesReport() {
 
       // Daily sales breakdown
       const dailySales: {
-        [date: string]: { revenue: number; orders: number; customers: number };
+        [date: string]: { revenue: number; orders: number; customers: number, discount: number };
       } = {};
 
       uniqueCombinedData.forEach((item: any) => {
@@ -141,17 +141,19 @@ export function SalesReport() {
           const dateStr = itemDate.toISOString().split('T')[0];
 
           if (!dailySales[dateStr]) {
-            dailySales[dateStr] = { revenue: 0, orders: 0, customers: 0 };
+            dailySales[dateStr] = { revenue: 0, orders: 0, customers: 0, discount: 0 };
           }
 
           // Assuming 'item.total' is the price for an order or order_item
           const itemPrice = Number(item.price || item.total || 0);
           const itemQuantity = Number(item.quantity || 1);
           const revenue = itemPrice * itemQuantity;
+          const discountAmount = Number(item.discount || 0);
 
-          dailySales[dateStr].revenue += revenue;
+          dailySales[dateStr].revenue += revenue - discountAmount;
           dailySales[dateStr].orders += 1; // Each item processed contributes to an order count for that day
           dailySales[dateStr].customers += 1; // Assuming each item is from a distinct customer interaction for simplicity here
+          dailySales[dateStr].discount += discountAmount;
         } catch (error) {
           console.warn("Error processing item for daily sales:", error);
         }
@@ -187,8 +189,10 @@ export function SalesReport() {
           const itemPrice = Number(item.price || item.total || 0);
           const itemQuantity = Number(item.quantity || 1);
           const revenue = itemPrice * itemQuantity;
+          const discountAmount = Number(item.discount || 0);
 
-          paymentMethods[orderPaymentMethod].revenue += revenue;
+
+          paymentMethods[orderPaymentMethod].revenue += revenue - discountAmount;
         } catch (error) {
           console.warn("Error processing item for payment methods:", error);
         }
@@ -205,9 +209,11 @@ export function SalesReport() {
           const itemPrice = Number(item.price || item.total || 0);
           const itemQuantity = Number(item.quantity || 1);
           const revenue = itemPrice * itemQuantity;
+          const discountAmount = Number(item.discount || 0);
+
 
           if (!isNaN(revenue) && revenue > 0) {
-            hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
+            hourlySales[hour] = (hourlySales[hour] || 0) + revenue - discountAmount;
           }
         } catch (error) {
           console.warn("Error processing item for hourly sales:", error);
@@ -218,7 +224,8 @@ export function SalesReport() {
       const totalRevenue = uniqueCombinedData.reduce((total: number, item: any) => {
         const itemPrice = Number(item.price || item.total || 0);
         const itemQuantity = Number(item.quantity || 1);
-        return total + (itemPrice * itemQuantity);
+        const discountAmount = Number(item.discount || 0);
+        return total + (itemPrice * itemQuantity) - discountAmount;
       }, 0);
 
       // Total orders should be based on unique orders, not items

@@ -531,12 +531,11 @@ export function SalesChartReport() {
           dailySales[dateStr] = { orders: 0, revenue: 0, customers: 0 };
         }
 
-        dailySales[dateStr].orders += 1;
-        // Use total from order, not amount
-        const orderTotal = Number(order.total || order.amount || 0);
-        const orderDiscount = Number(order.discount || 0);
-        const revenue = orderTotal - orderDiscount;
+        const orderTotal = Number(order.total || 0);
+        const discount = Number(order.discount || 0); // Set default discount to 0
+        const revenue = orderTotal - discount;
 
+        dailySales[dateStr].orders += 1;
         dailySales[dateStr].revenue += revenue;
         dailySales[dateStr].customers += Number(order.customerCount || 1);
 
@@ -544,7 +543,7 @@ export function SalesChartReport() {
           id: order.id,
           date: dateStr,
           total: orderTotal,
-          discount: orderDiscount,
+          discount: discount,
           revenue: revenue,
         });
       } catch (error) {
@@ -566,7 +565,7 @@ export function SalesChartReport() {
       paymentMethods[method].count += 1;
 
       // Use EXACT same revenue calculation as dashboard: total - discount
-      const orderTotal = Number(order.total || order.amount || 0);
+      const orderTotal = Number(order.total || 0);
       const discount = Number(order.discount || 0);
       paymentMethods[method].revenue += orderTotal - discount;
     });
@@ -1434,6 +1433,7 @@ export function SalesChartReport() {
           revenue: number;
           tax: number;
           total: number;
+          discount: number; // Default discount to 0
           paymentMethods: { [method: string]: number };
         };
       } = {};
@@ -1454,20 +1454,22 @@ export function SalesChartReport() {
             revenue: 0,
             tax: 0,
             total: 0,
+            discount: 0, // Default discount to 0
             paymentMethods: {},
           };
         }
 
         const stats = employeeSales[employeeKey];
         const orderTotal = Number(order.total || 0);
-        const orderDiscount = Number(order.discount || 0);
+        const orderDiscount = Number(order.discount || 0); // Default discount to 0
         const revenue = orderTotal - orderDiscount;
-        const tax = revenue * 0.1; // 10% tax
 
         stats.orderCount += 1;
         stats.revenue += revenue;
-        stats.tax += tax;
-        stats.total += revenue;
+        stats.tax += (revenue * 0.1); // Tax is 10% of revenue
+        stats.total += orderTotal;
+        stats.discount = (stats.discount || 0) + orderDiscount;
+
 
         const paymentMethod = order.paymentMethod || "cash";
         stats.paymentMethods[paymentMethod] =
@@ -1475,7 +1477,7 @@ export function SalesChartReport() {
       });
 
       const data = Object.values(employeeSales).sort(
-        (a, b) => b.total - a.total,
+        (a, b) => b.total - a.total, // Sort by total amount
       );
 
       // Pagination logic
@@ -1514,6 +1516,7 @@ export function SalesChartReport() {
                       "Tên NV": item.employeeName,
                       "Số đơn": item.orderCount,
                       "Doanh thu": formatCurrency(item.revenue),
+                      "Giảm giá": formatCurrency(item.discount),
                       Thuế: formatCurrency(item.tax),
                       "Tổng cộng": formatCurrency(item.total),
                       ...Object.fromEntries(
@@ -1532,6 +1535,7 @@ export function SalesChartReport() {
                       "Tên NV": `${data.length} nhân viên`,
                       "Số đơn": data.reduce((sum, item) => sum + item.orderCount, 0),
                       "Doanh thu": formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0)),
+                      "Giảm giá": formatCurrency(data.reduce((sum, item) => sum + item.discount, 0)),
                       Thuế: formatCurrency(data.reduce((sum, item) => sum + item.tax, 0)),
                       "Tổng cộng": formatCurrency(data.reduce((sum, item) => sum + item.total, 0)),
                       ...Object.fromEntries(
@@ -1585,6 +1589,12 @@ export function SalesChartReport() {
                         rowSpan={2}
                       >
                         {t("reports.revenue")}
+                      </TableHead>
+                      <TableHead
+                        className="text-right border-r min-w-[120px]"
+                        rowSpan={2}
+                      >
+                        {t("reports.discount")}
                       </TableHead>
                       <TableHead
                         className="text-right border-r min-w-[120px]"
@@ -1708,6 +1718,9 @@ export function SalesChartReport() {
                               <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
                                 {formatCurrency(item.revenue)}
                               </TableCell>
+                              <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
+                                {formatCurrency(item.discount || 0)}
+                              </TableCell>
                               <TableCell className="text-right border-r min-w-[120px] px-4">
                                 {formatCurrency(item.tax)}
                               </TableCell>
@@ -1819,6 +1832,11 @@ export function SalesChartReport() {
                                         Number(transaction.total),
                                       )}
                                     </TableCell>
+                                    <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
+                                      {formatCurrency(
+                                        Number(transaction.discount) || 0,
+                                      )}
+                                    </TableCell>
                                     <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
                                       {formatCurrency(
                                         Number(transaction.total) * 0.1,
@@ -1914,7 +1932,7 @@ export function SalesChartReport() {
                           {t("common.total")}
                         </TableCell>
                         <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
-                          {data.length} khách hàng
+                          {data.length} nhân viên
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[100px] px-4">
                           {data
@@ -1924,6 +1942,11 @@ export function SalesChartReport() {
                         <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
                           {formatCurrency(
                             data.reduce((sum, item) => sum + item.revenue, 0),
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
+                          {formatCurrency(
+                            data.reduce((sum, item) => sum + item.discount, 0),
                           )}
                         </TableCell>
                         <TableCell className="text-right border-r min-w-[120px] px-4">
@@ -2162,7 +2185,7 @@ export function SalesChartReport() {
         customerGroup: string;
         orders: number;
         totalAmount: number;
-        discount: number;
+        discount: number; // Default discount to 0
         revenue: number;
         status: string;
         customerGroup: string;
@@ -2171,7 +2194,7 @@ export function SalesChartReport() {
     } = {};
 
     filteredOrders.forEach((order: any) => {
-      const customerId = order.customerId || "walk-in";
+      const customerId = order.customerId || "guest";
       const customerName = order.customerName || "Khách lẻ";
 
       if (!customerSales[customerId]) {
@@ -2181,7 +2204,7 @@ export function SalesChartReport() {
           customerGroup: t("common.regularCustomer"), // Default group
           orders: 0,
           totalAmount: 0,
-          discount: 0,
+          discount: 0, // Default discount to 0
           revenue: 0,
           status: t("reports.active"), // Default status
           customerGroup: t("common.regularCustomer"), // Default group
@@ -2189,14 +2212,15 @@ export function SalesChartReport() {
         };
       }
 
-      const orderTotal = Number(order.total);
+      const orderTotal = Number(order.total || 0);
       const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
-      const orderDiscount = orderSubtotal - orderTotal;
+      const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
       customerSales[customerId].orders += 1;
       customerSales[customerId].totalAmount += orderSubtotal;
       customerSales[customerId].discount += orderDiscount;
-      customerSales[customerId].revenue += orderTotal;
+      customerSales[customerId].revenue += (orderTotal - orderDiscount);
+      customerSales[customerId].orderDetails.push(order);
 
       // Determine customer group based on total spending
       if (customerSales[customerId].revenue >= 1000000) {
@@ -2204,13 +2228,6 @@ export function SalesChartReport() {
       } else if (customerSales[customerId].revenue >= 500000) {
         customerSales[customerId].customerGroup = t("common.goldCustomer");
       }
-    });
-
-    // Add orderDetails to customer sales data
-    Object.keys(customerSales).forEach((customerId) => {
-      customerSales[customerId].orderDetails = filteredOrders.filter(
-        (order) => (order.customerId || "walk-in") === customerId,
-      );
     });
 
     const data = Object.values(customerSales).sort(
@@ -2906,7 +2923,9 @@ export function SalesChartReport() {
               dailyData[dateKey] = { revenue: 0, orders: 0 };
             }
 
-            dailyData[dateKey].revenue += Number(order.total || 0);
+            const orderTotal = Number(order.total || 0);
+            const discount = Number(order.discount || 0); // Set default discount to 0
+            dailyData[dateKey].revenue += orderTotal - discount;
             dailyData[dateKey].orders += 1;
           });
         }
@@ -3011,7 +3030,7 @@ export function SalesChartReport() {
 
               // Use EXACT same calculation as dashboard: total - discount
               const orderTotal = Number(order.total || 0);
-              const orderDiscount = Number(order.discount || 0);
+              const orderDiscount = Number(order.discount || 0); // Default discount to 0
               const revenue = orderTotal - orderDiscount;
 
               if (revenue >= 0) {
@@ -3103,12 +3122,12 @@ export function SalesChartReport() {
 
           const orderTotal = Number(order.total);
           const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
-          const orderDiscount = orderSubtotal - orderTotal;
+          const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
           customerData[customerId].orders += 1;
           customerData[customerId].totalAmount += orderSubtotal;
           customerData[customerId].discount += orderDiscount;
-          customerData[customerId].revenue += orderTotal;
+          customerData[customerId].revenue += (orderTotal - orderDiscount);
           customerData[customerId].orderDetails.push(order);
 
           // Determine customer group based on total spending
@@ -3493,7 +3512,7 @@ export function SalesChartReport() {
                         fontSize={12}
                         angle={-45}
                         textAnchor="end"
-                        height={80}
+                                height={80}
                         interval={0}
                       />
                       <YAxis stroke="#6b7280" fontSize={12} />
