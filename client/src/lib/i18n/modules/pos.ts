@@ -233,6 +233,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     cancel: "취소",
     confirmAndSelectPayment: "확인 및 결제 선택",
     thankYouBusiness: "이용해 주셔서 감사합니다!",
+    keepReceiptRecords: "영수증을 기록용으로 보관해 주세요",
     bulkImport: "일괄 가져오기",
     bulkImportTitle: "일괄 가져오기",
     bulkImportInstructions:

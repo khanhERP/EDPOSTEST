@@ -75,7 +75,7 @@ export function ReceiptModal({
         hasReceiptData: !!(receipt && typeof receipt === 'object'),
         hasValidData: !!(receipt && typeof receipt === 'object') || (isPreview && cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0)
       });
-      
+
       // Force show modal when receipt data exists
       if (receipt && typeof receipt === 'object') {
         console.log("✅ Receipt Modal: Valid receipt data found - modal will display");
@@ -126,7 +126,7 @@ export function ReceiptModal({
 
   const handlePrint = () => {
     console.log('🖨️ Receipt Modal: Print button clicked - triggering data refresh');
-    
+
     // Force clear cart immediately when print is clicked
     if (typeof window !== 'undefined') {
       // Dispatch custom event to clear cart
@@ -788,7 +788,7 @@ export function ReceiptModal({
               <Button
                 onClick={() => {
                   console.log('🔴 Receipt Modal: Close button clicked - forcing data refresh');
-                  
+
                   // Force clear cart when close button is clicked
                   if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('clearCart', {
@@ -798,7 +798,7 @@ export function ReceiptModal({
                       }
                     }));
                   }
-                  
+
                   // Send enhanced refresh signals to update table data
                   try {
                     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -847,7 +847,7 @@ export function ReceiptModal({
                   } catch (error) {
                     console.error("Failed to send refresh signals:", error);
                   }
-                  
+
                   // Close the modal
                   onClose();
                 }}
