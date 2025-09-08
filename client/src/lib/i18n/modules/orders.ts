@@ -66,6 +66,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderUpdateSuccess: "주문 업데이트",
     orderUpdateSuccessDesc: "주문에 새 메뉴가 성공적으로 추가되었습니다",
     updateAndRefresh: "업데이트 및 새로고침",
+    showingItems: "{{count}}개 항목 표시 중 - 주문 {{orderNumber}}",
     pointsPaymentDialog: {
       title: "포인트 결제",
       description: "고객을 선택하고 포인트로 주문을 결제하세요",
@@ -176,6 +177,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderUpdateSuccessDesc:
       "New items have been successfully added to the order",
     updateAndRefresh: "Update & Refresh",
+    showingItems: "Showing {{count}} items in order {{orderNumber}}",
     pointsPaymentDialog: {
       title: "Points Payment",
       description: "Select customer and use points to pay for the order",
@@ -286,6 +288,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderUpdateSuccess: "Cập nhật đơn hàng",
     orderUpdateSuccessDesc: "Đã thêm món mới vào đơn hàng thành công",
     updateAndRefresh: "Cập nhật & Làm mới",
+    showingItems: "Hiển thị {{count}} món trong đơn hàng {{orderNumber}}",
     pointsPaymentDialog: {
       title: "Thanh toán bằng điểm",
       description: "Chọn khách hàng và số điểm để thanh toán đơn hàng",
