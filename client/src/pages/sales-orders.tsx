@@ -1664,15 +1664,15 @@ export default function SalesOrders() {
                 <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded">
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
-                      <span className="font-medium">Tổng tiền hàng:</span>
+                      <span className="font-medium">{t("common.subtotalAmount")}:</span>
                       <div className="font-bold text-blue-600">{formatCurrency(totals.subtotal)}</div>
                     </div>
                     <div>
-                      <span className="font-medium">Tổng thuế:</span>
+                      <span className="font-medium">{t("common.totalTax")}:</span>
                       <div className="font-bold text-orange-600">{formatCurrency(totals.tax)}</div>
                     </div>
                     <div>
-                      <span className="font-medium">Tổng cộng:</span>
+                      <span className="font-medium">{t("common.grandTotal")}:</span>
                       <div className="font-bold text-green-600">{formatCurrency(totals.total)}</div>
                     </div>
                   </div>
