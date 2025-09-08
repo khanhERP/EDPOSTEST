@@ -1415,7 +1415,7 @@ export function EInvoiceModal({
               </div>
               <div>
                 <Label htmlFor="customerName">
-                  Tên đơn vị
+                  {t("einvoice.companyName")}
                 </Label>
                 <Input
                   id="customerName"
