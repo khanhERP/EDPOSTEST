@@ -1657,7 +1657,7 @@ export function OrderManagement() {
         </div>
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-          <span className="ml-2">Đang tải đơn hàng...</span>
+          <span className="ml-2">{t('common.loading')} {t('orders.title')}...</span>
         </div>
       </div>
     );
@@ -1668,16 +1668,16 @@ export function OrderManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng bàn</h2>
-          <p className="text-gray-600">Theo dõi trạng thái đơn hàng từ bàn trong thời gian thực</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')} - {t('orders.tableOrder')}</h2>
+          <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
         </div>
         <div className="flex items-center gap-4">
           <Badge variant="secondary" className="text-lg px-4 py-2">
-            {totalOrders} đơn đang xử lý
+            {totalOrders} {t('orders.ordersInProgress')}
           </Badge>
           {totalPages > 1 && (
             <Badge variant="outline" className="text-sm px-3 py-1">
-              Trang {currentPage}/{totalPages}
+              {t('common.page')} {currentPage}/{totalPages}
             </Badge>
           )}
         </div>
@@ -1886,7 +1886,7 @@ export function OrderManagement() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
               <div className="text-sm text-gray-600">
-                Hiển thị {startIndex + 1}-{Math.min(endIndex, totalOrders)} của {totalOrders} đơn hàng
+                {t('common.showing')} {startIndex + 1}-{Math.min(endIndex, totalOrders)} {t('common.of')} {totalOrders} {t('orders.title')}
               </div>
 
               <div className="flex items-center gap-2">
@@ -1898,7 +1898,7 @@ export function OrderManagement() {
                   className="flex items-center gap-1"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Trước
+                  {t('common.previous')}
                 </Button>
 
                 <div className="flex items-center gap-1">
@@ -1950,7 +1950,7 @@ export function OrderManagement() {
                   disabled={currentPage === totalPages}
                   className="flex items-center gap-1"
                 >
-                  Sau
+                  {t('common.next')}
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
