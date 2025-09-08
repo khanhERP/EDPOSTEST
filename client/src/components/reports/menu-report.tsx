@@ -722,8 +722,8 @@ function MenuReport() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {t("reports.menuItemAnalysis") ||
-              "Phân tích sản phẩm theo đơn hàng"}
+            {t("reports.menuAnalysis") ||
+              "Phân tích theo menu"}
           </CardTitle>
         </CardHeader>
         <CardContent>
