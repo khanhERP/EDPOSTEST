@@ -375,7 +375,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productPerformance: "Hiệu suất sản phẩm",
     categoryPerformance: "Phân tích theo nhóm hàng",
     topSellingItems: "Top 10 mặt hàng bán chạy nhất",
-    topRevenueItems: "Sản phẩm doanh thu cao nhất",
+    topRevenueItems: "Top 10 mặt hàng doanh thu cao nhất",
     categoryBreakdown: "Phân tích theo danh mục",
     itemPerformance: "Hiệu suất sản phẩm",
     salesTrend: "Xu hướng bán hàng",
