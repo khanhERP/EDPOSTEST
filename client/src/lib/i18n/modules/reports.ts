@@ -361,6 +361,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalSalesRevenue: "Tổng doanh thu bán hàng",
     salesRevenue: "Doanh thu bán hàng",
     revenueAmount: "Số tiền doanh thu",
+    revenueTotal: "Doanh thu",
 
     // Chart specific
     value: "Giá trị",
@@ -864,6 +865,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalSalesRevenue: "총 매출액",
     salesRevenue: "매출액",
     revenueAmount: "수익 금액",
+    revenueTotal: "매출",
 
     // Chart specific
     value: "값",
@@ -1373,6 +1375,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalSalesRevenue: "Total Sales Revenue",
     salesRevenue: "Sales Revenue", 
     revenueAmount: "Revenue Amount",
+    revenueTotal: "Revenue",
 
     // Chart specific
     value: "Value",
