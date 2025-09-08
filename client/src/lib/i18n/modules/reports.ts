@@ -115,6 +115,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     unitPrice: "Đơn giá",
     amount: "Thành tiền",
     thanhTien: "Thành tiền",
+    totalMoney: "Tổng tiền",
     exportTax: "Thuế xuất",
     vatTax: "Thuế GTGT",
     tableName: "Bàn",
