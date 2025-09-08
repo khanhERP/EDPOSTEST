@@ -51,7 +51,7 @@ export default function ReportsPage() {
               <Link href="/">
                 <Button variant="outline">
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {t('navigation.pos')}
+                  {t('nav.pos')}
                 </Button>
               </Link>
             </div>

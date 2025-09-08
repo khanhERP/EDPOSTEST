@@ -159,7 +159,7 @@ export default function TablesPage() {
               <Link href="/">
                 <Button variant="outline">
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  Quay lại Bán hàng
+                  {t('nav.pos')}
                 </Button>
               </Link>
             </div>
