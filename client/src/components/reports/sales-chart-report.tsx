@@ -1475,12 +1475,14 @@ export function SalesChartReport() {
 
         const stats = employeeSales[employeeKey];
         const orderTotal = Number(order.total || 0);
+        const orderSubtotal = Number(order.subtotal || 0);
         const orderDiscount = Number(order.discount || 0); // Default discount to 0
-        const revenue = orderTotal - orderDiscount;
+        const revenue = orderSubtotal; // Doanh thu = subtotal (chưa thuế) giống như báo cáo thời gian
+        const tax = orderTotal - orderSubtotal; // Thuế = total - subtotal
 
         stats.orderCount += 1;
         stats.revenue += revenue;
-        stats.tax += revenue * 0.1; // Tax is 10% of revenue
+        stats.tax += tax;
         stats.total += orderTotal;
         stats.discount = (stats.discount || 0) + orderDiscount;
 
@@ -1864,7 +1866,7 @@ export function SalesChartReport() {
                                     </TableCell>
                                     <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                       {formatCurrency(
-                                        Number(transaction.total),
+                                        Number(transaction.subtotal || 0),
                                       )}
                                     </TableCell>
                                     <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
@@ -1874,7 +1876,7 @@ export function SalesChartReport() {
                                     </TableCell>
                                     <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
                                       {formatCurrency(
-                                        Number(transaction.total) * 0.1,
+                                        Number(transaction.total || 0) - Number(transaction.subtotal || 0),
                                       )}
                                     </TableCell>
                                     <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
