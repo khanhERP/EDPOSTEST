@@ -171,8 +171,8 @@ export function ShoppingCart({
               type: 'cart_update',
               cart: cart,
               subtotal: subtotal,
-              tax: totalTax,
-              total: grandTotal,
+              tax: tax,
+              total: total,
               timestamp: new Date().toISOString()
             }));
           }
@@ -242,7 +242,7 @@ export function ShoppingCart({
         ws.close();
       }
     };
-  }, [onClearCart, cart, subtotal, totalTax, grandTotal]);
+  }, [onClearCart, cart, subtotal, tax, total]);
 
   // Store WebSocket reference for broadcasting cart updates
   const wsRef = useRef<WebSocket | null>(null);
@@ -288,16 +288,16 @@ export function ShoppingCart({
         type: 'cart_update',
         cart: cart,
         subtotal: subtotal,
-        tax: totalTax,
-        total: grandTotal,
+        tax: tax,
+        total: total,
         timestamp: new Date().toISOString()
       };
 
       console.log("📡 Shopping Cart: Broadcasting cart update to customer display:", {
         cartItems: cart.length,
         subtotal: subtotal,
-        tax: totalTax,
-        total: grandTotal
+        tax: tax,
+        total: total
       });
 
       try {
@@ -308,7 +308,7 @@ export function ShoppingCart({
     } else {
       console.log("📡 Shopping Cart: WebSocket not available for broadcasting");
     }
-  }, [cart, subtotal, totalTax, grandTotal]);
+  }, [cart, subtotal, tax, total]);
 
   // Helper to call broadcastCartUpdate after state changes
   const triggerBroadcastUpdate = useCallback(() => {
