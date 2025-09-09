@@ -1298,7 +1298,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
@@ -1553,7 +1552,7 @@ export function SalesChartReport() {
                         "Thành tiền": formatCurrency(item.totalAmount),
                         "Giảm giá": formatCurrency(item.discount),
                         "Doanh thu": formatCurrency(item.revenue),
-                        "Thuế suất": formatCurrency(item.tax),
+                        "Thuế suất": item.taxRate, // Use item.taxRate directly
                         "Thuế GTGT": formatCurrency(item.vat),
                         "Tổng tiền": formatCurrency(item.totalMoney),
                         "Ghi chú": order?.notes || "",
@@ -1578,7 +1577,7 @@ export function SalesChartReport() {
                       "Thành tiền": formatCurrency(totalAmount),
                       "Giảm giá": formatCurrency(totalDiscount),
                       "Doanh thu": formatCurrency(totalRevenue),
-                      "Thuế suất": formatCurrency(totalTax),
+                      "Thuế suất": "10%", // Displayed as 10%
                       "Thuế GTGT": formatCurrency(totalVat),
                       "Tổng tiền": formatCurrency(totalMoney),
                       "Ghi chú": "",
@@ -1832,7 +1831,7 @@ export function SalesChartReport() {
                                     {formatCurrency(item.revenue)}
                                   </TableCell>
                                   <TableCell className="text-right min-w-[100px] px-2">
-                                    {formatCurrency(item.tax)}
+                                    {item.taxRate} {/* Updated to display taxRate */}
                                   </TableCell>
                                   <TableCell className="text-right min-w-[100px] px-2">
                                     {formatCurrency(item.vat)}
@@ -1911,7 +1910,7 @@ export function SalesChartReport() {
                           {formatCurrency(totalRevenue)}
                         </TableCell>
                         <TableCell className="text-right border-r bg-yellow-100 min-w-[100px] px-4">
-                          {formatCurrency(totalTax)}
+                          10%
                         </TableCell>
                         <TableCell className="text-right border-r bg-yellow-100 min-w-[100px] px-4">
                           {formatCurrency(totalVat)}
@@ -1999,7 +1998,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
@@ -3074,7 +3072,7 @@ export function SalesChartReport() {
                     <TableHeader>
                       <TableRow>
                         <TableHead
-                          className="text-center border-r bg-green-50 w-12"
+                          className="text-center bg-green-50 w-12"
                           rowSpan={1}
                         ></TableHead>
                         <TableHead className="text-center border-r bg-green-50 min-w-[120px]">
