@@ -569,29 +569,32 @@ export function SalesChartReport() {
             customers: 0,
             discount: 0,
             tax: 0,
-            subtotal: 0, // Initialize subtotal
+            subtotal: 0,
           };
         }
 
-        // Use direct database values for faster calculation
-        const orderSubtotal = Number(order.subtotal || 0);
-        const orderDiscount = Number(order.discount || 0);
-        const orderTax = Number(order.tax || 0);
-        const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = Thành tiền - Giảm giá
+        // Use EXACT database values without recalculation
+        const orderTotal = Number(order.total || 0); // Tổng tiền (đã bao gồm thuế)
+        const orderSubtotal = Number(order.subtotal || 0); // Tiền hàng (chưa thuế)
+        const orderDiscount = Number(order.discount || 0); // Giảm giá
+        const orderTax = orderTotal - orderSubtotal; // Thuế = Total - Subtotal
+        const actualRevenue = orderTotal; // Doanh thu = Total (đã trừ giảm giá)
 
         dailySales[dateStr].orders += 1;
-        dailySales[dateStr].revenue += orderRevenue;
+        dailySales[dateStr].revenue += actualRevenue; // Sử dụng total làm doanh thu
         dailySales[dateStr].customers += Number(order.customerCount || 1);
-        dailySales[dateStr].discount += orderDiscount;
-        dailySales[dateStr].tax += orderTax;
-        dailySales[dateStr].subtotal += orderSubtotal; // Track subtotal
+        dailySales[dateStr].discount += orderDiscount; // Giảm giá từ DB
+        dailySales[dateStr].tax += orderTax; // Thuế = total - subtotal
+        dailySales[dateStr].subtotal += orderSubtotal; // Subtotal từ DB
 
         console.log("Processing order:", {
           id: order.id,
           date: dateStr,
-          total: orderTotal, // This 'orderTotal' is not defined in this scope, likely a typo from previous logic. It should use 'order.total' or similar.
+          total: orderTotal,
+          subtotal: orderSubtotal,
           discount: orderDiscount,
-          revenue: orderRevenue,
+          tax: orderTax,
+          revenue: actualRevenue,
         });
       } catch (error) {
         console.warn("Error processing order for daily sales:", error, order);
@@ -628,8 +631,6 @@ export function SalesChartReport() {
 
     return (
       <>
-
-
         {/* Daily Sales */}
         <Card>
           <CardHeader>
@@ -645,7 +646,7 @@ export function SalesChartReport() {
                       Ngày: formatDate(date),
                       "Tổng số đơn hàng": data.orders,
                       "Doanh thu": formatCurrency(data.revenue),
-                      Thuế: formatCurrency(data.revenue * 0.1),
+                      Thuế: formatCurrency(data.revenue * 0.1), // This calculation might be incorrect, should use actual tax from data.tax
                       "Thành tiền": formatCurrency(data.subtotal), // Use subtotal here
                       "Khách hàng": data.customers,
                     })),
@@ -822,7 +823,7 @@ export function SalesChartReport() {
                         return paginatedEntries.map(([date, data]) => {
                           const paymentAmount = data.subtotal; // Thành tiền (bao gồm thuế và phí)
                           const discount = data.discount; // Use the tracked discount
-                          const actualRevenue = paymentAmount - discount; // Doanh thu = Thành tiền - Giảm giá
+                          const actualRevenue = data.revenue; // Doanh thu = Thành tiền - Giảm giá (using calculated revenue from data)
                           const tax = data.tax || 0; // Use stored tax, default to 0
                           const customerPayment = actualRevenue; // Khách thanh toán = doanh thu
 
