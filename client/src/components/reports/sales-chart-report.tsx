@@ -1670,6 +1670,7 @@ export function SalesChartReport() {
                     <TableHead className="text-center min-w-[120px] font-bold">
                       Tên nhân viên
                     </TableHead>
+                    {/* ADDED COLUMN FOR PRODUCT GROUP */}
                     <TableHead className="text-center min-w-[120px] font-bold">
                       Nhóm hàng
                     </TableHead>
@@ -1739,6 +1740,9 @@ export function SalesChartReport() {
                             <TableCell className="text-right min-w-[120px] px-2 font-bold">
                               {formatCurrency(order.totalAmount)}
                             </TableCell>
+                            <TableCell className="text-right min-w-[120px] px-2 font-bold">
+                              {formatCurrency(order.totalAmount)}
+                            </TableCell>
                             <TableCell className="text-right text-red-600 min-w-[100px] px-2 font-bold">
                               {formatCurrency(order.discount)}
                             </TableCell>
@@ -1775,6 +1779,7 @@ export function SalesChartReport() {
                             <TableCell className="text-center min-w-[120px] px-2">
                               {order.employeeName}
                             </TableCell>
+                            {/* ADDED CELL FOR PRODUCT GROUP */}
                             <TableCell className="text-center min-w-[120px] px-2">
                               -
                             </TableCell>
@@ -1790,7 +1795,7 @@ export function SalesChartReport() {
                             order.items.map((item: any, itemIndex: number) => (
                               <TableRow
                                 key={`${order.orderNumber}-item-${itemIndex}`}
-                                className="hover:bg-gray-50 border-l-4 border-l-gray-300"
+                                className="bg-blue-50/50 border-l-4 border-l-blue-400"
                               >
                                 <TableCell className="text-center font-medium min-w-[100px] px-2">
                                   <div className="flex items-center gap-2 pl-2">
@@ -1869,6 +1874,7 @@ export function SalesChartReport() {
                                 <TableCell className="text-center min-w-[120px] px-2 text-gray-600 text-sm">
                                   {order.employeeName}
                                 </TableCell>
+                                {/* ADDED CELL FOR PRODUCT GROUP */}
                                 <TableCell className="text-center min-w-[120px] px-2">
                                   {item.productGroup}
                                 </TableCell>
@@ -2009,7 +2015,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -3133,7 +3138,7 @@ export function SalesChartReport() {
                               <TableCell className="text-center border-r min-w-[130px] px-4">
                                 <Badge
                                   variant={
-                                    item.customerGroup === t("reports.vip")
+                                    item.customerGroup === t("reports.reports.vip")
                                       ? "default"
                                       : "secondary"
                                   }
@@ -3762,7 +3767,7 @@ export function SalesChartReport() {
                   const orderSubtotal = Number(order.subtotal || 0);
                   const discount = Number(order.discount || 0);
                   const revenue = Math.max(0, orderSubtotal - discount); // Ensure non-negative
-                  
+
                   dailyData[dateKey].revenue += revenue;
                   dailyData[dateKey].orders += 1;
                 } catch (error) {
@@ -3789,7 +3794,7 @@ export function SalesChartReport() {
             console.log("Product analysis still loading...");
             return [];
           }
-          
+
           if (!productAnalysisData || !productAnalysisData.productStats) {
             console.log("No product analysis data available");
             return [];
@@ -3800,9 +3805,9 @@ export function SalesChartReport() {
 
           const productChartData = productStats
             .filter((product: any) => {
-              const isValid = product && 
-                             product.productName && 
-                             typeof product.totalRevenue === 'number' && 
+              const isValid = product &&
+                             product.productName &&
+                             typeof product.totalRevenue === 'number' &&
                              typeof product.totalQuantity === 'number' &&
                              product.totalQuantity > 0;
               if (!isValid) {
@@ -3944,7 +3949,7 @@ export function SalesChartReport() {
                 const orderDate = new Date(
                   order.orderedAt || order.created_at || order.createdAt,
                 );
-                
+
                 if (isNaN(orderDate.getTime())) {
                   console.warn("Invalid date for customer order:", order.id);
                   return false;
@@ -4363,7 +4368,7 @@ export function SalesChartReport() {
         console.log("Chart data for", analysisType, ":", chartData);
 
         // Validate chart data
-        const isValidChartData = Array.isArray(chartData) && chartData.length > 0 && 
+        const isValidChartData = Array.isArray(chartData) && chartData.length > 0 &&
           chartData.every(item => item && typeof item === 'object' && item.name);
 
         // Always render the chart container, even with no data
