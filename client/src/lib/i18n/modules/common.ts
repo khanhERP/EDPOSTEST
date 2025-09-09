@@ -729,7 +729,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     total: "Total",
     subtotal: "Subtotal",
     tax: "Tax",
-    discount: "Discount",
+    
     items: " items",
     category: "Category",
     status: "Status",
