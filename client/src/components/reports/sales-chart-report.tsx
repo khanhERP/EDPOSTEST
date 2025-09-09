@@ -4764,163 +4764,162 @@ export function SalesChartReport() {
               </div></div>
 
             {/* Secondary Filter Row - Show based on analysis type */}
-              {analysisType === "employee" && (
-                <div className="pt-4 border-t border-gray-100">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                        {t("reports.employeeFilter")}
-                      </Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          placeholder={t("reports.employeeFilterPlaceholder")}
-                          value={selectedEmployee === "all" ? "" : selectedEmployee}
-                          onChange={(e) =>
-                            setSelectedEmployee(e.target.value || "all")
-                          }
-                          className="pl-10 h-10 text-sm border-gray-200 hover:border-purple-300 focus:border-purple-500 transition-colors"
-                        />
-                      </div>
+            {analysisType === "employee" && (
+              <div className="pt-4 border-t border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      {t("reports.employeeFilter")}
+                    </Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder={t("reports.employeeFilterPlaceholder")}
+                        value={selectedEmployee === "all" ? "" : selectedEmployee}
+                        onChange={(e) =>
+                          setSelectedEmployee(e.target.value || "all")
+                        }
+                        className="pl-10 h-10 text-sm border-gray-200 hover:border-purple-300 focus:border-purple-500 transition-colors"
+                      />
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
             {analysisType === "customer" && (
                 <div className="pt-4 border-t border-gray-100">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        {t("reports.customerFilter")}
-                      </Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          placeholder={t("reports.customerFilterPlaceholder")}
-                          value={customerSearch}
-                          onChange={(e) => setCustomerSearch(e.target.value)}
-                          className="pl-10 h-10 text-sm border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        {t("reports.status")}
-                      </Label>
-                      <Select
-                        value={customerStatus}
-                        onValueChange={setCustomerStatus}
-                      >
-                        <SelectTrigger className="h-10 text-sm border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("common.all")}</SelectItem>
-                          <SelectItem value="active">
-                            {t("reports.active")}
-                          </SelectItem>
-                          <SelectItem value="inactive">
-                            {t("reports.inactive")}
-                          </SelectItem>
-                          <SelectItem value="vip">{t("reports.vip")}</SelectItem>
-                          <SelectItem value="new">
-                            {t("reports.newCustomer")}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      {t("reports.customerFilter")}
+                    </Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder={t("reports.customerFilterPlaceholder")}
+                        value={customerSearch}
+                        onChange={(e) => setCustomerSearch(e.target.value)}
+                        className="pl-10 h-10 text-sm border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors"
+                      />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      {t("reports.status")}
+                    </Label>
+                    <Select
+                      value={customerStatus}
+                      onValueChange={setCustomerStatus}
+                    >
+                      <SelectTrigger className="h-10 text-sm border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="active">
+                          {t("reports.active")}
+                        </SelectItem>
+                        <SelectItem value="inactive">
+                          {t("reports.inactive")}
+                        </SelectItem>
+                        <SelectItem value="vip">{t("reports.vip")}</SelectItem>
+                        <SelectItem value="new">
+                          {t("reports.newCustomer")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              )}
+              </div>
+            )}
 
             {analysisType === "product" && (
                 <div className="pt-4 border-t border-gray-100">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                        {t("reports.productFilter")}
-                      </Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          placeholder={t("reports.productFilterPlaceholder")}
-                          value={productSearch}
-                          onChange={(e) => setProductSearch(e.target.value)}
-                          className="pl-10 h-10 text-sm border-gray-200 hover:border-indigo-300 focus:border-indigo-500 transition-colors"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                        {t("common.productType")}
-                      </Label>
-                      <Select value={productType} onValueChange={setProductType}>
-                        <SelectTrigger className="h-10 text-sm border-gray-200 hover:border-indigo-300 focus:border-indigo-500 transition-colors">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("common.all")}</SelectItem>
-                          <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                          <SelectItem value="product">
-                            {t("reports.product")}
-                          </SelectItem>
-                          <SelectItem value="service">
-                            {t("reports.service")}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                        {t("reports.productGroup")}
-                      </Label>
-                      <Select
-                        value={selectedCategory}
-                        onValueChange={setSelectedCategory}
-                      >
-                        <SelectTrigger className="h-10 text-sm border-gray-200 hover:border-indigo-300 focus:border-indigo-500 transition-colors">
-                          <SelectValue placeholder={t("reports.productGroup")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("common.all")}</SelectItem>
-                          {categories &&
-                            Array.isArray(categories) &&
-                            categories.map((category: any) => (
-                              <SelectItem
-                                key={category.id}
-                                value={category.id.toString()}
-                              >
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                      {t("reports.productFilter")}
+                    </Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder={t("reports.productFilterPlaceholder")}
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className="pl-10 h-10 text-sm border-gray-200 hover:border-indigo-300 focus:border-indigo-500 transition-colors"
+                      />
                     </div>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                      {t("common.productType")}
+                    </Label>
+                    <Select value={productType} onValueChange={setProductType}>
+                      <SelectTrigger className="h-10 text-sm border-gray-200 hover:border-indigo-300 focus:border-indigo-500 transition-colors">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="combo">{t("reports.combo")}</SelectItem>
+                        <SelectItem value="product">
+                          {t("reports.product")}
+                        </SelectItem>
+                        <SelectItem value="service">
+                          {t("reports.service")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                      {t("reports.productGroup")}
+                    </Label>
+                    <Select
+                      value={selectedCategory}
+                      onValueChange={setSelectedCategory}
+                    >
+                      <SelectTrigger className="h-10 text-sm border-gray-200 hover:border-indigo-300 focus:border-indigo-500 transition-colors">
+                        <SelectValue placeholder={t("reports.productGroup")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        {categories &&
+                          Array.isArray(categories) &&
+                          categories.map((category: any) => (
+                            <SelectItem
+                              key={category.id}
+                              value={category.id.toString()}
+                            >
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              )}
+              </div>
+            )}
 
             {analysisType === "salesMethod" && (
                 <div className="pt-4 border-t border-gray-100">
-                  <div className="text-center text-gray-500 text-sm">
-                    Không cần bộ lọc bổ sung cho phân tích phương thức bán hàng
-                  </div>
+                <div className="text-center text-gray-500 text-sm">
+                  Không cần bộ lọc bổ sung cho phân tích phương thức bán hàng
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Sales Detail Report Filters */}
-              {analysisType === "salesDetail" && (
-                <div className="pt-4 border-t border-gray-100">
+            {analysisType === "salesDetail" && (
+              <div className="pt-4 border-t border-gray-100">
                   <div className="space-y-4">
                     {/* Employee and Order Code */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -5044,6 +5043,7 @@ export function SalesChartReport() {
                   </div>
                 </div>
               )}
+            </div>
           </CardContent>
         </Card>
 
