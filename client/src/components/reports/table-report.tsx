@@ -208,7 +208,12 @@ export function TableReport() {
       totalTables: validTables.length,
       orderItemsCount: orderItems?.length || 0,
       sampleOrder: completedOrders[0] || null,
-      sampleOrderItems: orderItems?.slice(0, 3) || []
+      sampleOrderItems: orderItems?.slice(0, 3) || [],
+      allOrderItemsByOrder: completedOrders.map(order => ({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        itemsCount: orderItems?.filter((item: any) => item.orderId === order.id)?.length || 0
+      }))
     });
 
     // Initialize table stats map
@@ -249,6 +254,10 @@ export function TableReport() {
         // Count number of different products in order (not quantity)
         if (orderItems && Array.isArray(orderItems)) {
           const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
+          console.log(`Table Report - Order ${order.id} (${order.orderNumber}):`, {
+            relatedOrderItems: relatedOrderItems.length,
+            orderItemsDetails: relatedOrderItems.map(item => ({ id: item.id, orderId: item.orderId, productId: item.productId, quantity: item.quantity }))
+          });
           if (relatedOrderItems.length > 0) {
             // Count unique products (number of different items in order)
             stats.itemsSold += relatedOrderItems.length;
@@ -257,7 +266,7 @@ export function TableReport() {
             stats.itemsSold += 1;
           }
         } else {
-          // Fallback: estimate 1 product per order
+          // Fallback: estimate 1 product per order  
           stats.itemsSold += 1;
         }
       }
