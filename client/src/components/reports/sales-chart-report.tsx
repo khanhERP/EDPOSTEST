@@ -647,7 +647,7 @@ export function SalesChartReport() {
                       "Tổng số đơn hàng": data.orders,
                       "Doanh thu": formatCurrency(data.revenue),
                       Thuế: formatCurrency(data.revenue * 0.1), // This calculation might be incorrect, should use actual tax from data.tax
-                      "Thành tiền": formatCurrency(data.subtotal), // Use subtotal here
+                      "Thành tiền": formatCurrency(data.subtotal),
                       "Khách hàng": data.customers,
                     })),
                     // Add summary row
@@ -671,7 +671,7 @@ export function SalesChartReport() {
                       ),
                       "Thành tiền": formatCurrency(
                         Object.values(dailySales).reduce(
-                          (sum, data) => sum + data.subtotal, // Use subtotal here
+                          (sum, data) => sum + data.subtotal,
                           0,
                         ),
                       ),
@@ -1628,7 +1628,7 @@ export function SalesChartReport() {
                         {t("reports.revenue")}
                       </TableHead>
                       <TableHead
-                        className="text-right border-r min-w-[120px]"
+                        className="text-center border-r min-w-[120px]"
                         rowSpan={2}
                       >
                         {t("reports.discount")}
@@ -1856,8 +1856,7 @@ export function SalesChartReport() {
                                       >
                                         {transaction.orderNumber ||
                                           transaction.transactionId ||
-                                          `ORD-${transaction.id}` ||
-                                          `TXN-${transaction.id}`}
+                                          `ORD-${transaction.id}`}
                                       </button>
                                     </TableCell>
                                     <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
@@ -2620,11 +2619,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
   };
 
   // Sales Channel Report Component Logic
@@ -3998,8 +3997,6 @@ export function SalesChartReport() {
               </div>
             </div>
           )}
-
-          
 
           {/* Sales Detail Report Filters */}
           {analysisType === "salesDetail" && (
