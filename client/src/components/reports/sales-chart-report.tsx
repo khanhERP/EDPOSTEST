@@ -578,10 +578,10 @@ export function SalesChartReport() {
         const orderSubtotal = Number(order.subtotal || 0); // Tiền hàng (chưa thuế)
         const orderDiscount = Number(order.discount || 0); // Giảm giá
         const orderTax = orderTotal - orderSubtotal; // Thuế = Total - Subtotal
-        const actualRevenue = orderSubtotal - orderDiscount; // Doanh thu = Subtotal - Giảm giá (trừ thuế)
+        const actualRevenue = orderTotal - orderTax - orderDiscount; // Doanh thu = Total - Thuế - Giảm giá
 
         dailySales[dateStr].orders += 1;
-        dailySales[dateStr].revenue += actualRevenue; // Sử dụng total làm doanh thu
+        dailySales[dateStr].revenue += actualRevenue; // Doanh thu thực tế sau khi trừ thuế và giảm giá
         dailySales[dateStr].customers += Number(order.customerCount || 1);
         dailySales[dateStr].discount += orderDiscount; // Giảm giá từ DB
         dailySales[dateStr].tax += orderTax; // Thuế = total - subtotal
