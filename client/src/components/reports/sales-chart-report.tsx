@@ -1832,7 +1832,16 @@ export function SalesChartReport() {
                                     {formatCurrency(item.revenue)}
                                   </TableCell>
                                   <TableCell className="text-right min-w-[100px] px-2">
-                                    {item.taxRate} {/* Updated to display taxRate */}
+                                    {(() => {
+                                      // Calculate tax rate: tax / revenue * 100%
+                                      const tax = item.vat || 0;
+                                      const revenue = item.revenue || 0;
+                                      if (revenue > 0) {
+                                        const taxRate = (tax / revenue) * 100;
+                                        return `${taxRate.toFixed(1)}%`;
+                                      }
+                                      return "0.0%";
+                                    })()}
                                   </TableCell>
                                   <TableCell className="text-right min-w-[100px] px-2">
                                     {formatCurrency(item.vat)}
