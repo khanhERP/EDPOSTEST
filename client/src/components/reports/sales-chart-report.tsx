@@ -4963,10 +4963,8 @@ export function SalesChartReport() {
             )}
 
             {analysisType === "salesMethod" && (
-                <div className="pt-4 border-t border-gray-100">
-                <div className="text-center text-gray-500 text-sm">
-                  Không cần bộ lọc bổ sung cho phân tích phương thức bán hàng
-                </div>
+              <div className="pt-4 border-t border-gray-100">
+                {/* No additional filters for sales method analysis */}
               </div>
             )}
 
