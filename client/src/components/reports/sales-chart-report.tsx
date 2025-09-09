@@ -50,6 +50,9 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import * as XLSX from "xlsx"; // Import xlsx for Excel export
 import { Button } from "@/components/ui/button";
@@ -276,6 +279,8 @@ export function SalesChartReport() {
         return t("reports.customerSalesReport");
       case "channel":
         return t("reports.channelSalesReport");
+      case "salesMethod":
+        return "Báo cáo theo hình thức bán hàng";
       default:
         return t("reports.salesReport");
     }
@@ -2946,6 +2951,9 @@ export function SalesChartReport() {
     },
   };
 
+  // Colors for pie chart
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
   // Get chart data based on analysis type
   const getChartData = () => {
     switch (analysisType) {
@@ -3250,6 +3258,53 @@ export function SalesChartReport() {
           }))
           .sort((a, b) => b.revenue - a.revenue)
           .slice(0, 10);
+
+      case "salesMethod":
+        if (!orders || !Array.isArray(orders)) return [];
+
+        const salesMethodStart = new Date(startDate);
+        const salesMethodEnd = new Date(endDate);
+        salesMethodEnd.setHours(23, 59, 59, 999);
+
+        // Filter completed orders for sales method analysis
+        const salesMethodFilteredOrders = orders.filter((order: any) => {
+          if (order.status !== "completed" && order.status !== "paid") return false;
+
+          const orderDate = new Date(
+            order.orderedAt || order.createdAt || order.created_at || order.paidAt,
+          );
+
+          if (isNaN(orderDate.getTime())) return false;
+
+          return orderDate >= salesMethodStart && orderDate <= salesMethodEnd;
+        });
+
+        // Group by sales method (Dine In vs Takeaway)
+        const salesMethodData: { [method: string]: { count: number; revenue: number } } = {
+          "Ăn tại chỗ": { count: 0, revenue: 0 },
+          "Mang về": { count: 0, revenue: 0 },
+        };
+
+        salesMethodFilteredOrders.forEach((order: any) => {
+          // Check if order has tableId to determine if it's dine-in or takeaway
+          const isDineIn = order.tableId && order.tableId !== null;
+          const method = isDineIn ? "Ăn tại chỗ" : "Mang về";
+
+          salesMethodData[method].count += 1;
+          salesMethodData[method].revenue += Number(order.subtotal || 0);
+        });
+
+        // Convert to chart data format
+        const salesMethodChartData = Object.entries(salesMethodData)
+          .map(([method, data]) => ({
+            name: method,
+            value: data.revenue,
+            count: data.count,
+          }))
+          .filter((item) => item.value > 0); // Only show methods with revenue
+
+        console.log("Sales method chart data:", salesMethodChartData);
+        return salesMethodChartData;
     }
 
     return [];
@@ -3538,6 +3593,53 @@ export function SalesChartReport() {
                   </div>
                 </div>
               </div>
+            ) : analysisType === "salesMethod" ? (
+              <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-purple-50/20 rounded-xl"></div>
+                <ChartContainer
+                  config={chartConfig}
+                  className="h-full w-full relative z-10"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={120}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, value, count }) => `${name}: ${formatCurrency(value)} (${count} đơn)`}
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-lg">
+                                <p className="font-semibold text-gray-800 mb-2">
+                                  {data.name}
+                                </p>
+                                <p className="text-sm text-blue-600">
+                                  Doanh thu: {formatCurrency(data.value)}
+                                </p>
+                                <p className="text-sm text-green-600">
+                                  Số đơn: {data.count}
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
             ) : (
               <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-purple-50/20 rounded-xl"></div>
@@ -3766,6 +3868,8 @@ export function SalesChartReport() {
           return renderCustomerReport();
         case "channel":
           return renderSalesChannelReport();
+        case "salesMethod":
+          return renderSalesChannelReport(); // Reuse channel report logic
         case "salesDetail":
           return renderSalesDetailReport();
         default:
@@ -3829,6 +3933,9 @@ export function SalesChartReport() {
                   </SelectItem>
                   <SelectItem value="channel">
                     {t("reports.channelAnalysis")}
+                  </SelectItem>
+                  <SelectItem value="salesMethod">
+                    Hình thức bán hàng
                   </SelectItem>
                   <SelectItem value="salesDetail">
                     {t("reports.salesDetailReport")}
@@ -4127,7 +4234,8 @@ export function SalesChartReport() {
               analysisType === "product" ||
               analysisType === "employee" ||
               analysisType === "customer" ||
-              analysisType === "channel") &&
+              analysisType === "channel" ||
+              analysisType === "salesMethod") &&
               renderChart()}
 
             {/* Data Tables */}
