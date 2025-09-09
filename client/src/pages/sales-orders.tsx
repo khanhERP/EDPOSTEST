@@ -608,19 +608,19 @@ export default function SalesOrders() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const orderParam = urlParams.get('order');
-    
+
     if (orderParam && orderParam !== orderNumberSearch) {
       console.log('🔍 Sales Orders: Auto-filtering by order:', orderParam);
       setOrderNumberSearch(orderParam);
-      
+
       // Auto-expand matching order when data is available
       setTimeout(() => {
-        const matchingOrder = filteredInvoices.find(item => 
+        const matchingOrder = filteredInvoices.find(item =>
           item.displayNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
           item.orderNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
           item.invoiceNumber?.toLowerCase().includes(orderParam.toLowerCase())
         );
-        
+
         if (matchingOrder) {
           console.log('🎯 Sales Orders: Auto-expanding matching order:', matchingOrder.displayNumber);
           setSelectedInvoice(matchingOrder);
@@ -1264,8 +1264,8 @@ export default function SalesOrders() {
                                                       </td>
                                                       <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.tableOrder")}:</td>
                                                       <td className="py-1 pr-6">
-                                                        {selectedInvoice.salesChannel === 'table' && selectedInvoice.tableId ? 
-                                                          `Bàn ${selectedInvoice.tableId}` : 
+                                                        {selectedInvoice.salesChannel === 'table' && selectedInvoice.tableId ?
+                                                          `Bàn ${selectedInvoice.tableId}` :
                                                           selectedInvoice.salesChannel === 'table' ? 'Bàn' : '-'
                                                         }
                                                       </td>
