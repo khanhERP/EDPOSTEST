@@ -157,12 +157,22 @@ export default function SalesOrders() {
     queryKey: ["/api/orders/date-range", startDate, endDate, currentPage, itemsPerPage],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/orders/date-range/${startDate}/${endDate}?page=${currentPage}&limit=${itemsPerPage}`);
+        let url;
+        if (startDate && endDate) {
+          // If both dates are provided, use date range endpoint
+          url = `/api/orders/date-range/${startDate}/${endDate}?page=${currentPage}&limit=${itemsPerPage}`;
+        } else {
+          // If no dates provided, fetch all orders
+          url = `/api/orders?page=${currentPage}&limit=${itemsPerPage}`;
+        }
+        
+        const response = await apiRequest("GET", url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Sales Orders - All orders loaded by date:', {
+        console.log('Sales Orders - All orders loaded:', {
+          url: url,
           total: data?.length || 0,
           tableOrders: data?.filter((o: any) => o.salesChannel === 'table').length || 0,
           posOrders: data?.filter((o: any) => o.salesChannel === 'pos').length || 0,
@@ -171,7 +181,7 @@ export default function SalesOrders() {
         });
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Error fetching orders by date:', error);
+        console.error('Error fetching orders:', error);
         return [];
       }
     },
