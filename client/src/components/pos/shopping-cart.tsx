@@ -133,8 +133,12 @@ export function ShoppingCart({
     },
   });
 
-  // Add WebSocket listener for data refresh
+  // WebSocket connection for refresh signals and cart updates
   useEffect(() => {
+    console.log('📡 Shopping Cart: Initializing WebSocket connection for refresh signals and cart updates');
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+
     let ws: WebSocket | null = null;
     let reconnectTimer: NodeJS.Timeout | null = null;
     let shouldReconnect = true;
@@ -148,8 +152,6 @@ export function ShoppingCart({
       }
 
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
@@ -157,7 +159,7 @@ export function ShoppingCart({
           reconnectAttempts = 0; // Reset attempts on successful connection
 
           // Register as shopping cart client
-          ws?.send(JSON.stringify({
+          ws.send(JSON.stringify({
             type: 'register_shopping_cart',
             timestamp: new Date().toISOString()
           }));
@@ -168,12 +170,12 @@ export function ShoppingCart({
             const data = JSON.parse(event.data);
             console.log('📩 Shopping Cart: Received WebSocket message:', data);
 
-            if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'force_refresh' || data.type === 'einvoice_published') {
+            if (data.type === 'payment_success' || data.type === 'popup_close' || data.type === 'force_refresh' || data.type === 'einvoice_published') {
               console.log('🔄 Shopping Cart: Refreshing data due to WebSocket signal');
 
-              // Clear cart if payment was successful
-              if ((data.type === 'popup_close' && data.success) || data.type === 'payment_success' || data.type === 'einvoice_published') {
-                console.log('🧹 Shopping Cart: Clearing cart due to successful payment/invoice');
+              // Clear cart if payment was successful or other refresh signals
+              if ((data.type === 'popup_close' && data.success) || data.type === 'payment_success' || data.type === 'einvoice_published' || data.type === 'force_refresh') {
+                console.log('🧹 Shopping Cart: Clearing cart due to signal');
 
                 // Multiple attempts to ensure cart is cleared
                 onClearCart();
@@ -229,70 +231,24 @@ export function ShoppingCart({
     };
   }, [onClearCart]);
 
-  // Listen for custom events to manage cart state
+  // Watch for cart changes and broadcast to customer display
   useEffect(() => {
-    const handleClearCart = (event: CustomEvent) => {
-      console.log('🔄 Shopping Cart: Received clear cart event:', event.detail);
+    console.log("Cart changed, new items:", cart.length);
 
-      // Clear cart immediately multiple times to ensure it works
-      setTimeout(() => {
-        console.log('🔄 Shopping Cart: Clearing cart - attempt 1');
-        onClearCart();
-      }, 0);
+    // Broadcast cart updates to customer display
+    broadcastCartUpdate(cart);
+  }, [cart]);
 
-      setTimeout(() => {
-        console.log('🔄 Shopping Cart: Clearing cart - attempt 2');
-        onClearCart();
-      }, 100);
-
-      setTimeout(() => {
-        console.log('🔄 Shopping Cart: Clearing cart - attempt 3');
-        onClearCart();
-      }, 300);
-
-      // Clear any active orders in POS
-      if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-        (window as any).clearActiveOrder();
-      }
-
-      console.log('✅ Shopping Cart: Cart clearing process initiated');
-    };
-
-    const handleCartUpdate = (event: CustomEvent) => {
-      console.log('🔄 Shopping Cart: Received cart update request:', event.detail);
-      // Could trigger a cart sync or update if needed
-    };
-
-    const handleForceRefresh = (event: CustomEvent) => {
-      console.log('🔄 Shopping Cart: Received force refresh event:', event.detail);
-      // Force clear cart and refresh
-      onClearCart();
-
-      // Clear any active orders
-      if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-        (window as any).clearActiveOrder();
-      }
-    };
-
-    // Add event listeners
-    window.addEventListener('clearCart', handleClearCart as EventListener);
-    window.addEventListener('cartUpdateRequest', handleCartUpdate as EventListener);
-    window.addEventListener('forceRefreshCart', handleForceRefresh as EventListener);
-
-    return () => {
-      window.removeEventListener('clearCart', handleClearCart as EventListener);
-      window.removeEventListener('cartUpdateRequest', handleCartUpdate as EventListener);
-      window.addEventListener('forceRefreshCart', handleForceRefresh as EventListener);
-    };
-  }, [onClearCart]);
-
-  // Broadcast cart updates to customer display using existing connection
-  // This useEffect is responsible for debouncing and broadcasting cart updates.
+  // Helper function to broadcast cart updates
   const broadcastCartUpdate = (currentCart: CartItem[]) => {
     // This function is no longer needed as WebSocket is removed.
     // If customer display synchronization is required via other means (e.g., polling, SSE, or another event system),
     // this logic would need to be reimplemented there.
     console.log("Customer display update would happen here if WebSocket was active.");
+    // Example: Send cart data via WebSocket if a connection is established
+    // if (ws && ws.readyState === WebSocket.OPEN) {
+    //   ws.send(JSON.stringify({ type: 'cart_update', data: currentCart }));
+    // }
   };
 
   // Function to clear the cart, used by the WebSocket handler
