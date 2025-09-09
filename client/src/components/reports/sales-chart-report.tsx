@@ -3261,38 +3261,25 @@ export function SalesChartReport() {
               onClick={() => {
                 const dataWithSummary = [
                   ...data.map((product: any) => ({
-                    "Mã sản phẩm": product.productSku || "",
-                    "Tên sản phẩm": product.productName,
-                    "Danh mục": product.categoryName || "",
+                    "Mã hàng": product.productSku,
+                    "Tên hàng": product.productName,
+                    "Đơn vị tính": t("common.perUnit"),
                     "Số lượng bán": product.totalQuantity,
+                    "Thành tiền": formatCurrency(product.totalRevenue),
+                    "Giảm giá": formatCurrency(0),
                     "Doanh thu": formatCurrency(product.totalRevenue),
-                    "Số đơn hàng": product.orderCount || 0,
-                    "Giá trị đơn TB": formatCurrency(
-                      product.averageOrderValue || 0,
-                    ),
-                    "Mức độ bán":
-                      product.totalQuantity > 50
-                        ? "Cao"
-                        : product.totalQuantity > 10
-                          ? "Trung bình"
-                          : "Thấp",
+                    "Nhóm hàng": product.categoryName,
                   })),
                   // Add summary row
                   {
-                    "Mã sản phẩm": "TỔNG CỘNG",
-                    "Tên sản phẩm": `${totalProducts} sản phẩm`,
-                    "Danh mục": "-",
+                    "Mã hàng": "TỔNG CỘNG",
+                    "Tên hàng": `${totalProducts} sản phẩm`,
+                    "Đơn vị tính": "-",
                     "Số lượng bán": totalQuantity,
+                    "Thành tiền": formatCurrency(totalRevenue),
+                    "Giảm giá": formatCurrency(0),
                     "Doanh thu": formatCurrency(totalRevenue),
-                    "Số đơn hàng": data.reduce(
-                      (sum: number, product: any) =>
-                        sum + (product.orderCount || 0),
-                      0,
-                    ),
-                    "Giá trị đơn TB": formatCurrency(
-                      totalProducts > 0 ? totalRevenue / totalProducts : 0,
-                    ),
-                    "Mức độ bán": "-",
+                    "Nhóm hàng": "-",
                   },
                 ];
                 exportToExcel(
@@ -3313,60 +3300,48 @@ export function SalesChartReport() {
               <Table className="w-full min-w-[1000px] xl:min-w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t("reports.productName")}</TableHead>
                     <TableHead>{t("reports.productCode")}</TableHead>
-                    <TableHead>{t("reports.categoryName")}</TableHead>
+                    <TableHead>{t("reports.productName")}</TableHead>
+                    <TableHead className="text-center">{t("common.unit")}</TableHead>
                     <TableHead className="text-center">
                       {t("reports.quantitySold")}
                     </TableHead>
                     <TableHead className="text-right">
-                      {t("reports.totalRevenue")}
+                      {t("common.subtotalAmount")}
                     </TableHead>
                     <TableHead className="text-right">
-                      {t("reports.orders")}
+                      {t("reports.discount")}
                     </TableHead>
                     <TableHead className="text-right">
-                      {t("reports.averageOrderValue")}
+                      {t("reports.revenue")}
                     </TableHead>
-                    <TableHead className="text-center">Mức độ bán</TableHead>
+                    <TableHead className="text-center">
+                      {t("reports.categoryName")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedData.length > 0 ? (
                     paginatedData.map((product: any, index: number) => (
                       <TableRow key={product.productId || index}>
+                        <TableCell className="font-medium">{product.productSku}</TableCell>
                         <TableCell>{product.productName}</TableCell>
-                        <TableCell>{product.productSku || "-"}</TableCell>
-                        <TableCell>{product.categoryName || "-"}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">{t("common.perUnit")}</TableCell>
+                        <TableCell className="text-center">
                           <Badge variant="outline">
-                            {product.totalQuantity} {t("common.count")}
+                            {product.totalQuantity}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-semibold text-green-600">
+                        <TableCell className="text-right font-semibold">
                           {formatCurrency(product.totalRevenue)}
                         </TableCell>
-                        <TableCell className="text-center">
-                          {product.orderCount || 0}
-                        </TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(product.averageOrderValue || 0)}
+                          {formatCurrency(0)}
                         </TableCell>
-                        <TableCell className="text-center">
-                          <Badge
-                            variant={
-                              (product.totalQuantity || 0) > 10
-                                ? "default"
-                                : "outline"
-                            }
-                          >
-                            {product.totalQuantity > 50
-                              ? "Cao"
-                              : product.totalQuantity > 10
-                                ? "Trung bình"
-                                : "Thấp"}
-                          </Badge>
+                        <TableCell className="text-right font-semibold text-green-600">
+                          {formatCurrency(product.totalRevenue)}
                         </TableCell>
+                        <TableCell className="text-center">{product.categoryName}</TableCell>
                       </TableRow>
                     ))
                   ) : (
