@@ -75,6 +75,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeeAnalysis: "Nhân viên",
     customerAnalysis: "Khách hàng",
     channelAnalysis: "Hình thức bán hàng",
+    salesMethod: "Hình thức bán hàng",
 
     // Chart and visual
     chartView: "Xem biểu đồ",
@@ -620,6 +621,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeeAnalysis: "직원",
     customerAnalysis: "고객",
     channelAnalysis: "판매 채널",
+    salesMethod: "판매 방법",
 
     // Chart and visual
     chartView: "차트 보기",
@@ -1135,6 +1137,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeeAnalysis: "Employee",
     customerAnalysis: "Customer",
     channelAnalysis: "Sales Channel",
+    salesMethod: "Sales Method",
 
     // Chart and visual
     chartView: "Chart View",
