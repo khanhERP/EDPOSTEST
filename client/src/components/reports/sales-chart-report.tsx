@@ -2814,7 +2814,7 @@ export function SalesChartReport() {
                       className="text-center font-bold bg-green-100 border"
                       colSpan={3}
                     >
-                      {t("reports.revenue")}
+                      {t("reports.totalSalesRevenue")}
                     </TableHead>
                   </TableRow>
                   <TableRow>
