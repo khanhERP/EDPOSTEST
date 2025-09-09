@@ -84,7 +84,9 @@ export function EInvoiceModal({
   });
 
   const [isTaxCodeLoading, setIsTaxCodeLoading] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false); // State for general publishing process
+  const [isProcessingPublish, setIsProcessingPublish] = useState(false); // State for "Phát hành" button
+  const [isProcessingPublishLater, setIsProcessingPublishLater] = useState(false); // State for "Phát hành sau" button
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [activeInputField, setActiveInputField] = useState<string | null>(null);
 
@@ -409,12 +411,12 @@ export function EInvoiceModal({
     }
 
     // Prevent duplicate calls
-    if (isPublishing) {
+    if (isProcessingPublishLater) {
       console.log("⚠️ Already processing publish later, skipping duplicate call");
       return;
     }
 
-    setIsPublishing(true);
+    setIsProcessingPublishLater(true); // Set processing state for this button
 
     try {
       console.log(
@@ -437,7 +439,7 @@ export function EInvoiceModal({
           description: "Không có sản phẩm nào trong giỏ hàng để lưu thông tin.",
           variant: "destructive",
         });
-        setIsPublishing(false);
+        setIsProcessingPublishLater(false);
         return;
       }
 
@@ -449,7 +451,7 @@ export function EInvoiceModal({
           description: "Tổng tiền không hợp lệ để lưu hóa đơn.",
           variant: "destructive",
         });
-        setIsPublishing(false);
+        setIsProcessingPublishLater(false);
         return;
       }
 
@@ -687,7 +689,7 @@ export function EInvoiceModal({
         description: errorMessage,
       });
     } finally {
-      setIsPublishing(false); // Always reset loading state
+      setIsProcessingPublishLater(false); // Always reset processing state for this button
     }
   };
 
@@ -699,7 +701,7 @@ export function EInvoiceModal({
     }
 
     // Prevent duplicate calls
-    if (isPublishing) {
+    if (isProcessingPublish) {
       console.log("⚠️ Already processing publish, skipping duplicate call");
       return;
     }
@@ -717,7 +719,7 @@ export function EInvoiceModal({
       return;
     }
 
-    setIsPublishing(true);
+    setIsProcessingPublish(true); // Set processing state for this button
 
     // Debug log current cart items
     console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
@@ -1318,7 +1320,9 @@ export function EInvoiceModal({
 
 
   const handleCancel = () => {
-    setIsPublishing(false); // Reset loading state
+    setIsPublishing(false); // Reset general publishing state
+    setIsProcessingPublish(false); // Reset specific publish button state
+    setIsProcessingPublishLater(false); // Reset specific publish later button state
     onClose();
   };
 
@@ -1560,9 +1564,9 @@ export function EInvoiceModal({
               type="button"
               onClick={(e) => handleConfirm(e)}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isPublishing}
+              disabled={isProcessingPublish || isPublishing} // Disable if either button is processing
             >
-              {isPublishing ? (
+              {(isProcessingPublish || isPublishing) ? ( // Use isPublishing as a general indicator if needed, but primarily use specific states
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
                   {t("einvoice.publishing")}
@@ -1578,9 +1582,9 @@ export function EInvoiceModal({
               type="button"
               onClick={(e) => handlePublishLater(e)}
               className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
-              disabled={isPublishing}
+              disabled={isProcessingPublishLater || isPublishing} // Disable if either button is processing
             >
-              {isPublishing ? (
+              {(isProcessingPublishLater || isPublishing) ? ( // Use isPublishing as a general indicator if needed, but primarily use specific states
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
                   {t("einvoice.publishing")}
@@ -1592,16 +1596,16 @@ export function EInvoiceModal({
                 </>
               )}
             </Button>
-            <Button 
+            <Button
               type="button"
-              variant="outline" 
+              variant="outline"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleCancel();
-              }} 
+              }}
               className="flex-1"
-              disabled={isPublishing}
+              disabled={isProcessingPublish || isProcessingPublishLater || isPublishing} // Disable if either button is processing
             >
               <span className="mr-2">❌</span>
               {t("einvoice.cancel")}
@@ -1609,8 +1613,6 @@ export function EInvoiceModal({
           </div>
         </div>
       </DialogContent>
-
-
     </Dialog>
   );
 }
