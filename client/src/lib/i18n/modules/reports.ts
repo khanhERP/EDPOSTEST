@@ -674,6 +674,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalDiscount: "총 할인",
     categoryName: "카테고리",
     productGroup: "상품 그룹",
+    productType: "상품 유형",
+    product: "상품",
+    combo: "콤보",
+    service: "서비스",
 
     // Report titles
     timeSalesReport: "시간별 매출 보고서",
@@ -1195,6 +1199,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalDiscount: "Total Discount",
     categoryName: "Category",
     productGroup: "Product Group",
+    productType: "Product Type",
+    product: "Product",
+    combo: "Combo",
+    service: "Service",
 
     // Report titles
     timeSalesReport: "Time Sales Report",
