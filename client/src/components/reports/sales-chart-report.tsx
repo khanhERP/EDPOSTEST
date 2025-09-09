@@ -3992,27 +3992,7 @@ export function SalesChartReport() {
             </div>
           )}
 
-          {/* Employee Filter - only show for employee analysis */}
-          {analysisType === "employee" && (
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4 border-t border-gray-200">
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.employeeFilter")}
-                </Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder={t("reports.employeeFilterPlaceholder")}
-                    value={selectedEmployee === "all" ? "" : selectedEmployee}
-                    onChange={(e) =>
-                      setSelectedEmployee(e.target.value || "all")
-                    }
-                    className="pl-10 h-9 text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          
 
           {/* Sales Detail Report Filters */}
           {analysisType === "salesDetail" && (
