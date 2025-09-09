@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ShoppingCart as CartIcon,
   Minus,
@@ -133,7 +133,7 @@ export function ShoppingCart({
     },
   });
 
-  // WebSocket connection for refresh signals and cart updates
+  // WebSocket setup for receiving refresh signals and broadcasting cart updates
   useEffect(() => {
     console.log('📡 Shopping Cart: Initializing WebSocket connection for refresh signals and cart updates');
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -163,6 +163,19 @@ export function ShoppingCart({
             type: 'register_shopping_cart',
             timestamp: new Date().toISOString()
           }));
+
+          // Send initial cart state to customer display
+          if (cart.length > 0) {
+            console.log("📡 Shopping Cart: Sending initial cart state to customer display");
+            ws.send(JSON.stringify({
+              type: 'cart_update',
+              cart: cart,
+              subtotal: subtotal,
+              tax: totalTax,
+              total: grandTotal,
+              timestamp: new Date().toISOString()
+            }));
+          }
         };
 
         ws.onmessage = (event) => {
@@ -229,32 +242,170 @@ export function ShoppingCart({
         ws.close();
       }
     };
-  }, [onClearCart]);
+  }, [onClearCart, cart, subtotal, totalTax, grandTotal]);
 
-  // Watch for cart changes and broadcast to customer display
+  // Store WebSocket reference for broadcasting cart updates
+  const wsRef = useRef<WebSocket | null>(null);
+
+  // Update WebSocket reference when connection is established
   useEffect(() => {
-    console.log("Cart changed, new items:", cart.length);
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
 
-    // Broadcast cart updates to customer display
-    broadcastCartUpdate(cart);
-  }, [cart]);
+    const ws = new WebSocket(wsUrl);
 
-  // Helper function to broadcast cart updates
-  const broadcastCartUpdate = (currentCart: CartItem[]) => {
-    // This function is no longer needed as WebSocket is removed.
-    // If customer display synchronization is required via other means (e.g., polling, SSE, or another event system),
-    // this logic would need to be reimplemented there.
-    console.log("Customer display update would happen here if WebSocket was active.");
-    // Example: Send cart data via WebSocket if a connection is established
-    // if (ws && ws.readyState === WebSocket.OPEN) {
-    //   ws.send(JSON.stringify({ type: 'cart_update', data: currentCart }));
-    // }
-  };
+    ws.onopen = () => {
+      console.log("📡 Shopping Cart: WebSocket connected for cart broadcasting");
+      wsRef.current = ws;
+      ws.send(JSON.stringify({
+        type: 'register_pos',
+        timestamp: new Date().toISOString()
+      }));
+    };
 
-  // Function to clear the cart, used by the WebSocket handler
-  const clearCart = () => {
-    onClearCart(); // Call the prop function passed from the parent
-  };
+    ws.onclose = () => {
+      console.log("📡 Shopping Cart: Cart broadcast WebSocket disconnected");
+      wsRef.current = null;
+    };
+
+    ws.onerror = (error) => {
+      console.error("📡 Shopping Cart: Cart broadcast WebSocket error:", error);
+      wsRef.current = null;
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+      wsRef.current = null;
+    };
+  }, []);
+
+  // Function to broadcast cart updates to customer display
+  const broadcastCartUpdate = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const cartData = {
+        type: 'cart_update',
+        cart: cart,
+        subtotal: subtotal,
+        tax: totalTax,
+        total: grandTotal,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log("📡 Shopping Cart: Broadcasting cart update to customer display:", {
+        cartItems: cart.length,
+        subtotal: subtotal,
+        tax: totalTax,
+        total: grandTotal
+      });
+
+      try {
+        wsRef.current.send(JSON.stringify(cartData));
+      } catch (error) {
+        console.error("📡 Shopping Cart: Error broadcasting cart update:", error);
+      }
+    } else {
+      console.log("📡 Shopping Cart: WebSocket not available for broadcasting");
+    }
+  }, [cart, subtotal, totalTax, grandTotal]);
+
+  // Helper to call broadcastCartUpdate after state changes
+  const triggerBroadcastUpdate = useCallback(() => {
+    // Use setTimeout to ensure state updates have been processed before broadcasting
+    setTimeout(() => broadcastCartUpdate(), 100);
+  }, [broadcastCartUpdate]);
+
+
+  const addToCart = useCallback((product: Product) => {
+    console.log("🛒 Adding product to cart:", product.name, "Price:", product.afterTaxPrice || product.price);
+
+    const effectivePrice = parseFloat(product.afterTaxPrice || product.price);
+    const taxRate = parseFloat(product.taxRate || '0');
+
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => item.productId === product.id);
+
+      let updatedCart;
+      if (existingItem) {
+        updatedCart = prevCart.map(item =>
+          item.productId === product.id
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                total: ((item.quantity + 1) * effectivePrice).toString()
+              }
+            : item
+        );
+        console.log("🛒 Updated existing item in cart");
+      } else {
+        const newItem: CartItem = {
+          id: `${product.id}-${Date.now()}`,
+          productId: product.id,
+          name: product.name,
+          price: effectivePrice.toString(),
+          quantity: 1,
+          total: effectivePrice.toString(),
+          taxRate: taxRate.toString(),
+          product: product
+        };
+        updatedCart = [...prevCart, newItem];
+        console.log("🛒 Added new item to cart");
+      }
+
+      // Broadcast cart update after state change
+      setTimeout(() => broadcastCartUpdate(), 100);
+
+      return updatedCart;
+    });
+  }, [broadcastCartUpdate]);
+
+  const removeFromCart = useCallback((id: string) => {
+    console.log("🗑️ Removing item from cart:", id);
+    setCart(prevCart => {
+      const updatedCart = prevCart.filter(item => item.id !== id);
+
+      // Broadcast cart update after state change
+      setTimeout(() => broadcastCartUpdate(), 100);
+
+      return updatedCart;
+    });
+  }, [broadcastCartUpdate]);
+
+  const updateQuantity = useCallback((id: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+
+    console.log("📝 Updating quantity for item:", id, "New quantity:", newQuantity);
+
+    setCart(prevCart => {
+      const updatedCart = prevCart.map(item => {
+        if (item.id === id) {
+          const effectivePrice = parseFloat(item.price);
+          const newTotal = (effectivePrice * newQuantity).toString();
+          console.log("📝 Updated item total:", newTotal);
+          return {
+            ...item,
+            quantity: newQuantity,
+            total: newTotal
+          };
+        }
+        return item;
+      });
+
+      // Broadcast cart update after state change
+      setTimeout(() => broadcastCartUpdate(), 100);
+
+      return updatedCart;
+    });
+  }, [broadcastCartUpdate]);
+
+  const clearCart = useCallback(() => {
+    console.log("🧹 Clearing cart");
+    setCart([]);
+
+    // Broadcast empty cart update
+    setTimeout(() => broadcastCartUpdate(), 100);
+  }, [broadcastCartUpdate]);
 
 
   const getPaymentMethods = () => {
@@ -595,7 +746,7 @@ export function ShoppingCart({
         ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const taxPerUnit = afterTaxPrice - basePrice;
-          totalTax += taxPerUnit * quantity;
+          totalTax += taxPerItem * quantity;
         }
       });
     }
@@ -772,7 +923,7 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        onUpdateQuantity(item.id, item.quantity - 1)
+                        updateQuantity(item.id, item.quantity - 1)
                       }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity <= 1}
@@ -786,7 +937,7 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        onUpdateQuantity(item.id, item.quantity + 1)
+                        updateQuantity(item.id, item.quantity + 1)
                       }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity >= item.stock}
@@ -796,7 +947,7 @@ export function ShoppingCart({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onRemoveItem(item.id)}
+                      onClick={() => removeFromCart(item.id)}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
                     >
                       <Trash2 size={10} />
@@ -1029,7 +1180,7 @@ export function ShoppingCart({
             }
 
             // Broadcast empty cart
-            broadcastCartUpdate([]);
+            broadcastCartUpdate();
 
             // Send popup close signal to refresh other components
             try {
