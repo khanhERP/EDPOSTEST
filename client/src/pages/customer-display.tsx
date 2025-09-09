@@ -45,12 +45,16 @@ export default function CustomerDisplayPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
+        console.log("Customer Display: Fetching initial data...");
+        
         // Fetch store info
         const storeResponse = await fetch('/api/store-settings');
         if (storeResponse.ok) {
           const storeData = await storeResponse.json();
           console.log("Customer Display: Store info loaded:", storeData);
           setStoreInfo(storeData);
+        } else {
+          console.error("Customer Display: Failed to fetch store settings:", storeResponse.status);
         }
         
         // Try to fetch current cart state if available
@@ -60,7 +64,14 @@ export default function CustomerDisplayPage() {
           console.log("Customer Display: Initial cart loaded:", cartData);
           if (cartData.cart && Array.isArray(cartData.cart)) {
             setCart(cartData.cart);
+            console.log("Customer Display: Cart state updated with", cartData.cart.length, "items");
           }
+          if (cartData.storeInfo) {
+            setStoreInfo(cartData.storeInfo);
+            console.log("Customer Display: Store info updated from cart API");
+          }
+        } else {
+          console.error("Customer Display: Failed to fetch current cart:", cartResponse.status);
         }
       } catch (error) {
         console.error("Customer Display: Error fetching initial data:", error);
@@ -102,17 +113,36 @@ export default function CustomerDisplayPage() {
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log("Customer Display: Received message:", data);
+            console.log("Customer Display: Received WebSocket message:", {
+              type: data.type,
+              hasCart: !!data.cart,
+              cartItems: data.cart?.length || 0,
+              subtotal: data.subtotal,
+              total: data.total,
+              timestamp: data.timestamp
+            });
 
             switch (data.type) {
               case 'cart_update':
-                console.log("Customer Display: Updating cart:", data.cart);
+                console.log("Customer Display: Processing cart update - Items:", data.cart?.length || 0);
+                
                 // Use React's functional update to ensure we get the latest state
                 setCart(prevCart => {
                   const newCart = Array.isArray(data.cart) ? data.cart : [];
-                  console.log("Customer Display: Cart state update from", prevCart.length, "to", newCart.length, "items");
+                  console.log("Customer Display: Cart state changing from", prevCart.length, "to", newCart.length, "items");
+                  
+                  // Log cart details for debugging
+                  if (newCart.length > 0) {
+                    console.log("Customer Display: New cart contents:", newCart.map(item => ({
+                      name: item.product?.name || 'Unknown',
+                      quantity: item.quantity,
+                      price: item.price
+                    })));
+                  }
+                  
                   return newCart;
                 });
+                
                 // Clear QR payment when cart updates (new order started)
                 setQrPayment(prevQr => {
                   if (prevQr) {

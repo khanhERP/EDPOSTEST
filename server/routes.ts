@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import WebSocket from 'ws';
 import {
   tenantMiddleware,
   getTenantDatabase,
@@ -2277,23 +2278,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Current cart state for customer display
   app.get('/api/current-cart', async (req, res) => {
     try {
+      console.log('📱 Customer Display: Current cart API called');
+      
       // Get store settings for customer display
       const storeSettings = await storage.getStoreSettings();
       
       const currentCartState = {
         cart: [],
+        subtotal: 0,
+        tax: 0,
+        total: 0,
         storeInfo: storeSettings,
         qrPayment: null
       };
       
-      console.log('Customer Display: Current cart API called, returning state:', {
+      console.log('📱 Customer Display: Current cart API returning state:', {
         cartItems: currentCartState.cart.length,
+        subtotal: currentCartState.subtotal,
+        tax: currentCartState.tax,
+        total: currentCartState.total,
         hasStoreInfo: !!currentCartState.storeInfo,
-        storeInfo: currentCartState.storeInfo
+        storeName: currentCartState.storeInfo?.storeName
       });
+      
       res.json(currentCartState);
     } catch (error) {
-      console.error('Error fetching current cart:', error);
+      console.error('❌ Error fetching current cart:', error);
       res.status(500).json({ error: 'Failed to fetch current cart' });
     }
   });
@@ -4584,6 +4594,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to publish invoice",
         details: error.message,
         errorType: error.constructor.name,
+      });
+    }
+  });
+
+  // Test customer display connection
+  app.post('/api/test-customer-display', async (req, res) => {
+    try {
+      const { testCart } = req.body;
+      
+      console.log('🧪 Test customer display endpoint called with cart:', testCart);
+      
+      // Simulate a cart update broadcast
+      if (wss) {
+        const testMessage = JSON.stringify({
+          type: 'cart_update',
+          cart: testCart || [
+            {
+              id: 'test-1',
+              product: { name: 'Test Product', price: '50000' },
+              quantity: 2,
+              price: '50000',
+              total: '100000'
+            }
+          ],
+          subtotal: 100000,
+          tax: 10000,
+          total: 110000,
+          timestamp: new Date().toISOString()
+        });
+
+        let clientCount = 0;
+        wss.clients.forEach((client: WebSocket) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(testMessage);
+            clientCount++;
+          }
+        });
+
+        console.log(`🧪 Test message sent to ${clientCount} WebSocket clients`);
+        
+        res.json({
+          success: true,
+          message: `Test cart update sent to ${clientCount} connected clients`,
+          clientCount
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'WebSocket server not available'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error in test customer display:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
       });
     }
   });

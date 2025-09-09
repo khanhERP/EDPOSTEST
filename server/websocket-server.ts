@@ -84,24 +84,45 @@ export function initializeWebSocketServer(server: Server) {
             qrPayment: null // Clear QR payment when cart updates
           };
           
-          console.log('📡 Broadcasting cart update to customer displays', {
+          console.log('📡 WebSocket: Cart update received and broadcasting to customer displays', {
             cartItems: currentCartState.cart.length,
-            total: currentCartState.total
+            subtotal: currentCartState.subtotal,
+            tax: currentCartState.tax,
+            total: currentCartState.total,
+            connectedClients: clients.size
           });
           
+          // Log cart items for debugging
+          if (currentCartState.cart.length > 0) {
+            console.log('📦 Cart items:', currentCartState.cart.map(item => ({
+              productName: item.product?.name || 'Unknown',
+              quantity: item.quantity,
+              price: item.price,
+              total: item.total
+            })));
+          }
+          
           // Broadcast cart update to all connected clients (customer displays)
+          let broadcastCount = 0;
           clients.forEach(client => {
             if (client.readyState === client.OPEN && client !== ws) {
-              client.send(JSON.stringify({
-                type: 'cart_update',
-                cart: currentCartState.cart,
-                subtotal: currentCartState.subtotal,
-                tax: currentCartState.tax,
-                total: currentCartState.total,
-                timestamp: data.timestamp || new Date().toISOString()
-              }));
+              try {
+                client.send(JSON.stringify({
+                  type: 'cart_update',
+                  cart: currentCartState.cart,
+                  subtotal: currentCartState.subtotal,
+                  tax: currentCartState.tax,
+                  total: currentCartState.total,
+                  timestamp: data.timestamp || new Date().toISOString()
+                }));
+                broadcastCount++;
+              } catch (sendError) {
+                console.error('❌ Error broadcasting to client:', sendError);
+              }
             }
           });
+          
+          console.log(`✅ Cart update broadcasted to ${broadcastCount} clients`);
         } else if (data.type === 'qr_payment') {
           // Update global QR payment state
           currentCartState.qrPayment = {
