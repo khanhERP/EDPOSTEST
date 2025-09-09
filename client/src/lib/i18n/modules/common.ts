@@ -218,7 +218,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     rows: "행",
     regularCustomer: "일반고객",
     goldCustomer: "골드고객",
-    customerGroup: "고객 그룹",
+    customerGroup: "고객 그룹", 
     walkInCustomer: "일반 고객",
     backToPOS: "POS로 돌아가기",
 
