@@ -76,6 +76,7 @@ export function SalesChartReport() {
   // Additional filters from legacy reports
   const [selectedEmployee, setSelectedEmployee] = useState("all");
   const [customerSearch, setCustomerSearch] = useState("");
+  const [orderSearch, setOrderSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [productType, setProductType] = useState("all");
@@ -1317,7 +1318,7 @@ export function SalesChartReport() {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    // Filter completed orders
+    // Filter completed orders with all search criteria
     const filteredOrders = orders.filter((order: any) => {
       const orderDate = new Date(order.orderedAt || order.createdAt || order.created_at);
       const dateMatch = orderDate >= start && orderDate <= end;
@@ -1326,9 +1327,22 @@ export function SalesChartReport() {
       const employeeMatch = 
         selectedEmployee === "all" ||
         order.employeeName === selectedEmployee ||
-        order.cashierName === selectedEmployee;
+        order.cashierName === selectedEmployee ||
+        (order.employeeName && order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase())) ||
+        (order.cashierName && order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
 
-      return dateMatch && statusMatch && employeeMatch;
+      const customerMatch =
+        !customerSearch ||
+        (order.customerName && order.customerName.toLowerCase().includes(customerSearch.toLowerCase())) ||
+        (order.customerId && order.customerId.toString().toLowerCase().includes(customerSearch.toLowerCase())) ||
+        (order.customerPhone && order.customerPhone.includes(customerSearch));
+
+      const orderMatch =
+        !orderSearch ||
+        (order.orderNumber && order.orderNumber.toLowerCase().includes(orderSearch.toLowerCase())) ||
+        (order.id && order.id.toString().includes(orderSearch));
+
+      return dateMatch && statusMatch && employeeMatch && customerMatch && orderMatch;
     });
 
     // Group orders with their items - using EXACT database values
@@ -1404,7 +1418,19 @@ export function SalesChartReport() {
         })
       };
 
-      groupedOrders.push(orderSummary);
+      // Filter order based on product search if needed
+      let shouldIncludeOrder = true;
+      if (productSearch) {
+        const hasMatchingProduct = orderSummary.items.some((item: any) => 
+          item.productName.toLowerCase().includes(productSearch.toLowerCase()) ||
+          item.productCode.toLowerCase().includes(productSearch.toLowerCase())
+        );
+        shouldIncludeOrder = hasMatchingProduct;
+      }
+
+      if (shouldIncludeOrder) {
+        groupedOrders.push(orderSummary);
+      }
     });
 
     // Sort by date descending
@@ -4578,15 +4604,31 @@ export function SalesChartReport() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
-                      placeholder={t("reports.searchOrderCode")}
+                      placeholder="Tìm theo mã đơn hàng..."
+                      value={orderSearch}
+                      onChange={(e) => setOrderSearch(e.target.value)}
                       className="pl-10 h-9 text-sm"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Product and Product Group */}
+              {/* Customer Search and Product Search */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Tìm khách hàng
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Tìm theo tên, mã KH, SĐT..."
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
                     {t("reports.productFilter")}
@@ -4601,6 +4643,10 @@ export function SalesChartReport() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Product Group and Status */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
                     {t("reports.productGroup")}
@@ -4627,16 +4673,12 @@ export function SalesChartReport() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              {/* Status only */}
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
                     {t("reports.status")}
                   </Label>
                   <Select defaultValue="all">
-                    <SelectTrigger className="h-9 text-sm w-full md:w-1/2">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -4654,6 +4696,8 @@ export function SalesChartReport() {
                   </Select>
                 </div>
               </div>
+
+              
             </div>
           )}
         </CardContent>
