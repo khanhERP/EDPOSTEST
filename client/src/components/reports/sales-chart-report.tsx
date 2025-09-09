@@ -2638,6 +2638,16 @@ export function SalesChartReport() {
           </CardContent>
         </Card>
       );
+    } catch (error) {
+      console.error("Error in renderCustomerReport:", error);
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-red-500">
+            <p>Có lỗi xảy ra khi hiển thị báo cáo khách hàng</p>
+            <p className="text-sm">{error?.message || "Unknown error"}</p>
+          </div>
+        </div>
+      );
     }
   };
 
