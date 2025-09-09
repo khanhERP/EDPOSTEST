@@ -1614,67 +1614,67 @@ export function SalesChartReport() {
               <Table className="w-full min-w-[2000px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center bg-green-50 min-w-[100px]">
+                    <TableHead className="text-center bg-green-50 min-w-[100px] font-bold">
                       Ngày
                     </TableHead>
-                    <TableHead className="text-center bg-green-50 min-w-[120px]">
+                    <TableHead className="text-center bg-green-50 min-w-[120px] font-bold">
                       Số đơn bán
                     </TableHead>
-                    <TableHead className="text-center bg-green-50 min-w-[120px]">
+                    <TableHead className="text-center bg-green-50 min-w-[120px] font-bold">
                       Mã khách hàng
                     </TableHead>
-                    <TableHead className="text-center bg-green-50 min-w-[150px]">
+                    <TableHead className="text-center bg-green-50 min-w-[150px] font-bold">
                       Tên khách hàng
                     </TableHead>
-                    <TableHead className="text-center bg-blue-50 min-w-[100px]">
+                    <TableHead className="text-center bg-blue-50 min-w-[100px] font-bold">
                       Mã hàng
                     </TableHead>
-                    <TableHead className="text-center bg-blue-50 min-w-[200px]">
+                    <TableHead className="text-center bg-blue-50 min-w-[200px] font-bold">
                       Tên hàng
                     </TableHead>
-                    <TableHead className="text-center bg-blue-50 min-w-[60px]">
+                    <TableHead className="text-center bg-blue-50 min-w-[60px] font-bold">
                       ĐVT
                     </TableHead>
-                    <TableHead className="text-center bg-blue-50 min-w-[100px]">
+                    <TableHead className="text-center bg-blue-50 min-w-[100px] font-bold">
                       Số lượng bán
                     </TableHead>
-                    <TableHead className="text-right bg-blue-50 min-w-[120px]">
+                    <TableHead className="text-right bg-blue-50 min-w-[120px] font-bold">
                       Đơn giá
                     </TableHead>
-                    <TableHead className="text-right bg-blue-50 min-w-[120px]">
+                    <TableHead className="text-right bg-blue-50 min-w-[120px] font-bold">
                       Thành tiền
                     </TableHead>
-                    <TableHead className="text-right bg-orange-50 min-w-[100px]">
+                    <TableHead className="text-right bg-orange-50 min-w-[100px] font-bold">
                       Giảm giá
                     </TableHead>
-                    <TableHead className="text-right bg-green-50 min-w-[120px]">
+                    <TableHead className="text-right bg-green-50 min-w-[120px] font-bold">
                       Doanh thu
                     </TableHead>
-                    <TableHead className="text-right bg-yellow-50 min-w-[100px]">
+                    <TableHead className="text-right bg-yellow-50 min-w-[100px] font-bold">
                       Thuế xuất
                     </TableHead>
-                    <TableHead className="text-right bg-yellow-50 min-w-[100px]">
+                    <TableHead className="text-right bg-yellow-50 min-w-[100px] font-bold">
                       Thuế GTGT
                     </TableHead>
-                    <TableHead className="text-right bg-purple-50 min-w-[120px]">
+                    <TableHead className="text-right bg-purple-50 min-w-[120px] font-bold">
                       Tổng tiền
                     </TableHead>
-                    <TableHead className="text-center min-w-[150px]">
+                    <TableHead className="text-center min-w-[150px] font-bold">
                       Ghi chú
                     </TableHead>
-                    <TableHead className="text-center min-w-[100px]">
+                    <TableHead className="text-center min-w-[100px] font-bold">
                       Kênh bán
                     </TableHead>
-                    <TableHead className="text-center min-w-[80px]">
+                    <TableHead className="text-center min-w-[80px] font-bold">
                       Bàn
                     </TableHead>
-                    <TableHead className="text-center min-w-[120px]">
+                    <TableHead className="text-center min-w-[120px] font-bold">
                       Tên nhân viên
                     </TableHead>
-                    <TableHead className="text-center min-w-[120px]">
+                    <TableHead className="text-center min-w-[120px] font-bold">
                       Nhóm hàng
                     </TableHead>
-                    <TableHead className="text-center min-w-[100px]">
+                    <TableHead className="text-center min-w-[100px] font-bold">
                       Trạng thái
                     </TableHead>
                   </TableRow>
