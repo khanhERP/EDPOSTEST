@@ -3407,21 +3407,27 @@ export function SalesChartReport() {
 
       const validOrders = Array.isArray(orders) ? orders : [];
 
-      // Filter completed orders only
-      const completedOrders = validOrders.filter(
-        (order: any) => order.status === "paid" || order.status === "completed",
+      // Filter orders that are completed, paid, or cancelled
+      const relevantOrders = validOrders.filter(
+        (order: any) => 
+          order.status === "paid" || 
+          order.status === "completed" || 
+          order.status === "cancelled"
       );
 
       console.log("Sales Channel Report Debug:", {
         totalOrders: validOrders.length,
-        completedOrders: completedOrders.length,
+        relevantOrders: relevantOrders.length,
+        completedOrders: relevantOrders.filter(o => o.status === "paid" || o.status === "completed").length,
+        cancelledOrders: relevantOrders.filter(o => o.status === "cancelled").length,
         dateRange: `${startDate} to ${endDate}`,
-        sampleOrder: completedOrders[0]
+        sampleOrder: relevantOrders[0]
           ? {
-              id: completedOrders[0].id,
-              tableId: completedOrders[0].tableId,
-              total: completedOrders[0].total,
-              salesChannel: completedOrders[0].salesChannel,
+              id: relevantOrders[0].id,
+              tableId: relevantOrders[0].tableId,
+              total: relevantOrders[0].total,
+              status: relevantOrders[0].status,
+              salesChannel: relevantOrders[0].salesChannel,
             }
           : null,
       });
@@ -3455,17 +3461,26 @@ export function SalesChartReport() {
         },
       };
 
-      // Process completed orders ONLY
-      completedOrders.forEach((order: any) => {
+      // Process all relevant orders (completed, paid, and cancelled)
+      relevantOrders.forEach((order: any) => {
         // Check tableId or salesChannel to determine method
         const isDineIn = order.tableId && order.tableId !== null;
         const method = isDineIn ? t("reports.dineIn") : t("reports.takeaway");
 
         if (salesMethodData[method]) {
-          salesMethodData[method].completedOrders += 1;
-          salesMethodData[method].completedRevenue += Number(order.subtotal || 0); // Doanh thu = subtotal (chưa thuế)
+          const orderRevenue = Number(order.subtotal || 0); // Doanh thu = subtotal (chưa thuế)
+          
+          if (order.status === "cancelled") {
+            salesMethodData[method].cancelledOrders += 1;
+            salesMethodData[method].cancelledRevenue += orderRevenue;
+          } else {
+            // completed or paid orders
+            salesMethodData[method].completedOrders += 1;
+            salesMethodData[method].completedRevenue += orderRevenue;
+          }
+          
           salesMethodData[method].totalOrders += 1;
-          salesMethodData[method].totalRevenue += Number(order.subtotal || 0); // Doanh thu = subtotal (chưa thuế)
+          salesMethodData[method].totalRevenue += orderRevenue;
         }
       });
 
@@ -4026,10 +4041,10 @@ export function SalesChartReport() {
             const salesMethodEnd = new Date(endDate);
             salesMethodEnd.setHours(23, 59, 59, 999);
 
-            // Filter completed orders for sales method analysis
+            // Filter orders that are completed, paid, or cancelled
             const salesMethodFilteredOrders = orders.filter((order: any) => {
               try {
-                if (order.status !== "completed" && order.status !== "paid")
+                if (order.status !== "completed" && order.status !== "paid" && order.status !== "cancelled")
                   return false;
 
                 const orderDate = new Date(
@@ -4053,10 +4068,10 @@ export function SalesChartReport() {
 
             // Group by sales method (Dine In vs Takeaway)
             const salesMethodData: {
-              [method: string]: { count: number; revenue: number };
+              [method: string]: { count: number; revenue: number; cancelledCount: number; cancelledRevenue: number };
             } = {
-              "Ăn tại chỗ": { count: 0, revenue: 0 },
-              "Mang về": { count: 0, revenue: 0 },
+              "Ăn tại chỗ": { count: 0, revenue: 0, cancelledCount: 0, cancelledRevenue: 0 },
+              "Mang về": { count: 0, revenue: 0, cancelledCount: 0, cancelledRevenue: 0 },
             };
 
             salesMethodFilteredOrders.forEach((order: any) => {
@@ -4069,19 +4084,26 @@ export function SalesChartReport() {
                 const orderDiscount = Number(order.discount || 0);
                 const revenue = Math.max(0, orderSubtotal - orderDiscount);
 
-                salesMethodData[method].count += 1;
-                salesMethodData[method].revenue += revenue;
+                if (order.status === "cancelled") {
+                  salesMethodData[method].cancelledCount += 1;
+                  salesMethodData[method].cancelledRevenue += revenue;
+                } else {
+                  salesMethodData[method].count += 1;
+                  salesMethodData[method].revenue += revenue;
+                }
               } catch (error) {
                 console.warn("Error processing sales method order:", order.id, error);
               }
             });
 
-            // Convert to chart data format
+            // Convert to chart data format - show total revenue (including cancelled)
             const salesMethodChartData = Object.entries(salesMethodData)
               .map(([method, data]) => ({
                 name: method,
-                value: Math.round(data.revenue),
-                count: data.count,
+                value: Math.round(data.revenue + data.cancelledRevenue), // Total revenue including cancelled
+                count: data.count + data.cancelledCount, // Total orders including cancelled
+                completedRevenue: Math.round(data.revenue),
+                cancelledRevenue: Math.round(data.cancelledRevenue),
               }))
               .filter((item) => item.value > 0 || item.count > 0); // Show methods with revenue or count
 
