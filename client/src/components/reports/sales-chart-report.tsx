@@ -883,7 +883,7 @@ export function SalesChartReport() {
                                   {formatCurrency(tax)}
                                 </TableCell>
                                 <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
-                                  {formatCurrency(actualRevenue)}
+                                  {formatCurrency(actualRevenue + tax)}
                                 </TableCell>
                                 {(() => {
                                   // Group transactions by payment method for this date
@@ -1009,7 +1009,7 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.subtotal || 0),
+                                          Number(transaction.subtotal || 0) + (Number(transaction.total || 0) - Number(transaction.subtotal || 0)),
                                         )}
                                       </TableCell>
                                       {(() => {
@@ -1124,7 +1124,7 @@ export function SalesChartReport() {
                         <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
                           {formatCurrency(
                             Object.values(dailySales).reduce(
-                              (sum, data) => sum + data.revenue,
+                              (sum, data) => sum + data.revenue + (data.tax || 0),
                               0,
                             ),
                           )}
