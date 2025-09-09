@@ -1743,8 +1743,8 @@ export function SalesChartReport() {
                               <TableCell className="text-right min-w-[100px] px-2">
                                 {(() => {
                                   // Calculate tax rate: tax / revenue * 100%
-                                  const tax = item.vat || 0;
-                                  const revenue = item.revenue || 0;
+                                  const tax = order.tax || 0;
+                                  const revenue = order.revenue || 0;
                                   if (revenue > 0) {
                                     const taxRate = (tax / revenue) * 100;
                                     return `${taxRate.toFixed(1)}%`;
@@ -1753,10 +1753,10 @@ export function SalesChartReport() {
                                 })()}
                               </TableCell>
                               <TableCell className="text-right min-w-[100px] px-2">
-                                {formatCurrency(item.vat)}
+                                {formatCurrency(order.tax)}
                               </TableCell>
                               <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">
-                                {formatCurrency(item.totalMoney)}
+                                {formatCurrency(order.totalMoney)}
                               </TableCell>
                               <TableCell className="text-center min-w-[150px] px-2">
                                 {order.notes || "-"}
@@ -2768,11 +2768,11 @@ export function SalesChartReport() {
                             )}
                             <TableCell className="text-right border-r min-w-[120px] px-4">
                               {(() => {
-                                // Calculate tax rate: tax / revenue * 100%
-                                const tax = item.tax || 0;
-                                const revenue = item.revenue || 0;
-                                if (revenue > 0) {
-                                  const taxRate = (tax / revenue) * 100;
+                                // Calculate overall tax rate for all employees
+                                const totalTax = data.reduce((sum, item) => sum + (item.tax || 0), 0);
+                                const totalRevenue = data.reduce((sum, item) => sum + (item.revenue || 0), 0);
+                                if (totalRevenue > 0) {
+                                  const taxRate = (totalTax / totalRevenue) * 100;
                                   return `${taxRate.toFixed(1)}%`;
                                 }
                                 return "0.0%";
