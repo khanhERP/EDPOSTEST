@@ -107,6 +107,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales chart table columns
     date: "Ngày",
     orderNumber: "Số đơn hàng",
+    orders: "Số đơn hàng",
     subtotal: "Tạm tính",
     discount: "Giảm giá",
     revenue: "Doanh thu",
@@ -619,7 +620,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Sales chart table columns
     date: "날짜",
-    orderNumber: "주문 번호",
+    orderNumber: "주문 번호", 
+    orders: "주문 수",
     subtotal: "소계",
     discount: "할인",
     revenue: "매출",
@@ -1137,6 +1139,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales chart table columns
     date: "Date",
     orderNumber: "Order Number",
+    orders: "Order Count", 
     subtotal: "Subtotal",
     discount: "Discount",
     revenue: "Revenue",
