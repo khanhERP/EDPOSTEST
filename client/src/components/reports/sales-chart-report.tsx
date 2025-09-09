@@ -992,7 +992,9 @@ export function SalesChartReport() {
                                         <button
                                           onClick={() => {
                                             // Navigate to sales orders with order filter
-                                            const orderNumber = transaction.orderNumber || `ORD-${transaction.id}`;
+                                            const orderNumber =
+                                              transaction.orderNumber ||
+                                              `ORD-${transaction.id}`;
                                             window.location.href = `/sales-orders?order=${orderNumber}`;
                                           }}
                                           className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
@@ -1023,7 +1025,8 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.total || 0) - Number(transaction.subtotal || 0),
+                                          Number(transaction.total || 0) -
+                                            Number(transaction.subtotal || 0),
                                         )}
                                       </TableCell>
                                       <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
@@ -1034,7 +1037,9 @@ export function SalesChartReport() {
                                       {(() => {
                                         const transactionMethod =
                                           transaction.paymentMethod || "cash";
-                                        const amount = Number(transaction.total);
+                                        const amount = Number(
+                                          transaction.total,
+                                        );
 
                                         // Get all unique payment methods from all transactions
                                         const allPaymentMethods = new Set();
@@ -1064,13 +1069,20 @@ export function SalesChartReport() {
                                                   className="text-right border-r text-sm min-w-[130px] px-4"
                                                 >
                                                   {transactionMethod === method
-                                                    ? formatCurrency(Number(transaction.total || 0))
+                                                    ? formatCurrency(
+                                                        Number(
+                                                          transaction.total ||
+                                                            0,
+                                                        ),
+                                                      )
                                                     : "-"}
                                                 </TableCell>
                                               ),
                                             )}
                                             <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
-                                              {formatCurrency(Number(transaction.total || 0))}
+                                              {formatCurrency(
+                                                Number(transaction.total || 0),
+                                              )}
                                             </TableCell>
                                           </>
                                         );
@@ -1143,7 +1155,8 @@ export function SalesChartReport() {
                         <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
                           {formatCurrency(
                             Object.values(dailySales).reduce(
-                              (sum, data) => sum + data.subtotal + (data.tax || 0),
+                              (sum, data) =>
+                                sum + data.subtotal + (data.tax || 0),
                               0,
                             ),
                           )}
@@ -1310,7 +1323,12 @@ export function SalesChartReport() {
       );
     }
 
-    if (!orders || !Array.isArray(orders) || !orderItems || !Array.isArray(orderItems)) {
+    if (
+      !orders ||
+      !Array.isArray(orders) ||
+      !orderItems ||
+      !Array.isArray(orderItems)
+    ) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">Không có dữ liệu</div>
@@ -1324,29 +1342,50 @@ export function SalesChartReport() {
 
     // Filter completed orders with all search criteria
     const filteredOrders = orders.filter((order: any) => {
-      const orderDate = new Date(order.orderedAt || order.createdAt || order.created_at);
+      const orderDate = new Date(
+        order.orderedAt || order.createdAt || order.created_at,
+      );
       const dateMatch = orderDate >= start && orderDate <= end;
-      const statusMatch = order.status === "paid" || order.status === "completed";
-      
-      const employeeMatch = 
+      const statusMatch =
+        order.status === "paid" || order.status === "completed";
+
+      const employeeMatch =
         selectedEmployee === "all" ||
         order.employeeName === selectedEmployee ||
         order.cashierName === selectedEmployee ||
-        (order.employeeName && order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase())) ||
-        (order.cashierName && order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
+        (order.employeeName &&
+          order.employeeName
+            .toLowerCase()
+            .includes(selectedEmployee.toLowerCase())) ||
+        (order.cashierName &&
+          order.cashierName
+            .toLowerCase()
+            .includes(selectedEmployee.toLowerCase()));
 
       const customerMatch =
         !customerSearch ||
-        (order.customerName && order.customerName.toLowerCase().includes(customerSearch.toLowerCase())) ||
-        (order.customerId && order.customerId.toString().toLowerCase().includes(customerSearch.toLowerCase())) ||
+        (order.customerName &&
+          order.customerName
+            .toLowerCase()
+            .includes(customerSearch.toLowerCase())) ||
+        (order.customerId &&
+          order.customerId
+            .toString()
+            .toLowerCase()
+            .includes(customerSearch.toLowerCase())) ||
         (order.customerPhone && order.customerPhone.includes(customerSearch));
 
       const orderMatch =
         !orderSearch ||
-        (order.orderNumber && order.orderNumber.toLowerCase().includes(orderSearch.toLowerCase())) ||
+        (order.orderNumber &&
+          order.orderNumber
+            .toLowerCase()
+            .includes(orderSearch.toLowerCase())) ||
         (order.id && order.id.toString().includes(orderSearch));
 
-      return dateMatch && statusMatch && employeeMatch && customerMatch && orderMatch;
+      return (
+        dateMatch && statusMatch && employeeMatch && customerMatch && orderMatch
+      );
     });
 
     // Group orders with their items - using EXACT database values
@@ -1354,15 +1393,19 @@ export function SalesChartReport() {
 
     filteredOrders.forEach((order: any) => {
       // Get items for this order
-      const orderItemsForOrder = orderItems.filter((item: any) => item.orderId === order.id);
-      
+      const orderItemsForOrder = orderItems.filter(
+        (item: any) => item.orderId === order.id,
+      );
+
       // Use EXACT values from database
       const orderSubtotal = Number(order.subtotal || 0); // Thành tiền từ DB
       const orderDiscount = Number(order.discount || 0); // Giảm giá từ DB
-      const orderTax = Number(order.tax || 0) || (Number(order.total || 0) - Number(order.subtotal || 0)); // Thuế từ DB hoặc tính từ total-subtotal
+      const orderTax =
+        Number(order.tax || 0) ||
+        Number(order.total || 0) - Number(order.subtotal || 0); // Thuế từ DB hoặc tính từ total-subtotal
       const orderTotal = Number(order.total || 0); // Tổng tiền từ DB
       const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = thành tiền - giảm giá
-      
+
       const orderSummary = {
         orderDate: order.orderedAt || order.createdAt || order.created_at,
         orderNumber: order.orderNumber || `ORD-${order.id}`,
@@ -1379,55 +1422,67 @@ export function SalesChartReport() {
         tableName: order.tableId ? `Bàn ${order.tableId}` : "",
         employeeName: order.employeeName || order.cashierName || "Unknown",
         status: order.status === "paid" ? "Đã thanh toán" : "Hoàn thành",
-        items: orderItemsForOrder.length === 0 ? [{
-          productCode: "-",
-          productName: "Đơn hàng trống",
-          unit: "-",
-          quantity: 0,
-          unitPrice: 0,
-          totalAmount: orderSubtotal, // Sử dụng thành tiền từ order
-          discount: orderDiscount, // Giảm giá từ order
-          revenue: orderRevenue, // Doanh thu từ order
-          tax: orderTax, // Thuế từ order
-          vat: orderTax, // VAT từ order
-          totalMoney: orderTotal, // Tổng tiền từ order
-          productGroup: "-"
-        }] : orderItemsForOrder.map((item: any) => {
-          // Sử dụng giá trị CHÍNH XÁC từ order_items và order
-          const itemQuantity = Number(item.quantity || 1);
-          const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items
-          const itemTotal = Number(item.total || 0) || (itemUnitPrice * itemQuantity); // Thành tiền từ order_items hoặc tính
-          
-          // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
-          const itemDiscountRatio = orderItemsForOrder.length > 0 ? itemTotal / orderSubtotal : 0;
-          const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
-          const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
-          const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
-          const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
+        items:
+          orderItemsForOrder.length === 0
+            ? [
+                {
+                  productCode: "-",
+                  productName: "Đơn hàng trống",
+                  unit: "-",
+                  quantity: 0,
+                  unitPrice: 0,
+                  totalAmount: orderSubtotal, // Sử dụng thành tiền từ order
+                  discount: orderDiscount, // Giảm giá từ order
+                  revenue: orderRevenue, // Doanh thu từ order
+                  tax: orderTax, // Thuế từ order
+                  vat: orderTax, // VAT từ order
+                  totalMoney: orderTotal, // Tổng tiền từ order
+                  productGroup: "-",
+                },
+              ]
+            : orderItemsForOrder.map((item: any) => {
+                // Sử dụng giá trị CHÍNH XÁC từ order_items và order
+                const itemQuantity = Number(item.quantity || 1);
+                const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items
+                const itemTotal =
+                  Number(item.total || 0) || itemUnitPrice * itemQuantity; // Thành tiền từ order_items hoặc tính
 
-          return {
-            productCode: item.productSku || `SP${item.productId}`,
-            productName: item.productName || "Unknown Product",
-            unit: "Món",
-            quantity: itemQuantity,
-            unitPrice: itemUnitPrice, // Đơn giá từ order_items
-            totalAmount: itemTotal, // Thành tiền từ order_items
-            discount: itemDiscount, // Giảm giá phân bổ
-            revenue: itemRevenue, // Doanh thu = thành tiền - giảm giá
-            tax: itemTax, // Thuế phân bổ
-            vat: itemTax, // VAT = thuế
-            totalMoney: itemTotalMoney, // Tổng tiền = thành tiền + thuế
-            productGroup: item.categoryName || "Chưa phân loại"
-          };
-        })
+                // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
+                const itemDiscountRatio =
+                  orderItemsForOrder.length > 0 ? itemTotal / orderSubtotal : 0;
+                const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
+                const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
+                const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
+                const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
+
+                return {
+                  productCode: item.productSku || `SP${item.productId}`,
+                  productName: item.productName || "Unknown Product",
+                  unit: "Món",
+                  quantity: itemQuantity,
+                  unitPrice: itemUnitPrice, // Đơn giá từ order_items
+                  totalAmount: itemTotal, // Thành tiền từ order_items
+                  discount: itemDiscount, // Giảm giá phân bổ
+                  revenue: itemRevenue, // Doanh thu = thành tiền - giảm giá
+                  tax: itemTax, // Thuế phân bổ
+                  vat: itemTax, // VAT = thuế
+                  totalMoney: itemTotalMoney, // Tổng tiền = thành tiền + thuế
+                  productGroup: item.categoryName || "Chưa phân loại",
+                };
+              }),
       };
 
       // Filter order based on product search if needed
       let shouldIncludeOrder = true;
       if (productSearch) {
-        const hasMatchingProduct = orderSummary.items.some((item: any) => 
-          item.productName.toLowerCase().includes(productSearch.toLowerCase()) ||
-          item.productCode.toLowerCase().includes(productSearch.toLowerCase())
+        const hasMatchingProduct = orderSummary.items.some(
+          (item: any) =>
+            item.productName
+              .toLowerCase()
+              .includes(productSearch.toLowerCase()) ||
+            item.productCode
+              .toLowerCase()
+              .includes(productSearch.toLowerCase()),
         );
         shouldIncludeOrder = hasMatchingProduct;
       }
@@ -1438,7 +1493,10 @@ export function SalesChartReport() {
     });
 
     // Sort by date descending
-    groupedOrders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+    groupedOrders.sort(
+      (a, b) =>
+        new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime(),
+    );
 
     // Pagination
     const totalPages = Math.ceil(groupedOrders.length / pageSize);
@@ -1447,14 +1505,29 @@ export function SalesChartReport() {
     const paginatedData = groupedOrders.slice(startIndex, endIndex);
 
     // Calculate totals for all orders (not just paginated)
-    const allItemsFlat = groupedOrders.flatMap(order => order.items);
-    const totalQuantity = allItemsFlat.reduce((sum, item) => sum + item.quantity, 0);
-    const totalAmount = allItemsFlat.reduce((sum, item) => sum + item.totalAmount, 0);
-    const totalDiscount = allItemsFlat.reduce((sum, item) => sum + item.discount, 0);
-    const totalRevenue = allItemsFlat.reduce((sum, item) => sum + item.revenue, 0);
+    const allItemsFlat = groupedOrders.flatMap((order) => order.items);
+    const totalQuantity = allItemsFlat.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+    const totalAmount = allItemsFlat.reduce(
+      (sum, item) => sum + item.totalAmount,
+      0,
+    );
+    const totalDiscount = allItemsFlat.reduce(
+      (sum, item) => sum + item.discount,
+      0,
+    );
+    const totalRevenue = allItemsFlat.reduce(
+      (sum, item) => sum + item.revenue,
+      0,
+    );
     const totalTax = allItemsFlat.reduce((sum, item) => sum + item.tax, 0);
     const totalVat = allItemsFlat.reduce((sum, item) => sum + item.vat, 0);
-    const totalMoney = allItemsFlat.reduce((sum, item) => sum + item.totalMoney, 0);
+    const totalMoney = allItemsFlat.reduce(
+      (sum, item) => sum + item.totalMoney,
+      0,
+    );
 
     return (
       <Card>
@@ -1471,15 +1544,17 @@ export function SalesChartReport() {
               onClick={() => {
                 const dataWithSummary = [
                   ...allItemsFlat.map((item, index) => {
-                    const order = groupedOrders.find(o => o.items.includes(item));
+                    const order = groupedOrders.find((o) =>
+                      o.items.includes(item),
+                    );
                     return {
-                      "Ngày": formatDate(order?.orderDate || ""),
+                      Ngày: formatDate(order?.orderDate || ""),
                       "Số đơn bán": order?.orderNumber || "",
                       "Mã khách hàng": order?.customerId || "",
                       "Tên khách hàng": order?.customerName || "",
                       "Mã hàng": item.productCode,
                       "Tên hàng": item.productName,
-                      "ĐVT": item.unit,
+                      ĐVT: item.unit,
                       "Số lượng bán": item.quantity,
                       "Đơn giá": formatCurrency(item.unitPrice),
                       "Thành tiền": formatCurrency(item.totalAmount),
@@ -1490,21 +1565,21 @@ export function SalesChartReport() {
                       "Tổng tiền": formatCurrency(item.totalMoney),
                       "Ghi chú": order?.notes || "",
                       "Kênh bán": order?.salesChannel || "",
-                      "Bàn": order?.tableName || "",
+                      Bàn: order?.tableName || "",
                       "Tên nhân viên": order?.employeeName || "",
                       "Nhóm hàng": item.productGroup,
-                      "Trạng thái": order?.status || ""
+                      "Trạng thái": order?.status || "",
                     };
                   }),
                   // Add summary row
                   {
-                    "Ngày": "TỔNG CỘNG",
+                    Ngày: "TỔNG CỘNG",
                     "Số đơn bán": `${allItemsFlat.length} dòng`,
                     "Mã khách hàng": "",
                     "Tên khách hàng": "",
                     "Mã hàng": "",
                     "Tên hàng": "",
-                    "ĐVT": "",
+                    ĐVT: "",
                     "Số lượng bán": totalQuantity,
                     "Đơn giá": "",
                     "Thành tiền": formatCurrency(totalAmount),
@@ -1515,15 +1590,15 @@ export function SalesChartReport() {
                     "Tổng tiền": formatCurrency(totalMoney),
                     "Ghi chú": "",
                     "Kênh bán": "",
-                    "Bàn": "",
+                    Bàn: "",
                     "Tên nhân viên": "",
                     "Nhóm hàng": "",
-                    "Trạng thái": ""
-                  }
+                    "Trạng thái": "",
+                  },
                 ];
                 exportToExcel(
                   dataWithSummary,
-                  `SalesDetail_${startDate}_to_${endDate}`
+                  `SalesDetail_${startDate}_to_${endDate}`,
                 );
               }}
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
@@ -1539,36 +1614,81 @@ export function SalesChartReport() {
               <Table className="w-full min-w-[2000px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center bg-green-50 min-w-[100px]">Ngày</TableHead>
-                    <TableHead className="text-center bg-green-50 min-w-[120px]">Số đơn bán</TableHead>
-                    <TableHead className="text-center bg-green-50 min-w-[120px]">Mã khách hàng</TableHead>
-                    <TableHead className="text-center bg-green-50 min-w-[150px]">Tên khách hàng</TableHead>
-                    <TableHead className="text-center bg-blue-50 min-w-[100px]">Mã hàng</TableHead>
-                    <TableHead className="text-center bg-blue-50 min-w-[200px]">Tên hàng</TableHead>
-                    <TableHead className="text-center bg-blue-50 min-w-[60px]">ĐVT</TableHead>
-                    <TableHead className="text-center bg-blue-50 min-w-[100px]">Số lượng bán</TableHead>
-                    <TableHead className="text-right bg-blue-50 min-w-[120px]">Đơn giá</TableHead>
-                    <TableHead className="text-right bg-blue-50 min-w-[120px]">Thành tiền</TableHead>
-                    <TableHead className="text-right bg-orange-50 min-w-[100px]">Giảm giá</TableHead>
-                    <TableHead className="text-right bg-green-50 min-w-[120px]">Doanh thu</TableHead>
-                    <TableHead className="text-right bg-yellow-50 min-w-[100px]">Thuế xuất</TableHead>
-                    <TableHead className="text-right bg-yellow-50 min-w-[100px]">Thuế GTGT</TableHead>
-                    <TableHead className="text-right bg-purple-50 min-w-[120px]">Tổng tiền</TableHead>
-                    <TableHead className="text-center min-w-[150px]">Ghi chú</TableHead>
-                    <TableHead className="text-center min-w-[100px]">Kênh bán</TableHead>
-                    <TableHead className="text-center min-w-[80px]">Bàn</TableHead>
-                    <TableHead className="text-center min-w-[120px]">Tên nhân viên</TableHead>
-                    <TableHead className="text-center min-w-[120px]">Nhóm hàng</TableHead>
-                    <TableHead className="text-center min-w-[100px]">Trạng thái</TableHead>
+                    <TableHead className="text-center bg-green-50 min-w-[100px]">
+                      Ngày
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 min-w-[120px]">
+                      Số đơn bán
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 min-w-[120px]">
+                      Mã khách hàng
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 min-w-[150px]">
+                      Tên khách hàng
+                    </TableHead>
+                    <TableHead className="text-center bg-blue-50 min-w-[100px]">
+                      Mã hàng
+                    </TableHead>
+                    <TableHead className="text-center bg-blue-50 min-w-[200px]">
+                      Tên hàng
+                    </TableHead>
+                    <TableHead className="text-center bg-blue-50 min-w-[60px]">
+                      ĐVT
+                    </TableHead>
+                    <TableHead className="text-center bg-blue-50 min-w-[100px]">
+                      Số lượng bán
+                    </TableHead>
+                    <TableHead className="text-right bg-blue-50 min-w-[120px]">
+                      Đơn giá
+                    </TableHead>
+                    <TableHead className="text-right bg-blue-50 min-w-[120px]">
+                      Thành tiền
+                    </TableHead>
+                    <TableHead className="text-right bg-orange-50 min-w-[100px]">
+                      Giảm giá
+                    </TableHead>
+                    <TableHead className="text-right bg-green-50 min-w-[120px]">
+                      Doanh thu
+                    </TableHead>
+                    <TableHead className="text-right bg-yellow-50 min-w-[100px]">
+                      Thuế xuất
+                    </TableHead>
+                    <TableHead className="text-right bg-yellow-50 min-w-[100px]">
+                      Thuế GTGT
+                    </TableHead>
+                    <TableHead className="text-right bg-purple-50 min-w-[120px]">
+                      Tổng tiền
+                    </TableHead>
+                    <TableHead className="text-center min-w-[150px]">
+                      Ghi chú
+                    </TableHead>
+                    <TableHead className="text-center min-w-[100px]">
+                      Kênh bán
+                    </TableHead>
+                    <TableHead className="text-center min-w-[80px]">
+                      Bàn
+                    </TableHead>
+                    <TableHead className="text-center min-w-[120px]">
+                      Tên nhân viên
+                    </TableHead>
+                    <TableHead className="text-center min-w-[120px]">
+                      Nhóm hàng
+                    </TableHead>
+                    <TableHead className="text-center min-w-[100px]">
+                      Trạng thái
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedData.length > 0 ? (
                     paginatedData.map((order, orderIndex) => {
-                      const isExpanded = expandedRows[`order-${order.orderNumber}`] || false;
-                      
+                      const isExpanded =
+                        expandedRows[`order-${order.orderNumber}`] || false;
+
                       return (
-                        <Fragment key={`order-${order.orderNumber}-${orderIndex}`}>
+                        <Fragment
+                          key={`order-${order.orderNumber}-${orderIndex}`}
+                        >
                           {/* Order Header Row */}
                           <TableRow className="bg-blue-50/50 hover:bg-blue-100/50 border-l-4 border-l-blue-500">
                             <TableCell className="text-center font-medium min-w-[100px] px-2">
@@ -1577,7 +1697,8 @@ export function SalesChartReport() {
                                   onClick={() =>
                                     setExpandedRows((prev) => ({
                                       ...prev,
-                                      [`order-${order.orderNumber}`]: !prev[`order-${order.orderNumber}`],
+                                      [`order-${order.orderNumber}`]:
+                                        !prev[`order-${order.orderNumber}`],
                                     }))
                                   }
                                   className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm bg-white border"
@@ -1598,28 +1719,68 @@ export function SalesChartReport() {
                                 {order.orderNumber}
                               </button>
                             </TableCell>
-                            <TableCell className="text-center min-w-[120px] px-2 font-semibold">{order.customerId}</TableCell>
-                            <TableCell className="text-center min-w-[150px] px-2 font-semibold">{order.customerName}</TableCell>
-                            <TableCell className="text-center min-w-[100px] px-2 text-gray-500">-</TableCell>
-                            <TableCell className="text-left min-w-[200px] px-2 font-semibold text-blue-800">Tổng đơn hàng</TableCell>
-                            <TableCell className="text-center min-w-[60px] px-2 text-gray-500">-</TableCell>
-                            <TableCell className="text-center min-w-[100px] px-2 font-semibold">{order.items.length}</TableCell>
-                            <TableCell className="text-right min-w-[120px] px-2 text-gray-500">-</TableCell>
-                            <TableCell className="text-right min-w-[120px] px-2 font-bold">{formatCurrency(order.totalAmount)}</TableCell>
-                            <TableCell className="text-right text-red-600 min-w-[100px] px-2 font-bold">{formatCurrency(order.discount)}</TableCell>
-                            <TableCell className="text-right text-green-600 font-bold min-w-[120px] px-2">{formatCurrency(order.revenue)}</TableCell>
-                            <TableCell className="text-right min-w-[100px] px-2 font-bold">{formatCurrency(order.tax)}</TableCell>
-                            <TableCell className="text-right min-w-[100px] px-2 font-bold">{formatCurrency(order.vat)}</TableCell>
-                            <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">{formatCurrency(order.totalMoney)}</TableCell>
-                            <TableCell className="text-center min-w-[150px] px-2">{order.notes || "-"}</TableCell>
+                            <TableCell className="text-center min-w-[120px] px-2 font-semibold">
+                              {order.customerId}
+                            </TableCell>
+                            <TableCell className="text-center min-w-[150px] px-2 font-semibold">
+                              {order.customerName}
+                            </TableCell>
+                            <TableCell className="text-center min-w-[100px] px-2 text-gray-500">
+                              -
+                            </TableCell>
+                            <TableCell className="text-left min-w-[200px] px-2 font-semibold text-blue-800">
+                              Tổng đơn hàng
+                            </TableCell>
+                            <TableCell className="text-center min-w-[60px] px-2 text-gray-500">
+                              -
+                            </TableCell>
+                            <TableCell className="text-center min-w-[100px] px-2 font-semibold">
+                              {order.items.length}
+                            </TableCell>
+                            <TableCell className="text-right min-w-[120px] px-2 text-gray-500">
+                              -
+                            </TableCell>
+                            <TableCell className="text-right min-w-[120px] px-2 font-bold">
+                              {formatCurrency(order.totalAmount)}
+                            </TableCell>
+                            <TableCell className="text-right text-red-600 min-w-[100px] px-2 font-bold">
+                              {formatCurrency(order.discount)}
+                            </TableCell>
+                            <TableCell className="text-right text-green-600 font-bold min-w-[120px] px-2">
+                              {formatCurrency(order.revenue)}
+                            </TableCell>
+                            <TableCell className="text-right min-w-[100px] px-2 font-bold">
+                              {formatCurrency(order.tax)}
+                            </TableCell>
+                            <TableCell className="text-right min-w-[100px] px-2 font-bold">
+                              {formatCurrency(order.vat)}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">
+                              {formatCurrency(order.totalMoney)}
+                            </TableCell>
+                            <TableCell className="text-center min-w-[150px] px-2">
+                              {order.notes || "-"}
+                            </TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
-                              <Badge variant={order.salesChannel === "Ăn tại chỗ" ? "default" : "secondary"}>
+                              <Badge
+                                variant={
+                                  order.salesChannel === "Ăn tại chỗ"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                              >
                                 {order.salesChannel}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-center min-w-[80px] px-2">{order.tableName || "-"}</TableCell>
-                            <TableCell className="text-center min-w-[120px] px-2">{order.employeeName}</TableCell>
-                            <TableCell className="text-center min-w-[120px] px-2 text-gray-500">-</TableCell>
+                            <TableCell className="text-center min-w-[80px] px-2">
+                              {order.tableName || "-"}
+                            </TableCell>
+                            <TableCell className="text-center min-w-[120px] px-2">
+                              {order.employeeName}
+                            </TableCell>
+                            <TableCell className="text-center min-w-[120px] px-2 text-gray-500">
+                              -
+                            </TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
                               <Badge variant="default" className="text-xs">
                                 {order.status}
@@ -1628,52 +1789,104 @@ export function SalesChartReport() {
                           </TableRow>
 
                           {/* Order Items Rows */}
-                          {isExpanded && order.items.map((item: any, itemIndex: number) => (
-                            <TableRow key={`${order.orderNumber}-item-${itemIndex}`} className="hover:bg-gray-50 border-l-4 border-l-gray-300">
-                              <TableCell className="text-center font-medium min-w-[100px] px-2">
-                                <div className="flex items-center gap-2 pl-8">
-                                  <span className="text-gray-400 text-xs">└</span>
-                                  <span className="text-gray-600 text-sm">{formatDate(order.orderDate)}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center min-w-[120px] px-2 pl-8 text-gray-600 text-sm">
-                                {order.orderNumber}
-                              </TableCell>
-                              <TableCell className="text-center min-w-[120px] px-2 text-gray-600 text-sm">{order.customerId}</TableCell>
-                              <TableCell className="text-center min-w-[150px] px-2 text-gray-600 text-sm">{order.customerName}</TableCell>
-                              <TableCell className="text-center min-w-[100px] px-2">{item.productCode}</TableCell>
-                              <TableCell className="text-left min-w-[200px] px-2 pl-8">{item.productName}</TableCell>
-                              <TableCell className="text-center min-w-[60px] px-2">{item.unit}</TableCell>
-                              <TableCell className="text-center min-w-[100px] px-2">{item.quantity}</TableCell>
-                              <TableCell className="text-right min-w-[120px] px-2">{formatCurrency(item.unitPrice)}</TableCell>
-                              <TableCell className="text-right min-w-[120px] px-2">{formatCurrency(item.totalAmount)}</TableCell>
-                              <TableCell className="text-right text-red-600 min-w-[100px] px-2">{formatCurrency(item.discount)}</TableCell>
-                              <TableCell className="text-right text-green-600 font-medium min-w-[120px] px-2">{formatCurrency(item.revenue)}</TableCell>
-                              <TableCell className="text-right min-w-[100px] px-2">{formatCurrency(item.tax)}</TableCell>
-                              <TableCell className="text-right min-w-[100px] px-2">{formatCurrency(item.vat)}</TableCell>
-                              <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">{formatCurrency(item.totalMoney)}</TableCell>
-                              <TableCell className="text-center min-w-[150px] px-2 text-gray-600 text-sm">{order.notes || "-"}</TableCell>
-                              <TableCell className="text-center min-w-[100px] px-2">
-                                <Badge variant={order.salesChannel === "Ăn tại chỗ" ? "default" : "secondary"} className="text-xs">
-                                  {order.salesChannel}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center min-w-[80px] px-2 text-gray-600 text-sm">{order.tableName || "-"}</TableCell>
-                              <TableCell className="text-center min-w-[120px] px-2 text-gray-600 text-sm">{order.employeeName}</TableCell>
-                              <TableCell className="text-center min-w-[120px] px-2">{item.productGroup}</TableCell>
-                              <TableCell className="text-center min-w-[100px] px-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {order.status}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {isExpanded &&
+                            order.items.map((item: any, itemIndex: number) => (
+                              <TableRow
+                                key={`${order.orderNumber}-item-${itemIndex}`}
+                                className="hover:bg-gray-50 border-l-4 border-l-gray-300"
+                              >
+                                <TableCell className="text-center font-medium min-w-[100px] px-2">
+                                  <div className="flex items-center gap-2 pl-8">
+                                    <span className="text-gray-400 text-xs">
+                                      └
+                                    </span>
+                                    <span className="text-gray-600 text-sm">
+                                      {formatDate(order.orderDate)}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center min-w-[120px] px-2 pl-8 text-gray-600 text-sm">
+                                  {order.orderNumber}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[120px] px-2 text-gray-600 text-sm">
+                                  {order.customerId}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[150px] px-2 text-gray-600 text-sm">
+                                  {order.customerName}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[100px] px-2">
+                                  {item.productCode}
+                                </TableCell>
+                                <TableCell className="text-left min-w-[200px] px-2 pl-8">
+                                  {item.productName}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[60px] px-2">
+                                  {item.unit}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[100px] px-2">
+                                  {item.quantity}
+                                </TableCell>
+                                <TableCell className="text-right min-w-[120px] px-2">
+                                  {formatCurrency(item.unitPrice)}
+                                </TableCell>
+                                <TableCell className="text-right min-w-[120px] px-2">
+                                  {formatCurrency(item.totalAmount)}
+                                </TableCell>
+                                <TableCell className="text-right text-red-600 min-w-[100px] px-2">
+                                  {formatCurrency(item.discount)}
+                                </TableCell>
+                                <TableCell className="text-right text-green-600 font-medium min-w-[120px] px-2">
+                                  {formatCurrency(item.revenue)}
+                                </TableCell>
+                                <TableCell className="text-right min-w-[100px] px-2">
+                                  {formatCurrency(item.tax)}
+                                </TableCell>
+                                <TableCell className="text-right min-w-[100px] px-2">
+                                  {formatCurrency(item.vat)}
+                                </TableCell>
+                                <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">
+                                  {formatCurrency(item.totalMoney)}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[150px] px-2 text-gray-600 text-sm">
+                                  {order.notes || "-"}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[100px] px-2">
+                                  <Badge
+                                    variant={
+                                      order.salesChannel === "Ăn tại chỗ"
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {order.salesChannel}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-center min-w-[80px] px-2 text-gray-600 text-sm">
+                                  {order.tableName || "-"}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[120px] px-2 text-gray-600 text-sm">
+                                  {order.employeeName}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[120px] px-2">
+                                  {item.productGroup}
+                                </TableCell>
+                                <TableCell className="text-center min-w-[100px] px-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {order.status}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
                         </Fragment>
                       );
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={21} className="text-center text-gray-500 py-8">
+                      <TableCell
+                        colSpan={21}
+                        className="text-center text-gray-500 py-8"
+                      >
                         Không có dữ liệu chi tiết bán hàng
                       </TableCell>
                     </TableRow>
@@ -1682,8 +1895,12 @@ export function SalesChartReport() {
                   {/* Summary Row */}
                   {groupedOrders.length > 0 && (
                     <TableRow className="bg-gray-100 font-bold border-t-2">
-                      <TableCell className="text-center bg-green-100 min-w-[100px] px-2">TỔNG CỘNG</TableCell>
-                      <TableCell className="text-center bg-green-100 min-w-[120px] px-2">{allItemsFlat.length} dòng</TableCell>
+                      <TableCell className="text-center bg-green-100 min-w-[100px] px-2">
+                        TỔNG CỘNG
+                      </TableCell>
+                      <TableCell className="text-center bg-green-100 min-w-[120px] px-2">
+                        {allItemsFlat.length} dòng
+                      </TableCell>
                       <TableCell className="text-center bg-green-100 min-w-[120px] px-2"></TableCell>
                       <TableCell className="text-center bg-green-100 min-w-[150px] px-2"></TableCell>
                       <TableCell className="text-center bg-blue-100 min-w-[100px] px-2"></TableCell>
@@ -1763,14 +1980,18 @@ export function SalesChartReport() {
                     «
                   </button>
                   <button
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     ‹
                   </button>
                   <button
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
@@ -2343,7 +2564,9 @@ export function SalesChartReport() {
                                       <button
                                         onClick={() => {
                                           // Navigate to sales orders with order filter
-                                          const orderNumber = transaction.orderNumber || `ORD-${transaction.id}`;
+                                          const orderNumber =
+                                            transaction.orderNumber ||
+                                            `ORD-${transaction.id}`;
                                           window.location.href = `/sales-orders?order=${orderNumber}`;
                                         }}
                                         className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
@@ -2384,7 +2607,8 @@ export function SalesChartReport() {
                                     )}
                                     <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
                                       {formatCurrency(
-                                        Number(transaction.total || 0) - Number(transaction.subtotal || 0),
+                                        Number(transaction.total || 0) -
+                                          Number(transaction.subtotal || 0),
                                       )}
                                     </TableCell>
                                     <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
@@ -2492,7 +2716,10 @@ export function SalesChartReport() {
                         {analysisType !== "employee" && (
                           <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
                             {formatCurrency(
-                              data.reduce((sum, item) => sum + item.discount, 0),
+                              data.reduce(
+                                (sum, item) => sum + item.discount,
+                                0,
+                              ),
                             )}
                           </TableCell>
                         )}
@@ -2948,7 +3175,9 @@ export function SalesChartReport() {
                                     <button
                                       onClick={() => {
                                         // Navigate to sales orders with order filter
-                                        const orderNumber = order.orderNumber || `ORD-${order.id}`;
+                                        const orderNumber =
+                                          order.orderNumber ||
+                                          `ORD-${order.id}`;
                                         window.location.href = `/sales-orders?order=${orderNumber}`;
                                       }}
                                       className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
@@ -2989,7 +3218,9 @@ export function SalesChartReport() {
                                     </TableCell>
                                   )}
                                   <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
-                                    {formatCurrency(Number(order.subtotal || 0))}
+                                    {formatCurrency(
+                                      Number(order.subtotal || 0),
+                                    )}
                                   </TableCell>
                                   <TableCell className="text-center text-sm min-w-[100px] px-4">
                                     <Badge
@@ -3131,10 +3362,10 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
-      );
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   // Sales Channel Report Component Logic
@@ -3438,7 +3669,7 @@ export function SalesChartReport() {
   };
 
   // Colors for pie chart
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
   // Get chart data based on analysis type
   const getChartData = () => {
@@ -3754,10 +3985,14 @@ export function SalesChartReport() {
 
         // Filter completed orders for sales method analysis
         const salesMethodFilteredOrders = orders.filter((order: any) => {
-          if (order.status !== "completed" && order.status !== "paid") return false;
+          if (order.status !== "completed" && order.status !== "paid")
+            return false;
 
           const orderDate = new Date(
-            order.orderedAt || order.createdAt || order.created_at || order.paidAt,
+            order.orderedAt ||
+              order.createdAt ||
+              order.created_at ||
+              order.paidAt,
           );
 
           if (isNaN(orderDate.getTime())) return false;
@@ -3766,7 +4001,9 @@ export function SalesChartReport() {
         });
 
         // Group by sales method (Dine In vs Takeaway)
-        const salesMethodData: { [method: string]: { count: number; revenue: number } } = {
+        const salesMethodData: {
+          [method: string]: { count: number; revenue: number };
+        } = {
           "Ăn tại chỗ": { count: 0, revenue: 0 },
           "Mang về": { count: 0, revenue: 0 },
         };
@@ -3884,7 +4121,9 @@ export function SalesChartReport() {
                   <TableRow>
                     <TableHead>{t("reports.productCode")}</TableHead>
                     <TableHead>{t("reports.productName")}</TableHead>
-                    <TableHead className="text-center">{t("common.unit")}</TableHead>
+                    <TableHead className="text-center">
+                      {t("common.unit")}
+                    </TableHead>
                     <TableHead className="text-center">
                       {t("reports.quantitySold")}
                     </TableHead>
@@ -3920,7 +4159,9 @@ export function SalesChartReport() {
                           </button>
                         </TableCell>
                         <TableCell>{product.productName}</TableCell>
-                        <TableCell className="text-center">{t("common.perUnit")}</TableCell>
+                        <TableCell className="text-center">
+                          {t("common.perUnit")}
+                        </TableCell>
                         <TableCell className="text-center">
                           <Badge variant="outline">
                             {product.totalQuantity}
@@ -3937,7 +4178,9 @@ export function SalesChartReport() {
                         <TableCell className="text-right font-semibold text-green-600">
                           {formatCurrency(product.totalRevenue)}
                         </TableCell>
-                        <TableCell className="text-center">{product.categoryName}</TableCell>
+                        <TableCell className="text-center">
+                          {product.categoryName}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -4095,10 +4338,15 @@ export function SalesChartReport() {
                         outerRadius={120}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, value, count }) => `${name}: ${formatCurrency(value)} (${count} đơn)`}
+                        label={({ name, value, count }) =>
+                          `${name}: ${formatCurrency(value)} (${count} đơn)`
+                        }
                       >
                         {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
                       <ChartTooltip
@@ -4576,15 +4824,14 @@ export function SalesChartReport() {
           )}
 
           {analysisType === "salesMethod" && (
-            <div className="pt-4 border-t border-gray-200">
-            </div>
+            <div className="pt-4 border-t border-gray-200"></div>
           )}
 
           {/* Sales Detail Report Filters */}
           {analysisType === "salesDetail" && (
             <div className="space-y-4 pt-4 border-t border-gray-200">
               {/* Employee and Order Code */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
                     {t("reports.employeeFilter")}
@@ -4615,10 +4862,36 @@ export function SalesChartReport() {
                     />
                   </div>
                 </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.productGroup")}
+                  </Label>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={setSelectedCategory}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder={t("reports.productGroup")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      {categories &&
+                        Array.isArray(categories) &&
+                        categories.map((category: any) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id.toString()}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Customer Search and Product Search */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
                     Tìm khách hàng
@@ -4647,36 +4920,6 @@ export function SalesChartReport() {
                     />
                   </div>
                 </div>
-              </div>
-
-              {/* Product Group and Status */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    {t("reports.productGroup")}
-                  </Label>
-                  <Select
-                    value={selectedCategory}
-                    onValueChange={setSelectedCategory}
-                  >
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder={t("reports.productGroup")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("common.all")}</SelectItem>
-                      {categories &&
-                        Array.isArray(categories) &&
-                        categories.map((category: any) => (
-                          <SelectItem
-                            key={category.id}
-                            value={category.id.toString()}
-                          >
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
                     {t("reports.status")}
@@ -4700,8 +4943,6 @@ export function SalesChartReport() {
                   </Select>
                 </div>
               </div>
-
-              
             </div>
           )}
         </CardContent>
