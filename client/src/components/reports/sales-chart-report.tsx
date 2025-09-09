@@ -1439,7 +1439,7 @@ export function SalesChartReport() {
 
                   // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
                   const itemDiscountRatio =
-                    orderItemsForOrder.length > 0 ? itemTotal / orderSubtotal : 0;
+                    orderSubtotal > 0 ? itemTotal / orderSubtotal : 0; // Avoid division by zero
                   const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
                   const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
                   const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
@@ -1896,7 +1896,7 @@ export function SalesChartReport() {
                           colSpan={21}
                           className="text-center text-gray-500 py-8"
                         >
-                          Không có dữ liệu chi tiết bán hàng
+                          {t("reports.noDataDescription")}
                         </TableCell>
                       </TableRow>
                     )}
@@ -2008,7 +2008,9 @@ export function SalesChartReport() {
                     </button>
                     <button
                       onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
+                      disabled={
+                        currentPage === totalPages
+                      }
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                     >
                       »
@@ -3790,7 +3792,8 @@ export function SalesChartReport() {
 
                 const orderSubtotal = Number(order.subtotal || 0);
                 const discount = Number(order.discount || 0); // Set default discount to 0
-                dailyData[dateKey].revenue += orderSubtotal - discount;
+                const revenue = orderSubtotal - discount; // Calculate revenue: subtotal - discount
+                dailyData[dateKey].revenue += revenue;
                 dailyData[dateKey].orders += 1;
               });
             }
