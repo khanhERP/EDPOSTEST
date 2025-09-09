@@ -68,7 +68,11 @@ export default function InventoryPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  const [searchTerm, setSearchTerm] = useState("");
+  // Get search parameter from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialSearch = urlParams.get('search') || '';
+
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [stockFilter, setStockFilter] = useState<string>("all");
   const [showStockDialog, setShowStockDialog] = useState(false);

@@ -3324,7 +3324,17 @@ export function SalesChartReport() {
                   {paginatedData.length > 0 ? (
                     paginatedData.map((product: any, index: number) => (
                       <TableRow key={product.productId || index}>
-                        <TableCell className="font-medium">{product.productSku}</TableCell>
+                        <TableCell className="font-medium">
+                          <button
+                            onClick={() => {
+                              window.location.href = `/inventory?search=${encodeURIComponent(product.productSku)}`;
+                            }}
+                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
+                            title="Click to view in inventory"
+                          >
+                            {product.productSku}
+                          </button>
+                        </TableCell>
                         <TableCell>{product.productName}</TableCell>
                         <TableCell className="text-center">{t("common.perUnit")}</TableCell>
                         <TableCell className="text-center">
