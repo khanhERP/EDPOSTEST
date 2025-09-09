@@ -650,7 +650,7 @@ export function SalesChartReport() {
                       Ngày: formatDate(date),
                       "Tổng số đơn hàng": data.orders,
                       "Doanh thu": formatCurrency(data.revenue),
-                      Thuế: formatCurrency(data.revenue * 0.1), // This calculation might be incorrect, should use actual tax from data.tax
+                      Thuế: "10%", // Displayed as 10%
                       "Thành tiền": formatCurrency(data.subtotal),
                       "Khách hàng": data.customers,
                     })),
@@ -667,12 +667,7 @@ export function SalesChartReport() {
                           0,
                         ),
                       ),
-                      Thuế: formatCurrency(
-                        Object.values(dailySales).reduce(
-                          (sum, data) => sum + data.tax,
-                          0,
-                        ),
-                      ),
+                      Thuế: "10%", // Displayed as 10%
                       "Thành tiền": formatCurrency(
                         Object.values(dailySales).reduce(
                           (sum, data) => sum + data.subtotal,
@@ -743,7 +738,7 @@ export function SalesChartReport() {
                         className="text-center border-r min-w-[120px]"
                         rowSpan={2}
                       >
-                        {t("reports.tax")}
+                        Thuế suất
                       </TableHead>
                       <TableHead
                         className="text-center border-r min-w-[140px]"
@@ -887,7 +882,7 @@ export function SalesChartReport() {
                                   {formatCurrency(actualRevenue)}
                                 </TableCell>
                                 <TableCell className="text-right border-r min-w-[120px] px-4">
-                                  {formatCurrency(tax)}
+                                  10%
                                 </TableCell>
                                 <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                                   {formatCurrency(data.subtotal + tax)}
@@ -1145,12 +1140,7 @@ export function SalesChartReport() {
                           )}
                         </TableCell>
                         <TableCell className="text-right border-r min-w-[120px] px-4">
-                          {formatCurrency(
-                            Object.values(dailySales).reduce(
-                              (sum, data) => sum + (data.tax || 0),
-                              0,
-                            ),
-                          )}
+                          10%
                         </TableCell>
                         <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
                           {formatCurrency(
@@ -1749,10 +1739,10 @@ export function SalesChartReport() {
                             <TableCell className="text-right text-green-600 font-bold min-w-[120px] px-2">
                               {formatCurrency(order.revenue)}
                             </TableCell>
-                            <TableCell className="text-right min-w-[100px] px-2 font-bold">
+                            <TableCell className="text-right min-w-[100px] px-2">
                               {formatCurrency(order.tax)}
                             </TableCell>
-                            <TableCell className="text-right min-w-[100px] px-2 font-bold">
+                            <TableCell className="text-right min-w-[100px] px-2">
                               {formatCurrency(order.vat)}
                             </TableCell>
                             <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">
@@ -1778,8 +1768,8 @@ export function SalesChartReport() {
                             <TableCell className="text-center min-w-[120px] px-2">
                               {order.employeeName}
                             </TableCell>
-                            <TableCell className="text-center min-w-[120px] px-2 text-gray-500">
-                              -
+                            <TableCell className="text-center min-w-[120px] px-2">
+                              {item.productGroup}
                             </TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
                               <Badge variant="default" className="text-xs">
@@ -1990,7 +1980,9 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      setCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2006,11 +1998,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
   };
 
   // Employee Report with Pagination State
@@ -2244,7 +2236,7 @@ export function SalesChartReport() {
                       "Số đơn": item.orderCount,
                       "Doanh thu": formatCurrency(item.revenue),
                       "Giảm giá": formatCurrency(item.discount),
-                      Thuế: formatCurrency(item.tax),
+                      Thuế: "10%", // Displayed as 10%
                       "Tổng cộng": formatCurrency(item.total),
                       ...Object.fromEntries(
                         paymentMethodsArray.map((method) => [
@@ -2270,9 +2262,7 @@ export function SalesChartReport() {
                       "Giảm giá": formatCurrency(
                         data.reduce((sum, item) => sum + item.discount, 0),
                       ),
-                      Thuế: formatCurrency(
-                        data.reduce((sum, item) => sum + item.tax, 0),
-                      ),
+                      Thuế: "10%", // Displayed as 10%
                       "Tổng cộng": formatCurrency(
                         data.reduce((sum, item) => sum + item.total, 0),
                       ),
@@ -2351,7 +2341,7 @@ export function SalesChartReport() {
                         className="text-right border-r min-w-[120px]"
                         rowSpan={2}
                       >
-                        {t("reports.tax")}
+                        Thuế suất
                       </TableHead>
                       <TableHead
                         className="text-right border-r min-w-[140px]"
@@ -3361,11 +3351,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
   };
 
   // Sales Channel Report Component Logic
