@@ -263,30 +263,45 @@ export function TableReport() {
         const hour = new Date(order.orderedAt).getHours();
         stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
 
-        // Count order items for this order (sum of quantities)
+        // Count order items for this order
         if (orderItems && Array.isArray(orderItems)) {
           const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
           
-          // Sum up quantities instead of just counting items
-          let totalQuantity = 0;
-          relatedOrderItems.forEach(item => {
-            totalQuantity += parseInt(item.quantity || 1);
-          });
-          
-          console.log(`📊 Table ${tableId} - Order ${order.id}: found ${relatedOrderItems.length} different items, total quantity: ${totalQuantity}`, {
+          console.log(`🔍 Table ${tableId} - Order ${order.id} Debug:`, {
             orderId: order.id,
             orderNumber: order.orderNumber,
-            itemCount: relatedOrderItems.length,
-            totalQuantity: totalQuantity,
+            allOrderItems: orderItems.length,
+            filteredItems: relatedOrderItems.length,
+            orderItemIds: orderItems.map(item => ({ id: item.id, orderId: item.orderId })).slice(0, 10),
             relatedItems: relatedOrderItems.map(item => ({
+              id: item.id,
+              orderId: item.orderId,
               productName: item.productName,
-              quantity: item.quantity
+              quantity: item.quantity,
+              unitPrice: item.unitPrice
             }))
           });
           
-          stats.itemsSold += totalQuantity;
+          if (relatedOrderItems.length > 0) {
+            // Count total items (sum of quantities)
+            let totalQuantity = 0;
+            relatedOrderItems.forEach(item => {
+              const quantity = parseInt(item.quantity || 1);
+              totalQuantity += quantity;
+              console.log(`   📦 Item ${item.id}: ${item.productName} x${quantity}`);
+            });
+            
+            stats.itemsSold += totalQuantity;
+            console.log(`✅ Table ${tableId} - Added ${totalQuantity} items. Total now: ${stats.itemsSold}`);
+          } else {
+            console.log(`⚠️ Table ${tableId} - Order ${order.id}: No related order items found`);
+          }
         } else {
-          console.warn(`⚠️ Table ${tableId} - Order ${order.id}: No orderItems data available`);
+          console.warn(`⚠️ Table ${tableId} - Order ${order.id}: orderItems is not available or not an array`, { 
+            orderItemsType: typeof orderItems,
+            orderItemsIsArray: Array.isArray(orderItems),
+            orderItemsValue: orderItems
+          });
         }
       }
     });
@@ -315,10 +330,23 @@ export function TableReport() {
       });
 
     // Final debug summary
+    const totalItemsCalculated = tableStats.reduce((sum, s) => sum + s.itemsSold, 0);
     console.log("🎯 Table Report Final Summary:", {
       totalCompletedOrders: completedOrders.length,
       totalOrderItemsInSystem: orderItems?.length || 0,
-      totalItemsSoldAcrossAllTables: tableStats.reduce((sum, s) => sum + s.itemsSold, 0),
+      totalItemsSoldAcrossAllTables: totalItemsCalculated,
+      orderItemsData: {
+        isArray: Array.isArray(orderItems),
+        length: orderItems?.length || 0,
+        sampleItems: orderItems?.slice(0, 5).map(item => ({
+          id: item.id,
+          orderId: item.orderId,
+          productName: item.productName,
+          quantity: item.quantity
+        })) || []
+      },
+      completedOrderIds: completedOrders.map(o => o.id),
+      orderItemsByOrderId: orderItems ? Object.groupBy(orderItems, (item: any) => item.orderId) : {},
       tableStatsWithItems: tableStats.filter(s => s.itemsSold > 0).map(s => ({
         tableId: s.tableId,
         tableName: s.tableName,
