@@ -1047,13 +1047,13 @@ export function SalesChartReport() {
                                                   className="text-right border-r text-sm min-w-[130px] px-4"
                                                 >
                                                   {transactionMethod === method
-                                                    ? formatCurrency(Number(transaction.subtotal || 0))
+                                                    ? formatCurrency(Number(transaction.total || 0))
                                                     : "-"}
                                                 </TableCell>
                                               ),
                                             )}
                                             <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
-                                              {formatCurrency(Number(transaction.subtotal || 0))}
+                                              {formatCurrency(Number(transaction.total || 0))}
                                             </TableCell>
                                           </>
                                         );
