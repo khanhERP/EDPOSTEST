@@ -3999,25 +3999,8 @@ export function SalesChartReport() {
 
           {analysisType === "channel" && (
             <div className="pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Sales Method */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    {t("reports.salesMethod")}
-                  </Label>
-                  <Select value={salesMethod} onValueChange={setSalesMethod}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("common.all")}</SelectItem>
-                      <SelectItem value="no_delivery">
-                        Không giao hàng
-                      </SelectItem>
-                      <SelectItem value="delivery">Có giao hàng</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="text-sm text-gray-600">
+                Phân tích theo hình thức bán hàng (Ăn tại chỗ / Mang về)
               </div>
             </div>
           )}
