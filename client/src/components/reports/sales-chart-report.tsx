@@ -1997,6 +1997,7 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
@@ -3350,11 +3351,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
       );
-    }
   };
 
   // Sales Channel Report Component Logic
