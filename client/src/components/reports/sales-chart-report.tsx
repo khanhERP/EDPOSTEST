@@ -1078,9 +1078,7 @@ export function SalesChartReport() {
                                               ),
                                             )}
                                             <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
-                                              {formatCurrency(
-                                                Number(transaction.total || 0),
-                                              )}
+                                              {formatCurrency(amount)}
                                             </TableCell>
                                           </>
                                         );
@@ -1298,7 +1296,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
@@ -1743,13 +1740,22 @@ export function SalesChartReport() {
                                 {formatCurrency(order.revenue)}
                               </TableCell>
                               <TableCell className="text-right min-w-[100px] px-2">
-                                {formatCurrency(order.tax)}
+                                {(() => {
+                                  // Calculate tax rate: tax / revenue * 100%
+                                  const tax = item.vat || 0;
+                                  const revenue = item.revenue || 0;
+                                  if (revenue > 0) {
+                                    const taxRate = (tax / revenue) * 100;
+                                    return `${taxRate.toFixed(1)}%`;
+                                  }
+                                  return "0.0%";
+                                })()}
                               </TableCell>
                               <TableCell className="text-right min-w-[100px] px-2">
-                                {formatCurrency(order.vat)}
+                                {formatCurrency(item.vat)}
                               </TableCell>
                               <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">
-                                {formatCurrency(order.totalMoney)}
+                                {formatCurrency(item.totalMoney)}
                               </TableCell>
                               <TableCell className="text-center min-w-[150px] px-2">
                                 {order.notes || "-"}
@@ -1761,6 +1767,7 @@ export function SalesChartReport() {
                                       ? "default"
                                       : "secondary"
                                   }
+                                  className="text-xs"
                                 >
                                   {order.salesChannel}
                                 </Badge>
@@ -2008,7 +2015,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
@@ -2462,7 +2468,16 @@ export function SalesChartReport() {
                                     </TableCell>
                                   )}
                                   <TableCell className="text-right border-r min-w-[120px] px-4">
-                                    {formatCurrency(item.tax)}
+                                    {(() => {
+                                      // Calculate tax rate: tax / revenue * 100%
+                                      const tax = item.tax || 0;
+                                      const revenue = item.revenue || 0;
+                                      if (revenue > 0) {
+                                        const taxRate = (tax / revenue) * 100;
+                                        return `${taxRate.toFixed(1)}%`;
+                                      }
+                                      return "0.0%";
+                                    })()}
                                   </TableCell>
                                   <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                                     {formatCurrency(item.total)}
@@ -2748,9 +2763,16 @@ export function SalesChartReport() {
                               </TableCell>
                             )}
                             <TableCell className="text-right border-r min-w-[120px] px-4">
-                              {formatCurrency(
-                                data.reduce((sum, item) => sum + item.tax, 0),
-                              )}
+                              {(() => {
+                                // Calculate tax rate: tax / revenue * 100%
+                                const tax = item.tax || 0;
+                                const revenue = item.revenue || 0;
+                                if (revenue > 0) {
+                                  const taxRate = (tax / revenue) * 100;
+                                  return `${taxRate.toFixed(1)}%`;
+                                }
+                                return "0.0%";
+                              })()}
                             </TableCell>
                             <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                               {formatCurrency(
