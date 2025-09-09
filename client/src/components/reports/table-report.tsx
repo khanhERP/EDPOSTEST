@@ -263,18 +263,28 @@ export function TableReport() {
         const hour = new Date(order.orderedAt).getHours();
         stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
 
-        // Count number of order items for this order
+        // Count order items for this order (sum of quantities)
         if (orderItems && Array.isArray(orderItems)) {
           const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
-          console.log(`📊 Table ${tableId} - Order ${order.id}: found ${relatedOrderItems.length} items`, {
+          
+          // Sum up quantities instead of just counting items
+          let totalQuantity = 0;
+          relatedOrderItems.forEach(item => {
+            totalQuantity += parseInt(item.quantity || 1);
+          });
+          
+          console.log(`📊 Table ${tableId} - Order ${order.id}: found ${relatedOrderItems.length} different items, total quantity: ${totalQuantity}`, {
             orderId: order.id,
             orderNumber: order.orderNumber,
+            itemCount: relatedOrderItems.length,
+            totalQuantity: totalQuantity,
             relatedItems: relatedOrderItems.map(item => ({
               productName: item.productName,
               quantity: item.quantity
             }))
           });
-          stats.itemsSold += relatedOrderItems.length;
+          
+          stats.itemsSold += totalQuantity;
         } else {
           console.warn(`⚠️ Table ${tableId} - Order ${order.id}: No orderItems data available`);
         }
@@ -308,7 +318,15 @@ export function TableReport() {
     console.log("🎯 Table Report Final Summary:", {
       totalCompletedOrders: completedOrders.length,
       totalOrderItemsInSystem: orderItems?.length || 0,
+      totalItemsSoldAcrossAllTables: tableStats.reduce((sum, s) => sum + s.itemsSold, 0),
       tableStatsWithItems: tableStats.filter(s => s.itemsSold > 0).map(s => ({
+        tableId: s.tableId,
+        tableName: s.tableName,
+        totalOrders: s.totalOrders,
+        itemsSold: s.itemsSold,
+        revenue: s.totalRevenue
+      })),
+      allTableStats: tableStats.map(s => ({
         tableId: s.tableId,
         tableName: s.tableName,
         totalOrders: s.totalOrders,
