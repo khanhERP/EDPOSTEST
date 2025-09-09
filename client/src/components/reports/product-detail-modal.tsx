@@ -322,12 +322,11 @@ export function ProductDetailModal({
           )}
         </div>
 
-          {/* Actions */}
-          <div className="flex justify-end items-center pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
-              {t("common.close") || "Đóng"}
-            </Button>
-          </div>
+        {/* Actions */}
+        <div className="flex justify-end items-center pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>
+            {t("common.close") || "Đóng"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
