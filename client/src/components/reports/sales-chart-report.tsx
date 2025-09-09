@@ -647,7 +647,7 @@ export function SalesChartReport() {
                       "Tổng số đơn hàng": data.orders,
                       "Doanh thu": formatCurrency(data.revenue),
                       Thuế: formatCurrency(data.revenue * 0.1), // This calculation might be incorrect, should use actual tax from data.tax
-                      "Thành tiền": formatCurrency(data.subtotal),
+                      "Thành tiền": formatCurrency(data.subtotal), // Use subtotal here
                       "Khách hàng": data.customers,
                     })),
                     // Add summary row
@@ -671,7 +671,7 @@ export function SalesChartReport() {
                       ),
                       "Thành tiền": formatCurrency(
                         Object.values(dailySales).reduce(
-                          (sum, data) => sum + data.subtotal,
+                          (sum, data) => sum + data.subtotal, // Use subtotal here
                           0,
                         ),
                       ),
@@ -1474,11 +1474,9 @@ export function SalesChartReport() {
         }
 
         const stats = employeeSales[employeeKey];
-        // Calculate revenue using same logic as time analysis - Doanh thu = Thành tiền (subtotal chưa thuế)
         const orderTotal = Number(order.total || 0);
-        const orderSubtotal = Number(order.subtotal || 0);
         const orderDiscount = Number(order.discount || 0); // Default discount to 0
-        const revenue = orderSubtotal; // Use subtotal directly like time analysis
+        const revenue = orderTotal - orderDiscount;
 
         stats.orderCount += 1;
         stats.revenue += revenue;
@@ -1627,14 +1625,12 @@ export function SalesChartReport() {
                       >
                         {t("reports.revenue")}
                       </TableHead>
-                      {analysisType !== "employee" && (
-                        <TableHead
-                          className="text-right border-r min-w-[120px]"
-                          rowSpan={2}
-                        >
-                          {t("reports.discount")}
-                        </TableHead>
-                      )}
+                      <TableHead
+                        className="text-right border-r min-w-[120px]"
+                        rowSpan={2}
+                      >
+                        {t("reports.discount")}
+                      </TableHead>
                       <TableHead
                         className="text-right border-r min-w-[120px]"
                         rowSpan={2}
@@ -1757,11 +1753,9 @@ export function SalesChartReport() {
                               <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
                                 {formatCurrency(item.revenue)}
                               </TableCell>
-                              {analysisType !== "employee" && (
-                                <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
-                                  {formatCurrency(item.discount || 0)}
-                                </TableCell>
-                              )}
+                              <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
+                                {formatCurrency(item.discount || 0)}
+                              </TableCell>
                               <TableCell className="text-right border-r min-w-[120px] px-4">
                                 {formatCurrency(item.tax)}
                               </TableCell>
@@ -1985,13 +1979,11 @@ export function SalesChartReport() {
                             data.reduce((sum, item) => sum + item.revenue, 0),
                           )}
                         </TableCell>
-                        {analysisType !== "employee" && (
-                          <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
-                            {formatCurrency(
-                              data.reduce((sum, item) => sum + item.discount, 0),
-                            )}
-                          </TableCell>
-                        )}
+                        <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
+                          {formatCurrency(
+                            data.reduce((sum, item) => sum + item.discount, 0),
+                          )}
+                        </TableCell>
                         <TableCell className="text-right border-r min-w-[120px] px-4">
                           {formatCurrency(
                             data.reduce((sum, item) => sum + item.tax, 0),
@@ -2256,7 +2248,7 @@ export function SalesChartReport() {
       }
 
       const orderTotal = Number(order.total || 0);
-      const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
+      const orderSubtotal = Number(order.subtotal || 0);
       const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
       customerSales[customerId].orders += 1;
@@ -3193,7 +3185,7 @@ export function SalesChartReport() {
           customerData[customerId].orders += 1;
           customerData[customerId].totalAmount += orderSubtotal;
           customerData[customerId].discount += orderDiscount;
-          customerData[customerId].revenue += orderSubtotal - orderDiscount;
+          customerData[customerId].revenue += orderTotal - orderDiscount;
           customerData[customerId].orderDetails.push(order);
 
           // Determine customer group based on total spending
@@ -3992,6 +3984,8 @@ export function SalesChartReport() {
               </div>
             </div>
           )}
+
+          
 
           {/* Sales Detail Report Filters */}
           {analysisType === "salesDetail" && (
