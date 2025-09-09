@@ -746,7 +746,7 @@ export function ShoppingCart({
         ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const taxPerUnit = afterTaxPrice - basePrice;
-          totalTax += taxPerItem * quantity;
+          totalTax += taxPerUnit * quantity;
         }
       });
     }
