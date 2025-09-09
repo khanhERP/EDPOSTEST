@@ -1293,7 +1293,7 @@ export default function SalesOrders() {
                                                           selectedInvoice.invoiceNumber || String(selectedInvoice.id).padStart(8, '0')
                                                         )}
                                                       </td>
-                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">Trạng thái HĐ:</td>
+                                                      <td className="py-1 pr-4 font-medium whitespace-nowrap">{t("common.invoiceStatusLabel")}</td>
                                                       <td className="py-1">{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus || 0)}</td>
                                                     </tr>
                                                   </tbody>
