@@ -1864,7 +1864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/order-items", async (req: TenantRequest, res) => {
     try {
       console.log("=== GET ALL ORDER ITEMS API CALLED ===");
-      
+
       let tenantDb;
       try {
         tenantDb = await getTenantDatabase(req);
@@ -1879,7 +1879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const database = tenantDb || db;
       console.log("Fetching all order items from database...");
-      
+
       const items = await database
         .select({
           id: orderItemsTable.id,
@@ -1897,8 +1897,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(orderItemsTable.id));
 
       console.log(`✅ Found ${items.length} total order items`);
-      
-      // Ensure items is always an array
+
+      // Ensure items is always an array, even if empty
       const safeItems = Array.isArray(items) ? items : [];
       res.json(safeItems);
     } catch (error) {
@@ -1943,7 +1943,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const items = await storage.getOrderItems(orderId, tenantDb);
       console.log(`Found ${items.length} order items:`, items);
 
-      // Ensure items is always an array
+      // Ensure items is always an array, even if empty
       const safeItems = Array.isArray(items) ? items : [];
       res.json(safeItems);
     } catch (error) {
@@ -2266,13 +2266,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Store Settings
   app.get("/api/store-settings", async (req: TenantRequest, res) => {
     try {
-      const tenantDb = await getTenantDatabase(req);
-      const settings = await storage.getStoreSettings(tenantDb);
+      const settings = await storage.getStoreSettings();
       res.json(settings);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch store settings" });
+      console.error("Error fetching store settings:", error);
+      res.status(500).json({ error: "Failed to fetch store settings" });
     }
   });
+
+  // Current cart state for customer display
+  app.get('/api/current-cart', async (req, res) => {
+    try {
+      // This endpoint returns the current cart state if available
+      // For now, return empty cart as default - this would be enhanced
+      // to store current cart state in memory or database
+      res.json({ cart: [] });
+    } catch (error) {
+      console.error('Error fetching current cart:', error);
+      res.status(500).json({ error: 'Failed to fetch current cart' });
+    }
+  });
+
 
   app.put("/api/store-settings", async (req: TenantRequest, res) => {
     try {

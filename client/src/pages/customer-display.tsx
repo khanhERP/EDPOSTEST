@@ -13,6 +13,8 @@ export default function CustomerDisplayPage() {
     transactionUuid: string;
   } | null>(null);
 
+  console.log("Customer Display: Component rendered with cart:", cart.length, "items, storeInfo:", !!storeInfo, "qrPayment:", !!qrPayment);
+
   // Auto-clear QR payment after 5 minutes if not manually cleared
   useEffect(() => {
     if (qrPayment) {
@@ -38,6 +40,35 @@ export default function CustomerDisplayPage() {
     return sum;
   }, 0);
   const total = subtotal + tax;
+
+  // Fetch initial data on component mount
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        // Fetch store info
+        const storeResponse = await fetch('/api/store-settings');
+        if (storeResponse.ok) {
+          const storeData = await storeResponse.json();
+          console.log("Customer Display: Store info loaded:", storeData);
+          setStoreInfo(storeData);
+        }
+        
+        // Try to fetch current cart state if available
+        const cartResponse = await fetch('/api/current-cart');
+        if (cartResponse.ok) {
+          const cartData = await cartResponse.json();
+          console.log("Customer Display: Initial cart loaded:", cartData);
+          if (cartData.cart && Array.isArray(cartData.cart)) {
+            setCart(cartData.cart);
+          }
+        }
+      } catch (error) {
+        console.error("Customer Display: Error fetching initial data:", error);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
 
   // WebSocket connection to receive real-time updates
   useEffect(() => {
@@ -78,7 +109,7 @@ export default function CustomerDisplayPage() {
                 console.log("Customer Display: Updating cart:", data.cart);
                 // Use React's functional update to ensure we get the latest state
                 setCart(prevCart => {
-                  const newCart = data.cart || [];
+                  const newCart = Array.isArray(data.cart) ? data.cart : [];
                   console.log("Customer Display: Cart state update from", prevCart.length, "to", newCart.length, "items");
                   return newCart;
                 });
@@ -166,18 +197,19 @@ export default function CustomerDisplayPage() {
 
     connectWebSocket();
 
-    // Fetch initial store info
-    fetch('/api/store-settings')
-      .then(res => res.json())
-      .then(data => setStoreInfo(data))
-      .catch(err => console.error('Failed to fetch store info:', err));
-
     return () => {
+      console.log("Customer Display: Cleaning up WebSocket connection");
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
       }
-      if (ws && isConnected) {
-        ws.close(1000, 'Component unmounting');
+      if (ws) {
+        try {
+          if (isConnected) {
+            ws.close(1000, 'Component unmounting');
+          }
+        } catch (error) {
+          console.error("Customer Display: Error closing WebSocket:", error);
+        }
       }
     };
   }, []);
