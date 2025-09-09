@@ -348,6 +348,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     days180: "180일",
     days365: "365일",
 
+    // Product type
+    productType: "상품 유형",
+    product: "상품",
+    combo: "콤보",
+    service: "서비스",
+
     // Unit indicators
     perUnit: "개당",
   },
@@ -628,6 +634,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     days90: "90 days",
     days180: "180 days",
     days365: "365 days",
+
+    // Product type
+    productType: "Product Type",
+    product: "Product",
+    combo: "Combo",
+    service: "Service",
 
     // Unit indicators
     perUnit: "per item",
@@ -912,6 +924,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
     // Product type
     productType: "Loại sản phẩm",
+    product: "Sản phẩm",
+    combo: "Combo", 
+    service: "Dịch vụ",
 
     // Unit indicators
     perUnit: "món",
