@@ -1468,7 +1468,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     summaryReportTitle: "Summary Report",
 
     // Table detail headers
-    salesDetailsHeader: "Sales Details",
+    salesDetailsHeader: " Sales Details",
     revenueExpenseDetailsHeader: "Revenue Expense Details",
     inventoryDetailsHeader: "Inventory Details",
 
