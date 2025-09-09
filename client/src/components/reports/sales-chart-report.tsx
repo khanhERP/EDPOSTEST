@@ -1691,7 +1691,7 @@ export function SalesChartReport() {
                           {/* Order Header Row */}
                           <TableRow className="bg-blue-50/50 hover:bg-blue-100/50 border-l-4 border-l-blue-500">
                             <TableCell className="text-center font-medium min-w-[100px] px-2">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 pl-0">
                                 <button
                                   onClick={() =>
                                     setExpandedRows((prev) => ({
@@ -1700,11 +1700,11 @@ export function SalesChartReport() {
                                         !prev[`order-${order.orderNumber}`],
                                     }))
                                   }
-                                  className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm bg-white border"
+                                  className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm bg-white border flex-shrink-0"
                                 >
                                   {isExpanded ? "−" : "+"}
                                 </button>
-                                <span>{formatDate(order.orderDate)}</span>
+                                <span className="flex-1 text-center">{formatDate(order.orderDate)}</span>
                               </div>
                             </TableCell>
                             <TableCell className="text-center min-w-[120px] px-2 font-semibold">
@@ -1793,17 +1793,19 @@ export function SalesChartReport() {
                                 className="hover:bg-gray-50 border-l-4 border-l-gray-300"
                               >
                                 <TableCell className="text-center font-medium min-w-[100px] px-2">
-                                  <div className="flex items-center gap-2 pl-8">
-                                    <span className="text-gray-400 text-xs">
+                                  <div className="flex items-center gap-2 pl-2">
+                                    <span className="text-gray-400 text-xs flex-shrink-0 w-6 text-center">
                                       └
                                     </span>
-                                    <span className="text-gray-600 text-sm">
+                                    <span className="text-gray-600 text-sm flex-1 text-center">
                                       {formatDate(order.orderDate)}
                                     </span>
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-center min-w-[120px] px-2 pl-8 text-gray-600 text-sm">
-                                  {order.orderNumber}
+                                <TableCell className="text-center min-w-[120px] px-2 text-gray-600 text-sm">
+                                  <div className="pl-6 text-center">
+                                    {order.orderNumber}
+                                  </div>
                                 </TableCell>
                                 <TableCell className="text-center min-w-[120px] px-2 text-gray-600 text-sm">
                                   {order.customerId}
@@ -1814,8 +1816,10 @@ export function SalesChartReport() {
                                 <TableCell className="text-center min-w-[100px] px-2">
                                   {item.productCode}
                                 </TableCell>
-                                <TableCell className="text-left min-w-[200px] px-2 pl-8">
-                                  {item.productName}
+                                <TableCell className="text-left min-w-[200px] px-2">
+                                  <div className="pl-6">
+                                    {item.productName}
+                                  </div>
                                 </TableCell>
                                 <TableCell className="text-center min-w-[60px] px-2">
                                   {item.unit}
