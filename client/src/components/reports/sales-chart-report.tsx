@@ -4216,12 +4216,30 @@ export function SalesChartReport() {
                               <TableCell className="font-medium">
                                 <button
                                   onClick={() => {
-                                    // Set product for modal and open it
-                                    setSelectedProductForDetail(product);
+                                    // Map product analysis data to modal format
+                                    const productForModal = {
+                                      id: product.productId,
+                                      name: product.productName,
+                                      sku: product.productSku,
+                                      price: product.unitPrice || 0,
+                                      stock: 0, // Not available in analysis data
+                                      categoryId: 0, // Not available in analysis data
+                                      categoryName: product.categoryName,
+                                      imageUrl: null,
+                                      isActive: true,
+                                      productType: 1, // Default to product
+                                      trackInventory: false,
+                                      taxRate: "10.00",
+                                      priceIncludesTax: false,
+                                      afterTaxPrice: product.unitPrice || 0,
+                                      createdAt: null,
+                                      updatedAt: null
+                                    };
+                                    setSelectedProductForDetail(productForModal);
                                     setShowProductDetailModal(true);
                                   }}
                                   className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
-                                  title="Click to view product details"
+                                  title="Click để xem chi tiết sản phẩm"
                                 >
                                   {product.productSku}
                                 </button>
