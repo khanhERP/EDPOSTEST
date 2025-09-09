@@ -263,8 +263,25 @@ export function TableReport() {
         const hour = new Date(order.orderedAt).getHours();
         stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
 
-        // Count order items for this order - simple logic
+        // Count order items for this order - simple logic with detailed debugging
         if (orderItems && Array.isArray(orderItems)) {
+          console.log(`🔍 DEBUG Table ${tableId} - Order ${order.id}:`, {
+            orderIdType: typeof order.id,
+            orderIdValue: order.id,
+            orderItemsTotal: orderItems.length,
+            sampleOrderItems: orderItems.slice(0, 3).map(item => ({
+              id: item.id,
+              orderId: item.orderId,
+              orderIdType: typeof item.orderId,
+              productName: item.productName,
+              quantity: item.quantity
+            })),
+            orderItemsWithMatchingOrderId: orderItems.filter((item: any) => {
+              console.log(`  🔎 Comparing order.id=${order.id} (${typeof order.id}) with item.orderId=${item.orderId} (${typeof item.orderId})`);
+              return item.orderId === order.id;
+            }).length
+          });
+
           // Find all order items that belong to this order
           const itemsForThisOrder = orderItems.filter((item: any) => item.orderId === order.id);
           
@@ -273,16 +290,18 @@ export function TableReport() {
           itemsForThisOrder.forEach((item: any) => {
             const quantity = Number(item.quantity || 0);
             totalQuantityForOrder += quantity;
+            console.log(`  📦 Item ${item.id}: ${item.productName} x${quantity} (orderId: ${item.orderId})`);
           });
           
           // Add to table stats
           stats.itemsSold += totalQuantityForOrder;
           
-          console.log(`🍽️ Table ${tableId} - Order ${order.id} (${order.orderNumber}): Found ${itemsForThisOrder.length} items, total quantity: ${totalQuantityForOrder}`, {
-            orderId: order.id,
-            itemsFound: itemsForThisOrder.length,
-            totalQuantity: totalQuantityForOrder,
-            runningTotal: stats.itemsSold
+          console.log(`✅ Table ${tableId} - Order ${order.id}: Found ${itemsForThisOrder.length} items, total quantity: ${totalQuantityForOrder}, running total: ${stats.itemsSold}`);
+        } else {
+          console.error(`❌ Table ${tableId} - Order ${order.id}: orderItems is not available`, {
+            orderItemsType: typeof orderItems,
+            orderItemsIsArray: Array.isArray(orderItems),
+            orderItemsLength: orderItems?.length
           });
         }
       }
