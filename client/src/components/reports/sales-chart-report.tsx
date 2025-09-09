@@ -1348,7 +1348,9 @@ export function SalesChartReport() {
             .toLowerCase()
             .includes(selectedEmployee.toLowerCase())) ||
         (order.cashierName &&
-          order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
+          order.cashierName
+            .toLowerCase()
+            .includes(selectedEmployee.toLowerCase()));
 
       const customerMatch =
         !customerSearch ||
@@ -1548,7 +1550,7 @@ export function SalesChartReport() {
                       "Thành tiền": formatCurrency(item.totalAmount),
                       "Giảm giá": formatCurrency(item.discount),
                       "Doanh thu": formatCurrency(item.revenue),
-                      "Thuế xuất": formatCurrency(item.tax),
+                      "Thuế suất": formatCurrency(item.tax),
                       "Thuế GTGT": formatCurrency(item.vat),
                       "Tổng tiền": formatCurrency(item.totalMoney),
                       "Ghi chú": order?.notes || "",
@@ -1573,7 +1575,7 @@ export function SalesChartReport() {
                     "Thành tiền": formatCurrency(totalAmount),
                     "Giảm giá": formatCurrency(totalDiscount),
                     "Doanh thu": formatCurrency(totalRevenue),
-                    "Thuế xuất": formatCurrency(totalTax),
+                    "Thuế suất": formatCurrency(totalTax),
                     "Thuế GTGT": formatCurrency(totalVat),
                     "Tổng tiền": formatCurrency(totalMoney),
                     "Ghi chú": "",
@@ -1639,7 +1641,7 @@ export function SalesChartReport() {
                       Doanh thu
                     </TableHead>
                     <TableHead className="text-right bg-yellow-50 min-w-[100px] font-bold">
-                      Thuế xuất
+                      Thuế suất
                     </TableHead>
                     <TableHead className="text-right bg-yellow-50 min-w-[100px] font-bold">
                       Thuế GTGT
@@ -1770,10 +1772,7 @@ export function SalesChartReport() {
                               {order.items[0]?.productGroup || "-"}
                             </TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
-                              <Badge
-                                variant="outline"
-                                className="text-xs"
-                              >
+                              <Badge variant="outline" className="text-xs">
                                 {order.status}
                               </Badge>
                             </TableCell>
@@ -1863,10 +1862,7 @@ export function SalesChartReport() {
                                   {item.productGroup}
                                 </TableCell>
                                 <TableCell className="text-center min-w-[100px] px-2">
-                                  <Badge
-                                    variant="outline"
-                                    className="text-xs"
-                                  >
+                                  <Badge variant="outline" className="text-xs">
                                     {order.status}
                                   </Badge>
                                 </TableCell>
@@ -1982,9 +1978,7 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(prev + 1, totalPages),
-                      )
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2001,10 +1995,10 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
-      );
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   // Employee Report with Pagination State
@@ -3354,10 +3348,10 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
-      );
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   // Sales Channel Report Component Logic
