@@ -2000,6 +2000,7 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
@@ -3352,6 +3353,7 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
@@ -3532,7 +3534,8 @@ export function SalesChartReport() {
                   <TableRow>
                     <TableHead className="text-center bg-green-50 border">
                       {t("reports.completed")}
-                    </TableHead><TableHead className="text-center bg-green-50 border">
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
                       {t("reports.cancelled")}
                     </TableHead>
                     <TableHead className="text-center bg-green-50 border">
