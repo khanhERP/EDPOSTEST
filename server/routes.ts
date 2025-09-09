@@ -2277,10 +2277,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Current cart state for customer display
   app.get('/api/current-cart', async (req, res) => {
     try {
-      // This endpoint returns the current cart state if available
-      // For now, return empty cart as default - this would be enhanced
-      // to store current cart state in memory or database
-      res.json({ cart: [] });
+      // Get store settings for customer display
+      const storeSettings = await storage.getStoreSettings();
+      
+      const currentCartState = {
+        cart: [],
+        storeInfo: storeSettings,
+        qrPayment: null
+      };
+      
+      console.log('Customer Display: Current cart API called, returning state:', {
+        cartItems: currentCartState.cart.length,
+        hasStoreInfo: !!currentCartState.storeInfo,
+        storeInfo: currentCartState.storeInfo
+      });
+      res.json(currentCartState);
     } catch (error) {
       console.error('Error fetching current cart:', error);
       res.status(500).json({ error: 'Failed to fetch current cart' });

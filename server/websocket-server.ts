@@ -5,6 +5,16 @@ let wss: WebSocketServer | null = null;
 // Keep track of all connected clients
 const clients = new Set<WebSocket>();
 
+// Global state for customer display
+let currentCartState = {
+  cart: [],
+  subtotal: 0,
+  tax: 0,
+  total: 0,
+  storeInfo: null,
+  qrPayment: null
+};
+
 export function initializeWebSocketServer(server: Server) {
   if (wss) {
     console.log('WebSocket server already running');
@@ -64,23 +74,46 @@ export function initializeWebSocketServer(server: Server) {
           console.log('✅ POS client registered');
           (ws as any).clientType = 'pos';
         } else if (data.type === 'cart_update') {
+          // Update global cart state
+          currentCartState = {
+            cart: data.cart || [],
+            subtotal: data.subtotal || 0,
+            tax: data.tax || 0,
+            total: data.total || 0,
+            storeInfo: currentCartState.storeInfo,
+            qrPayment: null // Clear QR payment when cart updates
+          };
+          
+          console.log('📡 Broadcasting cart update to customer displays', {
+            cartItems: currentCartState.cart.length,
+            total: currentCartState.total
+          });
+          
           // Broadcast cart update to all connected clients (customer displays)
-          console.log('📡 Broadcasting cart update to customer displays');
           clients.forEach(client => {
             if (client.readyState === client.OPEN && client !== ws) {
               client.send(JSON.stringify({
                 type: 'cart_update',
-                cart: data.cart,
-                subtotal: data.subtotal,
-                tax: data.tax,
-                total: data.total,
-                timestamp: data.timestamp
+                cart: currentCartState.cart,
+                subtotal: currentCartState.subtotal,
+                tax: currentCartState.tax,
+                total: currentCartState.total,
+                timestamp: data.timestamp || new Date().toISOString()
               }));
             }
           });
         } else if (data.type === 'qr_payment') {
-          // Broadcast QR payment info to customer displays
+          // Update global QR payment state
+          currentCartState.qrPayment = {
+            qrCodeUrl: data.qrCodeUrl,
+            amount: data.amount,
+            paymentMethod: data.paymentMethod,
+            transactionUuid: data.transactionUuid
+          };
+          
           console.log('📱 Broadcasting QR payment to customer displays');
+          
+          // Broadcast QR payment info to customer displays
           clients.forEach(client => {
             if (client.readyState === client.OPEN && client !== ws) {
               client.send(JSON.stringify({
@@ -89,17 +122,67 @@ export function initializeWebSocketServer(server: Server) {
                 amount: data.amount,
                 paymentMethod: data.paymentMethod,
                 transactionUuid: data.transactionUuid,
-                timestamp: data.timestamp
+                timestamp: data.timestamp || new Date().toISOString()
               }));
             }
           });
         } else if (data.type === 'customer_display_connected') {
-          console.log('👥 Customer display connected');
-          // Mark this connection as customer display if needed
+          console.log('👥 Customer display connected - sending current state');
+          // Mark this connection as customer display
           (ws as any).isCustomerDisplay = true;
+          
+          // Send current cart state to newly connected customer display
+          try {
+            ws.send(JSON.stringify({
+              type: 'cart_update',
+              cart: currentCartState.cart,
+              subtotal: currentCartState.subtotal,
+              tax: currentCartState.tax,
+              total: currentCartState.total,
+              timestamp: new Date().toISOString()
+            }));
+            
+            if (currentCartState.storeInfo) {
+              ws.send(JSON.stringify({
+                type: 'store_info',
+                storeInfo: currentCartState.storeInfo,
+                timestamp: new Date().toISOString()
+              }));
+            }
+            
+            if (currentCartState.qrPayment) {
+              ws.send(JSON.stringify({
+                type: 'qr_payment',
+                ...currentCartState.qrPayment,
+                timestamp: new Date().toISOString()
+              }));
+            }
+            
+            console.log('✅ Sent current state to customer display:', {
+              cartItems: currentCartState.cart.length,
+              hasStoreInfo: !!currentCartState.storeInfo,
+              hasQrPayment: !!currentCartState.qrPayment
+            });
+          } catch (error) {
+            console.error('❌ Failed to send current state to customer display:', error);
+          }
         } else if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'order_status_update' || data.type === 'force_refresh' || data.type === 'einvoice_published' || data.type === 'einvoice_saved_for_later') {
           // Broadcast data refresh signals to all connected table grids and order management clients
           console.log(`📡 Broadcasting ${data.type} to all clients`);
+          // Handle payment success specifically
+          if (data.type === 'payment_success') {
+            // Clear cart state on payment success
+            currentCartState = {
+              cart: [],
+              subtotal: 0,
+              tax: 0,
+              total: 0,
+              storeInfo: currentCartState.storeInfo,
+              qrPayment: null
+            };
+            console.log('💰 Payment success - cleared cart state');
+          }
+          
           clients.forEach(client => {
             if (client.readyState === client.OPEN && client !== ws) {
               const clientType = (client as any).clientType;
