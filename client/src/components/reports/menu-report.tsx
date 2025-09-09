@@ -854,7 +854,11 @@ function MenuReport() {
                               </span>
                             </td>
                             <td className="py-2 px-4 text-right">
-                              {formatCurrency(product.averagePrice || 0)} ₫
+                              {formatCurrency(
+                                product.totalQuantity > 0 
+                                  ? (product.totalRevenue || 0) / (product.totalQuantity || 1)
+                                  : 0
+                              )} ₫
                             </td>
                             <td className="py-2 px-4 text-right">
                               <div className="flex items-center justify-end gap-2">
