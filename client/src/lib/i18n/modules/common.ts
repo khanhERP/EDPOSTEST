@@ -686,7 +686,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     discount: "Giảm giá",
     totalTax: "Thuế GTGT",
     customerPaid: "Khách hàng trả",
-    cashPayment: "Tiền mặt",
+    cashPayment: "Thanh toán tiền mặt",
     bankTransfer: "Chuyển khoản",
     qrPayment: "QR Code InfoCAMS",
     cancelOrder: "Hủy đơn",
@@ -900,6 +900,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
       // Unit indicators
       perUnit: "món",
+
+      // Product type
+      productType: "Loại sản phẩm",
     },
   },
 };

@@ -3919,7 +3919,7 @@ export function SalesChartReport() {
 
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.productType")}
+                  {t("common.productType")}
                 </Label>
                 <Select value={productType} onValueChange={setProductType}>
                   <SelectTrigger className="h-9 text-sm">
