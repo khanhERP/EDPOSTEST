@@ -3718,109 +3718,137 @@ export function SalesChartReport() {
 
     // Get chart data based on analysis type
     const getChartData = () => {
-      switch (analysisType) {
-        case "time":
-          const timeStart = new Date(startDate);
-          const timeEnd = new Date(endDate);
-          timeEnd.setHours(23, 59, 59, 999);
+      try {
+        switch (analysisType) {
+          case "time":
+            const timeStart = new Date(startDate);
+            const timeEnd = new Date(endDate);
+            timeEnd.setHours(23, 59, 59, 999);
 
-          // Group orders by date using EXACT same logic as dashboard
-          const dailyData: {
-            [date: string]: { revenue: number; orders: number };
-          } = {};
+            // Group orders by date using EXACT same logic as dashboard
+            const dailyData: {
+              [date: string]: { revenue: number; orders: number };
+            } = {};
 
-          console.log("Time Analysis Debug:", {
-            startDate,
-            endDate,
-            timeStart: timeStart.toISOString(),
-            timeEnd: timeEnd.toISOString(),
-            ordersLength: orders?.length || 0,
-          });
-
-          if (orders && Array.isArray(orders)) {
-            // Use EXACT same filtering logic as dashboard
-            const filteredOrders = orders.filter((order: any) => {
-              // EXACT same status check as dashboard
-              if (
-                order.status !== "paid" &&
-                order.status !== "completed" &&
-                order.status !== "served" &&
-                order.status !== "confirmed"
-              ) {
-                return false;
-              }
-
-              // EXACT same date parsing as dashboard
-              const orderDate = new Date(
-                order.orderedAt ||
-                  order.paidAt ||
-                  order.createdAt ||
-                  order.created_at,
-              );
-
-              if (isNaN(orderDate.getTime())) {
-                return false;
-              }
-
-              const dateMatch = orderDate >= timeStart && orderDate <= timeEnd;
-              return dateMatch;
+            console.log("Time Analysis Debug:", {
+              startDate,
+              endDate,
+              timeStart: timeStart.toISOString(),
+              timeEnd: timeEnd.toISOString(),
+              ordersLength: orders?.length || 0,
             });
 
-            console.log(
-              `Time analysis: ${filteredOrders.length} orders after filtering`,
-            );
+            if (orders && Array.isArray(orders) && orders.length > 0) {
+              // Use EXACT same filtering logic as dashboard
+              const filteredOrders = orders.filter((order: any) => {
+                try {
+                  // EXACT same status check as dashboard
+                  if (
+                    order.status !== "paid" &&
+                    order.status !== "completed" &&
+                    order.status !== "served" &&
+                    order.status !== "confirmed"
+                  ) {
+                    return false;
+                  }
 
-            filteredOrders.forEach((order: any) => {
-              const orderDate = new Date(
-                order.orderedAt ||
-                  order.paidAt ||
-                  order.createdAt ||
-                  order.created_at,
+                  // EXACT same date parsing as dashboard
+                  const orderDate = new Date(
+                    order.orderedAt ||
+                      order.paidAt ||
+                      order.createdAt ||
+                      order.created_at,
+                  );
+
+                  if (isNaN(orderDate.getTime())) {
+                    console.warn("Invalid date for order:", order.id);
+                    return false;
+                  }
+
+                  const dateMatch = orderDate >= timeStart && orderDate <= timeEnd;
+                  return dateMatch;
+                } catch (error) {
+                  console.warn("Error filtering order:", order.id, error);
+                  return false;
+                }
+              });
+
+              console.log(
+                `Time analysis: ${filteredOrders.length} orders after filtering`,
               );
-              const dateKey = orderDate.toISOString().split("T")[0];
 
-              if (!dailyData[dateKey]) {
-                dailyData[dateKey] = { revenue: 0, orders: 0 };
-              }
+              filteredOrders.forEach((order: any) => {
+                try {
+                  const orderDate = new Date(
+                    order.orderedAt ||
+                      order.paidAt ||
+                      order.createdAt ||
+                      order.created_at,
+                  );
+                  const dateKey = orderDate.toISOString().split("T")[0];
 
-              const orderSubtotal = Number(order.subtotal || 0);
-              const discount = Number(order.discount || 0); // Set default discount to 0
-              const revenue = orderSubtotal - discount; // Calculate revenue: subtotal - discount
-              dailyData[dateKey].revenue += revenue;
-              dailyData[dateKey].orders += 1;
-            });
-          }
+                  if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = { revenue: 0, orders: 0 };
+                  }
 
-          const chartData = Object.keys(dailyData)
-            .map((date) => ({
-              name: formatDate(date), // Format date for display
-              revenue: dailyData[date].revenue,
-              orders: dailyData[date].orders,
-            }))
-            .sort(
-              (a, b) => new Date(a.name).getTime() - new Date(b.name).getTime(),
-            ) // Sort by date
-            .slice(0, 10);
+                  const orderSubtotal = Number(order.subtotal || 0);
+                  const discount = Number(order.discount || 0);
+                  const revenue = Math.max(0, orderSubtotal - discount); // Ensure non-negative
+                  
+                  dailyData[dateKey].revenue += revenue;
+                  dailyData[dateKey].orders += 1;
+                } catch (error) {
+                  console.warn("Error processing order for chart:", order.id, error);
+                }
+              });
+            }
 
-          console.log("Generated chart data:", chartData);
-          return chartData;
+            const chartData = Object.keys(dailyData)
+              .map((date) => ({
+                name: formatDate(date),
+                revenue: Math.round(dailyData[date].revenue), // Round to avoid floating point issues
+                orders: dailyData[date].orders,
+              }))
+              .sort((a, b) => new Date(a.name.split('/').reverse().join('-')).getTime() - new Date(b.name.split('/').reverse().join('-')).getTime())
+              .slice(0, 10);
+
+            console.log("Generated chart data:", chartData);
+            return chartData;
 
         case "product":
           // Use the new productAnalysisData
-          if (productAnalysisLoading) return [];
-          if (!productAnalysisData || !productAnalysisData.productStats)
+          if (productAnalysisLoading) {
+            console.log("Product analysis still loading...");
             return [];
+          }
+          
+          if (!productAnalysisData || !productAnalysisData.productStats) {
+            console.log("No product analysis data available");
+            return [];
+          }
 
-          const productChartData = (productAnalysisData.productStats || [])
+          const productStats = productAnalysisData.productStats || [];
+          console.log("Product stats received:", productStats.length, "items");
+
+          const productChartData = productStats
+            .filter((product: any) => {
+              const isValid = product && 
+                             product.productName && 
+                             typeof product.totalRevenue === 'number' && 
+                             typeof product.totalQuantity === 'number' &&
+                             product.totalQuantity > 0;
+              if (!isValid) {
+                console.warn("Invalid product data:", product);
+              }
+              return isValid;
+            })
             .map((product: any) => ({
-              name:
-                product.productName.length > 15
-                  ? product.productName.substring(0, 15) + "..."
-                  : product.productName,
-              revenue: product.totalRevenue,
-              quantity: product.totalQuantity,
+              name: product.productName.length > 15
+                ? product.productName.substring(0, 15) + "..."
+                : product.productName,
+              revenue: Math.round(Number(product.totalRevenue) || 0),
+              quantity: Number(product.totalQuantity) || 0,
             }))
-            .filter((item) => item.quantity > 0)
             .sort((a, b) => b.revenue - a.revenue)
             .slice(0, 10);
 
@@ -3829,7 +3857,7 @@ export function SalesChartReport() {
 
         case "employee":
           try {
-            if (!orders || !Array.isArray(orders)) {
+            if (!orders || !Array.isArray(orders) || orders.length === 0) {
               console.warn("Employee chart: No orders data available");
               return [];
             }
@@ -3840,42 +3868,48 @@ export function SalesChartReport() {
 
             // Use EXACT same filtering logic as dashboard
             const empFilteredOrders = orders.filter((order: any) => {
-              // Check if order is completed/paid (EXACT same as dashboard)
-              if (order.status !== "completed" && order.status !== "paid")
-                return false;
+              try {
+                // Check if order is completed/paid (EXACT same as dashboard)
+                if (order.status !== "completed" && order.status !== "paid")
+                  return false;
 
-              // Try multiple possible date fields (EXACT same as dashboard)
-              const orderDate = new Date(
-                order.orderedAt ||
-                  order.createdAt ||
-                  order.created_at ||
-                  order.paidAt,
-              );
+                // Try multiple possible date fields (EXACT same as dashboard)
+                const orderDate = new Date(
+                  order.orderedAt ||
+                    order.createdAt ||
+                    order.created_at ||
+                    order.paidAt,
+                );
 
-              // Skip if date is invalid
-              if (isNaN(orderDate.getTime())) {
+                // Skip if date is invalid
+                if (isNaN(orderDate.getTime())) {
+                  console.warn("Invalid date for employee order:", order.id);
+                  return false;
+                }
+
+                // Fix date comparison - ensure we're comparing dates correctly
+                const startOfDay = new Date(empStart);
+                startOfDay.setHours(0, 0, 0, 0);
+                const endOfDay = new Date(empEnd);
+                endOfDay.setHours(23, 59, 59, 999);
+
+                const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
+
+                const employeeMatch =
+                  selectedEmployee === "all" ||
+                  order.employeeName === selectedEmployee ||
+                  order.cashierName === selectedEmployee ||
+                  order.employeeId?.toString() === selectedEmployee ||
+                  (order.employeeName &&
+                    order.employeeName.includes(selectedEmployee)) ||
+                  (order.cashierName &&
+                    order.cashierName.includes(selectedEmployee));
+
+                return dateMatch && employeeMatch;
+              } catch (error) {
+                console.warn("Error filtering employee order:", order.id, error);
                 return false;
               }
-
-              // Fix date comparison - ensure we're comparing dates correctly
-              const startOfDay = new Date(empStart);
-              startOfDay.setHours(0, 0, 0, 0);
-              const endOfDay = new Date(empEnd);
-              endOfDay.setHours(23, 59, 59, 999);
-
-              const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
-
-              const employeeMatch =
-                selectedEmployee === "all" ||
-                order.employeeName === selectedEmployee ||
-                order.cashierName === selectedEmployee ||
-                order.employeeId?.toString() === selectedEmployee ||
-                (order.employeeName &&
-                  order.employeeName.includes(selectedEmployee)) ||
-                (order.cashierName &&
-                  order.cashierName.includes(selectedEmployee));
-
-              return dateMatch && employeeMatch;
             });
 
             const employeeData: {
@@ -3892,30 +3926,26 @@ export function SalesChartReport() {
 
                 // Use subtotal as revenue (excludes tax): subtotal - discount
                 const orderSubtotal = Number(order.subtotal || 0);
-                const orderDiscount = Number(order.discount || 0); // Default discount to 0
-                const revenue = orderSubtotal - orderDiscount;
+                const orderDiscount = Number(order.discount || 0);
+                const revenue = Math.max(0, orderSubtotal - orderDiscount); // Ensure non-negative
 
-                if (revenue >= 0) {
-                  // Allow 0 revenue orders
-                  employeeData[cashier].revenue += revenue;
-                  employeeData[cashier].orders += 1;
-                }
+                employeeData[cashier].revenue += revenue;
+                employeeData[cashier].orders += 1;
               } catch (error) {
-                console.warn("Error processing employee order:", error);
+                console.warn("Error processing employee order:", order.id, error);
               }
             });
 
             const result = Object.entries(employeeData)
+              .filter(([name, data]) => data.revenue > 0 || data.orders > 0) // Filter before mapping
               .map(([name, data]) => ({
-                name:
-                  name && name.length > 10
-                    ? name.substring(0, 10) + "..."
-                    : name || "Unknown",
-                revenue: Math.max(0, data.revenue || 0), // Ensure no negative values
-                orders: Math.max(0, data.orders || 0), // Ensure no negative values
+                name: name && name.length > 10
+                  ? name.substring(0, 10) + "..."
+                  : name || "Unknown",
+                revenue: Math.round(data.revenue || 0),
+                orders: data.orders || 0,
               }))
-              .filter((item) => item.revenue > 0 || item.orders > 0) // Only show employees with data
-              .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
+              .sort((a, b) => b.revenue - a.revenue)
               .slice(0, 10);
 
             console.log("Employee chart data generated:", {
@@ -3931,152 +3961,170 @@ export function SalesChartReport() {
           }
 
         case "customer":
-          if (!orders || !Array.isArray(orders)) return [];
+          try {
+            if (!orders || !Array.isArray(orders) || orders.length === 0) {
+              console.warn("Customer chart: No orders data available");
+              return [];
+            }
 
-          const custStart = new Date(startDate);
-          const custEnd = new Date(endDate);
-          custEnd.setHours(23, 59, 59, 999);
+            const custStart = new Date(startDate);
+            const custEnd = new Date(endDate);
+            custEnd.setHours(23, 59, 59, 999);
 
-          const custFilteredOrders = orders.filter((order: any) => {
-            const orderDate = new Date(
-              order.orderedAt || order.created_at || order.createdAt,
-            );
-            return (
-              orderDate >= custStart &&
-              orderDate <= custEnd &&
-              order.status === "paid"
-            );
-          });
+            const custFilteredOrders = orders.filter((order: any) => {
+              try {
+                const orderDate = new Date(
+                  order.orderedAt || order.created_at || order.createdAt,
+                );
+                
+                if (isNaN(orderDate.getTime())) {
+                  console.warn("Invalid date for customer order:", order.id);
+                  return false;
+                }
 
-          const customerData: {
-            [customerId: string]: {
-              customerId: string;
-              customerName: string;
-              customerGroup: string;
-              orders: number;
-              totalAmount: number;
-              discount: number;
-              revenue: number;
-              status: string;
-              customerGroup: string;
-              orderDetails: any[];
-            };
-          } = {};
+                return (
+                  orderDate >= custStart &&
+                  orderDate <= custEnd &&
+                  order.status === "paid"
+                );
+              } catch (error) {
+                console.warn("Error filtering customer order:", order.id, error);
+                return false;
+              }
+            });
 
-          custFilteredOrders.forEach((order: any) => {
-            const customerId = order.customerId || "guest";
-            const customerName = order.customerName || "Khách lẻ";
-
-            if (!customerData[customerId]) {
-              customerData[customerId] = {
-                customerId: customerId === "guest" ? "KL-001" : customerId,
-                customerName: customerName,
-                customerGroup: t("common.regularCustomer"), // Default group
-                orders: 0,
-                totalAmount: 0,
-                discount: 0,
-                revenue: 0,
-                status: t("reports.active"),
-                customerGroup: t("common.regularCustomer"), // Default group
-                orderDetails: [],
+            const customerData: {
+              [customerId: string]: {
+                customerName: string;
+                orders: number;
+                revenue: number;
               };
-            }
+            } = {};
 
-            const orderTotal = Number(order.total);
-            const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
-            const orderDiscount = Number(order.discount || 0); // Default discount to 0
+            custFilteredOrders.forEach((order: any) => {
+              try {
+                const customerId = order.customerId || "guest";
+                const customerName = order.customerName || "Khách lẻ";
 
-            customerData[customerId].orders += 1;
-            customerData[customerId].totalAmount += orderSubtotal;
-            customerData[customerId].discount += orderDiscount;
-            customerData[customerId].revenue += orderTotal - orderDiscount;
-            customerData[customerId].orderDetails.push(order);
+                if (!customerData[customerId]) {
+                  customerData[customerId] = {
+                    customerName: customerName,
+                    orders: 0,
+                    revenue: 0,
+                  };
+                }
 
-            // Determine customer group based on total spending
-            if (customerData[customerId].revenue >= 1000000) {
-              customerData[customerId].customerGroup = t("reports.vip");
-            } else if (customerData[customerId].revenue >= 500000) {
-              customerData[customerId].customerGroup = t("common.goldCustomer");
-            }
-          });
+                const orderSubtotal = Number(order.subtotal || 0);
+                const orderDiscount = Number(order.discount || 0);
+                const revenue = Math.max(0, orderSubtotal - orderDiscount);
 
-          const data = Object.values(customerSales).sort(
-            (a, b) => b.revenue - a.revenue,
-          );
+                customerData[customerId].orders += 1;
+                customerData[customerId].revenue += revenue;
+              } catch (error) {
+                console.warn("Error processing customer order:", order.id, error);
+              }
+            });
 
-          // Pagination logic
-          const totalPages = Math.ceil(data.length / customerPageSize);
-          const startIndex = (customerCurrentPage - 1) * customerPageSize;
-          const endIndex = startIndex + customerPageSize;
-          const paginatedData = data.slice(startIndex, endIndex);
-
-          return Object.entries(customerData)
-            .map(([customerId, data]) => ({
-              name:
-                data.customerName.length > 10
+            return Object.entries(customerData)
+              .filter(([_, data]) => data.revenue > 0 || data.orders > 0)
+              .map(([customerId, data]) => ({
+                name: data.customerName.length > 10
                   ? data.customerName.substring(0, 10) + "..."
                   : data.customerName,
-              revenue: data.revenue,
-              orders: data.orders,
-            }))
-            .sort((a, b) => b.revenue - a.revenue)
-            .slice(0, 10);
+                revenue: Math.round(data.revenue),
+                orders: data.orders,
+              }))
+              .sort((a, b) => b.revenue - a.revenue)
+              .slice(0, 10);
+          } catch (error) {
+            console.error("Error in customer chart data generation:", error);
+            return [];
+          }
 
         case "salesMethod":
-          if (!orders || !Array.isArray(orders)) return [];
+          try {
+            if (!orders || !Array.isArray(orders) || orders.length === 0) {
+              console.warn("Sales method chart: No orders data available");
+              return [];
+            }
 
-          const salesMethodStart = new Date(startDate);
-          const salesMethodEnd = new Date(endDate);
-          salesMethodEnd.setHours(23, 59, 59, 999);
+            const salesMethodStart = new Date(startDate);
+            const salesMethodEnd = new Date(endDate);
+            salesMethodEnd.setHours(23, 59, 59, 999);
 
-          // Filter completed orders for sales method analysis
-          const salesMethodFilteredOrders = orders.filter((order: any) => {
-            if (order.status !== "completed" && order.status !== "paid")
-              return false;
+            // Filter completed orders for sales method analysis
+            const salesMethodFilteredOrders = orders.filter((order: any) => {
+              try {
+                if (order.status !== "completed" && order.status !== "paid")
+                  return false;
 
-            const orderDate = new Date(
-              order.orderedAt ||
-                order.createdAt ||
-                order.created_at ||
-                order.paidAt,
-            );
+                const orderDate = new Date(
+                  order.orderedAt ||
+                    order.createdAt ||
+                    order.created_at ||
+                    order.paidAt,
+                );
 
-            if (isNaN(orderDate.getTime())) return false;
+                if (isNaN(orderDate.getTime())) {
+                  console.warn("Invalid date for sales method order:", order.id);
+                  return false;
+                }
 
-            return orderDate >= salesMethodStart && orderDate <= salesMethodEnd;
-          });
+                return orderDate >= salesMethodStart && orderDate <= salesMethodEnd;
+              } catch (error) {
+                console.warn("Error filtering sales method order:", order.id, error);
+                return false;
+              }
+            });
 
-          // Group by sales method (Dine In vs Takeaway)
-          const salesMethodData: {
-            [method: string]: { count: number; revenue: number };
-          } = {
-            "Ăn tại chỗ": { count: 0, revenue: 0 },
-            "Mang về": { count: 0, revenue: 0 },
-          };
+            // Group by sales method (Dine In vs Takeaway)
+            const salesMethodData: {
+              [method: string]: { count: number; revenue: number };
+            } = {
+              "Ăn tại chỗ": { count: 0, revenue: 0 },
+              "Mang về": { count: 0, revenue: 0 },
+            };
 
-          salesMethodFilteredOrders.forEach((order: any) => {
-            // Check if order has tableId to determine if it's dine-in or takeaway
-            const isDineIn = order.tableId && order.tableId !== null;
-            const method = isDineIn ? "Ăn tại chỗ" : "Mang về";
+            salesMethodFilteredOrders.forEach((order: any) => {
+              try {
+                // Check if order has tableId to determine if it's dine-in or takeaway
+                const isDineIn = order.tableId && order.tableId !== null;
+                const method = isDineIn ? "Ăn tại chỗ" : "Mang về";
 
-            salesMethodData[method].count += 1;
-            salesMethodData[method].revenue += Number(order.subtotal || 0);
-          });
+                const orderSubtotal = Number(order.subtotal || 0);
+                const orderDiscount = Number(order.discount || 0);
+                const revenue = Math.max(0, orderSubtotal - orderDiscount);
 
-          // Convert to chart data format
-          const salesMethodChartData = Object.entries(salesMethodData)
-            .map(([method, data]) => ({
-              name: method,
-              value: data.revenue,
-              count: data.count,
-            }))
-            .filter((item) => item.value > 0); // Only show methods with revenue
+                salesMethodData[method].count += 1;
+                salesMethodData[method].revenue += revenue;
+              } catch (error) {
+                console.warn("Error processing sales method order:", order.id, error);
+              }
+            });
 
-          console.log("Sales method chart data:", salesMethodChartData);
-          return salesMethodChartData;
+            // Convert to chart data format
+            const salesMethodChartData = Object.entries(salesMethodData)
+              .map(([method, data]) => ({
+                name: method,
+                value: Math.round(data.revenue),
+                count: data.count,
+              }))
+              .filter((item) => item.value > 0 || item.count > 0); // Show methods with revenue or count
+
+            console.log("Sales method chart data:", salesMethodChartData);
+            return salesMethodChartData;
+          } catch (error) {
+            console.error("Error in sales method chart data generation:", error);
+            return [];
+          }
+      default:
+          console.warn("Unknown analysis type:", analysisType);
+          return [];
       }
-
-      return [];
+      } catch (error) {
+        console.error("Error in getChartData:", error);
+        return [];
+      }
     };
 
     // Product Report Logic (Moved up to be before renderChart)
@@ -4346,6 +4394,10 @@ export function SalesChartReport() {
 
         console.log("Chart data for", analysisType, ":", chartData);
 
+        // Validate chart data
+        const isValidChartData = Array.isArray(chartData) && chartData.length > 0 && 
+          chartData.every(item => item && typeof item === 'object' && item.name);
+
         // Always render the chart container, even with no data
         return (
           <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
@@ -4370,7 +4422,7 @@ export function SalesChartReport() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
-              {!chartData || chartData.length === 0 ? (
+              {!isValidChartData ? (
                 <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 flex flex-col justify-center items-center">
                   <div className="text-gray-500 mb-4 text-center">
                     <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -4761,7 +4813,8 @@ export function SalesChartReport() {
 
                 {/* Empty space for balance */}
                 <div className="hidden lg:block"></div>
-              </div></div>
+              </div>
+            </div>
 
             {/* Secondary Filter Row - Show based on analysis type */}
             {analysisType === "employee" && (
