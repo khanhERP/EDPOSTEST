@@ -721,12 +721,7 @@ export function SalesChartReport() {
                       >
                         {t("reports.thanhTien")}
                       </TableHead>
-                      <TableHead
-                        className="text-center border-r min-w-[120px]"
-                        rowSpan={2}
-                      >
-                        {t("reports.discount")}
-                      </TableHead>
+                      
                       <TableHead
                         className="text-center border-r min-w-[140px]"
                         rowSpan={2}
@@ -873,9 +868,7 @@ export function SalesChartReport() {
                                 <TableCell className="text-right border-r min-w-[140px] px-4">
                                   {formatCurrency(paymentAmount)}
                                 </TableCell>
-                                <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
-                                  {formatCurrency(discount)}
-                                </TableCell>
+                                
                                 <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
                                   {formatCurrency(data.revenue)}
                                 </TableCell>
@@ -1002,11 +995,7 @@ export function SalesChartReport() {
                                           Number(transaction.subtotal || 0),
                                         )}
                                       </TableCell>
-                                      <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
-                                        {formatCurrency(
-                                          Number(transaction.discount || 0),
-                                        )}
-                                      </TableCell>
+                                      
                                       <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                         {formatCurrency(
                                           Number(transaction.subtotal || 0),
@@ -1107,14 +1096,7 @@ export function SalesChartReport() {
                             ),
                           )}
                         </TableCell>
-                        <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
-                          {formatCurrency(
-                            Object.values(dailySales).reduce(
-                              (sum, data) => sum + data.discount, // Use the tracked discount
-                              0,
-                            ),
-                          )}
-                        </TableCell>
+                        
                         <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
                           {formatCurrency(
                             Object.values(dailySales).reduce(
