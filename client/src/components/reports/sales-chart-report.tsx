@@ -754,15 +754,14 @@ export function SalesChartReport() {
                       <TableHead
                         className="text-center border-r bg-blue-50 min-w-[200px]"
                         colSpan={(() => {
-                          // Get all unique payment methods from transactions
+                          // Get all unique payment methods from completed orders
                           const allPaymentMethods = new Set();
                           if (
-                            filteredTransactions &&
-                            Array.isArray(filteredTransactions)
+                            filteredCompletedOrders &&
+                            Array.isArray(filteredCompletedOrders)
                           ) {
-                            filteredTransactions.forEach((transaction: any) => {
-                              const method =
-                                transaction.paymentMethod || "cash";
+                            filteredCompletedOrders.forEach((order: any) => {
+                              const method = order.paymentMethod || "cash";
                               allPaymentMethods.add(method);
                             });
                           }
@@ -774,14 +773,14 @@ export function SalesChartReport() {
                     </TableRow>
                     <TableRow>
                       {(() => {
-                        // Get all unique payment methods from transactions
+                        // Get all unique payment methods from completed orders
                         const allPaymentMethods = new Set();
                         if (
-                          filteredTransactions &&
-                          Array.isArray(filteredTransactions)
+                          filteredCompletedOrders &&
+                          Array.isArray(filteredCompletedOrders)
                         ) {
-                          filteredTransactions.forEach((transaction: any) => {
-                            const method = transaction.paymentMethod || "cash";
+                          filteredCompletedOrders.forEach((order: any) => {
+                            const method = order.paymentMethod || "cash";
                             allPaymentMethods.add(method);
                           });
                         }
@@ -894,7 +893,7 @@ export function SalesChartReport() {
                                   {formatCurrency(data.subtotal + tax)}
                                 </TableCell>
                                 {(() => {
-                                  // Group transactions by payment method for this date
+                                  // Group orders by payment method for this date
                                   const paymentMethods: {
                                     [method: string]: number;
                                   } = {};
@@ -908,16 +907,16 @@ export function SalesChartReport() {
                                     },
                                   );
 
-                                  // Get all unique payment methods from all transactions
+                                  // Get all unique payment methods from all completed orders
                                   const allPaymentMethods = new Set();
                                   if (
-                                    filteredTransactions &&
-                                    Array.isArray(filteredTransactions)
+                                    filteredCompletedOrders &&
+                                    Array.isArray(filteredCompletedOrders)
                                   ) {
-                                    filteredTransactions.forEach(
-                                      (transaction: any) => {
+                                    filteredCompletedOrders.forEach(
+                                      (order: any) => {
                                         const method =
-                                          transaction.paymentMethod || "cash";
+                                          order.paymentMethod || "cash";
                                         allPaymentMethods.add(method);
                                       },
                                     );
@@ -1161,12 +1160,17 @@ export function SalesChartReport() {
                               Number(transaction.total);
                           });
 
-                          // Get all unique payment methods from all transactions
+                          // Get all unique payment methods from all completed orders
                           const allPaymentMethods = new Set();
-                          filteredTransactions.forEach((transaction: any) => {
-                            const method = transaction.paymentMethod || "cash";
-                            allPaymentMethods.add(method);
-                          });
+                          if (
+                            filteredCompletedOrders &&
+                            Array.isArray(filteredCompletedOrders)
+                          ) {
+                            filteredCompletedOrders.forEach((order: any) => {
+                              const method = order.paymentMethod || "cash";
+                              allPaymentMethods.add(method);
+                            });
+                          }
 
                           const paymentMethodsArray =
                             Array.from(allPaymentMethods).sort();
