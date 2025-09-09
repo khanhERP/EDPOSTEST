@@ -134,14 +134,8 @@ export default function SalesOrders() {
   const urlParams = new URLSearchParams(window.location.search);
   const orderParam = urlParams.get('order');
 
-  const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
-  const [endDate, setEndDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [orderNumberSearch, setOrderNumberSearch] = useState(orderParam || "");
   const [customerCodeSearch, setCustomerCodeSearch] = useState("");
