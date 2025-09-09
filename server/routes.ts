@@ -1860,6 +1860,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get ALL order items
+  app.get("/api/order-items", async (req: TenantRequest, res) => {
+    try {
+      console.log("=== GET ALL ORDER ITEMS API CALLED ===");
+      
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log("✅ Tenant database connection obtained for all order items");
+      } catch (dbError) {
+        console.error(
+          "❌ Failed to get tenant database for all order items:",
+          dbError,
+        );
+        tenantDb = null;
+      }
+
+      const database = tenantDb || db;
+      console.log("Fetching all order items from database...");
+      
+      const items = await database
+        .select({
+          id: orderItemsTable.id,
+          orderId: orderItemsTable.orderId,
+          productId: orderItemsTable.productId,
+          quantity: orderItemsTable.quantity,
+          unitPrice: orderItemsTable.unitPrice,
+          total: orderItemsTable.total,
+          notes: orderItemsTable.notes,
+          productName: products.name,
+          productSku: products.sku,
+        })
+        .from(orderItemsTable)
+        .leftJoin(products, eq(orderItemsTable.productId, products.id))
+        .orderBy(desc(orderItemsTable.id));
+
+      console.log(`✅ Found ${items.length} total order items`);
+      
+      // Ensure items is always an array
+      const safeItems = Array.isArray(items) ? items : [];
+      res.json(safeItems);
+    } catch (error) {
+      console.error("=== GET ALL ORDER ITEMS ERROR ===");
+      console.error("Error type:", error?.constructor?.name || "Unknown");
+      console.error("Error message:", error?.message || "Unknown error");
+      console.error("Error stack:", error?.stack || "No stack trace");
+
+      res.status(500).json({
+        message: "Failed to fetch all order items",
+        details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // Get order items for a specific order
   app.get("/api/order-items/:orderId", async (req: TenantRequest, res) => {
     try {
