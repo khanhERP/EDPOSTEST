@@ -46,7 +46,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     subtotalAmount: "소계 금액",
     tableOrder: "테이블 주문",
     dineIn: "식당에서 식사",
-    Discount: "할인",
+    discount: "할인",
     OrderDetails: "주문 상세 정보",
     orderCode: "주문 코드",
     orderDate: "주문 날짜",
