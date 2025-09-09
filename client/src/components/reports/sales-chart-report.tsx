@@ -950,9 +950,6 @@ export function SalesChartReport() {
                                           );
                                         },
                                       )}
-                                      <TableCell className="text-right font-bold text-green-600 min-w-[150px] px-4">
-                                        {formatCurrency(totalCustomerPayment)}
-                                      </TableCell>
                                     </>
                                   );
                                 })()}
@@ -1069,9 +1066,6 @@ export function SalesChartReport() {
                                                 </TableCell>
                                               ),
                                             )}
-                                            <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
-                                              {formatCurrency(Number(transaction.total || 0))}
-                                            </TableCell>
                                           </>
                                         );
                                       })()}
@@ -1194,9 +1188,6 @@ export function SalesChartReport() {
                                   </TableCell>
                                 );
                               })}
-                              <TableCell className="text-right font-bold text-green-600 text-xl min-w-[150px] px-4">
-                                {formatCurrency(grandTotal)}
-                              </TableCell>
                             </>
                           );
                         })()}
@@ -1327,8 +1318,8 @@ export function SalesChartReport() {
       const orderDate = new Date(order.orderedAt || order.createdAt || order.created_at);
       const dateMatch = orderDate >= start && orderDate <= end;
       const statusMatch = order.status === "paid" || order.status === "completed";
-      
-      const employeeMatch = 
+
+      const employeeMatch =
         selectedEmployee === "all" ||
         order.employeeName === selectedEmployee ||
         order.cashierName === selectedEmployee ||
@@ -1355,14 +1346,14 @@ export function SalesChartReport() {
     filteredOrders.forEach((order: any) => {
       // Get items for this order
       const orderItemsForOrder = orderItems.filter((item: any) => item.orderId === order.id);
-      
+
       // Use EXACT values from database
       const orderSubtotal = Number(order.subtotal || 0); // Thành tiền từ DB
       const orderDiscount = Number(order.discount || 0); // Giảm giá từ DB
       const orderTax = Number(order.tax || 0) || (Number(order.total || 0) - Number(order.subtotal || 0)); // Thuế từ DB hoặc tính từ total-subtotal
       const orderTotal = Number(order.total || 0); // Tổng tiền từ DB
       const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = thành tiền - giảm giá
-      
+
       const orderSummary = {
         orderDate: order.orderedAt || order.createdAt || order.created_at,
         orderNumber: order.orderNumber || `ORD-${order.id}`,
@@ -1397,11 +1388,11 @@ export function SalesChartReport() {
           const itemQuantity = Number(item.quantity || 1);
           const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items
           const itemTotal = Number(item.total || 0) || (itemUnitPrice * itemQuantity); // Thành tiền từ order_items hoặc tính
-          
+
           // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
           const itemDiscountRatio = orderItemsForOrder.length > 0 ? itemTotal / orderSubtotal : 0;
           const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
-          const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
+          const itemTax = orderTax * item      } // Thuế theo tỷ lệ
           const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
           const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
 
@@ -1425,7 +1416,7 @@ export function SalesChartReport() {
       // Filter order based on product search if needed
       let shouldIncludeOrder = true;
       if (productSearch) {
-        const hasMatchingProduct = orderSummary.items.some((item: any) => 
+        const hasMatchingProduct = orderSummary.items.some((item: any) =>
           item.productName.toLowerCase().includes(productSearch.toLowerCase()) ||
           item.productCode.toLowerCase().includes(productSearch.toLowerCase())
         );
@@ -1566,7 +1557,7 @@ export function SalesChartReport() {
                   {paginatedData.length > 0 ? (
                     paginatedData.map((order, orderIndex) => {
                       const isExpanded = expandedRows[`order-${order.orderNumber}`] || false;
-                      
+
                       return (
                         <Fragment key={`order-${order.orderNumber}-${orderIndex}`}>
                           {/* Order Header Row */}
@@ -1621,7 +1612,7 @@ export function SalesChartReport() {
                             <TableCell className="text-center min-w-[120px] px-2">{order.employeeName}</TableCell>
                             <TableCell className="text-center min-w-[120px] px-2 text-gray-500">-</TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
-                              <Badge variant="default" className="text-xs">
+                              <Badge variant="outline" className="text-xs">
                                 {order.status}
                               </Badge>
                             </TableCell>
@@ -1786,10 +1777,10 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    );
+            )}
+          </CardContent>
+        </Card>
+      );
   };
 
   // Employee Report with Pagination State
@@ -1832,7 +1823,7 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      // Use EXACT same filtering logic as dashboard for orders
+      // Use EXACT same filtering logic as dashboard
       const filteredCompletedOrders = orders.filter((order: any) => {
         // Check if order is completed/paid (EXACT same as dashboard)
         if (order.status !== "completed" && order.status !== "paid")
@@ -2314,9 +2305,6 @@ export function SalesChartReport() {
                                         </TableCell>
                                       );
                                     })}
-                                    <TableCell className="text-right font-bold text-green-600 min-w-[150px] px-4">
-                                      {formatCurrency(totalCustomerPayment)}
-                                    </TableCell>
                                   </>
                                 );
                               })()}
@@ -2430,9 +2418,6 @@ export function SalesChartReport() {
                                               </TableCell>
                                             ),
                                           )}
-                                          <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
-                                            {formatCurrency(amount)}
-                                          </TableCell>
                                         </>
                                       );
                                     })()}
@@ -2547,9 +2532,6 @@ export function SalesChartReport() {
                                   </TableCell>
                                 );
                               })}
-                              <TableCell className="text-right font-bold text-green-600 text-xl min-w-[150px] px-4">
-                                {formatCurrency(grandTotal)}
-                              </TableCell>
                             </>
                           );
                         })()}
@@ -3509,8 +3491,11 @@ export function SalesChartReport() {
 
             const orderSubtotal = Number(order.subtotal || 0);
             const discount = Number(order.discount || 0); // Set default discount to 0
-            dailyData[dateKey].revenue += orderSubtotal - discount;
-            dailyData[dateKey].orders += 1;
+            const revenue = orderSubtotal - discount;
+            if (revenue >= 0) { // Ensure revenue is not negative
+              dailyData[dateKey].revenue += revenue;
+              dailyData[dateKey].orders += 1;
+            }
           });
         }
 
@@ -4701,7 +4686,7 @@ export function SalesChartReport() {
                 </div>
               </div>
 
-              
+
             </div>
           )}
         </CardContent>
