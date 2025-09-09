@@ -1311,7 +1311,7 @@ export function EInvoiceModal({
       <DialogContent className="max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg">
-            {t("einvoice.dialogTitle")}
+            {t("einvoice.title")}
           </DialogTitle>
         </DialogHeader>
 
