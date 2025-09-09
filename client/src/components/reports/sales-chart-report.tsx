@@ -58,7 +58,7 @@ import * as XLSX from "xlsx"; // Import xlsx for Excel export
 import { Button } from "@/components/ui/button";
 
 // Import the ProductDetailModal component
-import ProductDetailModal from "@/components/ProductDetailModal"; // Assuming the path
+import { ProductDetailModal } from "@/components/reports/product-detail-modal"; // Assuming the path
 
 export function SalesChartReport() {
   const { t } = useTranslation();
@@ -5037,9 +5037,7 @@ export function SalesChartReport() {
                 </>
               )}
             </div>
-          </div>
-        );
-      }
+          
       {showProductDetailModal && selectedProductForDetail && (
         <ProductDetailModal
           isOpen={showProductDetailModal}
