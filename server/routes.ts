@@ -743,6 +743,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Get order items by date range
+  app.get(
+    "/api/order-items/date-range/:startDate/:endDate",
+    async (req: TenantRequest, res) => {
+      try {
+        const { startDate, endDate } = req.params;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 1000; // Higher limit for order items
+
+        console.log("Order items by date range API called:", { startDate, endDate, page, limit });
+
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for order items by date");
+        } catch (dbError) {
+          console.error("❌ Failed to get tenant database for order items by date:", dbError);
+          tenantDb = null;
+        }
+
+        // Use tenant database or fallback to default
+        const database = tenantDb || db;
+
+        // Filter by date range using order date through join with orders table
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
+
+        const allOrderItems = await database
+          .select({
+            id: orderItemsTable.id,
+            orderId: orderItemsTable.orderId,
+            productId: orderItemsTable.productId,
+            productName: orderItemsTable.productName,
+            quantity: orderItemsTable.quantity,
+            unitPrice: orderItemsTable.unitPrice,
+            total: orderItemsTable.total,
+            notes: orderItemsTable.notes,
+            orderDate: orders.orderedAt,
+            orderStatus: orders.status,
+          })
+          .from(orderItemsTable)
+          .innerJoin(orders, eq(orderItemsTable.orderId, orders.id))
+          .where(
+            and(
+              gte(orders.orderedAt, start),
+              lte(orders.orderedAt, end)
+            )
+          )
+          .orderBy(
+            desc(orders.orderedAt), // Primary sort by order date (newest first)
+            desc(orderItemsTable.id) // Secondary sort by item ID (newest first)
+          );
+
+        console.log("Order items by date range - Total found:", allOrderItems.length);
+
+        // Paginate results
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedOrderItems = allOrderItems.slice(startIndex, endIndex);
+
+        console.log("Order items by date range - Paginated result:", {
+          page,
+          limit,
+          total: allOrderItems.length,
+          returned: paginatedOrderItems.length,
+        });
+
+        res.json(paginatedOrderItems);
+      } catch (error) {
+        console.error("Error fetching order items by date range:", error);
+        res.status(500).json({ error: "Failed to fetch order items by date range" });
+      }
+    },
+  );
+
   // Get invoices by date range
   app.get(
     "/api/invoices/date-range/:startDate/:endDate",
@@ -825,6 +901,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   );
+
+  // Get order items by date range (simple format)
+  app.get("/api/order-items/:startDate/:endDate", async (req: TenantRequest, res) => {
+    try {
+      const { startDate, endDate } = req.params;
+      
+      console.log("Simple order items by date range API called:", { startDate, endDate });
+
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log("✅ Tenant database connection obtained for order items");
+      } catch (dbError) {
+        console.error("❌ Failed to get tenant database for order items:", dbError);
+        tenantDb = null;
+      }
+
+      // Use tenant database or fallback to default
+      const database = tenantDb || db;
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      const orderItems = await database
+        .select({
+          id: orderItemsTable.id,
+          orderId: orderItemsTable.orderId,
+          productId: orderItemsTable.productId,
+          productName: orderItemsTable.productName,
+          quantity: orderItemsTable.quantity,
+          unitPrice: orderItemsTable.unitPrice,
+          total: orderItemsTable.total,
+          notes: orderItemsTable.notes,
+        })
+        .from(orderItemsTable)
+        .innerJoin(orders, eq(orderItemsTable.orderId, orders.id))
+        .where(
+          and(
+            gte(orders.orderedAt, start),
+            lte(orders.orderedAt, end),
+            or(eq(orders.status, "paid"), eq(orders.status, "completed"))
+          )
+        )
+        .orderBy(desc(orders.orderedAt));
+
+      console.log(`Found ${orderItems.length} order items for date range`);
+
+      // Always return an array, even if empty
+      res.json(orderItems || []);
+    } catch (error) {
+      console.error("Error fetching order items by date range:", error);
+      // Return empty array instead of error for reports
+      res.json([]);
+    }
+  });
 
   // Get next employee ID
   app.get("/api/employees/next-id", async (req: TenantRequest, res) => {
@@ -1856,6 +1988,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: "Failed to complete payment",
         error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  // Get all order items 
+  app.get("/api/order-items", async (req: TenantRequest, res) => {
+    try {
+      console.log("=== GET ALL ORDER ITEMS API CALLED ===");
+      
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log("✅ Tenant database connection obtained for all order items");
+      } catch (dbError) {
+        console.error("❌ Failed to get tenant database for all order items:", dbError);
+        tenantDb = null;
+      }
+
+      // Use tenant database or fallback to default
+      const database = tenantDb || db;
+
+      console.log("Fetching all order items from database...");
+      const allOrderItems = await database
+        .select({
+          id: orderItemsTable.id,
+          orderId: orderItemsTable.orderId,
+          productId: orderItemsTable.productId,
+          productName: orderItemsTable.productName,
+          quantity: orderItemsTable.quantity,
+          unitPrice: orderItemsTable.unitPrice,
+          total: orderItemsTable.total,
+          notes: orderItemsTable.notes,
+        })
+        .from(orderItemsTable)
+        .orderBy(desc(orderItemsTable.id));
+
+      console.log(`Found ${allOrderItems.length} total order items`);
+
+      // Ensure we always return an array
+      const safeItems = Array.isArray(allOrderItems) ? allOrderItems : [];
+      res.json(safeItems);
+    } catch (error) {
+      console.error("=== GET ALL ORDER ITEMS ERROR ===");
+      console.error("Error type:", error?.constructor?.name || "Unknown");
+      console.error("Error message:", error?.message || "Unknown error");
+      console.error("Error stack:", error?.stack || "No stack trace");
+
+      res.status(500).json({
+        message: "Failed to fetch all order items",
+        details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
       });
     }
   });
