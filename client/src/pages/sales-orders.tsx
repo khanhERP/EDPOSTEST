@@ -83,31 +83,6 @@ export default function SalesOrders() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // Handle URL parameter for order filtering and auto-expand
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const orderParam = urlParams.get('order');
-    
-    if (orderParam && orderParam !== orderNumberSearch) {
-      console.log('🔍 Sales Orders: Auto-filtering by order:', orderParam);
-      setOrderNumberSearch(orderParam);
-      
-      // Auto-expand matching order when data is available
-      setTimeout(() => {
-        const matchingOrder = filteredInvoices.find(item => 
-          item.displayNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
-          item.orderNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
-          item.invoiceNumber?.toLowerCase().includes(orderParam.toLowerCase())
-        );
-        
-        if (matchingOrder) {
-          console.log('🎯 Sales Orders: Auto-expanding matching order:', matchingOrder.displayNumber);
-          setSelectedInvoice(matchingOrder);
-        }
-      }, 1000); // Wait for data to load
-    }
-  }, [filteredInvoices]);
-
   // Auto-refresh when new orders are created
   useEffect(() => {
     const handleNewOrder = () => {
@@ -628,6 +603,31 @@ export default function SalesOrders() {
     // Sắp xếp giảm dần (mới nhất lên đầu)
     return dateB.getTime() - dateA.getTime();
   }) : [];
+
+  // Handle URL parameter for order filtering and auto-expand
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderParam = urlParams.get('order');
+    
+    if (orderParam && orderParam !== orderNumberSearch) {
+      console.log('🔍 Sales Orders: Auto-filtering by order:', orderParam);
+      setOrderNumberSearch(orderParam);
+      
+      // Auto-expand matching order when data is available
+      setTimeout(() => {
+        const matchingOrder = filteredInvoices.find(item => 
+          item.displayNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
+          item.orderNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
+          item.invoiceNumber?.toLowerCase().includes(orderParam.toLowerCase())
+        );
+        
+        if (matchingOrder) {
+          console.log('🎯 Sales Orders: Auto-expanding matching order:', matchingOrder.displayNumber);
+          setSelectedInvoice(matchingOrder);
+        }
+      }, 1000); // Wait for data to load
+    }
+  }, [filteredInvoices, orderNumberSearch]);
 
   const formatCurrency = (amount: string | number | undefined | null): string => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
