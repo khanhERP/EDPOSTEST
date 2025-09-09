@@ -1454,14 +1454,13 @@ export default function SalesOrders() {
                                                     variant="outline"
                                                     className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                     onClick={() => {
-                                                      if (selectedInvoice && selectedInvoice.einvoiceStatus === 0) {
+                                                      if (selectedInvoice) {
                                                         setShowPublishDialog(true);
                                                       }
                                                     }}
-                                                    disabled={selectedInvoice?.einvoiceStatus !== 0}
                                                   >
                                                     <Mail className="w-4 h-4" />
-                                                    {selectedInvoice?.einvoiceStatus === 0 ? t("common.publishEInvoice") : 'Đã phát hành'}
+                                                    {selectedInvoice?.einvoiceStatus === 0 ? t("common.publishEInvoice") : 'Chỉnh sửa & Phát hành lại'}
                                                   </Button>
                                                   <Button
                                                     size="sm"
@@ -1556,14 +1555,13 @@ export default function SalesOrders() {
                                                     variant="outline"
                                                     className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                     onClick={() => {
-                                                      if (selectedInvoice && selectedInvoice.einvoiceStatus === 0) {
+                                                      if (selectedInvoice) {
                                                         setShowPublishDialog(true);
                                                       }
                                                     }}
-                                                    disabled={selectedInvoice?.einvoiceStatus !== 0}
                                                   >
                                                     <Mail className="w-4 h-4" />
-                                                    {selectedInvoice?.einvoiceStatus === 0 ? 'Phát hành HĐ điện tử' : 'Đã phát hành'}
+                                                    {selectedInvoice?.einvoiceStatus === 0 ? 'Phát hành HĐ điện tử' : 'Chỉnh sửa & Phát hành lại'}
                                                   </Button>
                                                   <Button
                                                     size="sm"
@@ -1740,7 +1738,9 @@ export default function SalesOrders() {
         <AlertDialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
           <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-blue-600">Phát hành hóa đơn điện tử</AlertDialogTitle>
+              <AlertDialogTitle className="text-blue-600">
+              {selectedInvoice?.einvoiceStatus === 0 ? 'Phát hành hóa đơn điện tử' : 'Chỉnh sửa và phát hành lại hóa đơn điện tử'}
+            </AlertDialogTitle>
               <div className="text-sm text-gray-600">
                 Đơn hàng: {selectedInvoice.displayNumber} - {selectedInvoice.customerName}
               </div>
