@@ -1296,7 +1296,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
@@ -1338,7 +1337,7 @@ export function SalesChartReport() {
         );
         const dateMatch = orderDate >= start && orderDate <= end;
         const statusMatch =
-          order.status === "paid" || order.status === "completed";
+          order.status === "paid" || order.status === "completed" || order.status === "cancelled";
 
         const employeeMatch =
           selectedEmployee === "all" ||
@@ -2018,7 +2017,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
