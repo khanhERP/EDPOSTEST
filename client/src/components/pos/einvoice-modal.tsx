@@ -87,6 +87,7 @@ export function EInvoiceModal({
   const [isPublishing, setIsPublishing] = useState(false); // State for general publishing process
   const [isProcessingPublish, setIsProcessingPublish] = useState(false); // State for "Phát hành" button
   const [isProcessingPublishLater, setIsProcessingPublishLater] = useState(false); // State for "Phát hành sau" button
+  const [lastActionTime, setLastActionTime] = useState(0); // Debounce timestamp
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [activeInputField, setActiveInputField] = useState<string | null>(null);
 
@@ -410,8 +411,16 @@ export function EInvoiceModal({
       event.stopPropagation();
     }
 
+    // Add debouncing to prevent rapid clicks
+    const now = Date.now();
+    if (now - lastActionTime < 1000) {
+      console.log("⚠️ Debouncing: Action too soon, ignoring duplicate call");
+      return;
+    }
+    setLastActionTime(now);
+
     // Prevent duplicate calls
-    if (isProcessingPublishLater) {
+    if (isProcessingPublishLater || isPublishing) {
       console.log("⚠️ Already processing publish later, skipping duplicate call");
       return;
     }
@@ -700,8 +709,16 @@ export function EInvoiceModal({
       event.stopPropagation();
     }
 
+    // Add debouncing to prevent rapid clicks
+    const now = Date.now();
+    if (now - lastActionTime < 1000) {
+      console.log("⚠️ Debouncing: Action too soon, ignoring duplicate call");
+      return;
+    }
+    setLastActionTime(now);
+
     // Prevent duplicate calls
-    if (isProcessingPublish) {
+    if (isProcessingPublish || isPublishing) {
       console.log("⚠️ Already processing publish, skipping duplicate call");
       return;
     }
@@ -1323,6 +1340,7 @@ export function EInvoiceModal({
     setIsPublishing(false); // Reset general publishing state
     setIsProcessingPublish(false); // Reset specific publish button state
     setIsProcessingPublishLater(false); // Reset specific publish later button state
+    setLastActionTime(0); // Reset debounce timer
     onClose();
   };
 
@@ -1564,9 +1582,9 @@ export function EInvoiceModal({
               type="button"
               onClick={(e) => handleConfirm(e)}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isProcessingPublish || isPublishing} // Disable if either button is processing
+              disabled={isProcessingPublish || isPublishing || isProcessingPublishLater} // Disable if ANY processing is happening
             >
-              {(isProcessingPublish || isPublishing) ? ( // Use isPublishing as a general indicator if needed, but primarily use specific states
+              {(isProcessingPublish || isPublishing) ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
                   {t("einvoice.publishing")}
@@ -1582,9 +1600,9 @@ export function EInvoiceModal({
               type="button"
               onClick={(e) => handlePublishLater(e)}
               className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
-              disabled={isProcessingPublishLater || isPublishing} // Disable if either button is processing
+              disabled={isProcessingPublishLater || isPublishing || isProcessingPublish} // Disable if ANY processing is happening
             >
-              {(isProcessingPublishLater || isPublishing) ? ( // Use isPublishing as a general indicator if needed, but primarily use specific states
+              {(isProcessingPublishLater || isPublishing) ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
                   {t("einvoice.publishing")}
@@ -1602,10 +1620,11 @@ export function EInvoiceModal({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                setLastActionTime(0); // Reset debounce timer
                 handleCancel();
               }}
               className="flex-1"
-              disabled={isProcessingPublish || isProcessingPublishLater || isPublishing} // Disable if either button is processing
+              disabled={isProcessingPublish || isProcessingPublishLater || isPublishing} // Disable if ANY processing is happening
             >
               <span className="mr-2">❌</span>
               {t("einvoice.cancel")}
