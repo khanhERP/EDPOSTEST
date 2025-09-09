@@ -338,7 +338,7 @@ export function SalesChartReport() {
           : null,
       });
 
-      // Calculate total sales revenue (sum of subtotal) - Doanh thu thực tế (chưa thuế)
+      // Calculate total sales revenue (sum of subtotal) - Doanh thu = Thành tiền (chưa thuế)
       const periodRevenue = completedOrders.reduce(
         (sum: number, order: any) => {
           const subtotal = Number(order.subtotal || 0);
@@ -575,13 +575,13 @@ export function SalesChartReport() {
 
         // Use EXACT database values without recalculation
         const orderTotal = Number(order.total || 0); // Tổng tiền (đã bao gồm thuế)
-        const orderSubtotal = Number(order.subtotal || 0); // Tiền hàng (chưa thuế)
+        const orderSubtotal = Number(order.subtotal || 0); // Tiền hàng (chưa thuế) = Thành tiền
         const orderDiscount = Number(order.discount || 0); // Giảm giá
         const orderTax = orderTotal - orderSubtotal; // Thuế = Total - Subtotal
-        const actualRevenue = orderTotal - orderTax - orderDiscount; // Doanh thu = Total - Thuế - Giảm giá
+        const actualRevenue = orderSubtotal; // Doanh thu = Thành tiền (subtotal)
 
         dailySales[dateStr].orders += 1;
-        dailySales[dateStr].revenue += actualRevenue; // Doanh thu thực tế sau khi trừ thuế và giảm giá
+        dailySales[dateStr].revenue += actualRevenue; // Doanh thu = Thành tiền (subtotal)
         dailySales[dateStr].customers += Number(order.customerCount || 1);
         dailySales[dateStr].discount += orderDiscount; // Giảm giá từ DB
         dailySales[dateStr].tax += orderTax; // Thuế = total - subtotal
@@ -821,9 +821,9 @@ export function SalesChartReport() {
                         );
 
                         return paginatedEntries.map(([date, data]) => {
-                          const paymentAmount = data.subtotal; // Thành tiền (bao gồm thuế và phí)
+                          const paymentAmount = data.subtotal; // Thành tiền (chưa thuế)
                           const discount = data.discount; // Use the tracked discount
-                          const actualRevenue = data.revenue; // Doanh thu = Thành tiền - Giảm giá (using calculated revenue from data)
+                          const actualRevenue = data.subtotal; // Doanh thu = Thành tiền (subtotal)
                           const tax = data.tax || 0; // Use stored tax, default to 0
                           const customerPayment = actualRevenue; // Khách thanh toán = doanh thu
 
