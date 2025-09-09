@@ -2355,7 +2355,7 @@ export function SalesChartReport() {
                       {t("common.customerGroup")}
                     </TableHead>
                     <TableHead className="text-right border-r min-w-[140px]">
-                      {t("reports.totalAmount")}
+                      {t("reports.thanhTien")}
                     </TableHead>
                     {analysisType !== "employee" && (
                       <TableHead className="text-right border-r min-w-[120px]">
@@ -2418,7 +2418,7 @@ export function SalesChartReport() {
                               {formatCurrency(item.totalAmount)}
                             </TableCell>
                             {analysisType !== "employee" && (
-                              <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
+                              <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
                                 {formatCurrency(item.discount)}
                               </TableCell>
                             )}
@@ -2477,24 +2477,18 @@ export function SalesChartReport() {
                                   </TableCell>
                                   <TableCell className="text-right border-r text-sm min-w-[140px] px-4">
                                     {formatCurrency(
-                                      Number(
-                                        order.subtotal ||
-                                          Number(order.total) * 1.1,
-                                      ),
+                                      Number(order.subtotal || 0),
                                     )}
                                   </TableCell>
                                   {analysisType !== "employee" && (
-                                    <TableCell className="text-right border-r text-red-600 text-sm min-w-[120px] px-4">
+                                    <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
                                       {formatCurrency(
-                                        Number(
-                                          order.subtotal ||
-                                            Number(order.total) * 1.1,
-                                        ) - Number(order.total),
+                                        Number(order.discount || 0),
                                       )}
                                     </TableCell>
                                   )}
                                   <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
-                                    {formatCurrency(Number(order.total))}
+                                    {formatCurrency(Number(order.subtotal || 0))}
                                   </TableCell>
                                   <TableCell className="text-center text-sm min-w-[100px] px-4">
                                     <Badge
@@ -2549,7 +2543,7 @@ export function SalesChartReport() {
                         )}
                       </TableCell>
                       {analysisType !== "employee" && (
-                        <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
+                        <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
                           {formatCurrency(
                             data.reduce((sum, item) => sum + item.discount, 0),
                           )}
