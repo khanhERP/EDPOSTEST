@@ -57,6 +57,9 @@ import {
 import * as XLSX from "xlsx"; // Import xlsx for Excel export
 import { Button } from "@/components/ui/button";
 
+// Import the ProductDetailModal component
+import ProductDetailModal from "@/components/ProductDetailModal"; // Assuming the path
+
 export function SalesChartReport() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -89,6 +92,11 @@ export function SalesChartReport() {
   // Customer Report with Pagination State
   const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
   const [customerPageSize, setCustomerPageSize] = useState(15);
+
+  // State for Product Detail Modal
+  const [showProductDetailModal, setShowProductDetailModal] = useState(false);
+  const [selectedProductForDetail, setSelectedProductForDetail] =
+    useState<any>(null);
 
   // Query orders by date range - using proper order data
   const {
@@ -1296,7 +1304,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
@@ -2019,7 +2026,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
@@ -3409,7 +3415,9 @@ export function SalesChartReport() {
                       </button>
                       <button
                         onClick={() => setCustomerCurrentPage(totalPages)}
-                        disabled={customerCurrentPage === totalPages}
+                        disabled={
+                          customerCurrentPage === totalPages
+                        }
                         className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                       >
                         »
@@ -4206,7 +4214,9 @@ export function SalesChartReport() {
                             <TableCell className="font-medium">
                               <button
                                 onClick={() => {
-                                  window.location.href = `/inventory?productId=${product.productId}&action=view`;
+                                  // Set product for modal and open it
+                                  setSelectedProductForDetail(product);
+                                  setShowProductDetailModal(true);
                                 }}
                                 className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
                                 title="Click to view product details"
