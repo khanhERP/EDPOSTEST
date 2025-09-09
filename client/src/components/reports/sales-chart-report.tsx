@@ -3916,7 +3916,7 @@ export function SalesChartReport() {
                     {t("reports.customerAnalysis")}
                   </SelectItem>
                   <SelectItem value="salesMethod">
-                    Hình thức bán hàng
+                    {t("reports.salesMethod")}
                   </SelectItem>
                   <SelectItem value="salesDetail">
                     {t("reports.salesDetailReport")}
