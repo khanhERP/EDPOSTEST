@@ -258,44 +258,10 @@ export function TableReport() {
         const hour = new Date(order.orderedAt).getHours();
         stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
 
-        // Count number of different products in order (not quantity)
+        // Count number of order items for this order
         if (orderItems && Array.isArray(orderItems)) {
           const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
-          console.log(`🔍 Table Report - Processing Order ${order.id} (${order.orderNumber}) for Table ${order.tableId}:`, {
-            orderTotal: order.total,
-            status: order.status,
-            tableId: order.tableId,
-            relatedOrderItemsCount: relatedOrderItems.length,
-            orderItemsDetails: relatedOrderItems.map(item => ({ 
-              id: item.id, 
-              orderId: item.orderId, 
-              productId: item.productId, 
-              productName: item.productName,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice
-            })),
-            allOrderItemsInSystem: orderItems.length,
-            orderItemsSample: orderItems.slice(0, 3).map(item => ({ 
-              id: item.id, 
-              orderId: item.orderId, 
-              productId: item.productId
-            }))
-          });
-          
-          if (relatedOrderItems.length > 0) {
-            // Count unique products (number of different items in order)
-            const itemsToAdd = relatedOrderItems.length;
-            stats.itemsSold += itemsToAdd;
-            console.log(`✅ Added ${itemsToAdd} items to table ${tableId} stats. Total items now: ${stats.itemsSold}`);
-          } else {
-            // Fallback: estimate 1 product per order
-            stats.itemsSold += 1;
-            console.log(`⚠️ No order items found for order ${order.id}, adding 1 as fallback`);
-          }
-        } else {
-          // Fallback: estimate 1 product per order  
-          stats.itemsSold += 1;
-          console.log(`⚠️ No orderItems array available, adding 1 as fallback for order ${order.id}`);
+          stats.itemsSold += relatedOrderItems.length;
         }
       }
     });
