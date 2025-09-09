@@ -277,8 +277,6 @@ export function SalesChartReport() {
         return t("reports.employeeSalesReport");
       case "customer":
         return t("reports.customerSalesReport");
-      case "channel":
-        return t("reports.channelSalesReport");
       case "salesMethod":
         return "Báo cáo theo hình thức bán hàng";
       default:
@@ -1036,9 +1034,7 @@ export function SalesChartReport() {
                                       {(() => {
                                         const transactionMethod =
                                           transaction.paymentMethod || "cash";
-                                        const amount = Number(
-                                          transaction.total,
-                                        );
+                                        const amount = Number(transaction.total);
 
                                         // Get all unique payment methods from all transactions
                                         const allPaymentMethods = new Set();
@@ -1128,7 +1124,7 @@ export function SalesChartReport() {
                             )}
                           </TableCell>
                         )}
-                        <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
+                        <TableCell className="text-right border-r min-w-[140px] px-4">
                           {formatCurrency(
                             Object.values(dailySales).reduce(
                               (sum, data) => sum + data.revenue,
@@ -1482,7 +1478,7 @@ export function SalesChartReport() {
         const orderTotal = Number(order.total || 0);
         const orderSubtotal = Number(order.subtotal || 0);
         const orderDiscount = Number(order.discount || 0); // Default discount to 0
-        const revenue = orderSubtotal; // Doanh thu = subtotal (chưa thuế) giống như báo cáo thời gian
+        const revenue = orderSubtotal - orderDiscount; // Doanh thu = subtotal - discount
         const tax = orderTotal - orderSubtotal; // Thuế = total - subtotal
 
         stats.orderCount += 1;
@@ -2273,14 +2269,14 @@ export function SalesChartReport() {
         };
       }
 
-      const orderTotal = Number(order.total || 0);
+      const orderTotal = Number(order.total);
       const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
       const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
       customerSales[customerId].orders += 1;
       customerSales[customerId].totalAmount += orderSubtotal;
       customerSales[customerId].discount += orderDiscount;
-      customerSales[customerId].revenue += orderSubtotal - orderDiscount; // Doanh thu = subtotal - discount
+      customerSales[customerId].revenue += orderTotal - orderDiscount; // Doanh thu = subtotal - discount
       customerSales[customerId].orderDetails.push(order);
 
       // Determine customer group based on total spending
@@ -3779,18 +3775,8 @@ export function SalesChartReport() {
                         />
                       )}
 
-                      {analysisType === "product" && (
-                        <Bar
-                          dataKey="quantity"
-                          fill="url(#quantityGradient)"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      )}
-
                       {(analysisType === "employee" ||
                         analysisType === "customer" ||
-                        analysisType === "channel" ||
                         analysisType === "salesDetail") && (
                         <Bar
                           dataKey="orders"
@@ -3866,8 +3852,6 @@ export function SalesChartReport() {
           return renderEmployeeReport();
         case "customer":
           return renderCustomerReport();
-        case "channel":
-          return renderSalesChannelReport();
         case "salesMethod":
           return renderSalesChannelReport(); // Reuse channel report logic
         case "salesDetail":
@@ -3930,9 +3914,6 @@ export function SalesChartReport() {
                   </SelectItem>
                   <SelectItem value="customer">
                     {t("reports.customerAnalysis")}
-                  </SelectItem>
-                  <SelectItem value="channel">
-                    {t("reports.channelAnalysis")}
                   </SelectItem>
                   <SelectItem value="salesMethod">
                     Hình thức bán hàng
@@ -4104,7 +4085,7 @@ export function SalesChartReport() {
             </div>
           )}
 
-          {analysisType === "channel" && (
+          {analysisType === "salesMethod" && (
             <div className="pt-4 border-t border-gray-200">
               <div className="text-sm text-gray-600">
                 Phân tích theo hình thức bán hàng (Ăn tại chỗ / Mang về)
@@ -4234,7 +4215,6 @@ export function SalesChartReport() {
               analysisType === "product" ||
               analysisType === "employee" ||
               analysisType === "customer" ||
-              analysisType === "channel" ||
               analysisType === "salesMethod") &&
               renderChart()}
 
