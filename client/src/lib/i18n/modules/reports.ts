@@ -269,7 +269,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dailySales: "Bán hàng hàng ngày",
     paymentMethods: "Phương thức thanh toán",
     hourlyBreakdown: "Phân tích theo giờ",
-    orders: "Đơn hàng",
+    orders: "Số đơn bán",
     customers: "Khách hàng",
     cash: "Tiền mặt",
     card: "Thẻ",
