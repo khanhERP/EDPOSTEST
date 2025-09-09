@@ -548,6 +548,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     contribution: "% đóng góp",
     items: "món",
     hour: "giờ",
+    productDetails: "Chi tiết sản phẩm",
+    priceInfo: "Thông tin giá",
+    additionalInfo: "Thông tin khác",
   },
 
   ko: {
@@ -1065,6 +1068,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     soldItems: "판매된 품목 수",
     items: "품목",
     hour: "시간",
+    productDetails: "제품 세부 정보",
+    priceInfo: "가격 정보",
+    additionalInfo: "추가 정보",
   },
 
   en: {
@@ -1585,5 +1591,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     soldItems: "sold items",
     items: "items",
     hour: "hour",
+    productDetails: "Product Details",
+    priceInfo: "Price Information",
+    additionalInfo: "Additional Information",
   },
 };

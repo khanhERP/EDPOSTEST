@@ -503,8 +503,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     cancelled: "Cancelled",
     salesMethod: "Sales Method",
 
-    email: "Email",
-
     // Payment method modal
     selectPaymentMethod: "Select Payment Method",
     totalAmount: "Total Amount",
@@ -722,13 +720,13 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     logout: "Đăng xuất",
     login: "Đăng nhập",
     register: "Đăng ký",
-    username: "Tên đăng nhập",  
+    username: "Tên đăng nhập",
     password: "Mật khẩu",
     name: "Tên",
     address: "Địa chỉ",
     city: "Thành phố",
     country: "Quốc gia",
-    date: "Ngày", 
+    date: "Ngày",
     time: "Thời gian",
     price: "Giá",
     total: "Tổng cộng",
@@ -737,8 +735,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     items: "món",
     category: "Danh mục",
     status: "Trạng thái",
-    active: "Hoạt động",
-    inactive: "Không hoạt động",
+    active: "Đang bán",
+    inactive: "Ngừng bán",
     enabled: "Bật",
     disabled: "Tắt",
     available: "Có sẵn",
@@ -774,7 +772,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     customerGroup: "Nhóm khách hàng",
     walkInCustomer: "Khách hàng vãng lai",
     backToPOS: "Quay lại POS",
-    
+
 
 
 

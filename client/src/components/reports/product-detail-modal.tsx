@@ -105,11 +105,11 @@ export function ProductDetailModal({
                 <Badge 
                   variant={product.isActive ? "default" : "destructive"}
                 >
-                  {product.isActive ? "Đang bán" : "Ngừng bán"}
+                  {product.isActive ? (t("common.active") || "Đang bán") : (t("common.inactive") || "Ngừng bán")}
                 </Badge>
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                Loại: {getProductTypeName(product.productType)}
+                {t("common.type") || "Loại"}: {getProductTypeName(product.productType)}
               </p>
             </div>
           </div>
@@ -161,7 +161,12 @@ export function ProductDetailModal({
                       variant={product.stock > 10 ? "default" : product.stock > 0 ? "secondary" : "destructive"}
                       className="text-xs"
                     >
-                      {product.stock > 10 ? "Đủ hàng" : product.stock > 0 ? "Sắp hết" : "Hết hàng"}
+                      {product.stock > 10 
+                        ? (t("inventory.inStock") || "Đủ hàng") 
+                        : product.stock > 0 
+                          ? (t("inventory.lowStock") || "Sắp hết") 
+                          : (t("inventory.outOfStock") || "Hết hàng")
+                      }
                     </Badge>
                   </div>
                 </div>
@@ -174,7 +179,7 @@ export function ProductDetailModal({
                 <div className="flex justify-between items-center py-1">
                   <span className="text-gray-600">{t("common.category") || "Nhóm hàng"}:</span>
                   <span className="font-medium">
-                    {product.categoryName || `${t("common.category")} ${product.categoryId}`}
+                    {product.categoryName || (t("inventory.uncategorized") || "Chưa phân loại")}
                   </span>
                 </div>
               </div>
@@ -185,16 +190,16 @@ export function ProductDetailModal({
           <div className="space-y-4">
             <h4 className="font-medium text-gray-900 flex items-center gap-2">
               <Tag className="w-4 h-4" />
-              Thông tin khác
+              {t("reports.additionalInfo") || "Thông tin khác"}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex justify-between">
-                <span className="text-gray-600">ID sản phẩm:</span>
+                <span className="text-gray-600">{t("common.productId") || "ID sản phẩm"}:</span>
                 <span className="font-medium">#{product.id}</span>
               </div>
               {product.createdAt && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Ngày tạo:</span>
+                  <span className="text-gray-600">{t("common.createdAt") || "Ngày tạo"}:</span>
                   <span className="font-medium">
                     {new Date(product.createdAt).toLocaleDateString('vi-VN')}
                   </span>
@@ -204,24 +209,10 @@ export function ProductDetailModal({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-xs text-gray-500">
-              {t("common.productId") || "ID"}: #{product.id}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose}>
-                {t("common.close") || "Đóng"}
-              </Button>
-              <Button 
-                onClick={() => {
-                  window.location.href = `/inventory?productId=${product.id}&action=edit`;
-                }}
-                className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-              >
-                <Edit3 className="w-4 h-4" />
-                {t("common.edit") || "Chỉnh sửa"}
-              </Button>
-            </div>
+          <div className="flex justify-end items-center pt-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              {t("common.close") || "Đóng"}
+            </Button>
           </div>
         </div>
       </DialogContent>
