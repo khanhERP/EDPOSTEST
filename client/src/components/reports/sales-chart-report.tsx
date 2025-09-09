@@ -338,11 +338,11 @@ export function SalesChartReport() {
           : null,
       });
 
-      // Calculate total sales revenue (sum of total) - Tổng thu từ bán hàng
+      // Calculate total sales revenue (sum of subtotal) - Doanh thu thực tế (chưa thuế)
       const periodRevenue = completedOrders.reduce(
         (sum: number, order: any) => {
-          const total = Number(order.total || 0);
-          return sum + total;
+          const subtotal = Number(order.subtotal || 0);
+          return sum + subtotal;
         },
         0,
       );
@@ -578,7 +578,7 @@ export function SalesChartReport() {
         const orderSubtotal = Number(order.subtotal || 0); // Tiền hàng (chưa thuế)
         const orderDiscount = Number(order.discount || 0); // Giảm giá
         const orderTax = orderTotal - orderSubtotal; // Thuế = Total - Subtotal
-        const actualRevenue = orderTotal; // Doanh thu = Total (đã trừ giảm giá)
+        const actualRevenue = orderSubtotal; // Doanh thu = Subtotal (chưa thuế, đã trừ giảm giá)
 
         dailySales[dateStr].orders += 1;
         dailySales[dateStr].revenue += actualRevenue; // Sử dụng total làm doanh thu
@@ -2230,13 +2230,13 @@ export function SalesChartReport() {
       }
 
       const orderTotal = Number(order.total || 0);
-      const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
+      const orderSubtotal = Number(order.subtotal || 0);
       const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
       customerSales[customerId].orders += 1;
       customerSales[customerId].totalAmount += orderSubtotal;
       customerSales[customerId].discount += orderDiscount;
-      customerSales[customerId].revenue += orderTotal - orderDiscount;
+      customerSales[customerId].revenue += orderSubtotal - orderDiscount; // Doanh thu = subtotal - discount
       customerSales[customerId].orderDetails.push(order);
 
       // Determine customer group based on total spending
@@ -2671,9 +2671,9 @@ export function SalesChartReport() {
 
       if (salesMethodData[method]) {
         salesMethodData[method].completedOrders += 1;
-        salesMethodData[method].completedRevenue += Number(order.total || 0);
+        salesMethodData[method].completedRevenue += Number(order.subtotal || 0); // Doanh thu = subtotal (chưa thuế)
         salesMethodData[method].totalOrders += 1;
-        salesMethodData[method].totalRevenue += Number(order.total || 0);
+        salesMethodData[method].totalRevenue += Number(order.subtotal || 0); // Doanh thu = subtotal (chưa thuế)
       }
     });
 
@@ -2962,9 +2962,9 @@ export function SalesChartReport() {
               dailyData[dateKey] = { revenue: 0, orders: 0 };
             }
 
-            const orderTotal = Number(order.total || 0);
+            const orderSubtotal = Number(order.subtotal || 0);
             const discount = Number(order.discount || 0); // Set default discount to 0
-            dailyData[dateKey].revenue += orderTotal - discount;
+            dailyData[dateKey].revenue += orderSubtotal - discount;
             dailyData[dateKey].orders += 1;
           });
         }
@@ -3068,10 +3068,10 @@ export function SalesChartReport() {
                 employeeData[cashier] = { revenue: 0, orders: 0 };
               }
 
-              // Use EXACT same calculation as dashboard: total - discount
-              const orderTotal = Number(order.total || 0);
+              // Use subtotal as revenue (excludes tax): subtotal - discount
+              const orderSubtotal = Number(order.subtotal || 0);
               const orderDiscount = Number(order.discount || 0); // Default discount to 0
-              const revenue = orderTotal - orderDiscount;
+              const revenue = orderSubtotal - orderDiscount;
 
               if (revenue >= 0) {
                 // Allow 0 revenue orders
