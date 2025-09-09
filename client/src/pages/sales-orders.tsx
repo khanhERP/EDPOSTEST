@@ -613,25 +613,42 @@ export default function SalesOrders() {
     const urlParams = new URLSearchParams(window.location.search);
     const orderParam = urlParams.get('order');
 
-    if (orderParam && orderParam !== orderNumberSearch) {
+    if (orderParam) {
       console.log('🔍 Sales Orders: Auto-filtering by order:', orderParam);
       setOrderNumberSearch(orderParam);
-
-      // Auto-expand matching order when data is available
-      setTimeout(() => {
-        const matchingOrder = filteredInvoices.find(item =>
-          item.displayNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
-          item.orderNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
-          item.invoiceNumber?.toLowerCase().includes(orderParam.toLowerCase())
-        );
-
-        if (matchingOrder) {
-          console.log('🎯 Sales Orders: Auto-expanding matching order:', matchingOrder.displayNumber);
-          setSelectedInvoice(matchingOrder);
-        }
-      }, 1000); // Wait for data to load
     }
-  }, [filteredInvoices, orderNumberSearch]);
+  }, []);
+
+  // Auto-expand matching order when data is available and order param exists
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderParam = urlParams.get('order');
+
+    if (orderParam && filteredInvoices.length > 0 && !selectedInvoice) {
+      const matchingOrder = filteredInvoices.find(item => {
+        const displayNumber = item.displayNumber?.toLowerCase() || '';
+        const orderNumber = item.orderNumber?.toLowerCase() || '';
+        const invoiceNumber = item.invoiceNumber?.toLowerCase() || '';
+        const searchParam = orderParam.toLowerCase();
+        
+        return displayNumber.includes(searchParam) || 
+               orderNumber.includes(searchParam) || 
+               invoiceNumber.includes(searchParam) ||
+               displayNumber === searchParam ||
+               orderNumber === searchParam ||
+               invoiceNumber === searchParam;
+      });
+
+      if (matchingOrder) {
+        console.log('🎯 Sales Orders: Auto-expanding matching order:', matchingOrder.displayNumber);
+        setSelectedInvoice(matchingOrder);
+        
+        // Clear URL parameter after auto-expand
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, [filteredInvoices, selectedInvoice]);
 
   const formatCurrency = (amount: string | number | undefined | null): string => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
