@@ -112,7 +112,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     discount: "Giảm giá",
     revenue: "Doanh thu",
     tax: "Thuế",
-    total: "Tổng cộng",
+    total: "Tổng tiền",
     unitPrice: "Đơn giá",
     amount: "Thành tiền",
     thanhTien: "Thành tiền",
