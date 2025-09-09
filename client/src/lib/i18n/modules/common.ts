@@ -196,12 +196,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     undo: "실행 취소",
     redo: "다시 실행",
     filters: "필터",
-    tax: "Tax",
-    discount: "Discount",
-    items: " items",
-    filters: "Filters",
-    collapse: "Collapse",
-    customerPaid: "Customer Paid",
+    tax: "세금"
+    discount: "할인",
+    items: "개",
+    filters: "필터",
+    collapse: "접기",
+    customerPaid:
     bankTransfer: "Bank Transfer",
     itemName: "Item Name",
     unit: "Unit",
