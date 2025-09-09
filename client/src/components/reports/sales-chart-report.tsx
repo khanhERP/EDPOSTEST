@@ -2000,7 +2000,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -3210,7 +3209,7 @@ export function SalesChartReport() {
                                       )}
                                     </TableCell>
                                   )}
-                                  <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
+                                  <TableCell className="text-right border-r text-sm min-w-[140px] px-4">
                                     {formatCurrency(
                                       Number(order.subtotal || 0),
                                     )}
@@ -3354,7 +3353,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
