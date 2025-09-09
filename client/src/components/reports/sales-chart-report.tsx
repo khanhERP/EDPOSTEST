@@ -647,7 +647,7 @@ export function SalesChartReport() {
                       "Tổng số đơn hàng": data.orders,
                       "Doanh thu": formatCurrency(data.revenue),
                       Thuế: formatCurrency(data.revenue * 0.1), // This calculation might be incorrect, should use actual tax from data.tax
-                      "Thành tiền": formatCurrency(data.subtotal), // Use subtotal here
+                      "Thành tiền": formatCurrency(data.subtotal),
                       "Khách hàng": data.customers,
                     })),
                     // Add summary row
@@ -2269,7 +2269,7 @@ export function SalesChartReport() {
       }
 
       const orderTotal = Number(order.total || 0);
-      const orderSubtotal = Number(order.subtotal || 0);
+      const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
       const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
       customerSales[customerId].orders += 1;
@@ -2630,10 +2630,10 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
-      );
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   // Sales Channel Report Component Logic
