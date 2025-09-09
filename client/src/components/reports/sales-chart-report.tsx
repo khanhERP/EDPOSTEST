@@ -4681,9 +4681,9 @@ export function SalesChartReport() {
       <div className="space-y-6">
         {/* Filters */}
         <Card>
-          <CardContent className="pt-4 flex flex-col items-center">
+          <CardContent className="pt-4">
             {/* Main Filter Row */}
-            <div className="grid grid-cols-4 gap-4 mb-4 items-center justify-center">
+            <div className="grid grid-cols-4 gap-4 mb-4">
               {/* Analysis Type */}
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
