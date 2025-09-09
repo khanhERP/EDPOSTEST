@@ -1297,9 +1297,380 @@ export function SalesChartReport() {
 
   // Sales Detail Report Component
   const renderSalesDetailReport = () => {
-    // Temporarily use renderSalesReport logic for sales detail report
-    // This might need a dedicated implementation later
-    return renderSalesReport();
+    if (ordersLoading || orderItemsLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
+    if (!orders || !Array.isArray(orders) || !orderItems || !Array.isArray(orderItems)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">Không có dữ liệu</div>
+        </div>
+      );
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    // Filter completed orders
+    const filteredOrders = orders.filter((order: any) => {
+      const orderDate = new Date(order.orderedAt || order.createdAt || order.created_at);
+      const dateMatch = orderDate >= start && orderDate <= end;
+      const statusMatch = order.status === "paid" || order.status === "completed";
+      
+      const employeeMatch = 
+        selectedEmployee === "all" ||
+        order.employeeName === selectedEmployee ||
+        order.cashierName === selectedEmployee;
+
+      return dateMatch && statusMatch && employeeMatch;
+    });
+
+    // Create detailed sales data by combining orders with order items
+    const salesDetailData: any[] = [];
+
+    filteredOrders.forEach((order: any) => {
+      // Get items for this order
+      const orderItemsForOrder = orderItems.filter((item: any) => item.orderId === order.id);
+      
+      if (orderItemsForOrder.length === 0) {
+        // If no items found, create a single row with order info
+        salesDetailData.push({
+          orderDate: order.orderedAt || order.createdAt || order.created_at,
+          orderNumber: order.orderNumber || `ORD-${order.id}`,
+          customerId: order.customerId || "KL-001",
+          customerName: order.customerName || "Khách lẻ",
+          productCode: "-",
+          productName: "Đơn hàng trống",
+          unit: "-",
+          quantity: 0,
+          unitPrice: 0,
+          totalAmount: Number(order.subtotal || 0),
+          discount: Number(order.discount || 0),
+          revenue: Number(order.subtotal || 0) - Number(order.discount || 0),
+          tax: Number(order.total || 0) - Number(order.subtotal || 0),
+          vat: Number(order.total || 0) - Number(order.subtotal || 0),
+          totalMoney: Number(order.total || 0),
+          notes: order.notes || "",
+          salesChannel: order.tableId ? "Ăn tại chỗ" : "Mang về",
+          tableName: order.tableId ? `Bàn ${order.tableId}` : "",
+          employeeName: order.employeeName || order.cashierName || "Unknown",
+          productGroup: "-",
+          status: order.status === "paid" ? "Đã thanh toán" : "Hoàn thành"
+        });
+      } else {
+        // Create a row for each item in the order
+        orderItemsForOrder.forEach((item: any) => {
+          salesDetailData.push({
+            orderDate: order.orderedAt || order.createdAt || order.created_at,
+            orderNumber: order.orderNumber || `ORD-${order.id}`,
+            customerId: order.customerId || "KL-001",
+            customerName: order.customerName || "Khách lẻ",
+            productCode: item.productSku || item.productId || "N/A",
+            productName: item.productName || "Unknown Product",
+            unit: "Món",
+            quantity: item.quantity || 1,
+            unitPrice: Number(item.price || 0),
+            totalAmount: Number(item.quantity || 1) * Number(item.price || 0),
+            discount: Number(order.discount || 0) / orderItemsForOrder.length, // Distribute discount evenly
+            revenue: (Number(item.quantity || 1) * Number(item.price || 0)) - (Number(order.discount || 0) / orderItemsForOrder.length),
+            tax: (Number(item.quantity || 1) * Number(item.price || 0)) * 0.1, // Assuming 10% tax
+            vat: (Number(item.quantity || 1) * Number(item.price || 0)) * 0.1,
+            totalMoney: Number(item.quantity || 1) * Number(item.price || 0) * 1.1,
+            notes: order.notes || "",
+            salesChannel: order.tableId ? "Ăn tại chỗ" : "Mang về",
+            tableName: order.tableId ? `Bàn ${order.tableId}` : "",
+            employeeName: order.employeeName || order.cashierName || "Unknown",
+            productGroup: item.categoryName || "Chưa phân loại",
+            status: order.status === "paid" ? "Đã thanh toán" : "Hoàn thành"
+          });
+        });
+      }
+    });
+
+    // Sort by date descending
+    salesDetailData.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+
+    // Pagination
+    const totalPages = Math.ceil(salesDetailData.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedData = salesDetailData.slice(startIndex, endIndex);
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Báo cáo chi tiết bán hàng
+          </CardTitle>
+          <CardDescription className="flex items-center justify-between">
+            <span>
+              Từ ngày: {formatDate(startDate)} - Đến ngày: {formatDate(endDate)}
+            </span>
+            <Button
+              onClick={() => {
+                const dataWithSummary = [
+                  ...salesDetailData.map((item) => ({
+                    "Ngày": formatDate(item.orderDate),
+                    "Số đơn bán": item.orderNumber,
+                    "Mã khách hàng": item.customerId,
+                    "Tên khách hàng": item.customerName,
+                    "Mã hàng": item.productCode,
+                    "Tên hàng": item.productName,
+                    "ĐVT": item.unit,
+                    "Số lượng bán": item.quantity,
+                    "Đơn giá": formatCurrency(item.unitPrice),
+                    "Thành tiền": formatCurrency(item.totalAmount),
+                    "Giảm giá": formatCurrency(item.discount),
+                    "Doanh thu": formatCurrency(item.revenue),
+                    "Thuế xuất": formatCurrency(item.tax),
+                    "Thuế GTGT": formatCurrency(item.vat),
+                    "Tổng tiền": formatCurrency(item.totalMoney),
+                    "Ghi chú": item.notes,
+                    "Kênh bán": item.salesChannel,
+                    "Bàn": item.tableName,
+                    "Tên nhân viên": item.employeeName,
+                    "Nhóm hàng": item.productGroup,
+                    "Trạng thái": item.status
+                  })),
+                  // Add summary row
+                  {
+                    "Ngày": "TỔNG CỘNG",
+                    "Số đơn bán": `${salesDetailData.length} dòng`,
+                    "Mã khách hàng": "",
+                    "Tên khách hàng": "",
+                    "Mã hàng": "",
+                    "Tên hàng": "",
+                    "ĐVT": "",
+                    "Số lượng bán": salesDetailData.reduce((sum, item) => sum + item.quantity, 0),
+                    "Đơn giá": "",
+                    "Thành tiền": formatCurrency(salesDetailData.reduce((sum, item) => sum + item.totalAmount, 0)),
+                    "Giảm giá": formatCurrency(salesDetailData.reduce((sum, item) => sum + item.discount, 0)),
+                    "Doanh thu": formatCurrency(salesDetailData.reduce((sum, item) => sum + item.revenue, 0)),
+                    "Thuế xuất": formatCurrency(salesDetailData.reduce((sum, item) => sum + item.tax, 0)),
+                    "Thuế GTGT": formatCurrency(salesDetailData.reduce((sum, item) => sum + item.vat, 0)),
+                    "Tổng tiền": formatCurrency(salesDetailData.reduce((sum, item) => sum + item.totalMoney, 0)),
+                    "Ghi chú": "",
+                    "Kênh bán": "",
+                    "Bàn": "",
+                    "Tên nhân viên": "",
+                    "Nhóm hàng": "",
+                    "Trạng thái": ""
+                  }
+                ];
+                exportToExcel(
+                  dataWithSummary,
+                  `SalesDetail_${startDate}_to_${endDate}`
+                );
+              }}
+              className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Xuất Excel
+            </Button>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="w-full">
+            <div className="overflow-x-auto">
+              <Table className="w-full min-w-[2000px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-center bg-green-50 min-w-[100px]">Ngày</TableHead>
+                    <TableHead className="text-center bg-green-50 min-w-[120px]">Số đơn bán</TableHead>
+                    <TableHead className="text-center bg-green-50 min-w-[120px]">Mã khách hàng</TableHead>
+                    <TableHead className="text-center bg-green-50 min-w-[150px]">Tên khách hàng</TableHead>
+                    <TableHead className="text-center bg-blue-50 min-w-[100px]">Mã hàng</TableHead>
+                    <TableHead className="text-center bg-blue-50 min-w-[200px]">Tên hàng</TableHead>
+                    <TableHead className="text-center bg-blue-50 min-w-[60px]">ĐVT</TableHead>
+                    <TableHead className="text-center bg-blue-50 min-w-[100px]">Số lượng bán</TableHead>
+                    <TableHead className="text-right bg-blue-50 min-w-[120px]">Đơn giá</TableHead>
+                    <TableHead className="text-right bg-blue-50 min-w-[120px]">Thành tiền</TableHead>
+                    <TableHead className="text-right bg-orange-50 min-w-[100px]">Giảm giá</TableHead>
+                    <TableHead className="text-right bg-green-50 min-w-[120px]">Doanh thu</TableHead>
+                    <TableHead className="text-right bg-yellow-50 min-w-[100px]">Thuế xuất</TableHead>
+                    <TableHead className="text-right bg-yellow-50 min-w-[100px]">Thuế GTGT</TableHead>
+                    <TableHead className="text-right bg-purple-50 min-w-[120px]">Tổng tiền</TableHead>
+                    <TableHead className="text-center min-w-[150px]">Ghi chú</TableHead>
+                    <TableHead className="text-center min-w-[100px]">Kênh bán</TableHead>
+                    <TableHead className="text-center min-w-[80px]">Bàn</TableHead>
+                    <TableHead className="text-center min-w-[120px]">Tên nhân viên</TableHead>
+                    <TableHead className="text-center min-w-[120px]">Nhóm hàng</TableHead>
+                    <TableHead className="text-center min-w-[100px]">Trạng thái</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((item, index) => (
+                      <TableRow key={`${item.orderNumber}-${index}`} className="hover:bg-gray-50">
+                        <TableCell className="text-center font-medium min-w-[100px] px-2">
+                          {formatDate(item.orderDate)}
+                        </TableCell>
+                        <TableCell className="text-center min-w-[120px] px-2">
+                          <button
+                            onClick={() => {
+                              window.location.href = `/sales-orders?order=${item.orderNumber}`;
+                            }}
+                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
+                            title="Click to view order details"
+                          >
+                            {item.orderNumber}
+                          </button>
+                        </TableCell>
+                        <TableCell className="text-center min-w-[120px] px-2">{item.customerId}</TableCell>
+                        <TableCell className="text-center min-w-[150px] px-2">{item.customerName}</TableCell>
+                        <TableCell className="text-center min-w-[100px] px-2">{item.productCode}</TableCell>
+                        <TableCell className="text-left min-w-[200px] px-2">{item.productName}</TableCell>
+                        <TableCell className="text-center min-w-[60px] px-2">{item.unit}</TableCell>
+                        <TableCell className="text-center min-w-[100px] px-2">{item.quantity}</TableCell>
+                        <TableCell className="text-right min-w-[120px] px-2">{formatCurrency(item.unitPrice)}</TableCell>
+                        <TableCell className="text-right min-w-[120px] px-2">{formatCurrency(item.totalAmount)}</TableCell>
+                        <TableCell className="text-right text-red-600 min-w-[100px] px-2">{formatCurrency(item.discount)}</TableCell>
+                        <TableCell className="text-right text-green-600 font-medium min-w-[120px] px-2">{formatCurrency(item.revenue)}</TableCell>
+                        <TableCell className="text-right min-w-[100px] px-2">{formatCurrency(item.tax)}</TableCell>
+                        <TableCell className="text-right min-w-[100px] px-2">{formatCurrency(item.vat)}</TableCell>
+                        <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">{formatCurrency(item.totalMoney)}</TableCell>
+                        <TableCell className="text-center min-w-[150px] px-2">{item.notes || "-"}</TableCell>
+                        <TableCell className="text-center min-w-[100px] px-2">
+                          <Badge variant={item.salesChannel === "Ăn tại chỗ" ? "default" : "secondary"}>
+                            {item.salesChannel}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center min-w-[80px] px-2">{item.tableName || "-"}</TableCell>
+                        <TableCell className="text-center min-w-[120px] px-2">{item.employeeName}</TableCell>
+                        <TableCell className="text-center min-w-[120px] px-2">{item.productGroup}</TableCell>
+                        <TableCell className="text-center min-w-[100px] px-2">
+                          <Badge variant="default" className="text-xs">
+                            {item.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={21} className="text-center text-gray-500 py-8">
+                        Không có dữ liệu chi tiết bán hàng
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {/* Summary Row */}
+                  {salesDetailData.length > 0 && (
+                    <TableRow className="bg-gray-100 font-bold border-t-2">
+                      <TableCell className="text-center bg-green-100 min-w-[100px] px-2">TỔNG CỘNG</TableCell>
+                      <TableCell className="text-center bg-green-100 min-w-[120px] px-2">{salesDetailData.length} dòng</TableCell>
+                      <TableCell className="text-center bg-green-100 min-w-[120px] px-2"></TableCell>
+                      <TableCell className="text-center bg-green-100 min-w-[150px] px-2"></TableCell>
+                      <TableCell className="text-center bg-blue-100 min-w-[100px] px-2"></TableCell>
+                      <TableCell className="text-center bg-blue-100 min-w-[200px] px-2"></TableCell>
+                      <TableCell className="text-center bg-blue-100 min-w-[60px] px-2"></TableCell>
+                      <TableCell className="text-center bg-blue-100 min-w-[100px] px-2">
+                        {salesDetailData.reduce((sum, item) => sum + item.quantity, 0)}
+                      </TableCell>
+                      <TableCell className="text-right bg-blue-100 min-w-[120px] px-2"></TableCell>
+                      <TableCell className="text-right bg-blue-100 min-w-[120px] px-2">
+                        {formatCurrency(salesDetailData.reduce((sum, item) => sum + item.totalAmount, 0))}
+                      </TableCell>
+                      <TableCell className="text-right text-red-600 bg-orange-100 min-w-[100px] px-2">
+                        {formatCurrency(salesDetailData.reduce((sum, item) => sum + item.discount, 0))}
+                      </TableCell>
+                      <TableCell className="text-right text-green-600 bg-green-100 min-w-[120px] px-2">
+                        {formatCurrency(salesDetailData.reduce((sum, item) => sum + item.revenue, 0))}
+                      </TableCell>
+                      <TableCell className="text-right bg-yellow-100 min-w-[100px] px-2">
+                        {formatCurrency(salesDetailData.reduce((sum, item) => sum + item.tax, 0))}
+                      </TableCell>
+                      <TableCell className="text-right bg-yellow-100 min-w-[100px] px-2">
+                        {formatCurrency(salesDetailData.reduce((sum, item) => sum + item.vat, 0))}
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-blue-600 bg-purple-100 min-w-[120px] px-2">
+                        {formatCurrency(salesDetailData.reduce((sum, item) => sum + item.totalMoney, 0))}
+                      </TableCell>
+                      <TableCell className="text-center min-w-[150px] px-2"></TableCell>
+                      <TableCell className="text-center min-w-[100px] px-2"></TableCell>
+                      <TableCell className="text-center min-w-[80px] px-2"></TableCell>
+                      <TableCell className="text-center min-w-[120px] px-2"></TableCell>
+                      <TableCell className="text-center min-w-[120px] px-2"></TableCell>
+                      <TableCell className="text-center min-w-[100px] px-2"></TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Pagination Controls */}
+          {salesDetailData.length > 0 && (
+            <div className="flex items-center justify-between space-x-6 py-4">
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">{t("common.show")} </p>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => {
+                    setPageSize(Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    <SelectItem value="15">15</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm font-medium"> {t("common.rows")}</p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">
+                  {t("common.page")} {currentPage} / {totalPages}
+                </p>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    «
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ›
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   // Employee Report with Pagination State
