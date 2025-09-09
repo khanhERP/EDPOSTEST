@@ -1431,7 +1431,7 @@ export function EInvoiceModal({
                       handleInputChange("taxCode", e.target.value)
                     }
                     onFocus={() => handleInputFocus("taxCode")}
-                    placeholder="0102222333-001"
+                    placeholder="0123456789"
                     disabled={false}
                     readOnly={false}
                   />

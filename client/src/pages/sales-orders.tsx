@@ -1735,6 +1735,51 @@ export default function SalesOrders() {
       </AlertDialog>
 
       {selectedInvoice && (
+        <EInvoiceModal
+          isOpen={showPublishDialog}
+          onClose={() => setShowPublishDialog(false)}
+          onConfirm={(invoiceData) => {
+            console.log('📧 E-Invoice confirmed from Sales Orders:', invoiceData);
+            
+            if (invoiceData.success) {
+              if (invoiceData.publishLater) {
+                // Handle "Phát hành sau" case
+                toast({
+                  title: "Thành công",
+                  description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau",
+                });
+              } else {
+                // Handle direct publish case
+                toast({
+                  title: "Thành công", 
+                  description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceData.invoiceNumber || 'N/A'}`,
+                });
+              }
+              
+              // Refresh data
+              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+            }
+            
+            setShowPublishDialog(false);
+          }}
+          total={parseFloat(selectedInvoice.total || '0')}
+          cartItems={orderItems.map((item: any) => ({
+            id: item.productId || item.id,
+            name: item.productName,
+            price: parseFloat(item.unitPrice || '0'),
+            quantity: item.quantity || 1,
+            sku: item.sku || `ITEM${item.productId}`,
+            taxRate: parseFloat(item.taxRate || '0')
+          }))}
+          source="sales_orders"
+          orderId={selectedInvoice.id}
+          selectedPaymentMethod="cash"
+        />
+      )}
+
+      {/* Keep the original AlertDialog structure but move the content to EInvoiceModal */}
+      {false && selectedInvoice && (
         <AlertDialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
           <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <AlertDialogHeader>
