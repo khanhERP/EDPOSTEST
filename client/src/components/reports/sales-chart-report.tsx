@@ -999,17 +999,17 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.total),
+                                          Number(transaction.subtotal || 0),
                                         )}
                                       </TableCell>
                                       <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.total) * 0.1,
+                                          Number(transaction.total || 0) - Number(transaction.subtotal || 0),
                                         )}
                                       </TableCell>
                                       <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.total),
+                                          Number(transaction.subtotal || 0),
                                         )}
                                       </TableCell>
                                       {(() => {
@@ -1047,13 +1047,13 @@ export function SalesChartReport() {
                                                   className="text-right border-r text-sm min-w-[130px] px-4"
                                                 >
                                                   {transactionMethod === method
-                                                    ? formatCurrency(amount)
+                                                    ? formatCurrency(Number(transaction.subtotal || 0))
                                                     : "-"}
                                                 </TableCell>
                                               ),
                                             )}
                                             <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
-                                              {formatCurrency(amount)}
+                                              {formatCurrency(Number(transaction.subtotal || 0))}
                                             </TableCell>
                                           </>
                                         );
