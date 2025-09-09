@@ -157,7 +157,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Report titles
     timeSalesReport: "Báo cáo bán hàng theo thời gian",
-    inventoryReport: "Báo cáo kho",
+    inventoryReport: "Doanh thu top 10 mặt hàng bán chạy nhất",
     salesReportByProduct: "Báo cáo bán hàng theo sản phẩm",
     profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
     invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
