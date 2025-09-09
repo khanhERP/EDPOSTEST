@@ -1845,8 +1845,20 @@ export function SalesChartReport() {
                                       </div>
                                     </TableCell>
                                     <TableCell className="text-center border-r text-blue-600 text-sm min-w-[120px] px-4">
-                                      {transaction.transactionId ||
-                                        `TXN-${transaction.id}`}
+                                      <button
+                                        onClick={() => {
+                                          // Navigate to sales orders with order filter
+                                          const orderNumber = transaction.orderNumber || `ORD-${transaction.id}`;
+                                          window.location.href = `/sales-orders?order=${orderNumber}`;
+                                        }}
+                                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
+                                        title="Click to view order details"
+                                      >
+                                        {transaction.orderNumber ||
+                                          transaction.transactionId ||
+                                          `ORD-${transaction.id}` ||
+                                          `TXN-${transaction.id}`}
+                                      </button>
                                     </TableCell>
                                     <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
                                       {new Date(
