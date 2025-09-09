@@ -801,7 +801,7 @@ export function SalesChartReport() {
                               ),
                             )}
                             <TableHead className="text-center bg-blue-50 min-w-[150px]">
-                              {t("reports.totalCustomerPayment")}
+                              {t("common.total")}
                             </TableHead>
                           </>
                         );
@@ -950,6 +950,9 @@ export function SalesChartReport() {
                                           );
                                         },
                                       )}
+                                      <TableCell className="text-right font-bold text-green-600 min-w-[150px] px-4">
+                                        {formatCurrency(totalCustomerPayment)}
+                                      </TableCell>
                                     </>
                                   );
                                 })()}
@@ -1066,6 +1069,9 @@ export function SalesChartReport() {
                                                 </TableCell>
                                               ),
                                             )}
+                                            <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
+                                              {formatCurrency(Number(transaction.total || 0))}
+                                            </TableCell>
                                           </>
                                         );
                                       })()}
@@ -1188,6 +1194,9 @@ export function SalesChartReport() {
                                   </TableCell>
                                 );
                               })}
+                              <TableCell className="text-right font-bold text-green-600 text-xl min-w-[150px] px-4">
+                                {formatCurrency(grandTotal)}
+                              </TableCell>
                             </>
                           );
                         })()}
@@ -1392,7 +1401,7 @@ export function SalesChartReport() {
           // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
           const itemDiscountRatio = orderItemsForOrder.length > 0 ? itemTotal / orderSubtotal : 0;
           const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
-          const itemTax = orderTax * item      } // Thuế theo tỷ lệ
+          const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
           const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
           const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
 
@@ -1777,10 +1786,10 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
-      );
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   // Employee Report with Pagination State
@@ -1823,7 +1832,7 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      // Use EXACT same filtering logic as dashboard
+      // Use EXACT same filtering logic as dashboard for orders
       const filteredCompletedOrders = orders.filter((order: any) => {
         // Check if order is completed/paid (EXACT same as dashboard)
         if (order.status !== "completed" && order.status !== "paid")
@@ -2180,7 +2189,7 @@ export function SalesChartReport() {
                               ),
                             )}
                             <TableHead className="text-center bg-blue-50 min-w-[150px]">
-                              {t("reports.totalCustomerPayment")}
+                              {t("common.total")}
                             </TableHead>
                           </>
                         );
@@ -2305,6 +2314,9 @@ export function SalesChartReport() {
                                         </TableCell>
                                       );
                                     })}
+                                    <TableCell className="text-right font-bold text-green-600 min-w-[150px] px-4">
+                                      {formatCurrency(totalCustomerPayment)}
+                                    </TableCell>
                                   </>
                                 );
                               })()}
@@ -2418,6 +2430,9 @@ export function SalesChartReport() {
                                               </TableCell>
                                             ),
                                           )}
+                                          <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
+                                            {formatCurrency(amount)}
+                                          </TableCell>
                                         </>
                                       );
                                     })()}
@@ -2532,6 +2547,9 @@ export function SalesChartReport() {
                                   </TableCell>
                                 );
                               })}
+                              <TableCell className="text-right font-bold text-green-600 text-xl min-w-[150px] px-4">
+                                {formatCurrency(grandTotal)}
+                              </TableCell>
                             </>
                           );
                         })()}
@@ -3139,7 +3157,7 @@ export function SalesChartReport() {
 
     const validOrders = Array.isArray(orders) ? orders : [];
 
-    // Filter completed/paid orders only
+    // Filter completed orders only
     const completedOrders = validOrders.filter(
       (order: any) => order.status === "paid" || order.status === "completed",
     );
@@ -3491,11 +3509,8 @@ export function SalesChartReport() {
 
             const orderSubtotal = Number(order.subtotal || 0);
             const discount = Number(order.discount || 0); // Set default discount to 0
-            const revenue = orderSubtotal - discount;
-            if (revenue >= 0) { // Ensure revenue is not negative
-              dailyData[dateKey].revenue += revenue;
-              dailyData[dateKey].orders += 1;
-            }
+            dailyData[dateKey].revenue += orderSubtotal - discount;
+            dailyData[dateKey].orders += 1;
           });
         }
 
