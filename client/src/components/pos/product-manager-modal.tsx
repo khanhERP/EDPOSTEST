@@ -43,13 +43,13 @@ import * as XLSX from "xlsx";
 interface ProductManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialSearchSku?: string;
+  initialSearchSKU?: string;
 }
 
 export function ProductManagerModal({
   isOpen,
   onClose,
-  initialSearchSku = "",
+  initialSearchSKU = "",
 }: ProductManagerModalProps) {
   const { t } = useTranslation();
 
@@ -75,7 +75,7 @@ export function ProductManagerModal({
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [searchTerm, setSearchTerm] = useState(initialSearchSku);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   const {
@@ -426,9 +426,9 @@ export function ProductManagerModal({
   useEffect(() => {
     if (isOpen) {
       refetch();
-      // Set search term from prop when modal opens
-      if (initialSearchSku) {
-        setSearchTerm(initialSearchSku);
+      // Set search term if initialSearchSKU is provided
+      if (initialSearchSKU) {
+        setSearchTerm(initialSearchSKU);
       }
       // Reset form completely when opening modal
       if (!editingProduct) {
@@ -447,7 +447,7 @@ export function ProductManagerModal({
         });
       }
     }
-  }, [isOpen, refetch, editingProduct, initialSearchSku]);
+  }, [isOpen, refetch, editingProduct, initialSearchSKU]);
 
   // Add keyboard support for closing modal
   useEffect(() => {
