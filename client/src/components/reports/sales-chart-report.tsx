@@ -4206,10 +4206,10 @@ export function SalesChartReport() {
                             <TableCell className="font-medium">
                               <button
                                 onClick={() => {
-                                  window.location.href = `/inventory?search=${encodeURIComponent(product.productSku)}`;
+                                  window.location.href = `/inventory?productId=${product.productId}&action=view`;
                                 }}
                                 className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
-                                title="Click to view in inventory"
+                                title="Click to view product details"
                               >
                                 {product.productSku}
                               </button>
