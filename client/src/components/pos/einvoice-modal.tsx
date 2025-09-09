@@ -401,7 +401,13 @@ export function EInvoiceModal({
     }
   };
 
-  const handlePublishLater = async () => {
+  const handlePublishLater = async (event?: React.MouseEvent) => {
+    // Prevent event propagation and default behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     // Prevent duplicate calls
     if (isPublishing) {
       console.log("⚠️ Already processing publish later, skipping duplicate call");
@@ -685,7 +691,19 @@ export function EInvoiceModal({
     }
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (event?: React.MouseEvent) => {
+    // Prevent event propagation and default behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    // Prevent duplicate calls
+    if (isPublishing) {
+      console.log("⚠️ Already processing publish, skipping duplicate call");
+      return;
+    }
+
     // Validate required fields
     if (!formData.invoiceProvider || !formData.customerName) {
       alert(
@@ -1539,7 +1557,8 @@ export function EInvoiceModal({
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t">
             <Button
-              onClick={handleConfirm}
+              type="button"
+              onClick={(e) => handleConfirm(e)}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               disabled={isPublishing}
             >
@@ -1556,7 +1575,8 @@ export function EInvoiceModal({
               )}
             </Button>
             <Button
-              onClick={handlePublishLater}
+              type="button"
+              onClick={(e) => handlePublishLater(e)}
               className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
               disabled={isPublishing}
             >
@@ -1572,7 +1592,17 @@ export function EInvoiceModal({
                 </>
               )}
             </Button>
-            <Button variant="outline" onClick={handleCancel} className="flex-1">
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleCancel();
+              }} 
+              className="flex-1"
+              disabled={isPublishing}
+            >
               <span className="mr-2">❌</span>
               {t("einvoice.cancel")}
             </Button>
