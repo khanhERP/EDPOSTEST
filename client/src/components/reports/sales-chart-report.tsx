@@ -4087,9 +4087,6 @@ export function SalesChartReport() {
 
           {analysisType === "salesMethod" && (
             <div className="pt-4 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
-                Phân tích theo hình thức bán hàng (Ăn tại chỗ / Mang về)
-              </div>
             </div>
           )}
 
