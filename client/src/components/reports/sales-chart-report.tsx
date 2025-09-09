@@ -1884,11 +1884,13 @@ export function SalesChartReport() {
                                         Number(transaction.subtotal || 0),
                                       )}
                                     </TableCell>
-                                    <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
-                                      {formatCurrency(
-                                        Number(transaction.discount) || 0,
-                                      )}
-                                    </TableCell>
+                                    {analysisType !== "employee" && (
+                                      <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
+                                        {formatCurrency(
+                                          Number(transaction.discount) || 0,
+                                        )}
+                                      </TableCell>
+                                    )}
                                     <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
                                       {formatCurrency(
                                         Number(transaction.total || 0) - Number(transaction.subtotal || 0),
