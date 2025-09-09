@@ -900,9 +900,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
       // Unit indicators
       perUnit: "món",
-
-      // Product type
-      productType: "Loại sản phẩm",
     },
+
+    // Product type
+    productType: "Loại sản phẩm",
   },
 };
