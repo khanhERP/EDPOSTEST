@@ -83,6 +83,31 @@ export default function SalesOrders() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
+  // Handle URL parameter for order filtering and auto-expand
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderParam = urlParams.get('order');
+    
+    if (orderParam && orderParam !== orderNumberSearch) {
+      console.log('🔍 Sales Orders: Auto-filtering by order:', orderParam);
+      setOrderNumberSearch(orderParam);
+      
+      // Auto-expand matching order when data is available
+      setTimeout(() => {
+        const matchingOrder = filteredInvoices.find(item => 
+          item.displayNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
+          item.orderNumber?.toLowerCase().includes(orderParam.toLowerCase()) ||
+          item.invoiceNumber?.toLowerCase().includes(orderParam.toLowerCase())
+        );
+        
+        if (matchingOrder) {
+          console.log('🎯 Sales Orders: Auto-expanding matching order:', matchingOrder.displayNumber);
+          setSelectedInvoice(matchingOrder);
+        }
+      }, 1000); // Wait for data to load
+    }
+  }, [filteredInvoices]);
+
   // Auto-refresh when new orders are created
   useEffect(() => {
     const handleNewOrder = () => {
@@ -130,6 +155,10 @@ export default function SalesOrders() {
       window.removeEventListener('receiptCreated', handleNewOrder);
     };
   }, [queryClient]);
+  // Get URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const orderParam = urlParams.get('order');
+
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -139,7 +168,7 @@ export default function SalesOrders() {
     return today.toISOString().split('T')[0];
   });
   const [customerSearch, setCustomerSearch] = useState("");
-  const [orderNumberSearch, setOrderNumberSearch] = useState("");
+  const [orderNumberSearch, setOrderNumberSearch] = useState(orderParam || "");
   const [customerCodeSearch, setCustomerCodeSearch] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null); // Renamed to selectedItem for clarity
   const [isEditing, setIsEditing] = useState(false);
