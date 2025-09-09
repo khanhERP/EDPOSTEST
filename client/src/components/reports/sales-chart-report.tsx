@@ -1331,24 +1331,31 @@ export function SalesChartReport() {
       return dateMatch && statusMatch && employeeMatch;
     });
 
-    // Group orders with their items
+    // Group orders with their items - using EXACT database values
     const groupedOrders: any[] = [];
 
     filteredOrders.forEach((order: any) => {
       // Get items for this order
       const orderItemsForOrder = orderItems.filter((item: any) => item.orderId === order.id);
       
+      // Use EXACT values from database
+      const orderSubtotal = Number(order.subtotal || 0); // Thành tiền từ DB
+      const orderDiscount = Number(order.discount || 0); // Giảm giá từ DB
+      const orderTax = Number(order.tax || 0) || (Number(order.total || 0) - Number(order.subtotal || 0)); // Thuế từ DB hoặc tính từ total-subtotal
+      const orderTotal = Number(order.total || 0); // Tổng tiền từ DB
+      const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = thành tiền - giảm giá
+      
       const orderSummary = {
         orderDate: order.orderedAt || order.createdAt || order.created_at,
         orderNumber: order.orderNumber || `ORD-${order.id}`,
         customerId: order.customerId || "KL-001",
         customerName: order.customerName || "Khách lẻ",
-        totalAmount: Number(order.subtotal || 0),
-        discount: Number(order.discount || 0),
-        revenue: Number(order.subtotal || 0) - Number(order.discount || 0),
-        tax: Number(order.total || 0) - Number(order.subtotal || 0),
-        vat: Number(order.total || 0) - Number(order.subtotal || 0),
-        totalMoney: Number(order.total || 0),
+        totalAmount: orderSubtotal, // Thành tiền từ DB
+        discount: orderDiscount, // Giảm giá từ DB
+        revenue: orderRevenue, // Doanh thu = thành tiền - giảm giá
+        tax: orderTax, // Thuế từ DB
+        vat: orderTax, // VAT = thuế
+        totalMoney: orderTotal, // Tổng tiền từ DB
         notes: order.notes || "",
         salesChannel: order.tableId ? "Ăn tại chỗ" : "Mang về",
         tableName: order.tableId ? `Bàn ${order.tableId}` : "",
@@ -1360,27 +1367,41 @@ export function SalesChartReport() {
           unit: "-",
           quantity: 0,
           unitPrice: 0,
-          totalAmount: Number(order.subtotal || 0),
-          discount: Number(order.discount || 0),
-          revenue: Number(order.subtotal || 0) - Number(order.discount || 0),
-          tax: Number(order.total || 0) - Number(order.subtotal || 0),
-          vat: Number(order.total || 0) - Number(order.subtotal || 0),
-          totalMoney: Number(order.total || 0),
+          totalAmount: orderSubtotal, // Sử dụng thành tiền từ order
+          discount: orderDiscount, // Giảm giá từ order
+          revenue: orderRevenue, // Doanh thu từ order
+          tax: orderTax, // Thuế từ order
+          vat: orderTax, // VAT từ order
+          totalMoney: orderTotal, // Tổng tiền từ order
           productGroup: "-"
-        }] : orderItemsForOrder.map((item: any) => ({
-          productCode: item.productSku || item.productId || "N/A",
-          productName: item.productName || "Unknown Product",
-          unit: "Món",
-          quantity: item.quantity || 1,
-          unitPrice: Number(item.price || 0),
-          totalAmount: Number(item.quantity || 1) * Number(item.price || 0),
-          discount: Number(order.discount || 0) / orderItemsForOrder.length, // Distribute discount evenly
-          revenue: (Number(item.quantity || 1) * Number(item.price || 0)) - (Number(order.discount || 0) / orderItemsForOrder.length),
-          tax: (Number(item.quantity || 1) * Number(item.price || 0)) * 0.1, // Assuming 10% tax
-          vat: (Number(item.quantity || 1) * Number(item.price || 0)) * 0.1,
-          totalMoney: Number(item.quantity || 1) * Number(item.price || 0) * 1.1,
-          productGroup: item.categoryName || "Chưa phân loại"
-        }))
+        }] : orderItemsForOrder.map((item: any) => {
+          // Sử dụng giá trị CHÍNH XÁC từ order_items và order
+          const itemQuantity = Number(item.quantity || 1);
+          const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items
+          const itemTotal = Number(item.total || 0) || (itemUnitPrice * itemQuantity); // Thành tiền từ order_items hoặc tính
+          
+          // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
+          const itemDiscountRatio = orderItemsForOrder.length > 0 ? itemTotal / orderSubtotal : 0;
+          const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
+          const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
+          const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
+          const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
+
+          return {
+            productCode: item.productSku || `SP${item.productId}`,
+            productName: item.productName || "Unknown Product",
+            unit: "Món",
+            quantity: itemQuantity,
+            unitPrice: itemUnitPrice, // Đơn giá từ order_items
+            totalAmount: itemTotal, // Thành tiền từ order_items
+            discount: itemDiscount, // Giảm giá phân bổ
+            revenue: itemRevenue, // Doanh thu = thành tiền - giảm giá
+            tax: itemTax, // Thuế phân bổ
+            vat: itemTax, // VAT = thuế
+            totalMoney: itemTotalMoney, // Tổng tiền = thành tiền + thuế
+            productGroup: item.categoryName || "Chưa phân loại"
+          };
+        })
       };
 
       groupedOrders.push(orderSummary);
