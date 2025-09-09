@@ -897,12 +897,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       days90: "90 ngày",
       days180: "180 ngày",
       days365: "365 ngày",
-
-      // Unit indicators
-      perUnit: "món",
     },
 
     // Product type
     productType: "Loại sản phẩm",
+
+    // Unit indicators
+    perUnit: "món",
   },
 };
