@@ -1327,8 +1327,8 @@ export function SalesChartReport() {
       const orderDate = new Date(order.orderedAt || order.createdAt || order.created_at);
       const dateMatch = orderDate >= start && orderDate <= end;
       const statusMatch = order.status === "paid" || order.status === "completed";
-      
-      const employeeMatch = 
+
+      const employeeMatch =
         selectedEmployee === "all" ||
         order.employeeName === selectedEmployee ||
         order.cashierName === selectedEmployee ||
@@ -1355,14 +1355,14 @@ export function SalesChartReport() {
     filteredOrders.forEach((order: any) => {
       // Get items for this order
       const orderItemsForOrder = orderItems.filter((item: any) => item.orderId === order.id);
-      
+
       // Use EXACT values from database
       const orderSubtotal = Number(order.subtotal || 0); // Thành tiền từ DB
       const orderDiscount = Number(order.discount || 0); // Giảm giá từ DB
       const orderTax = Number(order.tax || 0) || (Number(order.total || 0) - Number(order.subtotal || 0)); // Thuế từ DB hoặc tính từ total-subtotal
       const orderTotal = Number(order.total || 0); // Tổng tiền từ DB
       const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = thành tiền - giảm giá
-      
+
       const orderSummary = {
         orderDate: order.orderedAt || order.createdAt || order.created_at,
         orderNumber: order.orderNumber || `ORD-${order.id}`,
@@ -1397,7 +1397,7 @@ export function SalesChartReport() {
           const itemQuantity = Number(item.quantity || 1);
           const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items
           const itemTotal = Number(item.total || 0) || (itemUnitPrice * itemQuantity); // Thành tiền từ order_items hoặc tính
-          
+
           // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
           const itemDiscountRatio = orderItemsForOrder.length > 0 ? itemTotal / orderSubtotal : 0;
           const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
@@ -1425,7 +1425,7 @@ export function SalesChartReport() {
       // Filter order based on product search if needed
       let shouldIncludeOrder = true;
       if (productSearch) {
-        const hasMatchingProduct = orderSummary.items.some((item: any) => 
+        const hasMatchingProduct = orderSummary.items.some((item: any) =>
           item.productName.toLowerCase().includes(productSearch.toLowerCase()) ||
           item.productCode.toLowerCase().includes(productSearch.toLowerCase())
         );
@@ -1566,7 +1566,7 @@ export function SalesChartReport() {
                   {paginatedData.length > 0 ? (
                     paginatedData.map((order, orderIndex) => {
                       const isExpanded = expandedRows[`order-${order.orderNumber}`] || false;
-                      
+
                       return (
                         <Fragment key={`order-${order.orderNumber}-${orderIndex}`}>
                           {/* Order Header Row */}
@@ -1619,7 +1619,7 @@ export function SalesChartReport() {
                             </TableCell>
                             <TableCell className="text-center min-w-[80px] px-2">{order.tableName || "-"}</TableCell>
                             <TableCell className="text-center min-w-[120px] px-2">{order.employeeName}</TableCell>
-                            <TableCell className="text-center min-w-[120px] px-2 text-gray-500">-</TableCell>
+                            <TableCell className="text-center min-w-[120px] px-2">{item.productGroup}</TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
                               <Badge variant="default" className="text-xs">
                                 {order.status}
@@ -3900,7 +3900,7 @@ export function SalesChartReport() {
                       {t("reports.revenue")}
                     </TableHead>
                     <TableHead className="text-center">
-                      {t("reports.categoryName")}
+                      {t("reports.productGroup")}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -4701,7 +4701,7 @@ export function SalesChartReport() {
                 </div>
               </div>
 
-              
+
             </div>
           )}
         </CardContent>
