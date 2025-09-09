@@ -196,8 +196,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     undo: "실행 취소",
     redo: "다시 실행",
     filters: "필터",
-    tax: "세금"
-    discount: "할인",
+    tax: "세금",
     items: "개",
     filters: "필터",
     collapse: "접기",
