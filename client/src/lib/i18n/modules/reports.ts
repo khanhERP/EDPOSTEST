@@ -81,7 +81,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     visualRepresentation: "Trực quan hóa dữ liệu",
 
     // Filter labels
-    salesMethod: "Phương thức bán hàng",
+    salesMethod: "Hình thức bán hàng",
     salesChannel: "Hình thức bán hàng",
     productFilter: "Sản phẩm",
     productFilterPlaceholder: "Tìm theo tên hoặc mã",
