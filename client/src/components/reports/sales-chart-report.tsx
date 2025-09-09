@@ -1776,7 +1776,7 @@ export function SalesChartReport() {
                               {order.employeeName}
                             </TableCell>
                             <TableCell className="text-center min-w-[120px] px-2">
-                              {order.status}
+                              -
                             </TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
                               <Badge variant="outline" className="text-xs">
