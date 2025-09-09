@@ -2645,7 +2645,6 @@ export function SalesChartReport() {
           </CardContent>
         </Card>
       );
-    }
   };
 
   // Sales Channel Report Component Logic
