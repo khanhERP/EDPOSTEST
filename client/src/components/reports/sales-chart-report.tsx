@@ -1770,7 +1770,10 @@ export function SalesChartReport() {
                               {order.items[0]?.productGroup || "-"}
                             </TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
-                              <Badge variant="outline" className="text-xs">
+                              <Badge
+                                variant="outline"
+                                className="text-xs"
+                              >
                                 {order.status}
                               </Badge>
                             </TableCell>
@@ -2045,7 +2048,7 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      // Use EXACT same filtering logic as dashboard for orders
+      // Use EXACT same filtering logic as dashboard
       const filteredCompletedOrders = orders.filter((order: any) => {
         // Check if order is completed/paid (EXACT same as dashboard)
         if (order.status !== "completed" && order.status !== "paid")
