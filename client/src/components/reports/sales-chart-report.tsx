@@ -3992,8 +3992,8 @@ export function SalesChartReport() {
             </div>
           )}
 
-          {/* Filters for Time Analysis and Sales Detail Report */}
-          {(analysisType === "time" || concernType === "salesDetail") && (
+          {/* Employee Filter - only show for employee analysis */}
+          {analysisType === "employee" && (
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4 border-t border-gray-200">
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
