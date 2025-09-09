@@ -192,133 +192,135 @@ export function ProductDetailModal({
 
           {/* Product Image and Basic Info */}
           {selectedProduct && (
-          <div className="flex gap-4">
-            <div className="flex-shrink-0">
-              {selectedProduct.imageUrl ? (
-                <img
-                  src={selectedProduct.imageUrl}
-                  alt={selectedProduct.name}
-                  className="w-24 h-24 object-cover rounded-lg border shadow-sm"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    target.nextElementSibling?.classList.remove('hidden');
-                  }}
-                />
-              ) : null}
-              <div className={`w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg border flex items-center justify-center shadow-sm ${selectedProduct.imageUrl ? 'hidden' : ''}`}>
-                <Package className="w-8 h-8 text-gray-400" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold">{selectedProduct.name}</h3>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="secondary">{selectedProduct.sku}</Badge>
-                <Badge 
-                  variant={selectedProduct.isActive ? "default" : "destructive"}
-                >
-                  {selectedProduct.isActive ? (t("common.active") || "Đang bán") : (t("common.inactive") || "Ngừng bán")}
-                </Badge>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">
-                {t("common.type") || "Loại"}: {getProductTypeName(selectedProduct.productType)}
-              </p>
-            </div>
-          </div>
-
-          {/* Product Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Pricing Information */}
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900 flex items-center gap-2 border-b pb-2">
-                <DollarSign className="w-4 h-4 text-green-600" />
-                {t("reports.priceInfo") || "Thông tin giá"}
-              </h4>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-600">{t("common.originalPrice") || "Giá gốc"}:</span>
-                  <span className="font-medium">{formatCurrency(selectedProduct.price)}</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-600">{t("common.taxRate") || "Thuế suất"}:</span>
-                  <span className="font-medium">{selectedProduct.taxRate}%</span>
-                </div>
-                <div className="flex justify-between items-center py-1 bg-green-50 px-2 rounded">
-                  <span className="text-gray-600">{t("common.afterTaxPrice") || "Giá đã có thuế"}:</span>
-                  <span className="font-semibold text-green-700">
-                    {formatCurrency(selectedProduct.afterTaxPrice)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-600">{t("common.includesTax") || "Bao gồm thuế"}:</span>
-                  <Badge variant={selectedProduct.priceIncludesTax ? "default" : "secondary"}>
-                    {selectedProduct.priceIncludesTax ? (t("common.yes") || "Có") : (t("common.no") || "Không")}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Inventory Information */}
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900 flex items-center gap-2 border-b pb-2">
-                <Warehouse className="w-4 h-4 text-blue-600" />
-                {t("inventory.inventoryInfo") || "Thông tin kho"}
-              </h4>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-600">{t("common.stock") || "Tồn kho"}:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{selectedProduct.stock}</span>
-                    <Badge 
-                      variant={selectedProduct.stock > 10 ? "default" : selectedProduct.stock > 0 ? "secondary" : "destructive"}
-                      className="text-xs"
-                    >
-                      {selectedProduct.stock > 10 
-                        ? (t("inventory.inStock") || "Đủ hàng") 
-                        : selectedProduct.stock > 0 
-                          ? (t("inventory.lowStock") || "Sắp hết") 
-                          : (t("inventory.outOfStock") || "Hết hàng")
-                      }
-                    </Badge>
+            <>
+              <div className="flex gap-4">
+                <div className="flex-shrink-0">
+                  {selectedProduct.imageUrl ? (
+                    <img
+                      src={selectedProduct.imageUrl}
+                      alt={selectedProduct.name}
+                      className="w-24 h-24 object-cover rounded-lg border shadow-sm"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg border flex items-center justify-center shadow-sm ${selectedProduct.imageUrl ? 'hidden' : ''}`}>
+                    <Package className="w-8 h-8 text-gray-400" />
                   </div>
                 </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-600">{t("inventory.trackInventory") || "Theo dõi kho"}:</span>
-                  <Badge variant={selectedProduct.trackInventory ? "default" : "secondary"}>
-                    {selectedProduct.trackInventory ? (t("common.yes") || "Có") : (t("common.no") || "Không")}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-600">{t("common.category") || "Nhóm hàng"}:</span>
-                  <span className="font-medium">
-                    {selectedProduct.categoryName || (t("inventory.uncategorized") || "Chưa phân loại")}
-                  </span>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold">{selectedProduct.name}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="secondary">{selectedProduct.sku}</Badge>
+                    <Badge 
+                      variant={selectedProduct.isActive ? "default" : "destructive"}
+                    >
+                      {selectedProduct.isActive ? (t("common.active") || "Đang bán") : (t("common.inactive") || "Ngừng bán")}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {t("common.type") || "Loại"}: {getProductTypeName(selectedProduct.productType)}
+                  </p>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Additional Information */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-gray-900 flex items-center gap-2">
-              <Tag className="w-4 h-4" />
-              {t("reports.additionalInfo") || "Thông tin khác"}
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600">{t("common.productId") || "ID sản phẩm"}:</span>
-                <span className="font-medium">#{selectedProduct.id}</span>
-              </div>
-              {selectedProduct.createdAt && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{t("common.createdAt") || "Ngày tạo"}:</span>
-                  <span className="font-medium">
-                    {new Date(selectedProduct.createdAt).toLocaleDateString('vi-VN')}
-                  </span>
+              {/* Product Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Pricing Information */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2 border-b pb-2">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    {t("reports.priceInfo") || "Thông tin giá"}
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-600">{t("common.originalPrice") || "Giá gốc"}:</span>
+                      <span className="font-medium">{formatCurrency(selectedProduct.price)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-600">{t("common.taxRate") || "Thuế suất"}:</span>
+                      <span className="font-medium">{selectedProduct.taxRate}%</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1 bg-green-50 px-2 rounded">
+                      <span className="text-gray-600">{t("common.afterTaxPrice") || "Giá đã có thuế"}:</span>
+                      <span className="font-semibold text-green-700">
+                        {formatCurrency(selectedProduct.afterTaxPrice)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-600">{t("common.includesTax") || "Bao gồm thuế"}:</span>
+                      <Badge variant={selectedProduct.priceIncludesTax ? "default" : "secondary"}>
+                        {selectedProduct.priceIncludesTax ? (t("common.yes") || "Có") : (t("common.no") || "Không")}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
+
+                {/* Inventory Information */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2 border-b pb-2">
+                    <Warehouse className="w-4 h-4 text-blue-600" />
+                    {t("inventory.inventoryInfo") || "Thông tin kho"}
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-600">{t("common.stock") || "Tồn kho"}:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{selectedProduct.stock}</span>
+                        <Badge 
+                          variant={selectedProduct.stock > 10 ? "default" : selectedProduct.stock > 0 ? "secondary" : "destructive"}
+                          className="text-xs"
+                        >
+                          {selectedProduct.stock > 10 
+                            ? (t("inventory.inStock") || "Đủ hàng") 
+                            : selectedProduct.stock > 0 
+                              ? (t("inventory.lowStock") || "Sắp hết") 
+                              : (t("inventory.outOfStock") || "Hết hàng")
+                          }
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-600">{t("inventory.trackInventory") || "Theo dõi kho"}:</span>
+                      <Badge variant={selectedProduct.trackInventory ? "default" : "secondary"}>
+                        {selectedProduct.trackInventory ? (t("common.yes") || "Có") : (t("common.no") || "Không")}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-600">{t("common.category") || "Nhóm hàng"}:</span>
+                      <span className="font-medium">
+                        {selectedProduct.categoryName || (t("inventory.uncategorized") || "Chưa phân loại")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  <Tag className="w-4 h-4" />
+                  {t("reports.additionalInfo") || "Thông tin khác"}
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{t("common.productId") || "ID sản phẩm"}:</span>
+                    <span className="font-medium">#{selectedProduct.id}</span>
+                  </div>
+                  {selectedProduct.createdAt && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">{t("common.createdAt") || "Ngày tạo"}:</span>
+                      <span className="font-medium">
+                        {new Date(selectedProduct.createdAt).toLocaleDateString('vi-VN')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </div>
 
