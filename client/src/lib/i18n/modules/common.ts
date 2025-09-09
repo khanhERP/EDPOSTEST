@@ -218,7 +218,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     rows: "행",
     regularCustomer: "일반고객",
     goldCustomer: "골드고객",
-    customerGroup: "고객 그룹", 
+    customerGroup: "고객 그룹",
     walkInCustomer: "일반 고객",
     backToPOS: "POS로 돌아가기",
 
@@ -676,9 +676,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     dineIn: "Bán tại bàn",
     tableOrder: "Bàn",
     itemList: "Danh sách hàng hóa",
-    tax: "Thuế",
-    notes: "Ghi chú",
-    status:  "Trạng thái",
     itemCode: "Mã hàng",
     itemName: "Tên hàng",
     unit: "ĐVT",
@@ -841,5 +838,18 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
     // Unit indicators
     perUnit: "món",
+
+    people: "Người",
+    showing: "Hiển thị",
+    of: "của",
+    for: "cho",
+    show: "Hiển thị",
+    rows: "hàng",
+    regularCustomer: "Khách hàng thường",
+    goldCustomer: "Khách hàng vàng",
+    customerGroup: "Nhóm khách hàng",
+    walkInCustomer: "Khách hàng vãng lai",
+    backToPOS: "Quay lại POS",
+    description: "Mô tả",
   },
 };
