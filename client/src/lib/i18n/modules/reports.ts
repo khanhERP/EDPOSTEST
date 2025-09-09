@@ -498,6 +498,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dineIn: "Ăn tại chỗ",
     takeaway: "Mang về",
     cancelled: "Đã hủy",
+    salesMethodReport: "Báo cáo theo hình thức bán hàng",
+    salesMethodReportDesc: "Phân tích chi tiết theo hình thức bán hàng (Ăn tại chỗ / Mang về)",
 
     // Financial reports
     financialReport: "Báo cáo tài chính",
@@ -1014,6 +1016,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dineIn: "매장 식사",
     takeaway: "포장",
     cancelled: "취소됨",
+    salesMethodReport: "판매 방법 보고서",
+    salesMethodReportDesc: "판매 방법별 상세 분석 (매장 식사 / 포장)",
 
     // Financial reports
     financialReport: "재무 보고서",
@@ -1532,6 +1536,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dineIn: "Dine In",
     takeaway: "Takeaway",
     cancelled: "Cancelled",
+    salesMethodReport: "Sales Method Report",
+    salesMethodReportDesc: "Detailed analysis by sales method (Dine In / Takeaway)",
 
     // Financial reports
     financialReport: "Financial Report",

@@ -278,7 +278,7 @@ export function SalesChartReport() {
       case "customer":
         return t("reports.customerSalesReport");
       case "salesMethod":
-        return "Báo cáo theo hình thức bán hàng";
+        return t("reports.salesMethodReport");
       default:
         return t("reports.salesReport");
     }
@@ -324,7 +324,7 @@ export function SalesChartReport() {
         (order: any) => order.status === "paid" || order.status === "completed",
       );
 
-      console.log("Sales Chart Debug - Raw Data:", {
+      console.log("Sales Chart - Orders loaded:", {
         totalOrders: validOrders.length,
         completedOrders: completedOrders.length,
         totalOrderItems: validOrderItems.length,
@@ -580,7 +580,7 @@ export function SalesChartReport() {
         const orderTotal = Number(order.total || 0); // Tổng tiền (đã bao gồm thuế)
         const orderSubtotal = Number(order.subtotal || 0); // Tiền hàng (chưa thuế) = Thành tiền
         const orderDiscount = Number(order.discount || 0); // Giảm giá
-        const orderTax = orderTotal - orderSubtotal; // Thuế = Total - Subtotal
+        const orderTax = orderTotal - orderSubtotal; // Thuế = total - subtotal
         const actualRevenue = orderSubtotal; // Doanh thu = Thành tiền (subtotal)
 
         dailySales[dateStr].orders += 1;
@@ -828,7 +828,7 @@ export function SalesChartReport() {
                         return paginatedEntries.map(([date, data]) => {
                           const paymentAmount = data.subtotal; // Thành tiền (chưa thuế)
                           const discount = data.discount; // Use the tracked discount
-                          const actualRevenue = data.subtotal; // Doanh thu = Thành tiền (subtotal)
+                          const actualRevenue = data.revenue; // Doanh thu = Thành tiền (subtotal)
                           const tax = data.tax || 0; // Use stored tax, default to 0
                           const customerPayment = actualRevenue; // Khách thanh toán = doanh thu
 
@@ -884,7 +884,7 @@ export function SalesChartReport() {
                                   </TableCell>
                                 )}
                                 <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
-                                  {formatCurrency(data.revenue)}
+                                  {formatCurrency(actualRevenue)}
                                 </TableCell>
                                 <TableCell className="text-right border-r min-w-[120px] px-4">
                                   {formatCurrency(tax)}
@@ -2640,11 +2640,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
   };
 
   // Sales Channel Report Component Logic
