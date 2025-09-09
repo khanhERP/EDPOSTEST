@@ -1296,7 +1296,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
@@ -1349,9 +1348,7 @@ export function SalesChartReport() {
               .toLowerCase()
               .includes(selectedEmployee.toLowerCase())) ||
           (order.cashierName &&
-            order.cashierName
-              .toLowerCase()
-              .includes(selectedEmployee.toLowerCase()));
+            order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
 
         const customerMatch =
           !customerSearch ||
@@ -1412,7 +1409,10 @@ export function SalesChartReport() {
           salesChannel: order.tableId ? "Ăn tại chỗ" : "Mang về",
           tableName: order.tableId ? `Bàn ${order.tableId}` : "",
           employeeName: order.employeeName || order.cashierName || "Unknown",
-          status: order.status === "paid" ? "Đã thanh toán" : "Hoàn thành",
+          status: order.status === "paid" ? "Đã thanh toán" :
+                      order.status === "completed" ? "Hoàn thành" :
+                      order.status === "cancelled" ? "Đã hủy" :
+                      order.status,
           items:
             orderItemsForOrder.length === 0
               ? [
@@ -2018,7 +2018,6 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
               )}
             </CardContent>
           </Card>
