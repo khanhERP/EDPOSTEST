@@ -763,6 +763,18 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     tableDeleteConfirm: "Bạn có chắc chắn muốn xóa bàn này?",
     tableDeleteError: "Không thể xóa bàn đã được sử dụng.",
     description: "Mô tả",
+    showing: "Hiển thị",
+    of: "của",
+    for: "cho",
+    show: "Hiển thị",
+    rows: "hàng",
+    page: "Trang",
+    regularCustomer: "Khách hàng thường",
+    goldCustomer: "Khách hàng vàng",
+    customerGroup: "Nhóm khách hàng",
+    walkInCustomer: "Khách hàng vãng lai",
+    backToPOS: "Quay lại POS",
+    
 
 
 

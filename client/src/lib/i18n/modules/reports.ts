@@ -74,7 +74,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productAnalysis: "Sản phẩm",
     employeeAnalysis: "Nhân viên",
     customerAnalysis: "Khách hàng",
-    channelAnalysis: "Kênh bán hàng",
+    channelAnalysis: "Hình thức bán hàng",
 
     // Chart and visual
     chartView: "Xem biểu đồ",
@@ -82,7 +82,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Filter labels
     salesMethod: "Phương thức bán hàng",
-    salesChannel: "Kênh bán hàng",
+    salesChannel: "Hình thức bán hàng",
     productFilter: "Sản phẩm",
     productFilterPlaceholder: "Tìm theo tên hoặc mã",
     customerFilter: "Khách hàng",
@@ -620,7 +620,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Sales chart table columns
     date: "날짜",
-    orderNumber: "주문 번호", 
+    orderNumber: "주문 번호",
     orders: "주문 수",
     subtotal: "소계",
     discount: "할인",
@@ -1139,7 +1139,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales chart table columns
     date: "Date",
     orderNumber: "Order Number",
-    orders: "Order Count", 
+    orders: "Order Count",
     subtotal: "Subtotal",
     discount: "Discount",
     revenue: "Revenue",
@@ -1456,8 +1456,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     loading: "Loading",
     noData: "No Data",
     noPaymentData: "No Payment Data",
-    noPaymentDataDescription:
-      "No payment transactions in the selected period",
+    noPaymentDataDescription: "No payment transactions in the selected period",
     salesDetails: "Sales Details",
     revenueExpenseDetails: "Revenue Expense Details",
     inventoryDetails: "Inventory Details",
