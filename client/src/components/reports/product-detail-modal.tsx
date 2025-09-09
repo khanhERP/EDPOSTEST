@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Tag, DollarSign, Warehouse, Calendar } from "lucide-react";
+import { Package, Tag, DollarSign, Warehouse, Calendar, Edit3, X } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 interface ProductDetailModalProps {
@@ -18,7 +18,7 @@ interface ProductDetailModalProps {
     id: number;
     name: string;
     sku: string;
-    price: string;
+    price: string | number;
     stock: number;
     categoryId: number;
     categoryName?: string;
@@ -26,9 +26,9 @@ interface ProductDetailModalProps {
     isActive: boolean;
     productType: number;
     trackInventory: boolean;
-    taxRate: string;
+    taxRate: string | number;
     priceIncludesTax: boolean;
-    afterTaxPrice: string;
+    afterTaxPrice: string | number;
     createdAt?: string;
     updatedAt?: string;
   } | null;
@@ -44,26 +44,37 @@ export function ProductDetailModal({
   if (!product) return null;
 
   const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (!amount && amount !== 0) return "0 ₫";
+    const num = typeof amount === 'string' ? parseFloat(amount) || 0 : amount;
     return `${num.toLocaleString('vi-VN')} ₫`;
   };
 
   const getProductTypeName = (type: number) => {
-    const types = {
-      1: "Sản phẩm",
-      2: "Combo",
-      3: "Dịch vụ",
+    const types: Record<number, string> = {
+      1: t("reports.product") || "Sản phẩm",
+      2: t("reports.combo") || "Combo", 
+      3: t("reports.service") || "Dịch vụ",
     };
-    return types[type as keyof typeof types] || "Sản phẩm";
+    return types[type] || types[1];
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            Chi tiết sản phẩm
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-blue-600" />
+              {t("reports.productDetails") || "Chi tiết sản phẩm"}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
@@ -75,13 +86,17 @@ export function ProductDetailModal({
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-24 h-24 object-cover rounded-lg border"
+                  className="w-24 h-24 object-cover rounded-lg border shadow-sm"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.nextElementSibling?.classList.remove('hidden');
+                  }}
                 />
-              ) : (
-                <div className="w-24 h-24 bg-gray-200 rounded-lg border flex items-center justify-center">
-                  <Package className="w-8 h-8 text-gray-400" />
-                </div>
-              )}
+              ) : null}
+              <div className={`w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg border flex items-center justify-center shadow-sm ${product.imageUrl ? 'hidden' : ''}`}>
+                <Package className="w-8 h-8 text-gray-400" />
+              </div>
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold">{product.name}</h3>
@@ -103,29 +118,29 @@ export function ProductDetailModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Pricing Information */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                Thông tin giá
+              <h4 className="font-medium text-gray-900 flex items-center gap-2 border-b pb-2">
+                <DollarSign className="w-4 h-4 text-green-600" />
+                {t("reports.priceInfo") || "Thông tin giá"}
               </h4>
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Giá gốc:</span>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-gray-600">{t("common.originalPrice") || "Giá gốc"}:</span>
                   <span className="font-medium">{formatCurrency(product.price)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Thuế suất:</span>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-gray-600">{t("common.taxRate") || "Thuế suất"}:</span>
                   <span className="font-medium">{product.taxRate}%</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Giá đã có thuế:</span>
-                  <span className="font-medium text-green-600">
+                <div className="flex justify-between items-center py-1 bg-green-50 px-2 rounded">
+                  <span className="text-gray-600">{t("common.afterTaxPrice") || "Giá đã có thuế"}:</span>
+                  <span className="font-semibold text-green-700">
                     {formatCurrency(product.afterTaxPrice)}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Bao gồm thuế:</span>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-gray-600">{t("common.includesTax") || "Bao gồm thuế"}:</span>
                   <Badge variant={product.priceIncludesTax ? "default" : "secondary"}>
-                    {product.priceIncludesTax ? "Có" : "Không"}
+                    {product.priceIncludesTax ? (t("common.yes") || "Có") : (t("common.no") || "Không")}
                   </Badge>
                 </div>
               </div>
@@ -133,25 +148,33 @@ export function ProductDetailModal({
 
             {/* Inventory Information */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                <Warehouse className="w-4 h-4" />
-                Thông tin kho
+              <h4 className="font-medium text-gray-900 flex items-center gap-2 border-b pb-2">
+                <Warehouse className="w-4 h-4 text-blue-600" />
+                {t("inventory.inventoryInfo") || "Thông tin kho"}
               </h4>
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tồn kho:</span>
-                  <span className="font-medium">{product.stock}</span>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-gray-600">{t("common.stock") || "Tồn kho"}:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{product.stock}</span>
+                    <Badge 
+                      variant={product.stock > 10 ? "default" : product.stock > 0 ? "secondary" : "destructive"}
+                      className="text-xs"
+                    >
+                      {product.stock > 10 ? "Đủ hàng" : product.stock > 0 ? "Sắp hết" : "Hết hàng"}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Theo dõi kho:</span>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-gray-600">{t("inventory.trackInventory") || "Theo dõi kho"}:</span>
                   <Badge variant={product.trackInventory ? "default" : "secondary"}>
-                    {product.trackInventory ? "Có" : "Không"}
+                    {product.trackInventory ? (t("common.yes") || "Có") : (t("common.no") || "Không")}
                   </Badge>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Nhóm hàng:</span>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-gray-600">{t("common.category") || "Nhóm hàng"}:</span>
                   <span className="font-medium">
-                    {product.categoryName || `Danh mục ${product.categoryId}`}
+                    {product.categoryName || `${t("common.category")} ${product.categoryId}`}
                   </span>
                 </div>
               </div>
@@ -181,18 +204,24 @@ export function ProductDetailModal({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
-              Đóng
-            </Button>
-            <Button 
-              onClick={() => {
-                window.location.href = `/inventory?productId=${product.id}&action=edit`;
-              }}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Chỉnh sửa sản phẩm
-            </Button>
+          <div className="flex justify-between items-center pt-4 border-t">
+            <div className="text-xs text-gray-500">
+              {t("common.productId") || "ID"}: #{product.id}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose}>
+                {t("common.close") || "Đóng"}
+              </Button>
+              <Button 
+                onClick={() => {
+                  window.location.href = `/inventory?productId=${product.id}&action=edit`;
+                }}
+                className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                {t("common.edit") || "Chỉnh sửa"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
