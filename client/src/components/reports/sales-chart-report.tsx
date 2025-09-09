@@ -1603,7 +1603,7 @@ export function SalesChartReport() {
                         className="text-center border-r bg-green-50 min-w-[150px]"
                         rowSpan={2}
                       >
-                        {t("reports.seller")}
+                        {t("reports.employeeName")}
                       </TableHead>
                       <TableHead
                         className="text-center border-r min-w-[100px]"
