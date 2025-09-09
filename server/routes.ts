@@ -689,60 +689,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  // Get orders by date range
-  app.get(
-    "/api/orders/date-range/:startDate/:endDate",
-    async (req: TenantRequest, res) => {
-      try {
-        const { startDate, endDate } = req.params;
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 20;
-
-        const tenantDb = await getTenantDatabase(req);
-
-        // Use direct database query with proper ordering
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        end.setUTCHours(23, 59, 59, 999);
-
-        const allOrders = await db
-          .select()
-          .from(orders)
-          .where(and(gte(orders.orderedAt, start), lte(orders.orderedAt, end)))
-          .orderBy(
-            desc(orders.orderedAt), // Primary sort by order date (newest first)
-            desc(orders.id), // Secondary sort by ID (newest first)
-          );
-
-        console.log("Orders by date range - Total found:", allOrders.length);
-
-        // Paginate results after sorting
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
-        const paginatedOrders = allOrders.slice(startIndex, endIndex);
-
-        console.log("Orders by date range - Paginated result:", {
-          page,
-          limit,
-          total: allOrders.length,
-          returned: paginatedOrders.length,
-          newestOrder: paginatedOrders[0]
-            ? {
-                id: paginatedOrders[0].id,
-                orderNumber: paginatedOrders[0].orderNumber,
-                orderedAt: paginatedOrders[0].orderedAt,
-              }
-            : null,
-        });
-
-        res.json(paginatedOrders);
-      } catch (error) {
-        console.error("Error fetching orders by date range:", error);
-        res.status(500).json({ error: "Failed to fetch orders" });
-      }
-    },
-  );
-
   // Get order items by date range
   app.get(
     "/api/order-items/date-range/:startDate/:endDate",
@@ -906,7 +852,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/order-items/:startDate/:endDate", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate } = req.params;
-      
+
       console.log("Simple order items by date range API called:", { startDate, endDate });
 
       let tenantDb;
@@ -1992,25 +1938,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all order items 
+  // Get all order items
   app.get("/api/order-items", async (req: TenantRequest, res) => {
-    try {
-      console.log("=== GET ALL ORDER ITEMS API CALLED ===");
-      
-      let tenantDb;
-      try {
-        tenantDb = await getTenantDatabase(req);
-        console.log("✅ Tenant database connection obtained for all order items");
-      } catch (dbError) {
-        console.error("❌ Failed to get tenant database for all order items:", dbError);
-        tenantDb = null;
-      }
+    console.log("=== GET ALL ORDER ITEMS API CALLED ===");
 
-      // Use tenant database or fallback to default
-      const database = tenantDb || db;
+    try {
+      const db = await getTenantDatabase(req);
+      console.log("✅ Tenant database connection obtained for all order items");
 
       console.log("Fetching all order items from database...");
-      const allOrderItems = await database
+      const items = await db
         .select({
           id: orderItemsTable.id,
           orderId: orderItemsTable.orderId,
@@ -2018,16 +1955,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           productName: orderItemsTable.productName,
           quantity: orderItemsTable.quantity,
           unitPrice: orderItemsTable.unitPrice,
-          total: orderItemsTable.total,
-          notes: orderItemsTable.notes,
+          totalPrice: orderItemsTable.totalPrice,
+          notes: orderItemsTable.notes
         })
-        .from(orderItemsTable)
-        .orderBy(desc(orderItemsTable.id));
+        .from(orderItemsTable);
 
-      console.log(`Found ${allOrderItems.length} total order items`);
+      console.log(`Found ${items.length} total order items`);
 
-      // Ensure we always return an array
-      const safeItems = Array.isArray(allOrderItems) ? allOrderItems : [];
+      // Ensure we always return an array, even if empty
+      const safeItems = Array.isArray(items) ? items : [];
       res.json(safeItems);
     } catch (error) {
       console.error("=== GET ALL ORDER ITEMS ERROR ===");
@@ -4695,7 +4631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health/db", async (req, res) => {
     try {
       // Test basic connection with simple query
-      const result = await db.execute(sql`SELECT 
+      const result = await db.execute(sql`SELECT
         current_database() as database_name,
         current_user as user_name,
         version() as postgres_version,

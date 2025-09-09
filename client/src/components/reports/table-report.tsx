@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -209,6 +208,14 @@ export function TableReport() {
       orderItemsCount: orderItems?.length || 0,
       orderItemsIsArray: Array.isArray(orderItems),
       orderItemsAvailable: !!orderItems,
+      orderItemsType: typeof orderItems,
+      orderItemsFirst3: orderItems?.slice(0, 3)?.map(item => ({
+        id: item?.id,
+        orderId: item?.orderId,
+        orderIdType: typeof item?.orderId,
+        productName: item?.productName,
+        quantity: item?.quantity
+      })) || [],
       sampleOrderItems: orderItems?.slice(0, 5) || [],
       allOrderItemsByOrder: completedOrders.map(order => ({
         orderId: order.id,
@@ -250,11 +257,11 @@ export function TableReport() {
     // Process completed orders
     completedOrders.forEach((order: any) => {
       const tableId = order.tableId;
-      
+
       // Only process orders with valid tableId
       if (tableId && tableStatsMap.has(tableId)) {
         const stats = tableStatsMap.get(tableId);
-        
+
         stats.totalRevenue += parseFloat(order.total || 0);
         stats.totalOrders += 1;
         stats.totalCustomers += order.customerCount || 1;
@@ -284,7 +291,7 @@ export function TableReport() {
 
           // Find all order items that belong to this order
           const itemsForThisOrder = orderItems.filter((item: any) => item.orderId === order.id);
-          
+
           // Sum up all quantities for this order
           let totalQuantityForOrder = 0;
           itemsForThisOrder.forEach((item: any) => {
@@ -292,10 +299,10 @@ export function TableReport() {
             totalQuantityForOrder += quantity;
             console.log(`  📦 Item ${item.id}: ${item.productName} x${quantity} (orderId: ${item.orderId})`);
           });
-          
+
           // Add to table stats
           stats.itemsSold += totalQuantityForOrder;
-          
+
           console.log(`✅ Table ${tableId} - Order ${order.id}: Found ${itemsForThisOrder.length} items, total quantity: ${totalQuantityForOrder}, running total: ${stats.itemsSold}`);
         } else {
           console.error(`❌ Table ${tableId} - Order ${order.id}: orderItems is not available`, {
@@ -354,15 +361,15 @@ export function TableReport() {
     });
 
     // Calculate totals
-    const totalRevenue = completedOrders.reduce((sum: number, order: any) => 
+    const totalRevenue = completedOrders.reduce((sum: number, order: any) =>
       sum + parseFloat(order.total || 0), 0
     );
     const totalOrders = completedOrders.length;
-    const totalCustomers = completedOrders.reduce((sum: number, order: any) => 
+    const totalCustomers = completedOrders.reduce((sum: number, order: any) =>
       sum + (order.customerCount || 1), 0
     );
-    const averageUtilization = tableStats.length > 0 
-      ? tableStats.reduce((sum, stats) => sum + stats.totalOrders, 0) / tableStats.length 
+    const averageUtilization = tableStats.length > 0
+      ? tableStats.reduce((sum, stats) => sum + stats.totalOrders, 0) / tableStats.length
       : 0;
 
     // Sort tables by different metrics
