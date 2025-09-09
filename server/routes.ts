@@ -697,46 +697,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { startDate, endDate } = req.params;
         const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 20;
+        const limit = parseInt(req.query.limit as string) || 1000; // Increase limit to get all data
 
         const tenantDb = await getTenantDatabase(req);
 
-        // Use direct database query with proper ordering
+        // Parse dates with proper timezone handling
         const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0); // Start of day in local timezone
+        
         const end = new Date(endDate);
-        end.setUTCHours(23, 59, 59, 999);
+        end.setHours(23, 59, 59, 999); // End of day in local timezone
 
-        const allOrders = await db
-          .select()
-          .from(orders)
-          .where(and(gte(orders.orderedAt, start), lte(orders.orderedAt, end)))
-          .orderBy(
-            desc(orders.orderedAt), // Primary sort by order date (newest first)
-            desc(orders.id), // Secondary sort by ID (newest first)
-          );
-
-        console.log("Orders by date range - Total found:", allOrders.length);
-
-        // Paginate results after sorting
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
-        const paginatedOrders = allOrders.slice(startIndex, endIndex);
-
-        console.log("Orders by date range - Paginated result:", {
-          page,
-          limit,
-          total: allOrders.length,
-          returned: paginatedOrders.length,
-          newestOrder: paginatedOrders[0]
-            ? {
-                id: paginatedOrders[0].id,
-                orderNumber: paginatedOrders[0].orderNumber,
-                orderedAt: paginatedOrders[0].orderedAt,
-              }
-            : null,
+        console.log("Date range filter:", {
+          startDate,
+          endDate,
+          startParsed: start.toISOString(),
+          endParsed: end.toISOString()
         });
 
-        res.json(paginatedOrders);
+        // Get ALL orders and filter by date range properly
+        const allOrdersInDb = await db
+          .select()
+          .from(orders)
+          .orderBy(desc(orders.orderedAt), desc(orders.id));
+
+        // Filter orders by date range in application layer for better control
+        const filteredOrders = allOrdersInDb.filter(order => {
+          if (!order.orderedAt) return false;
+          
+          const orderDate = new Date(order.orderedAt);
+          
+          // Normalize dates for comparison (remove time component)
+          const orderDateOnly = new Date(orderDate);
+          orderDateOnly.setHours(0, 0, 0, 0);
+          
+          const startDateOnly = new Date(start);
+          startDateOnly.setHours(0, 0, 0, 0);
+          
+          const endDateOnly = new Date(end);
+          endDateOnly.setHours(0, 0, 0, 0);
+          
+          return orderDateOnly >= startDateOnly && orderDateOnly <= endDateOnly;
+        });
+
+        console.log("Orders by date range - Filter results:", {
+          totalOrdersInDb: allOrdersInDb.length,
+          filteredCount: filteredOrders.length,
+          dateRange: `${startDate} to ${endDate}`,
+          sampleFilteredOrder: filteredOrders[0] ? {
+            id: filteredOrders[0].id,
+            orderNumber: filteredOrders[0].orderNumber,
+            orderedAt: filteredOrders[0].orderedAt,
+            status: filteredOrders[0].status
+          } : null
+        });
+
+        // Return all filtered orders (no pagination for reports)
+        res.json(filteredOrders);
       } catch (error) {
         console.error("Error fetching orders by date range:", error);
         res.status(500).json({ error: "Failed to fetch orders" });
