@@ -208,11 +208,18 @@ export function TableReport() {
       totalTables: validTables.length,
       orderItemsCount: orderItems?.length || 0,
       sampleOrder: completedOrders[0] || null,
-      sampleOrderItems: orderItems?.slice(0, 3) || [],
+      sampleOrderItems: orderItems?.slice(0, 5) || [],
       allOrderItemsByOrder: completedOrders.map(order => ({
         orderId: order.id,
         orderNumber: order.orderNumber,
-        itemsCount: orderItems?.filter((item: any) => item.orderId === order.id)?.length || 0
+        tableId: order.tableId,
+        itemsCount: orderItems?.filter((item: any) => item.orderId === order.id)?.length || 0,
+        actualItems: orderItems?.filter((item: any) => item.orderId === order.id)?.map(item => ({
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity
+        })) || []
       }))
     });
 
@@ -254,20 +261,41 @@ export function TableReport() {
         // Count number of different products in order (not quantity)
         if (orderItems && Array.isArray(orderItems)) {
           const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
-          console.log(`Table Report - Order ${order.id} (${order.orderNumber}):`, {
-            relatedOrderItems: relatedOrderItems.length,
-            orderItemsDetails: relatedOrderItems.map(item => ({ id: item.id, orderId: item.orderId, productId: item.productId, quantity: item.quantity }))
+          console.log(`🔍 Table Report - Processing Order ${order.id} (${order.orderNumber}) for Table ${order.tableId}:`, {
+            orderTotal: order.total,
+            status: order.status,
+            tableId: order.tableId,
+            relatedOrderItemsCount: relatedOrderItems.length,
+            orderItemsDetails: relatedOrderItems.map(item => ({ 
+              id: item.id, 
+              orderId: item.orderId, 
+              productId: item.productId, 
+              productName: item.productName,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice
+            })),
+            allOrderItemsInSystem: orderItems.length,
+            orderItemsSample: orderItems.slice(0, 3).map(item => ({ 
+              id: item.id, 
+              orderId: item.orderId, 
+              productId: item.productId
+            }))
           });
+          
           if (relatedOrderItems.length > 0) {
             // Count unique products (number of different items in order)
-            stats.itemsSold += relatedOrderItems.length;
+            const itemsToAdd = relatedOrderItems.length;
+            stats.itemsSold += itemsToAdd;
+            console.log(`✅ Added ${itemsToAdd} items to table ${tableId} stats. Total items now: ${stats.itemsSold}`);
           } else {
             // Fallback: estimate 1 product per order
             stats.itemsSold += 1;
+            console.log(`⚠️ No order items found for order ${order.id}, adding 1 as fallback`);
           }
         } else {
           // Fallback: estimate 1 product per order  
           stats.itemsSold += 1;
+          console.log(`⚠️ No orderItems array available, adding 1 as fallback for order ${order.id}`);
         }
       }
     });
@@ -294,6 +322,19 @@ export function TableReport() {
         // If revenue is equal (including 0), sort by table ID
         return a.tableId - b.tableId;
       });
+
+    // Final debug summary
+    console.log("🎯 Table Report Final Summary:", {
+      totalCompletedOrders: completedOrders.length,
+      totalOrderItemsInSystem: orderItems?.length || 0,
+      tableStatsWithItems: tableStats.filter(s => s.itemsSold > 0).map(s => ({
+        tableId: s.tableId,
+        tableName: s.tableName,
+        totalOrders: s.totalOrders,
+        itemsSold: s.itemsSold,
+        revenue: s.totalRevenue
+      }))
+    });
 
     // Calculate totals
     const totalRevenue = completedOrders.reduce((sum: number, order: any) => 
