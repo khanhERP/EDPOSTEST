@@ -45,7 +45,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     invoiceNumber: "송장 번호",
     subtotalAmount: "소계 금액",
     tableOrder: "테이블 주문",
-    dineIn: "식당에서 식사",
+    dineIn: "매장 식사",
     discount: "할인",
     OrderDetails: "주문 상세 정보",
     orderCode: "주문 코드",
@@ -497,6 +497,14 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     backToPOS: "Back to POS",
     description: "Description",
 
+    // Sales channel report specific
+    dineIn: "Dine In",
+    takeaway: "Takeaway",
+    cancelled: "Cancelled",
+    salesMethod: "Sales Method",
+
+    email: "Email",
+
     // Payment method modal
     selectPaymentMethod: "Select Payment Method",
     totalAmount: "Total Amount",
@@ -673,7 +681,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     phone: "Điện thoại",
     cashier: "Thu ngân",
     salesType: "Hình thức bán",
-    dineIn: "Bán tại bàn",
+    dineIn: "Ăn tại chỗ",
     tableOrder: "Bàn",
     itemList: "Danh sách hàng hóa",
     itemCode: "Mã hàng",
@@ -755,10 +763,16 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     tableDeleteConfirm: "Bạn có chắc chắn muốn xóa bàn này?",
     tableDeleteError: "Không thể xóa bàn đã được sử dụng.",
     description: "Mô tả",
-    
-      
+
+
 
     email: "Email",
+
+    // Sales channel report specific
+    dineIn: "Ăn tại chỗ",
+    takeaway: "Mang về",
+    cancelled: "Đã hủy",
+    salesMethod: "Hình thức bán hàng",
 
     // Payment method modal
     selectPaymentMethod: "Chọn phương thức thanh toán",

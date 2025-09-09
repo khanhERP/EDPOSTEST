@@ -484,7 +484,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cashFlow: "Dòng tiền",
 
     // Customer reports
-    channelSalesReport: "Báo cáo bán hàng kênh",
+    channelSalesReport: "Báo cáo hình thức bán hàng",
 
     // Supplier reports
     supplierReportDescription: "Báo cáo chi tiết về nhà cung cấp",
@@ -998,7 +998,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cashFlow: "현금 흐름",
 
     // Customer reports
-    channelSalesReport: "채널 매출 보고서",
+    channelSalesReport: "판매 방식 보고서",
 
     // Supplier reports
     supplierReportDescription: "공급업체에 대한 상세 보고서",
@@ -1515,7 +1515,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cashFlow: "Cash Flow",
 
     // Customer reports
-    channelSalesReport: "Channel Sales Report",
+    channelSalesReport: "Sales Method Report",
 
     // Supplier reports
     supplierReportDescription: "Detailed supplier report",
