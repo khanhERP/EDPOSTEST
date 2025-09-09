@@ -246,21 +246,19 @@ export function TableReport() {
         const hour = new Date(order.orderedAt).getHours();
         stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
 
-        // Count items sold from order_items if available
+        // Count number of different products in order (not quantity)
         if (orderItems && Array.isArray(orderItems)) {
           const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
           if (relatedOrderItems.length > 0) {
-            const itemsCount = relatedOrderItems.reduce((sum, oi) => sum + (parseInt(oi.quantity) || 0), 0);
-            stats.itemsSold += itemsCount;
+            // Count unique products (number of different items in order)
+            stats.itemsSold += relatedOrderItems.length;
           } else {
-            // Fallback: estimate based on order total (each 50k = 1 item approximately)
-            const estimatedItems = Math.max(1, Math.floor(parseFloat(order.total || 0) / 50000));
-            stats.itemsSold += estimatedItems;
+            // Fallback: estimate 1 product per order
+            stats.itemsSold += 1;
           }
         } else {
-          // Fallback: estimate based on order total (each 50k = 1 item approximately)  
-          const estimatedItems = Math.max(1, Math.floor(parseFloat(order.total || 0) / 50000));
-          stats.itemsSold += estimatedItems;
+          // Fallback: estimate 1 product per order
+          stats.itemsSold += 1;
         }
       }
     });
