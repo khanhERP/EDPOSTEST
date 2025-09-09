@@ -154,6 +154,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalAmount: "Tổng số tiền",
     totalDiscount: "Tổng giảm giá",
     categoryName: "Danh mục",
+    productGroup: "Nhóm sản phẩm",
 
     // Report titles
     timeSalesReport: "Báo cáo bán hàng theo thời gian",
@@ -672,6 +673,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalAmount: "총 금액",
     totalDiscount: "총 할인",
     categoryName: "카테고리",
+    productGroup: "상품 그룹",
 
     // Report titles
     timeSalesReport: "시간별 매출 보고서",
@@ -1192,6 +1194,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalAmount: "Total Amount",
     totalDiscount: "Total Discount",
     categoryName: "Category",
+    productGroup: "Product Group",
 
     // Report titles
     timeSalesReport: "Time Sales Report",

@@ -4185,7 +4185,7 @@ export function SalesChartReport() {
                         {t("reports.revenue")}
                       </TableHead>
                       <TableHead className="text-center">
-                        {t("reports.categoryName")}
+                        {t("reports.productGroup")}
                       </TableHead>
                     </TableRow>
                   </TableHeader>
