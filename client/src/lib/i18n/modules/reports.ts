@@ -99,10 +99,28 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inactive: "Không hoạt động",
     active: "Hoạt động",
 
-    // Time analysis specific keys
-    timeSalesReport: "Báo cáo bán hàng theo thời gian",
-    invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
-    returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
+    // Chart and visual
+    chartView: "Xem biểu đồ",
+    visualRepresentation: "Trực quan hóa dữ liệu",
+
+    // Filter labels
+    salesMethod: "Hình thức bán hàng",
+    salesChannel: "Hình thức bán hàng",
+    productFilter: "Sản phẩm",
+    productFilterPlaceholder: "Tìm theo tên hoặc mã",
+    customerFilter: "Khách hàng",
+    customerFilterPlaceholder: "Tìm theo tên, số điện thoại hoặc mã",
+    customerCodePlaceholder: "Tìm theo mã khách hàng",
+    orderNumberPlaceholder: "Tìm theo số đơn bán",
+    employeeFilter: "Tìm kiếm nhân viên",
+    employeeFilterPlaceholder: "Tìm theo tên nhân viên",
+    employeeId: "Mã nhân viên",
+    customerId: "Mã khách hàng",
+    customerName: "Tên khách hàng",
+    vip: "Khách VIP",
+    newCustomer: "Khách hàng mới",
+    inactive: "Không hoạt động",
+    active: "Hoạt động",
 
     // Sales chart table columns
     date: "Ngày",
@@ -111,6 +129,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     subtotal: "Tạm tính",
     discount: "Giảm giá",
     revenue: "Doanh thu",
+    totalSalesRevenue: "Tổng thu từ bán hàng",
     tax: "Thuế",
     total: "Tổng tiền",
     unitPrice: "Đơn giá",
@@ -136,9 +155,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryName: "Danh mục",
 
     // Report titles
+    timeSalesReport: "Báo cáo bán hàng theo thời gian",
     inventoryReport: "Báo cáo kho",
     salesReportByProduct: "Báo cáo bán hàng theo sản phẩm",
     profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
+    invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
+    returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
 
     // End of day report
     endOfDayReport: "Báo cáo cuối ngày",
@@ -625,6 +647,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     subtotal: "소계",
     discount: "할인",
     revenue: "매출",
+    totalSalesRevenue: "총 매출액",
     tax: "세금",
     total: "합계",
     totalCustomerPayment: "총 고객 결제",
@@ -1143,6 +1166,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     subtotal: "Subtotal",
     discount: "Discount",
     revenue: "Revenue",
+    totalSalesRevenue: "Total Sales Revenue",
     tax: "Tax",
     total: "Total",
     totalCustomerPayment: "Total Customer Payment",
