@@ -1392,7 +1392,7 @@ export function SalesChartReport() {
           // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
           const itemDiscountRatio = orderItemsForOrder.length > 0 ? itemTotal / orderSubtotal : 0;
           const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
-          const itemTax = orderTax * item      } // Thuế theo tỷ lệ
+          const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
           const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
           const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
 
