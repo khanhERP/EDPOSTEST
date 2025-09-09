@@ -199,7 +199,7 @@ export function TableReport() {
       }
     });
 
-    console.log("Table Report Debug (Orders Only):", {
+    console.log("🍽️ Table Report Debug (Items Counting Focus):", {
       dateRange,
       startDate,
       endDate,
@@ -207,7 +207,8 @@ export function TableReport() {
       completedOrders: completedOrders.length,
       totalTables: validTables.length,
       orderItemsCount: orderItems?.length || 0,
-      sampleOrder: completedOrders[0] || null,
+      orderItemsIsArray: Array.isArray(orderItems),
+      orderItemsAvailable: !!orderItems,
       sampleOrderItems: orderItems?.slice(0, 5) || [],
       allOrderItemsByOrder: completedOrders.map(order => ({
         orderId: order.id,
@@ -218,9 +219,13 @@ export function TableReport() {
           id: item.id,
           productId: item.productId,
           productName: item.productName,
-          quantity: item.quantity
+          quantity: item.quantity,
+          orderId: item.orderId
         })) || []
-      }))
+      })),
+      totalItemsInSystem: orderItems?.length || 0,
+      uniqueOrderIds: [...new Set(orderItems?.map((item: any) => item.orderId) || [])],
+      completedOrderIds: completedOrders.map(o => o.id)
     });
 
     // Initialize table stats map
@@ -261,7 +266,17 @@ export function TableReport() {
         // Count number of order items for this order
         if (orderItems && Array.isArray(orderItems)) {
           const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === order.id);
+          console.log(`📊 Table ${tableId} - Order ${order.id}: found ${relatedOrderItems.length} items`, {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            relatedItems: relatedOrderItems.map(item => ({
+              productName: item.productName,
+              quantity: item.quantity
+            }))
+          });
           stats.itemsSold += relatedOrderItems.length;
+        } else {
+          console.warn(`⚠️ Table ${tableId} - Order ${order.id}: No orderItems data available`);
         }
       }
     });
