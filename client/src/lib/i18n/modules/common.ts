@@ -846,6 +846,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     show: "Hiển thị",
     rows: "hàng",
     page: "Trang",
+    total: "Tổng cộng",
     regularCustomer: "Khách hàng thường",
     goldCustomer: "Khách hàng vàng",
     customerGroup: "Nhóm khách hàng",
