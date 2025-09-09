@@ -2000,11 +2000,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
       );
-    }
   };
 
   // Employee Report with Pagination State
@@ -3353,6 +3353,7 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
