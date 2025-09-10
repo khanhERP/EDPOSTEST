@@ -2795,44 +2795,10 @@ export function SalesChartReport() {
                           })()}
                         </TableRow>
                       )}
-
-                    {/* Summary Row */}
-                    {data.length > 0 && (
-                      <TableRow className="bg-gray-100 font-bold border-t-2">
-                        <TableCell className="text-center font-bold">
-                          TỔNG CỘNG
-                        </TableCell>
-                        <TableCell className="text-center font-bold">
-                          {totalProducts} sản phẩm
-                        </TableCell>
-                        <TableCell className="text-center font-bold">
-                          Món
-                        </TableCell>
-                        <TableCell className="text-center font-bold">
-                          <Badge variant="outline" className="font-bold">
-                            {totalQuantity}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-bold text-blue-600">
-                          {formatCurrency(totalRevenue)}
-                        </TableCell>
-                        {analysisType !== "employee" && (
-                          <TableCell className="text-right font-bold text-red-600">
-                            {formatCurrency(0)}
-                          </TableCell>
-                        )}
-                        <TableCell className="text-right font-bold text-green-600">
-                          {formatCurrency(totalRevenue)}
-                        </TableCell>
-                        <TableCell className="text-center font-bold">
-                          -
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </div>
 
               {/* Pagination Controls for Employee Report */}
               {data.length > 0 && (
