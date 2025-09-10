@@ -2398,16 +2398,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .set(updateData)
         .where(eq(products.id, productId));
 
-      // Create inventory transaction record
-      await db.insert(inventoryTransactions).values({
-        productId,
-        type,
-        quantity,
-        previousStock: product.stock,
-        newStock,
-        notes: notes || null,
-        createdAt: new Date().toISOString(),
-      });
+      // Create inventory transaction record using raw SQL to match exact schema
+      await db.execute(sql`
+        INSERT INTO inventory_transactions (product_id, type, quantity, previous_stock, new_stock, notes, created_at)
+        VALUES (${productId}, ${type}, ${quantity}, ${product.stock}, ${newStock}, ${notes || null}, ${new Date().toISOString()})
+      `);
 
       res.json({ success: true, newStock });
     } catch (error) {
