@@ -131,22 +131,29 @@ export function initializeWebSocketServer(server: Server) {
             qrCodeUrl: data.qrCodeUrl ? `${data.qrCodeUrl.substring(0, 50)}...` : 'null',
             amount: data.amount,
             clientsCount: clients.size,
-            transactionUuid: data.transactionUuid
+            transactionUuid: data.transactionUuid,
+            hasValidQrData: !!(data.qrCodeUrl && data.amount)
           });
 
           // Broadcast QR payment info to all clients (especially customer displays)
           let qrBroadcastCount = 0;
+          const qrMessage = {
+            type: 'qr_payment',
+            qrCodeUrl: data.qrCodeUrl,
+            amount: Number(data.amount) || 0,
+            paymentMethod: data.paymentMethod || 'QR Code',
+            transactionUuid: data.transactionUuid,
+            timestamp: data.timestamp || new Date().toISOString()
+          };
+
           clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN && client !== ws) {
               try {
-                client.send(JSON.stringify({
-                  type: 'qr_payment',
-                  qrCodeUrl: data.qrCodeUrl,
-                  amount: data.amount,
-                  paymentMethod: data.paymentMethod,
-                  transactionUuid: data.transactionUuid,
-                  timestamp: data.timestamp || new Date().toISOString()
-                }));
+                console.log(`📤 Sending QR payment to client (type: ${(client as any).clientType || 'unknown'}):`, {
+                  hasQrCodeUrl: !!qrMessage.qrCodeUrl,
+                  amount: qrMessage.amount
+                });
+                client.send(JSON.stringify(qrMessage));
                 qrBroadcastCount++;
               } catch (error) {
                 console.error('❌ Error broadcasting QR payment to client:', error);
