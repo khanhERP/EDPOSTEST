@@ -704,7 +704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Parse dates with proper timezone handling
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0); // Start of day in local timezone
-
+        
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999); // End of day in local timezone
 
@@ -724,19 +724,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Filter orders by date range in application layer for better control
         const filteredOrders = allOrdersInDb.filter(order => {
           if (!order.orderedAt) return false;
-
+          
           const orderDate = new Date(order.orderedAt);
-
+          
           // Normalize dates for comparison (remove time component)
           const orderDateOnly = new Date(orderDate);
           orderDateOnly.setHours(0, 0, 0, 0);
-
+          
           const startDateOnly = new Date(start);
           startDateOnly.setHours(0, 0, 0, 0);
-
+          
           const endDateOnly = new Date(end);
           endDateOnly.setHours(0, 0, 0, 0);
-
+          
           return orderDateOnly >= startDateOnly && orderDateOnly <= endDateOnly;
         });
 
@@ -2296,10 +2296,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/current-cart', async (req, res) => {
     try {
       console.log('📱 Customer Display: Current cart API called');
-
+      
       // Get store settings for customer display
       const storeSettings = await storage.getStoreSettings();
-
+      
       const currentCartState = {
         cart: [],
         subtotal: 0,
@@ -2308,7 +2308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storeInfo: storeSettings,
         qrPayment: null
       };
-
+      
       console.log('📱 Customer Display: Current cart API returning state:', {
         cartItems: currentCartState.cart.length,
         subtotal: currentCartState.subtotal,
@@ -2317,7 +2317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasStoreInfo: !!currentCartState.storeInfo,
         storeName: currentCartState.storeInfo?.storeName
       });
-
+      
       res.json(currentCartState);
     } catch (error) {
       console.error('❌ Error fetching current cart:', error);
@@ -3844,7 +3844,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           categoryName: categories.name,
           productType: products.productType,
           unitPrice: orderItemsTable.unitPrice,
-          originalPrice: products.price, // Include originalPrice from products table
           quantity: orderItemsTable.quantity,
           total: orderItemsTable.total,
           orderId: orderItemsTable.orderId,
@@ -3881,11 +3880,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           existing.totalQuantity += quantity;
           existing.totalRevenue += revenue;
           existing.orderCount += 1;
-          existing.averageOrderValue = existing.totalRevenue / existing.orderCount;
-          // Cập nhật originalPrice nếu chưa có
-          if (!existing.originalPrice && item.originalPrice) {
-            existing.originalPrice = Number(item.originalPrice || 0);
-          }
         } else {
           productMap.set(productId, {
             productId: item.productId,
@@ -3894,12 +3888,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             categoryId: item.categoryId,
             categoryName: item.categoryName,
             productType: item.productType,
-            unitPrice: Number(item.unitPrice || 0), // Giá trong order_items
-            originalPrice: Number(item.originalPrice || 0), // Giá gốc từ products
             totalQuantity: quantity,
             totalRevenue: revenue,
+            averagePrice: Number(item.unitPrice || 0),
             orderCount: 1,
-            averageOrderValue: revenue,
           });
         }
       });
@@ -4627,9 +4619,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/test-customer-display', async (req, res) => {
     try {
       const { testCart } = req.body;
-
+      
       console.log('🧪 Test customer display endpoint called with cart:', testCart);
-
+      
       // Simulate a cart update broadcast
       if (wss) {
         const testMessage = JSON.stringify({
@@ -4658,7 +4650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         console.log(`🧪 Test message sent to ${clientCount} WebSocket clients`);
-
+        
         res.json({
           success: true,
           message: `Test cart update sent to ${clientCount} connected clients`,
@@ -4683,8 +4675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health/db", async (req, res) => {
     try {
       // Test basic connection with simple query
-      const result = await db.execute(sql`
-      SELECT 
+      const result = await db.execute(sql`SELECT 
         current_database() as database_name,
         current_user as user_name,
         version() as postgres_version,
