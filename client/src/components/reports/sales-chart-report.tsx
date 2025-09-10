@@ -906,7 +906,7 @@ export function SalesChartReport() {
                                   {formatCurrency(actualRevenue)}
                                 </TableCell>
                                 <TableCell className="text-right border-r min-w-[120px] px-4">
-                                  {tax > 0 ? `${((tax / actualRevenue) * 100).toFixed(1)}%` : "0%"}
+                                  {formatCurrency(tax)}
                                 </TableCell>
                                 <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                                   {formatCurrency(data.subtotal + tax)}
