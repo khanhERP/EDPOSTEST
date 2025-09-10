@@ -690,6 +690,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // API lấy danh sách đơn hàng với filter và pagination
+  app.get("/api/orders/list", async (req: TenantRequest, res) => {
+    try {
+      const { 
+        startDate, 
+        endDate, 
+        customerName, 
+        orderNumber, 
+        customerCode,
+        status,
+        salesChannel,
+        page = "1", 
+        limit = "20",
+        sortBy = "orderedAt",
+        sortOrder = "desc"
+      } = req.query;
+
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+
+      console.log("🔍 GET /api/orders/list - Filter params:", {
+        startDate, endDate, customerName, orderNumber, customerCode,
+        status, salesChannel, page: pageNum, limit: limitNum
+      });
+
+      const tenantDb = await getTenantDatabase(req);
+      const database = tenantDb || db;
+
+      // Build where conditions
+      const whereConditions = [];
+
+      // Date range filter
+      if (startDate && endDate) {
+        const start = new Date(startDate as string);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+        
+        whereConditions.push(
+          gte(orders.orderedAt, start),
+          lte(orders.orderedAt, end)
+        );
+      }
+
+      // Customer name filter
+      if (customerName) {
+        whereConditions.push(
+          ilike(orders.customerName, `%${customerName}%`)
+        );
+      }
+
+      // Order number filter
+      if (orderNumber) {
+        whereConditions.push(
+          ilike(orders.orderNumber, `%${orderNumber}%`)
+        );
+      }
+
+      // Status filter
+      if (status && status !== "all") {
+        whereConditions.push(eq(orders.status, status as string));
+      }
+
+      // Sales channel filter
+      if (salesChannel && salesChannel !== "all") {
+        whereConditions.push(eq(orders.salesChannel, salesChannel as string));
+      }
+
+      // Get total count for pagination
+      const [totalCountResult] = await database
+        .select({ count: count() })
+        .from(orders)
+        .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+      const totalCount = totalCountResult?.count || 0;
+      const totalPages = Math.ceil(totalCount / limitNum);
+
+      // Get paginated orders
+      const orderBy = sortOrder === "asc" 
+        ? asc(orders[sortBy as keyof typeof orders] || orders.orderedAt)
+        : desc(orders[sortBy as keyof typeof orders] || orders.orderedAt);
+
+      const ordersResult = await database
+        .select({
+          id: orders.id,
+          orderNumber: orders.orderNumber,
+          tableId: orders.tableId,
+          employeeId: orders.employeeId,
+          status: orders.status,
+          customerName: orders.customerName,
+          customerCount: orders.customerCount,
+          subtotal: orders.subtotal,
+          tax: orders.tax,
+          total: orders.total,
+          paymentMethod: orders.paymentMethod,
+          paymentStatus: orders.paymentStatus,
+          salesChannel: orders.salesChannel,
+          einvoiceStatus: orders.einvoiceStatus,
+          templateNumber: orders.templateNumber,
+          symbol: orders.symbol,
+          invoiceNumber: orders.invoiceNumber,
+          notes: orders.notes,
+          orderedAt: orders.orderedAt,
+          paidAt: orders.paidAt,
+        })
+        .from(orders)
+        .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+        .orderBy(orderBy)
+        .limit(limitNum)
+        .offset(offset);
+
+      console.log(`✅ Orders list API - Found ${ordersResult.length} orders (page ${pageNum}/${totalPages})`);
+
+      res.json({
+        orders: ordersResult,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalCount,
+          limit: limitNum,
+          hasNext: pageNum < totalPages,
+          hasPrev: pageNum > 1
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ Error in orders list API:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch orders list",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Get orders by date range
   app.get(
     "/api/orders/date-range/:startDate/:endDate",
