@@ -97,10 +97,11 @@ export function initializeWebSocketServer(server: Server) {
             total: item.total
           })));
 
-          // Create validated message
+          // Create validated message with proper order number
           const validatedMessage = {
             ...data,
-            cart: validatedCart
+            cart: validatedCart,
+            orderNumber: data.orderNumber || `ORD-${Date.now()}`
           };
 
           // Broadcast to all connected clients (especially customer displays)

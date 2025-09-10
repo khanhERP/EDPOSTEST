@@ -112,6 +112,7 @@ export function CustomerDisplay({
             if (data.orderNumber) {
               setOrderNumber(data.orderNumber);
             }
+            console.log('📦 Customer Display: Received order number:', data.orderNumber);
           } else if (data.type === 'order_created') {
             console.log('🆕 Customer Display: New order created:', data.order);
             setCurrentOrder(data.order);
@@ -249,7 +250,7 @@ export function CustomerDisplay({
                           </div>
                           <div>
                             <h3 className="font-semibold text-lg text-gray-800">
-                              {item.name || item.productName || item.product?.name || `Sản phẩm ${item.id || item.productId}`}
+                              {item.name || item.productName || item.product?.name || (orderNumber ? `${orderNumber}` : `Sản phẩm ${item.id || item.productId}`)}
                             </h3>
                             <p className="text-sm text-gray-600">
                               {formatCurrency(item.price)} × {item.quantity}

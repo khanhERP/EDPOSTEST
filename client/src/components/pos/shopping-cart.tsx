@@ -302,7 +302,7 @@ export function ShoppingCart({
         subtotal: subtotal,
         tax: tax,
         total: total,
-        orderNumber: activeOrderId || `POS-${Date.now()}`,
+        orderNumber: activeOrderId || `ORD-${Date.now()}`,
         timestamp: new Date().toISOString()
       };
 
