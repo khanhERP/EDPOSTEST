@@ -2073,13 +2073,13 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      // Use EXACT same filtering logic as dashboard
+      // Simplified filtering logic - bỏ qua các kiểm tra phức tạp
       const filteredCompletedOrders = orders.filter((order: any) => {
-        // Check if order is completed/paid (EXACT same as dashboard)
-        if (order.status !== "completed" && order.status !== "paid")
-          return false;
+        // Chỉ kiểm tra status cơ bản
+        const validStatus = order.status === "completed" || order.status === "paid";
+        if (!validStatus) return false;
 
-        // Try multiple possible date fields (EXACT same as dashboard)
+        // Kiểm tra ngày đơn giản
         const orderDate = new Date(
           order.orderedAt ||
             order.createdAt ||
@@ -2087,23 +2087,10 @@ export function SalesChartReport() {
             order.paidAt,
         );
 
-        // Skip if date is invalid (EXACT same as dashboard)
         if (isNaN(orderDate.getTime())) {
-          console.log(
-            "Invalid order date for order:",
-            order.id,
-            "date fields:",
-            {
-              orderedAt: order.orderedAt,
-              createdAt: order.createdAt,
-              created_at: order.created_at,
-              paidAt: order.paidAt,
-            },
-          );
           return false;
         }
 
-        // Fix date comparison - ensure we're comparing dates correctly
         const startOfDay = new Date(start);
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(end);
@@ -2111,34 +2098,8 @@ export function SalesChartReport() {
 
         const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
 
-        // Safe employee matching with proper null/undefined checks
-        const employeeMatch =
-          !selectedEmployee ||
-          selectedEmployee === "all" ||
-          selectedEmployee === "" ||
-          (order.employeeName && order.employeeName === selectedEmployee) ||
-          (order.cashierName && order.cashierName === selectedEmployee) ||
-          (order.employeeId && order.employeeId.toString() === selectedEmployee) ||
-          (order.employeeName &&
-            typeof order.employeeName === "string" &&
-            selectedEmployee &&
-            typeof selectedEmployee === "string" &&
-            selectedEmployee !== "all" &&
-            selectedEmployee.trim() !== "" &&
-            order.employeeName
-              .toLowerCase()
-              .includes(selectedEmployee.toLowerCase())) ||
-          (order.cashierName &&
-            typeof order.cashierName === "string" &&
-            selectedEmployee &&
-            typeof selectedEmployee === "string" &&
-            selectedEmployee !== "all" &&
-            selectedEmployee.trim() !== "" &&
-            order.cashierName
-              .toLowerCase()
-              .includes(selectedEmployee.toLowerCase()));
-
-        return dateMatch && employeeMatch;
+        // Bỏ qua kiểm tra employee filter phức tạp - hiển thị tất cả
+        return dateMatch;
       });
 
       // Convert orders to transaction-like format for compatibility
