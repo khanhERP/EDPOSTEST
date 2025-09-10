@@ -441,11 +441,39 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     };
   }, [queryClient, refetchTables, refetchOrders]);
 
-  // Broadcast cart updates to customer display
-  const broadcastCartUpdate = useCallback(() => {
+  // Broadcast cart updates to customer display - only for selected table
+  const broadcastCartUpdate = useCallback((specificTableId?: number) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      // Convert active orders to cart format for customer display
-      const cartItems = activeOrders.map(order => ({
+      let ordersToShow = [];
+      let orderSubtotal = 0;
+      let orderTax = 0;
+      let orderTotal = 0;
+
+      // If specific table ID is provided, show only that table's orders
+      if (specificTableId) {
+        const tableOrders = activeOrders.filter(order => order.tableId === specificTableId);
+        
+        // If table has orders, show them
+        if (tableOrders.length > 0) {
+          ordersToShow = tableOrders;
+          
+          // Calculate totals for this specific table
+          tableOrders.forEach(order => {
+            orderSubtotal += parseFloat(order.subtotal || "0");
+            orderTax += parseFloat(order.tax || "0");
+            orderTotal += parseFloat(order.total || "0");
+          });
+        }
+      } else {
+        // If no specific table, clear the display
+        ordersToShow = [];
+        orderSubtotal = 0;
+        orderTax = 0;
+        orderTotal = 0;
+      }
+
+      // Convert orders to cart format for customer display
+      const cartItems = ordersToShow.map(order => ({
         id: order.id,
         productId: order.productId,
         name: order.name,
@@ -466,18 +494,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       const cartData = {
         type: 'cart_update',
         cart: cartItems,
-        subtotal: subtotal,
-        tax: totalTax,
-        total: grandTotal,
+        subtotal: orderSubtotal,
+        tax: orderTax,
+        total: orderTotal,
+        tableId: specificTableId || null,
         timestamp: new Date().toISOString()
       };
 
-      console.log("📡 Table Grid: Broadcasting cart update to customer display:", {
-        activeOrdersCount: activeOrders.length,
+      console.log("📡 Table Grid: Broadcasting cart update for table:", {
+        tableId: specificTableId,
+        activeOrdersCount: ordersToShow.length,
         cartItemsCount: cartItems.length,
-        subtotal: subtotal,
-        tax: totalTax,
-        total: grandTotal
+        subtotal: orderSubtotal,
+        tax: orderTax,
+        total: orderTotal
       });
 
       try {
@@ -488,19 +518,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     } else {
       console.log("📡 Table Grid: WebSocket not available for broadcasting");
     }
-  }, [activeOrders, subtotal, totalTax, grandTotal]);
+  }, [activeOrders]);
 
 
-  // Effect to broadcast cart updates when active orders change
+  // Clear customer display when no order details are open
   useEffect(() => {
-    console.log("📡 Table Grid: Active orders changed, broadcasting update");
-    // Small delay to ensure state is fully updated
-    const timeoutId = setTimeout(() => {
-      broadcastCartUpdate();
-    }, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [activeOrders, subtotal, totalTax, grandTotal, broadcastCartUpdate]);
+    if (!orderDetailsOpen && !selectedOrder) {
+      // Clear customer display when no order is being viewed
+      broadcastCartUpdate(null);
+    }
+  }, [orderDetailsOpen, selectedOrder, broadcastCartUpdate]);
 
 
   const updateTableStatusMutation = useMutation({
@@ -1395,6 +1422,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     // Set the selected order first
     setSelectedOrder(order);
+
+    // Broadcast cart update for this specific table to customer display
+    if (order.tableId) {
+      broadcastCartUpdate(order.tableId);
+    }
 
     // Then open the dialog - this ensures selectedOrder is set when the query runs
     setTimeout(() => {
@@ -2397,7 +2429,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       />
 
       {/* Order Details Dialog */}
-      <Dialog open={orderDetailsOpen} onOpenChange={setOrderDetailsOpen}>
+      <Dialog open={orderDetailsOpen} onOpenChange={(open) => {
+        setOrderDetailsOpen(open);
+        // Clear customer display when closing order details
+        if (!open) {
+          setSelectedOrder(null);
+          broadcastCartUpdate(null);
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("orders.orderDetails")}</DialogTitle>
