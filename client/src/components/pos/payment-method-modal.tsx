@@ -424,15 +424,6 @@ export function PaymentMethodModal({
 
             ws.onopen = () => {
               console.log("QR Payment: WebSocket connected, sending QR payment info");
-              console.log("QR Payment: Sending data:", {
-                type: "qr_payment",
-                qrCodeUrl: qrUrl ? "QR_URL_EXISTS" : "NO_QR_URL",
-                qrCodeUrlLength: qrUrl?.length || 0,
-                amount: orderTotal,
-                transactionUuid: transactionUuid,
-                paymentMethod: "QR Code"
-              });
-              
               ws.send(
                 JSON.stringify({
                   type: "qr_payment",
@@ -444,11 +435,10 @@ export function PaymentMethodModal({
                 }),
               );
               console.log("QR Payment: QR payment info sent to customer display");
-              
               // Don't close immediately, wait a bit to ensure message is delivered
               setTimeout(() => {
                 ws.close();
-              }, 1500);
+              }, 1000);
             };
 
             ws.onerror = (error) => {

@@ -26,37 +26,8 @@ export function CustomerDisplay({
   tax,
   total,
   storeInfo,
-  qrPayment,
+  qrPayment
 }: CustomerDisplayProps) {
-  console.log("CustomerDisplay: Component props debug:", {
-    cartLength: cart?.length || 0,
-    subtotal,
-    tax,
-    total,
-    hasStoreInfo: !!storeInfo,
-    hasQrPayment: !!qrPayment,
-    qrPaymentDetails: qrPayment ? {
-      hasQrCodeUrl: !!qrPayment.qrCodeUrl,
-      qrCodeUrlLength: qrPayment.qrCodeUrl?.length || 0,
-      amount: qrPayment.amount,
-      paymentMethod: qrPayment.paymentMethod,
-      transactionUuid: qrPayment.transactionUuid
-    } : null,
-    shouldShowQrPayment: !!qrPayment && !!qrPayment.qrCodeUrl,
-    timestamp: new Date().toISOString()
-  });
-
-  // Force render verification for QR payment
-  if (qrPayment) {
-    console.log("🎯 CustomerDisplay: QR Payment detected, verifying render conditions:", {
-      qrPayment: !!qrPayment,
-      hasQrCodeUrl: !!qrPayment.qrCodeUrl,
-      qrCodeUrl: qrPayment.qrCodeUrl ? `${qrPayment.qrCodeUrl.substring(0, 50)}...` : 'NO_URL',
-      amount: qrPayment.amount,
-      willShowQrPayment: !!qrPayment && !!qrPayment.qrCodeUrl,
-      cartEmpty: cart.length === 0
-    });
-  }
   const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -116,14 +87,9 @@ export function CustomerDisplay({
       {/* Main Content */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="max-w-6xl mx-auto flex-1 flex flex-col">
-          {qrPayment && qrPayment.qrCodeUrl ? (
+          {qrPayment ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
-              {console.log("🎯 CustomerDisplay: Rendering QR Payment UI", {
-                qrCodeUrl: qrPayment.qrCodeUrl ? "EXISTS" : "MISSING",
-                amount: qrPayment.amount,
-                transactionUuid: qrPayment.transactionUuid
-              })}
               <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
                 <div className="text-center mb-4">
                   <div className="text-4xl mb-2">📱</div>
@@ -138,7 +104,7 @@ export function CustomerDisplay({
                 <div className="bg-gray-50 rounded-2xl p-4 mb-4">
                   <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {qrPayment.amount?.toLocaleString('vi-VN') || '0'} ₫
+                    {qrPayment.amount.toLocaleString('vi-VN')} ₫
                   </p>
                 </div>
 
@@ -148,15 +114,13 @@ export function CustomerDisplay({
                       src={qrPayment.qrCodeUrl}
                       alt="QR Code thanh toán"
                       className="w-56 h-56 max-w-full max-h-full object-contain"
-                      onLoad={() => console.log("🎯 CustomerDisplay: QR Code image loaded successfully")}
-                      onError={(e) => console.error("❌ CustomerDisplay: QR Code image failed to load", e)}
                     />
                   </div>
                 </div>
 
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">
-                    Mã giao dịch: {qrPayment.transactionUuid || 'N/A'}
+                    Mã giao dịch: {qrPayment.transactionUuid}
                   </p>
                   <p className="text-sm text-blue-600 font-medium">
                     Vui lòng quét mã QR để hoàn tất thanh toán

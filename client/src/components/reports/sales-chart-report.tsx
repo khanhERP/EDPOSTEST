@@ -1295,6 +1295,7 @@ export function SalesChartReport() {
             )}
           </CardContent>
         </Card>
+      </>
     );
   };
 
@@ -1391,9 +1392,7 @@ export function SalesChartReport() {
         Number(order.tax || 0) ||
         Number(order.total || 0) - Number(order.subtotal || 0); // Thuế từ DB hoặc tính từ total-subtotal
       const orderTotal = Number(order.total || 0); // Tổng tiền từ DB
-
-      // Đơn hàng đã hủy có doanh thu = 0
-      const orderRevenue = order.status === "cancelled" ? 0 : orderSubtotal - orderDiscount;
+      const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = thành tiền - giảm giá
 
       const orderSummary = {
         orderDate: order.orderedAt || order.createdAt || order.created_at,
@@ -1448,9 +1447,8 @@ export function SalesChartReport() {
                   orderSubtotal > 0 ? itemTotal / orderSubtotal : 0; // Avoid division by zero
                 const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
                 const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
-                // Đơn hàng đã hủy có doanh thu = 0
-                const itemRevenue = order.status === "cancelled" ? 0 : itemTotal - itemDiscount; // Doanh thu = 0 nếu đã hủy
-                const itemTotalMoney = order.status === "cancelled" ? 0 : itemTotal + itemTax; // Tổng tiền = 0 nếu đã hủy
+                const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
+                const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
 
                 return {
                   productCode: item.productSku || `SP${item.productId}`,
@@ -1781,7 +1779,7 @@ export function SalesChartReport() {
                             </TableCell>
                             {/* ADDED CELL FOR PRODUCT GROUP */}
                             <TableCell className="text-center min-w-[120px] px-2">
-                              {order.productGroup}
+                              -
                             </TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
                               <Badge variant="outline" className="text-xs">
@@ -1993,9 +1991,7 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(prev + 1, totalPages),
-                      )
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2012,9 +2008,9 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
     );
   };
 
@@ -3371,11 +3367,11 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
-      );
-    };
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Sales Channel Report Component Logic
   const renderSalesChannelReport = () => {
@@ -4467,11 +4463,11 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
-      );
-    };
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Render Chart component
   const renderChart = () => {
