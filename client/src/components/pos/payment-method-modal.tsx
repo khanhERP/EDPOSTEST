@@ -416,44 +416,67 @@ export function PaymentMethodModal({
           setShowQRCode(true);
 
           // Send QR payment info to customer display via WebSocket
-          try {
-            const protocol =
-              window.location.protocol === "https:" ? "wss:" : "ws:";
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            const ws = new WebSocket(wsUrl);
+          const sendQRPaymentToDisplay = () => {
+            try {
+              const protocol =
+                window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              console.log("QR Payment: Attempting to connect to WebSocket:", wsUrl);
+              
+              const ws = new WebSocket(wsUrl);
 
-            ws.onopen = () => {
-              console.log("QR Payment: WebSocket connected, sending QR payment info");
-              ws.send(
-                JSON.stringify({
+              ws.onopen = () => {
+                console.log("QR Payment: WebSocket connected successfully, sending QR payment info");
+                const qrPaymentMessage = {
                   type: "qr_payment",
                   qrCodeUrl: qrUrl,
                   amount: orderTotal,
                   transactionUuid: transactionUuid,
                   paymentMethod: "QR Code",
                   timestamp: new Date().toISOString(),
-                }),
+                };
+                console.log("QR Payment: Sending message:", qrPaymentMessage);
+                ws.send(JSON.stringify(qrPaymentMessage));
+                console.log("QR Payment: QR payment info sent to customer display successfully");
+                
+                // Wait longer to ensure message is delivered
+                setTimeout(() => {
+                  console.log("QR Payment: Closing WebSocket connection");
+                  ws.close();
+                }, 2000);
+              };
+
+              ws.onerror = (error) => {
+                console.error("QR Payment: WebSocket error:", error);
+                // Retry after a short delay
+                setTimeout(() => {
+                  console.log("QR Payment: Retrying WebSocket connection...");
+                  sendQRPaymentToDisplay();
+                }, 1000);
+              };
+
+              ws.onclose = (event) => {
+                console.log("QR Payment: WebSocket closed", {
+                  code: event.code,
+                  reason: event.reason,
+                  wasClean: event.wasClean
+                });
+              };
+            } catch (error) {
+              console.error(
+                "QR Payment: Failed to send QR payment info to customer display:",
+                error,
               );
-              console.log("QR Payment: QR payment info sent to customer display");
-              // Don't close immediately, wait a bit to ensure message is delivered
+              // Retry after error
               setTimeout(() => {
-                ws.close();
+                console.log("QR Payment: Retrying after error...");
+                sendQRPaymentToDisplay();
               }, 1000);
-            };
+            }
+          };
 
-            ws.onerror = (error) => {
-              console.error("QR Payment: WebSocket error:", error);
-            };
-
-            ws.onclose = () => {
-              console.log("QR Payment: WebSocket closed after sending QR info");
-            };
-          } catch (error) {
-            console.error(
-              "Failed to send QR payment info to customer display:",
-              error,
-            );
-          }
+          // Call the function to send QR payment info
+          sendQRPaymentToDisplay();
         } else {
           console.error("No QR data received from API");
           // Fallback to mock QR code
@@ -470,43 +493,56 @@ export function PaymentMethodModal({
           setShowQRCode(true);
 
           // Send fallback QR payment info to customer display
-          try {
-            const protocol =
-              window.location.protocol === "https:" ? "wss:" : "ws:";
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            const ws = new WebSocket(wsUrl);
+          const sendFallbackQRPaymentToDisplay = () => {
+            try {
+              const protocol =
+                window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              console.log("Fallback QR Payment: Attempting to connect to WebSocket:", wsUrl);
+              
+              const ws = new WebSocket(wsUrl);
 
-            ws.onopen = () => {
-              console.log("Fallback QR Payment: WebSocket connected, sending QR payment info");
-              ws.send(
-                JSON.stringify({
+              ws.onopen = () => {
+                console.log("Fallback QR Payment: WebSocket connected successfully, sending QR payment info");
+                const fallbackMessage = {
                   type: "qr_payment",
                   qrCodeUrl: qrUrl,
                   amount: orderTotal,
                   transactionUuid: `FALLBACK-${Date.now()}`,
                   paymentMethod: "QR Code",
                   timestamp: new Date().toISOString(),
-                }),
+                };
+                console.log("Fallback QR Payment: Sending message:", fallbackMessage);
+                ws.send(JSON.stringify(fallbackMessage));
+                console.log("Fallback QR Payment: QR payment info sent to customer display successfully");
+                
+                setTimeout(() => {
+                  console.log("Fallback QR Payment: Closing WebSocket connection");
+                  ws.close();
+                }, 2000);
+              };
+
+              ws.onerror = (error) => {
+                console.error("Fallback QR Payment: WebSocket error:", error);
+              };
+
+              ws.onclose = (event) => {
+                console.log("Fallback QR Payment: WebSocket closed", {
+                  code: event.code,
+                  reason: event.reason,
+                  wasClean: event.wasClean
+                });
+              };
+            } catch (error) {
+              console.error(
+                "Fallback QR Payment: Failed to send QR payment info to customer display:",
+                error,
               );
-              console.log("Fallback QR Payment: QR payment info sent to customer display");
-              setTimeout(() => {
-                ws.close();
-              }, 1000);
-            };
+            }
+          };
 
-            ws.onerror = (error) => {
-              console.error("Fallback QR Payment: WebSocket error:", error);
-            };
-
-            ws.onclose = () => {
-              console.log("Fallback QR Payment: WebSocket closed after sending QR info");
-            };
-          } catch (error) {
-            console.error(
-              "Failed to send fallback QR payment info to customer display:",
-              error,
-            );
-          }
+          // Call the function to send fallback QR payment info
+          sendFallbackQRPaymentToDisplay();
         }
       } catch (error) {
         console.error("Error calling CreateQRPos API:", error);

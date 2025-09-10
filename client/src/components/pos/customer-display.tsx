@@ -37,6 +37,9 @@ export function CustomerDisplay({
   const [currentTotal, setCurrentTotal] = useState(total);
   const [currentOrder, setCurrentOrder] = useState<any>(null);
   const [orderNumber, setOrderNumber] = useState<string>('');
+  // State to hold the QR payment details, initially null or undefined
+  const [qrPaymentState, setQrPayment] = useState<CustomerDisplayProps['qrPayment'] | null | undefined>(qrPayment);
+
 
   // Calculate correct subtotal from cart items (pre-tax price * quantity)
   const calculateCorrectSubtotal = () => {
@@ -54,7 +57,7 @@ export function CustomerDisplay({
       const basePrice = parseFloat(item.price || '0');
       const quantity = item.quantity || 0;
       const afterTaxPrice = item.afterTaxPrice ? parseFloat(item.afterTaxPrice) : null;
-      
+
       if (afterTaxPrice && afterTaxPrice > basePrice) {
         const taxPerUnit = afterTaxPrice - basePrice;
         return sum + (taxPerUnit * quantity);
@@ -81,7 +84,9 @@ export function CustomerDisplay({
     setCurrentSubtotal(subtotal);
     setCurrentTax(tax);
     setCurrentTotal(total);
-  }, [cart, subtotal, tax, total]);
+    // Also update qrPaymentState if qrPayment prop changes
+    setQrPayment(qrPayment);
+  }, [cart, subtotal, tax, total, qrPayment]);
 
 
   const formatTime = (date: Date) => {
@@ -134,12 +139,12 @@ export function CustomerDisplay({
 
           if (data.type === 'cart_update') {
             setCartItems(data.cart || []);
-            
+
             // Always use calculated values to ensure accuracy
             const calculatedSubtotal = calculateCorrectSubtotal();
             const calculatedTax = calculateCorrectTax();
             const calculatedTotal = calculatedSubtotal + calculatedTax;
-            
+
             // Use calculated values instead of potentially incorrect WebSocket data
             setCurrentSubtotal(calculatedSubtotal);
             setCurrentTax(calculatedTax); 
@@ -173,7 +178,44 @@ export function CustomerDisplay({
               setCurrentTotal(0);
               setCurrentOrder(null);
               setOrderNumber('');
+              setQrPayment(null); // Clear QR payment state as well
             }, 3000); // Show success for 3 seconds before clearing
+          } else if (data.type === 'qr_payment') {
+                console.log("Customer Display: Received QR payment message:", {
+                  hasQrCodeUrl: !!data.qrCodeUrl,
+                  amount: data.amount,
+                  paymentMethod: data.paymentMethod,
+                  transactionUuid: data.transactionUuid,
+                  qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+                  fullData: data
+                });
+
+                // Clear cart first to ensure QR display shows properly
+                setCartItems([]);
+
+                if (data.qrCodeUrl && data.amount) {
+                  console.log("Customer Display: Setting QR payment state");
+                  setQrPayment({
+                    qrCodeUrl: data.qrCodeUrl,
+                    amount: data.amount,
+                    paymentMethod: data.paymentMethod || 'QR Code',
+                    transactionUuid: data.transactionUuid || `QR-${Date.now()}`
+                  });
+                  console.log("Customer Display: QR payment state set successfully");
+                } else {
+                  console.error("Customer Display: Invalid QR payment data received", data);
+                  // Even if data is incomplete, try to show what we have
+                  if (data.qrCodeUrl || data.amount) {
+                    setQrPayment({
+                      qrCodeUrl: data.qrCodeUrl || '',
+                      amount: data.amount || 0,
+                      paymentMethod: data.paymentMethod || 'QR Code',
+                      transactionUuid: data.transactionUuid || `QR-${Date.now()}`
+                    });
+                    console.log("Customer Display: Partial QR payment state set");
+                  }
+                }
+                break;
           }
         };
 
@@ -213,7 +255,7 @@ export function CustomerDisplay({
       {/* Main Content */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="max-w-6xl mx-auto flex-1 flex flex-col">
-          {qrPayment ? (
+          {qrPaymentState ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
               <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
@@ -230,14 +272,14 @@ export function CustomerDisplay({
                 <div className="bg-gray-50 rounded-2xl p-4 mb-4">
                   <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {qrPayment.amount.toLocaleString('vi-VN')} ₫
+                    {qrPaymentState.amount.toLocaleString('vi-VN')} ₫
                   </p>
                 </div>
 
                 <div className="flex justify-center mb-4 flex-1 flex items-center">
                   <div className="bg-white p-4 rounded-2xl border-4 border-green-200 shadow-xl">
                     <img
-                      src={qrPayment.qrCodeUrl}
+                      src={qrPaymentState.qrCodeUrl}
                       alt="QR Code thanh toán"
                       className="w-56 h-56 max-w-full max-h-full object-contain"
                     />
@@ -246,7 +288,7 @@ export function CustomerDisplay({
 
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">
-                    Mã giao dịch: {qrPayment.transactionUuid}
+                    Mã giao dịch: {qrPaymentState.transactionUuid}
                   </p>
                   <p className="text-sm text-blue-600 font-medium">
                     Vui lòng quét mã QR để hoàn tất thanh toán
