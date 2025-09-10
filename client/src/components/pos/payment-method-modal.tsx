@@ -423,6 +423,7 @@ export function PaymentMethodModal({
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
+              console.log("QR Payment: WebSocket connected, sending QR payment info");
               ws.send(
                 JSON.stringify({
                   type: "qr_payment",
@@ -433,7 +434,19 @@ export function PaymentMethodModal({
                   timestamp: new Date().toISOString(),
                 }),
               );
-              ws.close();
+              console.log("QR Payment: QR payment info sent to customer display");
+              // Don't close immediately, wait a bit to ensure message is delivered
+              setTimeout(() => {
+                ws.close();
+              }, 1000);
+            };
+
+            ws.onerror = (error) => {
+              console.error("QR Payment: WebSocket error:", error);
+            };
+
+            ws.onclose = () => {
+              console.log("QR Payment: WebSocket closed after sending QR info");
             };
           } catch (error) {
             console.error(
@@ -455,6 +468,45 @@ export function PaymentMethodModal({
           });
           setQrCodeUrl(qrUrl);
           setShowQRCode(true);
+
+          // Send fallback QR payment info to customer display
+          try {
+            const protocol =
+              window.location.protocol === "https:" ? "wss:" : "ws:";
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+              console.log("Fallback QR Payment: WebSocket connected, sending QR payment info");
+              ws.send(
+                JSON.stringify({
+                  type: "qr_payment",
+                  qrCodeUrl: qrUrl,
+                  amount: orderTotal,
+                  transactionUuid: `FALLBACK-${Date.now()}`,
+                  paymentMethod: "QR Code",
+                  timestamp: new Date().toISOString(),
+                }),
+              );
+              console.log("Fallback QR Payment: QR payment info sent to customer display");
+              setTimeout(() => {
+                ws.close();
+              }, 1000);
+            };
+
+            ws.onerror = (error) => {
+              console.error("Fallback QR Payment: WebSocket error:", error);
+            };
+
+            ws.onclose = () => {
+              console.log("Fallback QR Payment: WebSocket closed after sending QR info");
+            };
+          } catch (error) {
+            console.error(
+              "Failed to send fallback QR payment info to customer display:",
+              error,
+            );
+          }
         }
       } catch (error) {
         console.error("Error calling CreateQRPos API:", error);
@@ -505,6 +557,45 @@ export function PaymentMethodModal({
         });
         setQrCodeUrl(qrUrl);
         setShowQRCode(true);
+
+        // Send VNPay QR payment info to customer display
+        try {
+          const protocol =
+            window.location.protocol === "https:" ? "wss:" : "ws:";
+          const wsUrl = `${protocol}//${window.location.host}/ws`;
+          const ws = new WebSocket(wsUrl);
+
+          ws.onopen = () => {
+            console.log("VNPay QR Payment: WebSocket connected, sending QR payment info");
+            ws.send(
+              JSON.stringify({
+                type: "qr_payment",
+                qrCodeUrl: qrUrl,
+                amount: orderTotal,
+                transactionUuid: `VNPAY-${Date.now()}`,
+                paymentMethod: "VNPay",
+                timestamp: new Date().toISOString(),
+              }),
+            );
+            console.log("VNPay QR Payment: QR payment info sent to customer display");
+            setTimeout(() => {
+              ws.close();
+            }, 1000);
+          };
+
+          ws.onerror = (error) => {
+            console.error("VNPay QR Payment: WebSocket error:", error);
+          };
+
+          ws.onclose = () => {
+            console.log("VNPay QR Payment: WebSocket closed after sending QR info");
+          };
+        } catch (error) {
+          console.error(
+            "Failed to send VNPay QR payment info to customer display:",
+            error,
+          );
+        }
       } catch (error) {
         console.error("Error generating QR code:", error);
       } finally {

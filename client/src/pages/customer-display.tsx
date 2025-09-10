@@ -157,13 +157,25 @@ export default function CustomerDisplayPage() {
                 setStoreInfo(data.storeInfo);
                 break;
               case 'qr_payment':
-                console.log("Customer Display: Showing QR payment:", data);
-                setQrPayment({
-                  qrCodeUrl: data.qrCodeUrl,
+                console.log("Customer Display: Received QR payment message:", {
+                  hasQrCodeUrl: !!data.qrCodeUrl,
                   amount: data.amount,
                   paymentMethod: data.paymentMethod,
-                  transactionUuid: data.transactionUuid
+                  transactionUuid: data.transactionUuid,
+                  qrCodeUrlLength: data.qrCodeUrl?.length || 0
                 });
+                if (data.qrCodeUrl && data.amount) {
+                  console.log("Customer Display: Setting QR payment state");
+                  setQrPayment({
+                    qrCodeUrl: data.qrCodeUrl,
+                    amount: data.amount,
+                    paymentMethod: data.paymentMethod,
+                    transactionUuid: data.transactionUuid
+                  });
+                  console.log("Customer Display: QR payment state set successfully");
+                } else {
+                  console.error("Customer Display: Invalid QR payment data received", data);
+                }
                 break;
               case 'payment_success':
                 console.log("Customer Display: Payment completed, clearing QR");
