@@ -95,6 +95,14 @@ export function CustomerDisplay({
     });
   }, [qrPayment]);
 
+  // Debug QR payment state
+  console.log("🖥️ CustomerDisplay RENDER DEBUG:", {
+    hasQrPayment: !!qrPayment,
+    qrPaymentData: qrPayment,
+    shouldShowQRPayment,
+    cartLength: cart?.length || 0
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
       {/* Header */}

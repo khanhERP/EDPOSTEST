@@ -12,6 +12,23 @@ export default function CustomerDisplayPage() {
     transactionUuid: string;
   } | null>(null);
 
+  // Debug state changes
+  useEffect(() => {
+    console.log('🔄 Customer Display: QR Payment state changed:', {
+      hasQrPayment: !!qrPayment,
+      qrPaymentData: qrPayment,
+      timestamp: new Date().toISOString()
+    });
+  }, [qrPayment]);
+
+  useEffect(() => {
+    console.log('🔄 Customer Display: Cart state changed:', {
+      cartLength: cart.length,
+      cartItems: cart,
+      timestamp: new Date().toISOString()
+    });
+  }, [cart]);
+
   console.log("Customer Display: Component rendered with cart:", cart.length, "items, storeInfo:", !!storeInfo, "qrPayment:", !!qrPayment);
 
   // Auto-clear QR payment after 5 minutes if not manually cleared
@@ -139,17 +156,29 @@ export default function CustomerDisplayPage() {
 
                 console.log('💾 Customer Display: Setting QR payment state with data:', qrPaymentData);
                 
-                // Clear cart and set QR payment immediately
+                // Clear cart first
                 setCart([]);
+                
+                // Set QR payment data with forced update
                 setQrPayment(qrPaymentData);
 
                 console.log('✅ Customer Display: QR payment state set successfully');
 
-                // Force re-render by updating a dummy state
+                // Multiple attempts to ensure state updates
                 setTimeout(() => {
-                  console.log('🔍 Customer Display: Force re-render to ensure QR shows');
-                  setQrPayment(prev => ({ ...prev }));
-                }, 50);
+                  console.log('🔍 Customer Display: First force re-render');
+                  setQrPayment(prev => prev ? {...prev} : qrPaymentData);
+                }, 100);
+
+                setTimeout(() => {
+                  console.log('🔍 Customer Display: Second force re-render');
+                  setQrPayment(prev => prev ? {...prev} : qrPaymentData);
+                }, 200);
+
+                // Also trigger a window focus event to ensure component updates
+                setTimeout(() => {
+                  window.dispatchEvent(new Event('focus'));
+                }, 300);
               } else {
                 console.error('❌ Customer Display: Invalid QR payment data received', {
                   hasQrCodeUrl: !!data.qrCodeUrl,
