@@ -338,7 +338,7 @@ export function CustomerDisplay({
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Thuế:</span>
                       <span className="font-medium">
-                        {formatCurrency(currentTax)}
+                        {formatCurrency(Math.round(currentTax > 0 ? currentTax : correctTax))}
                       </span>
                     </div>
 
@@ -347,7 +347,7 @@ export function CustomerDisplay({
                         Tổng cộng:
                       </span>
                       <span className="text-2xl font-bold text-green-600">
-                        {formatCurrency(currentTotal)}
+                        {formatCurrency(Math.round(currentTotal))}
                       </span>
                     </div>
 
