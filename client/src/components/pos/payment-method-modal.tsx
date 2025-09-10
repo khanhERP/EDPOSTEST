@@ -424,16 +424,16 @@ export function PaymentMethodModal({
 
             ws.onopen = () => {
               console.log("QR Payment: WebSocket connected, sending QR payment info");
-              ws.send(
-                JSON.stringify({
-                  type: "qr_payment",
-                  qrCodeUrl: qrUrl,
-                  amount: orderTotal,
-                  transactionUuid: transactionUuid,
-                  paymentMethod: "QR Code",
-                  timestamp: new Date().toISOString(),
-                }),
-              );
+              const qrMessage = {
+                type: "qr_payment",
+                qrCodeUrl: qrUrl,
+                amount: Math.floor(orderTotal),
+                transactionUuid: transactionUuid,
+                paymentMethod: "QR Code",
+                timestamp: new Date().toISOString(),
+              };
+              console.log("QR Payment: Sending message:", qrMessage);
+              ws.send(JSON.stringify(qrMessage));
               console.log("QR Payment: QR payment info sent to customer display");
               // Don't close immediately, wait a bit to ensure message is delivered
               setTimeout(() => {
@@ -477,18 +477,22 @@ export function PaymentMethodModal({
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
-              console.log("Fallback QR Payment: WebSocket connected, sending QR payment info");
-              ws.send(
-                JSON.stringify({
-                  type: "qr_payment",
-                  qrCodeUrl: qrUrl,
-                  amount: orderTotal,
-                  transactionUuid: `FALLBACK-${Date.now()}`,
-                  paymentMethod: "QR Code",
-                  timestamp: new Date().toISOString(),
-                }),
+              console.log(
+                "Fallback QR Payment: WebSocket connected, sending QR payment info",
               );
-              console.log("Fallback QR Payment: QR payment info sent to customer display");
+              const qrMessage = {
+                type: "qr_payment",
+                qrCodeUrl: qrUrl,
+                amount: Math.floor(orderTotal),
+                transactionUuid: `FALLBACK-${Date.now()}`,
+                paymentMethod: "QR Code",
+                timestamp: new Date().toISOString(),
+              };
+              console.log("Fallback QR Payment: Sending message:", qrMessage);
+              ws.send(JSON.stringify(qrMessage));
+              console.log(
+                "Fallback QR Payment: QR payment info sent to customer display",
+              );
               setTimeout(() => {
                 ws.close();
               }, 1000);
@@ -567,16 +571,16 @@ export function PaymentMethodModal({
 
           ws.onopen = () => {
             console.log("VNPay QR Payment: WebSocket connected, sending QR payment info");
-            ws.send(
-              JSON.stringify({
-                type: "qr_payment",
-                qrCodeUrl: qrUrl,
-                amount: orderTotal,
-                transactionUuid: `VNPAY-${Date.now()}`,
-                paymentMethod: "VNPay",
-                timestamp: new Date().toISOString(),
-              }),
-            );
+            const qrMessage = {
+              type: "qr_payment",
+              qrCodeUrl: qrUrl,
+              amount: Math.floor(orderTotal),
+              transactionUuid: `VNPAY-${Date.now()}`,
+              paymentMethod: "VNPay",
+              timestamp: new Date().toISOString(),
+            };
+            console.log("VNPay QR Payment: Sending message:", qrMessage);
+            ws.send(JSON.stringify(qrMessage));
             console.log("VNPay QR Payment: QR payment info sent to customer display");
             setTimeout(() => {
               ws.close();

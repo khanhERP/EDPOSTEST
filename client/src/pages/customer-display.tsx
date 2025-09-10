@@ -130,10 +130,6 @@ export default function CustomerDisplayPage() {
               if (data.qrCodeUrl && data.amount && data.transactionUuid) {
                 console.log('✅ Customer Display: Valid QR payment data - setting state');
 
-                // Clear cart first to ensure QR payment is prioritized
-                console.log('🗑️ Customer Display: Clearing cart for QR payment priority');
-                setCart([]);
-
                 const qrPaymentData = {
                   qrCodeUrl: data.qrCodeUrl,
                   amount: data.amount,
@@ -143,38 +139,19 @@ export default function CustomerDisplayPage() {
 
                 console.log('💾 Customer Display: Setting QR payment state with data:', qrPaymentData);
                 
-                // Set QR payment state
+                // Clear cart and set QR payment immediately in batch
+                setCart([]);
                 setQrPayment(qrPaymentData);
 
                 console.log('✅ Customer Display: QR payment state set successfully');
 
-                // Immediate verification
+                // Force immediate re-render verification
                 setTimeout(() => {
-                  console.log('🔍 Customer Display: Immediate state verification');
-                  setQrPayment(prevQr => {
-                    console.log('📊 Customer Display: Current QR state details:', {
-                      hasQrPayment: !!prevQr,
-                      qrCodeUrl: prevQr?.qrCodeUrl?.substring(0, 50) + '...',
-                      amount: prevQr?.amount,
-                      paymentMethod: prevQr?.paymentMethod,
-                      transactionUuid: prevQr?.transactionUuid
-                    });
-                    return prevQr; // Return same state to trigger re-render
+                  setQrPayment(prev => {
+                    console.log('🔍 Customer Display: Force re-render verification - QR exists:', !!prev);
+                    return prev;
                   });
-                }, 50);
-
-                // Multiple verification checkpoints
-                setTimeout(() => {
-                  console.log('🔍 Customer Display: 200ms verification checkpoint');
-                }, 200);
-
-                setTimeout(() => {
-                  console.log('🔍 Customer Display: 500ms verification checkpoint');
-                }, 500);
-
-                setTimeout(() => {
-                  console.log('🔍 Customer Display: 1000ms final verification checkpoint');
-                }, 1000);
+                }, 10);
               } else {
                 console.error('❌ Customer Display: Invalid QR payment data received', {
                   hasQrCodeUrl: !!data.qrCodeUrl,
