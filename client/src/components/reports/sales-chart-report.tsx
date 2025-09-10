@@ -1563,41 +1563,27 @@ export function SalesChartReport() {
     const endIndex = startIndex + pageSize;
     const paginatedData = groupedOrders.slice(startIndex, endIndex);
 
-    // Calculate totals for all orders (use order totals, not item-by-item to avoid double counting)
-    // Calculate totals - sum each column directly from displayed data
-    const totalQuantity = groupedOrders.reduce(
-      (sum, order) =>
-        sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
-      0,
-    );
-    const totalAmount = groupedOrders.reduce(
-      (sum, order) =>
-        sum +
-        order.items.reduce((itemSum, item) => itemSum + item.totalAmount, 0),
-      0,
-    );
-    const totalDiscount = groupedOrders.reduce(
-      (sum, order) =>
-        sum + order.items.reduce((itemSum, item) => itemSum + item.discount, 0),
-      0,
-    );
-    const totalRevenue = groupedOrders.reduce(
-      (sum, order) =>
-        sum + order.items.reduce((itemSum, item) => itemSum + item.revenue, 0),
-      0,
-    );
-    const totalTax = groupedOrders.reduce(
-      (sum, order) =>
-        sum + order.items.reduce((itemSum, item) => itemSum + item.tax, 0),
-      0,
-    );
+    // Calculate totals - simple sum of each column from all displayed items
+    let totalQuantity = 0;
+    let totalAmount = 0;
+    let totalDiscount = 0;
+    let totalRevenue = 0;
+    let totalTax = 0;
+    let totalMoney = 0;
+
+    // Sum each column directly from displayed data
+    groupedOrders.forEach(order => {
+      order.items.forEach(item => {
+        totalQuantity += item.quantity;
+        totalAmount += item.totalAmount;
+        totalDiscount += item.discount;
+        totalRevenue += item.revenue;
+        totalTax += item.tax;
+        totalMoney += item.totalMoney;
+      });
+    });
+
     const totalVat = totalTax; // VAT = Tax in this context
-    const totalMoney = groupedOrders.reduce(
-      (sum, order) =>
-        sum +
-        order.items.reduce((itemSum, item) => itemSum + item.totalMoney, 0),
-      0,
-    );
 
     return (
       <Card>
