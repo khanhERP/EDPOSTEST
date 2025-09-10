@@ -987,6 +987,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: "Employee deleted successfully" });
     } catch (error) {
+      console.error("Error deleting employee:", error);
+      
+      // Trả về thông báo lỗi chi tiết từ storage layer
+      if (error instanceof Error) {
+        return res.status(400).json({ 
+          message: error.message 
+        });
+      }
+      
       res.status(500).json({ message: "Failed to delete employee" });
     }
   });
