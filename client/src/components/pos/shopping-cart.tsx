@@ -363,6 +363,36 @@ export function ShoppingCart({
   // Handler for when receipt preview is confirmed - move to payment method selection
   const handleReceiptPreviewConfirm = () => {
     console.log("🎯 POS: Receipt preview confirmed, showing payment method modal");
+    
+    // Update receipt preview with correct tax calculation before proceeding
+    if (previewReceipt && orderForPayment) {
+      const updatedReceipt = {
+        ...previewReceipt,
+        tax: tax.toString(),
+        exactTax: tax,
+        total: total.toString(),
+        exactTotal: total
+      };
+      
+      const updatedOrder = {
+        ...orderForPayment,
+        tax: tax,
+        exactTax: tax,
+        total: total,
+        exactTotal: total
+      };
+      
+      setPreviewReceipt(updatedReceipt);
+      setOrderForPayment(updatedOrder);
+      
+      console.log("🔧 Updated receipt and order with correct tax:", {
+        tax: tax,
+        total: total,
+        updatedReceipt: updatedReceipt,
+        updatedOrder: updatedOrder
+      });
+    }
+    
     setShowReceiptPreview(false);
     setShowPaymentModal(true);
   };
