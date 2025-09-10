@@ -284,7 +284,7 @@ export function SalesChartReport() {
       case "employee":
         return t("reports.employeeSalesReport");
       case "customer":
-        return t("reports.topCustomersByRevenue");
+        return t("reports.customerSalesReport");
       case "salesMethod":
         return t("reports.salesMethodReport");
       default:
@@ -3023,7 +3023,7 @@ export function SalesChartReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            {t("reports.topCustomersByRevenue")}
+            {t("reports.customerSalesReport")}
           </CardTitle>
           <CardDescription className="flex items-center justify-between">
             <span>
