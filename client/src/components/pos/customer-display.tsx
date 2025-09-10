@@ -85,8 +85,24 @@ export function CustomerDisplay({
     setCurrentTax(tax);
     setCurrentTotal(total);
     // Also update qrPaymentState if qrPayment prop changes
+    console.log("🔄 Customer Display: Props changed, updating QR payment state:", {
+      qrPayment,
+      hasQrCodeUrl: !!qrPayment?.qrCodeUrl,
+      amount: qrPayment?.amount
+    });
     setQrPayment(qrPayment);
   }, [cart, subtotal, tax, total, qrPayment]);
+
+  // Debug log whenever qrPaymentState changes
+  useEffect(() => {
+    console.log("🎯 Customer Display: QR Payment State Changed:", {
+      qrPaymentState,
+      hasQrCodeUrl: !!qrPaymentState?.qrCodeUrl,
+      amount: qrPaymentState?.amount,
+      paymentMethod: qrPaymentState?.paymentMethod,
+      timestamp: new Date().toISOString()
+    });
+  }, [qrPaymentState]);
 
 
   const formatTime = (date: Date) => {
@@ -192,29 +208,34 @@ export function CustomerDisplay({
 
                 // Clear cart first to ensure QR display shows properly
                 setCartItems([]);
+                setCurrentSubtotal(0);
+                setCurrentTax(0);
+                setCurrentTotal(0);
 
-                if (data.qrCodeUrl && data.amount) {
-                  console.log("Customer Display: Setting QR payment state");
-                  setQrPayment({
+                // Always try to set QR payment state if we have any data
+                if (data.qrCodeUrl || data.amount) {
+                  console.log("Customer Display: Setting QR payment state with data:", {
                     qrCodeUrl: data.qrCodeUrl,
                     amount: data.amount,
+                    paymentMethod: data.paymentMethod,
+                    transactionUuid: data.transactionUuid
+                  });
+                  
+                  const qrPaymentData = {
+                    qrCodeUrl: data.qrCodeUrl || '',
+                    amount: Number(data.amount) || 0,
                     paymentMethod: data.paymentMethod || 'QR Code',
                     transactionUuid: data.transactionUuid || `QR-${Date.now()}`
-                  });
-                  console.log("Customer Display: QR payment state set successfully");
+                  };
+                  
+                  setQrPayment(qrPaymentData);
+                  console.log("Customer Display: QR payment state set successfully:", qrPaymentData);
                 } else {
-                  console.error("Customer Display: Invalid QR payment data received", data);
-                  // Even if data is incomplete, try to show what we have
-                  if (data.qrCodeUrl || data.amount) {
-                    setQrPayment({
-                      qrCodeUrl: data.qrCodeUrl || '',
-                      amount: data.amount || 0,
-                      paymentMethod: data.paymentMethod || 'QR Code',
-                      transactionUuid: data.transactionUuid || `QR-${Date.now()}`
-                    });
-                    console.log("Customer Display: Partial QR payment state set");
-                  }
+                  console.error("Customer Display: No valid QR payment data received", data);
                 }
+          } else if (data.type === 'qr_payment_cancelled') {
+                console.log("Customer Display: QR payment cancelled, clearing QR state");
+                setQrPayment(null);
           }
         };
 
@@ -257,6 +278,12 @@ export function CustomerDisplay({
           {qrPaymentState ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
+              {console.log("🔍 Rendering QR Payment Display:", {
+                qrPaymentState,
+                hasQrCodeUrl: !!qrPaymentState.qrCodeUrl,
+                amount: qrPaymentState.amount,
+                timestamp: new Date().toISOString()
+              })}
               <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
                 <div className="text-center mb-4">
                   <div className="text-4xl mb-2">📱</div>
@@ -271,17 +298,33 @@ export function CustomerDisplay({
                 <div className="bg-gray-50 rounded-2xl p-4 mb-4">
                   <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {qrPaymentState.amount.toLocaleString('vi-VN')} ₫
+                    {Number(qrPaymentState.amount || 0).toLocaleString('vi-VN')} ₫
                   </p>
                 </div>
 
                 <div className="flex justify-center mb-4 flex-1 flex items-center">
                   <div className="bg-white p-4 rounded-2xl border-4 border-green-200 shadow-xl">
-                    <img
-                      src={qrPaymentState.qrCodeUrl}
-                      alt="QR Code thanh toán"
-                      className="w-56 h-56 max-w-full max-h-full object-contain"
-                    />
+                    {qrPaymentState.qrCodeUrl ? (
+                      <img
+                        src={qrPaymentState.qrCodeUrl}
+                        alt="QR Code thanh toán"
+                        className="w-56 h-56 max-w-full max-h-full object-contain"
+                        onError={(e) => {
+                          console.error("QR Code image failed to load:", qrPaymentState.qrCodeUrl);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                        onLoad={() => {
+                          console.log("✅ QR Code image loaded successfully");
+                        }}
+                      />
+                    ) : (
+                      <div className="w-56 h-56 flex items-center justify-center bg-gray-100 text-gray-500 border-2 border-dashed border-gray-300">
+                        <div className="text-center">
+                          <div className="text-4xl mb-2">⏳</div>
+                          <p className="text-sm">Đang tạo mã QR...</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
