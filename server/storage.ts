@@ -2731,7 +2731,7 @@ export class DatabaseStorage implements IStorage {
           useCK: templateData.useCK !== false,
           notes: templateData.notes || null,
           isDefault: templateData.isDefault || false,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(),
         })
         .returning();
       return template;
@@ -2754,7 +2754,7 @@ export class DatabaseStorage implements IStorage {
           useCK: templateData.useCK !== false,
           notes: templateData.notes || null,
           isDefault: templateData.isDefault || false,
-          updatedAt: new Date().toISOString(),
+          updatedAt: new Date(),
         })
         .where(eq(invoiceTemplates.id, id))
         .returning();
