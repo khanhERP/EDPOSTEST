@@ -878,7 +878,7 @@ export function SalesChartReport() {
                                   {data.orders.toLocaleString()}
                                 </TableCell>
                                 <TableCell className="text-right border-r min-w-[140px] px-4">
-                                  {formatCurrency(paymentAmount)}
+                                  {formatCurrency(actualRevenue)}
                                 </TableCell>
                                 {analysisType !== "employee" && (
                                   <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
@@ -1115,7 +1115,7 @@ export function SalesChartReport() {
                         <TableCell className="text-right border-r min-w-[140px] px-4">
                           {formatCurrency(
                             Object.values(dailySales).reduce(
-                              (sum, data) => sum + data.subtotal,
+                              (sum, data) => sum + data.revenue,
                               0,
                             ),
                           )}
