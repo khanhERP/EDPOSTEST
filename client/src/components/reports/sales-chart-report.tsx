@@ -1879,7 +1879,7 @@ export function SalesChartReport() {
                                 </TableCell>
                               </TableRow>
                             ))}
-                        </>
+                        </Fragment>
                       );
                     })
                   ) : (
@@ -2007,6 +2007,7 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
