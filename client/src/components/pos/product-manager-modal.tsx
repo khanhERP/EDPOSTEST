@@ -560,8 +560,7 @@ export function ProductManagerModal({
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1200px]">
+                  <table className="w-full">
                     <thead className="bg-gray-100">
                       <tr>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
@@ -682,7 +681,6 @@ export function ProductManagerModal({
                       ))}
                     </tbody>
                   </table>
-                  </div>
                 )}
               </div>
             </>
