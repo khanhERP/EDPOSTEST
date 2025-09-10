@@ -424,6 +424,13 @@ export function PaymentMethodModal({
 
             ws.onopen = () => {
               console.log("QR Payment: WebSocket connected, sending QR payment info");
+              console.log("QR Payment: Sending data:", {
+                type: "qr_payment",
+                qrCodeUrl: qrUrl.substring(0, 50) + "...",
+                amount: orderTotal,
+                transactionUuid: transactionUuid,
+                paymentMethod: "QR Code"
+              });
               ws.send(
                 JSON.stringify({
                   type: "qr_payment",
@@ -478,6 +485,13 @@ export function PaymentMethodModal({
 
             ws.onopen = () => {
               console.log("Fallback QR Payment: WebSocket connected, sending QR payment info");
+              console.log("Fallback QR Payment: Sending data:", {
+                type: "qr_payment",
+                qrCodeUrl: qrUrl.substring(0, 50) + "...",
+                amount: orderTotal,
+                transactionUuid: `FALLBACK-${Date.now()}`,
+                paymentMethod: "QR Code"
+              });
               ws.send(
                 JSON.stringify({
                   type: "qr_payment",
