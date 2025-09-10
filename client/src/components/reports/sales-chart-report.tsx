@@ -2012,10 +2012,10 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
-      </>
     );
   };
 
