@@ -423,22 +423,37 @@ export function PaymentMethodModal({
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
-              console.log("QR Payment: WebSocket connected, sending QR payment info");
-              const qrMessage = {
+              console.log(
+                "📱 QR Payment: WebSocket connected, sending QR info to customer display",
+              );
+              const qrPaymentMessage = {
                 type: "qr_payment",
                 qrCodeUrl: qrUrl,
                 amount: Math.floor(orderTotal),
-                transactionUuid: transactionUuid,
                 paymentMethod: "QR Code",
+                transactionUuid: transactionUuid,
                 timestamp: new Date().toISOString(),
               };
-              console.log("QR Payment: Sending message:", qrMessage);
-              ws.send(JSON.stringify(qrMessage));
-              console.log("QR Payment: QR payment info sent to customer display");
-              // Don't close immediately, wait a bit to ensure message is delivered
+
+              console.log(
+                "📤 QR Payment: Sending QR payment data:",
+                {
+                  ...qrPaymentMessage,
+                  qrCodeUrlLength: qrUrl?.length || 0,
+                  qrCodeUrlType: typeof qrUrl,
+                  qrCodeUrlPreview: qrUrl?.substring(0, 50) + '...'
+                }
+              );
+
+              // Send message immediately
+              ws.send(JSON.stringify(qrPaymentMessage));
+              console.log("✅ QR Payment: Message sent successfully");
+
+              // Close after sending
               setTimeout(() => {
+                console.log("🔌 QR Payment: Closing WebSocket");
                 ws.close();
-              }, 1000);
+              }, 500);
             };
 
             ws.onerror = (error) => {
@@ -447,6 +462,10 @@ export function PaymentMethodModal({
 
             ws.onclose = () => {
               console.log("QR Payment: WebSocket closed after sending QR info");
+            };
+
+            ws.onmessage = (event) => {
+              console.log("QR Payment: Received WebSocket response:", event.data);
             };
           } catch (error) {
             console.error(

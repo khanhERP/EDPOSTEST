@@ -83,6 +83,18 @@ export function CustomerDisplay({
     });
   };
 
+  // Force re-render when QR payment changes
+  useEffect(() => {
+    console.log("🖥️ CustomerDisplay: QR Payment state changed:", {
+      hasQrPayment: !!qrPayment,
+      qrDetails: qrPayment ? {
+        hasQrCodeUrl: !!qrPayment.qrCodeUrl,
+        amount: qrPayment.amount,
+        transactionUuid: qrPayment.transactionUuid
+      } : null
+    });
+  }, [qrPayment]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
       {/* Header */}
@@ -113,7 +125,7 @@ export function CustomerDisplay({
       {/* Main Content */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="max-w-6xl mx-auto flex-1 flex flex-col">
-          {qrPayment ? (
+          {qrPayment && qrPayment.qrCodeUrl ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
               <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
