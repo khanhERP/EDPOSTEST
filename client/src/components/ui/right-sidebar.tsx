@@ -130,7 +130,7 @@ export function RightSidebar() {
           {isExpanded ? (
             <>
               <ChevronLeft className="w-4 h-4 mr-2" />
-              <span>{t('common.collapse')}</span>
+              <span>{t('collapse')}</span>
             </>
           ) : (
             <Menu className="w-4 h-4" />
