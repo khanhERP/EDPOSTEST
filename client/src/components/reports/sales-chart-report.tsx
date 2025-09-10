@@ -1449,8 +1449,9 @@ export function SalesChartReport() {
                   orderSubtotal > 0 ? itemTotal / orderSubtotal : 0; // Avoid division by zero
                 const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
                 const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
-                const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
-                const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
+                // Đơn hàng đã hủy có doanh thu = 0
+                const itemRevenue = order.status === "cancelled" ? 0 : itemTotal - itemDiscount; // Doanh thu = 0 nếu đã hủy
+                const itemTotalMoney = order.status === "cancelled" ? 0 : itemTotal + itemTax; // Tổng tiền = 0 nếu đã hủy
 
                 return {
                   productCode: item.productSku || `SP${item.productId}`,
@@ -1781,7 +1782,7 @@ export function SalesChartReport() {
                             </TableCell>
                             {/* ADDED CELL FOR PRODUCT GROUP */}
                             <TableCell className="text-center min-w-[120px] px-2">
-                              -
+                              {order.productGroup}
                             </TableCell>
                             <TableCell className="text-center min-w-[100px] px-2">
                               <Badge variant="outline" className="text-xs">
@@ -2011,10 +2012,10 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
+      </>
     );
   };
 
@@ -3370,7 +3371,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -4466,7 +4466,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -4826,7 +4825,7 @@ export function SalesChartReport() {
         <CardContent className="pt-6">
           <div className="space-y-6">
             {/* Main Filter Row */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Analysis Type */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
