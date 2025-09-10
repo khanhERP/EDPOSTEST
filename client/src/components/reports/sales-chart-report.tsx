@@ -1577,7 +1577,7 @@ export function SalesChartReport() {
       order.items.forEach(item => {
         totalQuantity += item.quantity;
       });
-      
+
       // For financial data, use order-level values to avoid double counting
       totalAmount += order.totalAmount;      // Order's subtotal
       totalDiscount += order.discount;       // Order's discount
@@ -1601,62 +1601,111 @@ export function SalesChartReport() {
             </span>
             <Button
               onClick={() => {
-                const dataWithSummary = [
-                  ...groupedOrders
-                    .map((order) => {
-                      return order.items.map((item: any) => ({
-                        Ngày: formatDate(order.orderDate || ""),
-                        "Số đơn bán": order.orderNumber || "",
-                        "Mã khách hàng": order.customerId || "",
-                        "Tên khách hàng": order.customerName || "",
-                        "Mã hàng": item.productCode,
-                        "Tên hàng": item.productName,
-                        ĐVT: item.unit,
-                        "Số lượng bán": item.quantity,
-                        "Đơn giá": formatCurrency(item.unitPrice),
-                        "Thành tiền": formatCurrency(item.totalAmount),
-                        "Giảm giá": formatCurrency(item.discount),
-                        "Doanh thu": formatCurrency(item.revenue),
-                        "Thuế suất": `${item.taxRate || 0}%`, // Use item.taxRate directly
-                        "Thuế GTGT": formatCurrency(item.vat),
-                        "Tổng tiền": formatCurrency(item.totalMoney),
-                        "Ghi chú": order?.notes || "",
-                        "Kênh bán": order?.salesChannel || "",
-                        Bàn: order?.tableName || "",
-                        "Tên nhân viên": order?.employeeName || "",
-                        "Nhóm hàng": item.productGroup,
-                        "Trạng thái": order?.status || "",
-                      }));
-                    })
-                    .flat(), // Flatten the array of arrays
-                  // Add summary row
-                  {
-                    Ngày: "TỔNG CỘNG",
-                    "Số đơn bán": `${groupedOrders.length} dòng`,
-                    "Mã khách hàng": "",
-                    "Tên khách hàng": "",
-                    "Mã hàng": "",
-                    "Tên hàng": "",
-                    ĐVT: "",
-                    "Số lượng bán": totalQuantity,
-                    "Đơn giá": "",
-                    "Thành tiền": formatCurrency(totalAmount),
-                    "Giảm giá": formatCurrency(totalDiscount),
-                    "Doanh thu": formatCurrency(totalRevenue),
-                    "Thuế suất": "0%", // Average tax rate
-                    "Thuế GTGT": formatCurrency(totalVat),
-                    "Tổng tiền": formatCurrency(totalMoney),
-                    "Ghi chú": "",
-                    "Kênh bán": "",
-                    Bàn: "",
-                    "Tên nhân viên": "",
-                    "Nhóm hàng": "",
-                    "Trạng thái": "",
-                  },
-                ];
+                const exportData = [];
+
+                // Export order headers and all their items
+                groupedOrders.forEach((order) => {
+                  // Add order header row
+                  exportData.push({
+                    Loại: "Tổng đơn hàng",
+                    Ngày: formatDate(order.orderDate || ""),
+                    "Số đơn bán": order.orderNumber || "",
+                    "Mã khách hàng": order.customerId || "",
+                    "Tên khách hàng": order.customerName || "",
+                    "Mã hàng": "-",
+                    "Tên hàng": "Tổng đơn hàng",
+                    ĐVT: "-",
+                    "Số lượng bán": order.items.length,
+                    "Đơn giá": order.totalAmount,
+                    "Thành tiền": order.totalAmount,
+                    "Giảm giá": order.discount,
+                    "Doanh thu": order.revenue,
+                    "Thuế suất": (() => {
+                      if (order.items && order.items.length > 0) {
+                        const totalTaxRate = order.items.reduce((sum: number, item: any) => {
+                          return sum + (item.taxRate || 0);
+                        }, 0);
+                        const avgTaxRate = totalTaxRate / order.items.length;
+                        return `${avgTaxRate.toFixed(1)}%`;
+                      }
+                      return "0%";
+                    })(),
+                    "Thuế GTGT": order.tax,
+                    "Tổng tiền": order.totalMoney,
+                    "Ghi chú": order.notes || "",
+                    "Kênh bán": order.salesChannel || "",
+                    Bàn: order.tableName || "",
+                    "Tên nhân viên": order.employeeName || "",
+                    "Nhóm hàng": order.items.length > 0 && order.items[0].productGroup
+                      ? order.items[0].productGroup
+                      : "-",
+                    "Trạng thái": order.status || "",
+                  });
+
+                  // Add all items for this order
+                  order.items.forEach((item: any) => {
+                    exportData.push({
+                      Loại: "Chi tiết sản phẩm",
+                      Ngày: formatDate(order.orderDate || ""),
+                      "Số đơn bán": order.orderNumber || "",
+                      "Mã khách hàng": order.customerId || "",
+                      "Tên khách hàng": order.customerName || "",
+                      "Mã hàng": item.productCode,
+                      "Tên hàng": item.productName,
+                      ĐVT: item.unit,
+                      "Số lượng bán": item.quantity,
+                      "Đơn giá": item.unitPrice,
+                      "Thành tiền": item.totalAmount,
+                      "Giảm giá": item.discount,
+                      "Doanh thu": item.revenue,
+                      "Thuế suất": `${item.taxRate || 0}%`,
+                      "Thuế GTGT": item.vat,
+                      "Tổng tiền": item.totalMoney,
+                      "Ghi chú": order.notes || "",
+                      "Kênh bán": order.salesChannel || "",
+                      Bàn: order.tableName || "",
+                      "Tên nhân viên": order.employeeName || "",
+                      "Nhóm hàng": item.productGroup,
+                      "Trạng thái": order.status || "",
+                    });
+                  });
+                });
+
+                // Add grand total summary
+                exportData.push({
+                  Loại: "TỔNG CỘNG",
+                  Ngày: "",
+                  "Số đơn bán": `${groupedOrders.length} đơn hàng`,
+                  "Mã khách hàng": "",
+                  "Tên khách hàng": "",
+                  "Mã hàng": "",
+                  "Tên hàng": "",
+                  ĐVT: "",
+                  "Số lượng bán": totalQuantity,
+                  "Đơn giá": "",
+                  "Thành tiền": totalAmount,
+                  "Giảm giá": totalDiscount,
+                  "Doanh thu": totalRevenue,
+                  "Thuế suất": (() => {
+                    if (totalTax > 0 && totalAmount > 0) {
+                      const avgTaxRate = (totalTax / totalAmount) * 100;
+                      return `${avgTaxRate.toFixed(1)}%`;
+                    }
+                    return "0%";
+                  })(),
+                  "Thuế GTGT": totalTax,
+                  "Tổng tiền": totalMoney,
+                  "Ghi chú": "",
+                  "Kênh bán": "",
+                  Bàn: "",
+                  "Tên nhân viên": "",
+                  "Nhóm hàng": "",
+                  "Trạng thái": "",
+                });
+
                 exportToExcel(
-                  dataWithSummary,
-                  `SalesDetail_${startDate}_to_${endDate}`,
+                  exportData,
+                  `BaoCaoChiTietBanHang_${startDate}_to_${endDate}`,
                 );
               }}
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
@@ -2123,12 +2172,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
       );
-    }
+    };
 
     // Employee Report Component Logic - Enhanced with expandable rows and proper data handling
     const renderEmployeeReport = () => {
@@ -2272,27 +2320,64 @@ export function SalesChartReport() {
                 </span>
                 <Button
                   onClick={() => {
-                    const dataWithSummary = [
-                      ...data.map((item) => ({
+                    const exportData = [];
+
+                    // Export employee summaries with their detailed orders
+                    data.forEach((item) => {
+                      // Add employee summary row
+                      exportData.push({
+                        Loại: "Tổng nhân viên",
                         "Mã NV": item.employeeCode,
                         "Tên NV": item.employeeName,
+                        "Mã đơn hàng": "",
+                        "Ngày giờ": "",
+                        "Khách hàng": "",
                         "Số đơn": item.orderCount,
-                        "Doanh thu": formatCurrency(item.revenue),
-                        "Giảm giá": formatCurrency(item.discount),
-                        "Thuế": formatCurrency(item.tax),
-                        "Tổng cộng": formatCurrency(item.total),
-                      })),
-                      {
-                        "Mã NV": "TỔNG CỘNG",
-                        "Tên NV": `${data.length} nhân viên`,
-                        "Số đơn": data.reduce((sum, item) => sum + item.orderCount, 0),
-                        "Doanh thu": formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0)),
-                        "Giảm giá": formatCurrency(data.reduce((sum, item) => sum + item.discount, 0)),
-                        "Thuế": formatCurrency(data.reduce((sum, item) => sum + item.tax, 0)),
-                        "Tổng cộng": formatCurrency(data.reduce((sum, item) => sum + item.total, 0)),
-                      },
-                    ];
-                    exportToExcel(dataWithSummary, `EmployeeSales_${startDate}_to_${endDate}`);
+                        "Doanh thu": item.revenue,
+                        "Giảm giá": item.discount,
+                        "Thuế": item.tax,
+                        "Tổng cộng": item.total,
+                        "Phương thức thanh toán": "Tất cả",
+                      });
+
+                      // Add detailed orders for this employee
+                      item.orders.forEach((order: any) => {
+                        exportData.push({
+                          Loại: "Chi tiết đơn hàng",
+                          "Mã NV": item.employeeCode,
+                          "Tên NV": item.employeeName,
+                          "Mã đơn hàng": order.orderNumber || `ORD-${order.id}`,
+                          "Ngày giờ": new Date(
+                            order.orderedAt || order.createdAt || order.created_at
+                          ).toLocaleString("vi-VN"),
+                          "Khách hàng": order.customerName || "Khách lẻ",
+                          "Số đơn": 1,
+                          "Doanh thu": Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0)),
+                          "Giảm giá": Number(order.discount || 0),
+                          "Thuế": Math.max(0, Number(order.total || 0) - Number(order.subtotal || 0)),
+                          "Tổng cộng": Number(order.total || 0),
+                          "Phương thức thanh toán": getPaymentMethodLabel(order.paymentMethod || "cash"),
+                        });
+                      });
+                    });
+
+                    // Add grand total summary
+                    exportData.push({
+                      Loại: "TỔNG CỘNG",
+                      "Mã NV": "",
+                      "Tên NV": `${data.length} nhân viên`,
+                      "Mã đơn hàng": "",
+                      "Ngày giờ": "",
+                      "Khách hàng": "",
+                      "Số đơn": data.reduce((sum, item) => sum + item.orderCount, 0),
+                      "Doanh thu": data.reduce((sum, item) => sum + item.revenue, 0),
+                      "Giảm giá": data.reduce((sum, item) => sum + item.discount, 0),
+                      "Thuế": data.reduce((sum, item) => sum + item.tax, 0),
+                      "Tổng cộng": data.reduce((sum, item) => sum + item.total, 0),
+                      "Phương thức thanh toán": "Tất cả",
+                    });
+
+                    exportToExcel(exportData, `BaoCaoNhanVien_${startDate}_to_${endDate}`);
                   }}
                   className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
                 >
