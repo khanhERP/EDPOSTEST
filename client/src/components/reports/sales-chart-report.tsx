@@ -1139,7 +1139,12 @@ export function SalesChartReport() {
                           )}
                         </TableCell>
                         <TableCell className="text-right border-r min-w-[120px] px-4">
-                          10%
+                          {formatCurrency(
+                            Object.values(dailySales).reduce(
+                              (sum, data) => sum + (data.tax || 0),
+                              0,
+                            ),
+                          )}
                         </TableCell>
                         <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
                           {formatCurrency(
