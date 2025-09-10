@@ -2549,24 +2549,33 @@ export function SalesChartReport() {
 
                               {/* Expanded order details */}
                               {isExpanded &&
-                                filteredTransactions.length > 0 &&
-                                filteredTransactions.map(
-                                  (
-                                    transaction: any,
-                                    transactionIndex: number,
-                                  ) => {
-                                    // Check if this transaction belongs to the current employee
-                                    const transactionEmployeeName =
-                                      transaction.cashierName ||
-                                      transaction.employeeName;
-                                    if (
-                                      transactionEmployeeName !==
-                                      item.employeeName
-                                    ) {
-                                      return null; // Skip if not this employee's transaction
+                                (() => {
+                                  // Filter transactions for this specific employee
+                                  const employeeTransactions = filteredTransactions.filter(
+                                    (transaction: any) => {
+                                      const transactionEmployeeName =
+                                        transaction.cashierName ||
+                                        transaction.employeeName ||
+                                        "Unknown";
+                                      
+                                      // More flexible matching
+                                      return (
+                                        transactionEmployeeName === item.employeeName ||
+                                        transactionEmployeeName.includes(item.employeeName) ||
+                                        item.employeeName.includes(transactionEmployeeName) ||
+                                        (transactionEmployeeName === "Unknown" && item.employeeName === "Unknown")
+                                      );
                                     }
+                                  );
 
-                                    return (
+                                  console.log("Employee transactions for", item.employeeName, ":", {
+                                    totalTransactions: filteredTransactions.length,
+                                    employeeTransactions: employeeTransactions.length,
+                                    sampleTransaction: employeeTransactions[0]
+                                  });
+
+                                  return employeeTransactions.map(
+                                    (transaction: any, transactionIndex: number) => (
                                       <TableRow
                                         key={`${item.employeeCode}-transaction-${transaction.id || transactionIndex}`}
                                         className="bg-blue-50/50 border-l-4 border-l-blue-400"
@@ -2607,42 +2616,33 @@ export function SalesChartReport() {
                                           })}
                                         </TableCell>
                                         <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
-                                          {transaction.orderNumber || "1"}
+                                          1
                                         </TableCell>
                                         <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                           {formatCurrency(
-                                            Number(transaction.subtotal || 0),
+                                            Number(transaction.subtotal || 0) - Number(transaction.discount || 0),
                                           )}
                                         </TableCell>
                                         {analysisType !== "employee" && (
                                           <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
                                             {formatCurrency(
-                                              Number(
-                                                transaction.discount,
-                                              ) || 0,
+                                              Number(transaction.discount || 0),
                                             )}
                                           </TableCell>
                                         )}
                                         <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
-                                          {formatCurrency(
-                                            Number(
-                                              transaction.total || 0,
-                                            ) -
-                                              Number(
-                                                transaction.subtotal || 0,
-                                              ),
-                                          )}
+                                          10%
                                         </TableCell>
                                         <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                           {formatCurrency(
-                                            Number(transaction.total),
+                                            Number(transaction.total || 0),
                                           )}
                                         </TableCell>
                                         {(() => {
                                           const transactionMethod =
                                             transaction.paymentMethod || "cash";
                                           const amount = Number(
-                                            transaction.total,
+                                            transaction.total || 0,
                                           );
 
                                           // Get all unique payment methods from all transactions
@@ -2672,14 +2672,8 @@ export function SalesChartReport() {
                                                     key={method}
                                                     className="text-right border-r text-sm min-w-[130px] px-4"
                                                   >
-                                                    {transactionMethod ===
-                                                    method
-                                                      ? formatCurrency(
-                                                          Number(
-                                                            transaction.total ||
-                                                              0,
-                                                          ),
-                                                        )
+                                                    {transactionMethod === method
+                                                      ? formatCurrency(amount)
                                                       : "-"}
                                                   </TableCell>
                                                 ),
@@ -2691,9 +2685,9 @@ export function SalesChartReport() {
                                           );
                                         })()}
                                       </TableRow>
-                                    );
-                                  },
-                                )}
+                                    ),
+                                  );
+                                })()}
                             </>
                           );
                         })
