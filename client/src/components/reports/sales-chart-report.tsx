@@ -1507,11 +1507,11 @@ export function SalesChartReport() {
                 const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
                 const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
 
-                // Safely get tax rate, default to 10% if not available
-                const itemTaxRate =
-                  item.taxRate !== undefined && item.taxRate !== null
-                    ? Number(item.taxRate)
-                    : 10;
+                // Get tax rate from product database, default to 0 if not available
+                const product = Array.isArray(products) 
+                  ? products.find((p: any) => p.id === item.productId)
+                  : null;
+                const itemTaxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
 
                 return {
                   productCode: item.productSku || `SP${item.productId}`,
@@ -1826,7 +1826,17 @@ export function SalesChartReport() {
                               {formatCurrency(order.revenue)}
                             </TableCell>
                             <TableCell className="text-right min-w-[100px] px-2">
-                              {order.items.length > 0 && order.items[0].taxRate ? `${order.items[0].taxRate}%` : "0%"}
+                              {(() => {
+                                // Calculate average tax rate from all items in the order
+                                if (order.items && order.items.length > 0) {
+                                  const totalTaxRate = order.items.reduce((sum: number, item: any) => {
+                                    return sum + (item.taxRate || 0);
+                                  }, 0);
+                                  const avgTaxRate = totalTaxRate / order.items.length;
+                                  return avgTaxRate > 0 ? `${avgTaxRate.toFixed(1)}%` : "0%";
+                                }
+                                return "0%";
+                              })()}
                             </TableCell>
                             <TableCell className="text-right min-w-[100px] px-2">
                               {formatCurrency(order.tax)}
@@ -1922,7 +1932,14 @@ export function SalesChartReport() {
                                   {formatCurrency(item.revenue)}
                                 </TableCell>
                                 <TableCell className="text-right min-w-[100px] px-2">
-                                  {item.taxRate || 0}%
+                                  {(() => {
+                                    // Get taxRate from the actual product data
+                                    const product = Array.isArray(products) 
+                                      ? products.find((p: any) => p.id === item.productId)
+                                      : null;
+                                    const taxRate = product?.taxRate ? parseFloat(product.taxRate) : (item.taxRate || 0);
+                                    return `${taxRate}%`;
+                                  })()}
                                 </TableCell>
                                 <TableCell className="text-right min-w-[100px] px-2">
                                   {formatCurrency(item.vat)}
@@ -2014,7 +2031,30 @@ export function SalesChartReport() {
                         {formatCurrency(totalRevenue)}
                       </TableCell>
                       <TableCell className="text-center border-r bg-yellow-100 min-w-[100px] px-4">
-                        10%
+                        {(() => {
+                          // Calculate weighted average tax rate across all items
+                          if (groupedOrders.length > 0) {
+                            let totalTaxAmount = 0;
+                            let totalRevenue = 0;
+                            
+                            groupedOrders.forEach((order) => {
+                              order.items.forEach((item: any) => {
+                                const product = Array.isArray(products) 
+                                  ? products.find((p: any) => p.id === item.productId)
+                                  : null;
+                                const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
+                                const itemRevenue = item.totalAmount || 0;
+                                
+                                totalTaxAmount += (itemRevenue * taxRate / 100);
+                                totalRevenue += itemRevenue;
+                              });
+                            });
+                            
+                            const avgTaxRate = totalRevenue > 0 ? (totalTaxAmount / totalRevenue) * 100 : 0;
+                            return `${avgTaxRate.toFixed(1)}%`;
+                          }
+                          return "0%";
+                        })()}
                       </TableCell>
                       <TableCell className="text-right border-r bg-yellow-100 min-w-[100px] px-4">
                         {formatCurrency(totalVat)}
