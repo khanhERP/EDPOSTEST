@@ -93,10 +93,6 @@ export function SalesChartReport() {
   const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
   const [customerPageSize, setCustomerPageSize] = useState(15);
 
-  // Employee Report with Pagination State
-  const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
-  const [employeePageSize, setEmployeePageSize] = useState(15);
-
   // State for Product Manager Modal
   const [showProductManager, setShowProductManager] = useState(false);
   const [searchSKU, setSearchSKU] = useState("");
