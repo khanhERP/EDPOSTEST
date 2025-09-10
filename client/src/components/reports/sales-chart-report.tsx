@@ -3626,9 +3626,7 @@ export function SalesChartReport() {
                         )}
                       </TableCell>
                       <TableCell className="text-center border">
-                        {Object.values(salesMethodData).reduce                    (sum, data) => sum + data.cancelledOrders,
-                          0,
-                        )}
+                        {Object.values(salesMethodData).reduce((sum, data) => sum + data.cancelledOrders,0)}
                       </TableCell>
                       <TableCell className="text-center border font-medium">
                         {Object.values(salesMethodData).reduce(
