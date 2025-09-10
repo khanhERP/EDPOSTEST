@@ -155,11 +155,17 @@ export function CustomerDisplay({
       try {
         const registrationMessage = {
           type: 'customer_display_connected',
+          clientType: 'customer_display',
           timestamp: new Date().toISOString()
         };
         console.log('📤 Customer Display: Sending registration message:', registrationMessage);
         ws.send(JSON.stringify(registrationMessage));
         console.log('✅ Customer Display: Registration message sent successfully');
+        
+        // Set a small delay to ensure server processes registration before any other messages
+        setTimeout(() => {
+          console.log('🔄 Customer Display: Ready to receive messages');
+        }, 100);
       } catch (error) {
         console.error('❌ Customer Display: Failed to send registration message:', error);
       }

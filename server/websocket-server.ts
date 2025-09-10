@@ -119,49 +119,94 @@ export function initializeWebSocketServer(server: Server) {
 
           console.log(`✅ Cart update broadcasted to ${broadcastCount} clients`);
         } else if (data.type === 'qr_payment') {
+          console.log('📱 Received QR payment request:', {
+            hasQrCodeUrl: !!data.qrCodeUrl,
+            qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+            amount: data.amount,
+            paymentMethod: data.paymentMethod,
+            transactionUuid: data.transactionUuid,
+            clientsCount: clients.size
+          });
+
+          // Validate QR payment data first
+          if (!data.qrCodeUrl || !data.amount) {
+            console.error('❌ Invalid QR payment data received:', {
+              hasQrCodeUrl: !!data.qrCodeUrl,
+              hasAmount: !!data.amount,
+              data: data
+            });
+            return;
+          }
+
           // Update global QR payment state
           currentCartState.qrPayment = {
             qrCodeUrl: data.qrCodeUrl,
-            amount: data.amount,
-            paymentMethod: data.paymentMethod,
-            transactionUuid: data.transactionUuid
+            amount: Number(data.amount),
+            paymentMethod: data.paymentMethod || 'QR Code',
+            transactionUuid: data.transactionUuid || `QR-${Date.now()}`
           };
 
-          console.log('📱 Broadcasting QR payment to customer displays', {
-            qrCodeUrl: data.qrCodeUrl ? `${data.qrCodeUrl.substring(0, 50)}...` : 'null',
-            amount: data.amount,
+          // Clear cart state when QR payment is shown
+          currentCartState.cart = [];
+          currentCartState.subtotal = 0;
+          currentCartState.tax = 0;
+          currentCartState.total = 0;
+
+          console.log('✅ Updated global QR payment state:', {
+            hasQrCodeUrl: !!currentCartState.qrPayment.qrCodeUrl,
+            amount: currentCartState.qrPayment.amount,
+            paymentMethod: currentCartState.qrPayment.paymentMethod,
+            transactionUuid: currentCartState.qrPayment.transactionUuid
+          });
+
+          // Create validated QR message
+          const qrMessage = {
+            type: 'qr_payment',
+            qrCodeUrl: data.qrCodeUrl,
+            amount: Number(data.amount),
+            paymentMethod: data.paymentMethod || 'QR Code',
+            transactionUuid: data.transactionUuid || `QR-${Date.now()}`,
+            timestamp: new Date().toISOString()
+          };
+
+          console.log('📡 Broadcasting QR payment to all clients:', {
+            messageType: qrMessage.type,
+            hasQrCodeUrl: !!qrMessage.qrCodeUrl,
+            amount: qrMessage.amount,
             clientsCount: clients.size,
-            transactionUuid: data.transactionUuid,
-            hasValidQrData: !!(data.qrCodeUrl && data.amount)
+            timestamp: qrMessage.timestamp
           });
 
           // Broadcast QR payment info to all clients (especially customer displays)
           let qrBroadcastCount = 0;
-          const qrMessage = {
-            type: 'qr_payment',
-            qrCodeUrl: data.qrCodeUrl,
-            amount: Number(data.amount) || 0,
-            paymentMethod: data.paymentMethod || 'QR Code',
-            transactionUuid: data.transactionUuid,
-            timestamp: data.timestamp || new Date().toISOString()
-          };
+          let customerDisplayCount = 0;
 
           clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN && client !== ws) {
               try {
-                console.log(`📤 Sending QR payment to client (type: ${(client as any).clientType || 'unknown'}):`, {
+                const clientType = (client as any).clientType || 'unknown';
+                const isCustomerDisplay = (client as any).isCustomerDisplay || clientType === 'customer_display';
+                
+                console.log(`📤 Sending QR payment to client (type: ${clientType}, isCustomerDisplay: ${isCustomerDisplay}):`, {
                   hasQrCodeUrl: !!qrMessage.qrCodeUrl,
-                  amount: qrMessage.amount
+                  amount: qrMessage.amount,
+                  qrCodeStart: qrMessage.qrCodeUrl ? qrMessage.qrCodeUrl.substring(0, 30) + '...' : 'null'
                 });
+                
                 client.send(JSON.stringify(qrMessage));
                 qrBroadcastCount++;
+                
+                if (isCustomerDisplay) {
+                  customerDisplayCount++;
+                  console.log(`✅ QR payment sent to customer display #${customerDisplayCount}`);
+                }
               } catch (error) {
                 console.error('❌ Error broadcasting QR payment to client:', error);
               }
             }
           });
           
-          console.log(`✅ QR payment broadcasted to ${qrBroadcastCount} clients`);
+          console.log(`✅ QR payment broadcasted to ${qrBroadcastCount} total clients (${customerDisplayCount} customer displays)`);
         } else if (data.type === 'customer_display_connected') {
           console.log('👥 Customer display connected - sending current state');
           // Mark this connection as customer display
@@ -214,12 +259,55 @@ export function initializeWebSocketServer(server: Server) {
           } catch (error) {
             console.error('❌ Failed to send current state to customer display:', error);
           }
+        } else if (data.type === 'qr_payment_cancelled') {
+          console.log('🚫 QR payment cancelled, clearing QR payment state');
+          currentCartState.qrPayment = null;
+          
+          // Broadcast cancellation to all customer displays
+          clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN && client !== ws) {
+              const isCustomerDisplay = (client as any).isCustomerDisplay || (client as any).clientType === 'customer_display';
+              if (isCustomerDisplay) {
+                try {
+                  client.send(JSON.stringify({
+                    type: 'qr_payment_cancelled',
+                    timestamp: new Date().toISOString()
+                  }));
+                  console.log('📤 QR payment cancellation sent to customer display');
+                } catch (error) {
+                  console.error('❌ Error sending QR payment cancellation:', error);
+                }
+              }
+            }
+          });
+        } else if (data.type === 'restore_cart_display') {
+          console.log('🔄 Restoring cart display, clearing QR payment state');
+          currentCartState.qrPayment = null;
+          
+          // Broadcast restore command to customer displays
+          clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN && client !== ws) {
+              const isCustomerDisplay = (client as any).isCustomerDisplay || (client as any).clientType === 'customer_display';
+              if (isCustomerDisplay) {
+                try {
+                  client.send(JSON.stringify({
+                    type: 'restore_cart_display',
+                    timestamp: new Date().toISOString()
+                  }));
+                  console.log('📤 Restore cart display sent to customer display');
+                } catch (error) {
+                  console.error('❌ Error sending restore cart display:', error);
+                }
+              }
+            }
+          });
         } else if (data.type === 'popup_close' || data.type === 'payment_success' || data.type === 'order_status_update' || data.type === 'force_refresh' || data.type === 'einvoice_published' || data.type === 'einvoice_saved_for_later') {
           // Broadcast data refresh signals to all connected table grids and order management clients
           console.log(`📡 Broadcasting ${data.type} to all clients`);
           // Handle payment success specifically
           if (data.type === 'payment_success') {
-            // Clear cart state on payment success
+            console.log('💰 Payment success received, clearing all states');
+            // Clear cart state and QR payment on payment success
             currentCartState = {
               cart: [],
               subtotal: 0,
@@ -228,7 +316,7 @@ export function initializeWebSocketServer(server: Server) {
               storeInfo: currentCartState.storeInfo,
               qrPayment: null
             };
-            console.log('💰 Payment success - cleared cart state');
+            console.log('✅ Payment success - cleared cart and QR payment state');
           }
 
           clients.forEach(client => {
