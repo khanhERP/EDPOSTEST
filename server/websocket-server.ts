@@ -166,39 +166,51 @@ export function initializeWebSocketServer(server: Server) {
           console.log('👥 Customer display connected - sending current state');
           // Mark this connection as customer display
           (ws as any).isCustomerDisplay = true;
+          (ws as any).clientType = 'customer_display';
 
           // Send current cart state to newly connected customer display
           try {
-            ws.send(JSON.stringify({
+            // Always send cart update first
+            const cartMessage = {
               type: 'cart_update',
               cart: currentCartState.cart,
               subtotal: currentCartState.subtotal,
               tax: currentCartState.tax,
               total: currentCartState.total,
               timestamp: new Date().toISOString()
-            }));
+            };
+            ws.send(JSON.stringify(cartMessage));
+            console.log('📤 Sent cart update to customer display:', {
+              cartItems: currentCartState.cart.length,
+              subtotal: currentCartState.subtotal,
+              total: currentCartState.total
+            });
 
+            // Send store info if available
             if (currentCartState.storeInfo) {
               ws.send(JSON.stringify({
                 type: 'store_info',
                 storeInfo: currentCartState.storeInfo,
                 timestamp: new Date().toISOString()
               }));
+              console.log('📤 Sent store info to customer display');
             }
 
+            // Send QR payment if available
             if (currentCartState.qrPayment) {
-              ws.send(JSON.stringify({
+              const qrMessage = {
                 type: 'qr_payment',
                 ...currentCartState.qrPayment,
                 timestamp: new Date().toISOString()
-              }));
+              };
+              ws.send(JSON.stringify(qrMessage));
+              console.log('📤 Sent QR payment to customer display:', {
+                hasQrCodeUrl: !!currentCartState.qrPayment.qrCodeUrl,
+                amount: currentCartState.qrPayment.amount
+              });
             }
 
-            console.log('✅ Sent current state to customer display:', {
-              cartItems: currentCartState.cart.length,
-              hasStoreInfo: !!currentCartState.storeInfo,
-              hasQrPayment: !!currentCartState.qrPayment
-            });
+            console.log('✅ Customer display registration complete and state synchronized');
           } catch (error) {
             console.error('❌ Failed to send current state to customer display:', error);
           }
