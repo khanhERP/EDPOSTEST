@@ -67,6 +67,9 @@ export function ShoppingCart({
   const [lastCartItems, setLastCartItems] = useState<CartItem[]>([]);
   const [orderForPayment, setOrderForPayment] = useState(null);
 
+  const hasMounted = useRef(false);
+  const isNavigatingToTables = useRef(false);
+  const { toast } = useToast();
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -248,6 +251,7 @@ export function ShoppingCart({
 
   // Store WebSocket reference for broadcasting cart updates
   const wsRef = useRef<WebSocket | null>(null);
+  const cartBroadcastWs = wsRef.current; // Alias for clarity
 
   // Update WebSocket reference when connection is established
   useEffect(() => {
@@ -283,57 +287,59 @@ export function ShoppingCart({
     };
   }, []);
 
-  // Function to broadcast cart updates to customer display
-  const broadcastCartUpdate = useCallback(() => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      // Ensure cart items have proper names before broadcasting
-      const validatedCart = cart.map(item => ({
-        ...item,
-        name: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id}`,
-        productName: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id}`,
-        price: item.price || '0',
-        quantity: item.quantity || 1,
-        total: item.total || '0'
-      }));
-
-      const cartUpdateMessage = {
+  // Broadcast cart updates via WebSocket
+  const broadcastCartUpdate = useCallback((cartData: any[], subtotal: number, tax: number, total: number, fromPOS: boolean = true) => {
+    if (cartBroadcastWs && cartBroadcastWs.readyState === WebSocket.OPEN) {
+      const message = {
         type: 'cart_update',
-        cart: validatedCart,
-        subtotal: subtotal,
-        tax: tax,
-        total: total,
-        orderNumber: activeOrderId || `ORD-${Date.now()}`,
+        cart: cartData,
+        subtotal,
+        tax,
+        total,
+        fromPOS, // Add flag to indicate if this is from actual POS interaction
         timestamp: new Date().toISOString()
       };
 
-      console.log("📡 Shopping Cart: Broadcasting cart update to customer display:", {
-        cartItems: validatedCart.length,
-        subtotal: subtotal,
-        tax: tax,
-        total: total,
-        orderNumber: activeOrderId || `POS-${Date.now()}`,
-        sampleItem: validatedCart[0],
-        sampleItemName: validatedCart[0]?.name
+      console.log('📡 Shopping Cart: Broadcasting cart update:', {
+        cartItems: cartData.length,
+        subtotal,
+        tax,
+        total,
+        fromPOS
       });
 
-      try {
-        wsRef.current.send(JSON.stringify(cartUpdateMessage));
-      } catch (error) {
-        console.error("📡 Shopping Cart: Error broadcasting cart update:", error);
-      }
-    } else {
-      console.log("📡 Shopping Cart: WebSocket not available for broadcasting");
+      cartBroadcastWs.send(JSON.stringify(message));
     }
-  }, [cart, subtotal, tax, total, activeOrderId]);
+  }, [cartBroadcastWs]);
 
-  // Helper to call broadcastCartUpdate after state changes
-  const triggerBroadcastUpdate = useCallback(() => {
-    // Use setTimeout to ensure state updates have been processed before broadcasting
-    setTimeout(() => broadcastCartUpdate(), 100);
-  }, [broadcastCartUpdate]);
+  // Broadcast whenever cart changes (but not on initial mount or navigation)
+  useEffect(() => {
+    if (hasMounted.current && !isNavigatingToTables.current) {
+      const newSubtotal = calculateSubtotal();
+      const newTax = calculateTax();
+      const newTotal = newSubtotal + newTax;
 
+      broadcastCartUpdate(cart, newSubtotal, newTax, newTotal, true);
+    }
+  }, [cart, broadcastCartUpdate]);
 
-  
+  // Listen for navigation events to prevent unnecessary broadcasts
+  useEffect(() => {
+    const handleNavigation = () => {
+      isNavigatingToTables.current = true;
+      // Reset after a short delay
+      setTimeout(() => {
+        isNavigatingToTables.current = false;
+      }, 1000);
+    };
+
+    // Listen for navigation to tables page
+    window.addEventListener('beforeunload', handleNavigation);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleNavigation);
+    };
+  }, []);
 
 
   const getPaymentMethods = () => {
@@ -1108,7 +1114,7 @@ export function ShoppingCart({
             }
 
             // Broadcast empty cart
-            broadcastCartUpdate();
+            broadcastCartUpdate([], 0, 0, 0, false); // Broadcast empty cart with fromPOS as false
 
             // Send popup close signal to refresh other components
             try {
