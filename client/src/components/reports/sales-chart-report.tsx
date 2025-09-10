@@ -1343,29 +1343,53 @@ export function SalesChartReport() {
         order.status === "completed" ||
         order.status === "cancelled";
 
-      const employeeMatch =
-        !selectedEmployee ||
-        selectedEmployee === "all" ||
-        selectedEmployee === "" ||
-        order.employeeName === selectedEmployee ||
-        order.cashierName === selectedEmployee ||
-        order.employeeId?.toString() === selectedEmployee ||
-        (order.employeeName &&
-          typeof order.employeeName === "string" &&
-          selectedEmployee &&
-          typeof selectedEmployee === "string" &&
-          selectedEmployee !== "all" &&
-          order.employeeName
-            .toLowerCase()
-            .includes(selectedEmployee.toLowerCase())) ||
-        (order.cashierName &&
-          typeof order.cashierName === "string" &&
-          selectedEmployee &&
-          typeof selectedEmployee === "string" &&
-          selectedEmployee !== "all" &&
-          order.cashierName
-            .toLowerCase()
-            .includes(selectedEmployee.toLowerCase()));
+      const employeeMatch = (() => {
+        try {
+          // No filter selected
+          if (!selectedEmployee || selectedEmployee === "all" || selectedEmployee === "") {
+            return true;
+          }
+
+          // Safe string extraction
+          const safeEmployeeName = order.employeeName && typeof order.employeeName === "string" 
+            ? order.employeeName.trim() 
+            : "";
+          const safeCashierName = order.cashierName && typeof order.cashierName === "string" 
+            ? order.cashierName.trim() 
+            : "";
+          const safeEmployeeId = order.employeeId ? order.employeeId.toString() : "";
+          const safeSelectedEmployee = selectedEmployee && typeof selectedEmployee === "string" 
+            ? selectedEmployee.trim() 
+            : "";
+
+          // Exact matches
+          if (
+            safeEmployeeName === safeSelectedEmployee ||
+            safeCashierName === safeSelectedEmployee ||
+            safeEmployeeId === safeSelectedEmployee
+          ) {
+            return true;
+          }
+
+          // Partial matches for non-empty strings
+          if (safeSelectedEmployee && safeSelectedEmployee !== "all") {
+            const searchTerm = safeSelectedEmployee.toLowerCase();
+            
+            if (safeEmployeeName && safeEmployeeName.toLowerCase().includes(searchTerm)) {
+              return true;
+            }
+            
+            if (safeCashierName && safeCashierName.toLowerCase().includes(searchTerm)) {
+              return true;
+            }
+          }
+
+          return false;
+        } catch (error) {
+          console.warn("Error in employee matching:", error);
+          return true; // Include by default if there's an error
+        }
+      })();
 
       const customerMatch =
         !customerSearch ||
@@ -2637,84 +2661,50 @@ export function SalesChartReport() {
                                         // Safe employee matching with proper null/undefined checks
                                         const employeeMatch = (() => {
                                           try {
-                                            // Exact match first
-                                            if (
-                                              transactionEmployeeName ===
-                                              currentEmployeeName
-                                            ) {
-                                              return true;
-                                            }
-
-                                            // Get employee names safely with null checks
-                                            const orderEmployeeName =
-                                              transactionEmployeeName &&
-                                              typeof transactionEmployeeName ===
-                                                "string"
-                                                ? transactionEmployeeName.trim()
+                                            // Safe null/undefined checks for all variables
+                                            const safeTransactionEmployeeName = 
+                                              transactionEmployeeName && 
+                                              typeof transactionEmployeeName === "string" 
+                                                ? transactionEmployeeName.trim() 
                                                 : "";
-                                            const orderEmployeeId =
-                                              transaction.employeeId &&
+                                                
+                                            const safeCurrentEmployeeName = 
+                                              currentEmployeeName && 
+                                              typeof currentEmployeeName === "string" 
+                                                ? currentEmployeeName.trim() 
+                                                : "";
+                                                
+                                            const safeEmployeeId = 
+                                              transaction.employeeId && 
                                               transaction.employeeId !== null
                                                 ? transaction.employeeId.toString()
                                                 : "";
 
-                                            // Get current employee name safely
-                                            const safeCurrentEmployeeName =
-                                              currentEmployeeName &&
-                                              typeof currentEmployeeName ===
-                                                "string"
-                                                ? currentEmployeeName.trim()
-                                                : "";
-
-                                            // Skip if no valid current employee name
-                                            if (
-                                              !safeCurrentEmployeeName ||
-                                              safeCurrentEmployeeName ===
-                                                "Unknown"
-                                            ) {
-                                              return (
-                                                orderEmployeeName === "Unknown"
-                                              );
+                                            // If no current employee filter, return true
+                                            if (!safeCurrentEmployeeName || safeCurrentEmployeeName === "Unknown") {
+                                              return safeTransactionEmployeeName === "Unknown" || !safeTransactionEmployeeName;
                                             }
 
                                             // Exact matches
                                             if (
-                                              orderEmployeeName ===
-                                                safeCurrentEmployeeName ||
-                                              orderEmployeeId ===
-                                                safeCurrentEmployeeName
+                                              safeTransactionEmployeeName === safeCurrentEmployeeName ||
+                                              safeEmployeeId === safeCurrentEmployeeName
                                             ) {
                                               return true;
                                             }
 
                                             // Partial matches with safe string operations
-                                            if (
-                                              orderEmployeeName &&
-                                              safeCurrentEmployeeName
-                                            ) {
-                                              const searchTerm =
-                                                safeCurrentEmployeeName.toLowerCase();
-                                              const employeeTerm =
-                                                orderEmployeeName.toLowerCase();
-
-                                              if (
-                                                employeeTerm.includes &&
-                                                typeof employeeTerm.includes ===
-                                                  "function"
-                                              ) {
-                                                return employeeTerm.includes(
-                                                  searchTerm,
-                                                );
-                                              }
+                                            if (safeTransactionEmployeeName && safeCurrentEmployeeName) {
+                                              const searchTerm = safeCurrentEmployeeName.toLowerCase();
+                                              const employeeTerm = safeTransactionEmployeeName.toLowerCase();
+                                              
+                                              return employeeTerm.includes(searchTerm);
                                             }
 
                                             return false;
                                           } catch (error) {
-                                            console.warn(
-                                              "Error in employee matching:",
-                                              error,
-                                            );
-                                            return false; // Exclude by default if there's an error
+                                            console.warn("Error in employee matching:", error);
+                                            return false;
                                           }
                                         })();
 
