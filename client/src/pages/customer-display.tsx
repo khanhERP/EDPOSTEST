@@ -162,34 +162,19 @@ export default function CustomerDisplayPage() {
                   amount: data.amount,
                   paymentMethod: data.paymentMethod,
                   transactionUuid: data.transactionUuid,
-                  qrCodeUrlLength: data.qrCodeUrl?.length || 0,
-                  qrCodeUrlStart: data.qrCodeUrl?.substring(0, 50) || 'none'
+                  qrCodeUrlLength: data.qrCodeUrl?.length || 0
                 });
                 if (data.qrCodeUrl && data.amount) {
-                  console.log("Customer Display: Setting QR payment state with data:", {
-                    qrCodeUrl: data.qrCodeUrl.substring(0, 50) + "...",
-                    amount: data.amount,
-                    paymentMethod: data.paymentMethod,
-                    transactionUuid: data.transactionUuid
-                  });
+                  console.log("Customer Display: Setting QR payment state");
                   setQrPayment({
                     qrCodeUrl: data.qrCodeUrl,
                     amount: data.amount,
                     paymentMethod: data.paymentMethod,
                     transactionUuid: data.transactionUuid
                   });
-                  console.log("Customer Display: QR payment state set successfully - component should rerender now");
-                  
-                  // Force a state update to ensure the component rerenders
-                  setTimeout(() => {
-                    console.log("Customer Display: QR payment state check after timeout:", !!qrPayment);
-                  }, 100);
+                  console.log("Customer Display: QR payment state set successfully");
                 } else {
-                  console.error("Customer Display: Invalid QR payment data received", {
-                    hasQrCodeUrl: !!data.qrCodeUrl,
-                    hasAmount: !!data.amount,
-                    data: data
-                  });
+                  console.error("Customer Display: Invalid QR payment data received", data);
                 }
                 break;
               case 'payment_success':

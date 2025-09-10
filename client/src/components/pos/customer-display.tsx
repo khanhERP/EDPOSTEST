@@ -57,19 +57,6 @@ export function CustomerDisplay({
     });
   };
 
-  // Debugging: Log component render details
-  console.log("Customer Display: Component rendered with:", {
-    cartItems: cart.length,
-    hasStoreInfo: !!storeInfo,
-    hasQrPayment: !!qrPayment,
-    qrPaymentData: qrPayment ? {
-      hasQrCodeUrl: !!qrPayment.qrCodeUrl,
-      amount: qrPayment.amount,
-      paymentMethod: qrPayment.paymentMethod,
-      qrCodeUrlLength: qrPayment.qrCodeUrl?.length || 0
-    } : null
-  });
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
       {/* Header */}
