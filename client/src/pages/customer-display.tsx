@@ -14,6 +14,16 @@ export default function CustomerDisplayPage() {
   } | null>(null);
 
   console.log("Customer Display: Component rendered with cart:", cart.length, "items, storeInfo:", !!storeInfo, "qrPayment:", !!qrPayment);
+  console.log("Customer Display: Detailed render state:", {
+    cartItems: cart.length,
+    hasStoreInfo: !!storeInfo,
+    hasQrPayment: !!qrPayment,
+    qrPaymentAmount: qrPayment?.amount,
+    qrPaymentMethod: qrPayment?.paymentMethod,
+    qrCodeUrlExists: !!qrPayment?.qrCodeUrl,
+    shouldShowQrPayment: !!qrPayment && !!qrPayment.qrCodeUrl,
+    timestamp: new Date().toISOString()
+  });
 
   // Auto-clear QR payment after 5 minutes if not manually cleared
   useEffect(() => {
@@ -174,6 +184,10 @@ export default function CustomerDisplayPage() {
                     transactionUuid: data.transactionUuid
                   });
                   
+                  // Clear cart first to ensure QR payment is prioritized
+                  setCart([]);
+                  
+                  // Set QR payment state
                   setQrPayment({
                     qrCodeUrl: data.qrCodeUrl,
                     amount: data.amount,
@@ -183,10 +197,19 @@ export default function CustomerDisplayPage() {
                   
                   console.log("Customer Display: QR payment state set successfully");
                   
-                  // Force re-render by logging current state
+                  // Force re-render and verify state
                   setTimeout(() => {
-                    console.log("Customer Display: QR payment state after 100ms:", !!qrPayment);
+                    console.log("Customer Display: Verifying QR payment state after 100ms");
+                    setQrPayment(prevQr => {
+                      console.log("Customer Display: Current QR state:", !!prevQr);
+                      return prevQr; // Return same state to trigger re-render
+                    });
                   }, 100);
+                  
+                  // Additional verification after 500ms
+                  setTimeout(() => {
+                    console.log("Customer Display: Final QR payment verification after 500ms");
+                  }, 500);
                 } else {
                   console.error("Customer Display: Invalid QR payment data received", {
                     hasQrCodeUrl: !!data.qrCodeUrl,

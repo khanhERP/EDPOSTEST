@@ -26,8 +26,23 @@ export function CustomerDisplay({
   tax,
   total,
   storeInfo,
-  qrPayment
+  qrPayment,
 }: CustomerDisplayProps) {
+  console.log("CustomerDisplay: Component props debug:", {
+    cartLength: cart?.length || 0,
+    subtotal,
+    tax,
+    total,
+    hasStoreInfo: !!storeInfo,
+    hasQrPayment: !!qrPayment,
+    qrPaymentDetails: qrPayment ? {
+      hasQrCodeUrl: !!qrPayment.qrCodeUrl,
+      amount: qrPayment.amount,
+      paymentMethod: qrPayment.paymentMethod,
+      transactionUuid: qrPayment.transactionUuid
+    } : null,
+    timestamp: new Date().toISOString()
+  });
   const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
 
