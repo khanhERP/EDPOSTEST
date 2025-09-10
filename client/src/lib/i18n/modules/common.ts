@@ -302,7 +302,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       // Order status
       pending: "대기 중",
       confirmed: "확인됨",
-      preparing: "준비 중",
+      preparing: "준비 "��",
       ready: "준비 완료",
       served: "서빙됨",
       paid: "결제 완료",
@@ -785,9 +785,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     walkInCustomer: "Khách hàng vãng lai",
     backToPOS: "Quay lại POS",
 
-
-
-
     email: "Email",
 
     // Sales channel report specific
@@ -925,7 +922,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     // Product type
     productType: "Loại sản phẩm",
     product: "Sản phẩm",
-    combo: "Combo", 
+    combo: "Combo",
     service: "Dịch vụ",
 
     // Unit indicators
@@ -945,5 +942,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     walkInCustomer: "Khách hàng vãng lai",
     backToPOS: "Quay lại POS",
     description: "Mô tả",
+    successTitle: "Thành công",
+    templateUsage: "Trạng thái sử dụng",
   },
 };
