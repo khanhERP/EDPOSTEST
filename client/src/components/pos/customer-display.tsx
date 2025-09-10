@@ -57,29 +57,6 @@ export function CustomerDisplay({
     });
   };
 
-  // Helper function to format currency, ensuring it handles potential NaN or undefined values
-  const formatCurrency = (amount: number | string | undefined | null): string => {
-    const num = parseFloat(amount as string);
-    if (isNaN(num)) {
-      return '0 ₫'; // Default to '0 ₫' if parsing fails
-    }
-    return num.toLocaleString('vi-VN') + ' ₫';
-  };
-
-  // Helper function to get product name with fallbacks
-  const getProductName = (item: CartItem): string => {
-    if (item.name && item.name !== 'Unknown') {
-      return item.name;
-    }
-    if (item.product?.name) {
-      return item.product.name;
-    }
-    if (item.productName) {
-      return item.productName;
-    }
-    return `Sản phẩm ${item.id}`;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
       {/* Header */}
@@ -184,16 +161,16 @@ export function CustomerDisplay({
                           </div>
                           <div>
                             <h3 className="font-semibold text-lg text-gray-800">
-                              {getProductName(item)}
+                              {item.name}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              {formatCurrency(item.price)} × {item.quantity}
+                              {parseFloat(item.price).toLocaleString('vi-VN')} ₫ × {item.quantity}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="text-xl font-bold text-green-600">
-                            {formatCurrency(item.total)}
+                            {parseFloat(item.total).toLocaleString('vi-VN')} ₫
                           </div>
                         </div>
                       </div>
@@ -214,14 +191,14 @@ export function CustomerDisplay({
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Tạm tính:</span>
                       <span className="font-medium">
-                        {formatCurrency(subtotal)}
+                        {subtotal.toLocaleString('vi-VN')} ₫
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Thuế:</span>
                       <span className="font-medium">
-                        {formatCurrency(tax)}
+                        {tax.toLocaleString('vi-VN')} ₫
                       </span>
                     </div>
 
@@ -230,7 +207,7 @@ export function CustomerDisplay({
                         Tổng cộng:
                       </span>
                       <span className="text-2xl font-bold text-green-600">
-                        {formatCurrency(total)}
+                        {total.toLocaleString('vi-VN')} ₫
                       </span>
                     </div>
 
@@ -240,7 +217,7 @@ export function CustomerDisplay({
                         Tổng số sản phẩm
                       </div>
                       <div className="text-2xl font-bold text-green-800">
-                        {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                        {cart.reduce((sum, item) => sum + item.quantity, 0)}
                       </div>
                     </div>
                   </div>

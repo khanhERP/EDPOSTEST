@@ -74,23 +74,9 @@ export function initializeWebSocketServer(server: Server) {
           console.log('✅ POS client registered');
           (ws as any).clientType = 'pos';
         } else if (data.type === 'cart_update') {
-          // Ensure proper product names in cart items
-          const processedCart = (data.cart || []).map(item => {
-            let productName = item.name;
-            if (!productName || productName === 'Unknown') {
-              productName = item.product?.name || item.productName || `Sản phẩm ${item.id}`;
-            }
-            
-            return {
-              ...item,
-              name: productName,
-              productName: productName
-            };
-          });
-
           // Update global cart state
           currentCartState = {
-            cart: processedCart,
+            cart: data.cart || [],
             subtotal: data.subtotal || 0,
             tax: data.tax || 0,
             total: data.total || 0,
@@ -109,7 +95,7 @@ export function initializeWebSocketServer(server: Server) {
           // Log cart items for debugging
           if (currentCartState.cart.length > 0) {
             console.log('📦 Cart items:', currentCartState.cart.map(item => ({
-              productName: item.name || item.productName || 'Unknown',
+              productName: item.product?.name || 'Unknown',
               quantity: item.quantity,
               price: item.price,
               total: item.total

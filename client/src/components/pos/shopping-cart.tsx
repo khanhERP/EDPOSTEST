@@ -284,27 +284,9 @@ export function ShoppingCart({
   // Function to broadcast cart updates to customer display
   const broadcastCartUpdate = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      // Ensure cart items have proper names before broadcasting
-      const validatedCart = cart.map(item => {
-        // Get the most accurate product name available
-        let productName = item.name;
-        if (!productName || productName === 'Unknown') {
-          productName = item.product?.name || item.productName || `Sản phẩm ${item.id}`;
-        }
-
-        return {
-          ...item,
-          name: productName,
-          productName: productName, // Also set productName for consistency
-          price: item.price || '0',
-          quantity: item.quantity || 1,
-          total: item.total || '0'
-        };
-      });
-
       const cartData = {
         type: 'cart_update',
-        cart: validatedCart,
+        cart: cart,
         subtotal: subtotal,
         tax: tax,
         total: total,
@@ -312,16 +294,10 @@ export function ShoppingCart({
       };
 
       console.log("📡 Shopping Cart: Broadcasting cart update to customer display:", {
-        cartItems: validatedCart.length,
+        cartItems: cart.length,
         subtotal: subtotal,
         tax: tax,
-        total: total,
-        sampleItem: validatedCart[0] ? {
-          id: validatedCart[0].id,
-          name: validatedCart[0].name,
-          productName: validatedCart[0].productName,
-          price: validatedCart[0].price
-        } : null
+        total: total
       });
 
       try {
