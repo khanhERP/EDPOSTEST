@@ -1508,7 +1508,7 @@ export function SalesChartReport() {
                 const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
 
                 // Get tax rate from product database, default to 0 if not available
-                const product = Array.isArray(products) 
+                const product = Array.isArray(products)
                   ? products.find((p: any) => p.id === item.productId)
                   : null;
                 const itemTaxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
@@ -1887,7 +1887,7 @@ export function SalesChartReport() {
                                 className="bg-blue-50/50 border-l-4 border-l-blue-400"
                               >
                                 <TableCell className="text-center font-medium min-w-[100px] px-2">
-                                  <div className="flex items-center gap-2 pl-2">
+                                  <div className="flex items-center gap-2 pl-6 text-center">
                                     <span className="text-gray-400 text-xs flex-shrink-0 w-6 text-center">
                                       └
                                     </span>
@@ -1934,7 +1934,7 @@ export function SalesChartReport() {
                                 <TableCell className="text-right min-w-[100px] px-2">
                                   {(() => {
                                     // Get taxRate from the actual product data
-                                    const product = Array.isArray(products) 
+                                    const product = Array.isArray(products)
                                       ? products.find((p: any) => p.id === item.productId)
                                       : null;
                                     const taxRate = product?.taxRate ? parseFloat(product.taxRate) : (item.taxRate || 0);
@@ -2033,34 +2033,18 @@ export function SalesChartReport() {
                       <TableCell className="text-center border-r bg-yellow-100 min-w-[100px] px-4">
                         {(() => {
                           // Calculate weighted average tax rate across all items
-                          if (groupedOrders.length > 0) {
-                            let totalTaxAmount = 0;
-                            let totalRevenue = 0;
-                            
-                            groupedOrders.forEach((order) => {
-                              order.items.forEach((item: any) => {
-                                const product = Array.isArray(products) 
-                                  ? products.find((p: any) => p.id === item.productId)
-                                  : null;
-                                const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
-                                const itemRevenue = item.totalAmount || 0;
-                                
-                                totalTaxAmount += (itemRevenue * taxRate / 100);
-                                totalRevenue += itemRevenue;
-                              });
-                            });
-                            
-                            const avgTaxRate = totalRevenue > 0 ? (totalTaxAmount / totalRevenue) * 100 : 0;
+                          if (totalTax > 0 && totalAmount > 0) {
+                            const avgTaxRate = (totalTax / totalAmount) * 100;
                             return `${avgTaxRate.toFixed(1)}%`;
                           }
                           return "0%";
                         })()}
                       </TableCell>
                       <TableCell className="text-right border-r bg-yellow-100 min-w-[100px] px-4">
-                        {formatCurrency(totalVat)}
+                        {formatCurrency(totalTax)}
                       </TableCell>
                       <TableCell className="text-right border-r bg-purple-100 min-w-[120px] px-4">
-                        {formatCurrency(totalMoney)}
+                        {formatCurrency(totalAmount + totalTax)}
                       </TableCell>
                       <TableCell className="text-center min-w-[150px] px-4">
                         -
@@ -2088,7 +2072,7 @@ export function SalesChartReport() {
           </div>
 
           {/* Pagination Controls */}
-          {groupedOrders.length > 0 && (
+          {paginatedData.length > 0 && (
             <div className="flex items-center justify-between space-x-6 py-4">
               <div className="flex items-center space-x-2">
                 <p className="text-sm font-medium">{t("common.show")} </p>
@@ -2154,7 +2138,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
