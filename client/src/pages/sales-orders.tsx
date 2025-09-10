@@ -567,7 +567,7 @@ export default function SalesOrders() {
     invoiceDate: order.orderedAt,
     einvoiceStatus: order.einvoiceStatus || 0,
     // Ensure all fields from Invoice interface are present, even if null/empty
-    orderNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
+    invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
     templateNumber: order.templateNumber || '',
     customerEmail: order.customerEmail || '',
     subtotal: order.subtotal || '0',

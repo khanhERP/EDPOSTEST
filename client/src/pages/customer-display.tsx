@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import { useState, useEffect } from "react";
 import { CustomerDisplay } from "@/components/pos/customer-display";
 import type { CartItem } from "@shared/schema";
 
@@ -11,23 +12,6 @@ export default function CustomerDisplayPage() {
     paymentMethod: string;
     transactionUuid: string;
   } | null>(null);
-
-  // Debug state changes
-  useEffect(() => {
-    console.log('🔄 Customer Display: QR Payment state changed:', {
-      hasQrPayment: !!qrPayment,
-      qrPaymentData: qrPayment,
-      timestamp: new Date().toISOString()
-    });
-  }, [qrPayment]);
-
-  useEffect(() => {
-    console.log('🔄 Customer Display: Cart state changed:', {
-      cartLength: cart.length,
-      cartItems: cart,
-      timestamp: new Date().toISOString()
-    });
-  }, [cart]);
 
   console.log("Customer Display: Component rendered with cart:", cart.length, "items, storeInfo:", !!storeInfo, "qrPayment:", !!qrPayment);
 
@@ -62,7 +46,7 @@ export default function CustomerDisplayPage() {
     const fetchInitialData = async () => {
       try {
         console.log("Customer Display: Fetching initial data...");
-
+        
         // Fetch store info
         const storeResponse = await fetch('/api/store-settings');
         if (storeResponse.ok) {
@@ -72,7 +56,7 @@ export default function CustomerDisplayPage() {
         } else {
           console.error("Customer Display: Failed to fetch store settings:", storeResponse.status);
         }
-
+        
         // Try to fetch current cart state if available
         const cartResponse = await fetch('/api/current-cart');
         if (cartResponse.ok) {
@@ -99,148 +83,175 @@ export default function CustomerDisplayPage() {
 
   // WebSocket connection to receive real-time updates
   useEffect(() => {
+    console.log("Customer Display: Initializing WebSocket connection");
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    let ws: WebSocket;
+    let reconnectTimer: NodeJS.Timeout;
+    let isConnected = false;
+
     const connectWebSocket = () => {
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-        const ws = new WebSocket(wsUrl);
+        ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log('🔌 Customer Display: WebSocket connected successfully');
-          
-          // Register as customer display with multiple methods for reliability
-          console.log('📝 Customer Display: Registering as customer display client');
-          
-          // Primary registration
-          ws.send(JSON.stringify({
-            type: 'register_customer_display',
-            timestamp: new Date().toISOString()
-          }));
-          
-          // Legacy registration for backward compatibility
-          setTimeout(() => {
-            ws.send(JSON.stringify({
+          console.log("Customer Display: WebSocket connected");
+          isConnected = true;
+          // Send identification as customer display
+          try {
+            ws.send(JSON.stringify({ 
               type: 'customer_display_connected',
               timestamp: new Date().toISOString()
             }));
-          }, 100);
-          
-          console.log('✅ Customer Display: Registration messages sent');
+            console.log("Customer Display: Identification message sent");
+          } catch (error) {
+            console.error("Customer Display: Failed to send identification:", error);
+          }
         };
 
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log('🔄 Customer Display: Received WebSocket message:', {
+            console.log("Customer Display: Received WebSocket message:", {
               type: data.type,
-              timestamp: data.timestamp,
-              hasQrCodeUrl: data.type === 'qr_payment' ? !!data.qrCodeUrl : undefined,
-              amount: data.type === 'qr_payment' ? data.amount : undefined,
-              messageSize: event.data.length
+              hasCart: !!data.cart,
+              cartItems: data.cart?.length || 0,
+              subtotal: data.subtotal,
+              total: data.total,
+              timestamp: data.timestamp
             });
 
-            if (data.type === 'cart_update') {
-              console.log('Customer Display: Cart update received:', data);
-              setCart(data.cart || []);
-              // Clear QR payment when cart updates (unless it's from payment)
-              if (!data.fromPayment) {
-                setQrPayment(null);
-              }
-            } else if (data.type === 'qr_payment_created') {
-              console.log('📱 Customer Display: QR payment message received!');
-              console.log('🔍 QR payment message details:', {
-                type: data.type,
-                hasQrCodeUrl: !!data.qrCodeUrl,
-                qrCodeUrlLength: data.qrCodeUrl?.length || 0,
-                qrCodeUrlPreview: data.qrCodeUrl?.substring(0, 100) + '...',
-                amount: data.amount,
-                amountType: typeof data.amount,
-                transactionUuid: data.transactionUuid,
-                paymentMethod: data.paymentMethod,
-                timestamp: data.timestamp
-              });
-
-              // Validate QR payment data more strictly
-              if (data.qrCodeUrl && data.amount && data.transactionUuid) {
-                console.log('✅ Customer Display: Valid QR payment data - setting state');
-
-                const qrPaymentData = {
-                  qrCodeUrl: data.qrCodeUrl,
-                  amount: Number(data.amount),
-                  paymentMethod: data.paymentMethod || 'QR Code',
-                  transactionUuid: data.transactionUuid
-                };
-
-                console.log('💾 Customer Display: Setting QR payment state with data:', qrPaymentData);
-
-                // Clear cart first
-                setCart([]);
-
-                // Set QR payment data with forced update
-                setQrPayment(qrPaymentData);
-
-                console.log('✅ Customer Display: QR payment state set successfully');
-
-                // Multiple attempts to ensure state updates
-                setTimeout(() => {
-                  console.log('🔍 Customer Display: First force re-render');
-                  setQrPayment(prev => prev ? {...prev} : qrPaymentData);
-                }, 100);
-
-                setTimeout(() => {
-                  console.log('🔍 Customer Display: Second force re-render');
-                  setQrPayment(prev => prev ? {...prev} : qrPaymentData);
-                }, 200);
-
-                // Also trigger a window focus event to ensure component updates
-                setTimeout(() => {
-                  window.dispatchEvent(new Event('focus'));
-                }, 300);
-              } else {
-                console.error('❌ Customer Display: Invalid QR payment data received', {
-                  hasQrCodeUrl: !!data.qrCodeUrl,
-                  qrCodeUrlValue: data.qrCodeUrl,
-                  hasAmount: !!data.amount,
-                  amountValue: data.amount,
-                  hasTransactionUuid: !!data.transactionUuid,
-                  transactionUuidValue: data.transactionUuid,
-                  fullData: data
+            switch (data.type) {
+              case 'cart_update':
+                console.log("Customer Display: Processing cart update - Items:", data.cart?.length || 0);
+                
+                // Use React's functional update to ensure we get the latest state
+                setCart(prevCart => {
+                  const newCart = Array.isArray(data.cart) ? data.cart : [];
+                  console.log("Customer Display: Cart state changing from", prevCart.length, "to", newCart.length, "items");
+                  
+                  // Log cart details for debugging
+                  if (newCart.length > 0) {
+                    console.log("Customer Display: New cart contents:", newCart.map(item => ({
+                      name: item.product?.name || 'Unknown',
+                      quantity: item.quantity,
+                      price: item.price
+                    })));
+                  }
+                  
+                  return newCart;
                 });
-              }
-            } else if (data.type === 'qr_payment_cancelled') {
-              console.log('Customer Display: QR payment cancelled');
-              setQrPayment(null);
-            } else if (data.type === 'restore_cart_display') {
-              console.log('Customer Display: Restoring cart display');
-              setQrPayment(null);
+                
+                // Clear QR payment when cart updates (new order started)
+                setQrPayment(prevQr => {
+                  if (prevQr) {
+                    console.log("Customer Display: Clearing QR payment due to cart update");
+                    return null;
+                  }
+                  return prevQr;
+                });
+                break;
+              case 'store_info':
+                console.log("Customer Display: Updating store info:", data.storeInfo);
+                setStoreInfo(data.storeInfo);
+                break;
+              case 'qr_payment':
+                console.log("Customer Display: Received QR payment message:", {
+                  hasQrCodeUrl: !!data.qrCodeUrl,
+                  amount: data.amount,
+                  paymentMethod: data.paymentMethod,
+                  transactionUuid: data.transactionUuid,
+                  qrCodeUrlLength: data.qrCodeUrl?.length || 0
+                });
+                if (data.qrCodeUrl && data.amount) {
+                  console.log("Customer Display: Setting QR payment state");
+                  setQrPayment({
+                    qrCodeUrl: data.qrCodeUrl,
+                    amount: data.amount,
+                    paymentMethod: data.paymentMethod,
+                    transactionUuid: data.transactionUuid
+                  });
+                  console.log("Customer Display: QR payment state set successfully");
+                } else {
+                  console.error("Customer Display: Invalid QR payment data received", data);
+                }
+                break;
+              case 'payment_success':
+                console.log("Customer Display: Payment completed, clearing QR");
+                setQrPayment(null);
+                setCart([]);
+                break;
+              case 'qr_payment_cancelled':
+                console.log("Customer Display: QR payment cancelled, clearing QR and restoring cart");
+                setQrPayment(prevQr => {
+                  if (prevQr) {
+                    console.log("Customer Display: Clearing QR payment state");
+                    return null;
+                  }
+                  return prevQr;
+                });
+                break;
+              case 'refresh_customer_display':
+                console.log("Customer Display: Refresh requested, reloading page in 500ms");
+                // Add a small delay to ensure all cleanup is done
+                setTimeout(() => {
+                  console.log("Customer Display: Executing page reload now");
+                  window.location.reload();
+                }, 500);
+                break;
+              case 'restore_cart_display':
+                console.log("Customer Display: Restoring cart display, clearing QR payment");
+                // Force clear QR payment to show cart again
+                setQrPayment(null);
+                console.log("Customer Display: QR payment force cleared to restore cart view");
+                break;
+              default:
+                console.log("Customer Display: Unknown message type:", data.type);
             }
           } catch (error) {
-            console.error('Customer Display: Error parsing WebSocket message:', error);
+            console.error("Customer Display: Error parsing message:", error);
           }
         };
 
-        ws.onclose = () => {
-          console.log('Customer Display: WebSocket disconnected, attempting reconnect...');
-          setTimeout(connectWebSocket, 2000);
+        ws.onclose = (event) => {
+          console.log("Customer Display: WebSocket closed:", event.code, event.reason);
+          isConnected = false;
+          // Only reconnect if not manually closed
+          if (event.code !== 1000) {
+            reconnectTimer = setTimeout(() => {
+              console.log("Customer Display: Attempting to reconnect...");
+              connectWebSocket();
+            }, 1000); // Reduced reconnect delay
+          }
         };
 
         ws.onerror = (error) => {
-          console.error('Customer Display: WebSocket error:', error);
+          console.error("Customer Display: WebSocket error:", error);
+          isConnected = false;
         };
-
-        return ws;
       } catch (error) {
-        console.error('Customer Display: Failed to connect WebSocket:', error);
-        setTimeout(connectWebSocket, 2000);
-        return null;
+        console.error("Customer Display: Failed to create WebSocket:", error);
+        // Retry after 1 second
+        reconnectTimer = setTimeout(connectWebSocket, 1000);
       }
     };
 
-    const ws = connectWebSocket();
+    connectWebSocket();
 
     return () => {
+      console.log("Customer Display: Cleaning up WebSocket connection");
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
       if (ws) {
-        ws.close();
+        try {
+          if (isConnected) {
+            ws.close(1000, 'Component unmounting');
+          }
+        } catch (error) {
+          console.error("Customer Display: Error closing WebSocket:", error);
+        }
       }
     };
   }, []);

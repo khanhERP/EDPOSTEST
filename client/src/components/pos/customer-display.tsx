@@ -26,34 +26,8 @@ export function CustomerDisplay({
   tax,
   total,
   storeInfo,
-  qrPayment,
+  qrPayment
 }: CustomerDisplayProps) {
-  console.log("🖥️ CustomerDisplay: Component render with props:", {
-    cartLength: cart?.length || 0,
-    subtotal,
-    tax,
-    total,
-    hasStoreInfo: !!storeInfo,
-    hasQrPayment: !!qrPayment,
-    qrPaymentDetails: qrPayment ? {
-      hasQrCodeUrl: !!qrPayment.qrCodeUrl,
-      qrCodeUrlLength: qrPayment.qrCodeUrl?.length || 0,
-      amount: qrPayment.amount,
-      paymentMethod: qrPayment.paymentMethod,
-      transactionUuid: qrPayment.transactionUuid
-    } : null,
-    timestamp: new Date().toISOString()
-  });
-
-  // Additional debug for QR payment rendering decision
-  const shouldShowQRPayment = !!qrPayment && !!qrPayment.qrCodeUrl;
-  console.log("🖥️ CustomerDisplay: QR Payment render decision:", {
-    shouldShowQRPayment,
-    hasQrPayment: !!qrPayment,
-    hasQrCodeUrl: qrPayment ? !!qrPayment.qrCodeUrl : false,
-    willRenderQR: shouldShowQRPayment
-  });
-
   const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -82,30 +56,6 @@ export function CustomerDisplay({
       day: 'numeric'
     });
   };
-
-  // Force re-render when QR payment changes
-  useEffect(() => {
-    console.log("🖥️ CustomerDisplay: QR Payment state changed:", {
-      hasQrPayment: !!qrPayment,
-      qrDetails: qrPayment ? {
-        hasQrCodeUrl: !!qrPayment.qrCodeUrl,
-        amount: qrPayment.amount,
-        transactionUuid: qrPayment.transactionUuid
-      } : null
-    });
-  }, [qrPayment]);
-
-  // Debug QR payment state with more details
-  console.log("🖥️ CustomerDisplay RENDER DEBUG:", {
-    hasQrPayment: !!qrPayment,
-    qrPaymentData: qrPayment,
-    shouldShowQRPayment,
-    cartLength: cart?.length || 0,
-    qrPaymentQrCodeUrl: qrPayment?.qrCodeUrl ? 'present' : 'missing',
-    qrPaymentAmount: qrPayment?.amount,
-    qrPaymentMethod: qrPayment?.paymentMethod,
-    qrPaymentTransactionUuid: qrPayment?.transactionUuid
-  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
@@ -137,7 +87,7 @@ export function CustomerDisplay({
       {/* Main Content */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="max-w-6xl mx-auto flex-1 flex flex-col">
-          {shouldShowQRPayment ? (
+          {qrPayment ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
               <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
