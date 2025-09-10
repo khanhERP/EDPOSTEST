@@ -215,7 +215,6 @@ export function CustomerDisplay({
                     console.log("Customer Display: Partial QR payment state set");
                   }
                 }
-                break;
           }
         };
 
