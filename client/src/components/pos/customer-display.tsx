@@ -100,9 +100,18 @@ export function CustomerDisplay({
       hasQrCodeUrl: !!qrPaymentState?.qrCodeUrl,
       amount: qrPaymentState?.amount,
       paymentMethod: qrPaymentState?.paymentMethod,
+      shouldShowQR: !!(qrPaymentState?.qrCodeUrl),
+      cartLength: cartItems.length,
       timestamp: new Date().toISOString()
     });
-  }, [qrPaymentState]);
+    
+    // Force a re-render check
+    if (qrPaymentState?.qrCodeUrl) {
+      console.log("🔥 Customer Display: QR Code URL is available, should display QR payment UI");
+    } else {
+      console.log("❌ Customer Display: No QR Code URL available");
+    }
+  }, [qrPaymentState, cartItems.length]);
 
 
   const formatTime = (date: Date) => {
@@ -230,13 +239,7 @@ export function CustomerDisplay({
               timestamp: new Date().toISOString()
             });
 
-            // Clear cart first to ensure QR display shows properly
-            setCartItems([]);
-            setCurrentSubtotal(0);
-            setCurrentTax(0);
-            setCurrentTotal(0);
-
-            // Validate and set QR payment state
+            // Validate QR data first
             if (data.qrCodeUrl && data.amount) {
               console.log("🎯 Customer Display: Valid QR data received, setting payment state");
               
@@ -247,7 +250,13 @@ export function CustomerDisplay({
                 transactionUuid: data.transactionUuid || `QR-${Date.now()}`
               };
               
-              // Force update the QR payment state with immediate effect
+              // Clear cart and set QR payment state
+              setCartItems([]);
+              setCurrentSubtotal(0);
+              setCurrentTax(0);
+              setCurrentTotal(0);
+              
+              // Set QR payment state immediately
               setQrPayment(qrPaymentData);
               
               console.log("✅ Customer Display: QR payment state set successfully:", {
@@ -255,11 +264,6 @@ export function CustomerDisplay({
                 amount: qrPaymentData.amount,
                 qrCodeStart: qrPaymentData.qrCodeUrl.substring(0, 50) + '...'
               });
-              
-              // Force re-render by updating a dummy state
-              setTimeout(() => {
-                console.log("🔄 Customer Display: Forcing re-render to ensure QR display");
-              }, 100);
               
             } else {
               console.error("❌ Customer Display: Invalid QR payment data received", {
@@ -325,7 +329,7 @@ export function CustomerDisplay({
       {/* Main Content */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="max-w-6xl mx-auto flex-1 flex flex-col">
-          {qrPaymentState && qrPaymentState.qrCodeUrl ? (
+          {qrPaymentState?.qrCodeUrl ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
               {console.log("🔍 Rendering QR Payment Display:", {
