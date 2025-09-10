@@ -327,12 +327,11 @@ export function SalesChartReport() {
       const validOrderItems = Array.isArray(orderItems) ? orderItems : [];
       const validTables = Array.isArray(tables) ? tables : [];
 
-      // Filter completed/paid/cancelled orders for time analysis
+      // Filter completed/paid orders for time analysis (exclude cancelled orders)
       const completedOrders = validOrders.filter(
         (order: any) =>
           order.status === "paid" ||
-          order.status === "completed" ||
-          order.status === "cancelled", // Include cancelled orders in time analysis
+          order.status === "completed"
       );
 
       console.log("Sales Chart - Orders loaded:", {
@@ -2075,14 +2074,13 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      // Đơn giản hóa logic lọc - chỉ lọc theo ngày và trạng thái (bao gồm cả đơn hủy)
+      // Đơn giản hóa logic lọc - chỉ lọc theo ngày và trạng thái (loại trừ đơn hủy)
       const filteredCompletedOrders = orders.filter((order: any) => {
         try {
-          // Kiểm tra trạng thái - bao gồm cả đơn đã hủy
+          // Kiểm tra trạng thái - chỉ bao gồm đơn hoàn thành và đã thanh toán
           if (
             order.status !== "completed" &&
-            order.status !== "paid" &&
-            order.status !== "cancelled"
+            order.status !== "paid"
           ) {
             return false;
           }
@@ -3790,12 +3788,10 @@ export function SalesChartReport() {
             // Use EXACT same filtering logic as dashboard
             const filteredOrders = orders.filter((order: any) => {
               try {
-                // EXACT same status check as dashboard
+                // EXACT same status check as dashboard - exclude cancelled orders
                 if (
                   order.status !== "paid" &&
-                  order.status !== "completed" &&
-                  order.status !== "served" &&
-                  order.status !== "confirmed"
+                  order.status !== "completed"
                 ) {
                   return false;
                 }
