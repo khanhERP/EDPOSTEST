@@ -726,55 +726,55 @@ export function SalesChartReport() {
                   <TableHeader>
                     <TableRow>
                       <TableHead
-                        className="text-center border-r bg-green-50 w-12"
+                        className="text-center border-r bg-green-50 w-12 font-bold"
                         rowSpan={2}
                       ></TableHead>
                       <TableHead
-                        className="text-center border-r bg-green-50 min-w-[120px]"
+                        className="text-center border-r bg-green-50 min-w-[120px] font-bold"
                         rowSpan={2}
                       >
                         {t("reports.date")}
                       </TableHead>
                       <TableHead
-                        className="text-center border-r min-w-[100px]"
+                        className="text-center border-r min-w-[100px] font-bold"
                         rowSpan={2}
                       >
                         {t("reports.orders")}
                       </TableHead>
                       <TableHead
-                        className="text-center border-r min-w-[140px]"
+                        className="text-center border-r min-w-[140px] font-bold"
                         rowSpan={2}
                       >
                         {t("reports.thanhTien")}
                       </TableHead>
                       {analysisType !== "employee" && (
                         <TableHead
-                          className="text-center border-r min-w-[120px]"
+                          className="text-center border-r min-w-[120px] font-bold"
                           rowSpan={2}
                         >
                           {t("reports.discount")}
                         </TableHead>
                       )}
                       <TableHead
-                        className="text-center border-r min-w-[140px]"
+                        className="text-center border-r min-w-[140px] font-bold"
                         rowSpan={2}
                       >
                         {t("reports.revenue")}
                       </TableHead>
                       <TableHead
-                        className="text-center border-r min-w-[120px]"
+                        className="text-center border-r min-w-[120px] font-bold"
                         rowSpan={2}
                       >
                         {t("common.tax")}
                       </TableHead>
                       <TableHead
-                        className="text-center border-r min-w-[140px]"
+                        className="text-center border-r min-w-[140px] font-bold"
                         rowSpan={2}
                       >
                         {t("reports.totalMoney")}
                       </TableHead>
                       <TableHead
-                        className="text-center border-r bg-blue-50 min-w-[200px]"
+                        className="text-center border-r bg-blue-50 min-w-[200px] font-bold"
                         colSpan={(() => {
                           // Get all unique payment methods from completed orders
                           const allPaymentMethods = new Set();
@@ -816,7 +816,7 @@ export function SalesChartReport() {
                               (method: any, index: number) => (
                                 <TableHead
                                   key={`payment-method-header-${index}-${method}`}
-                                  className="text-center border-r bg-blue-50 min-w-[130px]"
+                                  className="text-center border-r bg-blue-50 min-w-[130px] font-bold"
                                 >
                                   {getPaymentMethodLabel(method)}
                                 </TableHead>
