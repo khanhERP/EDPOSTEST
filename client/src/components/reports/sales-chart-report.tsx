@@ -1102,57 +1102,107 @@ export function SalesChartReport() {
                     {Object.entries(dailySales).length > 0 && (
                       <TableRow className="bg-gray-100 font-bold border-t-2">
                         <TableCell className="text-center border-r w-12"></TableCell>
-                        <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
-                          TỔNG CỘNG
+                        <TableCell className="text-center border-r bg-green-50 min-w-[120px] px-4">
+                          {t("common.total")}
                         </TableCell>
-                        <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
-                          {groupedOrders.length} đơn hàng
+                        <TableCell className="text-center border-r min-w-[100px] px-4">
+                          {Object.values(dailySales).reduce(
+                            (sum, data) => sum + data.orders,
+                            0,
+                          )}
                         </TableCell>
-                        <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4"></TableCell>
-                        <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4"></TableCell>
-                        <TableCell className="text-center border-r bg-blue-100 min-w-[200px] px-4">
-                          {totalQuantity} món
+                        <TableCell className="text-right border-r min-w-[140px] px-4">
+                          {formatCurrency(
+                            Object.values(dailySales).reduce(
+                              (sum, data) => sum + data.revenue,
+                              0,
+                            ),
+                          )}
                         </TableCell>
-                        <TableCell className="text-center border-r bg-blue-100 min-w-[60px] px-4"></TableCell>
-                        <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4">
-                          {totalQuantity}
+                        {analysisType !== "employee" && (
+                          <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
+                            {formatCurrency(
+                              Object.values(dailySales).reduce(
+                                (sum, data) => sum + data.discount, // Use the tracked discount
+                                0,
+                              ),
+                            )}
+                          </TableCell>
+                        )}
+                        <TableCell className="text-right border-r min-w-[140px] px-4">
+                          {formatCurrency(
+                            Object.values(dailySales).reduce(
+                              (sum, data) => sum + data.revenue,
+                              0,
+                            ),
+                          )}
                         </TableCell>
-                        <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                          {formatCurrency(totalAmount)}
+                        <TableCell className="text-right border-r min-w-[120px] px-4">
+                          {formatCurrency(
+                            Object.values(dailySales).reduce(
+                              (sum, data) => sum + (data.tax || 0),
+                              0,
+                            ),
+                          )}
                         </TableCell>
-                        <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                          {formatCurrency(totalAmount)}
+                        <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
+                          {formatCurrency(
+                            Object.values(dailySales).reduce(
+                              (sum, data) =>
+                                sum + data.subtotal + (data.tax || 0),
+                              0,
+                            ),
+                          )}
                         </TableCell>
-                        <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                          {formatCurrency(totalDiscount)}
-                        </TableCell>
-                        <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                          {formatCurrency(totalRevenue)}
-                        </TableCell>
-                        <TableCell className="text-center border-r bg-blue-100 min-w-[80px] px-4">
-                          {(() => {
-                            // Calculate average tax rate from all orders
-                            const avgTaxRate = groupedOrders.length > 0 ?
-                              groupedOrders.reduce((sum, order) => {
-                                const orderTaxRate = order.items.length > 0 && order.items[0].taxRate ?
-                                  Number(order.items[0].taxRate) : 0;
-                                return sum + orderTaxRate;
-                              }, 0) / groupedOrders.length : 0;
-                            return avgTaxRate > 0 ? `${Math.round(avgTaxRate)}%` : '0%';
-                          })()}
-                        </TableCell>
-                        <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                          {formatCurrency(totalVat)}
-                        </TableCell>
-                        <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                          {formatCurrency(totalMoney)}
-                        </TableCell>
-                        <TableCell className="text-center min-w-[150px] px-4"></TableCell>
-                        <TableCell className="text-center min-w-[100px] px-4"></TableCell>
-                        <TableCell className="text-center min-w-[80px] px-4"></TableCell>
-                        <TableCell className="text-center min-w-[120px] px-4"></TableCell>
-                        <TableCell className="text-center min-w-[120px] px-4"></TableCell>
-                        <TableCell className="text-center min-w-[100px] px-4"></TableCell>
+                        {(() => {
+                          // Calculate total payment methods across all dates
+                          const totalPaymentMethods: {
+                            [method: string]: number;
+                          } = {};
+                          filteredTransactions.forEach((transaction: any) => {
+                            const method = transaction.paymentMethod || "cash";
+                            totalPaymentMethods[method] =
+                              (totalPaymentMethods[method] || 0) +
+                              Number(transaction.total);
+                          });
+
+                          // Get all unique payment methods from all completed orders
+                          const allPaymentMethods = new Set();
+                          if (
+                            filteredCompletedOrders &&
+                            Array.isArray(filteredCompletedOrders)
+                          ) {
+                            filteredCompletedOrders.forEach((order: any) => {
+                              const method = order.paymentMethod || "cash";
+                              allPaymentMethods.add(method);
+                            });
+                          }
+
+                          const paymentMethodsArray =
+                            Array.from(allPaymentMethods).sort();
+                          const grandTotal = Object.values(
+                            totalPaymentMethods,
+                          ).reduce(
+                            (sum: number, amount: number) => sum + amount,
+                            0,
+                          );
+
+                          return (
+                            <>
+                              {paymentMethodsArray.map((method: any) => {
+                                const total = totalPaymentMethods[method] || 0;
+                                return (
+                                  <TableCell
+                                    key={method}
+                                    className="text-right border-r font-bold text-green-600 min-w-[130px] px-4"
+                                  >
+                                    {total > 0 ? formatCurrency(total) : "-"}
+                                  </TableCell>
+                                );
+                              })}
+                            </>
+                          );
+                        })()}
                       </TableRow>
                     )}
                   </TableBody>
@@ -1874,10 +1924,9 @@ export function SalesChartReport() {
                       <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
                         TỔNG CỘNG
                       </TableCell>
-                      <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
+                      <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
                         {groupedOrders.length} đơn hàng
                       </TableCell>
-                      <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4"></TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4"></TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[200px] px-4">
                         {totalQuantity} món
@@ -1890,7 +1939,7 @@ export function SalesChartReport() {
                         {formatCurrency(totalAmount)}
                       </TableCell>
                       <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                        {formatCurrency(totalAmount)}
+                        {formatCurrency(totalRevenue)}
                       </TableCell>
                       <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
                         {formatCurrency(totalDiscount)}
@@ -1899,19 +1948,10 @@ export function SalesChartReport() {
                         {formatCurrency(totalRevenue)}
                       </TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[80px] px-4">
-                        {(() => {
-                          // Calculate average tax rate from all orders
-                          const avgTaxRate = groupedOrders.length > 0 ?
-                            groupedOrders.reduce((sum, order) => {
-                              const orderTaxRate = order.items.length > 0 && order.items[0].taxRate ?
-                                Number(order.items[0].taxRate) : 0;
-                              return sum + orderTaxRate;
-                            }, 0) / groupedOrders.length : 0;
-                          return avgTaxRate > 0 ? `${Math.round(avgTaxRate)}%` : '0%';
-                        })()}
+                        10%
                       </TableCell>
                       <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                        {formatCurrency(totalVat)}
+                        {formatCurrency(totalTax)}
                       </TableCell>
                       <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
                         {formatCurrency(totalMoney)}
@@ -2172,8 +2212,8 @@ export function SalesChartReport() {
           const orderTotal = Number(order.total || 0);
           const orderSubtotal = Number(order.subtotal || 0);
           const orderDiscount = Number(order.discount || 0);
-          const revenue = orderSubtotal - orderDiscount;
-          const tax = orderTotal - orderSubtotal;
+          const revenue = Math.max(0, orderSubtotal - orderDiscount);
+          const tax = Math.max(0, orderTotal - orderSubtotal);
 
           stats.orderCount += 1;
           stats.revenue += revenue;
@@ -2558,15 +2598,74 @@ export function SalesChartReport() {
                                               ? item.employeeName
                                               : null) || "Unknown";
 
-                                        // Chỉ so sánh exact match để tránh lỗi includes
-                                        return (
-                                          transactionEmployeeName ===
-                                            currentEmployeeName ||
-                                          (transactionEmployeeName ===
-                                            "Unknown" &&
-                                            currentEmployeeName ===
-                                              "Unknown")
-                                        );
+                                        // Safe employee matching with proper null/undefined checks
+                                        const employeeMatch = (() => {
+                                          // If no employee filter is selected, include all orders
+                                          if (
+                                            !selectedEmployee ||
+                                            selectedEmployee === "all" ||
+                                            selectedEmployee === ""
+                                          ) {
+                                            return true;
+                                          }
+
+                                          // Get employee names safely
+                                          const orderEmployeeName =
+                                            transactionEmployeeName || "";
+                                          const orderCashierName =
+                                            transactionEmployeeName || "";
+                                          const orderEmployeeId =
+                                            transaction.employeeId
+                                              ? transaction.employeeId.toString()
+                                              : "";
+
+                                          // Exact matches
+                                          if (
+                                            orderEmployeeName ===
+                                              currentEmployeeName ||
+                                            orderCashierName ===
+                                              currentEmployeeName ||
+                                            orderEmployeeId ===
+                                              currentEmployeeName
+                                          ) {
+                                            return true;
+                                          }
+
+                                          // Partial matches (only if selectedEmployee is a valid string)
+                                          if (
+                                            currentEmployeeName &&
+                                            typeof currentEmployeeName ===
+                                              "string" &&
+                                            currentEmployeeName.trim() !== ""
+                                          ) {
+                                            const searchTerm =
+                                              currentEmployeeName
+                                                .toLowerCase()
+                                                .trim();
+
+                                            if (
+                                              orderEmployeeName &&
+                                              orderEmployeeName
+                                                .toLowerCase()
+                                                .includes(searchTerm)
+                                            ) {
+                                              return true;
+                                            }
+
+                                            if (
+                                              orderCashierName &&
+                                              orderCashierName
+                                                .toLowerCase()
+                                                .includes(searchTerm)
+                                            ) {
+                                              return true;
+                                            }
+                                          }
+
+                                          return false;
+                                        })();
+
+                                        return employeeMatch;
                                       } catch (error) {
                                         console.warn(
                                           "Error filtering employee transaction:",
