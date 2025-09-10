@@ -107,6 +107,12 @@ export default function CustomerDisplayPage() {
 
         ws.onopen = () => {
           console.log('Customer Display: WebSocket connected');
+          // Register as customer display
+          ws.send(JSON.stringify({
+            type: 'register_customer_display',
+            timestamp: new Date().toISOString()
+          }));
+          // Also send the legacy message for backward compatibility
           ws.send(JSON.stringify({
             type: 'customer_display_connected',
             timestamp: new Date().toISOString()

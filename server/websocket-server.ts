@@ -73,6 +73,10 @@ export function initializeWebSocketServer(server: Server) {
         } else if (data.type === 'register_pos') {
           console.log('✅ POS client registered');
           (ws as any).clientType = 'pos';
+        } else if (data.type === 'register_customer_display') {
+          console.log('✅ Customer Display client registered');
+          (ws as any).clientType = 'customer_display';
+          (ws as any).isCustomerDisplay = true;
         } else if (data.type === 'cart_update') {
           // Update global cart state
           currentCartState = {
@@ -242,7 +246,7 @@ export function initializeWebSocketServer(server: Server) {
           }
 
           const qrPaymentMessage = {
-            type: 'qr_payment',
+            type: 'qr_payment_created',
             qrCodeUrl: data.qrCodeUrl,
             amount: Number(data.amount),
             paymentMethod: data.paymentMethod || 'QR Code',
@@ -263,8 +267,9 @@ export function initializeWebSocketServer(server: Server) {
           let sentCount = 0;
           let totalCustomerDisplays = 0;
 
-          clients.forEach((client, clientWs) => {
-            if (client.type === 'customer_display') {
+          clients.forEach((clientWs) => {
+            // Check if client is customer display
+            if ((clientWs as any).isCustomerDisplay || (clientWs as any).clientType === 'customer_display') {
               totalCustomerDisplays++;
               if (clientWs.readyState === WebSocket.OPEN) {
                 try {
@@ -272,7 +277,7 @@ export function initializeWebSocketServer(server: Server) {
                   clientWs.send(messageStr);
                   sentCount++;
                   console.log('✅ QR payment sent to customer display client:', {
-                    clientId: client.id || 'unknown',
+                    clientType: (clientWs as any).clientType || 'customer_display',
                     messageSize: messageStr.length,
                     timestamp: new Date().toISOString()
                   });
@@ -288,8 +293,8 @@ export function initializeWebSocketServer(server: Server) {
           console.log(`📱 QR payment broadcast summary: ${sentCount}/${totalCustomerDisplays} customer displays reached`);
 
           // Also send to POS clients for confirmation
-          clients.forEach((client, clientWs) => {
-            if (client.type === 'pos' && clientWs.readyState === WebSocket.OPEN) {
+          clients.forEach((clientWs) => {
+            if ((clientWs as any).clientType === 'pos' && clientWs.readyState === WebSocket.OPEN) {
               try {
                 clientWs.send(JSON.stringify({
                   type: 'qr_payment_broadcast_status',
