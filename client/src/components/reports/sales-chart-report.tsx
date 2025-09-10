@@ -4822,10 +4822,10 @@ export function SalesChartReport() {
         <CardContent className="pt-6">
           <div className="space-y-6">
             {/* Main Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center justify-items-center">
               {/* Analysis Type */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <div className="space-y-2 w-full">
+                <Label className="text-sm font-semibold text-gray-800 flex items-center justify-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   {t("reports.analyzeBy")}
                 </Label>
@@ -4871,8 +4871,8 @@ export function SalesChartReport() {
               </div>
 
               {/* Date Range */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <div className="space-y-2 w-full">
+                <Label className="text-sm font-semibold text-gray-800 flex items-center justify-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   {t("reports.startDate")}
                 </Label>
@@ -4880,12 +4880,12 @@ export function SalesChartReport() {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="h-10 text-sm border-gray-200 hover:border-green-300 focus:border-green-500 transition-colors"
+                  className="h-10 text-sm border-gray-200 hover:border-green-300 focus:border-green-500 transition-colors text-center"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <div className="space-y-2 w-full">
+                <Label className="text-sm font-semibold text-gray-800 flex items-center justify-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   {t("reports.endDate")}
                 </Label>
@@ -4893,7 +4893,7 @@ export function SalesChartReport() {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="h-10 text-sm border-gray-200 hover:border-green-300 focus:border-green-500 transition-colors"
+                  className="h-10 text-sm border-gray-200 hover:border-green-300 focus:border-green-500 transition-colors text-center"
                 />
               </div>
 
