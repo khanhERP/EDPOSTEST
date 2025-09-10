@@ -957,16 +957,11 @@ export function SalesChartReport() {
                                 })()}
                               </TableRow>
 
-                              {/* Expanded order details - chỉ hiển thị đơn hàng hoàn thành */}
+                              {/* Expanded order details */}
                               {isExpanded &&
                                 dateTransactions.length > 0 &&
-                                dateTransactions
-                                  .filter(
-                                    (transaction: any) =>
-                                      transaction.status === "completed" ||
-                                      transaction.status === "paid",
-                                  )
-                                  .map((transaction: any, txIndex: number) => (
+                                dateTransactions.map(
+                                  (transaction: any, txIndex: number) => (
                                     <TableRow
                                       key={`${date}-transaction-${transaction.id || txIndex}`}
                                       className="bg-blue-50/50 border-l-4 border-l-blue-400"
@@ -1087,7 +1082,8 @@ export function SalesChartReport() {
                                         );
                                       })()}
                                     </TableRow>
-                                  ))}
+                                  ),
+                                )}
                             </>
                           );
                         });
@@ -1350,14 +1346,11 @@ export function SalesChartReport() {
         selectedEmployee === "all" ||
         order.employeeName === selectedEmployee ||
         order.cashierName === selectedEmployee ||
-        order.employeeId?.toString() === selectedEmployee ||
         (order.employeeName &&
-          typeof order.employeeName === "string" &&
           order.employeeName
             .toLowerCase()
             .includes(selectedEmployee.toLowerCase())) ||
         (order.cashierName &&
-          typeof order.cashierName === "string" &&
           order.cashierName
             .toLowerCase()
             .includes(selectedEmployee.toLowerCase()));
@@ -1511,32 +1504,28 @@ export function SalesChartReport() {
     const endIndex = startIndex + pageSize;
     const paginatedData = groupedOrders.slice(startIndex, endIndex);
 
-    // Calculate totals for all orders (not just paginated) - Sửa lỗi tính toán
+    // Calculate totals for all orders (not just paginated)
     const allItemsFlat = groupedOrders.flatMap((order) => order.items);
-
-    // Tính tổng từ các order thay vì từ items để tránh trùng lặp
     const totalQuantity = allItemsFlat.reduce(
       (sum, item) => sum + item.quantity,
       0,
     );
-
-    // Tính tổng từ order level để đảm bảo chính xác
-    const totalAmount = groupedOrders.reduce(
-      (sum, order) => sum + order.totalAmount,
+    const totalAmount = allItemsFlat.reduce(
+      (sum, item) => sum + item.totalAmount,
       0,
     );
-    const totalDiscount = groupedOrders.reduce(
-      (sum, order) => sum + order.discount,
+    const totalDiscount = allItemsFlat.reduce(
+      (sum, item) => sum + item.discount,
       0,
     );
-    const totalRevenue = groupedOrders.reduce(
-      (sum, order) => sum + order.revenue,
+    const totalRevenue = allItemsFlat.reduce(
+      (sum, item) => sum + item.revenue,
       0,
     );
-    const totalTax = groupedOrders.reduce((sum, order) => sum + order.tax, 0);
-    const totalVat = groupedOrders.reduce((sum, order) => sum + order.vat, 0);
-    const totalMoney = groupedOrders.reduce(
-      (sum, order) => sum + order.totalMoney,
+    const totalTax = allItemsFlat.reduce((sum, item) => sum + item.tax, 0);
+    const totalVat = allItemsFlat.reduce((sum, item) => sum + item.vat, 0);
+    const totalMoney = allItemsFlat.reduce(
+      (sum, item) => sum + item.totalMoney,
       0,
     );
 
@@ -1883,10 +1872,10 @@ export function SalesChartReport() {
                                     {order.salesChannel}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="text-center min-w-[80px] px-2">
+                                <TableCell className="text-center min-w-[80px] px-2 text-gray-600 text-sm">
                                   {order.tableName || "-"}
                                 </TableCell>
-                                <TableCell className="text-center min-w-[120px] px-2">
+                                <TableCell className="text-center min-w-[120px] px-2 text-gray-600 text-sm">
                                   {order.employeeName}
                                 </TableCell>
                                 {/* ADDED CELL FOR PRODUCT GROUP */}
@@ -2116,16 +2105,12 @@ export function SalesChartReport() {
           order.employeeName === selectedEmployee ||
           order.cashierName === selectedEmployee ||
           order.employeeId?.toString() === selectedEmployee ||
-          (order.employeeName &&
-            typeof order.employeeName === "string" &&
-            order.employeeName
-              .toLowerCase()
-              .includes(selectedEmployee.toLowerCase())) ||
-          (order.cashierName &&
-            typeof order.cashierName === "string" &&
-            order.cashierName
-              .toLowerCase()
-              .includes(selectedEmployee.toLowerCase()));
+          (order.employeeName && 
+            typeof order.employeeName === 'string' &&
+            order.employeeName.includes(selectedEmployee)) ||
+          (order.cashierName && 
+            typeof order.cashierName === 'string' &&
+            order.cashierName.includes(selectedEmployee));
 
         return dateMatch && employeeMatch;
       });
@@ -2537,6 +2522,12 @@ export function SalesChartReport() {
 
                                 const paymentMethodsArray =
                                   Array.from(allPaymentMethods).sort();
+                                const totalCustomerPayment = Object.values(
+                                  paymentMethods,
+                                ).reduce(
+                                  (sum: number, amount: number) => sum + amount,
+                                  0,
+                                );
 
                                 return (
                                   <>
@@ -2986,9 +2977,9 @@ export function SalesChartReport() {
       }
 
       // Include paid, completed, and cancelled orders
-      const validOrderStatus =
-        order.status === "paid" ||
-        order.status === "completed" ||
+      const validOrderStatus = 
+        order.status === "paid" || 
+        order.status === "completed" || 
         order.status === "cancelled";
 
       return dateMatch && customerMatch && statusMatch && validOrderStatus;
@@ -3173,7 +3164,8 @@ export function SalesChartReport() {
                             <TableCell className="text-center border-r min-w-[130px] px-4">
                               <Badge
                                 variant={
-                                  item.customerGroup === t("reports.vip")
+                                  item.customerGroup ===
+                                  t("reports.reports.vip")
                                     ? "default"
                                     : "secondary"
                                 }
@@ -3938,11 +3930,11 @@ export function SalesChartReport() {
                   order.employeeName === selectedEmployee ||
                   order.cashierName === selectedEmployee ||
                   order.employeeId?.toString() === selectedEmployee ||
-                  (order.employeeName &&
-                    typeof order.employeeName === "string" &&
+                  (order.employeeName && 
+                    typeof order.employeeName === 'string' &&
                     order.employeeName.includes(selectedEmployee)) ||
-                  (order.cashierName &&
-                    typeof order.cashierName === "string" &&
+                  (order.cashierName && 
+                    typeof order.cashierName === 'string' &&
                     order.cashierName.includes(selectedEmployee));
 
                 return dateMatch && employeeMatch;
@@ -5004,7 +4996,7 @@ export function SalesChartReport() {
                     value={customerStatus}
                     onValueChange={setCustomerStatus}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10 text-sm border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
