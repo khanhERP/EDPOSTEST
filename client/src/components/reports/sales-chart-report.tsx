@@ -1523,26 +1523,33 @@ export function SalesChartReport() {
     const paginatedData = groupedOrders.slice(startIndex, endIndex);
 
     // Calculate totals for all orders (use order totals, not item-by-item to avoid double counting)
+    // Calculate totals from actual displayed items (sum of all individual items)
     const totalQuantity = groupedOrders.reduce(
       (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
       0,
     );
     const totalAmount = groupedOrders.reduce(
-      (sum, order) => sum + order.totalAmount,
+      (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.totalAmount, 0),
       0,
     );
     const totalDiscount = groupedOrders.reduce(
-      (sum, order) => sum + order.discount,
+      (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.discount, 0),
       0,
     );
     const totalRevenue = groupedOrders.reduce(
-      (sum, order) => sum + order.revenue,
+      (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.revenue, 0),
       0,
     );
-    const totalTax = groupedOrders.reduce((sum, order) => sum + order.tax, 0);
-    const totalVat = groupedOrders.reduce((sum, order) => sum + order.vat, 0);
+    const totalTax = groupedOrders.reduce(
+      (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.tax, 0),
+      0,
+    );
+    const totalVat = groupedOrders.reduce(
+      (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.vat, 0),
+      0,
+    );
     const totalMoney = groupedOrders.reduce(
-      (sum, order) => sum + order.totalMoney,
+      (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.totalMoney, 0),
       0,
     );
 
@@ -2611,23 +2618,23 @@ export function SalesChartReport() {
                                             }
 
                                             // Get employee names safely with null checks
-                                            const orderEmployeeName = 
-                                              (transactionEmployeeName && typeof transactionEmployeeName === "string") 
-                                                ? transactionEmployeeName.trim() 
+                                            const orderEmployeeName =
+                                              (transactionEmployeeName && typeof transactionEmployeeName === "string")
+                                                ? transactionEmployeeName.trim()
                                                 : "";
-                                            const orderCashierName = 
-                                              (transactionEmployeeName && typeof transactionEmployeeName === "string") 
-                                                ? transactionEmployeeName.trim() 
+                                            const orderCashierName =
+                                              (transactionEmployeeName && typeof transactionEmployeeName === "string")
+                                                ? transactionEmployeeName.trim()
                                                 : "";
-                                            const orderEmployeeId = 
-                                              (transaction.employeeId && transaction.employeeId !== null) 
-                                                ? transaction.employeeId.toString() 
+                                            const orderEmployeeId =
+                                              (transaction.employeeId && transaction.employeeId !== null)
+                                                ? transaction.employeeId.toString()
                                                 : "";
 
                                             // Get current employee name safely
-                                            const safeCurrentEmployeeName = 
-                                              (currentEmployeeName && typeof currentEmployeeName === "string") 
-                                                ? currentEmployeeName.trim() 
+                                            const safeCurrentEmployeeName =
+                                              (currentEmployeeName && typeof currentEmployeeName === "string")
+                                                ? currentEmployeeName.trim()
                                                 : "";
 
                                             // Skip if no valid current employee name
