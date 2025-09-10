@@ -728,7 +728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         start.setHours(0, 0, 0, 0);
         const end = new Date(endDate as string);
         end.setHours(23, 59, 59, 999);
-        
+
         whereConditions.push(
           gte(orders.orderedAt, start),
           lte(orders.orderedAt, end)
@@ -839,7 +839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Parse dates with proper timezone handling
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0); // Start of day in local timezone
-        
+
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999); // End of day in local timezone
 
@@ -859,19 +859,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Filter orders by date range in application layer for better control
         const filteredOrders = allOrdersInDb.filter(order => {
           if (!order.orderedAt) return false;
-          
+
           const orderDate = new Date(order.orderedAt);
-          
+
           // Normalize dates for comparison (remove time component)
           const orderDateOnly = new Date(orderDate);
           orderDateOnly.setHours(0, 0, 0, 0);
-          
+
           const startDateOnly = new Date(start);
           startDateOnly.setHours(0, 0, 0, 0);
-          
+
           const endDateOnly = new Date(end);
           endDateOnly.setHours(0, 0, 0, 0);
-          
+
           return orderDateOnly >= startDateOnly && orderDateOnly <= endDateOnly;
         });
 
@@ -2406,7 +2406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousStock: product.stock,
         newStock,
         notes: notes || null,
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
       });
 
       res.json({ success: true, newStock });
@@ -2431,10 +2431,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/current-cart', async (req, res) => {
     try {
       console.log('📱 Customer Display: Current cart API called');
-      
+
       // Get store settings for customer display
       const storeSettings = await storage.getStoreSettings();
-      
+
       const currentCartState = {
         cart: [],
         subtotal: 0,
@@ -2443,7 +2443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storeInfo: storeSettings,
         qrPayment: null
       };
-      
+
       console.log('📱 Customer Display: Current cart API returning state:', {
         cartItems: currentCartState.cart.length,
         subtotal: currentCartState.subtotal,
@@ -2452,7 +2452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasStoreInfo: !!currentCartState.storeInfo,
         storeName: currentCartState.storeInfo?.storeName
       });
-      
+
       res.json(currentCartState);
     } catch (error) {
       console.error('❌ Error fetching current cart:', error);
@@ -4754,9 +4754,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/test-customer-display', async (req, res) => {
     try {
       const { testCart } = req.body;
-      
+
       console.log('🧪 Test customer display endpoint called with cart:', testCart);
-      
+
       // Simulate a cart update broadcast
       if (wss) {
         const testMessage = JSON.stringify({
@@ -4785,7 +4785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         console.log(`🧪 Test message sent to ${clientCount} WebSocket clients`);
-        
+
         res.json({
           success: true,
           message: `Test cart update sent to ${clientCount} connected clients`,
