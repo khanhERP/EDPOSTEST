@@ -74,69 +74,50 @@ export function initializeWebSocketServer(server: Server) {
           console.log('✅ POS client registered');
           (ws as any).clientType = 'pos';
         } else if (data.type === 'cart_update') {
-          // Only broadcast if this is from POS context, not from navigation
-          const fromPOS = data.fromPOS !== false; // Default to true unless explicitly set to false
-
-          console.log('📡 WebSocket: Cart update received', {
+          console.log('📡 WebSocket: Cart update received and broadcasting to customer displays', {
             cartItems: data.cart?.length || 0,
             subtotal: data.subtotal,
             tax: data.tax,
             total: data.total,
-            fromPOS: fromPOS,
             connectedClients: wss.clients.size
           });
 
-          if (fromPOS) {
-            console.log('📡 Broadcasting to customer displays (from POS)');
+          // Ensure cart items have proper names
+          const validatedCart = (data.cart || []).map(item => ({
+            ...item,
+            name: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id || item.productId}`,
+            productName: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id || item.productId}`
+          }));
 
-            // Ensure cart items have proper names
-            const validatedCart = (data.cart || []).map(item => ({
-              ...item,
-              name: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id || item.productId}`,
-              productName: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id || item.productId}`
-            }));
+          // Log cart items for debugging
+          console.log('📦 Cart items:', validatedCart.map(item => ({
+            productName: item.name || 'Unknown',
+            quantity: item.quantity,
+            price: item.price,
+            total: item.total
+          })));
 
-            // Store current cart state for new customer display connections
-            currentCartState = {
-              cart: validatedCart,
-              subtotal: data.subtotal || 0,
-              tax: data.tax || 0,
-              total: data.total || 0,
-              timestamp: data.timestamp || new Date().toISOString()
-            };
+          // Create validated message with proper order number
+          const validatedMessage = {
+            ...data,
+            cart: validatedCart,
+            orderNumber: data.orderNumber || `ORD-${Date.now()}`
+          };
 
-            // Log cart items for debugging
-            console.log('📦 Cart items:', validatedCart.map(item => ({
-              productName: item.name || 'Unknown',
-              quantity: item.quantity,
-              price: item.price,
-              total: item.total
-            })));
-
-            // Create validated message with proper order number
-            const validatedMessage = {
-              ...data,
-              cart: validatedCart,
-              orderNumber: data.orderNumber || `ORD-${Date.now()}`
-            };
-
-            // Broadcast to all connected clients (especially customer displays)
-            let broadcastCount = 0;
-            wss.clients.forEach((client: WebSocket) => {
-              if (client !== ws && client.readyState === WebSocket.OPEN) {
-                try {
-                  client.send(JSON.stringify(validatedMessage));
-                  broadcastCount++;
-                } catch (error) {
-                  console.error('📡 Error broadcasting cart update:', error);
-                }
+          // Broadcast to all connected clients (especially customer displays)
+          let broadcastCount = 0;
+          wss.clients.forEach((client: WebSocket) => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              try {
+                client.send(JSON.stringify(validatedMessage));
+                broadcastCount++;
+              } catch (error) {
+                console.error('📡 Error broadcasting cart update:', error);
               }
-            });
+            }
+          });
 
-            console.log(`✅ Cart update broadcasted to ${broadcastCount} clients`);
-          } else {
-            console.log('📡 Skipping broadcast (not from POS context)');
-          }
+          console.log(`✅ Cart update broadcasted to ${broadcastCount} clients`);
         } else if (data.type === 'qr_payment') {
           // Update global QR payment state
           currentCartState.qrPayment = {
