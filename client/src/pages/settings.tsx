@@ -161,7 +161,32 @@ export default function Settings() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        
+        // Handle specific error cases
+        if (errorData.message && errorData.message.includes("attendance records")) {
+          toast({
+            title: "Không thể xóa nhân viên",
+            description: "Nhân viên này đã có dữ liệu chấm công trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
+            variant: "destructive",
+          });
+        } else if (errorData.message && errorData.message.includes("orders")) {
+          toast({
+            title: "Không thể xóa nhân viên",
+            description: "Nhân viên này đã có đơn hàng trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Lỗi",
+            description: errorData.message || "Có lỗi xảy ra khi xóa nhân viên",
+            variant: "destructive",
+          });
+        }
+        
+        setShowEmployeeDeleteDialog(false);
+        setEmployeeToDelete(null);
+        return;
       }
 
       await queryClient.refetchQueries({
