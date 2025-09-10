@@ -95,12 +95,16 @@ export function CustomerDisplay({
     });
   }, [qrPayment]);
 
-  // Debug QR payment state
+  // Debug QR payment state with more details
   console.log("🖥️ CustomerDisplay RENDER DEBUG:", {
     hasQrPayment: !!qrPayment,
     qrPaymentData: qrPayment,
     shouldShowQRPayment,
-    cartLength: cart?.length || 0
+    cartLength: cart?.length || 0,
+    qrPaymentQrCodeUrl: qrPayment?.qrCodeUrl ? 'present' : 'missing',
+    qrPaymentAmount: qrPayment?.amount,
+    qrPaymentMethod: qrPayment?.paymentMethod,
+    qrPaymentTransactionUuid: qrPayment?.transactionUuid
   });
 
   return (

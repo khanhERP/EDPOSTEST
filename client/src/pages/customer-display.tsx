@@ -131,19 +131,10 @@ export default function CustomerDisplayPage() {
               if (!data.fromPayment) {
                 setQrPayment(null);
               }
-            } else if (data.type === 'qr_payment') {
-              console.log('📱 Customer Display: QR payment message received:', {
-                hasQrCodeUrl: !!data.qrCodeUrl,
-                qrCodeUrlType: typeof data.qrCodeUrl,
-                qrCodeUrlLength: data.qrCodeUrl?.length || 0,
-                qrCodeUrlPreview: data.qrCodeUrl?.substring(0, 50) + '...',
-                amount: data.amount,
-                amountType: typeof data.amount,
-                paymentMethod: data.paymentMethod,
-                transactionUuid: data.transactionUuid,
-                fullMessage: data
-              });
+            } else if (data.type === 'qr_payment' || data.type === 'qr_payment_created') {
+              console.log('✅ Customer Display: Received QR payment message:', data);
 
+              // Validate QR payment data more strictly
               if (data.qrCodeUrl && data.amount && data.transactionUuid) {
                 console.log('✅ Customer Display: Valid QR payment data - setting state');
 
@@ -155,10 +146,10 @@ export default function CustomerDisplayPage() {
                 };
 
                 console.log('💾 Customer Display: Setting QR payment state with data:', qrPaymentData);
-                
+
                 // Clear cart first
                 setCart([]);
-                
+
                 // Set QR payment data with forced update
                 setQrPayment(qrPaymentData);
 
