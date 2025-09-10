@@ -327,12 +327,12 @@ export function SalesChartReport() {
       const validOrderItems = Array.isArray(orderItems) ? orderItems : [];
       const validTables = Array.isArray(tables) ? tables : [];
 
-      // Filter completed/paid/cancelled orders only
+      // Filter completed/paid/cancelled orders for time analysis
       const completedOrders = validOrders.filter(
         (order: any) =>
           order.status === "paid" ||
           order.status === "completed" ||
-          order.status === "cancelled", // Include cancelled orders
+          order.status === "cancelled", // Include cancelled orders in time analysis
       );
 
       console.log("Sales Chart - Orders loaded:", {
@@ -1883,10 +1883,10 @@ export function SalesChartReport() {
                                     {order.salesChannel}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="text-center min-w-[80px] px-2 text-gray-600 text-sm">
+                                <TableCell className="text-center min-w-[80px] px-2">
                                   {order.tableName || "-"}
                                 </TableCell>
-                                <TableCell className="text-center min-w-[120px] px-2 text-gray-600 text-sm">
+                                <TableCell className="text-center min-w-[120px] px-2">
                                   {order.employeeName}
                                 </TableCell>
                                 {/* ADDED CELL FOR PRODUCT GROUP */}
@@ -2010,7 +2010,9 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      setCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2073,16 +2075,14 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      // Đơn giản hóa logic lọc - chỉ lọc theo ngày và trạng thái
+      // Đơn giản hóa logic lọc - chỉ lọc theo ngày và trạng thái (bao gồm cả đơn hủy)
       const filteredCompletedOrders = orders.filter((order: any) => {
         try {
-          // Kiểm tra trạng thái cơ bản
+          // Kiểm tra trạng thái - bao gồm cả đơn đã hủy
           if (
-            !order ||
-            !order.status ||
-            (order.status !== "completed" &&
-              order.status !== "paid" &&
-              order.status !== "cancelled")
+            order.status !== "completed" &&
+            order.status !== "paid" &&
+            order.status !== "cancelled"
           ) {
             return false;
           }
@@ -2178,9 +2178,13 @@ export function SalesChartReport() {
           const employeeCode = order.employeeId
             ? `EMP-${order.employeeId}`
             : "EMP-000";
-          const employeeName = 
-            (order.employeeName && typeof order.employeeName === 'string' ? order.employeeName : null) ||
-            (order.cashierName && typeof order.cashierName === 'string' ? order.cashierName : null) ||
+          const employeeName =
+            (order.employeeName && typeof order.employeeName === "string"
+              ? order.employeeName
+              : null) ||
+            (order.cashierName && typeof order.cashierName === "string"
+              ? order.cashierName
+              : null) ||
             "Unknown";
           const employeeKey = `${employeeCode}-${employeeName}`;
 
@@ -2210,9 +2214,10 @@ export function SalesChartReport() {
           stats.total += orderTotal;
           stats.discount = (stats.discount || 0) + orderDiscount;
 
-          const paymentMethod = (order.paymentMethod && typeof order.paymentMethod === 'string') 
-            ? order.paymentMethod 
-            : "cash";
+          const paymentMethod =
+            order.paymentMethod && typeof order.paymentMethod === "string"
+              ? order.paymentMethod
+              : "cash";
           stats.paymentMethods[paymentMethod] =
             (stats.paymentMethods[paymentMethod] || 0) + orderTotal;
         } catch (error) {
@@ -2564,21 +2569,39 @@ export function SalesChartReport() {
                                     (transaction: any) => {
                                       try {
                                         const transactionEmployeeName =
-                                          (transaction.cashierName && typeof transaction.cashierName === 'string' ? transaction.cashierName : null) ||
-                                          (transaction.employeeName && typeof transaction.employeeName === 'string' ? transaction.employeeName : null) ||
+                                          (transaction.cashierName &&
+                                            typeof transaction.cashierName ===
+                                              "string"
+                                              ? transaction.cashierName
+                                              : null) ||
+                                          (transaction.employeeName &&
+                                            typeof transaction.employeeName ===
+                                              "string"
+                                              ? transaction.employeeName
+                                              : null) ||
                                           "Unknown";
 
-                                        const currentEmployeeName = 
-                                          (item.employeeName && typeof item.employeeName === 'string' ? item.employeeName : null) ||
-                                          "Unknown";
+                                        const currentEmployeeName =
+                                          (item.employeeName &&
+                                            typeof item.employeeName ===
+                                              "string"
+                                              ? item.employeeName
+                                              : null) || "Unknown";
 
                                         // Chỉ so sánh exact match để tránh lỗi includes
                                         return (
-                                          transactionEmployeeName === currentEmployeeName ||
-                                          (transactionEmployeeName === "Unknown" && currentEmployeeName === "Unknown")
+                                          transactionEmployeeName ===
+                                            currentEmployeeName ||
+                                          (transactionEmployeeName ===
+                                            "Unknown" &&
+                                            currentEmployeeName ===
+                                              "Unknown")
                                         );
                                       } catch (error) {
-                                        console.warn("Error filtering employee transaction:", error);
+                                        console.warn(
+                                          "Error filtering employee transaction:",
+                                          error,
+                                        );
                                         return false;
                                       }
                                     },
@@ -2646,7 +2669,9 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.subtotal || 0) -
+                                          Number(
+                                            transaction.subtotal || 0,
+                                          ) -
                                             Number(transaction.discount || 0),
                                         )}
                                       </TableCell>
@@ -5159,8 +5184,7 @@ export function SalesChartReport() {
                         onChange={(e) => setOrderSearch(e.target.value)}
                         className="pl-10 h-10 text-sm border-gray-200 hover:border-pink-300 focus:border-pink-500 transition-colors"
                       />
-                    </div>
-                  </div>
+                                      </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                       <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
