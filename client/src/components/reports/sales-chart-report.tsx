@@ -1514,28 +1514,27 @@ export function SalesChartReport() {
     const endIndex = startIndex + pageSize;
     const paginatedData = groupedOrders.slice(startIndex, endIndex);
 
-    // Calculate totals for all orders (not just paginated)
-    const allItemsFlat = groupedOrders.flatMap((order) => order.items);
-    const totalQuantity = allItemsFlat.reduce(
-      (sum, item) => sum + item.quantity,
+    // Calculate totals for all orders (use order totals, not item-by-item to avoid double counting)
+    const totalQuantity = groupedOrders.reduce(
+      (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
       0,
     );
-    const totalAmount = allItemsFlat.reduce(
-      (sum, item) => sum + item.totalAmount,
+    const totalAmount = groupedOrders.reduce(
+      (sum, order) => sum + order.totalAmount,
       0,
     );
-    const totalDiscount = allItemsFlat.reduce(
-      (sum, item) => sum + item.discount,
+    const totalDiscount = groupedOrders.reduce(
+      (sum, order) => sum + order.discount,
       0,
     );
-    const totalRevenue = allItemsFlat.reduce(
-      (sum, item) => sum + item.revenue,
+    const totalRevenue = groupedOrders.reduce(
+      (sum, order) => sum + order.revenue,
       0,
     );
-    const totalTax = allItemsFlat.reduce((sum, item) => sum + item.tax, 0);
-    const totalVat = allItemsFlat.reduce((sum, item) => sum + item.vat, 0);
-    const totalMoney = allItemsFlat.reduce(
-      (sum, item) => sum + item.totalMoney,
+    const totalTax = groupedOrders.reduce((sum, order) => sum + order.tax, 0);
+    const totalVat = groupedOrders.reduce((sum, order) => sum + order.vat, 0);
+    const totalMoney = groupedOrders.reduce(
+      (sum, order) => sum + order.totalMoney,
       0,
     );
 
@@ -1920,10 +1919,14 @@ export function SalesChartReport() {
                       <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
                         TỔNG CỘNG
                       </TableCell>
-                      <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4"></TableCell>
+                      <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
+                        {groupedOrders.length} đơn hàng
+                      </TableCell>
                       <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4"></TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4"></TableCell>
-                      <TableCell className="text-center border-r bg-blue-100 min-w-[200px] px-4"></TableCell>
+                      <TableCell className="text-center border-r bg-blue-100 min-w-[200px] px-4">
+                        {totalQuantity} món
+                      </TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[60px] px-4"></TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4">
                         {totalQuantity}
