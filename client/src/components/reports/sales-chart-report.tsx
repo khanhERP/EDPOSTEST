@@ -4763,7 +4763,8 @@ export function SalesChartReport() {
                     Lỗi hiển thị biểu đồ
                   </div>
                 </div>
-              </CardHeader>
+              </CardTitle>
+            </CardHeader>
               <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
                 <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 flex flex-col justify-center items-center">
                   <div className="text-red-500 text-center">
