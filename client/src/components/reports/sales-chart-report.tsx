@@ -2600,69 +2600,72 @@ export function SalesChartReport() {
 
                                         // Safe employee matching with proper null/undefined checks
                                         const employeeMatch = (() => {
-                                          // If no employee filter is selected, include all orders
-                                          if (
-                                            !selectedEmployee ||
-                                            selectedEmployee === "all" ||
-                                            selectedEmployee === ""
-                                          ) {
-                                            return true;
-                                          }
+                                          try {
+                                            // If no employee filter is selected, include all orders
+                                            if (
+                                              !selectedEmployee ||
+                                              selectedEmployee === "all" ||
+                                              selectedEmployee === ""
+                                            ) {
+                                              return true;
+                                            }
 
-                                          // Get employee names safely
-                                          const orderEmployeeName =
-                                            transactionEmployeeName || "";
-                                          const orderCashierName =
-                                            transactionEmployeeName || "";
-                                          const orderEmployeeId =
-                                            transaction.employeeId
-                                              ? transaction.employeeId.toString()
-                                              : "";
+                                            // Get employee names safely with null checks
+                                            const orderEmployeeName = 
+                                              (transactionEmployeeName && typeof transactionEmployeeName === "string") 
+                                                ? transactionEmployeeName.trim() 
+                                                : "";
+                                            const orderCashierName = 
+                                              (transactionEmployeeName && typeof transactionEmployeeName === "string") 
+                                                ? transactionEmployeeName.trim() 
+                                                : "";
+                                            const orderEmployeeId = 
+                                              (transaction.employeeId && transaction.employeeId !== null) 
+                                                ? transaction.employeeId.toString() 
+                                                : "";
 
-                                          // Exact matches
-                                          if (
-                                            orderEmployeeName ===
-                                              currentEmployeeName ||
-                                            orderCashierName ===
-                                              currentEmployeeName ||
-                                            orderEmployeeId ===
-                                              currentEmployeeName
-                                          ) {
-                                            return true;
-                                          }
+                                            // Get current employee name safely
+                                            const safeCurrentEmployeeName = 
+                                              (currentEmployeeName && typeof currentEmployeeName === "string") 
+                                                ? currentEmployeeName.trim() 
+                                                : "";
 
-                                          // Partial matches (only if selectedEmployee is a valid string)
-                                          if (
-                                            currentEmployeeName &&
-                                            typeof currentEmployeeName ===
-                                              "string" &&
-                                            currentEmployeeName.trim() !== ""
-                                          ) {
-                                            const searchTerm =
-                                              currentEmployeeName
-                                                .toLowerCase()
-                                                .trim();
+                                            // Skip if no valid current employee name
+                                            if (!safeCurrentEmployeeName) {
+                                              return true;
+                                            }
+
+                                            // Exact matches
+                                            if (
+                                              orderEmployeeName === safeCurrentEmployeeName ||
+                                              orderCashierName === safeCurrentEmployeeName ||
+                                              orderEmployeeId === safeCurrentEmployeeName
+                                            ) {
+                                              return true;
+                                            }
+
+                                            // Partial matches with safe string operations
+                                            const searchTerm = safeCurrentEmployeeName.toLowerCase();
 
                                             if (
                                               orderEmployeeName &&
-                                              orderEmployeeName
-                                                .toLowerCase()
-                                                .includes(searchTerm)
+                                              orderEmployeeName.toLowerCase().includes(searchTerm)
                                             ) {
                                               return true;
                                             }
 
                                             if (
                                               orderCashierName &&
-                                              orderCashierName
-                                                .toLowerCase()
-                                                .includes(searchTerm)
+                                              orderCashierName.toLowerCase().includes(searchTerm)
                                             ) {
                                               return true;
                                             }
-                                          }
 
-                                          return false;
+                                            return false;
+                                          } catch (error) {
+                                            console.warn("Error in employee matching:", error);
+                                            return true; // Include by default if there's an error
+                                          }
                                         })();
 
                                         return employeeMatch;
