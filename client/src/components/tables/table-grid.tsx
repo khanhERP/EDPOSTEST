@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +52,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [pointsAmount, setPointsAmount] = useState("");
   const [showQRPayment, setShowQRPayment] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const [editOrderOpen, setEditOrderOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [editingTable, setEditingTable] = useState<Table | null>(null);
@@ -70,6 +70,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
   const [orderForEInvoice, setOrderForEInvoice] = useState<any>(null);
+  const wsRef = useRef<WebSocket | null>(null); // Ref for WebSocket connection
 
   const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
@@ -90,8 +91,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchInterval: false,
     retry: 2,
   });
-
-
 
   const {
     data: orderItems,
@@ -165,6 +164,24 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       })
     : [];
 
+  // Extract active orders, subtotal, tax, and total from the `orders` data
+  const activeOrders = Array.isArray(orders)
+    ? orders.filter((order: Order) => !["paid", "cancelled"].includes(order.status))
+    : [];
+
+  // Calculate subtotal, tax, and total from active orders for broadcasting
+  let subtotal = 0;
+  let totalTax = 0;
+  let grandTotal = 0;
+
+  if (Array.isArray(activeOrders) && activeOrders.length > 0) {
+    activeOrders.forEach((order) => {
+      subtotal += parseFloat(order.subtotal || "0");
+      totalTax += parseFloat(order.tax || "0");
+      grandTotal += parseFloat(order.total || "0");
+    });
+  }
+
   // Only refetch order items when dialog opens and no cached data exists
   useEffect(() => {
     if (orderDetailsOpen && selectedOrder?.id) {
@@ -221,11 +238,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
         ws.onopen = () => {
           console.log('🔌 TableGrid: WebSocket connected successfully');
+          wsRef.current = ws;
+
           // Register as table grid client
           ws.send(JSON.stringify({
             type: 'register_table_grid',
             timestamp: new Date().toISOString()
           }));
+
+          // Send initial cart state if there are active orders
+          if (activeOrders.length > 0) {
+            setTimeout(() => {
+              broadcastCartUpdate();
+            }, 500);
+          }
         };
 
         ws.onmessage = async (event) => {
@@ -244,7 +270,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 data.type === 'refresh_data_after_print' ||
                 data.type === 'invoice_modal_closed' ||
                 data.force_refresh === true) {
-              
+
               console.log('🔄 TableGrid: IMMEDIATE data refresh triggered by:', data.type);
               console.log('📊 TableGrid: Event details:', data);
 
@@ -257,9 +283,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 // Strategy 2: Force immediate fresh data fetch with multiple cache busting techniques
                 const timestamp = Date.now().toString();
                 const cacheBuster = `${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
-                
+
                 console.log('📡 TableGrid: Fetching fresh data with cache buster:', cacheBuster);
-                
+
                 const [freshTables, freshOrders] = await Promise.all([
                   fetch(`/api/tables?_ws_refresh=${cacheBuster}&_force=true&_timestamp=${timestamp}`, {
                     cache: "no-store",
@@ -321,11 +347,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
               } catch (refreshError) {
                 console.error('❌ TableGrid: WebSocket refresh failed, using fallback:', refreshError);
-                
+
                 // Enhanced fallback strategy
                 queryClient.clear();
                 queryClient.removeQueries();
-                
+
                 try {
                   await Promise.all([
                     refetchTables(),
@@ -334,7 +360,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   console.log('✅ TableGrid: Fallback refresh completed');
                 } catch (fallbackError) {
                   console.error('❌ TableGrid: Even fallback failed:', fallbackError);
-                  
+
                   // Last resort: force page reload for critical data
                   setTimeout(() => {
                     if (data.type === 'payment_success' || data.type === 'einvoice_published') {
@@ -379,7 +405,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
         ws.onclose = (event) => {
           console.log('🔌 TableGrid: WebSocket connection closed:', event.code, event.reason);
-          
+
           // Attempt reconnection if still needed
           if (shouldReconnect) {
             console.log('🔄 TableGrid: Attempting WebSocket reconnection in 2 seconds...');
@@ -389,7 +415,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       } catch (error) {
         console.error('❌ TableGrid: Failed to create WebSocket connection:', error);
-        
+
         // Retry connection after delay
         if (shouldReconnect) {
           reconnectTimeout = setTimeout(connectWebSocket, 3000);
@@ -404,16 +430,77 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     return () => {
       console.log('🧹 TableGrid: Cleaning up WebSocket connection');
       shouldReconnect = false;
-      
+
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
       }
-      
+
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close(1000, 'Component unmounting');
       }
     };
   }, [queryClient, refetchTables, refetchOrders]);
+
+  // Broadcast cart updates to customer display
+  const broadcastCartUpdate = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      // Convert active orders to cart format for customer display
+      const cartItems = activeOrders.map(order => ({
+        id: order.id,
+        productId: order.productId,
+        name: order.name,
+        price: order.price,
+        quantity: order.quantity,
+        total: order.total,
+        taxRate: order.taxRate || "0",
+        afterTaxPrice: order.afterTaxPrice,
+        product: {
+          id: order.productId,
+          name: order.name,
+          price: order.price,
+          afterTaxPrice: order.afterTaxPrice,
+          taxRate: order.taxRate
+        }
+      }));
+
+      const cartData = {
+        type: 'cart_update',
+        cart: cartItems,
+        subtotal: subtotal,
+        tax: totalTax,
+        total: grandTotal,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log("📡 Table Grid: Broadcasting cart update to customer display:", {
+        activeOrdersCount: activeOrders.length,
+        cartItemsCount: cartItems.length,
+        subtotal: subtotal,
+        tax: totalTax,
+        total: grandTotal
+      });
+
+      try {
+        wsRef.current.send(JSON.stringify(cartData));
+      } catch (error) {
+        console.error("📡 Table Grid: Error broadcasting cart update:", error);
+      }
+    } else {
+      console.log("📡 Table Grid: WebSocket not available for broadcasting");
+    }
+  }, [activeOrders, subtotal, totalTax, grandTotal]);
+
+
+  // Effect to broadcast cart updates when active orders change
+  useEffect(() => {
+    console.log("📡 Table Grid: Active orders changed, broadcasting update");
+    // Small delay to ensure state is fully updated
+    const timeoutId = setTimeout(() => {
+      broadcastCartUpdate();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [activeOrders, subtotal, totalTax, grandTotal, broadcastCartUpdate]);
 
 
   const updateTableStatusMutation = useMutation({
@@ -1482,10 +1569,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         console.log("🔄 Table Grid: AGGRESSIVE cache clearing starting...");
         queryClient.clear();
         queryClient.removeQueries();
-        
+
         // STEP 2: Force immediate fresh data fetch with multiple strategies
         console.log("🔄 Table Grid: Force fetching fresh data...");
-        
+
         // Strategy A: Direct fetch with no-cache headers
         const [freshTables, freshOrders] = await Promise.all([
           fetch("/api/tables?" + new URLSearchParams({ 
@@ -1554,7 +1641,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       } catch (error) {
         console.error('❌ Table Grid: Error refreshing data after payment:', error);
-        
+
         // Fallback refresh with forced refetch
         try {
           await Promise.all([
@@ -1586,7 +1673,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
 
     if (!orderForPayment) {
-      console.error("❌ No order found for payment");
+      console.error("❌ No order for payment found");
       toast({
         title: "Lỗi",
         description: "Không tìm thấy đơn hàng để thanh toán",
@@ -1621,7 +1708,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       const receiptPreview = {
         transactionId: `TXN-${Date.now()}`,
         createdAt: new Date().toISOString(),
-        cashierName: "Nhân viên",
+        cashierName: "Table Service",
         paymentMethod: method,
         amountReceived: paymentData?.amountReceived?.toString(),
         change: paymentData?.change?.toString(),
@@ -1681,7 +1768,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       // Force immediate data refresh
       console.log("🔄 Table: Force refreshing data after payment completion");
-      
+
       // Clear cache completely
       queryClient.clear();
       queryClient.removeQueries({ queryKey: ["/api/tables"] });
@@ -1700,7 +1787,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       // Send WebSocket signal for data refresh
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const wsUrl = `${protocol}//${window.location.host}/ws`;
         const ws = new WebSocket(wsUrl);
 
@@ -1792,7 +1879,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             product.afterTaxPrice !== null &&
             product.afterTaxPrice !== ""
           ) {
-            const afterTaxPrice = parseFloat(product.afterTaxPrice);
+            const afterTaxPrice = parseFloat(
+              product.afterTaxPrice,
+            );
             const taxPerUnit = afterTaxPrice - basePrice;
             totalTax += taxPerUnit * quantity;
           }
@@ -2750,7 +2839,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                         const grandTotal = subtotal + totalTax;
 
-                        // Create receipt data using EXACT same values as Order Details display
+                        // Create receipt data using EXACT same values as Order Details
                         const processedItems = orderItems.map((item: any) => ({
                           id: item.id,
                           productId: item.productId,
@@ -2902,7 +2991,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             price: parseFloat(item.price || item.unitPrice || "0"),
             quantity: item.quantity,
             sku: item.sku || `SP${item.productId}`,
-            taxRate: item.taxRate || 10,
+            taxRate: (() => {
+              const product = Array.isArray(products)
+                ? products.find((p: any) => p.id === item.productId)
+                : null;
+              return product?.taxRate ? parseFloat(product.taxRate) : 10;
+            })(),
           })) || []
         }
         total={previewReceipt ? parseFloat(previewReceipt.total) : 0}
@@ -3052,12 +3146,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
             // AGGRESSIVE DATA REFRESH - Multiple strategies
             console.log("🔄 Table: Starting MULTI-STRATEGY data refresh after receipt modal close");
-            
+
             try {
               // Strategy 1: Complete cache clearing
               queryClient.clear();
               queryClient.removeQueries();
-              
+
               // Strategy 2: Force immediate fresh data fetch with timestamp to bypass any cache
               const timestamp = Date.now().toString();
               const [freshTables, freshOrders] = await Promise.all([
@@ -3082,9 +3176,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               // Strategy 3: Set fresh data immediately in cache
               queryClient.setQueryData(["/api/tables"], freshTables);
               queryClient.setQueryData(["/api/orders"], freshOrders);
-              
+
               console.log("✅ Table: Fresh data loaded and cached after receipt modal close");
-              
+
               // Strategy 4: Multiple timed invalidations to force re-renders
               setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
@@ -3103,7 +3197,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
             } catch (fetchError) {
               console.error("❌ Table: Error during aggressive fetch, falling back:", fetchError);
-              
+
               // Strategy 5: Fallback with forced refetch
               try {
                 await Promise.all([
@@ -3205,7 +3299,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       {/* Points Payment Dialog */}
       <Dialog open={pointsPaymentOpen} onOpenChange={setPointsPaymentOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2md">
           <DialogHeader>
             <DialogTitle>{t("orders.pointsPaymentDialog.title")}</DialogTitle>
             <DialogDescription>
