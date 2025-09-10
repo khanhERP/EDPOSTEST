@@ -578,7 +578,8 @@ export function ReceiptModal({
                 <span>
                   {Math.round(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
                 </span>
-              </div></div>
+              </div>
+            </div>
           </div>
         ) : isPreview && hasCartData && total > 0 ? (
           // Generate preview receipt from cartItems when in preview mode
@@ -650,64 +651,103 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               {(() => {
-                // Calculate subtotal from cart items
-                const subtotal = cartItems.reduce((sum, item) => {
-                  const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                  return sum + (price * item.quantity);
-                }, 0);
+                // For preview mode (cartItems), calculate values from cart
+                if (isPreview && cartItems && cartItems.length > 0) {
+                  const subtotal = cartItems.reduce((sum, item) => {
+                    const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                    return sum + (price * item.quantity);
+                  }, 0);
 
-                // Calculate tax from individual items if they have afterTaxPrice
-                let totalTax = 0;
-                cartItems.forEach((item) => {
-                  if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-                    const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                    const afterTaxPrice = parseFloat(item.afterTaxPrice);
-                    const taxPerUnit = afterTaxPrice - basePrice;
-                    totalTax += taxPerUnit * item.quantity;
-                  }
-                });
+                  // Calculate tax from individual items if they have afterTaxPrice
+                  let totalTax = 0;
+                  cartItems.forEach((item) => {
+                    if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                      const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                      const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                      const taxPerUnit = afterTaxPrice - basePrice;
+                      totalTax += Math.floor(taxPerUnit * item.quantity);
+                    }
+                  });
 
-                // If no tax calculated from items, use total - subtotal as fallback
-                const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
+                  const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
 
-                // Round all values consistently - use Math.round instead of Math.floor
-                const roundedSubtotal = Math.round(subtotal);
-                const roundedTax = Math.round(tax);
-                const roundedTotal = Math.round(total);
+                  return (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("pos.subtotal")}</span>
+                        <span>
+                          {Math.round(subtotal).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("pos.tax")}</span>
+                        <span>
+                          {Math.round(tax).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>{t("pos.total")}</span>
+                        <span>
+                          {Math.round(total).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                    </>
+                  );
+                } else if (receipt) {
+                  // For final receipt, use values directly from database
+                  const dbSubtotal = Math.round(parseFloat(receipt.subtotal || "0"));
+                  const dbTax = Math.round(parseFloat(receipt.tax || "0"));
+                  const dbTotal = Math.round(parseFloat(receipt.total || "0"));
 
-                console.log("🔍 Receipt Modal Preview - Tax calculation debug:", {
-                  cartItems: cartItems.length,
-                  subtotal: subtotal,
-                  totalTax: totalTax,
-                  finalTax: tax,
-                  roundedSubtotal: roundedSubtotal,
-                  roundedTax: roundedTax,
-                  roundedTotal: roundedTotal,
-                  total: total
-                });
+                  console.log("🔍 Receipt Modal: Using database values:", {
+                    dbSubtotal,
+                    dbTax,
+                    dbTotal,
+                    receiptId: receipt.id,
+                    source: "database_direct"
+                  });
 
-                return (
-                  <>
-                    <div className="flex justify-between text-sm">
-                      <span>{t("pos.subtotal")}</span>
-                      <span>
-                        {roundedSubtotal.toLocaleString("vi-VN")} ₫
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>{t("pos.tax")}</span>
-                      <span>
-                        {roundedTax.toLocaleString("vi-VN")} ₫
-                      </span>
-                    </div>
-                    <div className="flex justify-between font-bold">
-                      <span>{t("pos.total")}</span>
-                      <span>
-                        {roundedTotal.toLocaleString("vi-VN")} ₫
-                      </span>
-                    </div>
-                  </>
-                );
+                  return (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("pos.subtotal")}</span>
+                        <span>
+                          {dbSubtotal.toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("pos.tax")}</span>
+                        <span>
+                          {dbTax.toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>{t("pos.total")}</span>
+                        <span>
+                          {dbTotal.toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                    </>
+                  );
+                } else {
+                  // Fallback for missing data
+                  return (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("pos.subtotal")}</span>
+                        <span>0 ₫</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("pos.tax")}</span>
+                        <span>0 ₫</span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>{t("pos.total")}</span>
+                        <span>0 ₫</span>
+                      </div>
+                    </>
+                  );
+                }
               })()}
             </div>
           </div>
