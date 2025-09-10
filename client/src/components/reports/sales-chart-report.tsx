@@ -661,7 +661,11 @@ export function SalesChartReport() {
                       Ngày: formatDate(date),
                       "Tổng số đơn hàng": data.orders,
                       "Doanh thu": formatCurrency(data.revenue),
-                      Thuế: "10%", // Displayed as 10%
+                      Thuế: `${
+                        data.revenue > 0
+                          ? ((data.tax / data.revenue) * 100).toFixed(1)
+                          : 0
+                      }%`,
                       "Thành tiền": formatCurrency(data.subtotal),
                       "Khách hàng": data.customers,
                     })),
@@ -678,7 +682,19 @@ export function SalesChartReport() {
                           0,
                         ),
                       ),
-                      Thuế: "10%", // Displayed as 10%
+                      Thuế: `${(() => {
+                        const totalTaxAmount = Object.values(dailySales).reduce(
+                          (sum, data) => sum + (data.tax || 0),
+                          0,
+                        );
+                        const totalRevenueAmount = Object.values(dailySales).reduce(
+                          (sum, data) => sum + data.revenue,
+                          0,
+                        );
+                        return totalRevenueAmount > 0
+                          ? ((totalTaxAmount / totalRevenueAmount) * 100).toFixed(1)
+                          : "0";
+                      })()}%`,
                       "Thành tiền": formatCurrency(
                         Object.values(dailySales).reduce(
                           (sum, data) => sum + data.subtotal,
@@ -890,7 +906,7 @@ export function SalesChartReport() {
                                   {formatCurrency(actualRevenue)}
                                 </TableCell>
                                 <TableCell className="text-right border-r min-w-[120px] px-4">
-                                  {formatCurrency(tax)}
+                                  {tax > 0 ? `${((tax / actualRevenue) * 100).toFixed(1)}%` : "0%"}
                                 </TableCell>
                                 <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                                   {formatCurrency(data.subtotal + tax)}
@@ -1050,8 +1066,7 @@ export function SalesChartReport() {
                                           filteredTransactions.forEach(
                                             (transaction: any) => {
                                               const method =
-                                                transaction.paymentMethod ||
-                                                "cash";
+                                                transaction.paymentMethod || "cash";
                                               allPaymentMethods.add(method);
                                             },
                                           );
@@ -1643,7 +1658,7 @@ export function SalesChartReport() {
                     "Thành tiền": formatCurrency(totalAmount),
                     "Giảm giá": formatCurrency(totalDiscount),
                     "Doanh thu": formatCurrency(totalRevenue),
-                    "Thuế suất": "10%", // Displayed as 10%
+                    "Thuế suất": "0%", // Average tax rate
                     "Thuế GTGT": formatCurrency(totalVat),
                     "Tổng tiền": formatCurrency(totalMoney),
                     "Ghi chú": "",
@@ -1811,7 +1826,7 @@ export function SalesChartReport() {
                               {formatCurrency(order.revenue)}
                             </TableCell>
                             <TableCell className="text-right min-w-[100px] px-2">
-                              10%
+                              {order.items.length > 0 && order.items[0].taxRate ? `${order.items[0].taxRate}%` : "0%"}
                             </TableCell>
                             <TableCell className="text-right min-w-[100px] px-2">
                               {formatCurrency(order.tax)}
@@ -2081,7 +2096,9 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      setCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2098,11 +2115,10 @@ export function SalesChartReport() {
                 </div>
               </div>
             </div>
-            )}
-          </CardContent>
-        </Card>
-      );
-    }
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   // Employee Report with Pagination State

@@ -3329,6 +3329,9 @@ export default function Settings() {
                       const afterTaxPrice = basePriceNum * (1 + taxRateNum / 100);
                       setProductForm((prev) => ({ ...prev, afterTaxPrice: Math.floor(afterTaxPrice).toString() }));
                     }
+                  } else if (!taxRate || parseFloat(taxRate) === 0) {
+                    // If tax rate is 0 or empty, after tax price equals base price
+                    setProductForm((prev) => ({ ...prev, afterTaxPrice: productForm.price }));
                   }
                 }}
                 className="col-span-3"

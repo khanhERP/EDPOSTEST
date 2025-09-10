@@ -2739,6 +2739,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
                         const itemTax = Math.floor(taxPerUnit * quantity);
                         totalTax += itemTax;
+                        
+                        console.log(`💰 Table Grid - Tax details:`, {
+                          productTaxRate: product?.taxRate || 0,
+                          afterTaxPrice,
+                          basePrice,
+                          taxPerUnit,
+                          itemTax,
+                          quantity
+                        });
 
                         console.log(`💰 Table Grid - Tax calculated:`, {
                           afterTaxPrice,

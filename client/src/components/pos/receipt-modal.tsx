@@ -138,7 +138,7 @@ export function ReceiptModal({
       }));
     }
 
-    // Send enhanced refresh signals to ensure table data is updated
+    // Send enhanced refresh signals to ensure all components refresh
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -697,7 +697,7 @@ export function ReceiptModal({
                   // For final receipt, ALWAYS use values directly from database without any calculation
                   // This ensures exact match with what's stored in the orders table
                   const dbSubtotal = parseFloat(receipt.subtotal || "0");
-                  const dbTax = parseFloat(receipt.tax || "0"); 
+                  const dbTax = parseFloat(receipt.tax || "0");
                   const dbTotal = parseFloat(receipt.total || "0");
 
                   console.log("🔍 Receipt Modal: Using EXACT database values:", {
