@@ -720,6 +720,7 @@ export function ReceiptModal({
                   return sum + (price * item.quantity);
                 }, 0);
 
+                // Use tax from total - subtotal for preview receipt
                 const tax = Math.max(0, total - subtotal);
 
                 return (
