@@ -2108,7 +2108,7 @@ export function SalesChartReport() {
   // const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1); // Moved up
   // const [employeePageSize, setEmployeePageSize] = useState(15); // Moved up
 
-  // Employee Report Component Logic - Rewritten with simplified logic
+  // Employee Report Component Logic - Enhanced with expandable rows and proper data handling
   const renderEmployeeReport = () => {
     if (ordersLoading) {
       return (
@@ -2127,7 +2127,7 @@ export function SalesChartReport() {
     }
 
     try {
-      // Simple date filtering
+      // Date filtering
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
@@ -2153,7 +2153,7 @@ export function SalesChartReport() {
         }
       });
 
-      // Group by employee with safe string handling
+      // Group by employee with detailed order tracking
       const employeeSales: {
         [employeeKey: string]: {
           employeeCode: string;
@@ -2163,6 +2163,7 @@ export function SalesChartReport() {
           tax: number;
           total: number;
           discount: number;
+          orders: any[];
           paymentMethods: { [method: string]: number };
         };
       } = {};
@@ -2200,6 +2201,7 @@ export function SalesChartReport() {
               tax: 0,
               total: 0,
               discount: 0,
+              orders: [],
               paymentMethods: {},
             };
           }
@@ -2216,6 +2218,7 @@ export function SalesChartReport() {
           stats.tax += tax;
           stats.total += orderTotal;
           stats.discount += orderDiscount;
+          stats.orders.push(order);
 
           const paymentMethod = order.paymentMethod || "cash";
           stats.paymentMethods[paymentMethod] = 
@@ -2232,14 +2235,6 @@ export function SalesChartReport() {
       const startIndex = (employeeCurrentPage - 1) * employeePageSize;
       const endIndex = startIndex + employeePageSize;
       const paginatedData = data.slice(startIndex, endIndex);
-
-      // Get unique payment methods
-      const allPaymentMethods = new Set<string>();
-      completedOrders.forEach((order: any) => {
-        const method = order.paymentMethod || "cash";
-        allPaymentMethods.add(method);
-      });
-      const paymentMethodsArray = Array.from(allPaymentMethods).sort();
 
       return (
         <Card>
@@ -2287,9 +2282,12 @@ export function SalesChartReport() {
           <CardContent>
             <div className="w-full">
               <div className="overflow-x-auto">
-                <Table className="w-full min-w-[1000px]">
+                <Table className="w-full min-w-[1200px]">
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="text-center bg-green-50 w-12">
+                        {/* Expand/Collapse column */}
+                      </TableHead>
                       <TableHead className="text-center bg-green-50 min-w-[120px]">
                         {t("reports.employeeId")}
                       </TableHead>
@@ -2315,34 +2313,118 @@ export function SalesChartReport() {
                   </TableHeader>
                   <TableBody>
                     {paginatedData.length > 0 ? (
-                      paginatedData.map((item, index) => (
-                        <TableRow key={`${item.employeeCode}-${index}`} className="hover:bg-gray-50">
-                          <TableCell className="text-center bg-green-50 font-medium">
-                            {item.employeeCode}
-                          </TableCell>
-                          <TableCell className="text-center bg-green-50 font-medium">
-                            {item.employeeName}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {item.orderCount.toLocaleString()}
-                          </TableCell>
-                          <TableCell className="text-right text-green-600 font-medium">
-                            {formatCurrency(item.revenue)}
-                          </TableCell>
-                          <TableCell className="text-right text-orange-600">
-                            {formatCurrency(item.discount)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(item.tax)}
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-blue-600">
-                            {formatCurrency(item.total)}
-                          </TableCell>
-                        </TableRow>
-                      ))
+                      paginatedData.map((item, index) => {
+                        const isExpanded = expandedRows[item.employeeCode] || false;
+
+                        return (
+                          <>
+                            {/* Employee Summary Row */}
+                            <TableRow key={`${item.employeeCode}-${index}`} className="hover:bg-gray-50">
+                              <TableCell className="text-center border-r w-12">
+                                <button
+                                  onClick={() =>
+                                    setExpandedRows((prev) => ({
+                                      ...prev,
+                                      [item.employeeCode]: !prev[item.employeeCode],
+                                    }))
+                                  }
+                                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
+                                >
+                                  {isExpanded ? "−" : "+"}
+                                </button>
+                              </TableCell>
+                              <TableCell className="text-center bg-green-50 font-medium">
+                                {item.employeeCode}
+                              </TableCell>
+                              <TableCell className="text-center bg-green-50 font-medium">
+                                {item.employeeName}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {item.orderCount.toLocaleString()}
+                              </TableCell>
+                              <TableCell className="text-right text-green-600 font-medium">
+                                {formatCurrency(item.revenue)}
+                              </TableCell>
+                              <TableCell className="text-right text-orange-600">
+                                {formatCurrency(item.discount)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(item.tax)}
+                              </TableCell>
+                              <TableCell className="text-right font-bold text-blue-600">
+                                {formatCurrency(item.total)}
+                              </TableCell>
+                            </TableRow>
+
+                            {/* Expanded Order Details */}
+                            {isExpanded &&
+                              item.orders.length > 0 &&
+                              item.orders.map((order: any, orderIndex: number) => (
+                                <TableRow
+                                  key={`${item.employeeCode}-order-${order.id || orderIndex}`}
+                                  className="bg-blue-50/50 border-l-4 border-l-blue-400"
+                                >
+                                  <TableCell className="text-center border-r bg-blue-50 w-12">
+                                    <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
+                                      └
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-center bg-blue-50 text-blue-600 text-sm">
+                                    <button
+                                      onClick={() => {
+                                        const orderNumber = order.orderNumber || `ORD-${order.id}`;
+                                        window.location.href = `/sales-orders?order=${orderNumber}`;
+                                      }}
+                                      className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
+                                      title="Click to view order details"
+                                    >
+                                      {order.orderNumber || `ORD-${order.id}`}
+                                    </button>
+                                  </TableCell>
+                                  <TableCell className="text-center text-sm">
+                                    <div>
+                                      {new Date(
+                                        order.orderedAt || order.createdAt || order.created_at
+                                      ).toLocaleDateString("vi-VN")}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {new Date(
+                                        order.orderedAt || order.createdAt || order.created_at
+                                      ).toLocaleTimeString("vi-VN", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-center text-sm">
+                                    <Badge variant="outline" className="text-xs">
+                                      {order.customerName || "Khách lẻ"}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right text-sm">
+                                    {formatCurrency(
+                                      Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0))
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-right text-orange-600 text-sm">
+                                    {formatCurrency(Number(order.discount || 0))}
+                                  </TableCell>
+                                  <TableCell className="text-right text-sm">
+                                    {formatCurrency(
+                                      Math.max(0, Number(order.total || 0) - Number(order.subtotal || 0))
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-right font-bold text-blue-600 text-sm">
+                                    {formatCurrency(Number(order.total || 0))}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                          </>
+                        );
+                      })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                        <TableCell colSpan={8} className="text-center text-gray-500 py-8">
                           {t("reports.noDataDescription")}
                         </TableCell>
                       </TableRow>
@@ -2351,6 +2433,7 @@ export function SalesChartReport() {
                     {/* Summary Row */}
                     {data.length > 0 && (
                       <TableRow className="bg-gray-100 font-bold border-t-2">
+                        <TableCell className="text-center border-r w-12"></TableCell>
                         <TableCell className="text-center bg-green-100">
                           {t("common.total")}
                         </TableCell>
