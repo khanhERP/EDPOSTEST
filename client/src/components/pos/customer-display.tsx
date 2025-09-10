@@ -125,7 +125,7 @@ export function CustomerDisplay({
       {/* Main Content */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="max-w-6xl mx-auto flex-1 flex flex-col">
-          {qrPayment && qrPayment.qrCodeUrl ? (
+          {shouldShowQRPayment ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
               <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">

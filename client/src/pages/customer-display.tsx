@@ -139,22 +139,17 @@ export default function CustomerDisplayPage() {
 
                 console.log('💾 Customer Display: Setting QR payment state with data:', qrPaymentData);
                 
-                // Use React.startTransition for immediate state update
-                React.startTransition(() => {
-                  setCart([]);
-                  setQrPayment(qrPaymentData);
-                });
+                // Clear cart and set QR payment immediately
+                setCart([]);
+                setQrPayment(qrPaymentData);
 
                 console.log('✅ Customer Display: QR payment state set successfully');
 
-                // Additional verification
+                // Force re-render by updating a dummy state
                 setTimeout(() => {
-                  console.log('🔍 Customer Display: State verification after 100ms');
-                  setQrPayment(prev => {
-                    console.log('Current QR payment state:', prev);
-                    return prev;
-                  });
-                }, 100);
+                  console.log('🔍 Customer Display: Force re-render to ensure QR shows');
+                  setQrPayment(prev => ({ ...prev }));
+                }, 50);
               } else {
                 console.error('❌ Customer Display: Invalid QR payment data received', {
                   hasQrCodeUrl: !!data.qrCodeUrl,
