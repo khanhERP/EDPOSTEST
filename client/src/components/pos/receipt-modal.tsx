@@ -570,7 +570,7 @@ export function ReceiptModal({
               <div className="flex justify-between text-sm">
                 <span>{t("pos.tax")}</span>
                 <span>
-                  {Math.round(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between font-bold">
@@ -682,7 +682,7 @@ export function ReceiptModal({
                       <div className="flex justify-between text-sm">
                         <span>{t("pos.tax")}</span>
                         <span>
-                          {Math.round(tax).toLocaleString("vi-VN")} ₫
+                          {Math.floor(tax).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                       <div className="flex justify-between font-bold">
@@ -722,7 +722,7 @@ export function ReceiptModal({
                       <div className="flex justify-between text-sm">
                         <span>{t("pos.tax")}</span>
                         <span>
-                          {Math.round(dbTax).toLocaleString("vi-VN")} ₫
+                          {Math.floor(dbTax).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                       <div className="flex justify-between font-bold">
