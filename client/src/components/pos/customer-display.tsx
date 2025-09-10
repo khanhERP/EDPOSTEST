@@ -38,6 +38,19 @@ export function CustomerDisplay({
   const [currentOrder, setCurrentOrder] = useState<any>(null);
   const [orderNumber, setOrderNumber] = useState<string>('');
 
+  // Calculate correct subtotal from cart items (pre-tax price * quantity)
+  const calculateCorrectSubtotal = () => {
+    return cartItems.reduce((sum, item) => {
+      // Use the base price (before tax) for subtotal calculation
+      const basePrice = parseFloat(item.price || '0');
+      const quantity = item.quantity || 0;
+      return sum + (basePrice * quantity);
+    }, 0);
+  };
+
+  // Get the correct pre-tax subtotal
+  const correctSubtotal = calculateCorrectSubtotal();
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -105,6 +118,7 @@ export function CustomerDisplay({
 
           if (data.type === 'cart_update') {
             setCartItems(data.cart || []);
+            // Note: data.subtotal from WebSocket is actually the correct pre-tax subtotal
             setCurrentSubtotal(data.subtotal || 0);
             setCurrentTax(data.tax || 0);
             setCurrentTotal(data.total || 0);
@@ -113,6 +127,7 @@ export function CustomerDisplay({
               setOrderNumber(data.orderNumber);
             }
             console.log('📦 Customer Display: Received order number:', data.orderNumber);
+            console.log('💰 Customer Display: Received correct subtotal (pre-tax):', data.subtotal);
           } else if (data.type === 'order_created') {
             console.log('🆕 Customer Display: New order created:', data.order);
             setCurrentOrder(data.order);
@@ -280,7 +295,7 @@ export function CustomerDisplay({
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Tạm tính:</span>
                       <span className="font-medium">
-                        {formatCurrency(currentSubtotal)}
+                        {formatCurrency(currentSubtotal > 0 ? currentSubtotal : correctSubtotal)}
                       </span>
                     </div>
 
