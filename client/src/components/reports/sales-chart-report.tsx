@@ -1346,9 +1346,7 @@ export function SalesChartReport() {
             .toLowerCase()
             .includes(selectedEmployee.toLowerCase())) ||
         (order.cashierName &&
-          order.cashierName
-            .toLowerCase()
-            .includes(selectedEmployee.toLowerCase()));
+          order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
 
       const customerMatch =
         !customerSearch ||
@@ -1744,7 +1742,7 @@ export function SalesChartReport() {
                             <TableCell className="text-right text-red-600 min-w-[100px] px-2 font-bold">
                               {formatCurrency(order.discount)}
                             </TableCell>
-                            <TableCell className="text-right text-green-600 font-bold min-w-[120px] px-2">
+                            <TableCell className="text-right text-green-600 font-medium min-w-[120px] px-2">
                               {formatCurrency(order.revenue)}
                             </TableCell>
                             <TableCell className="text-right min-w-[100px] px-2">
@@ -2009,8 +2007,7 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           </CardContent>
         </Card>
       );
@@ -3139,7 +3136,7 @@ export function SalesChartReport() {
                                 <Badge
                                   variant={
                                     item.customerGroup ===
-                                    t("reports.reports.vip")
+                                    t("reports.vip")
                                       ? "default"
                                       : "secondary"
                                   }
