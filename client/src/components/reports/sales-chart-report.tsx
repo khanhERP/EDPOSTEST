@@ -3188,9 +3188,7 @@ export function SalesChartReport() {
                                       className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
                                       title="Click to view order details"
                                     >
-                                      {order.orderNumber ||
-                                        order.transactionId ||
-                                        `ORD-${order.id}`}
+                                      {order.orderNumber || `ORD-${order.id}`}
                                     </button>
                                   </TableCell>
                                   <TableCell className="text-center border-r text-sm min-w-[150px] px-4">

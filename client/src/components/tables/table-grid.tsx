@@ -2403,7 +2403,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             <DialogTitle>{t("orders.orderDetails")}</DialogTitle>
             <DialogDescription>
               {selectedOrder &&
-                `${t("orders.orderNumber")}: ${selectedOrder.orderNumber}`}
+                `${t("orders.orderNumber")}: ${selectedOrder.orderNumber || `ORD-${selectedOrder.id}`}`}
             </DialogDescription>
           </DialogHeader>
 

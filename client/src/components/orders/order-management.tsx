@@ -1979,7 +1979,9 @@ export function OrderManagement() {
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span>{t('orders.orderNumber')}:</span>
-                        <span className="font-medium">{selectedOrder.orderNumber}</span>
+                        <span className="font-medium">
+                        {selectedOrder.orderNumber || `ORD-${selectedOrder.id}`}
+                      </span>
                       </div>
                       <div className="flex justify-between">
                         <span>{t('orders.table')}:</span>
