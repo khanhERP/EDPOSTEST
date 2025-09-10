@@ -748,7 +748,7 @@ export function SalesChartReport() {
                         className="text-center border-r min-w-[120px]"
                         rowSpan={2}
                       >
-                        Thuế suất
+                        Thuế + dịch
                       </TableHead>
                       <TableHead
                         className="text-center border-r min-w-[140px]"
@@ -1646,7 +1646,7 @@ export function SalesChartReport() {
                       Doanh thu
                     </TableHead>
                     <TableHead className="text-right bg-yellow-50 min-w-[100px] font-bold">
-                      Thuế suất
+                      Thuế + dịch
                     </TableHead>
                     <TableHead className="text-right bg-yellow-50 min-w-[100px] font-bold">
                       Thuế GTGT
@@ -2350,7 +2350,7 @@ export function SalesChartReport() {
                         className="text-right border-r min-w-[120px]"
                         rowSpan={2}
                       >
-                        Thuế suất
+                        Thuế + dịch
                       </TableHead>
                       <TableHead
                         className="text-right border-r min-w-[140px]"
