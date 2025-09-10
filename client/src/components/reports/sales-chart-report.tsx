@@ -1448,7 +1448,7 @@ export function SalesChartReport() {
                   vat: orderTax, // VAT từ order
                   totalMoney: orderTotal, // Tổng tiền từ order
                   productGroup: "-",
-                  taxRate: 0, // Default tax rate for empty order
+                  taxRate: 10, // Default tax rate for items
                 },
               ]
             : orderItemsForOrder.map((item: any) => {
@@ -1458,10 +1458,6 @@ export function SalesChartReport() {
                 const itemTotal =
                   Number(item.total || 0) || itemUnitPrice * itemQuantity; // Thành tiền từ order_items hoặc tính
 
-                // Get actual tax rate from products array
-                const product = products?.find((p: any) => p.id === item.productId);
-                const actualTaxRate = product?.taxRate ? Number(product.taxRate) : 0;
-
                 // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
                 const itemDiscountRatio =
                   orderSubtotal > 0 ? itemTotal / orderSubtotal : 0; // Avoid division by zero
@@ -1469,6 +1465,12 @@ export function SalesChartReport() {
                 const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
                 const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
                 const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
+
+                // Safely get tax rate, default to 10% if not available
+                const itemTaxRate =
+                  item.taxRate !== undefined && item.taxRate !== null
+                    ? Number(item.taxRate)
+                    : 10;
 
                 return {
                   productCode: item.productSku || `SP${item.productId}`,
@@ -1483,7 +1485,7 @@ export function SalesChartReport() {
                   vat: itemTax, // VAT = thuế
                   totalMoney: itemTotalMoney, // Tổng tiền = thành tiền + thuế
                   productGroup: item.categoryName || "Chưa phân loại",
-                  taxRate: actualTaxRate, // Actual tax rate from product
+                  taxRate: itemTaxRate,
                 };
               }),
       };
@@ -1558,12 +1560,12 @@ export function SalesChartReport() {
             <Button
               onClick={() => {
                 const dataWithSummary = [
-                  ...paginatedData.map((order) => {
+                  ...groupedOrders.map((order) => {
                     return order.items.map((item: any) => ({
-                      Ngày: formatDate(order?.orderDate || ""),
-                      "Số đơn bán": order?.orderNumber || "",
-                      "Mã khách hàng": order?.customerId || "",
-                      "Tên khách hàng": order?.customerName || "",
+                      Ngày: formatDate(order.orderDate || ""),
+                      "Số đơn bán": order.orderNumber || "",
+                      "Mã khách hàng": order.customerId || "",
+                      "Tên khách hàng": order.customerName || "",
                       "Mã hàng": item.productCode,
                       "Tên hàng": item.productName,
                       ĐVT: item.unit,
@@ -1572,7 +1574,7 @@ export function SalesChartReport() {
                       "Thành tiền": formatCurrency(item.totalAmount),
                       "Giảm giá": formatCurrency(item.discount),
                       "Doanh thu": formatCurrency(item.revenue),
-                      "Thuế suất": item.taxRate ? `${item.taxRate}%` : "0%",
+                      "Thuế suất": `${item.taxRate || 0}%`, // Use item.taxRate directly
                       "Thuế GTGT": formatCurrency(item.vat),
                       "Tổng tiền": formatCurrency(item.totalMoney),
                       "Ghi chú": order?.notes || "",
@@ -1586,7 +1588,7 @@ export function SalesChartReport() {
                   // Add summary row
                   {
                     Ngày: "TỔNG CỘNG",
-                    "Số đơn bán": `${groupedOrders.length} đơn hàng`,
+                    "Số đơn bán": `${groupedOrders.length} dòng`,
                     "Mã khách hàng": "",
                     "Tên khách hàng": "",
                     "Mã hàng": "",
@@ -1861,7 +1863,7 @@ export function SalesChartReport() {
                                   {formatCurrency(item.revenue)}
                                 </TableCell>
                                 <TableCell className="text-right min-w-[100px] px-2">
-                                  {item.taxRate ? `${item.taxRate}%` : "0%"}
+                                  {item.taxRate || 0}%
                                 </TableCell>
                                 <TableCell className="text-right min-w-[100px] px-2">
                                   {formatCurrency(item.vat)}
@@ -1922,10 +1924,9 @@ export function SalesChartReport() {
                       <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
                         TỔNG CỘNG
                       </TableCell>
-                      <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
+                      <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
                         {groupedOrders.length} đơn hàng
                       </TableCell>
-                      <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4"></TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4"></TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[200px] px-4">
                         {totalQuantity} món
@@ -1934,23 +1935,25 @@ export function SalesChartReport() {
                       <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4">
                         {totalQuantity}
                       </TableCell>
-                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4"></TableCell>
                       <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
                         {formatCurrency(totalAmount)}
                       </TableCell>
-                      <TableCell className="text-right border-r text-red-600 bg-orange-100 min-w-[100px] px-4">
-                        {formatCurrency(totalDiscount)}
-                      </TableCell>
-                      <TableCell className="text-right border-r text-green-600 bg-green-100 min-w-[120px] px-4">
+                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
                         {formatCurrency(totalRevenue)}
                       </TableCell>
-                      <TableCell className="text-right border-r bg-yellow-100 min-w-[100px] px-4">
+                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
+                        {formatCurrency(totalDiscount)}
+                      </TableCell>
+                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
+                        {formatCurrency(totalRevenue)}
+                      </TableCell>
+                      <TableCell className="text-center border-r bg-blue-100 min-w-[80px] px-4">
                         10%
                       </TableCell>
-                      <TableCell className="text-right border-r bg-yellow-100 min-w-[100px] px-4">
-                        {formatCurrency(totalVat)}
+                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
+                        {formatCurrency(totalTax)}
                       </TableCell>
-                      <TableCell className="text-right font-bold text-blue-600 border-r bg-purple-100 min-w-[120px] px-4">
+                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
                         {formatCurrency(totalMoney)}
                       </TableCell>
                       <TableCell className="text-center min-w-[150px] px-4"></TableCell>
@@ -2241,7 +2244,10 @@ export function SalesChartReport() {
 
       // Get all unique payment methods from transactions
       const allPaymentMethods = new Set();
-      if (filteredTransactions && Array.isArray(filteredTransactions)) {
+      if (
+        filteredTransactions &&
+        Array.isArray(filteredTransactions)
+      ) {
         filteredTransactions.forEach((transaction: any) => {
           const method = transaction.paymentMethod || "cash";
           allPaymentMethods.add(method);
@@ -3297,7 +3303,7 @@ export function SalesChartReport() {
                                       Number(order.subtotal || 0),
                                     )}
                                   </TableCell>
-                                  <TableCell className="text-center text-sm min-w-[100px] px-4">
+                                  <TableCell className="text-center text-center text-sm min-w-[100px] px-4">
                                     <Badge
                                       variant={
                                         order.status === "paid"
