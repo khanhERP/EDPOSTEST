@@ -48,8 +48,24 @@ export function CustomerDisplay({
     }, 0);
   };
 
-  // Get the correct pre-tax subtotal
+  // Calculate correct tax from cart items  
+  const calculateCorrectTax = () => {
+    return cartItems.reduce((sum, item) => {
+      const basePrice = parseFloat(item.price || '0');
+      const quantity = item.quantity || 0;
+      const afterTaxPrice = item.afterTaxPrice ? parseFloat(item.afterTaxPrice) : null;
+      
+      if (afterTaxPrice && afterTaxPrice > basePrice) {
+        const taxPerUnit = afterTaxPrice - basePrice;
+        return sum + (taxPerUnit * quantity);
+      }
+      return sum;
+    }, 0);
+  };
+
+  // Get the correct pre-tax subtotal and tax
   const correctSubtotal = calculateCorrectSubtotal();
+  const correctTax = calculateCorrectTax();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -118,10 +134,16 @@ export function CustomerDisplay({
 
           if (data.type === 'cart_update') {
             setCartItems(data.cart || []);
-            // Note: data.subtotal from WebSocket is actually the correct pre-tax subtotal
-            setCurrentSubtotal(data.subtotal || 0);
-            setCurrentTax(data.tax || 0);
-            setCurrentTotal(data.total || 0);
+            
+            // Always use calculated values to ensure accuracy
+            const calculatedSubtotal = calculateCorrectSubtotal();
+            const calculatedTax = calculateCorrectTax();
+            const calculatedTotal = calculatedSubtotal + calculatedTax;
+            
+            // Use calculated values instead of potentially incorrect WebSocket data
+            setCurrentSubtotal(calculatedSubtotal);
+            setCurrentTax(calculatedTax); 
+            setCurrentTotal(calculatedTotal);
             // Update order number if available in cart update
             if (data.orderNumber) {
               setOrderNumber(data.orderNumber);
@@ -295,14 +317,14 @@ export function CustomerDisplay({
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Tạm tính:</span>
                       <span className="font-medium">
-                        {formatCurrency(currentSubtotal > 0 ? currentSubtotal : correctSubtotal)}
+                        {formatCurrency(correctSubtotal)}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Thuế:</span>
                       <span className="font-medium">
-                        {formatCurrency(currentTax)}
+                        {formatCurrency(correctTax)}
                       </span>
                     </div>
 
@@ -311,7 +333,7 @@ export function CustomerDisplay({
                         Tổng cộng:
                       </span>
                       <span className="text-2xl font-bold text-green-600">
-                        {formatCurrency(currentTotal)}
+                        {formatCurrency(correctSubtotal + correctTax)}
                       </span>
                     </div>
 
