@@ -720,7 +720,8 @@ export function ReceiptModal({
                   return sum + (price * item.quantity);
                 }, 0);
 
-                const tax = Math.max(0, total - subtotal);
+                // Use tax directly from receipt data without parsing to avoid decimal issues
+                const tax = receipt?.tax ? parseFloat(receipt.tax) : Math.max(0, total - subtotal);
 
                 return (
                   <>
