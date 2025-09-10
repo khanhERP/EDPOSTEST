@@ -1295,6 +1295,7 @@ export function SalesChartReport() {
             )}
           </CardContent>
         </Card>
+      </div>
       </>
     );
   };
