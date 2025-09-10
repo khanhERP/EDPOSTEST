@@ -155,6 +155,7 @@ export function initializeWebSocketServer(server: Server) {
           console.log('👥 Customer display connected - sending current state');
           // Mark this connection as customer display
           (ws as any).isCustomerDisplay = true;
+          (ws as any).clientType = 'customer_display';
 
           // Send current cart state to newly connected customer display
           try {
@@ -177,7 +178,7 @@ export function initializeWebSocketServer(server: Server) {
 
             if (currentCartState.qrPayment) {
               ws.send(JSON.stringify({
-                type: 'qr_payment',
+                type: 'qr_payment_created',
                 ...currentCartState.qrPayment,
                 timestamp: new Date().toISOString()
               }));

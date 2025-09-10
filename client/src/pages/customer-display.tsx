@@ -137,7 +137,7 @@ export default function CustomerDisplayPage() {
               if (!data.fromPayment) {
                 setQrPayment(null);
               }
-            } else if (data.type === 'qr_payment' || data.type === 'qr_payment_created') {
+            } else if (data.type === 'qr_payment_created') {
               console.log('✅ Customer Display: Received QR payment message:', data);
 
               // Validate QR payment data more strictly
