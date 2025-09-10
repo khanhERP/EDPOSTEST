@@ -22,8 +22,8 @@ export function initializeWebSocketServer(server: Server) {
   }
 
   try {
-    wss = new WebSocketServer({ 
-      server, 
+    wss = new WebSocketServer({
+      server,
       path: '/ws',
       perMessageDeflate: false,
       maxPayload: 16 * 1024 // 16KB
@@ -45,9 +45,9 @@ export function initializeWebSocketServer(server: Server) {
 
     // Send initial ping to confirm connection
     try {
-      ws.send(JSON.stringify({ 
-        type: 'connection_established', 
-        timestamp: new Date().toISOString() 
+      ws.send(JSON.stringify({
+        type: 'connection_established',
+        timestamp: new Date().toISOString()
       }));
     } catch (error) {
       console.error('❌ Error sending connection confirmation:', error);
@@ -74,50 +74,44 @@ export function initializeWebSocketServer(server: Server) {
           console.log('✅ POS client registered');
           (ws as any).clientType = 'pos';
         } else if (data.type === 'cart_update') {
-          // Update global cart state
-          currentCartState = {
-            cart: data.cart || [],
-            subtotal: data.subtotal || 0,
-            tax: data.tax || 0,
-            total: data.total || 0,
-            storeInfo: currentCartState.storeInfo,
-            qrPayment: null // Clear QR payment when cart updates
-          };
-
           console.log('📡 WebSocket: Cart update received and broadcasting to customer displays', {
-            cartItems: currentCartState.cart.length,
-            subtotal: currentCartState.subtotal,
-            tax: currentCartState.tax,
-            total: currentCartState.total,
-            connectedClients: clients.size
+            cartItems: data.cart?.length || 0,
+            subtotal: data.subtotal,
+            tax: data.tax,
+            total: data.total,
+            connectedClients: wss.clients.size
           });
 
-          // Log cart items for debugging
-          if (currentCartState.cart.length > 0) {
-            console.log('📦 Cart items:', currentCartState.cart.map(item => ({
-              productName: item.product?.name || 'Unknown',
-              quantity: item.quantity,
-              price: item.price,
-              total: item.total
-            })));
-          }
+          // Ensure cart items have proper names
+          const validatedCart = (data.cart || []).map(item => ({
+            ...item,
+            name: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id || item.productId}`,
+            productName: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id || item.productId}`
+          }));
 
-          // Broadcast cart update to all connected clients (customer displays)
+          // Log cart items for debugging
+          console.log('📦 Cart items:', validatedCart.map(item => ({
+            productName: item.name || 'Unknown',
+            quantity: item.quantity,
+            price: item.price,
+            total: item.total
+          })));
+
+          // Create validated message
+          const validatedMessage = {
+            ...data,
+            cart: validatedCart
+          };
+
+          // Broadcast to all connected clients (especially customer displays)
           let broadcastCount = 0;
-          clients.forEach(client => {
-            if (client.readyState === client.OPEN && client !== ws) {
+          wss.clients.forEach((client: WebSocket) => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
               try {
-                client.send(JSON.stringify({
-                  type: 'cart_update',
-                  cart: currentCartState.cart,
-                  subtotal: currentCartState.subtotal,
-                  tax: currentCartState.tax,
-                  total: currentCartState.total,
-                  timestamp: data.timestamp || new Date().toISOString()
-                }));
+                client.send(JSON.stringify(validatedMessage));
                 broadcastCount++;
-              } catch (sendError) {
-                console.error('❌ Error broadcasting to client:', sendError);
+              } catch (error) {
+                console.error('📡 Error broadcasting cart update:', error);
               }
             }
           });

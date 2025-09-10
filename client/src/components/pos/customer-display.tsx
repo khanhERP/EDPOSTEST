@@ -249,7 +249,7 @@ export function CustomerDisplay({
                           </div>
                           <div>
                             <h3 className="font-semibold text-lg text-gray-800">
-                              {item.name}
+                              {item.name || item.productName || item.product?.name || `Sản phẩm ${item.id || item.productId}`}
                             </h3>
                             <p className="text-sm text-gray-600">
                               {formatCurrency(item.price)} × {item.quantity}

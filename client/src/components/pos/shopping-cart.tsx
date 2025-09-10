@@ -289,7 +289,8 @@ export function ShoppingCart({
       // Ensure cart items have proper names before broadcasting
       const validatedCart = cart.map(item => ({
         ...item,
-        name: item.name || item.productName || `Sản phẩm ${item.id}`,
+        name: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id}`,
+        productName: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id}`,
         price: item.price || '0',
         quantity: item.quantity || 1,
         total: item.total || '0'
@@ -311,7 +312,8 @@ export function ShoppingCart({
         tax: tax,
         total: total,
         orderNumber: activeOrderId || `POS-${Date.now()}`,
-        sampleItem: validatedCart[0]
+        sampleItem: validatedCart[0],
+        sampleItemName: validatedCart[0]?.name
       });
 
       try {
@@ -937,7 +939,7 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        onUpdateQuantity(item.id, item.quantity - 1)
+                        updateQuantity(item.id, item.quantity - 1)
                       }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity <= 1}
@@ -951,7 +953,7 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        onUpdateQuantity(item.id, item.quantity + 1)
+                        updateQuantity(item.id, item.quantity + 1)
                       }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity >= item.stock}
@@ -961,7 +963,7 @@ export function ShoppingCart({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onRemoveItem(item.id)}
+                      onClick={() => removeFromCart(item.id)}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
                     >
                       <Trash2 size={10} />
