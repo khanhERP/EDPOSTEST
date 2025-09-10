@@ -57,6 +57,15 @@ export function CustomerDisplay({
     });
   };
 
+  // Helper function to format currency, ensuring it handles potential NaN or undefined values
+  const formatCurrency = (amount: number | string | undefined | null): string => {
+    const num = parseFloat(amount as string);
+    if (isNaN(num)) {
+      return '0 ₫'; // Default to '0 ₫' if parsing fails
+    }
+    return num.toLocaleString('vi-VN') + ' ₫';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
       {/* Header */}
@@ -164,13 +173,13 @@ export function CustomerDisplay({
                               {item.name}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              {parseFloat(item.price).toLocaleString('vi-VN')} ₫ × {item.quantity}
+                              {formatCurrency(item.price)} × {item.quantity}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="text-xl font-bold text-green-600">
-                            {parseFloat(item.total).toLocaleString('vi-VN')} ₫
+                            {formatCurrency(item.total)}
                           </div>
                         </div>
                       </div>
@@ -191,14 +200,14 @@ export function CustomerDisplay({
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Tạm tính:</span>
                       <span className="font-medium">
-                        {subtotal.toLocaleString('vi-VN')} ₫
+                        {formatCurrency(subtotal)}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Thuế:</span>
                       <span className="font-medium">
-                        {tax.toLocaleString('vi-VN')} ₫
+                        {formatCurrency(tax)}
                       </span>
                     </div>
 
@@ -207,7 +216,7 @@ export function CustomerDisplay({
                         Tổng cộng:
                       </span>
                       <span className="text-2xl font-bold text-green-600">
-                        {total.toLocaleString('vi-VN')} ₫
+                        {formatCurrency(total)}
                       </span>
                     </div>
 
@@ -217,7 +226,7 @@ export function CustomerDisplay({
                         Tổng số sản phẩm
                       </div>
                       <div className="text-2xl font-bold text-green-800">
-                        {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                        {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                       </div>
                     </div>
                   </div>
