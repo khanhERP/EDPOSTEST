@@ -609,34 +609,18 @@ export function PaymentMethodModal({
         console.log(`📝 Creating POS ${method} order:`, orderData);
         console.log("📦 Order items:", orderItems);
 
-        // Calculate subtotal, tax, and total for POS orders
-        let calculatedSubtotal = 0;
-        let calculatedTax = 0;
-        let calculatedTotal = 0;
+        // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
+        const receiptSubtotal = receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
+        const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
+        const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
-        const itemsToProcess = orderInfo.items || cartItems || [];
-
-        itemsToProcess.forEach((item: any) => {
-          const price = parseFloat(item.price?.toString() || "0");
-          const quantity = parseInt(item.quantity?.toString() || "1");
-          const taxRate = item.taxRate || 0;
-
-          const itemSubtotal = price * quantity;
-          const itemTax = itemSubtotal * (taxRate / 100);
-          const itemTotal = itemSubtotal + itemTax;
-
-          calculatedSubtotal += itemSubtotal;
-          calculatedTax += itemTax;
-          calculatedTotal += itemTotal;
+        console.log("💰 Other Payment Complete: Using exact receipt preview data:", {
+          receiptSubtotal,
+          receiptTax,
+          receiptTotal,
+          method,
+          source: "receipt_preview_exact"
         });
-
-        // Add tax to total if it's not already included in item totals, and if tax rate is applied
-        const taxIncludedInTotal = Math.abs(calculatedTotal - (calculatedSubtotal + calculatedTax)) < 0.01;
-        if (!taxIncludedInTotal && calculatedTax > 0) {
-           // If tax is not implicitly included, add it to the total.
-           // This logic might need refinement based on how 'total' is calculated elsewhere.
-           // For now, we ensure the final total reflects subtotal + tax.
-        }
 
         const orderData = {
           orderNumber: `ORD-${Date.now()}`,
@@ -647,9 +631,9 @@ export function PaymentMethodModal({
           status: "paid", // Mark as paid immediately
           paymentMethod: method,
           paymentStatus: "paid",
-          subtotal: calculatedSubtotal.toString(),
-          tax: calculatedTax.toString(),
-          total: calculatedTotal.toString(),
+          subtotal: receiptSubtotal.toString(),
+          tax: receiptTax.toString(),
+          total: receiptTotal.toString(),
           notes: `POS ${method} Payment`,
           paidAt: new Date().toISOString()
         };
@@ -734,27 +718,18 @@ export function PaymentMethodModal({
     const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
 
     if (isTemporaryOrder) {
-      console.log(`🔄 TEMPORARY ORDER DETECTED - creating order in database for QR payment ${orderInfo.id}`);
+      console.log(`🔄 TEMPORARY ORDER DETECTED - using receipt preview data for QR payment ${orderInfo.id}`);
 
-      // Calculate subtotal, tax, and total for POS orders
-      let calculatedSubtotal = 0;
-      let calculatedTax = 0;
-      let calculatedTotal = 0;
+      // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
+      const receiptSubtotal = receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
+      const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
+      const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
-      const itemsToProcess = orderInfo.items || cartItems || [];
-
-      itemsToProcess.forEach((item: any) => {
-        const price = parseFloat(item.price?.toString() || "0");
-        const quantity = parseInt(item.quantity?.toString() || "1");
-        const taxRate = item.taxRate || 0;
-
-        const itemSubtotal = price * quantity;
-        const itemTax = itemSubtotal * (taxRate / 100);
-        const itemTotal = itemSubtotal + itemTax;
-
-        calculatedSubtotal += itemSubtotal;
-        calculatedTax += itemTax;
-        calculatedTotal += itemTotal;
+      console.log("💰 QR Complete: Using exact receipt preview data:", {
+        receiptSubtotal,
+        receiptTax,
+        receiptTotal,
+        source: "receipt_preview_exact"
       });
 
       const orderData = {
@@ -766,9 +741,9 @@ export function PaymentMethodModal({
         status: "paid", // Mark as paid immediately for QR
         paymentMethod: "qrCode",
         paymentStatus: "paid",
-        subtotal: calculatedSubtotal.toString(),
-        tax: calculatedTax.toString(),
-        total: calculatedTotal.toString(),
+        subtotal: receiptSubtotal.toString(),
+        tax: receiptTax.toString(),
+        total: receiptTotal.toString(),
         notes: `POS QR Payment - Transaction: ${currentTransactionUuid || 'N/A'}`,
         paidAt: new Date().toISOString()
       };
@@ -925,27 +900,18 @@ export function PaymentMethodModal({
     const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
 
     if (isTemporaryOrder) {
-      console.log(`🔄 TEMPORARY ORDER DETECTED - creating order in database for POS payment ${orderInfo.id}`);
+      console.log(`🔄 TEMPORARY ORDER DETECTED - using receipt preview data for cash payment ${orderInfo.id}`);
 
-      // Calculate subtotal, tax, and total for POS orders
-      let calculatedSubtotal = 0;
-      let calculatedTax = 0;
-      let calculatedTotal = 0;
+      // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
+      const receiptSubtotal = receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
+      const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
+      const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
-      const itemsToProcess = orderInfo.items || cartItems || [];
-
-      itemsToProcess.forEach((item: any) => {
-        const price = parseFloat(item.price?.toString() || "0");
-        const quantity = parseInt(item.quantity?.toString() || "1");
-        const taxRate = item.taxRate || 0;
-
-        const itemSubtotal = price * quantity;
-        const itemTax = itemSubtotal * (taxRate / 100);
-        const itemTotal = itemSubtotal + itemTax;
-
-        calculatedSubtotal += itemSubtotal;
-        calculatedTax += itemTax;
-        calculatedTotal += itemTotal;
+      console.log("💰 Cash Complete: Using exact receipt preview data:", {
+        receiptSubtotal,
+        receiptTax,
+        receiptTotal,
+        source: "receipt_preview_exact"
       });
 
       const orderData = {
@@ -957,9 +923,9 @@ export function PaymentMethodModal({
         status: "paid", // Mark as paid immediately for cash
         paymentMethod: "cash",
         paymentStatus: "paid",
-        subtotal: calculatedSubtotal.toString(),
-        tax: calculatedTax.toString(),
-        total: calculatedTotal.toString(),
+        subtotal: receiptSubtotal.toString(),
+        tax: receiptTax.toString(),
+        total: receiptTotal.toString(),
         notes: `POS Cash Payment - Amount: ${cashAmountInput}, Change: ${finalChange}`,
         paidAt: new Date(),
       };
