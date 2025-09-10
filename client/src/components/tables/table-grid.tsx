@@ -442,72 +442,155 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   }, [queryClient, refetchTables, refetchOrders]);
 
   // Broadcast cart updates to customer display - only for selected table
-  const broadcastCartUpdate = useCallback((specificTableId?: number) => {
+  const broadcastCartUpdate = useCallback(async (specificTableId?: number) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      let ordersToShow = [];
+      let cartItems = [];
       let orderSubtotal = 0;
       let orderTax = 0;
       let orderTotal = 0;
 
-      // If specific table ID is provided, show only that table's orders
+      // If specific table ID is provided, get detailed order items for that table
       if (specificTableId) {
         const tableOrders = activeOrders.filter(order => order.tableId === specificTableId);
         
-        // If table has orders, show them
+        // If table has orders, get detailed items
         if (tableOrders.length > 0) {
-          ordersToShow = tableOrders;
+          console.log("📡 Table Grid: Getting detailed items for table", specificTableId, "with", tableOrders.length, "orders");
           
-          // Calculate totals for this specific table
-          tableOrders.forEach(order => {
-            orderSubtotal += parseFloat(order.subtotal || "0");
-            orderTax += parseFloat(order.tax || "0");
-            orderTotal += parseFloat(order.total || "0");
-          });
+          try {
+            // Get detailed order items for all orders of this table
+            for (const order of tableOrders) {
+              console.log("📡 Table Grid: Fetching items for order", order.id);
+              
+              // Fetch order items for this order
+              const response = await apiRequest("GET", `/api/order-items/${order.id}`);
+              const orderItemsData = await response.json();
+              
+              if (Array.isArray(orderItemsData) && orderItemsData.length > 0) {
+                console.log("📡 Table Grid: Found", orderItemsData.length, "items for order", order.id);
+                
+                // Convert order items to cart format with full product details
+                const orderCartItems = orderItemsData.map((item: any) => {
+                  const basePrice = Number(item.unitPrice || 0);
+                  const quantity = Number(item.quantity || 0);
+                  const product = Array.isArray(products) 
+                    ? products.find((p: any) => p.id === item.productId)
+                    : null;
+                  
+                  // Calculate subtotal for this item
+                  const itemSubtotal = basePrice * quantity;
+                  orderSubtotal += itemSubtotal;
+                  
+                  // Calculate tax for this item using same logic as order details
+                  let itemTax = 0;
+                  if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                    const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                    const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                    itemTax = Math.floor(taxPerUnit * quantity);
+                    orderTax += itemTax;
+                  }
+                  
+                  const itemTotal = itemSubtotal + itemTax;
+                  orderTotal += itemTotal;
+                  
+                  return {
+                    id: item.id,
+                    productId: item.productId,
+                    name: item.productName || getProductName(item.productId),
+                    productName: item.productName || getProductName(item.productId),
+                    price: basePrice.toString(),
+                    quantity: quantity,
+                    total: itemTotal.toString(),
+                    taxRate: product?.taxRate || "0",
+                    afterTaxPrice: product?.afterTaxPrice || null,
+                    unitPrice: item.unitPrice,
+                    notes: item.notes,
+                    orderNumber: order.orderNumber,
+                    product: {
+                      id: item.productId,
+                      name: item.productName || getProductName(item.productId),
+                      price: basePrice.toString(),
+                      afterTaxPrice: product?.afterTaxPrice || null,
+                      taxRate: product?.taxRate || "0"
+                    }
+                  };
+                });
+                
+                cartItems.push(...orderCartItems);
+              }
+            }
+            
+            console.log("📡 Table Grid: Total cart items for table", specificTableId, ":", cartItems.length);
+            console.log("📡 Table Grid: Calculated totals:", {
+              subtotal: orderSubtotal,
+              tax: orderTax,
+              total: orderTotal
+            });
+            
+          } catch (error) {
+            console.error("📡 Table Grid: Error fetching detailed order items:", error);
+            
+            // Fallback to basic order data if detailed fetch fails
+            cartItems = tableOrders.map(order => ({
+              id: order.id,
+              productId: order.productId || order.id,
+              name: order.name || `Đơn hàng ${order.orderNumber}`,
+              productName: order.name || `Đơn hàng ${order.orderNumber}`,
+              price: order.price || "0",
+              quantity: order.quantity || 1,
+              total: order.total || "0",
+              taxRate: order.taxRate || "0",
+              afterTaxPrice: order.afterTaxPrice,
+              orderNumber: order.orderNumber,
+              product: {
+                id: order.productId || order.id,
+                name: order.name || `Đơn hàng ${order.orderNumber}`,
+                price: order.price || "0",
+                afterTaxPrice: order.afterTaxPrice,
+                taxRate: order.taxRate || "0"
+              }
+            }));
+            
+            // Use stored totals as fallback
+            tableOrders.forEach(order => {
+              orderSubtotal += parseFloat(order.subtotal || "0");
+              orderTax += parseFloat(order.tax || "0");
+              orderTotal += parseFloat(order.total || "0");
+            });
+          }
         }
       } else {
         // If no specific table, clear the display
-        ordersToShow = [];
+        cartItems = [];
         orderSubtotal = 0;
         orderTax = 0;
         orderTotal = 0;
       }
 
-      // Convert orders to cart format for customer display
-      const cartItems = ordersToShow.map(order => ({
-        id: order.id,
-        productId: order.productId,
-        name: order.name,
-        price: order.price,
-        quantity: order.quantity,
-        total: order.total,
-        taxRate: order.taxRate || "0",
-        afterTaxPrice: order.afterTaxPrice,
-        product: {
-          id: order.productId,
-          name: order.name,
-          price: order.price,
-          afterTaxPrice: order.afterTaxPrice,
-          taxRate: order.taxRate
-        }
-      }));
-
       const cartData = {
         type: 'cart_update',
         cart: cartItems,
-        subtotal: orderSubtotal,
-        tax: orderTax,
-        total: orderTotal,
+        subtotal: Math.floor(orderSubtotal),
+        tax: Math.floor(orderTax),
+        total: Math.floor(orderTotal),
         tableId: specificTableId || null,
+        orderNumber: cartItems.length > 0 ? cartItems[0]?.orderNumber : null,
         timestamp: new Date().toISOString()
       };
 
-      console.log("📡 Table Grid: Broadcasting cart update for table:", {
+      console.log("📡 Table Grid: Broadcasting detailed cart update for table:", {
         tableId: specificTableId,
-        activeOrdersCount: ordersToShow.length,
         cartItemsCount: cartItems.length,
-        subtotal: orderSubtotal,
-        tax: orderTax,
-        total: orderTotal
+        subtotal: Math.floor(orderSubtotal),
+        tax: Math.floor(orderTax),
+        total: Math.floor(orderTotal),
+        orderNumber: cartData.orderNumber,
+        sampleItems: cartItems.slice(0, 3).map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total
+        }))
       });
 
       try {
@@ -518,7 +601,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     } else {
       console.log("📡 Table Grid: WebSocket not available for broadcasting");
     }
-  }, [activeOrders]);
+  }, [activeOrders, products, getProductName]);
 
 
   // Clear customer display when no order details are open
