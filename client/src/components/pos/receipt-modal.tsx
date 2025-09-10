@@ -708,7 +708,9 @@ export function ReceiptModal({
                     </div>
                   </>
                 );
-              })()}</div>
+              })()}
+            </div>
+          </div>
         ) : (
           // Fallback content - should not reach here due to validation above
           <div className="p-4 text-center">
@@ -718,7 +720,6 @@ export function ReceiptModal({
             </Button>
           </div>
         )}
-
 
         <div className="flex justify-center p-2 border-t">
           {isPreview ? (
