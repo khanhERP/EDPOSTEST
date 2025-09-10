@@ -284,7 +284,7 @@ export function SalesChartReport() {
       case "employee":
         return t("reports.employeeSalesReport");
       case "customer":
-        return t("reports.customerSalesReport");
+        return t("reports.topCustomersByRevenue");
       case "salesMethod":
         return t("reports.salesMethodReport");
       default:
