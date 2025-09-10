@@ -2813,22 +2813,80 @@ export function SalesChartReport() {
                 {t("reports.toDate")}: {formatDate(endDate)}
               </span>
               <Button
-                onClick={() =>
-                  exportToExcel(
-                    data.map((item) => ({
-                      // Changed to export all data (data instead of paginatedData)
-                      "Mã KH": item.customerId,
-                      "Tên KH": item.customerName,
-                      "Nhóm KH": item.customerGroup,
-                      "Số đơn": item.orders,
-                      "Tổng tiền": formatCurrency(item.totalAmount),
-                      "Giảm giá": formatCurrency(item.discount),
-                      "Doanh thu": formatCurrency(item.revenue),
-                      "Trạng thái": item.status,
-                    })),
-                    `CustomerSales_${startDate}_to_${endDate}`,
-                  )
-                }
+                onClick={() => {
+                  const exportData = [];
+
+                  // Export customer summaries with their detailed orders
+                  data.forEach((customer) => {
+                    // Add customer summary row
+                    exportData.push({
+                      Loại: "Tổng khách hàng",
+                      "Mã KH": customer.customerId,
+                      "Tên KH": customer.customerName,
+                      "Nhóm KH": customer.customerGroup,
+                      "Mã đơn hàng": "",
+                      "Ngày giờ": "",
+                      "Số đơn": customer.orders,
+                      "Tổng tiền": formatCurrency(customer.totalAmount),
+                      "Giảm giá": formatCurrency(customer.discount),
+                      "Doanh thu": formatCurrency(customer.revenue),
+                      "Trạng thái": customer.status,
+                      "Phương thức thanh toán": "Tất cả",
+                    });
+
+                    // Add detailed orders for this customer
+                    if (customer.orderDetails && customer.orderDetails.length > 0) {
+                      customer.orderDetails.forEach((order: any) => {
+                        exportData.push({
+                          Loại: "Chi tiết đơn hàng",
+                          "Mã KH": customer.customerId,
+                          "Tên KH": customer.customerName,
+                          "Nhóm KH": customer.customerGroup,
+                          "Mã đơn hàng": order.orderNumber || `ORD-${order.id}`,
+                          "Ngày giờ": new Date(
+                            order.orderedAt || order.createdAt || order.created_at
+                          ).toLocaleString("vi-VN"),
+                          "Số đơn": 1,
+                          "Tổng tiền": formatCurrency(Number(order.subtotal || 0)),
+                          "Giảm giá": formatCurrency(Number(order.discount || 0)),
+                          "Doanh thu": formatCurrency(
+                            Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0))
+                          ),
+                          "Trạng thái": order.status === "paid"
+                            ? "Đã thanh toán"
+                            : order.status === "cancelled"
+                              ? "Đã hủy"
+                              : order.status,
+                          "Phương thức thanh toán": getPaymentMethodLabel(order.paymentMethod || "cash"),
+                        });
+                      });
+                    }
+                  });
+
+                  // Add grand total summary
+                  exportData.push({
+                    Loại: "TỔNG CỘNG",
+                    "Mã KH": "",
+                    "Tên KH": `${data.length} khách hàng`,
+                    "Nhóm KH": "",
+                    "Mã đơn hàng": "",
+                    "Ngày giờ": "",
+                    "Số đơn": data.reduce((sum, customer) => sum + customer.orders, 0),
+                    "Tổng tiền": formatCurrency(
+                      data.reduce((sum, customer) => sum + customer.totalAmount, 0)
+                    ),
+                    "Giảm giá": formatCurrency(
+                      data.reduce((sum, customer) => sum + customer.discount, 0)
+                    ),
+                    "Doanh thu": formatCurrency(
+                      data.reduce((sum, customer) => sum + customer.revenue, 0)
+                    ),
+                    "Trạng thái": "",
+                    "Phương thức thanh toán": "Tất cả",
+                  });
+
+                  exportToExcel(exportData, `BaoCaoKhachHang_${startDate}_to_${endDate}`);
+                }}
                 className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
                 <Download className="w-4 h-4" />
