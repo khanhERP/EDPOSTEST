@@ -4228,7 +4228,7 @@ export function SalesChartReport() {
                     "Tên hàng": product.productName,
                     "Đơn vị tính": t("common.perUnit"),
                     "Số lượng bán": product.totalQuantity,
-                    "Thành tiền": formatCurrency(product.totalRevenue),
+                    "Thành tiền": formatCurrency((product.totalQuantity || 0) * (product.unitPrice || 0)),
                     "Giảm giá": formatCurrency(0),
                     "Doanh thu": formatCurrency(product.totalRevenue),
                     "Nhóm hàng": product.categoryName,
@@ -4239,7 +4239,7 @@ export function SalesChartReport() {
                     "Tên hàng": `${totalProducts} sản phẩm`,
                     "Đơn vị tính": "-",
                     "Số lượng bán": totalQuantity,
-                    "Thành tiền": formatCurrency(totalRevenue),
+                    "Thành tiền": formatCurrency(data.reduce((sum, product) => sum + ((product.totalQuantity || 0) * (product.unitPrice || 0)), 0)),
                     "Giảm giá": formatCurrency(0),
                     "Doanh thu": formatCurrency(totalRevenue),
                     "Nhóm hàng": "-",
@@ -4333,7 +4333,7 @@ export function SalesChartReport() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {formatCurrency(product.totalRevenue)}
+                          {formatCurrency((product.totalQuantity || 0) * (product.unitPrice || 0))}
                         </TableCell>
                         {analysisType !== "employee" && (
                           <TableCell className="text-right">
@@ -4377,7 +4377,7 @@ export function SalesChartReport() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-bold text-blue-600">
-                        {formatCurrency(totalRevenue)}
+                        {formatCurrency(data.reduce((sum, product) => sum + ((product.totalQuantity || 0) * (product.unitPrice || 0)), 0))}
                       </TableCell>
                       {analysisType !== "employee" && (
                         <TableCell className="text-right font-bold text-red-600">
