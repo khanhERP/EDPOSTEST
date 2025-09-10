@@ -134,22 +134,36 @@ export function CustomerDisplay({
 
           if (data.type === 'cart_update') {
             setCartItems(data.cart || []);
-            
-            // Always use calculated values to ensure accuracy
-            const calculatedSubtotal = calculateCorrectSubtotal();
-            const calculatedTax = calculateCorrectTax();
-            const calculatedTotal = calculatedSubtotal + calculatedTax;
-            
-            // Use calculated values instead of potentially incorrect WebSocket data
-            setCurrentSubtotal(calculatedSubtotal);
-            setCurrentTax(calculatedTax); 
-            setCurrentTotal(calculatedTotal);
+            // Note: data.subtotal from WebSocket is actually the correct pre-tax subtotal
+            setCurrentSubtotal(data.subtotal || 0);
+            setCurrentTax(data.tax || 0);
+            setCurrentTotal(data.total || 0);
             // Update order number if available in cart update
             if (data.orderNumber) {
               setOrderNumber(data.orderNumber);
             }
             console.log('📦 Customer Display: Received order number:', data.orderNumber);
             console.log('💰 Customer Display: Received correct subtotal (pre-tax):', data.subtotal);
+          } else if (data.type === 'qr_payment') {
+            console.log("Customer Display: Received QR payment message:", {
+              hasQrCodeUrl: !!data.qrCodeUrl,
+              amount: data.amount,
+              paymentMethod: data.paymentMethod,
+              transactionUuid: data.transactionUuid,
+              qrCodeUrlLength: data.qrCodeUrl?.length || 0
+            });
+            if (data.qrCodeUrl && data.amount) {
+              console.log("Customer Display: Setting QR payment state");
+              setQrPayment({
+                qrCodeUrl: data.qrCodeUrl,
+                amount: data.amount,
+                paymentMethod: data.paymentMethod,
+                transactionUuid: data.transactionUuid
+              });
+              console.log("Customer Display: QR payment state set successfully");
+            } else {
+              console.error("Customer Display: Invalid QR payment data received", data);
+            }
           } else if (data.type === 'order_created') {
             console.log('🆕 Customer Display: New order created:', data.order);
             setCurrentOrder(data.order);
@@ -317,14 +331,14 @@ export function CustomerDisplay({
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Tạm tính:</span>
                       <span className="font-medium">
-                        {formatCurrency(correctSubtotal)}
+                        {formatCurrency(currentSubtotal)}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Thuế:</span>
                       <span className="font-medium">
-                        {formatCurrency(correctTax)}
+                        {formatCurrency(currentTax)}
                       </span>
                     </div>
 
@@ -333,7 +347,7 @@ export function CustomerDisplay({
                         Tổng cộng:
                       </span>
                       <span className="text-2xl font-bold text-green-600">
-                        {formatCurrency(correctSubtotal + correctTax)}
+                        {formatCurrency(currentTotal)}
                       </span>
                     </div>
 

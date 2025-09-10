@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CustomerDisplay } from "@/components/pos/customer-display";
 import type { CartItem } from "@shared/schema";
@@ -46,7 +45,7 @@ export default function CustomerDisplayPage() {
     const fetchInitialData = async () => {
       try {
         console.log("Customer Display: Fetching initial data...");
-        
+
         // Fetch store info
         const storeResponse = await fetch('/api/store-settings');
         if (storeResponse.ok) {
@@ -56,7 +55,7 @@ export default function CustomerDisplayPage() {
         } else {
           console.error("Customer Display: Failed to fetch store settings:", storeResponse.status);
         }
-        
+
         // Try to fetch current cart state if available
         const cartResponse = await fetch('/api/current-cart');
         if (cartResponse.ok) {
@@ -86,7 +85,7 @@ export default function CustomerDisplayPage() {
     console.log("Customer Display: Initializing WebSocket connection");
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
+
     let ws: WebSocket;
     let reconnectTimer: NodeJS.Timeout;
     let isConnected = false;
@@ -98,16 +97,12 @@ export default function CustomerDisplayPage() {
         ws.onopen = () => {
           console.log("Customer Display: WebSocket connected");
           isConnected = true;
-          // Send identification as customer display
-          try {
-            ws.send(JSON.stringify({ 
-              type: 'customer_display_connected',
-              timestamp: new Date().toISOString()
-            }));
-            console.log("Customer Display: Identification message sent");
-          } catch (error) {
-            console.error("Customer Display: Failed to send identification:", error);
-          }
+          // Send identification message to identify as customer display
+          ws.send(JSON.stringify({
+            type: 'customer_display_connected',
+            timestamp: new Date().toISOString()
+          }));
+          console.log("Customer Display: Registration message sent");
         };
 
         ws.onmessage = (event) => {
@@ -125,12 +120,12 @@ export default function CustomerDisplayPage() {
             switch (data.type) {
               case 'cart_update':
                 console.log("Customer Display: Processing cart update - Items:", data.cart?.length || 0);
-                
+
                 // Use React's functional update to ensure we get the latest state
                 setCart(prevCart => {
                   const newCart = Array.isArray(data.cart) ? data.cart : [];
                   console.log("Customer Display: Cart state changing from", prevCart.length, "to", newCart.length, "items");
-                  
+
                   // Log cart details for debugging
                   if (newCart.length > 0) {
                     console.log("Customer Display: New cart contents:", newCart.map(item => ({
@@ -139,10 +134,10 @@ export default function CustomerDisplayPage() {
                       price: item.price
                     })));
                   }
-                  
+
                   return newCart;
                 });
-                
+
                 // Clear QR payment when cart updates (new order started)
                 setQrPayment(prevQr => {
                   if (prevQr) {
