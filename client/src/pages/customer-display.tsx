@@ -106,17 +106,26 @@ export default function CustomerDisplayPage() {
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log('Customer Display: WebSocket connected');
-          // Register as customer display
+          console.log('🔌 Customer Display: WebSocket connected successfully');
+          
+          // Register as customer display with multiple methods for reliability
+          console.log('📝 Customer Display: Registering as customer display client');
+          
+          // Primary registration
           ws.send(JSON.stringify({
             type: 'register_customer_display',
             timestamp: new Date().toISOString()
           }));
-          // Also send the legacy message for backward compatibility
-          ws.send(JSON.stringify({
-            type: 'customer_display_connected',
-            timestamp: new Date().toISOString()
-          }));
+          
+          // Legacy registration for backward compatibility
+          setTimeout(() => {
+            ws.send(JSON.stringify({
+              type: 'customer_display_connected',
+              timestamp: new Date().toISOString()
+            }));
+          }, 100);
+          
+          console.log('✅ Customer Display: Registration messages sent');
         };
 
         ws.onmessage = (event) => {
@@ -138,7 +147,18 @@ export default function CustomerDisplayPage() {
                 setQrPayment(null);
               }
             } else if (data.type === 'qr_payment_created') {
-              console.log('✅ Customer Display: Received QR payment message:', data);
+              console.log('📱 Customer Display: QR payment message received!');
+              console.log('🔍 QR payment message details:', {
+                type: data.type,
+                hasQrCodeUrl: !!data.qrCodeUrl,
+                qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+                qrCodeUrlPreview: data.qrCodeUrl?.substring(0, 100) + '...',
+                amount: data.amount,
+                amountType: typeof data.amount,
+                transactionUuid: data.transactionUuid,
+                paymentMethod: data.paymentMethod,
+                timestamp: data.timestamp
+              });
 
               // Validate QR payment data more strictly
               if (data.qrCodeUrl && data.amount && data.transactionUuid) {

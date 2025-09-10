@@ -269,8 +269,18 @@ export function initializeWebSocketServer(server: Server) {
           let totalCustomerDisplays = 0;
 
           clients.forEach((clientWs) => {
-            // Check if client is customer display
-            if ((clientWs as any).isCustomerDisplay || (clientWs as any).clientType === 'customer_display') {
+            // Check if client is customer display - improved detection
+            const isCustomerDisplay = (clientWs as any).isCustomerDisplay || 
+                                    (clientWs as any).clientType === 'customer_display';
+            
+            console.log('🔍 Checking client for QR broadcast:', {
+              isCustomerDisplay: (clientWs as any).isCustomerDisplay,
+              clientType: (clientWs as any).clientType,
+              readyState: clientWs.readyState,
+              willSend: isCustomerDisplay && clientWs.readyState === WebSocket.OPEN
+            });
+
+            if (isCustomerDisplay) {
               totalCustomerDisplays++;
               if (clientWs.readyState === WebSocket.OPEN) {
                 try {
