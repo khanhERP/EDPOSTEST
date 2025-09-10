@@ -2111,18 +2111,20 @@ export function SalesChartReport() {
 
         const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
 
+        // Safe employee matching with proper null/undefined checks
         const employeeMatch =
           !selectedEmployee ||
           selectedEmployee === "all" ||
           selectedEmployee === "" ||
-          order.employeeName === selectedEmployee ||
-          order.cashierName === selectedEmployee ||
-          order.employeeId?.toString() === selectedEmployee ||
+          (order.employeeName && order.employeeName === selectedEmployee) ||
+          (order.cashierName && order.cashierName === selectedEmployee) ||
+          (order.employeeId && order.employeeId.toString() === selectedEmployee) ||
           (order.employeeName &&
             typeof order.employeeName === "string" &&
             selectedEmployee &&
             typeof selectedEmployee === "string" &&
             selectedEmployee !== "all" &&
+            selectedEmployee.trim() !== "" &&
             order.employeeName
               .toLowerCase()
               .includes(selectedEmployee.toLowerCase())) ||
@@ -2131,6 +2133,7 @@ export function SalesChartReport() {
             selectedEmployee &&
             typeof selectedEmployee === "string" &&
             selectedEmployee !== "all" &&
+            selectedEmployee.trim() !== "" &&
             order.cashierName
               .toLowerCase()
               .includes(selectedEmployee.toLowerCase()));
@@ -3948,18 +3951,20 @@ export function SalesChartReport() {
                 const dateMatch =
                   orderDate >= startOfDay && orderDate <= endOfDay;
 
+                // Safe employee matching with proper null/undefined checks
                 const employeeMatch =
                   !selectedEmployee ||
                   selectedEmployee === "all" ||
                   selectedEmployee === "" ||
-                  order.employeeName === selectedEmployee ||
-                  order.cashierName === selectedEmployee ||
-                  order.employeeId?.toString() === selectedEmployee ||
+                  (order.employeeName && order.employeeName === selectedEmployee) ||
+                  (order.cashierName && order.cashierName === selectedEmployee) ||
+                  (order.employeeId && order.employeeId.toString() === selectedEmployee) ||
                   (order.employeeName &&
                     typeof order.employeeName === "string" &&
                     selectedEmployee &&
                     typeof selectedEmployee === "string" &&
                     selectedEmployee !== "all" &&
+                    selectedEmployee.trim() !== "" &&
                     order.employeeName
                       .toLowerCase()
                       .includes(selectedEmployee.toLowerCase())) ||
@@ -3968,6 +3973,7 @@ export function SalesChartReport() {
                     selectedEmployee &&
                     typeof selectedEmployee === "string" &&
                     selectedEmployee !== "all" &&
+                    selectedEmployee.trim() !== "" &&
                     order.cashierName
                       .toLowerCase()
                       .includes(selectedEmployee.toLowerCase()));
