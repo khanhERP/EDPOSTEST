@@ -2017,6 +2017,7 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
+            </div>
             )}
           </CardContent>
         </Card>
@@ -2106,12 +2107,12 @@ export function SalesChartReport() {
             order.employeeName === selectedEmployee ||
             order.cashierName === selectedEmployee ||
             order.employeeId?.toString() === selectedEmployee ||
-            (order.employeeName &&
-              typeof order.employeeName === "string" &&
-              order.employeeName.includes(selectedEmployee)) ||
-            (order.cashierName &&
-              typeof order.cashierName === "string" &&
-              order.cashierName.includes(selectedEmployee));
+            (order.employeeName && 
+              typeof order.employeeName === "string" && 
+              order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase())) ||
+            (order.cashierName && 
+              typeof order.cashierName === "string" && 
+              order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
 
           return dateMatch && employeeMatch;
         });
@@ -3937,10 +3938,10 @@ export function SalesChartReport() {
                     order.employeeId?.toString() === selectedEmployee ||
                     (order.employeeName &&
                       typeof order.employeeName === "string" &&
-                      order.employeeName.includes(selectedEmployee)) ||
+                      order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase())) ||
                     (order.cashierName &&
                       typeof order.cashierName === "string" &&
-                      order.cashierName.includes(selectedEmployee));
+                      order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
 
                   return dateMatch && employeeMatch;
                 } catch (error) {
