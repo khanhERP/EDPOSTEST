@@ -1,0 +1,82 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[dotenv@17.2.1] injecting env (0) from .env.local -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.2.1] injecting env (5) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+🔍 Environment check:
+  - NODE_ENV: development
+  - CUSTOM_DATABASE_URL exists: false
+  - DATABASE_URL exists: false
+  - EXTERNAL_DB_URL exists: true
+  - Using URL: EXTERNAL_DB_URL
+  - DATABASE_URL preview: postgresql://postgres:Info%402024@1.55.212.135:543...
+  - DATABASE_URL full (masked): postgresql://postgres:****@1.55.212.135:5432/edpod?sslmode=disable
+  - Contains 1.55.212.135: true
+  - Contains neon: false
+🔗 Database connection string: postgresql://postgres:****@1.55.212.135:5432/edpod?sslmode=disable
+🔍 Testing database connection...
+✅ Database connection validated successfully
+Running database migrations...
+✅ Database connection successful:
+  - Database: edpod
+  - User: postgres
+  - Version: PostgreSQL 16.3, compiled by Visual C++ build 1939...
+Migration for membership thresholds completed successfully.
+Migration for product_type column completed successfully.
+Migration for tax_rate column completed successfully.
+Migration for price_includes_tax column completed successfully.
+Migration for after_tax_price column completed successfully.
+Migration for pinCode column completed successfully.
+Migration for templateCode column completed successfully.
+Migration for trade_number column completed successfully.
+Migration for invoice_status column completed successfully.
+Migration for template_number and symbol columns in orders table completed successfully.
+Migration for invoice_number column in orders table completed successfully.
+Migration for discount column in orders table completed successfully.
+Migration for employees email constraint completed successfully.
+🔍 Checking customer table data...
+📊 Found 12 customers in database
+ℹ️ Sample data insertion skipped - using external database
+Migration for notes column in transactions table completed successfully.
+Migration for invoice_id and invoice_number columns in transactions table completed successfully.
+Inventory transactions table initialized
+E-invoice connections table initialized
+Invoice templates table initialized
+Invoices table initialized
+Printer configs table columns updated
+Invoice items table initialized
+✅ WebSocket server created successfully on path /ws
+WebSocket server started on the same port as HTTP server
+4:57:40 AM [express] WebSocket server initialized on same port as HTTP server
+4:57:40 AM [express] 🚀 Server running on port 5000
+WebSocket server already running
+4:57:40 AM [express] WebSocket server initialized on same port as HTTP server
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+📡 Client connected to WebSocket: {
+  url: '/ws',
+  origin: 'https://64071157-147f-4160-96cd-6dc099d777d2-00-1d0mzv8b48h7n.pike.replit.dev',
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...'
+}
+📩 Received WebSocket message: {
+  type: 'customer_display_connected',
+  timestamp: '2025-09-10T04:56:31.012Z'
+}
+👥 Customer display connected - sending current state
+✅ Sent current state to customer display: { cartItems: 0, hasStoreInfo: false, hasQrPayment: false }
+📡 Client connected to WebSocket: {
+  url: '/ws',
+  origin: 'https://64071157-147f-4160-96cd-6dc099d777d2-00-1d0mzv8b48h7n.pike.replit.dev',
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...'
+}
+4:57:47 AM [vite] Pre-transform error: /home/runner/workspace/client/src/components/reports/sales-chart-report.tsx: Expected corresponding JSX closing tag for <CardHeader>. (4777:12)
+
+  4775 |                 </div>
+  4776 |               </CardContent>
+> 4777 |             </Card>
+       |             ^
+  4778 |           );
+  4779 |         }
+  4780 |       }
