@@ -2073,13 +2073,14 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      // Simplified filtering logic - bỏ qua các kiểm tra phức tạp
+      // Đơn giản hóa logic lọc - chỉ lọc theo ngày và trạng thái
       const filteredCompletedOrders = orders.filter((order: any) => {
-        // Chỉ kiểm tra status cơ bản
-        const validStatus = order.status === "completed" || order.status === "paid";
-        if (!validStatus) return false;
+        // Kiểm tra trạng thái
+        if (order.status !== "completed" && order.status !== "paid") {
+          return false;
+        }
 
-        // Kiểm tra ngày đơn giản
+        // Kiểm tra ngày
         const orderDate = new Date(
           order.orderedAt ||
             order.createdAt ||
@@ -2096,10 +2097,7 @@ export function SalesChartReport() {
         const endOfDay = new Date(end);
         endOfDay.setHours(23, 59, 59, 999);
 
-        const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
-
-        // Bỏ qua kiểm tra employee filter phức tạp - hiển thị tất cả
-        return dateMatch;
+        return orderDate >= startOfDay && orderDate <= endOfDay;
       });
 
       // Convert orders to transaction-like format for compatibility
