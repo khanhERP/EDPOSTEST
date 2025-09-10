@@ -714,14 +714,25 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               {(() => {
-                // Calculate preview values
+                // Calculate subtotal from cart items
                 const subtotal = cartItems.reduce((sum, item) => {
                   const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
                   return sum + (price * item.quantity);
                 }, 0);
 
-                // Always use total - subtotal formula for tax calculation
-                const tax = Math.max(0, total - subtotal);
+                // Calculate tax from individual items if they have afterTaxPrice
+                let totalTax = 0;
+                cartItems.forEach((item) => {
+                  if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                    const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                    const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                    const taxPerUnit = afterTaxPrice - basePrice;
+                    totalTax += Math.floor(taxPerUnit * item.quantity);
+                  }
+                });
+
+                // If no tax calculated from items, use total - subtotal as fallback
+                const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
 
                 return (
                   <>
