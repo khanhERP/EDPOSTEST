@@ -3023,7 +3023,7 @@ export function SalesChartReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            {t("reports.customerSalesReport")}
+            {t("reports.topCustomersByRevenue")}
           </CardTitle>
           <CardDescription className="flex items-center justify-between">
             <span>

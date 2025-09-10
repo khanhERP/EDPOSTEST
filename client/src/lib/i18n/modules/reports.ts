@@ -346,6 +346,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     disposalReport: "Báo cáo hủy hàng",
     employeeSalesReport: "Báo cáo bán hàng nhân viên",
     customerSalesReport: "Báo cáo bán hàng khách hàng",
+  topCustomersByRevenue: "Top 10 khách hàng doanh thu cao nhất",
     supplierReportByProduct: "Báo cáo nhà cung cấp theo sản phẩm",
     salePrice: "Giá bán",
     saleValue: "Giá trị bán",

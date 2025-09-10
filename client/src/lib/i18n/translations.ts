@@ -41,7 +41,11 @@ export const translations: LanguageTranslations = {
     notFound: notFoundTranslations.en,
     orders: ordersTranslations.en,
     pos: posTranslations.en,
-    reports: reportsTranslations.en,
+    reports: {
+      ...reportsTranslations.en,
+      customerSalesReport: "Customer Sales Report",
+      topCustomersByRevenue: "Top 10 Customers by Revenue",
+    },
     settings: settingsTranslations.en,
     tables: tablesTranslations.en,
     einvoice: einvoiceTranslations.en,
@@ -57,7 +61,11 @@ export const translations: LanguageTranslations = {
     notFound: notFoundTranslations.vi,
     orders: ordersTranslations.vi,
     pos: posTranslations.vi,
-    reports: reportsTranslations.vi,
+    reports: {
+      ...reportsTranslations.vi,
+      customerSalesReport: "Báo cáo doanh thu khách hàng",
+      topCustomersByRevenue: "Top 10 khách hàng doanh thu cao nhất",
+    },
     settings: {
       ...settingsTranslations.vi,
       storeUpdated: "Thông tin cửa hàng đã được cập nhật",
