@@ -333,95 +333,7 @@ export function ShoppingCart({
   }, [broadcastCartUpdate]);
 
 
-  const addToCart = useCallback((product: Product) => {
-    console.log("🛒 Adding product to cart:", product.name, "Price:", product.afterTaxPrice || product.price);
-
-    const effectivePrice = parseFloat(product.afterTaxPrice || product.price);
-    const taxRate = parseFloat(product.taxRate || '0');
-
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.productId === product.id);
-
-      let updatedCart;
-      if (existingItem) {
-        updatedCart = prevCart.map(item =>
-          item.productId === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-                total: ((item.quantity + 1) * effectivePrice).toString()
-              }
-            : item
-        );
-        console.log("🛒 Updated existing item in cart");
-      } else {
-        const newItem: CartItem = {
-          id: `${product.id}-${Date.now()}`,
-          productId: product.id,
-          name: product.name,
-          price: effectivePrice.toString(),
-          quantity: 1,
-          total: effectivePrice.toString(),
-          taxRate: taxRate.toString(),
-          product: product
-        };
-        updatedCart = [...prevCart, newItem];
-        console.log("🛒 Added new item to cart");
-      }
-
-      // Broadcast cart update after state change
-      setTimeout(() => broadcastCartUpdate(), 100);
-
-      return updatedCart;
-    });
-  }, [broadcastCartUpdate]);
-
-  const removeFromCart = useCallback((id: string) => {
-    console.log("🗑️ Removing item from cart:", id);
-    setCart(prevCart => {
-      const updatedCart = prevCart.filter(item => item.id !== id);
-
-      // Broadcast cart update after state change
-      setTimeout(() => broadcastCartUpdate(), 100);
-
-      return updatedCart;
-    });
-  }, [broadcastCartUpdate]);
-
-  const updateQuantity = useCallback((id: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-
-    console.log("📝 Updating quantity for item:", id, "New quantity:", newQuantity);
-
-    setCart(prevCart => {
-      const updatedCart = prevCart.map(item => {
-        if (item.id === id) {
-          const effectivePrice = parseFloat(item.price);
-          const newTotal = (effectivePrice * newQuantity).toString();
-          console.log("📝 Updated item total:", newTotal);
-          return {
-            ...item,
-            quantity: newQuantity,
-            total: newTotal
-          };
-        }
-        return item;
-      });
-
-      // Broadcast cart update after state change
-      setTimeout(() => broadcastCartUpdate(), 100);
-
-      return updatedCart;
-    });
-  }, [broadcastCartUpdate]);
-
-  const clearCart = useCallback(() => {
-    console.log("🧹 Clearing cart");
-    setCart([]);
-
-    // Broadcast empty cart update
-    setTimeout(() => broadcastCartUpdate(), 100);
-  }, [broadcastCartUpdate]);
+  
 
 
   const getPaymentMethods = () => {
@@ -939,7 +851,7 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        updateQuantity(item.id, item.quantity - 1)
+                        onUpdateQuantity(parseInt(item.id), item.quantity - 1)
                       }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity <= 1}
@@ -953,7 +865,7 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        updateQuantity(item.id, item.quantity + 1)
+                        onUpdateQuantity(parseInt(item.id), item.quantity + 1)
                       }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity >= item.stock}
@@ -963,7 +875,7 @@ export function ShoppingCart({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => onRemoveItem(parseInt(item.id))}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
                     >
                       <Trash2 size={10} />
