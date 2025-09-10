@@ -131,7 +131,7 @@ export function ReceiptModal({
     if (typeof window !== 'undefined') {
       // Dispatch custom event to clear cart
       window.dispatchEvent(new CustomEvent('clearCart', {
-        detail: { 
+        detail: {
           source: 'receipt_print',
           timestamp: new Date().toISOString()
         }
@@ -564,85 +564,21 @@ export function ReceiptModal({
               <div className="flex justify-between text-sm">
                 <span>{t("pos.subtotal")}</span>
                 <span>
-                  {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.round(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>{t("pos.tax")}</span>
                 <span>
-                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.round(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between font-bold">
                 <span>{t("pos.total")}</span>
                 <span>
-                  {Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.round(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
                 </span>
-              </div>
-              <div className="flex justify-between text-sm mt-2">
-                <span>{t("pos.paymentMethod")}</span>
-                <span className="capitalize">
-                  {(() => {
-                    // Always prioritize originalPaymentMethod for e-invoices
-                    let displayMethod = receipt.paymentMethod;
-
-                    // If this is an e-invoice transaction and we have originalPaymentMethod, use it
-                    if (receipt.originalPaymentMethod) {
-                      displayMethod = receipt.originalPaymentMethod;
-                    }
-
-                    // Map payment methods to display names
-                    const methodNames = {
-                      cash: t("common.cash"),
-                      creditCard: t("common.creditCard"),
-                      debitCard: t("common.debitCard"),
-                      momo: t("common.momo"),
-                      zalopay: t("common.zalopay"),
-                      vnpay: t("common.vnpay"),
-                      qrCode: t("common.qrCode"),
-                      shopeepay: t("common.shopeepay"),
-                      grabpay: t("common.grabpay"),
-                      einvoice: t("pos.eInvoice"),
-                    };
-
-                    return methodNames[displayMethod] || displayMethod;
-                  })()}
-                </span>
-              </div>
-              {receipt.amountReceived && (
-                <div className="flex justify-between text-sm">
-                  <span>{t("pos.amountReceived")}</span>
-                  <span>
-                    {(() => {
-                      // For e-invoice transactions, amount received should equal the total
-                      if (
-                        receipt.paymentMethod === "einvoice" ||
-                        receipt.originalPaymentMethod === "einvoice"
-                      ) {
-                        // For e-invoice, use the total from receipt
-                        return Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN");
-                      }
-                      // For other payment methods, use the original amount received
-                      return Math.floor(
-                        parseFloat(receipt.amountReceived),
-                      ).toLocaleString("vi-VN");
-                    })()}{" "}
-                    ₫
-                  </span>
-                </div>
-              )}
-              {receipt.change && parseFloat(receipt.change) > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Change:</span>
-                  <span>{receipt.change} ₫</span>
-                </div>
-              )}
-            </div>
-
-            <div className="text-center mt-4 text-xs text-gray-600">
-              <p>{t("pos.thankYouBusiness")}</p>
-              <p>{t("pos.keepReceiptRecords")}</p>
-            </div>
+              </div></div>
           </div>
         ) : isPreview && hasCartData && total > 0 ? (
           // Generate preview receipt from cartItems when in preview mode
@@ -727,43 +663,52 @@ export function ReceiptModal({
                     const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
                     const afterTaxPrice = parseFloat(item.afterTaxPrice);
                     const taxPerUnit = afterTaxPrice - basePrice;
-                    totalTax += Math.floor(taxPerUnit * item.quantity);
+                    totalTax += taxPerUnit * item.quantity;
                   }
                 });
 
                 // If no tax calculated from items, use total - subtotal as fallback
                 const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
 
+                // Round all values consistently - use Math.round instead of Math.floor
+                const roundedSubtotal = Math.round(subtotal);
+                const roundedTax = Math.round(tax);
+                const roundedTotal = Math.round(total);
+
+                console.log("🔍 Receipt Modal Preview - Tax calculation debug:", {
+                  cartItems: cartItems.length,
+                  subtotal: subtotal,
+                  totalTax: totalTax,
+                  finalTax: tax,
+                  roundedSubtotal: roundedSubtotal,
+                  roundedTax: roundedTax,
+                  roundedTotal: roundedTotal,
+                  total: total
+                });
+
                 return (
                   <>
                     <div className="flex justify-between text-sm">
                       <span>{t("pos.subtotal")}</span>
                       <span>
-                        {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
+                        {roundedSubtotal.toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>{t("pos.tax")}</span>
                       <span>
-                        {Math.floor(tax).toLocaleString("vi-VN")} ₫
+                        {roundedTax.toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
                     <div className="flex justify-between font-bold">
                       <span>{t("pos.total")}</span>
                       <span>
-                        {Math.floor(total).toLocaleString("vi-VN")} ₫
+                        {roundedTotal.toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
                   </>
                 );
-              })()}
-            </div>
-
-            <div className="text-center mt-4 text-xs text-gray-600">
-              <p>{t("pos.thankYouBusiness")}</p>
-              <p>{t("pos.keepReceiptRecords")}</p>
-            </div>
-          </div>
+              })()}</div>
         ) : (
           // Fallback content - should not reach here due to validation above
           <div className="p-4 text-center">
@@ -804,7 +749,7 @@ export function ReceiptModal({
                   // Force clear cart when close button is clicked
                   if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('clearCart', {
-                      detail: { 
+                      detail: {
                         source: 'receipt_close_button',
                         timestamp: new Date().toISOString()
                       }
