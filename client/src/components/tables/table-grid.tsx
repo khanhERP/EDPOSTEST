@@ -72,6 +72,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [orderForEInvoice, setOrderForEInvoice] = useState<any>(null);
   const wsRef = useRef<WebSocket | null>(null); // Ref for WebSocket connection
 
+  // Helper function to get product name - defined early to avoid hoisting issues
+  const getProductName = (productId: number) => {
+    const product = Array.isArray(products)
+      ? products.find((p: any) => p.id === productId)
+      : null;
+    return product?.name || `Product #${productId}`;
+  };
+
   const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
     staleTime: 60 * 1000, // Cache 1 phút
@@ -1408,13 +1416,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     return latestOrder;
   };
 
-  // Helper function to get product name
-  const getProductName = (productId: number) => {
-    const product = Array.isArray(products)
-      ? products.find((p: any) => p.id === productId)
-      : null;
-    return product?.name || `Product #${productId}`;
-  };
+  
 
   // Helper function to get table info
   const getTableInfo = (tableId: number) => {
