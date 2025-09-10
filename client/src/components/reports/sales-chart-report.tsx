@@ -1944,44 +1944,63 @@ export function SalesChartReport() {
                       <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
                         TỔNG CỘNG
                       </TableCell>
+                      <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
+                        {groupedOrders.length} đơn
+                      </TableCell>
                       <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
-                        {groupedOrders.length} đơn hàng
+                        -
                       </TableCell>
-                      <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4"></TableCell>
+                      <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4">
+                        -
+                      </TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[200px] px-4">
-                        {totalQuantity} món
+                        -
                       </TableCell>
-                      <TableCell className="text-center border-r bg-blue-100 min-w-[60px] px-4"></TableCell>
+                      <TableCell className="text-center border-r bg-blue-100 min-w-[60px] px-4">
+                        -
+                      </TableCell>
                       <TableCell className="text-center border-r bg-blue-100 min-w-[100px] px-4">
                         {totalQuantity}
                       </TableCell>
                       <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
+                        -
+                      </TableCell>
+                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
                         {formatCurrency(totalAmount)}
                       </TableCell>
-                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                        {formatCurrency(totalRevenue)}
-                      </TableCell>
-                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
+                      <TableCell className="text-right border-r bg-orange-100 min-w-[100px] px-4">
                         {formatCurrency(totalDiscount)}
                       </TableCell>
-                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
+                      <TableCell className="text-right border-r bg-green-100 min-w-[120px] px-4">
                         {formatCurrency(totalRevenue)}
                       </TableCell>
-                      <TableCell className="text-center border-r bg-blue-100 min-w-[80px] px-4">
+                      <TableCell className="text-center border-r bg-yellow-100 min-w-[100px] px-4">
                         10%
                       </TableCell>
-                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
-                        {formatCurrency(totalTax)}
+                      <TableCell className="text-right border-r bg-yellow-100 min-w-[100px] px-4">
+                        {formatCurrency(totalVat)}
                       </TableCell>
-                      <TableCell className="text-right border-r bg-blue-100 min-w-[120px] px-4">
+                      <TableCell className="text-right border-r bg-purple-100 min-w-[120px] px-4">
                         {formatCurrency(totalMoney)}
                       </TableCell>
-                      <TableCell className="text-center min-w-[150px] px-4"></TableCell>
-                      <TableCell className="text-center min-w-[100px] px-4"></TableCell>
-                      <TableCell className="text-center min-w-[80px] px-4"></TableCell>
-                      <TableCell className="text-center min-w-[120px] px-4"></TableCell>
-                      <TableCell className="text-center min-w-[120px] px-4"></TableCell>
-                      <TableCell className="text-center min-w-[100px] px-4"></TableCell>
+                      <TableCell className="text-center min-w-[150px] px-4">
+                        -
+                      </TableCell>
+                      <TableCell className="text-center min-w-[100px] px-4">
+                        -
+                      </TableCell>
+                      <TableCell className="text-center min-w-[80px] px-4">
+                        -
+                      </TableCell>
+                      <TableCell className="text-center min-w-[120px] px-4">
+                        -
+                      </TableCell>
+                      <TableCell className="text-center min-w-[120px] px-4">
+                        -
+                      </TableCell>
+                      <TableCell className="text-center min-w-[100px] px-4">
+                        -
+                      </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
