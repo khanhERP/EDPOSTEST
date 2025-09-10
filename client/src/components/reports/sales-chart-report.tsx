@@ -957,133 +957,138 @@ export function SalesChartReport() {
                                 })()}
                               </TableRow>
 
-                              {/* Expanded order details */}
+                              {/* Expanded order details - chỉ hiển thị đơn hàng hoàn thành */}
                               {isExpanded &&
                                 dateTransactions.length > 0 &&
-                                dateTransactions.map(
-                                  (transaction: any, txIndex: number) => (
-                                    <TableRow
-                                      key={`${date}-transaction-${transaction.id || txIndex}`}
-                                      className="bg-blue-50/50 border-l-4 border-l-blue-400"
-                                    >
-                                      <TableCell className="text-center border-r bg-blue-50 w-12">
-                                        <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
-                                          └
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="font-medium text-center border-r bg-blue-50 text-blue-600 text-sm min-w-[120px] px-4">
-                                        <div>
-                                          {new Date(
-                                            transaction.createdAt ||
-                                              transaction.created_at,
-                                          ).toLocaleTimeString("vi-VN", {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                          })}
-                                        </div>
-                                        <div className="text-xs text-gray-500 font-normal mt-1">
-                                          {getPaymentMethodLabel(
-                                            transaction.paymentMethod,
-                                          )}
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
-                                        <button
-                                          onClick={() => {
-                                            // Navigate to sales orders with order filter
-                                            const orderNumber =
-                                              transaction.orderNumber ||
-                                              `ORD-${transaction.id}`;
-                                            window.location.href = `/sales-orders?order=${orderNumber}`;
-                                          }}
-                                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
-                                          title="Click to view order details"
-                                        >
-                                          {transaction.orderNumber ||
-                                            transaction.transactionId ||
-                                            `ORD-${transaction.id}` ||
-                                            `TXN-${txIndex + 1}`}
-                                        </button>
-                                      </TableCell>
-                                      <TableCell className="text-right border-r text-sm min-w-[140px] px-4">
-                                        {formatCurrency(
-                                          Number(transaction.subtotal || 0),
-                                        )}
-                                      </TableCell>
-                                      {analysisType !== "employee" && (
-                                        <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
+                                dateTransactions
+                                  .filter((transaction: any) => 
+                                    transaction.status === "completed" || 
+                                    transaction.status === "paid"
+                                  )
+                                  .map(
+                                    (transaction: any, txIndex: number) => (
+                                      <TableRow
+                                        key={`${date}-transaction-${transaction.id || txIndex}`}
+                                        className="bg-blue-50/50 border-l-4 border-l-blue-400"
+                                      >
+                                        <TableCell className="text-center border-r bg-blue-50 w-12">
+                                          <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
+                                            └
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="font-medium text-center border-r bg-blue-50 text-blue-600 text-sm min-w-[120px] px-4">
+                                          <div>
+                                            {new Date(
+                                              transaction.createdAt ||
+                                                transaction.created_at,
+                                            ).toLocaleTimeString("vi-VN", {
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                            })}
+                                          </div>
+                                          <div className="text-xs text-gray-500 font-normal mt-1">
+                                            {getPaymentMethodLabel(
+                                              transaction.paymentMethod,
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                          <button
+                                            onClick={() => {
+                                              // Navigate to sales orders with order filter
+                                              const orderNumber =
+                                                transaction.orderNumber ||
+                                                `ORD-${transaction.id}`;
+                                              window.location.href = `/sales-orders?order=${orderNumber}`;
+                                            }}
+                                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
+                                            title="Click to view order details"
+                                          >
+                                            {transaction.orderNumber ||
+                                              transaction.transactionId ||
+                                              `ORD-${transaction.id}` ||
+                                              `TXN-${txIndex + 1}`}
+                                          </button>
+                                        </TableCell>
+                                        <TableCell className="text-right border-r text-sm min-w-[140px] px-4">
                                           {formatCurrency(
-                                            Number(transaction.discount || 0),
+                                            Number(transaction.subtotal || 0),
                                           )}
                                         </TableCell>
-                                      )}
-                                      <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
-                                        {formatCurrency(
-                                          Number(transaction.subtotal || 0),
-                                        )}
-                                      </TableCell>
-                                      <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
-                                        {formatCurrency(
-                                          Number(transaction.total || 0) -
-                                            Number(transaction.subtotal || 0),
-                                        )}
-                                      </TableCell>
-                                      <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
-                                        {formatCurrency(
-                                          Number(transaction.total || 0),
-                                        )}
-                                      </TableCell>
-                                      {(() => {
-                                        const transactionMethod =
-                                          transaction.paymentMethod || "cash";
-                                        const amount = Number(
-                                          transaction.total,
-                                        );
-
-                                        // Get all unique payment methods from all transactions
-                                        const allPaymentMethods = new Set();
-                                        if (
-                                          filteredTransactions &&
-                                          Array.isArray(filteredTransactions)
-                                        ) {
-                                          filteredTransactions.forEach(
-                                            (transaction: any) => {
-                                              const method =
-                                                transaction.paymentMethod ||
-                                                "cash";
-                                              allPaymentMethods.add(method);
-                                            },
-                                          );
-                                        }
-
-                                        const paymentMethodsArray =
-                                          Array.from(allPaymentMethods).sort();
-
-                                        return (
-                                          <>
-                                            {paymentMethodsArray.map(
-                                              (method: any) => (
-                                                <TableCell
-                                                  key={method}
-                                                  className="text-right border-r text-sm min-w-[130px] px-4"
-                                                >
-                                                  {transactionMethod === method
-                                                    ? formatCurrency(
-                                                        Number(
-                                                          transaction.total ||
-                                                            0,
-                                                        ),
-                                                      )
-                                                    : "-"}
-                                                </TableCell>
-                                              ),
+                                        {analysisType !== "employee" && (
+                                          <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
+                                            {formatCurrency(
+                                              Number(transaction.discount || 0),
                                             )}
-                                          </>
-                                        );
-                                      })()}
-                                    </TableRow>
-                                  ),
-                                )}
+                                          </TableCell>
+                                        )}
+                                        <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
+                                          {formatCurrency(
+                                            Number(transaction.subtotal || 0),
+                                          )}
+                                        </TableCell>
+                                        <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
+                                          {formatCurrency(
+                                            Number(transaction.total || 0) -
+                                              Number(transaction.subtotal || 0),
+                                          )}
+                                        </TableCell>
+                                        <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
+                                          {formatCurrency(
+                                            Number(transaction.total || 0),
+                                          )}
+                                        </TableCell>
+                                        {(() => {
+                                          const transactionMethod =
+                                            transaction.paymentMethod || "cash";
+                                          const amount = Number(
+                                            transaction.total,
+                                          );
+
+                                          // Get all unique payment methods from all transactions
+                                          const allPaymentMethods = new Set();
+                                          if (
+                                            filteredTransactions &&
+                                            Array.isArray(filteredTransactions)
+                                          ) {
+                                            filteredTransactions.forEach(
+                                              (transaction: any) => {
+                                                const method =
+                                                  transaction.paymentMethod ||
+                                                  "cash";
+                                                allPaymentMethods.add(method);
+                                              },
+                                            );
+                                          }
+
+                                          const paymentMethodsArray =
+                                            Array.from(allPaymentMethods).sort();
+
+                                          return (
+                                            <>
+                                              {paymentMethodsArray.map(
+                                                (method: any) => (
+                                                  <TableCell
+                                                    key={method}
+                                                    className="text-right border-r text-sm min-w-[130px] px-4"
+                                                  >
+                                                    {transactionMethod === method
+                                                      ? formatCurrency(
+                                                          Number(
+                                                            transaction.total ||
+                                                              0,
+                                                          ),
+                                                        )
+                                                      : "-"}
+                                                  </TableCell>
+                                                ),
+                                              )}
+                                            </>
+                                          );
+                                        })()}
+                                      </TableRow>
+                                    ),
+                                  )}
                             </>
                           );
                         });
