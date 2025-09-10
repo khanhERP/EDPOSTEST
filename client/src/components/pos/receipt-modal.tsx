@@ -694,17 +694,21 @@ export function ReceiptModal({
                     </>
                   );
                 } else if (receipt) {
-                  // For final receipt, use values directly from database
-                  const dbSubtotal = Math.round(parseFloat(receipt.subtotal || "0"));
-                  const dbTax = Math.round(parseFloat(receipt.tax || "0"));
-                  const dbTotal = Math.round(parseFloat(receipt.total || "0"));
+                  // For final receipt, ALWAYS use values directly from database without any calculation
+                  // This ensures exact match with what's stored in the orders table
+                  const dbSubtotal = parseFloat(receipt.subtotal || "0");
+                  const dbTax = parseFloat(receipt.tax || "0"); 
+                  const dbTotal = parseFloat(receipt.total || "0");
 
-                  console.log("🔍 Receipt Modal: Using database values:", {
-                    dbSubtotal,
-                    dbTax,
-                    dbTotal,
+                  console.log("🔍 Receipt Modal: Using EXACT database values:", {
+                    rawSubtotal: receipt.subtotal,
+                    rawTax: receipt.tax,
+                    rawTotal: receipt.total,
+                    parsedSubtotal: dbSubtotal,
+                    parsedTax: dbTax,
+                    parsedTotal: dbTotal,
                     receiptId: receipt.id,
-                    source: "database_direct"
+                    source: "database_exact"
                   });
 
                   return (
@@ -712,19 +716,19 @@ export function ReceiptModal({
                       <div className="flex justify-between text-sm">
                         <span>{t("pos.subtotal")}</span>
                         <span>
-                          {dbSubtotal.toLocaleString("vi-VN")} ₫
+                          {Math.round(dbSubtotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>{t("pos.tax")}</span>
                         <span>
-                          {dbTax.toLocaleString("vi-VN")} ₫
+                          {Math.round(dbTax).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {dbTotal.toLocaleString("vi-VN")} ₫
+                          {Math.round(dbTotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>
