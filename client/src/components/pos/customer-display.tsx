@@ -203,7 +203,8 @@ export function CustomerDisplay({
                   paymentMethod: data.paymentMethod,
                   transactionUuid: data.transactionUuid,
                   qrCodeUrlLength: data.qrCodeUrl?.length || 0,
-                  fullData: data
+                  qrCodeStart: data.qrCodeUrl ? data.qrCodeUrl.substring(0, 50) + '...' : 'null',
+                  timestamp: new Date().toISOString()
                 });
 
                 // Clear cart first to ensure QR display shows properly
@@ -212,26 +213,30 @@ export function CustomerDisplay({
                 setCurrentTax(0);
                 setCurrentTotal(0);
 
-                // Always try to set QR payment state if we have any data
-                if (data.qrCodeUrl || data.amount) {
-                  console.log("Customer Display: Setting QR payment state with data:", {
-                    qrCodeUrl: data.qrCodeUrl,
-                    amount: data.amount,
-                    paymentMethod: data.paymentMethod,
-                    transactionUuid: data.transactionUuid
-                  });
+                // Validate and set QR payment state
+                if (data.qrCodeUrl && data.amount) {
+                  console.log("Customer Display: Valid QR data received, setting payment state");
                   
                   const qrPaymentData = {
-                    qrCodeUrl: data.qrCodeUrl || '',
+                    qrCodeUrl: data.qrCodeUrl,
                     amount: Number(data.amount) || 0,
                     paymentMethod: data.paymentMethod || 'QR Code',
                     transactionUuid: data.transactionUuid || `QR-${Date.now()}`
                   };
                   
+                  // Force update the QR payment state
                   setQrPayment(qrPaymentData);
-                  console.log("Customer Display: QR payment state set successfully:", qrPaymentData);
+                  console.log("✅ Customer Display: QR payment state set successfully:", {
+                    hasQrCodeUrl: !!qrPaymentData.qrCodeUrl,
+                    amount: qrPaymentData.amount,
+                    qrCodeStart: qrPaymentData.qrCodeUrl.substring(0, 50) + '...'
+                  });
                 } else {
-                  console.error("Customer Display: No valid QR payment data received", data);
+                  console.error("❌ Customer Display: Invalid QR payment data received", {
+                    hasQrCodeUrl: !!data.qrCodeUrl,
+                    hasAmount: !!data.amount,
+                    data: data
+                  });
                 }
           } else if (data.type === 'qr_payment_cancelled') {
                 console.log("Customer Display: QR payment cancelled, clearing QR state");

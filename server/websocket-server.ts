@@ -127,21 +127,34 @@ export function initializeWebSocketServer(server: Server) {
             transactionUuid: data.transactionUuid
           };
 
-          console.log('📱 Broadcasting QR payment to customer displays');
+          console.log('📱 Broadcasting QR payment to customer displays', {
+            qrCodeUrl: data.qrCodeUrl ? `${data.qrCodeUrl.substring(0, 50)}...` : 'null',
+            amount: data.amount,
+            clientsCount: clients.size,
+            transactionUuid: data.transactionUuid
+          });
 
-          // Broadcast QR payment info to customer displays
+          // Broadcast QR payment info to all clients (especially customer displays)
+          let qrBroadcastCount = 0;
           clients.forEach(client => {
-            if (client.readyState === client.OPEN && client !== ws) {
-              client.send(JSON.stringify({
-                type: 'qr_payment',
-                qrCodeUrl: data.qrCodeUrl,
-                amount: data.amount,
-                paymentMethod: data.paymentMethod,
-                transactionUuid: data.transactionUuid,
-                timestamp: data.timestamp || new Date().toISOString()
-              }));
+            if (client.readyState === WebSocket.OPEN && client !== ws) {
+              try {
+                client.send(JSON.stringify({
+                  type: 'qr_payment',
+                  qrCodeUrl: data.qrCodeUrl,
+                  amount: data.amount,
+                  paymentMethod: data.paymentMethod,
+                  transactionUuid: data.transactionUuid,
+                  timestamp: data.timestamp || new Date().toISOString()
+                }));
+                qrBroadcastCount++;
+              } catch (error) {
+                console.error('❌ Error broadcasting QR payment to client:', error);
+              }
             }
           });
+          
+          console.log(`✅ QR payment broadcasted to ${qrBroadcastCount} clients`);
         } else if (data.type === 'customer_display_connected') {
           console.log('👥 Customer display connected - sending current state');
           // Mark this connection as customer display

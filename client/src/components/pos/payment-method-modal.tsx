@@ -427,23 +427,27 @@ export function PaymentMethodModal({
 
               ws.onopen = () => {
                 console.log("QR Payment: WebSocket connected successfully, sending QR payment info");
-                const qrPaymentMessage = {
-                  type: "qr_payment",
-                  qrCodeUrl: qrUrl,
-                  amount: orderTotal,
-                  transactionUuid: transactionUuid,
-                  paymentMethod: "QR Code",
-                  timestamp: new Date().toISOString(),
-                };
-                console.log("QR Payment: Sending message:", qrPaymentMessage);
-                ws.send(JSON.stringify(qrPaymentMessage));
-                console.log("QR Payment: QR payment info sent to customer display successfully");
                 
-                // Wait longer to ensure message is delivered
+                // Wait a bit before sending to ensure connection is stable
                 setTimeout(() => {
-                  console.log("QR Payment: Closing WebSocket connection");
-                  ws.close();
-                }, 2000);
+                  const qrPaymentMessage = {
+                    type: "qr_payment",
+                    qrCodeUrl: qrUrl,
+                    amount: Math.floor(orderTotal),
+                    transactionUuid: transactionUuid,
+                    paymentMethod: "QR Code",
+                    timestamp: new Date().toISOString(),
+                  };
+                  console.log("QR Payment: Sending message:", qrPaymentMessage);
+                  ws.send(JSON.stringify(qrPaymentMessage));
+                  console.log("QR Payment: QR payment info sent to customer display successfully");
+                  
+                  // Close connection after longer delay to ensure delivery
+                  setTimeout(() => {
+                    console.log("QR Payment: Closing WebSocket connection");
+                    ws.close();
+                  }, 3000);
+                }, 500);
               };
 
               ws.onerror = (error) => {
