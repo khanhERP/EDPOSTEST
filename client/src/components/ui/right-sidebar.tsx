@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from '@/lib/i18n/index';
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -104,7 +104,7 @@ export function RightSidebar() {
     );
   }, [isExpanded]);
 
-  
+
 
   return (
     <div className={cn(
@@ -144,7 +144,7 @@ export function RightSidebar() {
           const Icon = item.icon;
           const isActive = location === item.href;
           const showText = isExpanded && !isNavCollapsed;
-          
+
           return (
             <div 
               key={item.href}
@@ -176,7 +176,7 @@ export function RightSidebar() {
                       {item.label}
                     </span>
                   )}
-                  
+
                   {showText && item.badge && (
                     <span className="ml-auto bg-red-600 text-white text-xs font-bold rounded-full px-3 py-1 shadow-md">
                       {item.badge}
