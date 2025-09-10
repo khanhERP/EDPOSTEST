@@ -937,7 +937,7 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        updateQuantity(item.id, item.quantity - 1)
+                        onUpdateQuantity(item.id, item.quantity - 1)
                       }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity <= 1}
@@ -951,7 +951,7 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        updateQuantity(item.id, item.quantity + 1)
+                        onUpdateQuantity(item.id, item.quantity + 1)
                       }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity >= item.stock}
@@ -961,7 +961,7 @@ export function ShoppingCart({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => onRemoveItem(item.id)}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
                     >
                       <Trash2 size={10} />
