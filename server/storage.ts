@@ -220,6 +220,9 @@ export interface IStorage {
   // Invoice template methods
   getInvoiceTemplates(tenantDb?: any): Promise<any[]>;
   getActiveInvoiceTemplates(): Promise<any[]>;
+  createInvoiceTemplate(templateData: any, tenantDb?: any): Promise<any>;
+  updateInvoiceTemplate(id: number, templateData: any, tenantDb?: any): Promise<any>;
+  deleteInvoiceTemplate(id: number, tenantDb?: any): Promise<boolean>;
 
   // E-invoice connections
   getEInvoiceConnections(): Promise<any[]>;
@@ -2686,13 +2689,94 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Invoice template methods
-  async getInvoiceTemplates(tenantDb?: any): Promise<any[]> {
-    const database = tenantDb || this.db;
-    return await database.select().from(invoiceTemplates).orderBy(invoiceTemplates.name);
+  async getInvoiceTemplates(tenantDb: any = null): Promise<any[]> {
+    const database = tenantDb || db;
+    try {
+      const templates = await database
+        .select()
+        .from(invoiceTemplates)
+        .orderBy(desc(invoiceTemplates.id));
+      return templates;
+    } catch (error) {
+      console.error("Error fetching invoice templates:", error);
+      return [];
+    }
   }
 
-  async getActiveInvoiceTemplates(): Promise<any[]> {
-    return await this.db.select().from(invoiceTemplates).where(eq(invoiceTemplates.isActive, true)).orderBy(invoiceTemplates.name);
+  async getActiveInvoiceTemplates(tenantDb: any = null): Promise<any[]> {
+    const database = tenantDb || db;
+    try {
+      const templates = await database
+        .select()
+        .from(invoiceTemplates)
+        .where(eq(invoiceTemplates.isDefault, true))
+        .orderBy(desc(invoiceTemplates.id));
+      return templates;
+    } catch (error) {
+      console.error("Error fetching active invoice templates:", error);
+      return [];
+    }
+  }
+
+  async createInvoiceTemplate(templateData: any, tenantDb: any = null): Promise<any> {
+    const database = tenantDb || db;
+    try {
+      const [template] = await database
+        .insert(invoiceTemplates)
+        .values({
+          name: templateData.name,
+          templateNumber: templateData.templateNumber,
+          templateCode: templateData.templateCode || null,
+          symbol: templateData.symbol,
+          useCK: templateData.useCK !== false,
+          notes: templateData.notes || null,
+          isDefault: templateData.isDefault || false,
+          createdAt: new Date().toISOString(),
+        })
+        .returning();
+      return template;
+    } catch (error) {
+      console.error("Error creating invoice template:", error);
+      throw error;
+    }
+  }
+
+  async updateInvoiceTemplate(id: number, templateData: any, tenantDb: any = null): Promise<any> {
+    const database = tenantDb || db;
+    try {
+      const [template] = await database
+        .update(invoiceTemplates)
+        .set({
+          name: templateData.name,
+          templateNumber: templateData.templateNumber,
+          templateCode: templateData.templateCode || null,
+          symbol: templateData.symbol,
+          useCK: templateData.useCK !== false,
+          notes: templateData.notes || null,
+          isDefault: templateData.isDefault || false,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(invoiceTemplates.id, id))
+        .returning();
+      return template;
+    } catch (error) {
+      console.error("Error updating invoice template:", error);
+      throw error;
+    }
+  }
+
+  async deleteInvoiceTemplate(id: number, tenantDb: any = null): Promise<boolean> {
+    const database = tenantDb || db;
+    try {
+      const [deleted] = await database
+        .delete(invoiceTemplates)
+        .where(eq(invoiceTemplates.id, id))
+        .returning();
+      return !!deleted;
+    } catch (error) {
+      console.error("Error deleting invoice template:", error);
+      throw error;
+    }
   }
 
   // Invoice methods
