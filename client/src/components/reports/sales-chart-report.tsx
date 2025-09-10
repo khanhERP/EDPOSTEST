@@ -1564,7 +1564,7 @@ export function SalesChartReport() {
     const paginatedData = groupedOrders.slice(startIndex, endIndex);
 
     // Calculate totals for all orders (use order totals, not item-by-item to avoid double counting)
-    // Calculate totals from actual displayed items (sum of all individual items)
+    // Calculate totals - sum each column directly from displayed data
     const totalQuantity = groupedOrders.reduce(
       (sum, order) =>
         sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
@@ -1591,11 +1591,7 @@ export function SalesChartReport() {
         sum + order.items.reduce((itemSum, item) => itemSum + item.tax, 0),
       0,
     );
-    const totalVat = groupedOrders.reduce(
-      (sum, order) =>
-        sum + order.items.reduce((itemSum, item) => itemSum + item.vat, 0),
-      0,
-    );
+    const totalVat = totalTax; // VAT = Tax in this context
     const totalMoney = groupedOrders.reduce(
       (sum, order) =>
         sum +
