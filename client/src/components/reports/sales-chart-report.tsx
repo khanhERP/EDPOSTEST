@@ -4307,7 +4307,7 @@ export function SalesChartReport() {
                                 isActive: true,
                                 productType: 1,
                                 trackInventory: false,
-                                taxRate: "10.00",
+                                taxRate: product.tax,
                                 priceIncludesTax: false,
                                 afterTaxPrice: product.unitPrice || 0,
                                 createdAt: null,
