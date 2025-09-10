@@ -66,6 +66,20 @@ export function CustomerDisplay({
     return num.toLocaleString('vi-VN') + ' ₫';
   };
 
+  // Helper function to get product name with fallbacks
+  const getProductName = (item: CartItem): string => {
+    if (item.name && item.name !== 'Unknown') {
+      return item.name;
+    }
+    if (item.product?.name) {
+      return item.product.name;
+    }
+    if (item.productName) {
+      return item.productName;
+    }
+    return `Sản phẩm ${item.id}`;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
       {/* Header */}
@@ -170,7 +184,7 @@ export function CustomerDisplay({
                           </div>
                           <div>
                             <h3 className="font-semibold text-lg text-gray-800">
-                              {item.name}
+                              {getProductName(item)}
                             </h3>
                             <p className="text-sm text-gray-600">
                               {formatCurrency(item.price)} × {item.quantity}
