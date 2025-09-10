@@ -2114,7 +2114,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2680,7 +2679,7 @@ export function SalesChartReport() {
           customerSales[customerId].orders += 1;
           customerSales[customerId].totalAmount += orderSubtotal;
           customerSales[customerId].discount += orderDiscount;
-          customerSales[customerId].revenue += orderTotal - orderDiscount; // Doanh thu = subtotal - discount
+          customerSales[customerId].revenue += orderSubtotal - orderDiscount; // Doanh thu = subtotal - discount
         } else {
           // For cancelled orders, still count them but don't add to revenue
           customerSales[customerId].orders += 1;
