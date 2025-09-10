@@ -77,7 +77,7 @@ export function SalesChartReport() {
   const [salesChannel, setSalesChannel] = useState("all");
 
   // Additional filters from legacy reports
-  const [selectedEmployee, setSelectedEmployee] = useState("all");
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
   const [customerSearch, setCustomerSearch] = useState("");
   const [orderSearch, setOrderSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -1343,17 +1343,24 @@ export function SalesChartReport() {
         order.status === "cancelled";
 
       const employeeMatch =
+        !selectedEmployee ||
         selectedEmployee === "all" ||
+        selectedEmployee === "" ||
         order.employeeName === selectedEmployee ||
         order.cashierName === selectedEmployee ||
+        order.employeeId?.toString() === selectedEmployee ||
         (order.employeeName &&
-          order.employeeName
-            .toLowerCase()
-            .includes(selectedEmployee.toLowerCase())) ||
+          typeof order.employeeName === "string" &&
+          selectedEmployee &&
+          typeof selectedEmployee === "string" &&
+          selectedEmployee !== "all" &&
+          order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase())) ||
         (order.cashierName &&
-          order.cashierName
-            .toLowerCase()
-            .includes(selectedEmployee.toLowerCase()));
+          typeof order.cashierName === "string" &&
+          selectedEmployee &&
+          typeof selectedEmployee === "string" &&
+          selectedEmployee !== "all" &&
+          order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
 
       const customerMatch =
         !customerSearch ||
@@ -2017,7 +2024,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2103,15 +2109,23 @@ export function SalesChartReport() {
           const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
 
           const employeeMatch =
+            !selectedEmployee ||
             selectedEmployee === "all" ||
+            selectedEmployee === "" ||
             order.employeeName === selectedEmployee ||
             order.cashierName === selectedEmployee ||
             order.employeeId?.toString() === selectedEmployee ||
-            (order.employeeName && 
-              typeof order.employeeName === "string" && 
+            (order.employeeName &&
+              typeof order.employeeName === "string" &&
+              selectedEmployee &&
+              typeof selectedEmployee === "string" &&
+              selectedEmployee !== "all" &&
               order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase())) ||
-            (order.cashierName && 
-              typeof order.cashierName === "string" && 
+            (order.cashierName &&
+              typeof order.cashierName === "string" &&
+              selectedEmployee &&
+              typeof selectedEmployee === "string" &&
+              selectedEmployee !== "all" &&
               order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
 
           return dateMatch && employeeMatch;
@@ -3932,15 +3946,23 @@ export function SalesChartReport() {
                     orderDate >= startOfDay && orderDate <= endOfDay;
 
                   const employeeMatch =
+                    !selectedEmployee ||
                     selectedEmployee === "all" ||
+                    selectedEmployee === "" ||
                     order.employeeName === selectedEmployee ||
                     order.cashierName === selectedEmployee ||
                     order.employeeId?.toString() === selectedEmployee ||
                     (order.employeeName &&
                       typeof order.employeeName === "string" &&
+                      selectedEmployee &&
+                      typeof selectedEmployee === "string" &&
+                      selectedEmployee !== "all" &&
                       order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase())) ||
                     (order.cashierName &&
                       typeof order.cashierName === "string" &&
+                      selectedEmployee &&
+                      typeof selectedEmployee === "string" &&
+                      selectedEmployee !== "all" &&
                       order.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
 
                   return dateMatch && employeeMatch;
