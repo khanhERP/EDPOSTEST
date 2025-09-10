@@ -2075,33 +2075,40 @@ export function SalesChartReport() {
 
       // Đơn giản hóa logic lọc - chỉ lọc theo ngày và trạng thái
       const filteredCompletedOrders = orders.filter((order: any) => {
-        // Kiểm tra trạng thái
-        if (
-          order.status !== "completed" &&
-          order.status !== "paid" &&
-          order.status !== "cancelled"
-        ) {
+        try {
+          // Kiểm tra trạng thái cơ bản
+          if (
+            !order ||
+            !order.status ||
+            (order.status !== "completed" &&
+              order.status !== "paid" &&
+              order.status !== "cancelled")
+          ) {
+            return false;
+          }
+
+          // Kiểm tra ngày cơ bản
+          const orderDate = new Date(
+            order.orderedAt ||
+              order.createdAt ||
+              order.created_at ||
+              order.paidAt,
+          );
+
+          if (isNaN(orderDate.getTime())) {
+            return false;
+          }
+
+          const startOfDay = new Date(start);
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date(end);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          return orderDate >= startOfDay && orderDate <= endOfDay;
+        } catch (error) {
+          console.warn("Error filtering order:", error);
           return false;
         }
-
-        // Kiểm tra ngày
-        const orderDate = new Date(
-          order.orderedAt ||
-            order.createdAt ||
-            order.created_at ||
-            order.paidAt,
-        );
-
-        if (isNaN(orderDate.getTime())) {
-          return false;
-        }
-
-        const startOfDay = new Date(start);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(end);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        return orderDate >= startOfDay && orderDate <= endOfDay;
       });
 
       // Convert orders to transaction-like format for compatibility
@@ -2160,48 +2167,57 @@ export function SalesChartReport() {
           revenue: number;
           tax: number;
           total: number;
-          discount: number; // Default discount to 0
+          discount: number;
           paymentMethods: { [method: string]: number };
         };
       } = {};
 
       filteredCompletedOrders.forEach((order: any) => {
-        const employeeCode = order.employeeId
-          ? `EMP-${order.employeeId}`
-          : "EMP-000";
-        const employeeName =
-          order.employeeName || order.cashierName || "Unknown";
-        const employeeKey = `${employeeCode}-${employeeName}`;
+        try {
+          // An toàn hóa việc lấy thông tin nhân viên
+          const employeeCode = order.employeeId
+            ? `EMP-${order.employeeId}`
+            : "EMP-000";
+          const employeeName = 
+            (order.employeeName && typeof order.employeeName === 'string' ? order.employeeName : null) ||
+            (order.cashierName && typeof order.cashierName === 'string' ? order.cashierName : null) ||
+            "Unknown";
+          const employeeKey = `${employeeCode}-${employeeName}`;
 
-        if (!employeeSales[employeeKey]) {
-          employeeSales[employeeKey] = {
-            employeeCode,
-            employeeName,
-            orderCount: 0,
-            revenue: 0,
-            tax: 0,
-            total: 0,
-            discount: 0, // Default discount to 0
-            paymentMethods: {},
-          };
+          if (!employeeSales[employeeKey]) {
+            employeeSales[employeeKey] = {
+              employeeCode,
+              employeeName,
+              orderCount: 0,
+              revenue: 0,
+              tax: 0,
+              total: 0,
+              discount: 0,
+              paymentMethods: {},
+            };
+          }
+
+          const stats = employeeSales[employeeKey];
+          const orderTotal = Number(order.total || 0);
+          const orderSubtotal = Number(order.subtotal || 0);
+          const orderDiscount = Number(order.discount || 0);
+          const revenue = orderSubtotal - orderDiscount;
+          const tax = orderTotal - orderSubtotal;
+
+          stats.orderCount += 1;
+          stats.revenue += revenue;
+          stats.tax += tax;
+          stats.total += orderTotal;
+          stats.discount = (stats.discount || 0) + orderDiscount;
+
+          const paymentMethod = (order.paymentMethod && typeof order.paymentMethod === 'string') 
+            ? order.paymentMethod 
+            : "cash";
+          stats.paymentMethods[paymentMethod] =
+            (stats.paymentMethods[paymentMethod] || 0) + orderTotal;
+        } catch (error) {
+          console.warn("Error processing employee order:", error);
         }
-
-        const stats = employeeSales[employeeKey];
-        const orderTotal = Number(order.total || 0);
-        const orderSubtotal = Number(order.subtotal || 0);
-        const orderDiscount = Number(order.discount || 0); // Default discount to 0
-        const revenue = orderSubtotal - orderDiscount; // Doanh thu = subtotal - discount
-        const tax = orderTotal - orderSubtotal; // Thuế = total - subtotal
-
-        stats.orderCount += 1;
-        stats.revenue += revenue;
-        stats.tax += tax;
-        stats.total += orderTotal;
-        stats.discount = (stats.discount || 0) + orderDiscount;
-
-        const paymentMethod = order.paymentMethod || "cash";
-        stats.paymentMethods[paymentMethod] =
-          (stats.paymentMethods[paymentMethod] || 0) + orderTotal;
       });
 
       const data = Object.values(employeeSales).sort(
@@ -2546,25 +2562,25 @@ export function SalesChartReport() {
                                 const employeeTransactions =
                                   filteredTransactions.filter(
                                     (transaction: any) => {
-                                      const transactionEmployeeName =
-                                        transaction.cashierName ||
-                                        transaction.employeeName ||
-                                        "Unknown";
+                                      try {
+                                        const transactionEmployeeName =
+                                          (transaction.cashierName && typeof transaction.cashierName === 'string' ? transaction.cashierName : null) ||
+                                          (transaction.employeeName && typeof transaction.employeeName === 'string' ? transaction.employeeName : null) ||
+                                          "Unknown";
 
-                                      // More flexible matching
-                                      return (
-                                        transactionEmployeeName ===
-                                          item.employeeName ||
-                                        transactionEmployeeName.includes(
-                                          item.employeeName,
-                                        ) ||
-                                        item.employeeName.includes(
-                                          transactionEmployeeName,
-                                        ) ||
-                                        (transactionEmployeeName ===
-                                          "Unknown" &&
-                                          item.employeeName === "Unknown")
-                                      );
+                                        const currentEmployeeName = 
+                                          (item.employeeName && typeof item.employeeName === 'string' ? item.employeeName : null) ||
+                                          "Unknown";
+
+                                        // Chỉ so sánh exact match để tránh lỗi includes
+                                        return (
+                                          transactionEmployeeName === currentEmployeeName ||
+                                          (transactionEmployeeName === "Unknown" && currentEmployeeName === "Unknown")
+                                        );
+                                      } catch (error) {
+                                        console.warn("Error filtering employee transaction:", error);
+                                        return false;
+                                      }
                                     },
                                   );
 
