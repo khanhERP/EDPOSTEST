@@ -50,11 +50,14 @@ function App() {
     setIsAuthenticated(false);
   };
 
+  // Check if current path is customer display to bypass authentication
+  const isCustomerDisplay = window.location.pathname === '/customer-display';
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        {!isAuthenticated ? (
+        {!isAuthenticated && !isCustomerDisplay ? (
           <PinAuth onAuthSuccess={handleAuthSuccess} />
         ) : (
           <Router onLogout={handleLogout} />
