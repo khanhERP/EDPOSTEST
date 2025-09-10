@@ -167,14 +167,16 @@ export function ShoppingCart({
           // Send initial cart state to customer display
           if (cart.length > 0) {
             console.log("📡 Shopping Cart: Sending initial cart state to customer display");
-            ws.send(JSON.stringify({
-              type: 'cart_update',
-              cart: cart,
-              subtotal: subtotal,
-              tax: tax,
-              total: total,
-              timestamp: new Date().toISOString()
-            }));
+            const cartUpdateMessage = {
+                type: 'cart_update',
+                cart: cart,
+                subtotal: subtotal,
+                tax: tax,
+                total: total,
+                orderNumber: activeOrderId || `POS-${Date.now()}`,
+                timestamp: new Date().toISOString()
+              };
+            ws.send(JSON.stringify(cartUpdateMessage));
           }
         };
 
@@ -293,12 +295,13 @@ export function ShoppingCart({
         total: item.total || '0'
       }));
 
-      const cartData = {
+      const cartUpdateMessage = {
         type: 'cart_update',
         cart: validatedCart,
         subtotal: subtotal,
         tax: tax,
         total: total,
+        orderNumber: activeOrderId || `POS-${Date.now()}`,
         timestamp: new Date().toISOString()
       };
 
@@ -307,18 +310,19 @@ export function ShoppingCart({
         subtotal: subtotal,
         tax: tax,
         total: total,
+        orderNumber: activeOrderId || `POS-${Date.now()}`,
         sampleItem: validatedCart[0]
       });
 
       try {
-        wsRef.current.send(JSON.stringify(cartData));
+        wsRef.current.send(JSON.stringify(cartUpdateMessage));
       } catch (error) {
         console.error("📡 Shopping Cart: Error broadcasting cart update:", error);
       }
     } else {
       console.log("📡 Shopping Cart: WebSocket not available for broadcasting");
     }
-  }, [cart, subtotal, tax, total]);
+  }, [cart, subtotal, tax, total, activeOrderId]);
 
   // Helper to call broadcastCartUpdate after state changes
   const triggerBroadcastUpdate = useCallback(() => {

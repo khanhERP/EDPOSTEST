@@ -40,7 +40,7 @@ export function initializeWebSocketServer(server: Server) {
       origin: request.headers.origin,
       userAgent: request.headers['user-agent']?.substring(0, 50) + '...'
     });
-    
+
     clients.add(ws);
 
     // Send initial ping to confirm connection
@@ -83,7 +83,7 @@ export function initializeWebSocketServer(server: Server) {
             storeInfo: currentCartState.storeInfo,
             qrPayment: null // Clear QR payment when cart updates
           };
-          
+
           console.log('📡 WebSocket: Cart update received and broadcasting to customer displays', {
             cartItems: currentCartState.cart.length,
             subtotal: currentCartState.subtotal,
@@ -91,7 +91,7 @@ export function initializeWebSocketServer(server: Server) {
             total: currentCartState.total,
             connectedClients: clients.size
           });
-          
+
           // Log cart items for debugging
           if (currentCartState.cart.length > 0) {
             console.log('📦 Cart items:', currentCartState.cart.map(item => ({
@@ -101,7 +101,7 @@ export function initializeWebSocketServer(server: Server) {
               total: item.total
             })));
           }
-          
+
           // Broadcast cart update to all connected clients (customer displays)
           let broadcastCount = 0;
           clients.forEach(client => {
@@ -121,7 +121,7 @@ export function initializeWebSocketServer(server: Server) {
               }
             }
           });
-          
+
           console.log(`✅ Cart update broadcasted to ${broadcastCount} clients`);
         } else if (data.type === 'qr_payment') {
           // Update global QR payment state
@@ -131,9 +131,9 @@ export function initializeWebSocketServer(server: Server) {
             paymentMethod: data.paymentMethod,
             transactionUuid: data.transactionUuid
           };
-          
+
           console.log('📱 Broadcasting QR payment to customer displays');
-          
+
           // Broadcast QR payment info to customer displays
           clients.forEach(client => {
             if (client.readyState === client.OPEN && client !== ws) {
@@ -151,7 +151,7 @@ export function initializeWebSocketServer(server: Server) {
           console.log('👥 Customer display connected - sending current state');
           // Mark this connection as customer display
           (ws as any).isCustomerDisplay = true;
-          
+
           // Send current cart state to newly connected customer display
           try {
             ws.send(JSON.stringify({
@@ -162,7 +162,7 @@ export function initializeWebSocketServer(server: Server) {
               total: currentCartState.total,
               timestamp: new Date().toISOString()
             }));
-            
+
             if (currentCartState.storeInfo) {
               ws.send(JSON.stringify({
                 type: 'store_info',
@@ -170,7 +170,7 @@ export function initializeWebSocketServer(server: Server) {
                 timestamp: new Date().toISOString()
               }));
             }
-            
+
             if (currentCartState.qrPayment) {
               ws.send(JSON.stringify({
                 type: 'qr_payment',
@@ -178,7 +178,7 @@ export function initializeWebSocketServer(server: Server) {
                 timestamp: new Date().toISOString()
               }));
             }
-            
+
             console.log('✅ Sent current state to customer display:', {
               cartItems: currentCartState.cart.length,
               hasStoreInfo: !!currentCartState.storeInfo,
@@ -203,7 +203,7 @@ export function initializeWebSocketServer(server: Server) {
             };
             console.log('💰 Payment success - cleared cart state');
           }
-          
+
           clients.forEach(client => {
             if (client.readyState === client.OPEN && client !== ws) {
               const clientType = (client as any).clientType;

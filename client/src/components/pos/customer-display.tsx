@@ -31,6 +31,13 @@ export function CustomerDisplay({
   const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  const [cartItems, setCartItems] = useState<CartItem[]>(cart);
+  const [currentSubtotal, setCurrentSubtotal] = useState(subtotal);
+  const [currentTax, setCurrentTax] = useState(tax);
+  const [currentTotal, setCurrentTotal] = useState(total);
+  const [currentOrder, setCurrentOrder] = useState<any>(null);
+  const [orderNumber, setOrderNumber] = useState<string>('');
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -38,6 +45,15 @@ export function CustomerDisplay({
 
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    // Update local state if props change
+    setCartItems(cart);
+    setCurrentSubtotal(subtotal);
+    setCurrentTax(tax);
+    setCurrentTotal(total);
+  }, [cart, subtotal, tax, total]);
+
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('vi-VN', {
@@ -65,6 +81,69 @@ export function CustomerDisplay({
     }
     return num.toLocaleString('vi-VN') + ' ₫';
   };
+
+  // WebSocket connection setup
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:3001'); // Assuming your WebSocket server runs on port 3001
+
+    ws.onopen = () => {
+      console.log('✅ Customer Display: Connected to WebSocket server');
+    };
+
+    ws.onclose = () => {
+      console.log('❌ Customer Display: Disconnected from WebSocket server');
+      // Optional: Implement reconnection logic here
+    };
+
+    ws.onerror = (error) => {
+      console.error('💥 Customer Display: WebSocket error:', error);
+    };
+
+    ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          console.log('📩 Customer Display: Received WebSocket message:', data);
+
+          if (data.type === 'cart_update') {
+            setCartItems(data.cart || []);
+            setCurrentSubtotal(data.subtotal || 0);
+            setCurrentTax(data.tax || 0);
+            setCurrentTotal(data.total || 0);
+            // Update order number if available in cart update
+            if (data.orderNumber) {
+              setOrderNumber(data.orderNumber);
+            }
+          } else if (data.type === 'order_created') {
+            console.log('🆕 Customer Display: New order created:', data.order);
+            setCurrentOrder(data.order);
+            if (data.order?.orderNumber) {
+              setOrderNumber(data.order.orderNumber);
+            }
+            // Clear cart when new order is created
+            if (data.clearCart) {
+              setCartItems([]);
+              setCurrentSubtotal(0);
+              setCurrentTax(0);
+              setCurrentTotal(0);
+            }
+          } else if (data.type === 'payment_completed') {
+            console.log('💳 Customer Display: Payment completed for order:', data.orderId);
+            // Clear display after payment
+            setTimeout(() => {
+              setCartItems([]);
+              setCurrentSubtotal(0);
+              setCurrentTax(0);
+              setCurrentTotal(0);
+              setCurrentOrder(null);
+              setOrderNumber('');
+            }, 3000); // Show success for 3 seconds before clearing
+          }
+        };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
@@ -137,7 +216,7 @@ export function CustomerDisplay({
                 </div>
               </div>
             </div>
-          ) : cart.length === 0 ? (
+          ) : cartItems.length === 0 ? (
             // Empty Cart Display
             <div className="text-center py-20">
               <div className="mb-8">
@@ -162,11 +241,11 @@ export function CustomerDisplay({
                   </h2>
 
                   <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {cart.map((item, index) => (
-                      <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border-l-4 border-green-400">
+                    {cartItems.map((item, index) => (
+                      <div key={`${item.id}-${index}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border-l-4 border-green-400">
                         <div className="flex items-center space-x-4">
-                          <div className="bg-green-100 text-green-800 font-bold text-sm px-3 py-1 rounded-full">
-                            #{index + 1}
+                          <div className="bg-green-100 text-green-800 rounded-full min-w-[32px] h-8 flex items-center justify-center text-xs font-medium px-2">
+                            {orderNumber || currentOrder?.orderNumber || `#${index + 1}`}
                           </div>
                           <div>
                             <h3 className="font-semibold text-lg text-gray-800">
@@ -200,14 +279,14 @@ export function CustomerDisplay({
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Tạm tính:</span>
                       <span className="font-medium">
-                        {formatCurrency(subtotal)}
+                        {formatCurrency(currentSubtotal)}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Thuế:</span>
                       <span className="font-medium">
-                        {formatCurrency(tax)}
+                        {formatCurrency(currentTax)}
                       </span>
                     </div>
 
@@ -216,7 +295,7 @@ export function CustomerDisplay({
                         Tổng cộng:
                       </span>
                       <span className="text-2xl font-bold text-green-600">
-                        {formatCurrency(total)}
+                        {formatCurrency(currentTotal)}
                       </span>
                     </div>
 
@@ -226,7 +305,7 @@ export function CustomerDisplay({
                         Tổng số sản phẩm
                       </div>
                       <div className="text-2xl font-bold text-green-800">
-                        {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                        {cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                       </div>
                     </div>
                   </div>
