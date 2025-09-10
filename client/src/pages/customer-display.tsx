@@ -162,19 +162,37 @@ export default function CustomerDisplayPage() {
                   amount: data.amount,
                   paymentMethod: data.paymentMethod,
                   transactionUuid: data.transactionUuid,
-                  qrCodeUrlLength: data.qrCodeUrl?.length || 0
+                  qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+                  fullData: data
                 });
+                
                 if (data.qrCodeUrl && data.amount) {
-                  console.log("Customer Display: Setting QR payment state");
-                  setQrPayment({
-                    qrCodeUrl: data.qrCodeUrl,
+                  console.log("Customer Display: Setting QR payment state with data:", {
+                    qrCodeUrl: data.qrCodeUrl.substring(0, 50) + "...",
                     amount: data.amount,
                     paymentMethod: data.paymentMethod,
                     transactionUuid: data.transactionUuid
                   });
+                  
+                  setQrPayment({
+                    qrCodeUrl: data.qrCodeUrl,
+                    amount: data.amount,
+                    paymentMethod: data.paymentMethod || "QR Code",
+                    transactionUuid: data.transactionUuid
+                  });
+                  
                   console.log("Customer Display: QR payment state set successfully");
+                  
+                  // Force re-render by logging current state
+                  setTimeout(() => {
+                    console.log("Customer Display: QR payment state after 100ms:", !!qrPayment);
+                  }, 100);
                 } else {
-                  console.error("Customer Display: Invalid QR payment data received", data);
+                  console.error("Customer Display: Invalid QR payment data received", {
+                    hasQrCodeUrl: !!data.qrCodeUrl,
+                    hasAmount: !!data.amount,
+                    data: data
+                  });
                 }
                 break;
               case 'payment_success':
