@@ -4044,7 +4044,7 @@ export function SalesChartReport() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {formatCurrency(product.totalRevenue)}
+                          {formatCurrency(product.unitPrice || 0)}
                         </TableCell>
                         {analysisType !== "employee" && (
                           <TableCell className="text-right">
