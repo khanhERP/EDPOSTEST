@@ -1448,6 +1448,7 @@ export function SalesChartReport() {
                   vat: orderTax, // VAT từ order
                   totalMoney: orderTotal, // Tổng tiền từ order
                   productGroup: "-",
+                  taxRate: 0, // Default tax rate for empty order
                 },
               ]
             : orderItemsForOrder.map((item: any) => {
@@ -1456,6 +1457,10 @@ export function SalesChartReport() {
                 const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items
                 const itemTotal =
                   Number(item.total || 0) || itemUnitPrice * itemQuantity; // Thành tiền từ order_items hoặc tính
+
+                // Get actual tax rate from products array
+                const product = products?.find((p: any) => p.id === item.productId);
+                const actualTaxRate = product?.taxRate ? Number(product.taxRate) : 0;
 
                 // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
                 const itemDiscountRatio =
@@ -1478,6 +1483,7 @@ export function SalesChartReport() {
                   vat: itemTax, // VAT = thuế
                   totalMoney: itemTotalMoney, // Tổng tiền = thành tiền + thuế
                   productGroup: item.categoryName || "Chưa phân loại",
+                  taxRate: actualTaxRate, // Actual tax rate from product
                 };
               }),
       };
@@ -1552,11 +1558,8 @@ export function SalesChartReport() {
             <Button
               onClick={() => {
                 const dataWithSummary = [
-                  ...allItemsFlat.map((item, index) => {
-                    const order = groupedOrders.find((o) =>
-                      o.items.includes(item),
-                    );
-                    return {
+                  ...paginatedData.map((order) => {
+                    return order.items.map((item: any) => ({
                       Ngày: formatDate(order?.orderDate || ""),
                       "Số đơn bán": order?.orderNumber || "",
                       "Mã khách hàng": order?.customerId || "",
@@ -1569,7 +1572,7 @@ export function SalesChartReport() {
                       "Thành tiền": formatCurrency(item.totalAmount),
                       "Giảm giá": formatCurrency(item.discount),
                       "Doanh thu": formatCurrency(item.revenue),
-                      "Thuế suất": item.taxRate, // Use item.taxRate directly
+                      "Thuế suất": item.taxRate ? `${item.taxRate}%` : "0%",
                       "Thuế GTGT": formatCurrency(item.vat),
                       "Tổng tiền": formatCurrency(item.totalMoney),
                       "Ghi chú": order?.notes || "",
@@ -1578,12 +1581,12 @@ export function SalesChartReport() {
                       "Tên nhân viên": order?.employeeName || "",
                       "Nhóm hàng": item.productGroup,
                       "Trạng thái": order?.status || "",
-                    };
-                  }),
+                    }));
+                  }).flat(), // Flatten the array of arrays
                   // Add summary row
                   {
                     Ngày: "TỔNG CỘNG",
-                    "Số đơn bán": `${allItemsFlat.length} dòng`,
+                    "Số đơn bán": `${groupedOrders.length} đơn hàng`,
                     "Mã khách hàng": "",
                     "Tên khách hàng": "",
                     "Mã hàng": "",
@@ -1858,7 +1861,7 @@ export function SalesChartReport() {
                                   {formatCurrency(item.revenue)}
                                 </TableCell>
                                 <TableCell className="text-right min-w-[100px] px-2">
-                                  10%
+                                  {item.taxRate ? `${item.taxRate}%` : "0%"}
                                 </TableCell>
                                 <TableCell className="text-right min-w-[100px] px-2">
                                   {formatCurrency(item.vat)}
@@ -5183,7 +5186,8 @@ export function SalesChartReport() {
                         onChange={(e) => setOrderSearch(e.target.value)}
                         className="pl-10 h-10 text-sm border-gray-200 hover:border-pink-300 focus:border-pink-500 transition-colors"
                       />
-                                      </div>
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                       <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
@@ -5270,7 +5274,6 @@ export function SalesChartReport() {
                   </div>
                 </div>
               </div>
-            </div>
             </div>
           )}
         </CardContent>
