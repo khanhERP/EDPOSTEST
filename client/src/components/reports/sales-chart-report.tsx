@@ -2009,379 +2009,360 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Employee Report with Pagination State
+  const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
+  const [employeePageSize, setEmployeePageSize] = useState(15);
+
+  // Legacy Employee Report Component Logic
+  const renderEmployeeReport = () => {
+    if (ordersLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
       );
-    };
+    }
 
-    // Employee Report with Pagination State
-    const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
-    const [employeePageSize, setEmployeePageSize] = useState(15);
+    if (!orders || !Array.isArray(orders)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">Không có dữ liệu đơn hàng</div>
+        </div>
+      );
+    }
 
-    // Legacy Employee Report Component Logic
-    const renderEmployeeReport = () => {
-      if (ordersLoading) {
-        return (
-          <div className="flex justify-center py-8">
-            <div className="text-gray-500">{t("reports.loading")}...</div>
-          </div>
+    try {
+      console.log("Employee Report - orders data:", {
+        ordersLength: orders.length,
+        sampleOrder: orders[0]
+          ? {
+              id: orders[0].id,
+              status: orders[0].status,
+              employeeName: orders[0].employeeName,
+              cashierName: orders[0].cashierName,
+              total: orders[0].total,
+            }
+          : null,
+      });
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      // Use EXACT same filtering logic as dashboard
+      const filteredCompletedOrders = orders.filter((order: any) => {
+        // Check if order is completed/paid (EXACT same as dashboard)
+        if (order.status !== "completed" && order.status !== "paid")
+          return false;
+
+        // Try multiple possible date fields (EXACT same as dashboard)
+        const orderDate = new Date(
+          order.orderedAt ||
+            order.createdAt ||
+            order.created_at ||
+            order.paidAt,
         );
-      }
 
-      if (!orders || !Array.isArray(orders)) {
-        return (
-          <div className="flex justify-center py-8">
-            <div className="text-gray-500">Không có dữ liệu đơn hàng</div>
-          </div>
-        );
-      }
-
-      try {
-        console.log("Employee Report - orders data:", {
-          ordersLength: orders.length,
-          sampleOrder: orders[0]
-            ? {
-                id: orders[0].id,
-                status: orders[0].status,
-                employeeName: orders[0].employeeName,
-                cashierName: orders[0].cashierName,
-                total: orders[0].total,
-              }
-            : null,
-        });
-
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-
-        // Use EXACT same filtering logic as dashboard
-        const filteredCompletedOrders = orders.filter((order: any) => {
-          // Check if order is completed/paid (EXACT same as dashboard)
-          if (order.status !== "completed" && order.status !== "paid")
-            return false;
-
-          // Try multiple possible date fields (EXACT same as dashboard)
-          const orderDate = new Date(
-            order.orderedAt ||
-              order.createdAt ||
-              order.created_at ||
-              order.paidAt,
+        // Skip if date is invalid (EXACT same as dashboard)
+        if (isNaN(orderDate.getTime())) {
+          console.log(
+            "Invalid order date for order:",
+            order.id,
+            "date fields:",
+            {
+              orderedAt: order.orderedAt,
+              createdAt: order.createdAt,
+              created_at: order.created_at,
+              paidAt: order.paidAt,
+            },
           );
-
-          // Skip if date is invalid (EXACT same as dashboard)
-          if (isNaN(orderDate.getTime())) {
-            console.log(
-              "Invalid order date for order:",
-              order.id,
-              "date fields:",
-              {
-                orderedAt: order.orderedAt,
-                createdAt: order.createdAt,
-                created_at: order.created_at,
-                paidAt: order.paidAt,
-              },
-            );
-            return false;
-          }
-
-          // Fix date comparison - ensure we're comparing dates correctly
-          const startOfDay = new Date(start);
-          startOfDay.setHours(0, 0, 0, 0);
-          const endOfDay = new Date(end);
-          endOfDay.setHours(23, 59, 59, 999);
-
-          const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
-
-          const employeeMatch =
-            selectedEmployee === "all" ||
-            order.employeeName === selectedEmployee ||
-            order.cashierName === selectedEmployee ||
-            order.employeeId?.toString() === selectedEmployee ||
-            (order.employeeName &&
-              order.employeeName.includes(selectedEmployee)) ||
-            (order.cashierName && order.cashierName.includes(selectedEmployee));
-
-          return dateMatch && employeeMatch;
-        });
-
-        // Convert orders to transaction-like format for compatibility
-        const filteredTransactions = filteredCompletedOrders.map(
-          (order: any) => ({
-            id: order.id,
-            orderNumber: order.orderNumber,
-            transactionId: `TXN-${order.id}`,
-            total: order.total,
-            subtotal: order.subtotal,
-            discount: order.discount || 0,
-            paymentMethod: order.paymentMethod || "cash",
-            createdAt:
-              order.orderedAt ||
-              order.createdAt ||
-              order.created_at ||
-              order.paidAt,
-            created_at:
-              order.orderedAt ||
-              order.createdAt ||
-              order.created_at ||
-              order.paidAt,
-            cashierName: order.employeeName || order.cashierName,
-            employeeId: order.employeeId,
-            items: order.items || [],
-            status: order.status,
-          }),
-        );
-
-        console.log("Employee Report Debug:", {
-          totalOrders: orders.length,
-          startDate,
-          endDate,
-          completedOrders: orders.filter(
-            (o: any) => o.status === "completed" || o.status === "paid",
-          ).length,
-          filteredCompletedOrders: filteredCompletedOrders.length,
-          selectedEmployee,
-          sampleOrderDates: orders.slice(0, 3).map((o: any) => ({
-            id: o.id,
-            status: o.status,
-            employeeName: o.employeeName || o.cashierName,
-            orderedAt: o.orderedAt,
-            createdAt: o.createdAt,
-            created_at: o.created_at,
-            paidAt: o.paidAt,
-          })),
-        });
-
-        // Calculate employee sales using proper data structure
-        const employeeSales: {
-          [employeeKey: string]: {
-            employeeCode: string;
-            employeeName: string;
-            orderCount: number;
-            revenue: number;
-            tax: number;
-            total: number;
-            discount: number; // Default discount to 0
-            paymentMethods: { [method: string]: number };
-          };
-        } = {};
-
-        filteredCompletedOrders.forEach((order: any) => {
-          const employeeCode = order.employeeId
-            ? `EMP-${order.employeeId}`
-            : "EMP-000";
-          const employeeName =
-            order.employeeName || order.cashierName || "Unknown";
-          const employeeKey = `${employeeCode}-${employeeName}`;
-
-          if (!employeeSales[employeeKey]) {
-            employeeSales[employeeKey] = {
-              employeeCode,
-              employeeName,
-              orderCount: 0,
-              revenue: 0,
-              tax: 0,
-              total: 0,
-              discount: 0, // Default discount to 0
-              paymentMethods: {},
-            };
-          }
-
-          const stats = employeeSales[employeeKey];
-          const orderTotal = Number(order.total || 0);
-          const orderSubtotal = Number(order.subtotal || 0);
-          const orderDiscount = Number(order.discount || 0); // Default discount to 0
-          const revenue = orderSubtotal - orderDiscount; // Doanh thu = subtotal - discount
-          const tax = orderTotal - orderSubtotal; // Thuế = total - subtotal
-
-          stats.orderCount += 1;
-          stats.revenue += revenue;
-          stats.tax += tax;
-          stats.total += orderTotal;
-          stats.discount = (stats.discount || 0) + orderDiscount;
-
-          const paymentMethod = order.paymentMethod || "cash";
-          stats.paymentMethods[paymentMethod] =
-            (stats.paymentMethods[paymentMethod] || 0) + orderTotal;
-        });
-
-        const data = Object.values(employeeSales).sort(
-          (a, b) => b.total - a.total, // Sort by total amount
-        );
-
-        // Pagination logic
-        const totalPages = Math.ceil(data.length / employeePageSize);
-        const startIndex = (employeeCurrentPage - 1) * employeePageSize;
-        const endIndex = startIndex + employeePageSize;
-        const paginatedData = data.slice(startIndex, endIndex);
-
-        // Get all unique payment methods from transactions
-        const allPaymentMethods = new Set();
-        if (filteredTransactions && Array.isArray(filteredTransactions)) {
-          filteredTransactions.forEach((transaction: any) => {
-            const method = transaction.paymentMethod || "cash";
-            allPaymentMethods.add(method);
-          });
+          return false;
         }
-        const paymentMethodsArray = Array.from(allPaymentMethods).sort();
 
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                {t("reports.employeeSalesReport")}
-              </CardTitle>
-              <CardDescription className="flex items-center justify-between">
-                <span>
-                  {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-                  {t("reports.toDate")}: {formatDate(endDate)}
-                </span>
-                <Button
-                  onClick={() => {
-                    const dataWithSummary = [
-                      ...data.map((item) => ({
-                        "Mã NV": item.employeeCode,
-                        "Tên NV": item.employeeName,
-                        "Số đơn": item.orderCount,
-                        "Doanh thu": formatCurrency(item.revenue),
-                        "Giảm giá": formatCurrency(item.discount),
-                        Thuế: "10%", // Displayed as 10%
-                        "Tổng cộng": formatCurrency(item.total),
-                        ...Object.fromEntries(
-                          paymentMethodsArray.map((method) => [
-                            getPaymentMethodLabel(method),
-                            item.paymentMethods[method]
-                              ? formatCurrency(item.paymentMethods[method])
-                              : "-",
-                          ]),
-                        ),
-                        "Tổng thanh toán": formatCurrency(item.total),
-                      })),
-                      // Add summary row
-                      {
-                        "Mã NV": "TỔNG CỘNG",
-                        "Tên NV": `${data.length} nhân viên`,
-                        "Số đơn": data.reduce(
-                          (sum, item) => sum + item.orderCount,
-                          0,
-                        ),
-                        "Doanh thu": formatCurrency(
-                          data.reduce((sum, item) => sum + item.revenue, 0),
-                        ),
-                        "Giảm giá": formatCurrency(
-                          data.reduce((sum, item) => sum + item.discount, 0),
-                        ),
-                        Thuế: "10%", // Displayed as 10%
-                        "Tổng cộng": formatCurrency(
-                          data.reduce((sum, item) => sum + item.total, 0),
-                        ),
-                        ...Object.fromEntries(
-                          paymentMethodsArray.map((method) => [
-                            getPaymentMethodLabel(method),
-                            formatCurrency(
-                              data.reduce(
-                                (sum, item) =>
-                                  sum + (item.paymentMethods[method] || 0),
-                                0,
-                              ),
+        // Fix date comparison - ensure we're comparing dates correctly
+        const startOfDay = new Date(start);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(end);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const dateMatch = orderDate >= startOfDay && orderDate <= endOfDay;
+
+        const employeeMatch =
+          selectedEmployee === "all" ||
+          order.employeeName === selectedEmployee ||
+          order.cashierName === selectedEmployee ||
+          order.employeeId?.toString() === selectedEmployee ||
+          (order.employeeName &&
+            order.employeeName.includes(selectedEmployee)) ||
+          (order.cashierName && order.cashierName.includes(selectedEmployee));
+
+        return dateMatch && employeeMatch;
+      });
+
+      // Convert orders to transaction-like format for compatibility
+      const filteredTransactions = filteredCompletedOrders.map(
+        (order: any) => ({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          transactionId: `TXN-${order.id}`,
+          total: order.total,
+          subtotal: order.subtotal,
+          discount: order.discount || 0,
+          paymentMethod: order.paymentMethod || "cash",
+          createdAt:
+            order.orderedAt ||
+            order.createdAt ||
+            order.created_at ||
+            order.paidAt,
+          created_at:
+            order.orderedAt ||
+            order.createdAt ||
+            order.created_at ||
+            order.paidAt,
+          cashierName: order.employeeName || order.cashierName,
+          employeeId: order.employeeId,
+          items: order.items || [],
+          status: order.status,
+        }),
+      );
+
+      console.log("Employee Report Debug:", {
+        totalOrders: orders.length,
+        startDate,
+        endDate,
+        completedOrders: orders.filter(
+          (o: any) => o.status === "completed" || o.status === "paid",
+        ).length,
+        filteredCompletedOrders: filteredCompletedOrders.length,
+        selectedEmployee,
+        sampleOrderDates: orders.slice(0, 3).map((o: any) => ({
+          id: o.id,
+          status: o.status,
+          employeeName: o.employeeName || o.cashierName,
+          orderedAt: o.orderedAt,
+          createdAt: o.createdAt,
+          created_at: o.created_at,
+          paidAt: o.paidAt,
+        })),
+      });
+
+      // Calculate employee sales using proper data structure
+      const employeeSales: {
+        [employeeKey: string]: {
+          employeeCode: string;
+          employeeName: string;
+          orderCount: number;
+          revenue: number;
+          tax: number;
+          total: number;
+          discount: number; // Default discount to 0
+          paymentMethods: { [method: string]: number };
+        };
+      } = {};
+
+      filteredCompletedOrders.forEach((order: any) => {
+        const employeeCode = order.employeeId
+          ? `EMP-${order.employeeId}`
+          : "EMP-000";
+        const employeeName =
+          order.employeeName || order.cashierName || "Unknown";
+        const employeeKey = `${employeeCode}-${employeeName}`;
+
+        if (!employeeSales[employeeKey]) {
+          employeeSales[employeeKey] = {
+            employeeCode,
+            employeeName,
+            orderCount: 0,
+            revenue: 0,
+            tax: 0,
+            total: 0,
+            discount: 0, // Default discount to 0
+            paymentMethods: {},
+          };
+        }
+
+        const stats = employeeSales[employeeKey];
+        const orderTotal = Number(order.total || 0);
+        const orderSubtotal = Number(order.subtotal || 0);
+        const orderDiscount = Number(order.discount || 0); // Default discount to 0
+        const revenue = orderSubtotal - orderDiscount; // Doanh thu = subtotal - discount
+        const tax = orderTotal - orderSubtotal; // Thuế = total - subtotal
+
+        stats.orderCount += 1;
+        stats.revenue += revenue;
+        stats.tax += tax;
+        stats.total += orderTotal;
+        stats.discount = (stats.discount || 0) + orderDiscount;
+
+        const paymentMethod = order.paymentMethod || "cash";
+        stats.paymentMethods[paymentMethod] =
+          (stats.paymentMethods[paymentMethod] || 0) + orderTotal;
+      });
+
+      const data = Object.values(employeeSales).sort(
+        (a, b) => b.total - a.total, // Sort by total amount
+      );
+
+      // Pagination logic
+      const totalPages = Math.ceil(data.length / employeePageSize);
+      const startIndex = (employeeCurrentPage - 1) * employeePageSize;
+      const endIndex = startIndex + employeePageSize;
+      const paginatedData = data.slice(startIndex, endIndex);
+
+      // Get all unique payment methods from transactions
+      const allPaymentMethods = new Set();
+      if (filteredTransactions && Array.isArray(filteredTransactions)) {
+        filteredTransactions.forEach((transaction: any) => {
+          const method = transaction.paymentMethod || "cash";
+          allPaymentMethods.add(method);
+        });
+      }
+      const paymentMethodsArray = Array.from(allPaymentMethods).sort();
+
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              {t("reports.employeeSalesReport")}
+            </CardTitle>
+            <CardDescription className="flex items-center justify-between">
+              <span>
+                {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+                {t("reports.toDate")}: {formatDate(endDate)}
+              </span>
+              <Button
+                onClick={() => {
+                  const dataWithSummary = [
+                    ...data.map((item) => ({
+                      "Mã NV": item.employeeCode,
+                      "Tên NV": item.employeeName,
+                      "Số đơn": item.orderCount,
+                      "Doanh thu": formatCurrency(item.revenue),
+                      "Giảm giá": formatCurrency(item.discount),
+                      Thuế: "10%", // Displayed as 10%
+                      "Tổng cộng": formatCurrency(item.total),
+                      ...Object.fromEntries(
+                        paymentMethodsArray.map((method) => [
+                          getPaymentMethodLabel(method),
+                          item.paymentMethods[method]
+                            ? formatCurrency(item.paymentMethods[method])
+                            : "-",
+                        ]),
+                      ),
+                      "Tổng thanh toán": formatCurrency(item.total),
+                    })),
+                    // Add summary row
+                    {
+                      "Mã NV": "TỔNG CỘNG",
+                      "Tên NV": `${data.length} nhân viên`,
+                      "Số đơn": data.reduce(
+                        (sum, item) => sum + item.orderCount,
+                        0,
+                      ),
+                      "Doanh thu": formatCurrency(
+                        data.reduce((sum, item) => sum + item.revenue, 0),
+                      ),
+                      "Giảm giá": formatCurrency(
+                        data.reduce((sum, item) => sum + item.discount, 0),
+                      ),
+                      Thuế: "10%", // Displayed as 10%
+                      "Tổng cộng": formatCurrency(
+                        data.reduce((sum, item) => sum + item.total, 0),
+                      ),
+                      ...Object.fromEntries(
+                        paymentMethodsArray.map((method) => [
+                          getPaymentMethodLabel(method),
+                          formatCurrency(
+                            data.reduce(
+                              (sum, item) =>
+                                sum + (item.paymentMethods[method] || 0),
+                              0,
                             ),
-                          ]),
-                        ),
-                        "Tổng thanh toán": formatCurrency(
-                          data.reduce((sum, item) => sum + item.total, 0),
-                        ),
-                      },
-                    ];
-                    exportToExcel(
-                      dataWithSummary,
-                      `EmployeeSales_${startDate}_to_${endDate}`,
-                    );
-                  }}
-                  className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Xuất Excel
-                </Button>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="w-full">
-                <div className="overflow-x-auto xl:overflow-x-visible">
-                  <Table className="w-full min-w-[1400px] xl:min-w-full">
-                    <TableHeader>
-                      <TableRow>
+                          ),
+                        ]),
+                      ),
+                      "Tổng thanh toán": formatCurrency(
+                        data.reduce((sum, item) => sum + item.total, 0),
+                      ),
+                    },
+                  ];
+                  exportToExcel(
+                    dataWithSummary,
+                    `EmployeeSales_${startDate}_to_${endDate}`,
+                  );
+                }}
+                className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Xuất Excel
+              </Button>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full">
+              <div className="overflow-x-auto xl:overflow-x-visible">
+                <Table className="w-full min-w-[1400px] xl:min-w-full">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead
+                        className="text-center border-r bg-green-50 w-12"
+                        rowSpan={2}
+                      ></TableHead>
+                      <TableHead
+                        className="text-center border-r bg-green-50 min-w-[120px]"
+                        rowSpan={2}
+                      >
+                        {t("reports.employeeId")}
+                      </TableHead>
+                      <TableHead
+                        className="text-center border-r bg-green-50 min-w-[150px]"
+                        rowSpan={2}
+                      >
+                        {t("reports.employeeName")}
+                      </TableHead>
+                      <TableHead
+                        className="text-center border-r min-w-[100px]"
+                        rowSpan={2}
+                      >
+                        {t("reports.orders")}
+                      </TableHead>
+                      <TableHead
+                        className="text-right border-r min-w-[140px]"
+                        rowSpan={2}
+                      >
+                        {t("reports.revenue")}
+                      </TableHead>
+                      {analysisType !== "employee" && (
                         <TableHead
-                          className="text-center border-r bg-green-50 w-12"
-                          rowSpan={2}
-                        ></TableHead>
-                        <TableHead
-                          className="text-center border-r bg-green-50 min-w-[120px]"
-                          rowSpan={2}
-                        >
-                          {t("reports.employeeId")}
-                        </TableHead>
-                        <TableHead
-                          className="text-center border-r bg-green-50 min-w-[150px]"
-                          rowSpan={2}
-                        >
-                          {t("reports.employeeName")}
-                        </TableHead>
-                        <TableHead
-                          className="text-center border-r min-w-[100px]"
-                          rowSpan={2}
-                        >
-                          {t("reports.orders")}
-                        </TableHead>
-                        <TableHead
-                          className="text-right border-r min-w-[140px]"
-                          rowSpan={2}
-                        >
-                          {t("reports.revenue")}
-                        </TableHead>
-                        {analysisType !== "employee" && (
-                          <TableHead
-                            className="text-center border-r min-w-[120px]"
-                            rowSpan={2}
-                          >
-                            {t("reports.discount")}
-                          </TableHead>
-                        )}
-                        <TableHead
-                          className="text-right border-r min-w-[120px]"
+                          className="text-center border-r min-w-[120px]"
                           rowSpan={2}
                         >
-                          Thuế suất
+                          {t("reports.discount")}
                         </TableHead>
-                        <TableHead
-                          className="text-right border-r min-w-[140px]"
-                          rowSpan={2}
-                        >
-                          {t("reports.total")}
-                        </TableHead>
-                        <TableHead
-                          className="text-center border-r bg-blue-50 min-w-[200px]"
-                          colSpan={(() => {
-                            // Get all unique payment methods from transactions
-                            const allPaymentMethods = new Set();
-                            if (
-                              filteredTransactions &&
-                              Array.isArray(filteredTransactions)
-                            ) {
-                              filteredTransactions.forEach((transaction: any) => {
-                                const method =
-                                  transaction.paymentMethod || "cash";
-                                allPaymentMethods.add(method);
-                              });
-                            }
-                            return allPaymentMethods.size + 1; // +1 for total column
-                          })()}
-                        >
-                          {t("reports.totalCustomerPayment")}
-                        </TableHead>
-                      </TableRow>
-                      <TableRow>
-                        {(() => {
+                      )}
+                      <TableHead
+                        className="text-right border-r min-w-[120px]"
+                        rowSpan={2}
+                      >
+                        Thuế suất
+                      </TableHead>
+                      <TableHead
+                        className="text-right border-r min-w-[140px]"
+                        rowSpan={2}
+                      >
+                        {t("reports.total")}
+                      </TableHead>
+                      <TableHead
+                        className="text-center border-r bg-blue-50 min-w-[200px]"
+                        colSpan={(() => {
                           // Get all unique payment methods from transactions
                           const allPaymentMethods = new Set();
                           if (
@@ -2389,92 +2370,191 @@ export function SalesChartReport() {
                             Array.isArray(filteredTransactions)
                           ) {
                             filteredTransactions.forEach((transaction: any) => {
-                              const method = transaction.paymentMethod || "cash";
+                              const method =
+                                transaction.paymentMethod || "cash";
                               allPaymentMethods.add(method);
                             });
                           }
-
-                          const paymentMethodsArray =
-                            Array.from(allPaymentMethods).sort();
-
-                          return (
-                            <>
-                              {paymentMethodsArray.map(
-                                (method: any, index: number) => (
-                                  <TableHead
-                                    key={`emp-payment-method-${index}-${method}`}
-                                    className="text-center border-r bg-blue-50 min-w-[130px]"
-                                  >
-                                    {getPaymentMethodLabel(method)}
-                                  </TableHead>
-                                ),
-                              )}
-                            </>
-                          );
+                          return allPaymentMethods.size + 1; // +1 for total column
                         })()}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedData.length > 0 ? (
-                        paginatedData.map((item, index) => {
-                          const isExpanded =
-                            expandedRows[`emp-${item.employeeCode}`] || false;
+                      >
+                        {t("reports.totalCustomerPayment")}
+                      </TableHead>
+                    </TableRow>
+                    <TableRow>
+                      {(() => {
+                        // Get all unique payment methods from transactions
+                        const allPaymentMethods = new Set();
+                        if (
+                          filteredTransactions &&
+                          Array.isArray(filteredTransactions)
+                        ) {
+                          filteredTransactions.forEach((transaction: any) => {
+                            const method = transaction.paymentMethod || "cash";
+                            allPaymentMethods.add(method);
+                          });
+                        }
 
-                          return (
-                            <>
-                              <TableRow
-                                key={`${item.employeeCode}-${index}`}
-                                className="hover:bg-gray-50"
-                              >
-                                <TableCell className="text-center border-r w-12">
-                                  <button
-                                    onClick={() =>
-                                      setExpandedRows((prev) => ({
-                                        ...prev,
-                                        [`emp-${item.employeeCode}`]:
-                                          !prev[`emp-${item.employeeCode}`],
-                                      }))
+                        const paymentMethodsArray =
+                          Array.from(allPaymentMethods).sort();
+
+                        return (
+                          <>
+                            {paymentMethodsArray.map(
+                              (method: any, index: number) => (
+                                <TableHead
+                                  key={`emp-payment-method-${index}-${method}`}
+                                  className="text-center border-r bg-blue-50 min-w-[130px]"
+                                >
+                                  {getPaymentMethodLabel(method)}
+                                </TableHead>
+                              ),
+                            )}
+                          </>
+                        );
+                      })()}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedData.length > 0 ? (
+                      paginatedData.map((item, index) => {
+                        const isExpanded =
+                          expandedRows[`emp-${item.employeeCode}`] || false;
+
+                        return (
+                          <>
+                            <TableRow
+                              key={`${item.employeeCode}-${index}`}
+                              className="hover:bg-gray-50"
+                            >
+                              <TableCell className="text-center border-r w-12">
+                                <button
+                                  onClick={() =>
+                                    setExpandedRows((prev) => ({
+                                      ...prev,
+                                      [`emp-${item.employeeCode}`]:
+                                        !prev[`emp-${item.employeeCode}`],
+                                    }))
+                                  }
+                                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
+                                >
+                                  {isExpanded ? "−" : "+"}
+                                </button>
+                              </TableCell>
+                              <TableCell className="text-center border-r bg-green-50 font-medium min-w-[120px] px-4">
+                                {item.employeeCode}
+                              </TableCell>
+                              <TableCell className="text-center border-r bg-green-50 font-medium min-w-[150px] px-4">
+                                {item.employeeName}
+                              </TableCell>
+                              <TableCell className="text-center border-r min-w-[100px] px-4">
+                                {item.orderCount.toLocaleString()}
+                              </TableCell>
+                              <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
+                                {formatCurrency(item.revenue)}
+                              </TableCell>
+                              {analysisType !== "employee" && (
+                                <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
+                                  {formatCurrency(item.discount || 0)}
+                                </TableCell>
+                              )}
+                              <TableCell className="text-right border-r min-w-[120px] px-4">
+                                10%
+                              </TableCell>
+                              <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
+                                {formatCurrency(item.total)}
+                              </TableCell>
+                              {(() => {
+                                // Group transactions by payment method for this employee
+                                const paymentMethods: {
+                                  [method: string]: number;
+                                } = {};
+                                filteredTransactions.forEach(
+                                  (transaction: any) => {
+                                    // Only consider transactions related to this employee
+                                    const transactionEmployeeName =
+                                      transaction.cashierName ||
+                                      transaction.employeeName;
+                                    if (
+                                      transactionEmployeeName ===
+                                        item.employeeName ||
+                                      transactionEmployeeName.includes(
+                                        item.employeeName,
+                                      ) ||
+                                      item.employeeName.includes(
+                                        transactionEmployeeName,
+                                      ) ||
+                                      (transactionEmployeeName === "Unknown" &&
+                                        item.employeeName === "Unknown")
+                                    ) {
+                                      const method =
+                                        transaction.paymentMethod || "cash";
+                                      paymentMethods[method] =
+                                        (paymentMethods[method] || 0) +
+                                        Number(transaction.total);
                                     }
-                                    className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
-                                  >
-                                    {isExpanded ? "−" : "+"}
-                                  </button>
-                                </TableCell>
-                                <TableCell className="text-center border-r bg-green-50 font-medium min-w-[120px] px-4">
-                                  {item.employeeCode}
-                                </TableCell>
-                                <TableCell className="text-center border-r bg-green-50 font-medium min-w-[150px] px-4">
-                                  {item.employeeName}
-                                </TableCell>
-                                <TableCell className="text-center border-r min-w-[100px] px-4">
-                                  {item.orderCount.toLocaleString()}
-                                </TableCell>
-                                <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
-                                  {formatCurrency(item.revenue)}
-                                </TableCell>
-                                {analysisType !== "employee" && (
-                                  <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
-                                    {formatCurrency(item.discount || 0)}
-                                  </TableCell>
-                                )}
-                                <TableCell className="text-right border-r min-w-[120px] px-4">
-                                  10%
-                                </TableCell>
-                                <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
-                                  {formatCurrency(item.total)}
-                                </TableCell>
-                                {(() => {
-                                  // Group transactions by payment method for this employee
-                                  const paymentMethods: {
-                                    [method: string]: number;
-                                  } = {};
+                                  },
+                                );
+
+                                // Get all unique payment methods from all transactions
+                                const allPaymentMethods = new Set();
+                                if (
+                                  filteredTransactions &&
+                                  Array.isArray(filteredTransactions)
+                                ) {
                                   filteredTransactions.forEach(
                                     (transaction: any) => {
-                                      // Only consider transactions related to this employee
+                                      const method =
+                                        transaction.paymentMethod || "cash";
+                                      allPaymentMethods.add(method);
+                                    },
+                                  );
+                                }
+
+                                const paymentMethodsArray =
+                                  Array.from(allPaymentMethods).sort();
+                                const totalCustomerPayment = Object.values(
+                                  paymentMethods,
+                                ).reduce(
+                                  (sum: number, amount: number) => sum + amount,
+                                  0,
+                                );
+
+                                return (
+                                  <>
+                                    {paymentMethodsArray.map((method: any) => {
+                                      const amount =
+                                        paymentMethods[method] || 0;
+                                      return (
+                                        <TableCell
+                                          key={method}
+                                          className="text-right border-r font-medium min-w-[130px] px-4"
+                                        >
+                                          {amount > 0
+                                            ? formatCurrency(amount)
+                                            : "-"}
+                                        </TableCell>
+                                      );
+                                    })}
+                                  </>
+                                );
+                              })()}
+                            </TableRow>
+
+                            {/* Expanded order details */}
+                            {isExpanded &&
+                              (() => {
+                                // Filter transactions for this specific employee
+                                const employeeTransactions =
+                                  filteredTransactions.filter(
+                                    (transaction: any) => {
                                       const transactionEmployeeName =
                                         transaction.cashierName ||
-                                        transaction.employeeName;
-                                      if (
+                                        transaction.employeeName ||
+                                        "Unknown";
+
+                                      // More flexible matching
+                                      return (
                                         transactionEmployeeName ===
                                           item.employeeName ||
                                         transactionEmployeeName.includes(
@@ -2483,220 +2563,141 @@ export function SalesChartReport() {
                                         item.employeeName.includes(
                                           transactionEmployeeName,
                                         ) ||
-                                        (transactionEmployeeName === "Unknown" &&
+                                        (transactionEmployeeName ===
+                                          "Unknown" &&
                                           item.employeeName === "Unknown")
-                                      ) {
-                                        const method =
-                                          transaction.paymentMethod || "cash";
-                                        paymentMethods[method] =
-                                          (paymentMethods[method] || 0) +
-                                          Number(transaction.total);
-                                      }
+                                      );
                                     },
                                   );
 
-                                  // Get all unique payment methods from all transactions
-                                  const allPaymentMethods = new Set();
-                                  if (
-                                    filteredTransactions &&
-                                    Array.isArray(filteredTransactions)
-                                  ) {
-                                    filteredTransactions.forEach(
-                                      (transaction: any) => {
-                                        const method =
-                                          transaction.paymentMethod || "cash";
-                                        allPaymentMethods.add(method);
-                                      },
-                                    );
-                                  }
+                                console.log(
+                                  "Employee transactions for",
+                                  item.employeeName,
+                                  ":",
+                                  {
+                                    totalTransactions:
+                                      filteredTransactions.length,
+                                    employeeTransactions:
+                                      employeeTransactions.length,
+                                    sampleTransaction: employeeTransactions[0],
+                                  },
+                                );
 
-                                  const paymentMethodsArray =
-                                    Array.from(allPaymentMethods).sort();
-                                  const totalCustomerPayment = Object.values(
-                                    paymentMethods,
-                                  ).reduce(
-                                    (sum: number, amount: number) => sum + amount,
-                                    0,
-                                  );
-
-                                  return (
-                                    <>
-                                      {paymentMethodsArray.map((method: any) => {
-                                        const amount =
-                                          paymentMethods[method] || 0;
-                                        return (
-                                          <TableCell
-                                            key={method}
-                                            className="text-right border-r font-medium min-w-[130px] px-4"
-                                          >
-                                            {amount > 0
-                                              ? formatCurrency(amount)
-                                              : "-"}
-                                          </TableCell>
-                                        );
-                                      })}
-                                    </>
-                                  );
-                                })()}
-                              </TableRow>
-
-                              {/* Expanded order details */}
-                              {isExpanded &&
-                                (() => {
-                                  // Filter transactions for this specific employee
-                                  const employeeTransactions =
-                                    filteredTransactions.filter(
-                                      (transaction: any) => {
-                                        const transactionEmployeeName =
-                                          transaction.cashierName ||
-                                          transaction.employeeName ||
-                                          "Unknown";
-
-                                        // More flexible matching
-                                        return (
-                                          transactionEmployeeName ===
-                                            item.employeeName ||
-                                          transactionEmployeeName.includes(
-                                            item.employeeName,
-                                          ) ||
-                                          item.employeeName.includes(
-                                            transactionEmployeeName,
-                                          ) ||
-                                          (transactionEmployeeName ===
-                                            "Unknown" &&
-                                            item.employeeName === "Unknown")
-                                        );
-                                      },
-                                    );
-
-                                  console.log(
-                                    "Employee transactions for",
-                                    item.employeeName,
-                                    ":",
-                                    {
-                                      totalTransactions:
-                                        filteredTransactions.length,
-                                      employeeTransactions:
-                                        employeeTransactions.length,
-                                      sampleTransaction: employeeTransactions[0],
-                                    },
-                                  );
-
-                                  return employeeTransactions.map(
-                                    (
-                                      transaction: any,
-                                      transactionIndex: number,
-                                    ) => (
-                                      <TableRow
-                                        key={`${item.employeeCode}-transaction-${transaction.id || transactionIndex}`}
-                                        className="bg-blue-50/50 border-l-4 border-l-blue-400"
-                                      >
-                                        <TableCell className="text-center border-r bg-blue-50 w-12">
-                                          <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
-                                            └
-                                          </div>
-                                        </TableCell>
-                                        <TableCell className="text-center border-r text-blue-600 text-sm min-w-[120px] px-4">
-                                          <button
-                                            onClick={() => {
-                                              // Navigate to sales orders with order filter
-                                              const orderNumber =
-                                                transaction.orderNumber ||
-                                                `ORD-${transaction.id}`;
-                                              window.location.href = `/sales-orders?order=${orderNumber}`;
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
-                                            title="Click to view order details"
-                                          >
-                                            {transaction.orderNumber ||
-                                              transaction.transactionId ||
-                                              `ORD-${transaction.id}`}
-                                          </button>
-                                        </TableCell>
-                                        <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                          {new Date(
-                                            transaction.createdAt ||
-                                              transaction.created_at,
-                                          ).toLocaleDateString("vi-VN")}{" "}
-                                          {new Date(
-                                            transaction.createdAt ||
-                                              transaction.created_at,
-                                          ).toLocaleTimeString("vi-VN", {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                          })}
-                                        </TableCell>
-                                        <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
-                                          1
-                                        </TableCell>
-                                        <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
-                                          {formatCurrency(
-                                            Number(transaction.subtotal || 0) -
-                                              Number(transaction.discount || 0),
-                                          )}
-                                        </TableCell>
-                                        {analysisType !== "employee" && (
-                                          <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
-                                            {formatCurrency(
-                                              Number(transaction.discount || 0),
-                                            )}
-                                          </TableCell>
+                                return employeeTransactions.map(
+                                  (
+                                    transaction: any,
+                                    transactionIndex: number,
+                                  ) => (
+                                    <TableRow
+                                      key={`${item.employeeCode}-transaction-${transaction.id || transactionIndex}`}
+                                      className="bg-blue-50/50 border-l-4 border-l-blue-400"
+                                    >
+                                      <TableCell className="text-center border-r bg-blue-50 w-12">
+                                        <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
+                                          └
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-center border-r text-blue-600 text-sm min-w-[120px] px-4">
+                                        <button
+                                          onClick={() => {
+                                            // Navigate to sales orders with order filter
+                                            const orderNumber =
+                                              transaction.orderNumber ||
+                                              `ORD-${transaction.id}`;
+                                            window.location.href = `/sales-orders?order=${orderNumber}`;
+                                          }}
+                                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-none p-0"
+                                          title="Click to view order details"
+                                        >
+                                          {transaction.orderNumber ||
+                                            transaction.transactionId ||
+                                            `ORD-${transaction.id}`}
+                                        </button>
+                                      </TableCell>
+                                      <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                        {new Date(
+                                          transaction.createdAt ||
+                                            transaction.created_at,
+                                        ).toLocaleDateString("vi-VN")}{" "}
+                                        {new Date(
+                                          transaction.createdAt ||
+                                            transaction.created_at,
+                                        ).toLocaleTimeString("vi-VN", {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </TableCell>
+                                      <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                        1
+                                      </TableCell>
+                                      <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
+                                        {formatCurrency(
+                                          Number(transaction.subtotal || 0) -
+                                            Number(transaction.discount || 0),
                                         )}
-                                        <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
-                                          10%
-                                        </TableCell>
-                                        <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
+                                      </TableCell>
+                                      {analysisType !== "employee" && (
+                                        <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
                                           {formatCurrency(
-                                            Number(transaction.total || 0),
+                                            Number(transaction.discount || 0),
                                           )}
                                         </TableCell>
-                                        {(() => {
-                                          const transactionMethod =
-                                            transaction.paymentMethod || "cash";
-                                          const amount = Number(
-                                            transaction.total || 0,
+                                      )}
+                                      <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
+                                        10%
+                                      </TableCell>
+                                      <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
+                                        {formatCurrency(
+                                          Number(transaction.total || 0),
+                                        )}
+                                      </TableCell>
+                                      {(() => {
+                                        const transactionMethod =
+                                          transaction.paymentMethod || "cash";
+                                        const amount = Number(
+                                          transaction.total || 0,
+                                        );
+
+                                        // Get all unique payment methods from all transactions
+                                        const allPaymentMethods = new Set();
+                                        if (
+                                          filteredTransactions &&
+                                          Array.isArray(filteredTransactions)
+                                        ) {
+                                          filteredTransactions.forEach(
+                                            (transaction: any) => {
+                                              const method =
+                                                transaction.paymentMethod ||
+                                                "cash";
+                                              allPaymentMethods.add(method);
+                                            },
                                           );
+                                        }
 
-                                          // Get all unique payment methods from all transactions
-                                          const allPaymentMethods = new Set();
-                                          if (
-                                            filteredTransactions &&
-                                            Array.isArray(filteredTransactions)
-                                          ) {
-                                            filteredTransactions.forEach(
-                                              (transaction: any) => {
-                                                const method =
-                                                  transaction.paymentMethod ||
-                                                  "cash";
-                                                allPaymentMethods.add(method);
-                                              },
-                                            );
-                                          }
+                                        const paymentMethodsArray =
+                                          Array.from(allPaymentMethods).sort();
 
-                                          const paymentMethodsArray =
-                                            Array.from(allPaymentMethods).sort();
-
-                                          return (
-                                            <>
-                                              {paymentMethodsArray.map(
-                                                (method: any) => (
-                                                  <TableCell
-                                                    key={method}
-                                                    className="text-right border-r text-sm min-w-[130px] px-4"
-                                                  >
-                                                    {transactionMethod === method
-                                                      ? formatCurrency(amount)
-                                                      : "-"}
-                                                  </TableCell>
-                                                ),
-                                              )}
-                                            </>
-                                          );
-                                        })()}
-                                      </TableRow>
-                                    ),
-                                  );
-                                })()}
+                                        return (
+                                          <>
+                                            {paymentMethodsArray.map(
+                                              (method: any) => (
+                                                <TableCell
+                                                  key={method}
+                                                  className="text-right border-r text-sm min-w-[130px] px-4"
+                                                >
+                                                  {transactionMethod === method
+                                                    ? formatCurrency(amount)
+                                                    : "-"}
+                                                </TableCell>
+                                              ),
+                                            )}
+                                          </>
+                                        );
+                                      })()}
+                                    </TableRow>
+                                  ),
+                                );
+                              })()}
                             </>
                           );
                         })
