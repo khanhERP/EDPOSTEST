@@ -162,10 +162,15 @@ export function CustomerDisplay({
         ws.send(JSON.stringify(registrationMessage));
         console.log('✅ Customer Display: Registration message sent successfully');
         
-        // Set a small delay to ensure server processes registration before any other messages
+        // Send a ping to ensure connection is stable
         setTimeout(() => {
-          console.log('🔄 Customer Display: Ready to receive messages');
-        }, 100);
+          try {
+            ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
+            console.log('🏓 Customer Display: Ping sent to verify connection');
+          } catch (error) {
+            console.error('❌ Customer Display: Failed to send ping:', error);
+          }
+        }, 500);
       } catch (error) {
         console.error('❌ Customer Display: Failed to send registration message:', error);
       }
@@ -247,7 +252,7 @@ export function CustomerDisplay({
             break;
             
           case 'qr_payment':
-            console.log("🔥 Customer Display: Processing QR payment message:", {
+            console.log("🔥🔥🔥 Customer Display: QR PAYMENT MESSAGE RECEIVED!", {
               hasQrCodeUrl: !!data.qrCodeUrl,
               amount: data.amount,
               paymentMethod: data.paymentMethod,
@@ -270,13 +275,15 @@ export function CustomerDisplay({
                 transactionUuid: data.transactionUuid || `QR-${Date.now()}`
               };
               
+              console.log("🔄 Customer Display: About to clear cart and set QR payment:", qrPaymentData);
+              
               // Clear cart and set QR payment state
               setCartItems([]);
               setCurrentSubtotal(0);
               setCurrentTax(0);
               setCurrentTotal(0);
               
-              // Set QR payment state immediately
+              // Set QR payment state immediately with force update
               setQrPayment(qrPaymentData);
               
               console.log("✅ Customer Display: QR payment state set successfully:", {
@@ -285,15 +292,30 @@ export function CustomerDisplay({
                 qrCodeStart: qrPaymentData.qrCodeUrl.substring(0, 50) + '...'
               });
               
-              // Force verification of state update
+              // Multiple verification attempts
               setTimeout(() => {
-                console.log("🔍 Customer Display: Verifying QR state after update:", {
+                console.log("🔍 Customer Display: First verification after 100ms:", {
                   qrPaymentStateExists: !!qrPaymentState,
                   hasQrCodeUrl: !!qrPaymentState?.qrCodeUrl,
                   shouldShowQr: !!(qrPaymentState?.qrCodeUrl),
                   currentCartLength: cartItems.length
                 });
               }, 100);
+              
+              setTimeout(() => {
+                console.log("🔍 Customer Display: Second verification after 500ms:", {
+                  qrPaymentStateExists: !!qrPaymentState,
+                  hasQrCodeUrl: !!qrPaymentState?.qrCodeUrl,
+                  shouldShowQr: !!(qrPaymentState?.qrCodeUrl),
+                  currentCartLength: cartItems.length
+                });
+                
+                // Force re-render if still not showing
+                if (!qrPaymentState?.qrCodeUrl) {
+                  console.log("🚨 Customer Display: QR state not set, forcing update again");
+                  setQrPayment(qrPaymentData);
+                }
+              }, 500);
               
             } else {
               console.error("❌ Customer Display: Invalid QR payment data received", {

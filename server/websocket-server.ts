@@ -181,6 +181,15 @@ export function initializeWebSocketServer(server: Server) {
           let qrBroadcastCount = 0;
           let customerDisplayCount = 0;
 
+          console.log('🔍 Available clients for QR broadcast:', {
+            totalClients: clients.size,
+            clientDetails: Array.from(clients).map(client => ({
+              clientType: (client as any).clientType || 'unknown',
+              isCustomerDisplay: (client as any).isCustomerDisplay || false,
+              readyState: client.readyState
+            }))
+          });
+
           clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN && client !== ws) {
               try {
@@ -212,6 +221,12 @@ export function initializeWebSocketServer(server: Server) {
           // Mark this connection as customer display
           (ws as any).isCustomerDisplay = true;
           (ws as any).clientType = 'customer_display';
+          
+          console.log('✅ Customer display registered:', {
+            clientType: (ws as any).clientType,
+            isCustomerDisplay: (ws as any).isCustomerDisplay,
+            totalClients: clients.size
+          });
 
           // Send current cart state to newly connected customer display
           try {
