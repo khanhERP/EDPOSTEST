@@ -497,11 +497,22 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                   <div className="border-t border-gray-200 my-2"></div>
 
                   <a
-                    href="/customer-display"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#"
                     className="w-full flex items-center px-4 py-2 text-left hover:bg-blue-50 hover:text-blue-600 text-gray-700 transition-colors"
-                    onClick={() => setPosMenuOpen(false)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPosMenuOpen(false);
+                      // Open customer display in new window with specific dimensions
+                      const width = 1024;
+                      const height = 768;
+                      const left = (screen.width - width) / 2;
+                      const top = (screen.height - height) / 2;
+                      window.open(
+                        '/customer-display',
+                        'customerDisplay',
+                        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,toolbar=no,menubar=no,location=no`
+                      );
+                    }}
                   >
                     <Users className="w-4 h-4 mr-3" />
                     Màn hình khách hàng
