@@ -2076,7 +2076,11 @@ export function SalesChartReport() {
       // Đơn giản hóa logic lọc - chỉ lọc theo ngày và trạng thái
       const filteredCompletedOrders = orders.filter((order: any) => {
         // Kiểm tra trạng thái
-        if (order.status !== "completed" && order.status !== "paid") {
+        if (
+          order.status !== "completed" &&
+          order.status !== "paid" &&
+          order.status !== "cancelled"
+        ) {
           return false;
         }
 
@@ -3915,9 +3919,12 @@ export function SalesChartReport() {
                   !selectedEmployee ||
                   selectedEmployee === "all" ||
                   selectedEmployee === "" ||
-                  (order.employeeName && order.employeeName === selectedEmployee) ||
-                  (order.cashierName && order.cashierName === selectedEmployee) ||
-                  (order.employeeId && order.employeeId.toString() === selectedEmployee) ||
+                  (order.employeeName &&
+                    order.employeeName === selectedEmployee) ||
+                  (order.cashierName &&
+                    order.cashierName === selectedEmployee) ||
+                  (order.employeeId &&
+                    order.employeeId.toString() === selectedEmployee) ||
                   (order.employeeName &&
                     typeof order.employeeName === "string" &&
                     selectedEmployee &&
