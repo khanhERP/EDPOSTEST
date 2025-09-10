@@ -152,10 +152,17 @@ export function CustomerDisplay({
     ws.onopen = () => {
       console.log('✅ Customer Display: Connected to WebSocket server');
       // Send registration message to identify as customer display
-      ws.send(JSON.stringify({
-        type: 'customer_display_connected',
-        timestamp: new Date().toISOString()
-      }));
+      try {
+        const registrationMessage = {
+          type: 'customer_display_connected',
+          timestamp: new Date().toISOString()
+        };
+        console.log('📤 Customer Display: Sending registration message:', registrationMessage);
+        ws.send(JSON.stringify(registrationMessage));
+        console.log('✅ Customer Display: Registration message sent successfully');
+      } catch (error) {
+        console.error('❌ Customer Display: Failed to send registration message:', error);
+      }
     };
 
     ws.onclose = () => {
@@ -170,7 +177,12 @@ export function CustomerDisplay({
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('📩 Customer Display: Received WebSocket message:', data);
+        console.log('📩 Customer Display: Received WebSocket message:', {
+          type: data.type,
+          hasQrCodeUrl: !!data.qrCodeUrl,
+          timestamp: data.timestamp,
+          rawData: data
+        });
 
         switch (data.type) {
           case 'connection_established':
@@ -236,6 +248,8 @@ export function CustomerDisplay({
               transactionUuid: data.transactionUuid,
               qrCodeUrlLength: data.qrCodeUrl?.length || 0,
               qrCodeStart: data.qrCodeUrl ? data.qrCodeUrl.substring(0, 50) + '...' : 'null',
+              currentCartLength: cartItems.length,
+              currentQrState: qrPaymentState,
               timestamp: new Date().toISOString()
             });
 
@@ -264,6 +278,16 @@ export function CustomerDisplay({
                 amount: qrPaymentData.amount,
                 qrCodeStart: qrPaymentData.qrCodeUrl.substring(0, 50) + '...'
               });
+              
+              // Force verification of state update
+              setTimeout(() => {
+                console.log("🔍 Customer Display: Verifying QR state after update:", {
+                  qrPaymentStateExists: !!qrPaymentState,
+                  hasQrCodeUrl: !!qrPaymentState?.qrCodeUrl,
+                  shouldShowQr: !!(qrPaymentState?.qrCodeUrl),
+                  currentCartLength: cartItems.length
+                });
+              }, 100);
               
             } else {
               console.error("❌ Customer Display: Invalid QR payment data received", {
