@@ -46,9 +46,6 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     queryKey: ["/api/products", { category: selectedCategory, search: searchQuery }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedCategory !== "all") {
-        params.append("category", selectedCategory.toString());
-      }
       if (searchQuery) {
         params.append("search", searchQuery);
       }
@@ -59,32 +56,35 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
       console.log("Raw products from API:", allProducts);
       console.log("Total products received:", allProducts.length);
+      console.log("Selected category:", selectedCategory);
 
-      // Only filter out raw materials (productType = 2) and inactive products
-      const filteredProducts = allProducts.filter((product: any) => {
+      // Filter out raw materials (productType = 2) and inactive products
+      let filteredProducts = allProducts.filter((product: any) => {
         const isNotRawMaterial = product.productType !== 2;
         const isActive = product.isActive !== false;
-        const isIncluded = isNotRawMaterial && isActive;
-
-        if (!isIncluded) {
-          console.log(`❌ Product ${product.name} excluded: productType=${product.productType}, isActive=${product.isActive}`);
-        } else {
-          console.log(`✅ Product ${product.name} included: category=${product.categoryId}`);
-        }
-
-        return isIncluded;
+        return isNotRawMaterial && isActive;
       });
+
+      // Apply category filter if not "all"
+      if (selectedCategory !== "all") {
+        filteredProducts = filteredProducts.filter((product: any) => {
+          const categoryMatch = product.categoryId === selectedCategory;
+          console.log(`Product ${product.name}: categoryId=${product.categoryId}, selectedCategory=${selectedCategory}, match=${categoryMatch}`);
+          return categoryMatch;
+        });
+      }
+
+      // Apply search filter if exists
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        filteredProducts = filteredProducts.filter((product: any) => {
+          return product.name.toLowerCase().includes(searchLower) ||
+                 product.sku.toLowerCase().includes(searchLower);
+        });
+      }
 
       console.log("Filtered products for POS:", filteredProducts);
       console.log("Products after filtering:", filteredProducts.length);
-
-      // Group by category for debugging
-      const productsByCategory = filteredProducts.reduce((acc: any, product: any) => {
-        if (!acc[product.categoryId]) acc[product.categoryId] = [];
-        acc[product.categoryId].push(product.name);
-        return acc;
-      }, {});
-      console.log("Products grouped by category:", productsByCategory);
 
       return filteredProducts;
     },
