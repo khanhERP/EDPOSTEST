@@ -2044,7 +2044,7 @@ export function SalesChartReport() {
                         {formatCurrency(totalTax)}
                       </TableCell>
                       <TableCell className="text-right border-r bg-purple-100 min-w-[120px] px-4">
-                        {formatCurrency(totalAmount + totalTax)}
+                        {formatCurrency(totalMoney)}
                       </TableCell>
                       <TableCell className="text-center min-w-[150px] px-4">
                         -
