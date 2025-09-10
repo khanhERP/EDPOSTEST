@@ -2973,9 +2973,13 @@ export function SalesChartReport() {
         }
       }
 
-      return (
-        dateMatch && customerMatch && statusMatch && order.status === "paid"
-      );
+      // Include paid, completed, and cancelled orders
+      const validOrderStatus = 
+        order.status === "paid" || 
+        order.status === "completed" || 
+        order.status === "cancelled";
+
+      return dateMatch && customerMatch && statusMatch && validOrderStatus;
     });
 
     // Calculate customer sales
@@ -3017,10 +3021,16 @@ export function SalesChartReport() {
       const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
       const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
-      customerSales[customerId].orders += 1;
-      customerSales[customerId].totalAmount += orderSubtotal;
-      customerSales[customerId].discount += orderDiscount;
-      customerSales[customerId].revenue += orderTotal - orderDiscount; // Doanh thu = subtotal - discount
+      // Only count revenue for non-cancelled orders
+      if (order.status !== "cancelled") {
+        customerSales[customerId].orders += 1;
+        customerSales[customerId].totalAmount += orderSubtotal;
+        customerSales[customerId].discount += orderDiscount;
+        customerSales[customerId].revenue += orderTotal - orderDiscount; // Doanh thu = subtotal - discount
+      } else {
+        // For cancelled orders, still count them but don't add to revenue
+        customerSales[customerId].orders += 1;
+      }
       customerSales[customerId].orderDetails.push(order);
 
       // Determine customer group based on total spending
@@ -3255,13 +3265,17 @@ export function SalesChartReport() {
                                       variant={
                                         order.status === "paid"
                                           ? "default"
-                                          : "secondary"
+                                          : order.status === "cancelled"
+                                            ? "destructive"
+                                            : "secondary"
                                       }
                                       className="text-xs"
                                     >
                                       {order.status === "paid"
                                         ? t("common.paid")
-                                        : order.status}
+                                        : order.status === "cancelled"
+                                          ? "Đã hủy"
+                                          : order.status}
                                     </Badge>
                                   </TableCell>
                                 </TableRow>
