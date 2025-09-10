@@ -302,7 +302,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       // Order status
       pending: "대기 중",
       confirmed: "확인됨",
-      preparing: "준비 "��",
+      preparing: "준비",
       ready: "준비 완료",
       served: "서빙됨",
       paid: "결제 완료",
