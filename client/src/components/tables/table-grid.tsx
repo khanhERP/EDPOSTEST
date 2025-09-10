@@ -2504,7 +2504,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ {t('orders.showingItems', { count: itemsToRender.length, orderNumber: selectedOrder?.orderNumber })}
+                                ✅ Hiển thị {itemsToRender.length} món - Đơn hàng {selectedOrder?.orderNumber}
                               </p>
                               {itemsToRender.map((item: any, index: number) => (
                                 <div
