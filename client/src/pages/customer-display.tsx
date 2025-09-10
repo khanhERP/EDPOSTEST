@@ -173,6 +173,7 @@ export default function CustomerDisplayPage() {
                   paymentMethod: data.paymentMethod,
                   transactionUuid: data.transactionUuid,
                   qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+                  qrCodeUrlStart: data.qrCodeUrl ? data.qrCodeUrl.substring(0, 100) : 'NO_URL',
                   fullData: data
                 });
                 
@@ -187,33 +188,53 @@ export default function CustomerDisplayPage() {
                   // Clear cart first to ensure QR payment is prioritized
                   setCart([]);
                   
-                  // Set QR payment state
-                  setQrPayment({
+                  // Create QR payment object
+                  const qrPaymentData = {
                     qrCodeUrl: data.qrCodeUrl,
                     amount: data.amount,
                     paymentMethod: data.paymentMethod || "QR Code",
-                    transactionUuid: data.transactionUuid
-                  });
+                    transactionUuid: data.transactionUuid || `QR-${Date.now()}`
+                  };
+                  
+                  console.log("Customer Display: About to set QR payment state:", qrPaymentData);
+                  
+                  // Set QR payment state immediately
+                  setQrPayment(qrPaymentData);
                   
                   console.log("Customer Display: QR payment state set successfully");
                   
-                  // Force re-render and verify state
+                  // Force multiple re-renders to ensure state update
                   setTimeout(() => {
                     console.log("Customer Display: Verifying QR payment state after 100ms");
                     setQrPayment(prevQr => {
-                      console.log("Customer Display: Current QR state:", !!prevQr);
+                      console.log("Customer Display: Current QR state verification:", {
+                        hasQrPayment: !!prevQr,
+                        hasQrCodeUrl: !!prevQr?.qrCodeUrl,
+                        amount: prevQr?.amount,
+                        qrCodeUrlLength: prevQr?.qrCodeUrl?.length || 0
+                      });
                       return prevQr; // Return same state to trigger re-render
                     });
                   }, 100);
                   
-                  // Additional verification after 500ms
+                  // Additional verification and force render
                   setTimeout(() => {
                     console.log("Customer Display: Final QR payment verification after 500ms");
+                    setQrPayment(prevQr => {
+                      if (!prevQr) {
+                        console.error("❌ Customer Display: QR payment state was lost, restoring...");
+                        return qrPaymentData;
+                      }
+                      console.log("✅ Customer Display: QR payment state verified successfully");
+                      return prevQr;
+                    });
                   }, 500);
                 } else {
                   console.error("Customer Display: Invalid QR payment data received", {
                     hasQrCodeUrl: !!data.qrCodeUrl,
                     hasAmount: !!data.amount,
+                    qrCodeUrlValue: data.qrCodeUrl || 'MISSING',
+                    amountValue: data.amount || 'MISSING',
                     data: data
                   });
                 }
