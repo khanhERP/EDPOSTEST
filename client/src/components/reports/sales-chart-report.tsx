@@ -2105,9 +2105,12 @@ export function SalesChartReport() {
           order.employeeName === selectedEmployee ||
           order.cashierName === selectedEmployee ||
           order.employeeId?.toString() === selectedEmployee ||
-          (order.employeeName &&
+          (order.employeeName && 
+            typeof order.employeeName === 'string' &&
             order.employeeName.includes(selectedEmployee)) ||
-          (order.cashierName && order.cashierName.includes(selectedEmployee));
+          (order.cashierName && 
+            typeof order.cashierName === 'string' &&
+            order.cashierName.includes(selectedEmployee));
 
         return dateMatch && employeeMatch;
       });
@@ -3927,9 +3930,11 @@ export function SalesChartReport() {
                   order.employeeName === selectedEmployee ||
                   order.cashierName === selectedEmployee ||
                   order.employeeId?.toString() === selectedEmployee ||
-                  (order.employeeName &&
+                  (order.employeeName && 
+                    typeof order.employeeName === 'string' &&
                     order.employeeName.includes(selectedEmployee)) ||
-                  (order.cashierName &&
+                  (order.cashierName && 
+                    typeof order.cashierName === 'string' &&
                     order.cashierName.includes(selectedEmployee));
 
                 return dateMatch && employeeMatch;
