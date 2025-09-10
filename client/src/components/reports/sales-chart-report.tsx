@@ -1351,15 +1351,15 @@ export function SalesChartReport() {
           }
 
           // Safe string extraction
-          const safeEmployeeName = order.employeeName && typeof order.employeeName === "string" 
-            ? order.employeeName.trim() 
+          const safeEmployeeName = order.employeeName && typeof order.employeeName === "string"
+            ? order.employeeName.trim()
             : "";
-          const safeCashierName = order.cashierName && typeof order.cashierName === "string" 
-            ? order.cashierName.trim() 
+          const safeCashierName = order.cashierName && typeof order.cashierName === "string"
+            ? order.cashierName.trim()
             : "";
           const safeEmployeeId = order.employeeId ? order.employeeId.toString() : "";
-          const safeSelectedEmployee = selectedEmployee && typeof selectedEmployee === "string" 
-            ? selectedEmployee.trim() 
+          const safeSelectedEmployee = selectedEmployee && typeof selectedEmployee === "string"
+            ? selectedEmployee.trim()
             : "";
 
           // Exact matches
@@ -1374,11 +1374,11 @@ export function SalesChartReport() {
           // Partial matches for non-empty strings
           if (safeSelectedEmployee && safeSelectedEmployee !== "all") {
             const searchTerm = safeSelectedEmployee.toLowerCase();
-            
+
             if (safeEmployeeName && safeEmployeeName.toLowerCase().includes(searchTerm)) {
               return true;
             }
-            
+
             if (safeCashierName && safeCashierName.toLowerCase().includes(searchTerm)) {
               return true;
             }
@@ -2097,11 +2097,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
   };
 
   // Employee Report with Pagination State
@@ -2140,7 +2140,7 @@ export function SalesChartReport() {
           }
 
           const orderDate = new Date(
-            order.orderedAt || order.createdAt || order.created_at
+            order.orderedAt || order.createdAt || order.created_at,
           );
 
           if (isNaN(orderDate.getTime())) {
@@ -2185,8 +2185,8 @@ export function SalesChartReport() {
           if (selectedEmployee && selectedEmployee !== "all") {
             const filterName = selectedEmployee.toLowerCase();
             const empNameLower = employeeName.toLowerCase();
-            
-            if (!empNameLower.includes(filterName) && 
+
+            if (!empNameLower.includes(filterName) &&
                 employeeCode.toLowerCase() !== selectedEmployee.toLowerCase()) {
               return;
             }
@@ -2221,7 +2221,7 @@ export function SalesChartReport() {
           stats.orders.push(order);
 
           const paymentMethod = order.paymentMethod || "cash";
-          stats.paymentMethods[paymentMethod] = 
+          stats.paymentMethods[paymentMethod] =
             (stats.paymentMethods[paymentMethod] || 0) + orderTotal;
         } catch (error) {
           console.warn("Error processing employee order:", error);
@@ -2736,33 +2736,33 @@ export function SalesChartReport() {
                 <TableHeader>
                   <TableRow>
                     <TableHead
-                      className="text-center bg-green-50 w-12"
+                      className="text-center bg-green-50 w-12 font-bold"
                       rowSpan={1}
                     ></TableHead>
-                    <TableHead className="text-center border-r bg-green-50 min-w-[120px]">
+                    <TableHead className="text-center border-r bg-green-50 min-w-[120px] font-bold">
                       {t("reports.customerId")}
                     </TableHead>
-                    <TableHead className="text-center border-r bg-green-50 min-w-[150px]">
+                    <TableHead className="text-center border-r bg-green-50 min-w-[150px] font-bold">
                       {t("reports.customerName")}
                     </TableHead>
-                    <TableHead className="text-center border-r min-w-[100px]">
+                    <TableHead className="text-center border-r min-w-[100px] font-bold">
                       {t("reports.orders")}
                     </TableHead>
-                    <TableHead className="text-center border-r min-w-[130px]">
+                    <TableHead className="text-center border-r min-w-[130px] font-bold">
                       {t("common.customerGroup")}
                     </TableHead>
-                    <TableHead className="text-right border-r min-w-[140px]">
+                    <TableHead className="text-right border-r min-w-[140px] font-bold">
                       {t("reports.thanhTien")}
                     </TableHead>
                     {analysisType !== "employee" && (
-                      <TableHead className="text-right border-r min-w-[120px]">
+                      <TableHead className="text-right border-r min-w-[120px] font-bold">
                         {t("reports.discount")}
                       </TableHead>
                     )}
-                    <TableHead className="text-right border-r min-w-[140px]">
+                    <TableHead className="text-right border-r min-w-[140px] font-bold">
                       {t("reports.revenue")}
                     </TableHead>
-                    <TableHead className="text-center min-w-[100px]">
+                    <TableHead className="text-center min-w-[100px] font-bold">
                       {t("reports.status")}
                     </TableHead>
                   </TableRow>
