@@ -1563,7 +1563,7 @@ export function SalesChartReport() {
     const endIndex = startIndex + pageSize;
     const paginatedData = groupedOrders.slice(startIndex, endIndex);
 
-    // Calculate totals - simple sum of each column from all displayed items
+    // Calculate totals correctly from order-level data (not item-level to avoid double counting)
     let totalQuantity = 0;
     let totalAmount = 0;
     let totalDiscount = 0;
@@ -1571,16 +1571,19 @@ export function SalesChartReport() {
     let totalTax = 0;
     let totalMoney = 0;
 
-    // Sum each column directly from displayed data
+    // Sum from order-level data to get correct totals
     groupedOrders.forEach(order => {
+      // For quantity, sum from items
       order.items.forEach(item => {
         totalQuantity += item.quantity;
-        totalAmount += item.totalAmount;
-        totalDiscount += item.discount;
-        totalRevenue += item.revenue;
-        totalTax += item.tax;
-        totalMoney += item.totalMoney;
       });
+      
+      // For financial data, use order-level values to avoid double counting
+      totalAmount += order.totalAmount;      // Order's subtotal
+      totalDiscount += order.discount;       // Order's discount
+      totalRevenue += order.revenue;         // Order's revenue
+      totalTax += order.tax;                 // Order's tax
+      totalMoney += order.totalMoney;        // Order's total money
     });
 
     const totalVat = totalTax; // VAT = Tax in this context
