@@ -37,9 +37,6 @@ export function CustomerDisplay({
   const [currentTotal, setCurrentTotal] = useState(total);
   const [currentOrder, setCurrentOrder] = useState<any>(null);
   const [orderNumber, setOrderNumber] = useState<string>('');
-  // State to hold the QR payment details, initially null or undefined
-  const [qrPaymentState, setQrPayment] = useState<CustomerDisplayProps['qrPayment'] | null | undefined>(qrPayment);
-
 
   // Calculate correct subtotal from cart items (pre-tax price * quantity)
   const calculateCorrectSubtotal = () => {
@@ -84,34 +81,7 @@ export function CustomerDisplay({
     setCurrentSubtotal(subtotal);
     setCurrentTax(tax);
     setCurrentTotal(total);
-    // Also update qrPaymentState if qrPayment prop changes
-    console.log("🔄 Customer Display: Props changed, updating QR payment state:", {
-      qrPayment,
-      hasQrCodeUrl: !!qrPayment?.qrCodeUrl,
-      amount: qrPayment?.amount
-    });
-    setQrPayment(qrPayment);
-  }, [cart, subtotal, tax, total, qrPayment]);
-
-  // Debug log whenever qrPaymentState changes
-  useEffect(() => {
-    console.log("🎯 Customer Display: QR Payment State Changed:", {
-      qrPaymentState,
-      hasQrCodeUrl: !!qrPaymentState?.qrCodeUrl,
-      amount: qrPaymentState?.amount,
-      paymentMethod: qrPaymentState?.paymentMethod,
-      shouldShowQR: !!(qrPaymentState?.qrCodeUrl),
-      cartLength: cartItems.length,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Force a re-render check
-    if (qrPaymentState?.qrCodeUrl) {
-      console.log("🔥 Customer Display: QR Code URL is available, should display QR payment UI");
-    } else {
-      console.log("❌ Customer Display: No QR Code URL available");
-    }
-  }, [qrPaymentState, cartItems.length]);
+  }, [cart, subtotal, tax, total]);
 
 
   const formatTime = (date: Date) => {
@@ -143,37 +113,10 @@ export function CustomerDisplay({
 
   // WebSocket connection setup
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    console.log('Customer Display: Connecting to WebSocket:', wsUrl);
-    
-    const ws = new WebSocket(wsUrl);
+    const ws = new WebSocket('ws://localhost:3001'); // Assuming your WebSocket server runs on port 3001
 
     ws.onopen = () => {
       console.log('✅ Customer Display: Connected to WebSocket server');
-      // Send registration message to identify as customer display
-      try {
-        const registrationMessage = {
-          type: 'customer_display_connected',
-          clientType: 'customer_display',
-          timestamp: new Date().toISOString()
-        };
-        console.log('📤 Customer Display: Sending registration message:', registrationMessage);
-        ws.send(JSON.stringify(registrationMessage));
-        console.log('✅ Customer Display: Registration message sent successfully');
-        
-        // Send a ping to ensure connection is stable
-        setTimeout(() => {
-          try {
-            ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
-            console.log('🏓 Customer Display: Ping sent to verify connection');
-          } catch (error) {
-            console.error('❌ Customer Display: Failed to send ping:', error);
-          }
-        }, 500);
-      } catch (error) {
-        console.error('❌ Customer Display: Failed to send registration message:', error);
-      }
     };
 
     ws.onclose = () => {
@@ -186,22 +129,10 @@ export function CustomerDisplay({
     };
 
     ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('📩 Customer Display: Received WebSocket message:', {
-          type: data.type,
-          hasQrCodeUrl: !!data.qrCodeUrl,
-          timestamp: data.timestamp,
-          rawData: data
-        });
+          const data = JSON.parse(event.data);
+          console.log('📩 Customer Display: Received WebSocket message:', data);
 
-        switch (data.type) {
-          case 'connection_established':
-            console.log('✅ Customer Display: Connection confirmed');
-            break;
-            
-          case 'cart_update':
-            console.log('📦 Customer Display: Processing cart update');
+          if (data.type === 'cart_update') {
             setCartItems(data.cart || []);
 
             // Always use calculated values to ensure accuracy
@@ -219,9 +150,7 @@ export function CustomerDisplay({
             }
             console.log('📦 Customer Display: Received order number:', data.orderNumber);
             console.log('💰 Customer Display: Received correct subtotal (pre-tax):', data.subtotal);
-            break;
-            
-          case 'order_created':
+          } else if (data.type === 'order_created') {
             console.log('🆕 Customer Display: New order created:', data.order);
             setCurrentOrder(data.order);
             if (data.order?.orderNumber) {
@@ -234,10 +163,7 @@ export function CustomerDisplay({
               setCurrentTax(0);
               setCurrentTotal(0);
             }
-            break;
-            
-          case 'payment_completed':
-          case 'payment_success':
+          } else if (data.type === 'payment_completed') {
             console.log('💳 Customer Display: Payment completed for order:', data.orderId);
             // Clear display after payment
             setTimeout(() => {
@@ -247,105 +173,11 @@ export function CustomerDisplay({
               setCurrentTotal(0);
               setCurrentOrder(null);
               setOrderNumber('');
-              setQrPayment(null); // Clear QR payment state as well
             }, 3000); // Show success for 3 seconds before clearing
-            break;
-            
-          case 'qr_payment':
-            console.log("🔥🔥🔥 Customer Display: QR PAYMENT MESSAGE RECEIVED!", {
-              hasQrCodeUrl: !!data.qrCodeUrl,
-              amount: data.amount,
-              paymentMethod: data.paymentMethod,
-              transactionUuid: data.transactionUuid,
-              qrCodeUrlLength: data.qrCodeUrl?.length || 0,
-              qrCodeStart: data.qrCodeUrl ? data.qrCodeUrl.substring(0, 50) + '...' : 'null',
-              currentCartLength: cartItems.length,
-              currentQrState: qrPaymentState,
-              timestamp: new Date().toISOString()
-            });
-
-            // Validate QR data first
-            if (data.qrCodeUrl && data.amount) {
-              console.log("🎯 Customer Display: Valid QR data received, setting payment state");
-              
-              const qrPaymentData = {
-                qrCodeUrl: data.qrCodeUrl,
-                amount: Number(data.amount) || 0,
-                paymentMethod: data.paymentMethod || 'QR Code',
-                transactionUuid: data.transactionUuid || `QR-${Date.now()}`
-              };
-              
-              console.log("🔄 Customer Display: About to clear cart and set QR payment:", qrPaymentData);
-              
-              // Clear cart and set QR payment state
-              setCartItems([]);
-              setCurrentSubtotal(0);
-              setCurrentTax(0);
-              setCurrentTotal(0);
-              
-              // Set QR payment state immediately with force update
-              setQrPayment(qrPaymentData);
-              
-              console.log("✅ Customer Display: QR payment state set successfully:", {
-                hasQrCodeUrl: !!qrPaymentData.qrCodeUrl,
-                amount: qrPaymentData.amount,
-                qrCodeStart: qrPaymentData.qrCodeUrl.substring(0, 50) + '...'
-              });
-              
-              // Multiple verification attempts
-              setTimeout(() => {
-                console.log("🔍 Customer Display: First verification after 100ms:", {
-                  qrPaymentStateExists: !!qrPaymentState,
-                  hasQrCodeUrl: !!qrPaymentState?.qrCodeUrl,
-                  shouldShowQr: !!(qrPaymentState?.qrCodeUrl),
-                  currentCartLength: cartItems.length
-                });
-              }, 100);
-              
-              setTimeout(() => {
-                console.log("🔍 Customer Display: Second verification after 500ms:", {
-                  qrPaymentStateExists: !!qrPaymentState,
-                  hasQrCodeUrl: !!qrPaymentState?.qrCodeUrl,
-                  shouldShowQr: !!(qrPaymentState?.qrCodeUrl),
-                  currentCartLength: cartItems.length
-                });
-                
-                // Force re-render if still not showing
-                if (!qrPaymentState?.qrCodeUrl) {
-                  console.log("🚨 Customer Display: QR state not set, forcing update again");
-                  setQrPayment(qrPaymentData);
-                }
-              }, 500);
-              
-            } else {
-              console.error("❌ Customer Display: Invalid QR payment data received", {
-                hasQrCodeUrl: !!data.qrCodeUrl,
-                hasAmount: !!data.amount,
-                data: data
-              });
-            }
-            break;
-            
-          case 'qr_payment_cancelled':
-            console.log("🚫 Customer Display: QR payment cancelled, clearing QR state");
-            setQrPayment(null);
-            break;
-            
-          case 'restore_cart_display':
-            console.log("🔄 Customer Display: Restoring cart display, clearing QR payment");
-            setQrPayment(null);
-            break;
-            
-          default:
-            console.log("❓ Customer Display: Unknown message type:", data.type);
-        }
-      } catch (error) {
-        console.error("💥 Customer Display: Error parsing WebSocket message:", error);
-      }
-    };
+          }
+        };
 
     return () => {
-      console.log('🔌 Customer Display: Closing WebSocket connection');
       ws.close();
     };
   }, []);
@@ -381,16 +213,9 @@ export function CustomerDisplay({
       {/* Main Content */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="max-w-6xl mx-auto flex-1 flex flex-col">
-          {qrPaymentState?.qrCodeUrl ? (
+          {qrPayment ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
-              {console.log("🔍 Rendering QR Payment Display:", {
-                qrPaymentState,
-                hasQrCodeUrl: !!qrPaymentState.qrCodeUrl,
-                amount: qrPaymentState.amount,
-                paymentMethod: qrPaymentState.paymentMethod,
-                timestamp: new Date().toISOString()
-              })}
               <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
                 <div className="text-center mb-4">
                   <div className="text-4xl mb-2">📱</div>
@@ -405,39 +230,23 @@ export function CustomerDisplay({
                 <div className="bg-gray-50 rounded-2xl p-4 mb-4">
                   <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {Number(qrPaymentState.amount || 0).toLocaleString('vi-VN')} ₫
+                    {qrPayment.amount.toLocaleString('vi-VN')} ₫
                   </p>
                 </div>
 
                 <div className="flex justify-center mb-4 flex-1 flex items-center">
                   <div className="bg-white p-4 rounded-2xl border-4 border-green-200 shadow-xl">
-                    {qrPaymentState.qrCodeUrl ? (
-                      <img
-                        src={qrPaymentState.qrCodeUrl}
-                        alt="QR Code thanh toán"
-                        className="w-56 h-56 max-w-full max-h-full object-contain"
-                        onError={(e) => {
-                          console.error("QR Code image failed to load:", qrPaymentState.qrCodeUrl);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                        onLoad={() => {
-                          console.log("✅ QR Code image loaded successfully");
-                        }}
-                      />
-                    ) : (
-                      <div className="w-56 h-56 flex items-center justify-center bg-gray-100 text-gray-500 border-2 border-dashed border-gray-300">
-                        <div className="text-center">
-                          <div className="text-4xl mb-2">⏳</div>
-                          <p className="text-sm">Đang tạo mã QR...</p>
-                        </div>
-                      </div>
-                    )}
+                    <img
+                      src={qrPayment.qrCodeUrl}
+                      alt="QR Code thanh toán"
+                      className="w-56 h-56 max-w-full max-h-full object-contain"
+                    />
                   </div>
                 </div>
 
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">
-                    Mã giao dịch: {qrPaymentState.transactionUuid}
+                    Mã giao dịch: {qrPayment.transactionUuid}
                   </p>
                   <p className="text-sm text-blue-600 font-medium">
                     Vui lòng quét mã QR để hoàn tất thanh toán

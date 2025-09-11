@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CustomerDisplay } from "@/components/pos/customer-display";
 import type { CartItem } from "@shared/schema";
