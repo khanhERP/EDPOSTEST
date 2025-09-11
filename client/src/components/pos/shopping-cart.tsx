@@ -934,79 +934,88 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        console.log(`🗑️ Shopping Cart: Remove item button clicked for item ${item.id}`);
+                        console.log(`🗑️ Shopping Cart: Remove item ${item.id} (${item.name}) - ENHANCED DELETION`);
                         
                         // Get updated cart after removing this item
                         const updatedCart = cart.filter(cartItem => cartItem.id !== item.id);
                         const isLastItem = cart.length === 1;
                         
-                        console.log(`🔍 Shopping Cart: Cart will change from ${cart.length} to ${updatedCart.length} items`);
+                        console.log(`🔍 Shopping Cart: Cart changing from ${cart.length} to ${updatedCart.length} items`);
                         
-                        // CRITICAL: Force immediate customer display update with multiple strategies
-                        const forceCustomerDisplayUpdate = (cartData, attempt = 1) => {
-                          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                            const message = {
-                              type: 'cart_update',
-                              cart: cartData,
-                              subtotal: 0,
-                              tax: 0,
-                              total: 0,
-                              orderNumber: '',
-                              timestamp: new Date().toISOString(),
-                              forceUpdate: true,
-                              attempt: attempt
-                            };
-                            
-                            // Calculate correct totals if items remain
-                            if (cartData.length > 0) {
-                              message.subtotal = cartData.reduce((sum, cartItem) => sum + parseFloat(cartItem.total), 0);
-                              message.tax = cartData.reduce((sum, cartItem) => {
-                                if (cartItem.taxRate && parseFloat(cartItem.taxRate) > 0) {
-                                  const basePrice = parseFloat(cartItem.price);
-                                  if (cartItem.afterTaxPrice && cartItem.afterTaxPrice !== null && cartItem.afterTaxPrice !== "") {
-                                    const afterTaxPrice = parseFloat(cartItem.afterTaxPrice);
-                                    const taxPerItem = afterTaxPrice - basePrice;
-                                    return sum + Math.floor(taxPerItem * cartItem.quantity);
+                        // CRITICAL: Immediate WebSocket broadcasts with persistence prevention
+                        const sendPersistentUpdate = (cartData, updateType, delay = 0) => {
+                          setTimeout(() => {
+                            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                              const message = {
+                                type: 'cart_update',
+                                cart: [...cartData], // Force new array reference
+                                subtotal: cartData.length === 0 ? 0 : cartData.reduce((sum, cartItem) => sum + parseFloat(cartItem.total), 0),
+                                tax: cartData.length === 0 ? 0 : cartData.reduce((sum, cartItem) => {
+                                  if (cartItem.taxRate && parseFloat(cartItem.taxRate) > 0) {
+                                    const basePrice = parseFloat(cartItem.price);
+                                    if (cartItem.afterTaxPrice && cartItem.afterTaxPrice !== null && cartItem.afterTaxPrice !== "") {
+                                      const afterTaxPrice = parseFloat(cartItem.afterTaxPrice);
+                                      const taxPerItem = afterTaxPrice - basePrice;
+                                      return sum + Math.floor(taxPerItem * cartItem.quantity);
+                                    }
                                   }
-                                }
-                                return sum;
-                              }, 0);
+                                  return sum;
+                                }, 0),
+                                total: 0,
+                                orderNumber: cartData.length === 0 ? '' : (activeOrderId || `ORD-${Date.now()}`),
+                                timestamp: new Date().toISOString(),
+                                forceUpdate: true,
+                                updateType: updateType,
+                                preventCache: Date.now(), // Unique identifier to prevent caching
+                                deletedItemId: item.id,
+                                deletedItemName: item.name
+                              };
+                              
+                              // Calculate total
                               message.total = Math.round(message.subtotal + message.tax);
-                              message.orderNumber = activeOrderId || `ORD-${Date.now()}`;
+                              
+                              try {
+                                wsRef.current.send(JSON.stringify(message));
+                                console.log(`📡 Shopping Cart: ${updateType} - sent cart with ${cartData.length} items, total: ${message.total}`);
+                              } catch (error) {
+                                console.error("📡 Shopping Cart: Error sending update:", error);
+                              }
                             }
-                            
-                            try {
-                              wsRef.current.send(JSON.stringify(message));
-                              console.log(`📡 Shopping Cart: Force update attempt ${attempt} - sent cart with ${cartData.length} items`);
-                            } catch (error) {
-                              console.error("📡 Shopping Cart: Error in force update:", error);
-                            }
-                          }
+                          }, delay);
                         };
                         
-                        // Strategy 1: Immediate force update before state change
-                        forceCustomerDisplayUpdate(updatedCart, 1);
+                        // PHASE 1: Pre-deletion broadcasts (multiple rapid-fire)
+                        sendPersistentUpdate(updatedCart, 'PRE_DELETE_1', 0);
+                        sendPersistentUpdate(updatedCart, 'PRE_DELETE_2', 10);
+                        sendPersistentUpdate(updatedCart, 'PRE_DELETE_3', 25);
                         
-                        // Strategy 2: Remove item from local state
+                        // PHASE 2: Execute local state removal
+                        console.log("🔥 Shopping Cart: Executing local state removal");
                         onRemoveItem(parseInt(item.id));
                         
-                        // Strategy 3: Multiple follow-up updates with increasing delays
-                        setTimeout(() => forceCustomerDisplayUpdate(updatedCart, 2), 50);
-                        setTimeout(() => forceCustomerDisplayUpdate(updatedCart, 3), 150);
-                        setTimeout(() => forceCustomerDisplayUpdate(updatedCart, 4), 300);
-                        setTimeout(() => forceCustomerDisplayUpdate(updatedCart, 5), 500);
+                        // PHASE 3: Post-deletion confirmation broadcasts
+                        sendPersistentUpdate(updatedCart, 'POST_DELETE_1', 50);
+                        sendPersistentUpdate(updatedCart, 'POST_DELETE_2', 100);
+                        sendPersistentUpdate(updatedCart, 'POST_DELETE_3', 200);
+                        sendPersistentUpdate(updatedCart, 'POST_DELETE_4', 350);
+                        sendPersistentUpdate(updatedCart, 'POST_DELETE_5', 500);
                         
-                        // Strategy 4: Final standard broadcast
+                        // PHASE 4: Final persistence prevention broadcast
                         setTimeout(() => {
-                          console.log("📡 Shopping Cart: Final standard broadcast");
-                          broadcastCartUpdate();
-                        }, 700);
+                          console.log("📡 Shopping Cart: FINAL persistence prevention broadcast");
+                          sendPersistentUpdate(updatedCart, 'FINAL_CONFIRMATION', 0);
+                          
+                          // Extra safety: Regular broadcast after 1 second
+                          setTimeout(() => {
+                            broadcastCartUpdate();
+                          }, 1000);
+                        }, 750);
                         
-                        console.log("✅ Shopping Cart: Enhanced item removal with force updates completed", {
-                          removedItemId: item.id,
+                        console.log("✅ Shopping Cart: ENHANCED PERSISTENT DELETION completed", {
+                          deletedItem: { id: item.id, name: item.name },
                           remainingItems: updatedCart.length,
                           isLastItem: isLastItem,
-                          strategy: "multiple_force_updates"
+                          timestamp: new Date().toISOString()
                         });
                       }}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"

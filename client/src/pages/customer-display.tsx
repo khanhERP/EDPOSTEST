@@ -119,53 +119,97 @@ export default function CustomerDisplayPage() {
               cartItems: data.cart?.length || 0,
               subtotal: data.subtotal,
               total: data.total,
-              timestamp: data.timestamp
+              timestamp: data.timestamp,
+              updateType: data.updateType,
+              deletedItemId: data.deletedItemId
             });
 
             switch (data.type) {
               case 'cart_update':
-                console.log("Customer Display: Processing cart update - Items:", data.cart?.length || 0, "Force update:", data.forceUpdate, "Attempt:", data.attempt);
+                console.log("Customer Display: Processing cart update:", {
+                  items: data.cart?.length || 0,
+                  forceUpdate: data.forceUpdate,
+                  updateType: data.updateType,
+                  preventCache: data.preventCache,
+                  deletedItem: data.deletedItemId ? `${data.deletedItemId} (${data.deletedItemName})` : 'none'
+                });
 
-                // CRITICAL: Force immediate state update with enhanced validation
+                // CRITICAL: Enhanced immediate state management
                 const newCart = Array.isArray(data.cart) ? [...data.cart] : [];
                 
-                // IMMEDIATE: Set cart state with force update flag
-                setCart(prevCart => {
-                  console.log("Customer Display: FORCE Cart state changing from", prevCart.length, "to", newCart.length, "items");
+                // PERSISTENT DELETION: If an item was deleted, ensure it's completely removed
+                if (data.deletedItemId) {
+                  console.log(`Customer Display: 🗑️ ENSURING item ${data.deletedItemId} (${data.deletedItemName}) is DELETED from display`);
                   
-                  // Special handling for empty cart - ensure complete reset
+                  // Force remove deleted item from current cart state
+                  setCart(prevCart => {
+                    const filteredCart = prevCart.filter(item => item.id !== data.deletedItemId && item.id !== data.deletedItemId.toString());
+                    console.log(`Customer Display: 🧹 DELETED item ${data.deletedItemId}, cart: ${prevCart.length} → ${filteredCart.length}`);
+                    return filteredCart;
+                  });
+                }
+                
+                // IMMEDIATE: Set cart state with persistence prevention
+                setCart(prevCart => {
+                  console.log("Customer Display: 🔄 FORCE Cart update:", {
+                    from: prevCart.length,
+                    to: newCart.length,
+                    updateType: data.updateType,
+                    timestamp: data.timestamp
+                  });
+                  
+                  // Special handling for empty cart - complete reset
                   if (newCart.length === 0) {
-                    console.log("Customer Display: 🧹 FORCE CLEARING - Cart is now empty");
+                    console.log("Customer Display: 🧹 COMPLETE CART CLEARING");
                     return [];
                   }
                   
-                  // Log cart details for debugging
-                  console.log("Customer Display: New cart contents:", newCart.map(item => ({
-                    id: item.id,
-                    name: item.product?.name || item.name || 'Unknown',
-                    quantity: item.quantity,
-                    price: item.price
-                  })));
+                  // Ensure deleted items are not included in new cart
+                  const cleanCart = newCart.filter(item => {
+                    const shouldInclude = !data.deletedItemId || (item.id !== data.deletedItemId && item.id !== data.deletedItemId.toString());
+                    if (!shouldInclude) {
+                      console.log(`Customer Display: 🚫 BLOCKING deleted item ${item.id} from re-appearing`);
+                    }
+                    return shouldInclude;
+                  });
 
-                  // Return completely new array reference to force re-render
-                  return newCart.map(item => ({ ...item }));
+                  // Return completely new array reference with unique keys
+                  return cleanCart.map((item, index) => ({ 
+                    ...item, 
+                    _displayKey: `${item.id}-${data.preventCache || Date.now()}-${index}`
+                  }));
                 });
 
                 // IMMEDIATE: Clear QR payment for empty cart
                 if (newCart.length === 0) {
-                  console.log("Customer Display: 🧹 FORCE CLEARING QR payment");
+                  console.log("Customer Display: 🧹 CLEARING QR payment due to empty cart");
                   setQrPayment(null);
                 }
 
-                // CRITICAL: Multiple forced re-renders to ensure UI updates
-                [10, 50, 100, 200].forEach((delay, index) => {
+                // PERSISTENCE PREVENTION: Multiple validation cycles
+                const validationDelays = [25, 75, 150, 300, 600];
+                validationDelays.forEach((delay, index) => {
                   setTimeout(() => {
-                    console.log(`Customer Display: Force refresh ${index + 1} after ${delay}ms`);
-                    // Force a state update to trigger re-render
+                    console.log(`Customer Display: Validation cycle ${index + 1} at ${delay}ms`);
                     setCart(current => {
-                      if (current.length === newCart.length) {
-                        return [...newCart.map(item => ({ ...item }))];
+                      // Remove any items that match deleted item ID
+                      const validatedCart = current.filter(item => {
+                        const isDeleted = data.deletedItemId && (item.id === data.deletedItemId || item.id === data.deletedItemId.toString());
+                        if (isDeleted) {
+                          console.log(`Customer Display: 🚫 VALIDATION REMOVED deleted item ${item.id}`);
+                        }
+                        return !isDeleted;
+                      });
+                      
+                      // Only update if there's a difference
+                      if (validatedCart.length !== current.length) {
+                        console.log(`Customer Display: ✅ VALIDATION fixed cart: ${current.length} → ${validatedCart.length}`);
+                        return validatedCart.map((item, index) => ({ 
+                          ...item, 
+                          _validationKey: `${item.id}-validation-${index}-${Date.now()}`
+                        }));
                       }
+                      
                       return current;
                     });
                   }, delay);
