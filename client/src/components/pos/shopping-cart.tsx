@@ -933,7 +933,43 @@ export function ShoppingCart({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onRemoveItem(parseInt(item.id))}
+                      onClick={() => {
+                        console.log(`🗑️ Shopping Cart: Remove item button clicked for item ${item.id}`);
+                        
+                        // Remove the item
+                        onRemoveItem(parseInt(item.id));
+                        
+                        // Check if this is the last item in cart
+                        const isLastItem = cart.length === 1;
+                        
+                        if (isLastItem) {
+                          console.log("🧹 Shopping Cart: Removing last item, broadcasting empty cart");
+                          
+                          // Immediately broadcast empty cart to customer display
+                          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                            const emptyCartMessage = {
+                              type: 'cart_update',
+                              cart: [],
+                              subtotal: 0,
+                              tax: 0,
+                              total: 0,
+                              orderNumber: '',
+                              timestamp: new Date().toISOString()
+                            };
+                            
+                            console.log("📡 Shopping Cart: Broadcasting empty cart to customer display");
+                            
+                            try {
+                              wsRef.current.send(JSON.stringify(emptyCartMessage));
+                            } catch (error) {
+                              console.error("📡 Shopping Cart: Error broadcasting empty cart:", error);
+                            }
+                          }
+                        }
+                        
+                        // Also trigger the broadcast update after a short delay to ensure state is updated
+                        setTimeout(() => broadcastCartUpdate(), 100);
+                      }}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
                     >
                       <Trash2 size={10} />
