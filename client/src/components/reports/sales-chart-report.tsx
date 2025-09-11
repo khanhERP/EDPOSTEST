@@ -4915,9 +4915,6 @@ export function SalesChartReport() {
                         angle={-45}
                         textAnchor="end"
                         height={50}
-                        interval={0}
-                        tick={{ dy: 10 }}
-                        tickMargin={8}
                       />
                       <YAxis stroke="#6b7280" fontSize={12} />
                       <ChartTooltip
