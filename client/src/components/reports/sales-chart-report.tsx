@@ -3334,7 +3334,10 @@ export function SalesChartReport() {
                               </TableCell>
                             )}
                             <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
-                              {formatCurrency(item.revenue)}
+                              {formatCurrency(item.orderDetails?.reduce((sum: number, order: any) => {
+                                const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
+                                return sum + orderRevenue;
+                              }, 0) || item.revenue)}
                             </TableCell>
                             <TableCell className="text-center min-w-[100px] px-4">
                               <Badge
