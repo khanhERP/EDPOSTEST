@@ -128,92 +128,43 @@ export default function CustomerDisplayPage() {
               case 'cart_update':
                 console.log("Customer Display: Processing cart update:", {
                   items: data.cart?.length || 0,
-                  forceUpdate: data.forceUpdate,
-                  updateType: data.updateType,
-                  preventCache: data.preventCache,
-                  deletedItem: data.deletedItemId ? `${data.deletedItemId} (${data.deletedItemName})` : 'none'
+                  isItemDeletion: data.isItemDeletion,
+                  deletedItem: data.deletedItemId ? `${data.deletedItemId} (${data.deletedItemName})` : 'none',
+                  timestamp: data.timestamp
                 });
 
-                // CRITICAL: Enhanced immediate state management
+                // Get the new cart from message
                 const newCart = Array.isArray(data.cart) ? [...data.cart] : [];
                 
-                // PERSISTENT DELETION: If an item was deleted, ensure it's completely removed
-                if (data.deletedItemId) {
-                  console.log(`Customer Display: 🗑️ ENSURING item ${data.deletedItemId} (${data.deletedItemName}) is DELETED from display`);
-                  
-                  // Force remove deleted item from current cart state
-                  setCart(prevCart => {
-                    const filteredCart = prevCart.filter(item => item.id !== data.deletedItemId && item.id !== data.deletedItemId.toString());
-                    console.log(`Customer Display: 🧹 DELETED item ${data.deletedItemId}, cart: ${prevCart.length} → ${filteredCart.length}`);
-                    return filteredCart;
-                  });
-                }
-                
-                // IMMEDIATE: Set cart state with persistence prevention
+                // SIMPLIFIED: Direct cart update without complex validation cycles
                 setCart(prevCart => {
-                  console.log("Customer Display: 🔄 FORCE Cart update:", {
+                  console.log("Customer Display: 🔄 Cart update:", {
                     from: prevCart.length,
                     to: newCart.length,
-                    updateType: data.updateType,
-                    timestamp: data.timestamp
+                    isItemDeletion: data.isItemDeletion,
+                    deletedItemId: data.deletedItemId
                   });
                   
-                  // Special handling for empty cart - complete reset
-                  if (newCart.length === 0) {
-                    console.log("Customer Display: 🧹 COMPLETE CART CLEARING");
-                    return [];
+                  // If this is an item deletion, ensure the deleted item is not in the new cart
+                  if (data.isItemDeletion && data.deletedItemId) {
+                    const cleanCart = newCart.filter(item => 
+                      item.id !== data.deletedItemId && 
+                      item.id !== data.deletedItemId.toString()
+                    );
+                    
+                    console.log(`Customer Display: 🗑️ Item ${data.deletedItemId} removed, final cart: ${cleanCart.length} items`);
+                    return cleanCart;
                   }
                   
-                  // Ensure deleted items are not included in new cart
-                  const cleanCart = newCart.filter(item => {
-                    const shouldInclude = !data.deletedItemId || (item.id !== data.deletedItemId && item.id !== data.deletedItemId.toString());
-                    if (!shouldInclude) {
-                      console.log(`Customer Display: 🚫 BLOCKING deleted item ${item.id} from re-appearing`);
-                    }
-                    return shouldInclude;
-                  });
-
-                  // Return completely new array reference with unique keys
-                  return cleanCart.map((item, index) => ({ 
-                    ...item, 
-                    _displayKey: `${item.id}-${data.preventCache || Date.now()}-${index}`
-                  }));
+                  // For non-deletion updates, just use the new cart as-is
+                  return newCart;
                 });
 
-                // IMMEDIATE: Clear QR payment for empty cart
+                // Clear QR payment for empty cart
                 if (newCart.length === 0) {
-                  console.log("Customer Display: 🧹 CLEARING QR payment due to empty cart");
+                  console.log("Customer Display: 🧹 Clearing QR payment due to empty cart");
                   setQrPayment(null);
                 }
-
-                // PERSISTENCE PREVENTION: Multiple validation cycles
-                const validationDelays = [25, 75, 150, 300, 600];
-                validationDelays.forEach((delay, index) => {
-                  setTimeout(() => {
-                    console.log(`Customer Display: Validation cycle ${index + 1} at ${delay}ms`);
-                    setCart(current => {
-                      // Remove any items that match deleted item ID
-                      const validatedCart = current.filter(item => {
-                        const isDeleted = data.deletedItemId && (item.id === data.deletedItemId || item.id === data.deletedItemId.toString());
-                        if (isDeleted) {
-                          console.log(`Customer Display: 🚫 VALIDATION REMOVED deleted item ${item.id}`);
-                        }
-                        return !isDeleted;
-                      });
-                      
-                      // Only update if there's a difference
-                      if (validatedCart.length !== current.length) {
-                        console.log(`Customer Display: ✅ VALIDATION fixed cart: ${current.length} → ${validatedCart.length}`);
-                        return validatedCart.map((item, index) => ({ 
-                          ...item, 
-                          _validationKey: `${item.id}-validation-${index}-${Date.now()}`
-                        }));
-                      }
-                      
-                      return current;
-                    });
-                  }, delay);
-                });
                 break;
               case 'store_info':
                 console.log("Customer Display: Updating store info:", data.storeInfo);

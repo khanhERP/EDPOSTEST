@@ -934,89 +934,59 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        console.log(`🗑️ Shopping Cart: Remove item ${item.id} (${item.name}) - ENHANCED DELETION`);
+                        console.log(`🗑️ Shopping Cart: Remove item ${item.id} (${item.name}) - SIMPLIFIED DELETION`);
                         
-                        // Get updated cart after removing this item
-                        const updatedCart = cart.filter(cartItem => cartItem.id !== item.id);
-                        const isLastItem = cart.length === 1;
+                        // Get the item to delete for reference
+                        const deletedItemId = item.id;
+                        const deletedItemName = item.name;
                         
-                        console.log(`🔍 Shopping Cart: Cart changing from ${cart.length} to ${updatedCart.length} items`);
-                        
-                        // CRITICAL: Immediate WebSocket broadcasts with persistence prevention
-                        const sendPersistentUpdate = (cartData, updateType, delay = 0) => {
-                          setTimeout(() => {
-                            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                              const message = {
-                                type: 'cart_update',
-                                cart: [...cartData], // Force new array reference
-                                subtotal: cartData.length === 0 ? 0 : cartData.reduce((sum, cartItem) => sum + parseFloat(cartItem.total), 0),
-                                tax: cartData.length === 0 ? 0 : cartData.reduce((sum, cartItem) => {
-                                  if (cartItem.taxRate && parseFloat(cartItem.taxRate) > 0) {
-                                    const basePrice = parseFloat(cartItem.price);
-                                    if (cartItem.afterTaxPrice && cartItem.afterTaxPrice !== null && cartItem.afterTaxPrice !== "") {
-                                      const afterTaxPrice = parseFloat(cartItem.afterTaxPrice);
-                                      const taxPerItem = afterTaxPrice - basePrice;
-                                      return sum + Math.floor(taxPerItem * cartItem.quantity);
-                                    }
-                                  }
-                                  return sum;
-                                }, 0),
-                                total: 0,
-                                orderNumber: cartData.length === 0 ? '' : (activeOrderId || `ORD-${Date.now()}`),
-                                timestamp: new Date().toISOString(),
-                                forceUpdate: true,
-                                updateType: updateType,
-                                preventCache: Date.now(), // Unique identifier to prevent caching
-                                deletedItemId: item.id,
-                                deletedItemName: item.name
-                              };
-                              
-                              // Calculate total
-                              message.total = Math.round(message.subtotal + message.tax);
-                              
-                              try {
-                                wsRef.current.send(JSON.stringify(message));
-                                console.log(`📡 Shopping Cart: ${updateType} - sent cart with ${cartData.length} items, total: ${message.total}`);
-                              } catch (error) {
-                                console.error("📡 Shopping Cart: Error sending update:", error);
-                              }
-                            }
-                          }, delay);
-                        };
-                        
-                        // PHASE 1: Pre-deletion broadcasts (multiple rapid-fire)
-                        sendPersistentUpdate(updatedCart, 'PRE_DELETE_1', 0);
-                        sendPersistentUpdate(updatedCart, 'PRE_DELETE_2', 10);
-                        sendPersistentUpdate(updatedCart, 'PRE_DELETE_3', 25);
-                        
-                        // PHASE 2: Execute local state removal
-                        console.log("🔥 Shopping Cart: Executing local state removal");
+                        // STEP 1: Remove item from local state FIRST
                         onRemoveItem(parseInt(item.id));
                         
-                        // PHASE 3: Post-deletion confirmation broadcasts
-                        sendPersistentUpdate(updatedCart, 'POST_DELETE_1', 50);
-                        sendPersistentUpdate(updatedCart, 'POST_DELETE_2', 100);
-                        sendPersistentUpdate(updatedCart, 'POST_DELETE_3', 200);
-                        sendPersistentUpdate(updatedCart, 'POST_DELETE_4', 350);
-                        sendPersistentUpdate(updatedCart, 'POST_DELETE_5', 500);
-                        
-                        // PHASE 4: Final persistence prevention broadcast
+                        // STEP 2: Wait for state to update, then broadcast the CURRENT cart state
                         setTimeout(() => {
-                          console.log("📡 Shopping Cart: FINAL persistence prevention broadcast");
-                          sendPersistentUpdate(updatedCart, 'FINAL_CONFIRMATION', 0);
+                          const currentCart = cart.filter(cartItem => cartItem.id !== deletedItemId);
                           
-                          // Extra safety: Regular broadcast after 1 second
-                          setTimeout(() => {
-                            broadcastCartUpdate();
-                          }, 1000);
-                        }, 750);
+                          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                            // Calculate totals for current cart (after deletion)
+                            const newSubtotal = currentCart.reduce((sum, cartItem) => sum + parseFloat(cartItem.total), 0);
+                            const newTax = currentCart.reduce((sum, cartItem) => {
+                              if (cartItem.taxRate && parseFloat(cartItem.taxRate) > 0) {
+                                const basePrice = parseFloat(cartItem.price);
+                                if (cartItem.afterTaxPrice && cartItem.afterTaxPrice !== null && cartItem.afterTaxPrice !== "") {
+                                  const afterTaxPrice = parseFloat(cartItem.afterTaxPrice);
+                                  const taxPerItem = afterTaxPrice - basePrice;
+                                  return sum + Math.floor(taxPerItem * cartItem.quantity);
+                                }
+                              }
+                              return sum;
+                            }, 0);
+                            const newTotal = Math.round(newSubtotal + newTax);
+                            
+                            // Send SINGLE definitive update
+                            const finalUpdate = {
+                              type: 'cart_update',
+                              cart: [...currentCart], // Clean cart without deleted item
+                              subtotal: newSubtotal,
+                              tax: newTax,
+                              total: newTotal,
+                              orderNumber: currentCart.length > 0 ? (activeOrderId || `ORD-${Date.now()}`) : '',
+                              timestamp: new Date().toISOString(),
+                              deletedItemId: deletedItemId,
+                              deletedItemName: deletedItemName,
+                              isItemDeletion: true
+                            };
+                            
+                            try {
+                              wsRef.current.send(JSON.stringify(finalUpdate));
+                              console.log(`📡 Shopping Cart: Item ${deletedItemId} deleted - sent final cart with ${currentCart.length} items`);
+                            } catch (error) {
+                              console.error("📡 Shopping Cart: Error sending final update:", error);
+                            }
+                          }
+                        }, 50);
                         
-                        console.log("✅ Shopping Cart: ENHANCED PERSISTENT DELETION completed", {
-                          deletedItem: { id: item.id, name: item.name },
-                          remainingItems: updatedCart.length,
-                          isLastItem: isLastItem,
-                          timestamp: new Date().toISOString()
-                        });
+                        console.log(`✅ Shopping Cart: Item ${deletedItemId} (${deletedItemName}) deletion initiated`);
                       }}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
                     >
