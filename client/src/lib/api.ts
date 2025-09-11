@@ -44,28 +44,25 @@ export interface CreateQRPosResponse {
 
 export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: string, clientID: string): Promise<CreateQRPosResponse> => {
   try {
-    console.log('🎯 Calling CreateQRPos via proxy...');
+    console.log('🎯 Calling CreateQRPos API directly...');
     console.log('📤 Request payload:', { ...request, bankCode, clientID });
     
-    // Use proxy route to avoid CORS issues
-    const response = await fetch('/api/pos/create-qr-proxy', {
+    // Call external API directly
+    const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
-      body: JSON.stringify({
-        ...request,
-        bankCode,
-        clientID
-      }),
+      body: JSON.stringify(request),
     });
 
-    console.log('📡 Proxy API response status:', response.status);
-    console.log('📡 Proxy API response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('📡 External API response status:', response.status);
+    console.log('📡 External API response headers:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       const responseText = await response.text();
-      console.error('❌ Proxy API error response:', responseText);
+      console.error('❌ External API error response:', responseText);
       
       // Check if response is HTML (error page)
       if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
@@ -73,11 +70,11 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
         throw new Error(`External API returned HTML error page instead of JSON`);
       }
       
-      throw new Error(`Proxy API error: ${response.status} ${response.statusText}`);
+      throw new Error(`External API error: ${response.status} ${response.statusText}`);
     }
 
     const responseText = await response.text();
-    console.log('📡 Raw proxy response:', responseText);
+    console.log('📡 Raw external API response:', responseText);
     
     // Check if response is HTML
     if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
@@ -94,7 +91,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
       throw new Error('Invalid JSON response from external API');
     }
     
-    console.log('✅ Proxy API success:', result);
+    console.log('✅ External API success:', result);
     
     // Transform response to match expected format
     return {
@@ -104,7 +101,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
     };
 
   } catch (error) {
-    console.error('❌ Proxy CreateQRPos API failed:', error);
+    console.error('❌ External CreateQRPos API failed:', error);
     console.log('🔄 Falling back to internal API...');
     
     // Fallback to internal API
@@ -128,7 +125,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
       
       return fallbackResult;
     } catch (fallbackError) {
-      console.error('❌ Both proxy and fallback APIs failed:', fallbackError);
+      console.error('❌ Both external and fallback APIs failed:', fallbackError);
       
       // Return mock QR data as last resort
       console.log('🎭 Using mock QR data as last resort');
