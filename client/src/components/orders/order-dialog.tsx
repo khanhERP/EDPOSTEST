@@ -605,12 +605,12 @@ export function OrderDialog({
                     </Label>
                     <Input
                       id="discount"
-                      type="number"
-                      min={0}
-                      value={discount}
-                      onChange={(e) =>
-                        setDiscount(parseFloat(e.target.value) || 0)
-                      }
+                      type="text"
+                      value={discount > 0 ? discount.toLocaleString('vi-VN') : ''}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d]/g, ''); // Chỉ giữ lại số
+                        setDiscount(parseFloat(value) || 0);
+                      }}
                       placeholder="0"
                     />
                   </div>
