@@ -1325,15 +1325,17 @@ export default function SalesOrders() {
                                             <div>
                                               <h4 className="font-medium mb-3">{t("common.itemList")}</h4>
                                               <div className="border rounded-lg overflow-hidden">
-                                                <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2">
+                                                <div className="grid grid-cols-8 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2">
                                                   <div className="col-span-1">STT</div>
-                                                  <div className="col-span-3">{t("common.itemCode")}</div>
-                                                  <div className="col-span-3">{t("common.itemName")}</div>
+                                                  <div className="col-span-1">{t("common.itemCode")}</div>
+                                                  <div className="col-span-2">{t("common.itemName")}</div>
                                                   <div className="col-span-1">{t("common.unit")}</div>
                                                   <div className="col-span-1">{t("common.quantity")}</div>
                                                   <div className="col-span-1">{t("common.unitPrice")}</div>
                                                   <div className="col-span-1">{t("common.totalAmount")}</div>
-                                                  <div className="col-span-1">{t("common.taxVAT")}</div>
+                                                </div>
+                                                <div className="grid grid-cols-8 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 border-t">
+                                                  <div className="col-span-8">{t("common.taxVAT")}</div>
                                                 </div>
                                                 {(() => {
                                                   const items = orderItems;
@@ -1344,18 +1346,33 @@ export default function SalesOrders() {
                                                       </div>
                                                     );
                                                   }
-                                                  return items.map((item: any, index: number) => (
-                                                    <div key={item.id} className="grid grid-cols-12 gap-2 text-xs p-2 border-t">
-                                                      <div className="col-span-1">{index + 1}</div>
-                                                      <div className="col-span-3">SP{String(item.productId).padStart(3, '0')}</div>
-                                                      <div className="col-span-3">{item.productName}</div>
-                                                      <div className="col-span-1">Cái</div>
-                                                      <div className="col-span-1 text-center">{item.quantity}</div>
-                                                      <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
-                                                      <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
-                                                      <div className="col-span-1 text-center">{item.taxRate || 0}%</div>
-                                                    </div>
-                                                  ));
+                                                  return items.map((item: any, index: number) => {
+                                                    // Calculate tax amount based on taxRate and price
+                                                    const unitPrice = parseFloat(item.unitPrice || '0');
+                                                    const quantity = item.quantity || 1;
+                                                    const taxRate = parseFloat(item.taxRate || '0');
+                                                    const taxAmount = Math.floor((unitPrice * quantity * taxRate) / 100);
+                                                    
+                                                    return (
+                                                      <div key={item.id}>
+                                                        <div className="grid grid-cols-8 gap-2 text-xs p-2 border-t">
+                                                          <div className="col-span-1">{index + 1}</div>
+                                                          <div className="col-span-1">SP{String(item.productId).padStart(3, '0')}</div>
+                                                          <div className="col-span-2">{item.productName}</div>
+                                                          <div className="col-span-1">Cái</div>
+                                                          <div className="col-span-1 text-center">{item.quantity}</div>
+                                                          <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
+                                                          <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
+                                                        </div>
+                                                        <div className="grid grid-cols-8 gap-2 text-xs p-2 bg-yellow-50">
+                                                          <div className="col-span-6 text-right text-gray-600">Thuế GTGT ({taxRate}%):</div>
+                                                          <div className="col-span-2 text-right font-medium text-orange-600">
+                                                            {formatCurrency(taxAmount)}
+                                                          </div>
+                                                        </div>
+                                                      </div>
+                                                    );
+                                                  });
                                                 })()}
                                               </div>
                                             </div>
