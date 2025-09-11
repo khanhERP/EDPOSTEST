@@ -44,10 +44,10 @@ export interface CreateQRPosResponse {
 
 export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: string, clientID: string): Promise<CreateQRPosResponse> => {
   try {
-    console.log('🎯 Attempting to call external CreateQuickQr API...');
+    console.log('🎯 Attempting to call external CreateQRPos API...');
     
     // Try the new external API endpoint first
-    const response = await fetch('http://1.55.212.135:9335/api/Ec/CreateQuickQr', {
+    const response = await fetch('http://1.55.212.138:9335/api/CreateQRPos', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
     };
 
   } catch (error) {
-    console.error('❌ External CreateQuickQr API failed:', error);
+    console.error('❌ External CreateQRPos API failed:', error);
     console.log('🔄 Falling back to internal API...');
     
     // Fallback to internal API
