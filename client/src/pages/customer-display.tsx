@@ -171,24 +171,41 @@ export default function CustomerDisplayPage() {
                 setStoreInfo(data.storeInfo);
                 break;
               case 'qr_payment':
-                console.log("Customer Display: Received QR payment message:", {
+                console.log("🎯 Customer Display: Received QR payment message:", {
                   hasQrCodeUrl: !!data.qrCodeUrl,
                   amount: data.amount,
                   paymentMethod: data.paymentMethod,
                   transactionUuid: data.transactionUuid,
-                  qrCodeUrlLength: data.qrCodeUrl?.length || 0
+                  qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+                  fullData: data
                 });
-                if (data.qrCodeUrl && data.amount) {
-                  console.log("Customer Display: Setting QR payment state");
-                  setQrPayment({
+                
+                // Validate QR payment data more thoroughly
+                if (data.qrCodeUrl && data.amount && data.qrCodeUrl.length > 0) {
+                  console.log("✅ Customer Display: Valid QR payment data, setting state");
+                  
+                  const qrPaymentData = {
                     qrCodeUrl: data.qrCodeUrl,
                     amount: data.amount,
-                    paymentMethod: data.paymentMethod,
-                    transactionUuid: data.transactionUuid
-                  });
-                  console.log("Customer Display: QR payment state set successfully");
+                    paymentMethod: data.paymentMethod || "QR Code",
+                    transactionUuid: data.transactionUuid || `QR-${Date.now()}`
+                  };
+                  
+                  console.log("📱 Customer Display: Setting QR payment state:", qrPaymentData);
+                  setQrPayment(qrPaymentData);
+                  
+                  // Force re-render by clearing cart temporarily
+                  setCart([]);
+                  
+                  console.log("🎉 Customer Display: QR payment state set successfully, should display QR now");
                 } else {
-                  console.error("Customer Display: Invalid QR payment data received", data);
+                  console.error("❌ Customer Display: Invalid QR payment data received:", {
+                    hasQrCodeUrl: !!data.qrCodeUrl,
+                    qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+                    hasAmount: !!data.amount,
+                    amount: data.amount,
+                    receivedData: data
+                  });
                 }
                 break;
               case 'payment_success':

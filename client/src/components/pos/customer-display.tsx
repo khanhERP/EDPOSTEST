@@ -150,7 +150,7 @@ export function CustomerDisplay({
 
           if (data.type === 'cart_update') {
             const newCartItems = Array.isArray(data.cart) ? data.cart : [];
-            
+
             console.log('🔄 Customer Display: Updating cart items', {
               previousCount: cartItems.length,
               newCount: newCartItems.length,
@@ -177,12 +177,12 @@ export function CustomerDisplay({
               setCurrentSubtotal(calculatedSubtotal);
               setCurrentTax(calculatedTax); 
               setCurrentTotal(calculatedTotal);
-              
+
               // Update order number if available in cart update
               if (data.orderNumber) {
                 setOrderNumber(data.orderNumber);
               }
-              
+
               console.log('💰 Customer Display: Updated totals', {
                 subtotal: calculatedSubtotal,
                 tax: calculatedTax,
@@ -256,6 +256,13 @@ export function CustomerDisplay({
           {qrPayment ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
+              {console.log("🎯 Customer Display: Rendering QR payment section:", {
+                hasQrPayment: !!qrPayment,
+                qrCodeUrl: qrPayment?.qrCodeUrl?.substring(0, 50) + "...",
+                amount: qrPayment?.amount,
+                paymentMethod: qrPayment?.paymentMethod,
+                timestamp: new Date().toISOString()
+              })}
               <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
                 <div className="text-center mb-4">
                   <div className="text-4xl mb-2">📱</div>
@@ -270,17 +277,29 @@ export function CustomerDisplay({
                 <div className="bg-gray-50 rounded-2xl p-4 mb-4">
                   <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {qrPayment.amount.toLocaleString('vi-VN')} ₫
+                    {qrPayment.amount.toLocaleString("vi-VN", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}{" "}
+                    ₫
                   </p>
                 </div>
 
                 <div className="flex justify-center mb-4 flex-1 flex items-center">
                   <div className="bg-white p-4 rounded-2xl border-4 border-green-200 shadow-xl">
-                    <img
-                      src={qrPayment.qrCodeUrl}
-                      alt="QR Code thanh toán"
-                      className="w-56 h-56 max-w-full max-h-full object-contain"
-                    />
+                    {qrPayment.qrCodeUrl ? (
+                      <img
+                        src={qrPayment.qrCodeUrl}
+                        alt="QR Code thanh toán"
+                        className="w-56 h-56 max-w-full max-h-full object-contain"
+                        onLoad={() => console.log("✅ Customer Display: QR Code image loaded successfully")}
+                        onError={(e) => console.error("❌ Customer Display: QR Code image failed to load:", e)}
+                      />
+                    ) : (
+                      <div className="w-56 h-56 flex items-center justify-center bg-gray-100 rounded-lg">
+                        <p className="text-gray-500">Đang tải QR code...</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
