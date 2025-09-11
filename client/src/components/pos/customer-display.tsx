@@ -129,9 +129,7 @@ export function CustomerDisplay({
 
   // WebSocket connection setup
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(wsUrl);
+    const ws = new WebSocket('ws://localhost:3001'); // Assuming your WebSocket server runs on port 3001
 
     ws.onopen = () => {
       console.log('✅ Customer Display: Connected to WebSocket server');
