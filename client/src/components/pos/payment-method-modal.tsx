@@ -433,45 +433,50 @@ export function PaymentMethodModal({
                   clearTimeout(connectionTimeout);
                 }
 
-                // Register as POS client first
-                ws.send(JSON.stringify({
-                  type: 'register_pos',
-                  timestamp: new Date().toISOString()
-                }));
-
-                // Send QR payment message immediately after registration
-                setTimeout(() => {
-                  const qrPaymentMessage = {
-                    type: "qr_payment",
-                    qrCodeUrl: qrUrl,
-                    amount: Math.floor(orderTotal),
-                    transactionUuid: transactionUuid,
-                    paymentMethod: "QR Code",
-                    timestamp: new Date().toISOString(),
-                  };
+                // Send QR payment message directly without registration delay
+                const qrPaymentMessage = {
+                  type: "qr_payment",
+                  qrCodeUrl: qrUrl,
+                  amount: Math.floor(orderTotal),
+                  transactionUuid: transactionUuid,
+                  paymentMethod: "QR Code",
+                  timestamp: new Date().toISOString(),
+                };
+                
+                console.log(`📤 QR Payment: Sending message to customer display:`, {
+                  type: qrPaymentMessage.type,
+                  amount: qrPaymentMessage.amount,
+                  hasQrCodeUrl: !!qrPaymentMessage.qrCodeUrl,
+                  qrCodeUrlLength: qrPaymentMessage.qrCodeUrl?.length || 0,
+                  transactionUuid: qrPaymentMessage.transactionUuid
+                });
+                
+                try {
+                  ws.send(JSON.stringify(qrPaymentMessage));
+                  console.log("✅ QR Payment: Message sent successfully to customer display");
                   
-                  console.log(`📤 QR Payment: Sending message to customer display:`, {
-                    type: qrPaymentMessage.type,
-                    amount: qrPaymentMessage.amount,
-                    hasQrCodeUrl: !!qrPaymentMessage.qrCodeUrl,
-                    qrCodeUrlLength: qrPaymentMessage.qrCodeUrl?.length || 0,
-                    transactionUuid: qrPaymentMessage.transactionUuid
-                  });
-                  
-                  try {
-                    ws.send(JSON.stringify(qrPaymentMessage));
-                    console.log("✅ QR Payment: Message sent successfully to customer display");
+                  // Send a second confirmation message after a delay
+                  setTimeout(() => {
+                    const confirmationMessage = {
+                      type: "qr_payment_confirmation",
+                      originalMessage: qrPaymentMessage,
+                      timestamp: new Date().toISOString(),
+                    };
                     
-                    // Keep connection open for a bit to ensure delivery
+                    ws.send(JSON.stringify(confirmationMessage));
+                    console.log("✅ QR Payment: Confirmation message sent");
+                    
+                    // Close connection after confirmation
                     setTimeout(() => {
                       console.log("🔒 QR Payment: Closing WebSocket connection");
                       ws.close(1000, 'QR payment sent successfully');
-                    }, 1000);
-                  } catch (sendError) {
-                    console.error("❌ QR Payment: Error sending message:", sendError);
-                    ws.close();
-                  }
-                }, 100);
+                    }, 500);
+                  }, 500);
+                  
+                } catch (sendError) {
+                  console.error("❌ QR Payment: Error sending message:", sendError);
+                  ws.close();
+                }
               };
 
               ws.onerror = (error) => {

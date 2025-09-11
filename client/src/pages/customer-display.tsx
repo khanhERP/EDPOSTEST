@@ -216,39 +216,29 @@ export default function CustomerDisplayPage() {
                   fullData: data
                 });
                 
-                // Validate QR payment data more thoroughly
-                if (data.qrCodeUrl && data.amount && data.qrCodeUrl.length > 0) {
+                // More flexible QR payment data validation
+                if (data.qrCodeUrl && data.qrCodeUrl.length > 0) {
                   console.log("✅ Customer Display: Valid QR payment data, setting state immediately");
                   
                   const qrPaymentData = {
                     qrCodeUrl: data.qrCodeUrl,
-                    amount: Number(data.amount),
+                    amount: Number(data.amount) || 0,
                     paymentMethod: data.paymentMethod || "QR Code",
                     transactionUuid: data.transactionUuid || `QR-${Date.now()}`
                   };
                   
                   console.log("📱 Customer Display: Setting QR payment state:", qrPaymentData);
                   
-                  // Set QR payment state FIRST
+                  // Force immediate state update for QR payment
                   setQrPayment(qrPaymentData);
                   
                   // Clear cart AFTER setting QR payment to prevent clearing QR state
                   setTimeout(() => {
                     setCart([]);
                     console.log("🧹 Customer Display: Cart cleared after QR payment set");
-                  }, 50);
+                  }, 100);
                   
                   console.log("🎉 Customer Display: QR payment state set successfully, QR should display now");
-                  
-                  // Verify state was set properly after a delay
-                  setTimeout(() => {
-                    console.log("🔍 Customer Display: QR payment verification:", {
-                      qrPaymentSet: !!qrPayment,
-                      hasQrCodeUrl: !!qrPaymentData.qrCodeUrl,
-                      amount: qrPaymentData.amount,
-                      timestamp: new Date().toISOString()
-                    });
-                  }, 200);
                 } else {
                   console.error("❌ Customer Display: Invalid QR payment data received:", {
                     hasQrCodeUrl: !!data.qrCodeUrl,
