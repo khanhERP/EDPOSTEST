@@ -2775,17 +2775,15 @@ export function SalesChartReport() {
         const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
         const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
-        // Only count revenue for non-cancelled orders
+        // Count all orders but only include revenue for non-cancelled orders
+        customerSales[customerId].orders += 1;
+        customerSales[customerId].orderDetails.push(order);
+        
         if (order.status !== "cancelled") {
-          customerSales[customerId].orders += 1;
           customerSales[customerId].totalAmount += orderSubtotal;
           customerSales[customerId].discount += orderDiscount;
           customerSales[customerId].revenue += orderSubtotal - orderDiscount; // Doanh thu = subtotal - discount
-        } else {
-          // For cancelled orders, still count them but don't add to revenue
-          customerSales[customerId].orders += 1;
         }
-        customerSales[customerId].orderDetails.push(order);
 
         // Determine customer group based on total spending
         if (customerSales[customerId].revenue >= 1000000) {
@@ -2983,15 +2981,50 @@ export function SalesChartReport() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right border-r min-w-[140px] px-4">
-                                {formatCurrency(item.totalAmount)}
+                                {(() => {
+                                  // Tính tổng thành tiền từ các đơn hàng con không bị hủy
+                                  let customerTotalAmount = 0;
+                                  if (item.orderDetails && Array.isArray(item.orderDetails)) {
+                                    item.orderDetails.forEach(order => {
+                                      if (order.status !== "cancelled") {
+                                        customerTotalAmount += Number(order.subtotal || 0);
+                                      }
+                                    });
+                                  }
+                                  return formatCurrency(customerTotalAmount);
+                                })()}
                               </TableCell>
                               {analysisType !== "employee" && (
                                 <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
-                                  {formatCurrency(item.discount)}
+                                  {(() => {
+                                    // Tính tổng giảm giá từ các đơn hàng con không bị hủy
+                                    let customerTotalDiscount = 0;
+                                    if (item.orderDetails && Array.isArray(item.orderDetails)) {
+                                      item.orderDetails.forEach(order => {
+                                        if (order.status !== "cancelled") {
+                                          customerTotalDiscount += Number(order.discount || 0);
+                                        }
+                                      });
+                                    }
+                                    return formatCurrency(customerTotalDiscount);
+                                  })()}
                                 </TableCell>
                               )}
                               <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
-                                {formatCurrency(item.revenue)}
+                                {(() => {
+                                  // Tính tổng doanh thu từ các đơn hàng con không bị hủy
+                                  let customerTotalRevenue = 0;
+                                  if (item.orderDetails && Array.isArray(item.orderDetails)) {
+                                    item.orderDetails.forEach(order => {
+                                      if (order.status !== "cancelled") {
+                                        const orderSubtotal = Number(order.subtotal || 0);
+                                        const orderDiscount = Number(order.discount || 0);
+                                        customerTotalRevenue += Math.max(0, orderSubtotal - orderDiscount);
+                                      }
+                                    });
+                                  }
+                                  return formatCurrency(customerTotalRevenue);
+                                })()}
                               </TableCell>
                               <TableCell className="text-center min-w-[100px] px-4">
                                 <Badge
@@ -3132,12 +3165,15 @@ export function SalesChartReport() {
                         <TableCell className="text-center border-r min-w-[130px]"></TableCell>
                         <TableCell className="text-right border-r min-w-[140px] px-4">
                           {(() => {
-                            // Tính tổng thành tiền từ tất cả orderDetails
+                            // Tính tổng thành tiền từ tất cả orderDetails của tất cả khách hàng
                             let totalAmount = 0;
                             data.forEach(customer => {
                               if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
                                 customer.orderDetails.forEach(order => {
-                                  totalAmount += Number(order.subtotal || 0);
+                                  // Chỉ tính các đơn hàng không bị hủy
+                                  if (order.status !== "cancelled") {
+                                    totalAmount += Number(order.subtotal || 0);
+                                  }
                                 });
                               }
                             });
@@ -3147,12 +3183,15 @@ export function SalesChartReport() {
                         {analysisType !== "employee" && (
                           <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
                             {(() => {
-                              // Tính tổng giảm giá từ tất cả orderDetails
+                              // Tính tổng giảm giá từ tất cả orderDetails của tất cả khách hàng
                               let totalDiscount = 0;
                               data.forEach(customer => {
                                 if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
                                   customer.orderDetails.forEach(order => {
-                                    totalDiscount += Number(order.discount || 0);
+                                    // Chỉ tính các đơn hàng không bị hủy
+                                    if (order.status !== "cancelled") {
+                                      totalDiscount += Number(order.discount || 0);
+                                    }
                                   });
                                 }
                               });
@@ -3162,14 +3201,17 @@ export function SalesChartReport() {
                         )}
                         <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                           {(() => {
-                            // Tính tổng doanh thu từ tất cả orderDetails
+                            // Tính tổng doanh thu từ tất cả orderDetails của tất cả khách hàng
                             let totalRevenue = 0;
                             data.forEach(customer => {
                               if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
                                 customer.orderDetails.forEach(order => {
-                                  const orderSubtotal = Number(order.subtotal || 0);
-                                  const orderDiscount = Number(order.discount || 0);
-                                  totalRevenue += Math.max(0, orderSubtotal - orderDiscount);
+                                  // Chỉ tính các đơn hàng không bị hủy
+                                  if (order.status !== "cancelled") {
+                                    const orderSubtotal = Number(order.subtotal || 0);
+                                    const orderDiscount = Number(order.discount || 0);
+                                    totalRevenue += Math.max(0, orderSubtotal - orderDiscount);
+                                  }
                                 });
                               }
                             });
