@@ -629,10 +629,10 @@ export function SalesChartReport() {
       }
       paymentMethods[method].count += 1;
 
-      // Use EXACT same revenue calculation as dashboard: total - discount
-      const orderTotal = Number(order.total || 0);
-      const discount = Number(order.discount || 0);
-      paymentMethods[method].revenue += orderTotal - discount;
+      // Use correct revenue formula: Doanh thu = Thành tiền - Giảm giá
+      const orderSubtotal = Number(order.subtotal || 0); // Thành tiền
+      const discount = Number(order.discount || 0); // Giảm giá
+      paymentMethods[method].revenue += Math.max(0, orderSubtotal - discount); // Doanh thu = Thành tiền - Giảm giá
     });
 
     console.log("Payment methods calculated:", paymentMethods);
@@ -2175,7 +2175,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2778,11 +2777,11 @@ export function SalesChartReport() {
         // Count all orders and add to orderDetails
         customerSales[customerId].orders += 1;
         customerSales[customerId].orderDetails.push(order);
-        
+
         // Always add to totals (including cancelled orders for total amount calculation)
         customerSales[customerId].totalAmount += orderSubtotal;
         customerSales[customerId].discount += orderDiscount;
-        
+
         // Only add to revenue if not cancelled
         if (order.status !== "cancelled") {
           customerSales[customerId].revenue += Math.max(0, orderSubtotal - orderDiscount); // Doanh thu = subtotal - discount
@@ -2850,7 +2849,7 @@ export function SalesChartReport() {
                           "Nhóm KH": customer.customerGroup,
                           "Mã đơn hàng": order.orderNumber || `ORD-${order.id}`,
                           "Ngày giờ": new Date(
-                            order.orderedAt || order.createdAt
+                            order.orderedAt || order.created_at,
                           ).toLocaleString("vi-VN"),
                           "Số đơn": 1,
                           "Tổng tiền": formatCurrency(Number(order.subtotal || 0)),
