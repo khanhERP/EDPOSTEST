@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import WebSocket from 'ws';
+import WebSocket from "ws";
 import {
   tenantMiddleware,
   getTenantDatabase,
@@ -561,7 +561,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (stockValidationErrors.length > 0) {
-        console.warn("⚠️ Stock validation warnings (allowing POS transaction to proceed):", stockValidationErrors);
+        console.warn(
+          "⚠️ Stock validation warnings (allowing POS transaction to proceed):",
+          stockValidationErrors,
+        );
       }
 
       const total = subtotal + tax;
@@ -583,7 +586,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         einvoiceStatus: 0, // Default e-invoice status
         invoiceId: validatedTransaction.invoiceId || null,
         invoiceNumber: validatedTransaction.invoiceNumber || null,
-        notes: validatedTransaction.notes || `POS Transaction by ${validatedTransaction.cashierName}`,
+        notes:
+          validatedTransaction.notes ||
+          `POS Transaction by ${validatedTransaction.cashierName}`,
         paidAt: new Date(),
       };
 
@@ -704,7 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         page = "1",
         limit = "20",
         sortBy = "orderedAt",
-        sortOrder = "desc"
+        sortOrder = "desc",
       } = req.query;
 
       const pageNum = parseInt(page as string);
@@ -712,8 +717,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const offset = (pageNum - 1) * limitNum;
 
       console.log("🔍 GET /api/orders/list - Filter params:", {
-        startDate, endDate, customerName, orderNumber, customerCode,
-        status, salesChannel, page: pageNum, limit: limitNum
+        startDate,
+        endDate,
+        customerName,
+        orderNumber,
+        customerCode,
+        status,
+        salesChannel,
+        page: pageNum,
+        limit: limitNum,
       });
 
       const tenantDb = await getTenantDatabase(req);
@@ -731,22 +743,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         whereConditions.push(
           gte(orders.orderedAt, start),
-          lte(orders.orderedAt, end)
+          lte(orders.orderedAt, end),
         );
       }
 
       // Customer name filter
       if (customerName) {
-        whereConditions.push(
-          ilike(orders.customerName, `%${customerName}%`)
-        );
+        whereConditions.push(ilike(orders.customerName, `%${customerName}%`));
       }
 
       // Order number filter
       if (orderNumber) {
-        whereConditions.push(
-          ilike(orders.orderNumber, `%${orderNumber}%`)
-        );
+        whereConditions.push(ilike(orders.orderNumber, `%${orderNumber}%`));
       }
 
       // Status filter
@@ -763,15 +771,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [totalCountResult] = await database
         .select({ count: count() })
         .from(orders)
-        .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+        .where(
+          whereConditions.length > 0 ? and(...whereConditions) : undefined,
+        );
 
       const totalCount = totalCountResult?.count || 0;
       const totalPages = Math.ceil(totalCount / limitNum);
 
       // Get paginated orders
-      const orderBy = sortOrder === "asc"
-        ? asc(orders[sortBy as keyof typeof orders] || orders.orderedAt)
-        : desc(orders[sortBy as keyof typeof orders] || orders.orderedAt);
+      const orderBy =
+        sortOrder === "asc"
+          ? asc(orders[sortBy as keyof typeof orders] || orders.orderedAt)
+          : desc(orders[sortBy as keyof typeof orders] || orders.orderedAt);
 
       const ordersResult = await database
         .select({
@@ -802,7 +813,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(limitNum)
         .offset(offset);
 
-      console.log(`✅ Orders list API - Found ${ordersResult.length} orders (page ${pageNum}/${totalPages})`);
+      console.log(
+        `✅ Orders list API - Found ${ordersResult.length} orders (page ${pageNum}/${totalPages})`,
+      );
 
       res.json({
         orders: ordersResult,
@@ -812,15 +825,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalCount,
           limit: limitNum,
           hasNext: pageNum < totalPages,
-          hasPrev: pageNum > 1
-        }
+          hasPrev: pageNum > 1,
+        },
       });
-
     } catch (error) {
       console.error("❌ Error in orders list API:", error);
       res.status(500).json({
         error: "Failed to fetch orders list",
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
       });
     }
   });
@@ -847,7 +859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           startDate,
           endDate,
           startParsed: start.toISOString(),
-          endParsed: end.toISOString()
+          endParsed: end.toISOString(),
         });
 
         // Get ALL orders and filter by date range properly
@@ -857,7 +869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .orderBy(desc(orders.orderedAt), desc(orders.id));
 
         // Filter orders by date range in application layer for better control
-        const filteredOrders = allOrdersInDb.filter(order => {
+        const filteredOrders = allOrdersInDb.filter((order) => {
           if (!order.orderedAt) return false;
 
           const orderDate = new Date(order.orderedAt);
@@ -879,12 +891,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalOrdersInDb: allOrdersInDb.length,
           filteredCount: filteredOrders.length,
           dateRange: `${startDate} to ${endDate}`,
-          sampleFilteredOrder: filteredOrders[0] ? {
-            id: filteredOrders[0].id,
-            orderNumber: filteredOrders[0].orderNumber,
-            orderedAt: filteredOrders[0].orderedAt,
-            status: filteredOrders[0].status
-          } : null
+          sampleFilteredOrder: filteredOrders[0]
+            ? {
+                id: filteredOrders[0].id,
+                orderNumber: filteredOrders[0].orderNumber,
+                orderedAt: filteredOrders[0].orderedAt,
+                status: filteredOrders[0].status,
+              }
+            : null,
         });
 
         // Return all filtered orders (no pagination for reports)
@@ -998,162 +1012,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log("🔍 GET /api/employees - Starting request processing");
 
+        // Proxy route for external CreateQRPos API
+        app.post("/api/pos/create-qr-proxy", async (req, res) => {
+          try {
+            const { bankCode, clientID, ...qrRequest } = req.body;
 
-// Proxy route for external CreateQRPos API
-app.post('/api/pos/create-qr-proxy', async (req, res) => {
-  try {
-    const { bankCode, clientID, ...qrRequest } = req.body;
+            console.log("🎯 Proxying CreateQRPos request:", {
+              qrRequest,
+              bankCode,
+              clientID,
+            });
+            console.log(
+              "🌐 Target URL:",
+              `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
+            );
 
-    console.log('🎯 Proxying CreateQRPos request:', { qrRequest, bankCode, clientID });
-    console.log('🌐 Target URL:', `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`);
+            // Forward request to external API (using HTTP as requested)
+            const response = await fetch(
+              `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                  "User-Agent": "EDPOS-System/1.0",
+                },
+                body: JSON.stringify(qrRequest),
+              },
+            );
 
-    // Forward request to external API (using HTTP as requested)
-    const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'EDPOS-System/1.0',
-      },
-      body: JSON.stringify(qrRequest),
-      timeout: 30000, // 30 second timeout
-    });
+            console.log("📡 External API response status:", response.status);
+            console.log(
+              "📡 External API response headers:",
+              Object.fromEntries(response.headers.entries()),
+            );
 
-    console.log('📡 External API response status:', response.status);
-    console.log('📡 External API response headers:', Object.fromEntries(response.headers.entries()));
+            const responseText = await response.text();
+            console.log(
+              "📡 External API raw response:",
+              responseText.substring(0, 500),
+            ); // Log first 500 chars
 
-    const responseText = await response.text();
-    console.log('📡 External API raw response:', responseText.substring(0, 500)); // Log first 500 chars
+            // Check if response is HTML (error page)
+            if (
+              responseText.includes("<!DOCTYPE") ||
+              responseText.includes("<html>")
+            ) {
+              console.error("❌ External API returned HTML instead of JSON");
+              console.error(
+                "❌ This usually means the API endpoint is incorrect or the server returned an error page",
+              );
+              return res.status(502).json({
+                error: "External API returned HTML error page instead of JSON",
+                details: "API endpoint may be incorrect or unavailable",
+                apiUrl: `http://1.55.212.135:9335/api/CreateQRPos`,
+              });
+            }
 
-    // Check if response is HTML (error page)
-    if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
-      console.error('❌ External API returned HTML instead of JSON');
-      console.error('❌ This usually means the API endpoint is incorrect or the server returned an error page');
-      return res.status(502).json({ 
-        error: 'External API returned HTML error page instead of JSON',
-        details: 'API endpoint may be incorrect or unavailable',
-        apiUrl: `http://1.55.212.135:9335/api/CreateQRPos`
-      });
-    }
+            if (!response.ok) {
+              console.error("❌ External API error:", responseText);
+              return res.status(response.status).json({
+                error: responseText,
+                statusCode: response.status,
+                statusText: response.statusText,
+              });
+            }
 
-    if (!response.ok) {
-      console.error('❌ External API error:', responseText);
-      return res.status(response.status).json({ 
-        error: responseText,
-        statusCode: response.status,
-        statusText: response.statusText
-      });
-    }
+            let result;
+            try {
+              result = JSON.parse(responseText);
+            } catch (parseError) {
+              console.error(
+                "❌ Failed to parse JSON from external API:",
+                parseError,
+              );
+              return res.status(502).json({
+                error: "Invalid JSON response from external API",
+                rawResponse: responseText.substring(0, 200),
+              });
+            }
 
-    let result;
-    try {
-      result = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('❌ Failed to parse JSON from external API:', parseError);
-      return res.status(502).json({ 
-        error: 'Invalid JSON response from external API',
-        rawResponse: responseText.substring(0, 200)
-      });
-    }
+            console.log("✅ External API success:", result);
 
-    console.log('✅ External API success:', result);
+            // Return the result
+            res.json(result);
+          } catch (error) {
+            console.error("❌ Proxy API error:", error);
 
-    // Return the result
-    res.json(result);
+            // Provide more detailed error information
+            if (error.code === "ECONNREFUSED") {
+              return res.status(503).json({
+                error: "Cannot connect to external API server",
+                details: "Connection refused - API server may be down",
+                apiUrl: "http://1.55.212.135:9335/api/CreateQRPos",
+              });
+            }
 
-  } catch (error) {
-    console.error('❌ Proxy API error:', error);
+            if (error.code === "ENOTFOUND") {
+              return res.status(503).json({
+                error: "External API server not found",
+                details: "DNS lookup failed - check API server address",
+                apiUrl: "http://1.55.212.135:9335/api/CreateQRPos",
+              });
+            }
 
-    // Provide more detailed error information
-    if (error.code === 'ECONNREFUSED') {
-      return res.status(503).json({ 
-        error: 'Cannot connect to external API server',
-        details: 'Connection refused - API server may be down',
-        apiUrl: 'http://1.55.212.135:9335/api/CreateQRPos'
-      });
-    }
+            res.status(500).json({
+              error: "Internal server error while calling external API",
+              details: error.message,
+              errorType: error.constructor.name,
+            });
+          }
+        });
 
-    if (error.code === 'ENOTFOUND') {
-      return res.status(503).json({ 
-        error: 'External API server not found',
-        details: 'DNS lookup failed - check API server address',
-        apiUrl: 'http://1.55.212.135:9335/api/CreateQRPos'
-      });
-    }
+        // Add missing /api/pos/create-qr route that fallback code is trying to call
+        app.post("/api/pos/create-qr", async (req, res) => {
+          try {
+            const { bankCode, clientID } = req.query;
+            const qrRequest = req.body;
 
-    res.status(500).json({ 
-      error: 'Internal server error while calling external API',
-      details: error.message,
-      errorType: error.constructor.name
-    });
-  }
-});
+            console.log("🎯 Fallback CreateQRPos request:", {
+              qrRequest,
+              bankCode,
+              clientID,
+            });
 
-// Add missing /api/pos/create-qr route that fallback code is trying to call
-app.post('/api/pos/create-qr', async (req, res) => {
-  try {
-    const { bankCode, clientID } = req.query;
-    const qrRequest = req.body;
+            // Forward to external API
+            const response = await fetch(
+              `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                  "User-Agent": "EDPOS-System/1.0",
+                },
+                body: JSON.stringify(qrRequest),
+                timeout: 30000,
+              },
+            );
 
-    console.log('🎯 Fallback CreateQRPos request:', { qrRequest, bankCode, clientID });
+            const responseText = await response.text();
+            console.log(
+              "📡 External API raw response:",
+              responseText.substring(0, 500),
+            );
 
-    // Forward to external API
-    const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'EDPOS-System/1.0',
-      },
-      body: JSON.stringify(qrRequest),
-      timeout: 30000,
-    });
+            if (!response.ok) {
+              console.error(
+                "❌ External API error:",
+                response.status,
+                responseText.substring(0, 200),
+              );
+              return res.status(response.status).json({
+                error: responseText,
+                statusCode: response.status,
+                statusText: response.statusText,
+              });
+            }
 
-    const responseText = await response.text();
-    console.log('📡 External API raw response:', responseText.substring(0, 500));
+            // Check if response looks like HTML (external API might be returning error page)
+            if (
+              responseText.trim().startsWith("<!DOCTYPE") ||
+              responseText.trim().startsWith("<html")
+            ) {
+              console.error("❌ External API returned HTML instead of JSON");
+              return res.status(502).json({
+                error:
+                  "External API returned HTML page instead of JSON response",
+                rawResponse: responseText.substring(0, 200),
+                suggestion:
+                  "External API might be down or returning error page",
+              });
+            }
 
-    if (!response.ok) {
-      console.error('❌ External API error:', response.status, responseText.substring(0, 200));
-      return res.status(response.status).json({ 
-        error: responseText,
-        statusCode: response.status,
-        statusText: response.statusText
-      });
-    }
+            let result;
+            try {
+              result = JSON.parse(responseText);
+              console.log("✅ External API JSON parsed successfully:", result);
+            } catch (parseError) {
+              console.error(
+                "❌ Failed to parse external API response as JSON:",
+                parseError,
+              );
+              return res.status(502).json({
+                error: "Invalid JSON response from external API",
+                rawResponse: responseText.substring(0, 200),
+                parseError: parseError.message,
+              });
+            }
 
-    // Check if response looks like HTML (external API might be returning error page)
-    if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-      console.error('❌ External API returned HTML instead of JSON');
-      return res.status(502).json({ 
-        error: 'External API returned HTML page instead of JSON response',
-        rawResponse: responseText.substring(0, 200),
-        suggestion: 'External API might be down or returning error page'
-      });
-    }
-
-    let result;
-    try {
-      result = JSON.parse(responseText);
-      console.log('✅ External API JSON parsed successfully:', result);
-    } catch (parseError) {
-      console.error('❌ Failed to parse external API response as JSON:', parseError);
-      return res.status(502).json({ 
-        error: 'Invalid JSON response from external API',
-        rawResponse: responseText.substring(0, 200),
-        parseError: parseError.message
-      });
-    }
-
-    res.json(result);
-
-  } catch (error) {
-    console.error('❌ Fallback CreateQRPos API error:', error);
-    res.status(500).json({ 
-      error: 'Internal server error while calling external API',
-      details: error.message
-    });
-  }
-});
+            res.json(result);
+          } catch (error) {
+            console.error("❌ Fallback CreateQRPos API error:", error);
+            res.status(500).json({
+              error: "Internal server error while calling external API",
+              details: error.message,
+            });
+          }
+        });
 
         let tenantDb;
         try {
@@ -1586,8 +1642,15 @@ app.post('/api/pos/create-qr', async (req, res) => {
         tenantDb = null;
       }
 
-      const orders = await storage.getOrders(undefined, undefined, tenantDb, salesChannel as string);
-      console.log(`✅ Successfully fetched ${orders.length} orders${salesChannel ? ` for channel: ${salesChannel}` : ''}`);
+      const orders = await storage.getOrders(
+        undefined,
+        undefined,
+        tenantDb,
+        salesChannel as string,
+      );
+      console.log(
+        `✅ Successfully fetched ${orders.length} orders${salesChannel ? ` for channel: ${salesChannel}` : ""}`,
+      );
       res.json(orders);
     } catch (error) {
       console.error("❌ Error fetching orders:", error);
@@ -2179,7 +2242,9 @@ app.post('/api/pos/create-qr', async (req, res) => {
       let tenantDb;
       try {
         tenantDb = await getTenantDatabase(req);
-        console.log("✅ Tenant database connection obtained for all order items");
+        console.log(
+          "✅ Tenant database connection obtained for all order items",
+        );
       } catch (dbError) {
         console.error(
           "❌ Failed to get tenant database for all order items:",
@@ -2309,34 +2374,54 @@ app.post('/api/pos/create-qr', async (req, res) => {
   });
 
   // Get POS orders specifically
-  app.get("/api/orders/pos", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log("🔍 GET /api/orders/pos - Fetching POS orders");
-      const tenantDb = await getTenantDatabase(req);
+  app.get(
+    "/api/orders/pos",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log("🔍 GET /api/orders/pos - Fetching POS orders");
+        const tenantDb = await getTenantDatabase(req);
 
-      const posOrders = await storage.getOrders(undefined, undefined, tenantDb, "pos");
-      console.log(`✅ Successfully fetched ${posOrders.length} POS orders`);
-      res.json(posOrders);
-    } catch (error) {
-      console.error("❌ Error fetching POS orders:", error);
-      res.status(500).json({ error: "Failed to fetch POS orders" });
-    }
-  });
+        const posOrders = await storage.getOrders(
+          undefined,
+          undefined,
+          tenantDb,
+          "pos",
+        );
+        console.log(`✅ Successfully fetched ${posOrders.length} POS orders`);
+        res.json(posOrders);
+      } catch (error) {
+        console.error("❌ Error fetching POS orders:", error);
+        res.status(500).json({ error: "Failed to fetch POS orders" });
+      }
+    },
+  );
 
   // Get table orders specifically
-  app.get("/api/orders/table", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log("🔍 GET /api/orders/table - Fetching table orders");
-      const tenantDb = await getTenantDatabase(req);
+  app.get(
+    "/api/orders/table",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log("🔍 GET /api/orders/table - Fetching table orders");
+        const tenantDb = await getTenantDatabase(req);
 
-      const tableOrders = await storage.getOrders(undefined, undefined, tenantDb, "table");
-      console.log(`✅ Successfully fetched ${tableOrders.length} table orders`);
-      res.json(tableOrders);
-    } catch (error) {
-      console.error("❌ Error fetching table orders:", error);
-      res.status(500).json({ error: "Failed to fetch table orders" });
-    }
-  });
+        const tableOrders = await storage.getOrders(
+          undefined,
+          undefined,
+          tenantDb,
+          "table",
+        );
+        console.log(
+          `✅ Successfully fetched ${tableOrders.length} table orders`,
+        );
+        res.json(tableOrders);
+      } catch (error) {
+        console.error("❌ Error fetching table orders:", error);
+        res.status(500).json({ error: "Failed to fetch table orders" });
+      }
+    },
+  );
 
   // Add order items to existing order
   app.post("/api/orders/:orderId/items", async (req: TenantRequest, res) => {
@@ -2581,9 +2666,9 @@ app.post('/api/pos/create-qr', async (req, res) => {
   });
 
   // Current cart state for customer display
-  app.get('/api/current-cart', async (req, res) => {
+  app.get("/api/current-cart", async (req, res) => {
     try {
-      console.log('📱 Customer Display: Current cart API called');
+      console.log("📱 Customer Display: Current cart API called");
 
       // Get store settings for customer display
       const storeSettings = await storage.getStoreSettings();
@@ -2594,25 +2679,24 @@ app.post('/api/pos/create-qr', async (req, res) => {
         tax: 0,
         total: 0,
         storeInfo: storeSettings,
-        qrPayment: null
+        qrPayment: null,
       };
 
-      console.log('📱 Customer Display: Current cart API returning state:', {
+      console.log("📱 Customer Display: Current cart API returning state:", {
         cartItems: currentCartState.cart.length,
         subtotal: currentCartState.subtotal,
         tax: currentCartState.tax,
         total: currentCartState.total,
         hasStoreInfo: !!currentCartState.storeInfo,
-        storeName: currentCartState.storeInfo?.storeName
+        storeName: currentCartState.storeInfo?.storeName,
       });
 
       res.json(currentCartState);
     } catch (error) {
-      console.error('❌ Error fetching current cart:', error);
-      res.status(500).json({ error: 'Failed to fetch current cart' });
+      console.error("❌ Error fetching current cart:", error);
+      res.status(500).json({ error: "Failed to fetch current cart" });
     }
   });
-
 
   app.put("/api/store-settings", async (req: TenantRequest, res) => {
     try {
@@ -3578,7 +3662,8 @@ app.post('/api/pos/create-qr', async (req, res) => {
   // Menu Analysis API
   app.get("/api/menu-analysis", async (req, res) => {
     try {
-      const { startDate, endDate, categoryId, productType, productSearch } = req.query;
+      const { startDate, endDate, categoryId, productType, productSearch } =
+        req.query;
       const tenantDb = await getTenantDatabase(req);
 
       console.log("Menu Analysis API called with params:", {
@@ -4065,7 +4150,8 @@ app.post('/api/pos/create-qr', async (req, res) => {
   // Product Analysis API - using orders and order_items data
   app.get("/api/product-analysis", async (req: TenantRequest, res) => {
     try {
-      const { startDate, endDate, categoryId, productType, productSearch } = req.query;
+      const { startDate, endDate, categoryId, productType, productSearch } =
+        req.query;
       const tenantDb = await getTenantDatabase(req);
 
       console.log("Product Analysis API called with params:", {
@@ -4115,10 +4201,7 @@ app.post('/api/pos/create-qr', async (req, res) => {
       if (productSearch && productSearch !== "" && productSearch !== "all") {
         const searchTerm = `%${productSearch}%`;
         searchConditions.push(
-          or(
-            ilike(products.name, searchTerm),
-            ilike(products.sku, searchTerm),
-          ),
+          or(ilike(products.name, searchTerm), ilike(products.sku, searchTerm)),
         );
       }
 
@@ -4186,12 +4269,21 @@ app.post('/api/pos/create-qr', async (req, res) => {
       // Convert to array and calculate final metrics
       const productStats = Array.from(productMap.values()).map((product) => ({
         ...product,
-        averageOrderValue: product.orderCount > 0 ? product.totalRevenue / product.orderCount : 0,
+        averageOrderValue:
+          product.orderCount > 0
+            ? product.totalRevenue / product.orderCount
+            : 0,
       }));
 
       // Calculate totals
-      const totalRevenue = productStats.reduce((sum, p) => sum + p.totalRevenue, 0);
-      const totalQuantity = productStats.reduce((sum, p) => sum + p.totalQuantity, 0);
+      const totalRevenue = productStats.reduce(
+        (sum, p) => sum + p.totalRevenue,
+        0,
+      );
+      const totalQuantity = productStats.reduce(
+        (sum, p) => sum + p.totalQuantity,
+        0,
+      );
       const totalProducts = productStats.length;
 
       // Sort by revenue (descending)
@@ -4204,7 +4296,8 @@ app.post('/api/pos/create-qr', async (req, res) => {
         totalProducts,
         summary: {
           topSellingProduct: productStats[0] || null,
-          averageRevenuePerProduct: totalProducts > 0 ? totalRevenue / totalProducts : 0,
+          averageRevenuePerProduct:
+            totalProducts > 0 ? totalRevenue / totalProducts : 0,
         },
       };
 
@@ -4311,7 +4404,8 @@ app.post('/api/pos/create-qr', async (req, res) => {
         // Daily average for the period
         const daysDiff = Math.max(
           1,
-          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+            1,
         );
         const dailyAverageRevenue = periodRevenue / daysDiff;
 
@@ -4333,7 +4427,10 @@ app.post('/api/pos/create-qr', async (req, res) => {
         const hourlyOrders: { [key: number]: number } = {};
         filteredCompletedOrders.forEach((order: any) => {
           const orderDate = new Date(
-            order.orderedAt || order.createdAt || order.created_at || order.paidAt,
+            order.orderedAt ||
+              order.createdAt ||
+              order.created_at ||
+              order.paidAt,
           );
           if (!isNaN(orderDate.getTime())) {
             const hour = orderDate.getHours();
@@ -4903,29 +5000,32 @@ app.post('/api/pos/create-qr', async (req, res) => {
   });
 
   // Test customer display connection
-  app.post('/api/test-customer-display', async (req, res) => {
+  app.post("/api/test-customer-display", async (req, res) => {
     try {
       const { testCart } = req.body;
 
-      console.log('🧪 Test customer display endpoint called with cart:', testCart);
+      console.log(
+        "🧪 Test customer display endpoint called with cart:",
+        testCart,
+      );
 
       // Simulate a cart update broadcast
       if (wss) {
         const testMessage = JSON.stringify({
-          type: 'cart_update',
+          type: "cart_update",
           cart: testCart || [
             {
-              id: 'test-1',
-              product: { name: 'Test Product', price: '50000' },
+              id: "test-1",
+              product: { name: "Test Product", price: "50000" },
               quantity: 2,
-              price: '50000',
-              total: '100000'
-            }
+              price: "50000",
+              total: "100000",
+            },
           ],
           subtotal: 100000,
           tax: 10000,
           total: 110000,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
 
         let clientCount = 0;
@@ -4941,19 +5041,19 @@ app.post('/api/pos/create-qr', async (req, res) => {
         res.json({
           success: true,
           message: `Test cart update sent to ${clientCount} connected clients`,
-          clientCount
+          clientCount,
         });
       } else {
         res.status(500).json({
           success: false,
-          message: 'WebSocket server not available'
+          message: "WebSocket server not available",
         });
       }
     } catch (error) {
-      console.error('❌ Error in test customer display:', error);
+      console.error("❌ Error in test customer display:", error);
       res.status(500).json({
         success: false,
-        error: error.message
+        error: error.message,
       });
     }
   });
