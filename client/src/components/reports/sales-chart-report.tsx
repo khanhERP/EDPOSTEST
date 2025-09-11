@@ -3334,10 +3334,19 @@ export function SalesChartReport() {
                               </TableCell>
                             )}
                             <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
-                              {formatCurrency(item.orderDetails?.reduce((sum: number, order: any) => {
-                                const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
-                                return sum + orderRevenue;
-                              }, 0) || item.revenue)}
+                              {formatCurrency(
+                                item.orderDetails?.reduce(
+                                  (sum: number, order: any) => {
+                                    const orderRevenue = Math.max(
+                                      0,
+                                      Number(order.subtotal || 0) -
+                                        Number(order.discount || 0),
+                                    );
+                                    return sum + orderRevenue;
+                                  },
+                                  0,
+                                ) || item.revenue,
+                              )}
                             </TableCell>
                             <TableCell className="text-center min-w-[100px] px-4">
                               <Badge
@@ -3507,10 +3516,18 @@ export function SalesChartReport() {
                         {formatCurrency(
                           data.reduce((sum, customer) => {
                             // Calculate revenue from order details for each customer
-                            const customerRevenue = customer.orderDetails?.reduce((orderSum: number, order: any) => {
-                              const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
-                              return orderSum + orderRevenue;
-                            }, 0) || customer.revenue;
+                            const customerRevenue =
+                              customer.orderDetails?.reduce(
+                                (orderSum: number, order: any) => {
+                                  const orderRevenue = Math.max(
+                                    0,
+                                    Number(order.subtotal || 0) -
+                                      Number(order.discount || 0),
+                                  );
+                                  return orderSum + orderRevenue;
+                                },
+                                0,
+                              ) || customer.revenue;
                             return sum + customerRevenue;
                           }, 0),
                         )}
@@ -5061,7 +5078,7 @@ export function SalesChartReport() {
         <CardContent className="pt-6">
           <div className="space-y-6">
             {/* Main Filter Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-3">
               {/* Analysis Type */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
