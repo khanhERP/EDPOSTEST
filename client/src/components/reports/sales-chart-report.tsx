@@ -3132,59 +3132,21 @@ export function SalesChartReport() {
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[130px]"></TableCell>
                         <TableCell className="text-right border-r min-w-[140px] px-4">
-                          {(() => {
-                            // Tính tổng thành tiền từ tất cả orderDetails của tất cả khách hàng
-                            let totalAmount = 0;
-                            data.forEach(customer => {
-                              if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
-                                customer.orderDetails.forEach(order => {
-                                  // Chỉ tính các đơn hàng không bị hủy
-                                  if (order.status !== "cancelled") {
-                                    totalAmount += Number(order.subtotal || 0);
-                                  }
-                                });
-                              }
-                            });
-                            return formatCurrency(totalAmount);
-                          })()}
+                          {formatCurrency(
+                            data.reduce((sum, customer) => sum + customer.totalAmount, 0)
+                          )}
                         </TableCell>
                         {analysisType !== "employee" && (
                           <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
-                            {(() => {
-                              // Tính tổng giảm giá từ tất cả orderDetails của tất cả khách hàng
-                              let totalDiscount = 0;
-                              data.forEach(customer => {
-                                if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
-                                  customer.orderDetails.forEach(order => {
-                                    // Chỉ tính các đơn hàng không bị hủy
-                                    if (order.status !== "cancelled") {
-                                      totalDiscount += Number(order.discount || 0);
-                                    }
-                                  });
-                                }
-                              });
-                              return formatCurrency(totalDiscount);
-                            })()}
+                            {formatCurrency(
+                              data.reduce((sum, customer) => sum + customer.discount, 0)
+                            )}
                           </TableCell>
                         )}
                         <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
-                          {(() => {
-                            // Tính tổng doanh thu từ tất cả orderDetails của tất cả khách hàng
-                            let totalRevenue = 0;
-                            data.forEach(customer => {
-                              if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
-                                customer.orderDetails.forEach(order => {
-                                  // Chỉ tính các đơn hàng không bị hủy
-                                  if (order.status !== "cancelled") {
-                                    const orderSubtotal = Number(order.subtotal || 0);
-                                    const orderDiscount = Number(order.discount || 0);
-                                    totalRevenue += Math.max(0, orderSubtotal - orderDiscount);
-                                  }
-                                });
-                              }
-                            });
-                            return formatCurrency(totalRevenue);
-                          })()}
+                          {formatCurrency(
+                            data.reduce((sum, customer) => sum + customer.revenue, 0)
+                          )}
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] px-4"></TableCell>
                       </TableRow>
