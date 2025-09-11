@@ -1006,7 +1006,7 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
     
     console.log('🎯 Proxying CreateQRPos request:', { qrRequest, bankCode, clientID });
     
-    // Forward request to external API
+    // Forward request to external API (using HTTP as requested)
     const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
       method: 'POST',
       headers: {
