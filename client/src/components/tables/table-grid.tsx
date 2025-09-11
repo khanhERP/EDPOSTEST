@@ -2768,11 +2768,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   }
 
                   const grandTotal = subtotal + totalTax;
+                  
+                  // Get discount amount from selected order
+                  const discountAmount = selectedOrder ? Number(selectedOrder.discount || 0) : 0;
+                  const finalTotal = Math.max(0, grandTotal - discountAmount);
 
                   console.log(`📊 Table Grid - Final totals:`, {
                     subtotal,
                     totalTax,
                     grandTotal,
+                    discountAmount,
+                    finalTotal,
                     itemsCount: orderItems?.length
                   });
 
@@ -2792,10 +2798,18 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           {Math.abs(Math.floor(totalTax)).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Giảm giá:</span>
+                          <span className="font-medium text-red-600">
+                            -{Math.floor(discountAmount).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-lg font-bold border-t pt-2">
                         <span>{t("orders.totalAmount")}:</span>
                         <span className="text-green-600">
-                          {Math.floor(subtotal + Math.abs(totalTax)).toLocaleString("vi-VN")} ₫
+                          {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>
