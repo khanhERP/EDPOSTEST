@@ -251,9 +251,21 @@ export function SalesReport() {
 
       // Total orders should be based on unique orders, not items
       const totalOrders = paidOrders.length;
-      const totalCustomers = new Set(paidOrders.map((item: any) =>
-        item.customerId || item.customerName || `order_${item.id}`
-      )).size;
+      
+      // Calculate total unique customers from all paid orders
+      const uniqueCustomers = new Set<string>();
+      paidOrders.forEach((order: any) => {
+        if (order.customerId && order.customerId !== "guest") {
+          uniqueCustomers.add(order.customerId);
+        } else if (order.customerName && order.customerName !== "Khách hàng lẻ" && order.customerName !== "Khách lẻ") {
+          uniqueCustomers.add(order.customerName);
+        } else {
+          // For guest customers, count each order as a separate customer
+          uniqueCustomers.add(`guest_${order.id}`);
+        }
+      });
+      
+      const totalCustomers = uniqueCustomers.size;
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       const paymentMethodsArray = Object.entries(paymentMethods).map(([method, data]) => ({
