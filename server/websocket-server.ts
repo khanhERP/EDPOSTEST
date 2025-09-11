@@ -216,6 +216,26 @@ export function initializeWebSocketServer(server: Server) {
           });
           
           console.log(`✅ QR payment broadcasted to ${qrBroadcastCount} total clients (${customerDisplayCount} customer displays)`);
+          
+          // Additional broadcast specifically to customer displays after a short delay
+          setTimeout(() => {
+            let additionalBroadcastCount = 0;
+            clients.forEach(client => {
+              if (client.readyState === WebSocket.OPEN) {
+                const isCustomerDisplay = (client as any).isCustomerDisplay || (client as any).clientType === 'customer_display';
+                if (isCustomerDisplay) {
+                  try {
+                    console.log(`📤 Additional QR broadcast to customer display`);
+                    client.send(JSON.stringify(qrMessage));
+                    additionalBroadcastCount++;
+                  } catch (error) {
+                    console.error('❌ Error in additional QR broadcast:', error);
+                  }
+                }
+              }
+            });
+            console.log(`🔄 Additional QR payment broadcast sent to ${additionalBroadcastCount} customer displays`);
+          }, 500);
         } else if (data.type === 'customer_display_connected') {
           console.log('👥 Customer display connected - sending current state');
           // Mark this connection as customer display

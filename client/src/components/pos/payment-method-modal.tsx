@@ -415,7 +415,7 @@ export function PaymentMethodModal({
           setQrCodeUrl(qrUrl);
           setShowQRCode(true);
 
-          // Send QR payment info to customer display via WebSocket - IMPROVED VERSION
+          // Send QR payment info to customer display via WebSocket - ENHANCED VERSION
           const sendQRPaymentToDisplay = () => {
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -423,20 +423,24 @@ export function PaymentMethodModal({
               console.log("🎯 QR Payment: Connecting to WebSocket for customer display:", wsUrl);
               
               const ws = new WebSocket(wsUrl);
-              let messageAttempts = 0;
-              const maxAttempts = 3;
+              let connectionTimeout: NodeJS.Timeout;
 
               ws.onopen = () => {
                 console.log("✅ QR Payment: WebSocket connected successfully");
                 
-                const sendMessage = () => {
-                  if (messageAttempts >= maxAttempts) {
-                    console.error("❌ QR Payment: Max attempts reached");
-                    ws.close();
-                    return;
-                  }
+                // Clear connection timeout since we're connected
+                if (connectionTimeout) {
+                  clearTimeout(connectionTimeout);
+                }
 
-                  messageAttempts++;
+                // Register as POS client first
+                ws.send(JSON.stringify({
+                  type: 'register_pos',
+                  timestamp: new Date().toISOString()
+                }));
+
+                // Send QR payment message immediately after registration
+                setTimeout(() => {
                   const qrPaymentMessage = {
                     type: "qr_payment",
                     qrCodeUrl: qrUrl,
@@ -446,7 +450,7 @@ export function PaymentMethodModal({
                     timestamp: new Date().toISOString(),
                   };
                   
-                  console.log(`📤 QR Payment: Sending message (attempt ${messageAttempts}):`, {
+                  console.log(`📤 QR Payment: Sending message to customer display:`, {
                     type: qrPaymentMessage.type,
                     amount: qrPaymentMessage.amount,
                     hasQrCodeUrl: !!qrPaymentMessage.qrCodeUrl,
@@ -456,27 +460,25 @@ export function PaymentMethodModal({
                   
                   try {
                     ws.send(JSON.stringify(qrPaymentMessage));
-                    console.log("✅ QR Payment: Message sent successfully");
+                    console.log("✅ QR Payment: Message sent successfully to customer display");
                     
-                    // Close after successful send
+                    // Keep connection open for a bit to ensure delivery
                     setTimeout(() => {
                       console.log("🔒 QR Payment: Closing WebSocket connection");
-                      ws.close();
-                    }, 2000);
+                      ws.close(1000, 'QR payment sent successfully');
+                    }, 1000);
                   } catch (sendError) {
                     console.error("❌ QR Payment: Error sending message:", sendError);
-                    if (messageAttempts < maxAttempts) {
-                      setTimeout(sendMessage, 1000);
-                    }
+                    ws.close();
                   }
-                };
-
-                // Wait for connection to stabilize before sending
-                setTimeout(sendMessage, 300);
+                }, 100);
               };
 
               ws.onerror = (error) => {
                 console.error("❌ QR Payment: WebSocket error:", error);
+                if (connectionTimeout) {
+                  clearTimeout(connectionTimeout);
+                }
               };
 
               ws.onclose = (event) => {
@@ -486,31 +488,21 @@ export function PaymentMethodModal({
                   wasClean: event.wasClean
                 });
                 
-                // Only retry if close was unexpected and we haven't sent successfully
-                if (event.code !== 1000 && messageAttempts === 0) {
-                  console.log("🔄 QR Payment: Retrying connection...");
-                  setTimeout(() => {
-                    sendQRPaymentToDisplay();
-                  }, 1500);
+                if (connectionTimeout) {
+                  clearTimeout(connectionTimeout);
                 }
               };
 
-              // Timeout fallback
-              setTimeout(() => {
+              // Set connection timeout
+              connectionTimeout = setTimeout(() => {
                 if (ws.readyState === WebSocket.CONNECTING) {
-                  console.warn("⚠️ QR Payment: Connection timeout, retrying...");
+                  console.warn("⚠️ QR Payment: Connection timeout");
                   ws.close();
-                  setTimeout(sendQRPaymentToDisplay, 1000);
                 }
               }, 5000);
 
             } catch (error) {
               console.error("❌ QR Payment: Failed to create WebSocket connection:", error);
-              // Retry after error
-              setTimeout(() => {
-                console.log("🔄 QR Payment: Retrying after connection error...");
-                sendQRPaymentToDisplay();
-              }, 2000);
             }
           };
 

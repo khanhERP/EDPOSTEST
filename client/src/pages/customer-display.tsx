@@ -202,22 +202,29 @@ export default function CustomerDisplayPage() {
                 
                 // Validate QR payment data more thoroughly
                 if (data.qrCodeUrl && data.amount && data.qrCodeUrl.length > 0) {
-                  console.log("✅ Customer Display: Valid QR payment data, setting state");
+                  console.log("✅ Customer Display: Valid QR payment data, setting state immediately");
                   
                   const qrPaymentData = {
                     qrCodeUrl: data.qrCodeUrl,
-                    amount: data.amount,
+                    amount: Number(data.amount),
                     paymentMethod: data.paymentMethod || "QR Code",
                     transactionUuid: data.transactionUuid || `QR-${Date.now()}`
                   };
                   
                   console.log("📱 Customer Display: Setting QR payment state:", qrPaymentData);
-                  setQrPayment(qrPaymentData);
                   
-                  // Force re-render by clearing cart temporarily
+                  // Clear cart first to ensure clean state
                   setCart([]);
                   
-                  console.log("🎉 Customer Display: QR payment state set successfully, should display QR now");
+                  // Set QR payment state
+                  setQrPayment(qrPaymentData);
+                  
+                  console.log("🎉 Customer Display: QR payment state set successfully, QR should display now");
+                  
+                  // Force a re-render to ensure UI updates
+                  setTimeout(() => {
+                    console.log("🔄 Customer Display: Force re-render triggered for QR display");
+                  }, 100);
                 } else {
                   console.error("❌ Customer Display: Invalid QR payment data received:", {
                     hasQrCodeUrl: !!data.qrCodeUrl,

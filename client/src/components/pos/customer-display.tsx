@@ -292,12 +292,21 @@ export function CustomerDisplay({
                         src={qrPayment.qrCodeUrl}
                         alt="QR Code thanh toán"
                         className="w-56 h-56 max-w-full max-h-full object-contain"
-                        onLoad={() => console.log("✅ Customer Display: QR Code image loaded successfully")}
-                        onError={(e) => console.error("❌ Customer Display: QR Code image failed to load:", e)}
+                        onLoad={() => {
+                          console.log("✅ Customer Display: QR Code image loaded successfully");
+                          console.log("🎯 Customer Display: QR Code URL preview:", qrPayment.qrCodeUrl.substring(0, 50) + "...");
+                        }}
+                        onError={(e) => {
+                          console.error("❌ Customer Display: QR Code image failed to load:", e);
+                          console.error("❌ Customer Display: Failed QR URL:", qrPayment.qrCodeUrl);
+                        }}
                       />
                     ) : (
                       <div className="w-56 h-56 flex items-center justify-center bg-gray-100 rounded-lg">
-                        <p className="text-gray-500">Đang tải QR code...</p>
+                        <div className="text-center">
+                          <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div>
+                          <p className="text-gray-500">Đang tải QR code...</p>
+                        </div>
                       </div>
                     )}
                   </div>
