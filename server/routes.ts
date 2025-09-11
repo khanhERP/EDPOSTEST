@@ -693,15 +693,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API lấy danh sách đơn hàng với filter và pagination
   app.get("/api/orders/list", async (req: TenantRequest, res) => {
     try {
-      const { 
-        startDate, 
-        endDate, 
-        customerName, 
-        orderNumber, 
+      const {
+        startDate,
+        endDate,
+        customerName,
+        orderNumber,
         customerCode,
         status,
         salesChannel,
-        page = "1", 
+        page = "1",
         limit = "20",
         sortBy = "orderedAt",
         sortOrder = "desc"
@@ -769,7 +769,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalPages = Math.ceil(totalCount / limitNum);
 
       // Get paginated orders
-      const orderBy = sortOrder === "asc" 
+      const orderBy = sortOrder === "asc"
         ? asc(orders[sortBy as keyof typeof orders] || orders.orderedAt)
         : desc(orders[sortBy as keyof typeof orders] || orders.orderedAt);
 
@@ -818,7 +818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("❌ Error in orders list API:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch orders list",
         message: error instanceof Error ? error.message : "Unknown error"
       });
@@ -3972,9 +3972,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           productSku: products.sku,
           categoryId: products.categoryId,
           categoryName: categories.name,
-          unitPrice: orderItemsTable.unitPrice,
+          unitPrice: orderItemsTable.unitPrice, // This is the pre-tax price
           quantity: orderItemsTable.quantity,
-          total: orderItemsTable.total,
+          total: orderItemsTable.total, // This should also be pre-tax total
           orderId: orderItemsTable.orderId,
           orderDate: orders.orderedAt,
           orderStatus: orders.status,
@@ -4804,7 +4804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health/db", async (req, res) => {
     try {
       // Test basic connection with simple query
-      const result = await db.execute(sql`SELECT 
+      const result = await db.execute(sql`SELECT
         current_database() as database_name,
         current_user as user_name,
         version() as postgres_version,
