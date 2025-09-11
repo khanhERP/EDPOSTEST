@@ -394,17 +394,10 @@ export function PaymentMethodModal({
 
         // Generate QR code from the received QR data
         if (qrResponse.qrData) {
-          // Decode base64 qrData to get the actual QR content
-          let qrContent = qrResponse.qrData;
-          try {
-            // Try to decode if it's base64 encoded
-            qrContent = atob(qrResponse.qrData);
-          } catch (e) {
-            // If decode fails, use the raw qrData
-            console.log("Using raw qrData as it is not base64 encoded");
-          }
-
-          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
+          console.log("✅ Using actual QR data from CreateQRPos API:", qrResponse.qrData);
+          
+          // Use the raw qrData directly - it's already in the correct format for VietQR
+          const qrUrl = await QRCodeLib.toDataURL(qrResponse.qrData, {
             width: 256,
             margin: 2,
             color: {
@@ -516,9 +509,11 @@ export function PaymentMethodModal({
           sendQRPaymentToDisplay();
         } else {
           console.error("No QR data received from API");
-          // Fallback to mock QR code
-          const fallbackData = `Payment via QR\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
-          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+          // Fallback: try to use qrDataDecode if available
+          const fallbackQrData = qrResponse.qrDataDecode || `00020101021238630010A000000727013300069711330119NPIPIFPHAN0100004190208QRIBFTTA53037045408${Math.floor(orderTotal)}.005802VN6304`;
+          console.log("📄 Using fallback QR data:", fallbackQrData);
+          
+          const qrUrl = await QRCodeLib.toDataURL(fallbackQrData, {
             width: 256,
             margin: 2,
             color: {
@@ -583,7 +578,7 @@ export function PaymentMethodModal({
         }
       } catch (error) {
         console.error("Error calling CreateQRPos API:", error);
-        // Fallback to mock QR code on error
+        // Fallback to VietQR format on error
         try {
           const orderTotal =
             receipt?.exactTotal ??
@@ -591,8 +586,11 @@ export function PaymentMethodModal({
             orderInfo?.total ??
             total ??
             0;
-          const fallbackData = `Payment via QR\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
-          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+          // Generate a valid VietQR format string
+          const fallbackQrData = `00020101021238630010A000000727013300069711330119NPIPIFPHAN0100004190208QRIBFTTA53037045408${Math.floor(orderTotal)}.005802VN6304`;
+          console.log("📄 Using error fallback VietQR data:", fallbackQrData);
+          
+          const qrUrl = await QRCodeLib.toDataURL(fallbackQrData, {
             width: 256,
             margin: 2,
             color: {
