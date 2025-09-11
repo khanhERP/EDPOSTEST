@@ -827,36 +827,7 @@ export function ShoppingCart({
           </span>
           {cart.length > 0 && (
             <button
-              onClick={() => {
-                console.log("🧹 Shopping Cart: Clear cart button clicked");
-                
-                // Clear the cart
-                onClearCart();
-                
-                // Immediately broadcast empty cart to customer display
-                if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                  const clearCartMessage = {
-                    type: 'cart_update',
-                    cart: [],
-                    subtotal: 0,
-                    tax: 0,
-                    total: 0,
-                    orderNumber: '',
-                    timestamp: new Date().toISOString()
-                  };
-                  
-                  console.log("📡 Shopping Cart: Broadcasting cart clear to customer display");
-                  
-                  try {
-                    wsRef.current.send(JSON.stringify(clearCartMessage));
-                  } catch (error) {
-                    console.error("📡 Shopping Cart: Error broadcasting cart clear:", error);
-                  }
-                }
-                
-                // Also trigger the broadcast update after a short delay to ensure state is updated
-                setTimeout(() => broadcastCartUpdate(), 100);
-              }}
+              onClick={onClearCart}
               className="text-red-500 hover:text-red-700 transition-colors"
             >
               {t("pos.clearCart")}
