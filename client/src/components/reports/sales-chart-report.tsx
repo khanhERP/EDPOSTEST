@@ -2095,6 +2095,9 @@ export function SalesChartReport() {
                       <TableCell className="text-center min-w-[120px] px-4">
                         -
                       </TableCell>
+                      <TableCell className="text-center min-w-[120px] px-4">
+                        -
+                      </TableCell>
                       <TableCell className="text-center min-w-[100px] px-4">
                         -
                       </TableCell>
@@ -2172,7 +2175,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2676,8 +2678,13 @@ export function SalesChartReport() {
 
       const filteredOrders = orders.filter((order: any) => {
         const orderDate = new Date(
-          order.orderedAt || order.created_at || order.createdAt,
+          order.orderedAt || order.createdAt || order.created_at,
         );
+
+        if (isNaN(orderDate.getTime())) {
+          return false;
+        }
+
         const dateMatch = orderDate >= start && orderDate <= end;
 
         const customerMatch =
@@ -2685,10 +2692,7 @@ export function SalesChartReport() {
           (order.customerName &&
             order.customerName
               .toLowerCase()
-              .includes(customerSearch.toLowerCase())) ||
-          (order.customerPhone && order.customerPhone.includes(customerSearch)) ||
-          (order.customerId &&
-            order.customerId.toString().includes(customerSearch));
+              .includes(customerSearch.toLowerCase()));
 
         // Status filter logic
         let statusMatch = true;
@@ -2969,7 +2973,7 @@ export function SalesChartReport() {
                                 <Badge
                                   variant={
                                     item.customerGroup ===
-                                    t("reports.reports.vip")
+                                    t("reports.vip")
                                       ? "default"
                                       : "secondary"
                                   }
@@ -2981,11 +2985,11 @@ export function SalesChartReport() {
                                 {formatCurrency(item.totalAmount)}
                               </TableCell>
                               {analysisType !== "employee" && (
-                                <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
+                                <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
                                   {formatCurrency(item.discount)}
                                 </TableCell>
                               )}
-                              <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
+                              <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                                 {formatCurrency(item.revenue)}
                               </TableCell>
                               <TableCell className="text-center min-w-[100px] px-4">
@@ -3056,7 +3060,7 @@ export function SalesChartReport() {
                                       )}
                                     </TableCell>
                                     {analysisType !== "employee" && (
-                                      <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
+                                      <TableCell className="text-right border-r text-red-600 text-sm min-w-[120px] px-4">
                                         {formatCurrency(
                                           Number(order.discount || 0),
                                         )}
@@ -3106,33 +3110,33 @@ export function SalesChartReport() {
                     {data.length > 0 && (
                       <TableRow className="bg-gray-100 font-bold border-t-2">
                         <TableCell className="text-center border-r w-12"></TableCell>
-                        <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
+                        <TableCell className="text-center border-r bg-green-50 min-w-[120px] px-4">
                           {t("common.total")}
                         </TableCell>
-                        <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
+                        <TableCell className="text-center border-r bg-green-50 min-w-[150px] px-4">
                           {data.length} khách hàng
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[100px] px-4">
                           {data
-                            .reduce((sum, item) => sum + item.orders, 0)
+                            .reduce((sum, customer) => sum + customer.orders, 0)
                             .toLocaleString()}
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[130px]"></TableCell>
                         <TableCell className="text-right border-r min-w-[140px] px-4">
                           {formatCurrency(
-                            data.reduce((sum, item) => sum + item.totalAmount, 0),
+                            data.reduce((sum, customer) => sum + customer.totalAmount, 0),
                           )}
                         </TableCell>
                         {analysisType !== "employee" && (
-                          <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
+                          <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
                             {formatCurrency(
-                              data.reduce((sum, item) => sum + item.discount, 0),
+                              data.reduce((sum, customer) => sum + customer.discount, 0),
                             )}
                           </TableCell>
                         )}
-                        <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
+                        <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
                           {formatCurrency(
-                            data.reduce((sum, item) => sum + item.revenue, 0),
+                            data.reduce((sum, customer) => sum + customer.revenue, 0),
                           )}
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] px-4"></TableCell>
