@@ -2556,7 +2556,7 @@ export function SalesChartReport() {
                                         └
                                       </div>
                                     </TableCell>
-                                    <TableCell className="text-center bg-blue-50 text-blue-600 text-sm">
+                                    <TableCell className="text-center border-r bg-blue-50 text-blue-600 text-sm min-w-[120px] px-4">
                                       <button
                                         onClick={() => {
                                           const orderNumber = order.orderNumber || `ORD-${order.id}`;
@@ -2568,7 +2568,7 @@ export function SalesChartReport() {
                                         {order.orderNumber || `ORD-${order.id}`}
                                       </button>
                                     </TableCell>
-                                    <TableCell className="text-center text-sm">
+                                    <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
                                       <div>
                                         {new Date(
                                           order.orderedAt || order.createdAt || order.created_at
@@ -2583,27 +2583,60 @@ export function SalesChartReport() {
                                         })}
                                       </div>
                                     </TableCell>
-                                    <TableCell className="text-center text-sm">
+                                    <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
                                       <Badge variant="outline" className="text-xs">
                                         {order.customerName || "Khách lẻ"}
                                       </Badge>
                                     </TableCell>
-                                    <TableCell className="text-right text-sm">
+                                    <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                       {formatCurrency(
                                         Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0))
                                       )}
                                     </TableCell>
-                                    <TableCell className="text-right text-orange-600 text-sm">
+                                    <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
                                       {formatCurrency(Number(order.discount || 0))}
                                     </TableCell>
-                                    <TableCell className="text-right text-sm">
+                                    <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
                                       {formatCurrency(
                                         Math.max(0, Number(order.total || 0) - Number(order.subtotal || 0))
                                       )}
                                     </TableCell>
-                                    <TableCell className="text-right font-bold text-blue-600 text-sm">
+                                    <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                       {formatCurrency(Number(order.total || 0))}
                                     </TableCell>
+                                    {(() => {
+                                      // Get all unique payment methods from all employee data
+                                      const allPaymentMethods = new Set();
+                                      if (data && Array.isArray(data)) {
+                                        data.forEach((employee: any) => {
+                                          if (employee.orders && Array.isArray(employee.orders)) {
+                                            employee.orders.forEach((order: any) => {
+                                              const method = order.paymentMethod || "cash";
+                                              allPaymentMethods.add(method);
+                                            });
+                                          }
+                                        });
+                                      }
+
+                                      const paymentMethodsArray = Array.from(allPaymentMethods).sort();
+                                      const orderPaymentMethod = order.paymentMethod || "cash";
+                                      const orderTotal = Number(order.total || 0);
+
+                                      return (
+                                        <>
+                                          {paymentMethodsArray.map((method: any) => (
+                                            <TableCell
+                                              key={method}
+                                              className="text-right border-r text-sm min-w-[130px] px-4"
+                                            >
+                                              {orderPaymentMethod === method
+                                                ? formatCurrency(orderTotal)
+                                                : "-"}
+                                            </TableCell>
+                                          ))}
+                                        </>
+                                      );
+                                    })()}
                                   </TableRow>
                                 ))}
                             </>
