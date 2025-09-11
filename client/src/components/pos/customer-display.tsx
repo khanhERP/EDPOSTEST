@@ -76,11 +76,27 @@ export function CustomerDisplay({
   }, []);
 
   useEffect(() => {
-    // Update local state if props change
-    setCartItems(cart);
+    // CRITICAL: Force immediate state update with validation
+    console.log("Customer Display Component: Props changed", {
+      cartLength: cart.length,
+      subtotal: subtotal,
+      tax: tax,
+      total: total
+    });
+
+    // Always update local state when props change
+    setCartItems([...cart]); // Force new array reference
     setCurrentSubtotal(subtotal);
     setCurrentTax(tax);
     setCurrentTotal(total);
+
+    // If cart is empty, ensure all totals are reset
+    if (cart.length === 0) {
+      console.log("Customer Display Component: Cart is empty, resetting all totals");
+      setCurrentSubtotal(0);
+      setCurrentTax(0);
+      setCurrentTotal(0);
+    }
   }, [cart, subtotal, tax, total]);
 
 
@@ -133,23 +149,47 @@ export function CustomerDisplay({
           console.log('📩 Customer Display: Received WebSocket message:', data);
 
           if (data.type === 'cart_update') {
-            setCartItems(data.cart || []);
+            const newCartItems = Array.isArray(data.cart) ? data.cart : [];
+            
+            console.log('🔄 Customer Display: Updating cart items', {
+              previousCount: cartItems.length,
+              newCount: newCartItems.length,
+              isEmpty: newCartItems.length === 0
+            });
 
-            // Always use calculated values to ensure accuracy
-            const calculatedSubtotal = calculateCorrectSubtotal();
-            const calculatedTax = calculateCorrectTax();
-            const calculatedTotal = calculatedSubtotal + calculatedTax;
+            // CRITICAL: Force immediate cart update
+            setCartItems([...newCartItems]); // Force new array reference
 
-            // Use calculated values instead of potentially incorrect WebSocket data
-            setCurrentSubtotal(calculatedSubtotal);
-            setCurrentTax(calculatedTax); 
-            setCurrentTotal(calculatedTotal);
-            // Update order number if available in cart update
-            if (data.orderNumber) {
-              setOrderNumber(data.orderNumber);
+            // If cart is empty, reset everything immediately
+            if (newCartItems.length === 0) {
+              console.log('🧹 Customer Display: Cart is empty, resetting all values');
+              setCurrentSubtotal(0);
+              setCurrentTax(0);
+              setCurrentTotal(0);
+              setOrderNumber('');
+            } else {
+              // Always use calculated values to ensure accuracy
+              const calculatedSubtotal = calculateCorrectSubtotal();
+              const calculatedTax = calculateCorrectTax();
+              const calculatedTotal = calculatedSubtotal + calculatedTax;
+
+              // Use calculated values instead of potentially incorrect WebSocket data
+              setCurrentSubtotal(calculatedSubtotal);
+              setCurrentTax(calculatedTax); 
+              setCurrentTotal(calculatedTotal);
+              
+              // Update order number if available in cart update
+              if (data.orderNumber) {
+                setOrderNumber(data.orderNumber);
+              }
+              
+              console.log('💰 Customer Display: Updated totals', {
+                subtotal: calculatedSubtotal,
+                tax: calculatedTax,
+                total: calculatedTotal,
+                orderNumber: data.orderNumber
+              });
             }
-            console.log('📦 Customer Display: Received order number:', data.orderNumber);
-            console.log('💰 Customer Display: Received correct subtotal (pre-tax):', data.subtotal);
           } else if (data.type === 'order_created') {
             console.log('🆕 Customer Display: New order created:', data.order);
             setCurrentOrder(data.order);

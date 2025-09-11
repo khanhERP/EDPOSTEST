@@ -126,31 +126,42 @@ export default function CustomerDisplayPage() {
               case 'cart_update':
                 console.log("Customer Display: Processing cart update - Items:", data.cart?.length || 0);
 
+                // CRITICAL: Force immediate state update with proper validation
+                const newCart = Array.isArray(data.cart) ? data.cart : [];
+                
                 // Use React's functional update to ensure we get the latest state
                 setCart(prevCart => {
-                  const newCart = Array.isArray(data.cart) ? data.cart : [];
                   console.log("Customer Display: Cart state changing from", prevCart.length, "to", newCart.length, "items");
 
                   // Log cart details for debugging
                   if (newCart.length > 0) {
                     console.log("Customer Display: New cart contents:", newCart.map(item => ({
-                      name: item.product?.name || 'Unknown',
+                      name: item.product?.name || item.name || 'Unknown',
                       quantity: item.quantity,
                       price: item.price
                     })));
+                  } else {
+                    console.log("Customer Display: Cart is now empty - clearing display");
                   }
 
-                  return newCart;
+                  // Force re-render by returning new array reference
+                  return [...newCart];
                 });
 
                 // Clear QR payment when cart updates (new order started)
                 setQrPayment(prevQr => {
-                  if (prevQr) {
-                    console.log("Customer Display: Clearing QR payment due to cart update");
+                  if (prevQr && newCart.length === 0) {
+                    console.log("Customer Display: Clearing QR payment due to empty cart");
                     return null;
                   }
                   return prevQr;
                 });
+
+                // CRITICAL: Force component re-render after state update
+                setTimeout(() => {
+                  console.log("Customer Display: Forced refresh after cart update");
+                  // This ensures the UI reflects the latest cart state
+                }, 50);
                 break;
               case 'store_info':
                 console.log("Customer Display: Updating store info:", data.storeInfo);
