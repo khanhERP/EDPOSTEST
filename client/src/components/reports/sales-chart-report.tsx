@@ -2175,7 +2175,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2849,7 +2848,7 @@ export function SalesChartReport() {
                           "Nhóm KH": customer.customerGroup,
                           "Mã đơn hàng": order.orderNumber || `ORD-${order.id}`,
                           "Ngày giờ": new Date(
-                            order.orderedAt || order.createdAt || order.created_at
+                            order.orderedAt || order.createdAt
                           ).toLocaleString("vi-VN"),
                           "Số đơn": 1,
                           "Tổng tiền": formatCurrency(Number(order.subtotal || 0)),
@@ -3119,64 +3118,61 @@ export function SalesChartReport() {
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[100px] px-4">
                           {(() => {
-                            // Tính tổng đơn hàng từ tất cả các orderDetails của khách hàng
-                            const totalOrdersFromDetails = data.reduce((sum, customer) => {
+                            // Tính tổng số đơn hàng từ tất cả orderDetails
+                            let totalOrders = 0;
+                            data.forEach(customer => {
                               if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
-                                return sum + customer.orderDetails.length;
+                                totalOrders += customer.orderDetails.length;
                               }
-                              return sum + customer.orders; // Fallback to orders count
-                            }, 0);
-                            return totalOrdersFromDetails.toLocaleString();
+                            });
+                            return totalOrders.toLocaleString();
                           })()}
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[130px]"></TableCell>
                         <TableCell className="text-right border-r min-w-[140px] px-4">
                           {(() => {
-                            // Tính tổng thành tiền từ tất cả các orderDetails
-                            const totalAmountFromDetails = data.reduce((sum, customer) => {
+                            // Tính tổng thành tiền từ tất cả orderDetails
+                            let totalAmount = 0;
+                            data.forEach(customer => {
                               if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
-                                const customerDetailTotal = customer.orderDetails.reduce((customerSum, order) => {
-                                  return customerSum + Number(order.subtotal || 0);
-                                }, 0);
-                                return sum + customerDetailTotal;
+                                customer.orderDetails.forEach(order => {
+                                  totalAmount += Number(order.subtotal || 0);
+                                });
                               }
-                              return sum + customer.totalAmount; // Fallback
-                            }, 0);
-                            return formatCurrency(totalAmountFromDetails);
+                            });
+                            return formatCurrency(totalAmount);
                           })()}
                         </TableCell>
                         {analysisType !== "employee" && (
                           <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
                             {(() => {
-                              // Tính tổng giảm giá từ tất cả các orderDetails
-                              const totalDiscountFromDetails = data.reduce((sum, customer) => {
+                              // Tính tổng giảm giá từ tất cả orderDetails
+                              let totalDiscount = 0;
+                              data.forEach(customer => {
                                 if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
-                                  const customerDiscountTotal = customer.orderDetails.reduce((customerSum, order) => {
-                                    return customerSum + Number(order.discount || 0);
-                                  }, 0);
-                                  return sum + customerDiscountTotal;
+                                  customer.orderDetails.forEach(order => {
+                                    totalDiscount += Number(order.discount || 0);
+                                  });
                                 }
-                                return sum + customer.discount; // Fallback
-                              }, 0);
-                              return formatCurrency(totalDiscountFromDetails);
+                              });
+                              return formatCurrency(totalDiscount);
                             })()}
                           </TableCell>
                         )}
-                        <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
+                        <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                           {(() => {
-                            // Tính tổng doanh thu từ tất cả các orderDetails
-                            const totalRevenueFromDetails = data.reduce((sum, customer) => {
+                            // Tính tổng doanh thu từ tất cả orderDetails
+                            let totalRevenue = 0;
+                            data.forEach(customer => {
                               if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
-                                const customerRevenueTotal = customer.orderDetails.reduce((customerSum, order) => {
+                                customer.orderDetails.forEach(order => {
                                   const orderSubtotal = Number(order.subtotal || 0);
                                   const orderDiscount = Number(order.discount || 0);
-                                  return customerSum + Math.max(0, orderSubtotal - orderDiscount);
-                                }, 0);
-                                return sum + customerRevenueTotal;
+                                  totalRevenue += Math.max(0, orderSubtotal - orderDiscount);
+                                });
                               }
-                              return sum + customer.revenue; // Fallback
-                            }, 0);
-                            return formatCurrency(totalRevenueFromDetails);
+                            });
+                            return formatCurrency(totalRevenue);
                           })()}
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] px-4"></TableCell>
