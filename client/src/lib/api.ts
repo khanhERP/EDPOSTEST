@@ -48,7 +48,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
     console.log('📤 Request payload:', { ...request, bankCode, clientID });
     
     // Try the new external API endpoint first
-    const response = await fetch('http://1.55.212.138:9335/api/CreateQRPos', {
+    const response = await fetch('http://1.55.212.135:9335/api/CreateQRPos', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
