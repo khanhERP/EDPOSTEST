@@ -1613,7 +1613,7 @@ export function SalesChartReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Báo cáo chi tiết bán hàng
+            {t("reports.salesDetailReport")}
           </CardTitle>
           <CardDescription className="flex items-center justify-between">
             <span>
