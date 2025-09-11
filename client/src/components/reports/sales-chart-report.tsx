@@ -1674,10 +1674,7 @@ export function SalesChartReport() {
                 // Add grand total summary
                 exportData.push({
                   Loại: "TỔNG CỘNG",
-                  Ngày: "",
-                  "Số đơn bán": `${groupedOrders.length} đơn hàng`,
-                  "Mã khách hàng": "",
-                  "Tên khách hàng": "",
+                  "Mã đơn bán": `${groupedOrders.length} đơn hàng`,
                   "Mã hàng": "",
                   "Tên hàng": "",
                   ĐVT: "",
@@ -2095,9 +2092,6 @@ export function SalesChartReport() {
                       <TableCell className="text-center min-w-[120px] px-4">
                         -
                       </TableCell>
-                      <TableCell className="text-center min-w-[120px] px-4">
-                        -
-                      </TableCell>
                       <TableCell className="text-center min-w-[100px] px-4">
                         -
                       </TableCell>
@@ -2175,7 +2169,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2962,7 +2955,7 @@ export function SalesChartReport() {
                                   {isExpanded ? "−" : "+"}
                                 </button>
                               </TableCell>
-                              <TableCell className="text-center border-r bg-green-50 font-medium min-w-[120px] px-4">
+                              <TableCell className="text-center border-r bg-green-50 min-w-[120px] px-4">
                                 {item.customerId}
                               </TableCell>
                               <TableCell className="text-center border-r bg-green-50 min-w-[150px] px-4">
@@ -3070,7 +3063,7 @@ export function SalesChartReport() {
                                     )}
                                     <TableCell className="text-right border-r text-sm min-w-[140px] px-4">
                                       {formatCurrency(
-                                        Number(order.subtotal || 0),
+                                        Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0))
                                       )}
                                     </TableCell>
                                     <TableCell className="text-center text-center text-sm min-w-[100px] px-4">
@@ -3120,14 +3113,14 @@ export function SalesChartReport() {
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[100px] px-4">
                           {(() => {
-                            // Tính tổng số đơn hàng từ tất cả orderDetails
-                            let totalOrders = 0;
+                            // Calculate total number of orders from all order details
+                            let totalOrdersCount = 0;
                             data.forEach(customer => {
                               if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
-                                totalOrders += customer.orderDetails.length;
+                                totalOrdersCount += customer.orderDetails.length;
                               }
                             });
-                            return totalOrders.toLocaleString();
+                            return totalOrdersCount.toLocaleString();
                           })()}
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[130px]"></TableCell>
@@ -3146,7 +3139,7 @@ export function SalesChartReport() {
                         <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                           {formatCurrency(
                             (() => {
-                              // Tính tổng doanh thu từ tất cả các đơn hàng con của tất cả khách hàng
+                              // Calculate total revenue from all child orders of all customers
                               let totalRevenueFromChildOrders = 0;
                               data.forEach(customer => {
                                 if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
