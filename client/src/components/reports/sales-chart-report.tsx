@@ -3118,27 +3118,66 @@ export function SalesChartReport() {
                           {data.length} khách hàng
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[100px] px-4">
-                          {data
-                            .reduce((sum, customer) => sum + customer.orders, 0)
-                            .toLocaleString()}
+                          {(() => {
+                            // Tính tổng đơn hàng từ tất cả các orderDetails của khách hàng
+                            const totalOrdersFromDetails = data.reduce((sum, customer) => {
+                              if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
+                                return sum + customer.orderDetails.length;
+                              }
+                              return sum + customer.orders; // Fallback to orders count
+                            }, 0);
+                            return totalOrdersFromDetails.toLocaleString();
+                          })()}
                         </TableCell>
                         <TableCell className="text-center border-r min-w-[130px]"></TableCell>
                         <TableCell className="text-right border-r min-w-[140px] px-4">
-                          {formatCurrency(
-                            data.reduce((sum, customer) => sum + customer.totalAmount, 0),
-                          )}
+                          {(() => {
+                            // Tính tổng thành tiền từ tất cả các orderDetails
+                            const totalAmountFromDetails = data.reduce((sum, customer) => {
+                              if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
+                                const customerDetailTotal = customer.orderDetails.reduce((customerSum, order) => {
+                                  return customerSum + Number(order.subtotal || 0);
+                                }, 0);
+                                return sum + customerDetailTotal;
+                              }
+                              return sum + customer.totalAmount; // Fallback
+                            }, 0);
+                            return formatCurrency(totalAmountFromDetails);
+                          })()}
                         </TableCell>
                         {analysisType !== "employee" && (
                           <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
-                            {formatCurrency(
-                              data.reduce((sum, customer) => sum + customer.discount, 0),
-                            )}
+                            {(() => {
+                              // Tính tổng giảm giá từ tất cả các orderDetails
+                              const totalDiscountFromDetails = data.reduce((sum, customer) => {
+                                if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
+                                  const customerDiscountTotal = customer.orderDetails.reduce((customerSum, order) => {
+                                    return customerSum + Number(order.discount || 0);
+                                  }, 0);
+                                  return sum + customerDiscountTotal;
+                                }
+                                return sum + customer.discount; // Fallback
+                              }, 0);
+                              return formatCurrency(totalDiscountFromDetails);
+                            })()}
                           </TableCell>
                         )}
                         <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
-                          {formatCurrency(
-                            data.reduce((sum, customer) => sum + customer.revenue, 0),
-                          )}
+                          {(() => {
+                            // Tính tổng doanh thu từ tất cả các orderDetails
+                            const totalRevenueFromDetails = data.reduce((sum, customer) => {
+                              if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
+                                const customerRevenueTotal = customer.orderDetails.reduce((customerSum, order) => {
+                                  const orderSubtotal = Number(order.subtotal || 0);
+                                  const orderDiscount = Number(order.discount || 0);
+                                  return customerSum + Math.max(0, orderSubtotal - orderDiscount);
+                                }, 0);
+                                return sum + customerRevenueTotal;
+                              }
+                              return sum + customer.revenue; // Fallback
+                            }, 0);
+                            return formatCurrency(totalRevenueFromDetails);
+                          })()}
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] px-4"></TableCell>
                       </TableRow>
