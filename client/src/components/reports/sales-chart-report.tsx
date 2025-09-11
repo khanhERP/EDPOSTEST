@@ -2177,9 +2177,7 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(prev + 1, totalPages),
-                      )
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2195,9 +2193,9 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </CardContent>
       </Card>
     );
   };
@@ -2428,7 +2426,9 @@ export function SalesChartReport() {
                     "Giảm giá": formatCurrency(
                       data.reduce((sum, item) => sum + item.discount, 0),
                     ),
-                    Thuế: formatCurrency(data.reduce((sum, item) => sum + item.tax, 0)),
+                    Thuế: formatCurrency(
+                      data.reduce((sum, item) => sum + item.tax, 0),
+                    ),
                     "Tổng cộng": formatCurrency(
                       data.reduce((sum, item) => sum + item.total, 0),
                     ),
@@ -3500,7 +3500,10 @@ export function SalesChartReport() {
                       )}
                       <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                         {formatCurrency(
-                          data.reduce((sum, customer) => sum + customer.revenue, 0),
+                          data.reduce(
+                            (sum, customer) => sum + customer.revenue,
+                            0,
+                          ),
                         )}
                       </TableCell>
                       <TableCell className="text-center min-w-[100px] px-4"></TableCell>
