@@ -421,13 +421,13 @@ export function PaymentMethodModal({
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
               console.log("🎯 QR Payment: Connecting to WebSocket for customer display:", wsUrl);
-
+              
               const ws = new WebSocket(wsUrl);
               let connectionTimeout: NodeJS.Timeout;
 
               ws.onopen = () => {
                 console.log("✅ QR Payment: WebSocket connected successfully");
-
+                
                 // Clear connection timeout since we're connected
                 if (connectionTimeout) {
                   clearTimeout(connectionTimeout);
@@ -449,7 +449,7 @@ export function PaymentMethodModal({
                     paymentMethod: "QR Code",
                     timestamp: new Date().toISOString(),
                   };
-
+                  
                   console.log(`📤 QR Payment: Sending message to customer display:`, {
                     type: qrPaymentMessage.type,
                     amount: qrPaymentMessage.amount,
@@ -457,11 +457,11 @@ export function PaymentMethodModal({
                     qrCodeUrlLength: qrPaymentMessage.qrCodeUrl?.length || 0,
                     transactionUuid: qrPaymentMessage.transactionUuid
                   });
-
+                  
                   try {
                     ws.send(JSON.stringify(qrPaymentMessage));
                     console.log("✅ QR Payment: Message sent successfully to customer display");
-
+                    
                     // Keep connection open for a bit to ensure delivery
                     setTimeout(() => {
                       console.log("🔒 QR Payment: Closing WebSocket connection");
@@ -487,7 +487,7 @@ export function PaymentMethodModal({
                   reason: event.reason,
                   wasClean: event.wasClean
                 });
-
+                
                 if (connectionTimeout) {
                   clearTimeout(connectionTimeout);
                 }
@@ -509,15 +509,6 @@ export function PaymentMethodModal({
           // Execute the function to send QR payment info
           console.log("🚀 QR Payment: Starting QR payment transmission to customer display");
           sendQRPaymentToDisplay();
-
-          // Additional verification log
-          console.log("🔍 QR Payment: Final data being sent:", {
-            hasQrUrl: !!qrUrl,
-            qrUrlLength: qrUrl?.length || 0,
-            orderTotal: orderTotal,
-            transactionUuid: transactionUuid,
-            timestamp: new Date().toISOString()
-          });
         } else {
           console.error("No QR data received from API");
           // Fallback to mock QR code
@@ -540,7 +531,7 @@ export function PaymentMethodModal({
                 window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
               console.log("Fallback QR Payment: Attempting to connect to WebSocket:", wsUrl);
-
+              
               const ws = new WebSocket(wsUrl);
 
               ws.onopen = () => {
@@ -556,7 +547,7 @@ export function PaymentMethodModal({
                 console.log("Fallback QR Payment: Sending message:", fallbackMessage);
                 ws.send(JSON.stringify(fallbackMessage));
                 console.log("Fallback QR Payment: QR payment info sent to customer display successfully");
-
+                
                 setTimeout(() => {
                   console.log("Fallback QR Payment: Closing WebSocket connection");
                   ws.close();
@@ -1004,7 +995,7 @@ export function PaymentMethodModal({
         tax: receiptTax.toString(),
         total: receiptTotal.toString(),
         notes: `POS Cash Payment - Amount: ${cashAmountInput}, Change: ${finalChange}`,
-        paidAt: new Date().toISOString(),
+        paidAt: new Date(),
       };
 
       // Prepare order items

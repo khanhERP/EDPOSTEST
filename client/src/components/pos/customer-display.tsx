@@ -31,17 +31,6 @@ export function CustomerDisplay({
   const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Add logging for QR payment prop changes
-  useEffect(() => {
-    console.log("🎯 Customer Display Component: QR payment prop changed:", {
-      hasQrPayment: !!qrPayment,
-      qrCodeUrl: qrPayment?.qrCodeUrl ? qrPayment.qrCodeUrl.substring(0, 50) + "..." : null,
-      amount: qrPayment?.amount,
-      paymentMethod: qrPayment?.paymentMethod,
-      timestamp: new Date().toISOString()
-    });
-  }, [qrPayment]);
-
   const [cartItems, setCartItems] = useState<CartItem[]>(cart);
   const [currentSubtotal, setCurrentSubtotal] = useState(subtotal);
   const [currentTax, setCurrentTax] = useState(tax);

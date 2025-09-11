@@ -236,6 +236,59 @@ export default function CustomerDisplayPage() {
                 console.log("Customer Display: Updating store info:", data.storeInfo);
                 setStoreInfo(data.storeInfo);
                 break;
+              case 'qr_payment':
+                console.log("🎯 Customer Display: Received QR payment message:", {
+                  hasQrCodeUrl: !!data.qrCodeUrl,
+                  amount: data.amount,
+                  paymentMethod: data.paymentMethod,
+                  transactionUuid: data.transactionUuid,
+                  qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+                  fullData: data
+                });
+                
+                // Validate QR payment data more thoroughly
+                if (data.qrCodeUrl && data.amount && data.qrCodeUrl.length > 0) {
+                  console.log("✅ Customer Display: Valid QR payment data, setting state immediately");
+                  
+                  const qrPaymentData = {
+                    qrCodeUrl: data.qrCodeUrl,
+                    amount: Number(data.amount),
+                    paymentMethod: data.paymentMethod || "QR Code",
+                    transactionUuid: data.transactionUuid || `QR-${Date.now()}`
+                  };
+                  
+                  console.log("📱 Customer Display: Setting QR payment state:", qrPaymentData);
+                  
+                  // Set QR payment state FIRST
+                  setQrPayment(qrPaymentData);
+                  
+                  // Clear cart AFTER setting QR payment to prevent clearing QR state
+                  setTimeout(() => {
+                    setCart([]);
+                    console.log("🧹 Customer Display: Cart cleared after QR payment set");
+                  }, 50);
+                  
+                  console.log("🎉 Customer Display: QR payment state set successfully, QR should display now");
+                  
+                  // Verify state was set properly after a delay
+                  setTimeout(() => {
+                    console.log("🔍 Customer Display: QR payment verification:", {
+                      qrPaymentSet: !!qrPayment,
+                      hasQrCodeUrl: !!qrPaymentData.qrCodeUrl,
+                      amount: qrPaymentData.amount,
+                      timestamp: new Date().toISOString()
+                    });
+                  }, 200);
+                } else {
+                  console.error("❌ Customer Display: Invalid QR payment data received:", {
+                    hasQrCodeUrl: !!data.qrCodeUrl,
+                    qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+                    hasAmount: !!data.amount,
+                    amount: data.amount,
+                    receivedData: data
+                  });
+                }
+                break;
               case 'payment_success':
                 console.log("Customer Display: Payment completed, clearing QR");
                 setQrPayment(null);
