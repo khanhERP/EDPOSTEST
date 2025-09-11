@@ -936,39 +936,68 @@ export function ShoppingCart({
                       onClick={() => {
                         console.log(`🗑️ Shopping Cart: Remove item button clicked for item ${item.id}`);
                         
-                        // Remove the item
-                        onRemoveItem(parseInt(item.id));
-                        
-                        // Check if this is the last item in cart
+                        // Get updated cart after removing this item
+                        const updatedCart = cart.filter(cartItem => cartItem.id !== item.id);
                         const isLastItem = cart.length === 1;
                         
-                        if (isLastItem) {
-                          console.log("🧹 Shopping Cart: Removing last item, broadcasting empty cart");
-                          
-                          // Immediately broadcast empty cart to customer display
-                          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                            const emptyCartMessage = {
-                              type: 'cart_update',
-                              cart: [],
-                              subtotal: 0,
-                              tax: 0,
-                              total: 0,
-                              orderNumber: '',
-                              timestamp: new Date().toISOString()
-                            };
-                            
-                            console.log("📡 Shopping Cart: Broadcasting empty cart to customer display");
-                            
-                            try {
-                              wsRef.current.send(JSON.stringify(emptyCartMessage));
-                            } catch (error) {
-                              console.error("📡 Shopping Cart: Error broadcasting empty cart:", error);
+                        console.log(`🔍 Shopping Cart: Cart will change from ${cart.length} to ${updatedCart.length} items`);
+                        
+                        // Calculate updated totals if there are remaining items
+                        let newSubtotal = 0;
+                        let newTax = 0;
+                        let newTotal = 0;
+                        
+                        if (updatedCart.length > 0) {
+                          newSubtotal = updatedCart.reduce((sum, cartItem) => sum + parseFloat(cartItem.total), 0);
+                          newTax = updatedCart.reduce((sum, cartItem) => {
+                            if (cartItem.taxRate && parseFloat(cartItem.taxRate) > 0) {
+                              const basePrice = parseFloat(cartItem.price);
+                              if (cartItem.afterTaxPrice && cartItem.afterTaxPrice !== null && cartItem.afterTaxPrice !== "") {
+                                const afterTaxPrice = parseFloat(cartItem.afterTaxPrice);
+                                const taxPerItem = afterTaxPrice - basePrice;
+                                return sum + Math.floor(taxPerItem * cartItem.quantity);
+                              }
                             }
+                            return sum;
+                          }, 0);
+                          newTotal = Math.round(newSubtotal + newTax);
+                        }
+                        
+                        // Immediately broadcast the updated cart state
+                        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                          const cartUpdateMessage = {
+                            type: 'cart_update',
+                            cart: updatedCart,
+                            subtotal: newSubtotal,
+                            tax: newTax,
+                            total: newTotal,
+                            orderNumber: updatedCart.length > 0 ? (activeOrderId || `ORD-${Date.now()}`) : '',
+                            timestamp: new Date().toISOString()
+                          };
+                          
+                          console.log("📡 Shopping Cart: Broadcasting cart update immediately:", {
+                            itemsCount: updatedCart.length,
+                            subtotal: newSubtotal,
+                            tax: newTax,
+                            total: newTotal,
+                            isLastItem: isLastItem
+                          });
+                          
+                          try {
+                            wsRef.current.send(JSON.stringify(cartUpdateMessage));
+                          } catch (error) {
+                            console.error("📡 Shopping Cart: Error broadcasting cart update:", error);
                           }
                         }
                         
-                        // Also trigger the broadcast update after a short delay to ensure state is updated
-                        setTimeout(() => broadcastCartUpdate(), 100);
+                        // Remove the item from local state
+                        onRemoveItem(parseInt(item.id));
+                        
+                        // Backup broadcast after state update
+                        setTimeout(() => {
+                          console.log("📡 Shopping Cart: Backup broadcast after state update");
+                          broadcastCartUpdate();
+                        }, 150);
                       }}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
                     >
