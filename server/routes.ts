@@ -1089,6 +1089,57 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
   }
 });
 
+// Add missing /api/pos/create-qr route that fallback code is trying to call
+app.post('/api/pos/create-qr', async (req, res) => {
+  try {
+    const { bankCode, clientID } = req.query;
+    const qrRequest = req.body;
+    
+    console.log('🎯 Fallback CreateQRPos request:', { qrRequest, bankCode, clientID });
+    
+    // Forward to external API
+    const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'EDPOS-System/1.0',
+      },
+      body: JSON.stringify(qrRequest),
+      timeout: 30000,
+    });
+    
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      return res.status(response.status).json({ 
+        error: responseText,
+        statusCode: response.status,
+        statusText: response.statusText
+      });
+    }
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      return res.status(502).json({ 
+        error: 'Invalid JSON response from external API',
+        rawResponse: responseText.substring(0, 200)
+      });
+    }
+    
+    res.json(result);
+    
+  } catch (error) {
+    console.error('❌ Fallback CreateQRPos API error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error while calling external API',
+      details: error.message
+    });
+  }
+});
+
         let tenantDb;
         try {
           tenantDb = await getTenantDatabase(req);
