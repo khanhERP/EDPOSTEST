@@ -1110,8 +1110,10 @@ app.post('/api/pos/create-qr', async (req, res) => {
     });
 
     const responseText = await response.text();
+    console.log('📡 External API raw response:', responseText.substring(0, 500));
 
     if (!response.ok) {
+      console.error('❌ External API error:', response.status, responseText.substring(0, 200));
       return res.status(response.status).json({ 
         error: responseText,
         statusCode: response.status,
@@ -1119,13 +1121,26 @@ app.post('/api/pos/create-qr', async (req, res) => {
       });
     }
 
+    // Check if response looks like HTML (external API might be returning error page)
+    if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+      console.error('❌ External API returned HTML instead of JSON');
+      return res.status(502).json({ 
+        error: 'External API returned HTML page instead of JSON response',
+        rawResponse: responseText.substring(0, 200),
+        suggestion: 'External API might be down or returning error page'
+      });
+    }
+
     let result;
     try {
       result = JSON.parse(responseText);
+      console.log('✅ External API JSON parsed successfully:', result);
     } catch (parseError) {
+      console.error('❌ Failed to parse external API response as JSON:', parseError);
       return res.status(502).json({ 
         error: 'Invalid JSON response from external API',
-        rawResponse: responseText.substring(0, 200)
+        rawResponse: responseText.substring(0, 200),
+        parseError: parseError.message
       });
     }
 

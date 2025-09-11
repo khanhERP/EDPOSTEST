@@ -61,6 +61,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
     });
 
     console.log('📡 Proxy API response status:', response.status);
+    console.log('📡 Proxy API response headers:', response.headers.get('content-type'));
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -68,8 +69,16 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
       throw new Error(`Proxy API error: ${response.status} ${response.statusText}`);
     }
 
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const responseText = await response.text();
+      console.error('❌ Proxy API returned non-JSON response:', responseText.substring(0, 200));
+      throw new Error('External API returned HTML instead of JSON');
+    }
+
     const result = await response.json();
-    console.log('✅ Proxy API success:', result);
+    console.log('✅ Proxy API success response:', result);
     
     // Transform response to match expected format
     return {
@@ -92,22 +101,37 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
         body: JSON.stringify(request),
       });
 
+      console.log('📡 Fallback API response status:', fallbackResponse.status);
+      console.log('📡 Fallback API response headers:', fallbackResponse.headers.get('content-type'));
+
       if (!fallbackResponse.ok) {
         const errorText = await fallbackResponse.text();
         console.error('❌ Fallback API error:', fallbackResponse.status, errorText);
         throw new Error(`Failed to create QR payment: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
       }
 
+      // Check if fallback response is JSON
+      const fallbackContentType = fallbackResponse.headers.get('content-type');
+      if (!fallbackContentType || !fallbackContentType.includes('application/json')) {
+        const fallbackResponseText = await fallbackResponse.text();
+        console.error('❌ Fallback API returned non-JSON response:', fallbackResponseText.substring(0, 200));
+        throw new Error('Fallback API also returned HTML instead of JSON');
+      }
+
       const fallbackResult = await fallbackResponse.json();
-      console.log('✅ Fallback API success:', fallbackResult);
+      console.log('✅ Fallback API success response:', fallbackResult);
       
-      return fallbackResult;
+      return {
+        qrDataDecode: fallbackResult.qrDataDecode || fallbackResult.qrData || '',
+        qrUrl: fallbackResult.qrUrl || '',
+        qrData: fallbackResult.qrData || fallbackResult.qrDataDecode || ''
+      };
     } catch (fallbackError) {
       console.error('❌ Both proxy and fallback APIs failed:', fallbackError);
       
-      // Return mock QR data as last resort
-      console.log('🎭 Using mock QR data as last resort');
-      const mockQRData = `PAYMENT|${request.depositAmt}|${request.transactionUuid}|${Date.now()}`;
+      // Return mock QR data as last resort with VietQR format
+      console.log('🎭 Using mock VietQR data as last resort');
+      const mockQRData = `00020101021238630010A000000727013300069711330119NPIPIFPHAN0100004190208QRIBFTTA53037045408${request.depositAmt}.005802VN6304`;
       return {
         qrDataDecode: mockQRData,
         qrUrl: '',
