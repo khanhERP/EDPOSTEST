@@ -670,6 +670,11 @@ export function ReceiptModal({
                   });
 
                   const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
+                  
+                  // Get discount from cart items if available (for preview mode, discount might come from parent)
+                  const discount = cartItems.reduce((sum, item) => {
+                    return sum + (parseFloat(item.discount || "0"));
+                  }, 0);
 
                   return (
                     <>
@@ -685,10 +690,18 @@ export function ReceiptModal({
                           {Math.floor(tax).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
+                      {discount > 0 && (
+                        <div className="flex justify-between text-sm text-red-600">
+                          <span>Giảm giá:</span>
+                          <span className="font-medium">
+                            -{Math.floor(discount).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(total).toLocaleString("vi-VN")} ₫
+                          {Math.round(Math.max(0, total - discount)).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>
@@ -699,14 +712,17 @@ export function ReceiptModal({
                   const dbSubtotal = parseFloat(receipt.subtotal || "0");
                   const dbTax = parseFloat(receipt.tax || "0");
                   const dbTotal = parseFloat(receipt.total || "0");
+                  const dbDiscount = parseFloat(receipt.discount || "0");
 
                   console.log("🔍 Receipt Modal: Using EXACT database values:", {
                     rawSubtotal: receipt.subtotal,
                     rawTax: receipt.tax,
                     rawTotal: receipt.total,
+                    rawDiscount: receipt.discount,
                     parsedSubtotal: dbSubtotal,
                     parsedTax: dbTax,
                     parsedTotal: dbTotal,
+                    parsedDiscount: dbDiscount,
                     receiptId: receipt.id,
                     source: "database_exact"
                   });
@@ -725,10 +741,18 @@ export function ReceiptModal({
                           {Math.floor(dbTax).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
+                      {dbDiscount > 0 && (
+                        <div className="flex justify-between text-sm text-red-600">
+                          <span>Giảm giá:</span>
+                          <span className="font-medium">
+                            -{Math.floor(dbDiscount).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(dbTotal).toLocaleString("vi-VN")} ₫
+                          {Math.round(Math.max(0, dbTotal - dbDiscount)).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>
