@@ -2175,7 +2175,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -3145,7 +3144,23 @@ export function SalesChartReport() {
                         )}
                         <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                           {formatCurrency(
-                            data.reduce((sum, customer) => sum + customer.revenue, 0)
+                            (() => {
+                              // Tính tổng doanh thu từ tất cả các đơn hàng con của tất cả khách hàng
+                              let totalRevenueFromChildOrders = 0;
+                              data.forEach(customer => {
+                                if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
+                                  customer.orderDetails.forEach(order => {
+                                    const orderSubtotal = Number(order.subtotal || 0);
+                                    const orderDiscount = Number(order.discount || 0);
+                                    const orderRevenue = Math.max(0, orderSubtotal - orderDiscount);
+                                    if (order.status !== "cancelled") {
+                                      totalRevenueFromChildOrders += orderRevenue;
+                                    }
+                                  });
+                                }
+                              });
+                              return totalRevenueFromChildOrders;
+                            })()
                           )}
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] px-4"></TableCell>
