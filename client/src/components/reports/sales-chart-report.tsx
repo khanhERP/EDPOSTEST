@@ -3505,10 +3505,14 @@ export function SalesChartReport() {
                       )}
                       <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                         {formatCurrency(
-                          data.reduce(
-                            (sum, customer) => sum + customer.revenue,
-                            0,
-                          ),
+                          data.reduce((sum, customer) => {
+                            // Calculate revenue from order details for each customer
+                            const customerRevenue = customer.orderDetails?.reduce((orderSum: number, order: any) => {
+                              const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
+                              return orderSum + orderRevenue;
+                            }, 0) || customer.revenue;
+                            return sum + customerRevenue;
+                          }, 0),
                         )}
                       </TableCell>
                       <TableCell className="text-center min-w-[100px] px-4"></TableCell>
