@@ -304,6 +304,14 @@ export default function CustomerDisplayPage() {
                 setQrPayment(null);
                 console.log("Customer Display: QR payment force cleared to restore cart view");
                 break;
+              case 'connection_established':
+                console.log("Customer Display: WebSocket connection confirmed");
+                // Just acknowledge the connection, no action needed
+                break;
+              case 'pong':
+                console.log("Customer Display: Pong received");
+                // Heartbeat response, no action needed
+                break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);
             }
@@ -316,17 +324,30 @@ export default function CustomerDisplayPage() {
           console.log("Customer Display: WebSocket closed:", event.code, event.reason);
           isConnected = false;
           // Only reconnect if not manually closed
-          if (event.code !== 1000) {
+          if (event.code !== 1000 && event.code !== 1001) {
             reconnectTimer = setTimeout(() => {
               console.log("Customer Display: Attempting to reconnect...");
               connectWebSocket();
-            }, 1000); // Reduced reconnect delay
+            }, 2000); // Increased delay for stability
           }
         };
 
         ws.onerror = (error) => {
           console.error("Customer Display: WebSocket error:", error);
           isConnected = false;
+          
+          // Close current connection and attempt reconnect
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.close();
+          }
+          
+          // Attempt reconnect after error
+          if (!reconnectTimer) {
+            reconnectTimer = setTimeout(() => {
+              console.log("Customer Display: Reconnecting after error...");
+              connectWebSocket();
+            }, 3000);
+          }
         };
       } catch (error) {
         console.error("Customer Display: Failed to create WebSocket:", error);
