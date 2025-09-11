@@ -124,44 +124,52 @@ export default function CustomerDisplayPage() {
 
             switch (data.type) {
               case 'cart_update':
-                console.log("Customer Display: Processing cart update - Items:", data.cart?.length || 0);
+                console.log("Customer Display: Processing cart update - Items:", data.cart?.length || 0, "Force update:", data.forceUpdate, "Attempt:", data.attempt);
 
-                // CRITICAL: Force immediate state update with proper validation
-                const newCart = Array.isArray(data.cart) ? data.cart : [];
+                // CRITICAL: Force immediate state update with enhanced validation
+                const newCart = Array.isArray(data.cart) ? [...data.cart] : [];
                 
-                // Use React's functional update to ensure we get the latest state
+                // IMMEDIATE: Set cart state with force update flag
                 setCart(prevCart => {
-                  console.log("Customer Display: Cart state changing from", prevCart.length, "to", newCart.length, "items");
-
+                  console.log("Customer Display: FORCE Cart state changing from", prevCart.length, "to", newCart.length, "items");
+                  
+                  // Special handling for empty cart - ensure complete reset
+                  if (newCart.length === 0) {
+                    console.log("Customer Display: 🧹 FORCE CLEARING - Cart is now empty");
+                    return [];
+                  }
+                  
                   // Log cart details for debugging
-                  if (newCart.length > 0) {
-                    console.log("Customer Display: New cart contents:", newCart.map(item => ({
-                      name: item.product?.name || item.name || 'Unknown',
-                      quantity: item.quantity,
-                      price: item.price
-                    })));
-                  } else {
-                    console.log("Customer Display: Cart is now empty - clearing display");
-                  }
+                  console.log("Customer Display: New cart contents:", newCart.map(item => ({
+                    id: item.id,
+                    name: item.product?.name || item.name || 'Unknown',
+                    quantity: item.quantity,
+                    price: item.price
+                  })));
 
-                  // Force re-render by returning new array reference
-                  return [...newCart];
+                  // Return completely new array reference to force re-render
+                  return newCart.map(item => ({ ...item }));
                 });
 
-                // Clear QR payment when cart updates (new order started)
-                setQrPayment(prevQr => {
-                  if (prevQr && newCart.length === 0) {
-                    console.log("Customer Display: Clearing QR payment due to empty cart");
-                    return null;
-                  }
-                  return prevQr;
-                });
+                // IMMEDIATE: Clear QR payment for empty cart
+                if (newCart.length === 0) {
+                  console.log("Customer Display: 🧹 FORCE CLEARING QR payment");
+                  setQrPayment(null);
+                }
 
-                // CRITICAL: Force component re-render after state update
-                setTimeout(() => {
-                  console.log("Customer Display: Forced refresh after cart update");
-                  // This ensures the UI reflects the latest cart state
-                }, 50);
+                // CRITICAL: Multiple forced re-renders to ensure UI updates
+                [10, 50, 100, 200].forEach((delay, index) => {
+                  setTimeout(() => {
+                    console.log(`Customer Display: Force refresh ${index + 1} after ${delay}ms`);
+                    // Force a state update to trigger re-render
+                    setCart(current => {
+                      if (current.length === newCart.length) {
+                        return [...newCart.map(item => ({ ...item }))];
+                      }
+                      return current;
+                    });
+                  }, delay);
+                });
                 break;
               case 'store_info':
                 console.log("Customer Display: Updating store info:", data.storeInfo);
