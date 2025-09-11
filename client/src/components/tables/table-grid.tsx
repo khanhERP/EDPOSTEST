@@ -2445,7 +2445,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           )}
                         </div>
                         <div className="font-medium text-gray-900">
-                          {Math.floor(Number(activeOrder.total || 0)).toLocaleString("vi-VN")} ₫
+                          {(() => {
+                            const total = Math.floor(Number(activeOrder.total || 0));
+                            const discount = Math.floor(Number(activeOrder.discount || 0));
+                            const finalTotal = Math.max(0, total - discount);
+                            return finalTotal.toLocaleString("vi-VN");
+                          })()} ₫
                         </div>
                       </div>
                     )}
