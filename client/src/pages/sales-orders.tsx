@@ -31,6 +31,8 @@ import { useTranslation } from "@/lib/i18n";
 import * as XLSX from "xlsx";
 import { EInvoiceModal } from "@/components/pos/einvoice-modal";
 import { PrintDialog } from "@/components/pos/print-dialog";
+import { toast } from "@/components/ui/use-toast";
+
 
 interface Invoice {
   id: number;
@@ -57,6 +59,9 @@ interface Invoice {
   displayNumber?: string;
   displayStatus?: number;
   orderNumber?: string;
+  salesChannel?: string;
+  tableId?: number;
+  orderedAt?: string;
 }
 
 interface InvoiceItem {
@@ -86,6 +91,20 @@ interface Order {
   einvoiceStatus: number;
   notes?: string;
   orderedAt: string;
+  salesChannel?: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  customerTaxCode?: string;
+  symbol?: string;
+  templateNumber?: string;
+  customerEmail?: string;
+  invoiceStatus?: number;
+  type?: "order";
+  date?: string;
+  displayNumber?: string;
+  displayStatus?: number;
 }
 
 // Helper function to safely determine item type
@@ -223,7 +242,24 @@ export default function SalesOrders() {
     refetchInterval: 10000, // Auto-refresh every 10 seconds
   });
 
-  // Removed queries for invoices and transactions as they are no longer needed.
+  // Query all products to get tax rates
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products"],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", "/api/products");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        return [];
+      }
+    },
+    staleTime: 300000, // Cache for 5 minutes
+  });
 
   const isLoading = ordersLoading; // Only orders loading is relevant now
   const hasError = ordersError; // Only orders error is relevant now
@@ -721,7 +757,7 @@ export default function SalesOrders() {
           }
         })
         .sort((a: any, b: any) => {
-          // Sắp xếp theo ngày tạo mới nhất lên  �ầu tiên
+          // Sắp xếp theo ngày tạo mới nhất lên  ầu tiên
           const dateA = new Date(
             a.orderedAt || a.createdAt || a.date || a.invoiceDate,
           );
@@ -1916,12 +1952,29 @@ export default function SalesOrders() {
                                                                 item.total,
                                                               )}
                                                             </div>
-                                                            <div className="col-span-1">
-                                                              {formatCurrency(
-                                                                item.total *
-                                                                  item.taxRate -
-                                                                  item.unitPrice,
-                                                              )}
+                                                            <div className="col-span-1 text-right">
+                                                              {(() => {
+                                                                // Calculate tax using the same logic as other components
+                                                                const unitPrice = parseFloat(item.unitPrice || '0');
+                                                                const quantity = parseInt(item.quantity || '0');
+
+                                                                // Find the product to get afterTaxPrice and taxRate
+                                                                const product = products.find((p: any) => p.id === item.productId);
+                                                                let taxAmount = 0;
+
+                                                                if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                                                                  // Use afterTaxPrice method: tax = (afterTaxPrice - unitPrice) * quantity
+                                                                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                                                  const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+                                                                  taxAmount = taxPerUnit * quantity;
+                                                                } else if (product?.taxRate && parseFloat(product.taxRate) > 0) {
+                                                                  // Use taxRate method: tax = (unitPrice * taxRate/100) * quantity
+                                                                  const taxRate = parseFloat(product.taxRate);
+                                                                  taxAmount = (unitPrice * taxRate / 100) * quantity;
+                                                                }
+
+                                                                return formatCurrency(Math.floor(taxAmount));
+                                                              })()}
                                                             </div>
                                                           </div>
                                                         ),
@@ -2530,55 +2583,61 @@ export default function SalesOrders() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {selectedInvoice && (
-        <EInvoiceModal
-          isOpen={showPublishDialog}
-          onClose={() => setShowPublishDialog(false)}
-          onConfirm={(invoiceData) => {
-            console.log(
-              "📧 E-Invoice confirmed from Sales Orders:",
-              invoiceData,
-            );
+      {/* EInvoiceModal is now used for publishing, the old AlertDialog is commented out */}
+      <EInvoiceModal
+        isOpen={showPublishDialog}
+        onClose={() => setShowPublishDialog(false)}
+        onConfirm={(invoiceData) => {
+          console.log(
+            "📧 E-Invoice confirmed from Sales Orders:",
+            invoiceData,
+          );
 
-            if (invoiceData.success) {
-              if (invoiceData.publishLater) {
-                // Handle "Phát hành sau" case
-                toast({
-                  title: "Thành công",
-                  description:
-                    "Thông tin hóa đơn điện tử đã được lưu để phát hành sau",
-                });
-              } else {
-                // Handle direct publish case
-                toast({
-                  title: "Thành công",
-                  description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceData.invoiceNumber || "N/A"}`,
-                });
-              }
-
-              // Refresh data
-              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-              queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+          if (invoiceData.success) {
+            if (invoiceData.publishLater) {
+              // Handle "Phát hành sau" case
+              toast({
+                title: "Thành công",
+                description:
+                  "Thông tin hóa đơn điện tử đã được lưu để phát hành sau",
+              });
+            } else {
+              // Handle direct publish case
+              toast({
+                title: "Thành công",
+                description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceData.invoiceNumber || "N/A"}`,
+              });
             }
 
-            setShowPublishDialog(false);
-          }}
-          total={parseFloat(selectedInvoice.total || "0")}
-          cartItems={orderItems.map((item: any) => ({
-            id: item.productId || item.id,
-            name: item.productName,
-            price: parseFloat(item.unitPrice || "0"),
-            quantity: item.quantity || 1,
-            sku: item.sku || `ITEM${item.productId}`,
-            taxRate: parseFloat(item.taxRate || "0"),
-          }))}
-          source="sales_orders"
-          orderId={selectedInvoice.id}
-          selectedPaymentMethod="cash"
-        />
-      )}
+            // Refresh data
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+          } else {
+            toast({
+              title: "Lỗi",
+              description: invoiceData.message || "Lỗi không xác định khi phát hành hóa đơn",
+              variant: "destructive",
+            });
+          }
 
-      {/* Keep the original AlertDialog structure but move the content to EInvoiceModal */}
+          setShowPublishDialog(false);
+        }}
+        total={parseFloat(selectedInvoice?.total || "0")}
+        cartItems={orderItems.map((item: any) => ({
+          id: item.productId || item.id,
+          name: item.productName,
+          price: parseFloat(item.unitPrice || "0"),
+          quantity: item.quantity || 1,
+          sku: item.sku || `ITEM${item.productId}`,
+          taxRate: parseFloat(item.taxRate || "0"), // This tax rate is from order item, might not be the final one
+        }))}
+        source="sales_orders"
+        orderId={selectedInvoice?.id}
+        selectedPaymentMethod={selectedInvoice?.paymentMethod}
+      />
+
+      {/* The old AlertDialog for publishing is commented out as EInvoiceModal is used instead */}
+      {/*
       {false && selectedInvoice && (
         <AlertDialog
           open={showPublishDialog}
@@ -2907,6 +2966,7 @@ export default function SalesOrders() {
           </AlertDialogContent>
         </AlertDialog>
       )}
+      */}
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
