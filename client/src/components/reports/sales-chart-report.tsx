@@ -3090,8 +3090,7 @@ export function SalesChartReport() {
         };
       }
 
-      const orderTotal = Number(order.total);
-      const orderSubtotal = Number(order.subtotal || orderTotal); // Use subtotal from DB
+      const orderSubtotal = Number(order.subtotal || 0); // Use subtotal from DB
       const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
       // Count all orders and add to orderDetails
@@ -3102,12 +3101,10 @@ export function SalesChartReport() {
       customerSales[customerId].totalAmount += orderSubtotal;
       customerSales[customerId].discount += orderDiscount;
 
-      // Only add to revenue if not cancelled
+      // Calculate revenue correctly: revenue = subtotal - discount (only for non-cancelled orders)
       if (order.status !== "cancelled") {
-        customerSales[customerId].revenue += Math.max(
-          0,
-          orderSubtotal - orderDiscount,
-        ); // Doanh thu = subtotal - discount
+        const orderRevenue = Math.max(0, orderSubtotal - orderDiscount);
+        customerSales[customerId].revenue += orderRevenue;
       }
 
       // Determine customer group based on total spending
