@@ -963,41 +963,50 @@ export function ShoppingCart({
                           newTotal = Math.round(newSubtotal + newTax);
                         }
                         
-                        // Immediately broadcast the updated cart state
-                        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                          const cartUpdateMessage = {
-                            type: 'cart_update',
-                            cart: updatedCart,
-                            subtotal: newSubtotal,
-                            tax: newTax,
-                            total: newTotal,
-                            orderNumber: updatedCart.length > 0 ? (activeOrderId || `ORD-${Date.now()}`) : '',
-                            timestamp: new Date().toISOString()
-                          };
-                          
-                          console.log("📡 Shopping Cart: Broadcasting cart update immediately:", {
-                            itemsCount: updatedCart.length,
-                            subtotal: newSubtotal,
-                            tax: newTax,
-                            total: newTotal,
-                            isLastItem: isLastItem
-                          });
-                          
-                          try {
-                            wsRef.current.send(JSON.stringify(cartUpdateMessage));
-                          } catch (error) {
-                            console.error("📡 Shopping Cart: Error broadcasting cart update:", error);
-                          }
-                        }
+                        // CRITICAL: Multiple immediate broadcasts to ensure customer display updates
+                        const broadcastUpdate = (cartData, delay = 0) => {
+                          setTimeout(() => {
+                            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                              const cartUpdateMessage = {
+                                type: 'cart_update',
+                                cart: cartData,
+                                subtotal: cartData.length > 0 ? newSubtotal : 0,
+                                tax: cartData.length > 0 ? newTax : 0,
+                                total: cartData.length > 0 ? newTotal : 0,
+                                orderNumber: cartData.length > 0 ? (activeOrderId || `ORD-${Date.now()}`) : '',
+                                timestamp: new Date().toISOString()
+                              };
+                              
+                              try {
+                                wsRef.current.send(JSON.stringify(cartUpdateMessage));
+                                console.log(`📡 Shopping Cart: Broadcast ${delay}ms - sent cart with ${cartData.length} items`);
+                              } catch (error) {
+                                console.error("📡 Shopping Cart: Error broadcasting cart update:", error);
+                              }
+                            }
+                          }, delay);
+                        };
+                        
+                        // Immediate broadcast #1 - Send updated cart instantly
+                        broadcastUpdate(updatedCart, 0);
                         
                         // Remove the item from local state
                         onRemoveItem(parseInt(item.id));
                         
-                        // Backup broadcast after state update
+                        // Immediate broadcast #2 - Send updated cart after state change
+                        broadcastUpdate(updatedCart, 50);
+                        
+                        // Backup broadcast #3 - Final confirmation
                         setTimeout(() => {
-                          console.log("📡 Shopping Cart: Backup broadcast after state update");
+                          console.log("📡 Shopping Cart: Final backup broadcast");
                           broadcastCartUpdate();
-                        }, 150);
+                        }, 200);
+                        
+                        console.log("✅ Shopping Cart: Item removal and broadcasts completed", {
+                          removedItemId: item.id,
+                          remainingItems: updatedCart.length,
+                          isLastItem: isLastItem
+                        });
                       }}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
                     >
