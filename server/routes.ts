@@ -997,6 +997,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: TenantRequest, res) => {
       try {
         console.log("🔍 GET /api/employees - Starting request processing");
+
+
+// Proxy route for external CreateQRPos API
+app.post('/api/pos/create-qr-proxy', async (req, res) => {
+  try {
+    const { bankCode, clientID, ...qrRequest } = req.body;
+    
+    console.log('🎯 Proxying CreateQRPos request:', { qrRequest, bankCode, clientID });
+    
+    // Forward request to external API
+    const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+      },
+      body: JSON.stringify(qrRequest),
+    });
+    
+    console.log('📡 External API response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ External API error:', errorText);
+      return res.status(response.status).json({ error: errorText });
+    }
+    
+    const result = await response.json();
+    console.log('✅ External API success:', result);
+    
+    // Return the result
+    res.json(result);
+    
+  } catch (error) {
+    console.error('❌ Proxy API error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
         let tenantDb;
         try {
           tenantDb = await getTenantDatabase(req);

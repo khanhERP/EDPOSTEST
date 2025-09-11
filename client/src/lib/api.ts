@@ -44,16 +44,14 @@ export interface CreateQRPosResponse {
 
 export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: string, clientID: string): Promise<CreateQRPosResponse> => {
   try {
-    console.log('🎯 Attempting to call external CreateQRPos API...');
+    console.log('🎯 Calling CreateQRPos via proxy...');
     console.log('📤 Request payload:', { ...request, bankCode, clientID });
     
-    // Try the new external API endpoint first
-    const response = await fetch('http://1.55.212.135:9335/api/CreateQRPos', {
+    // Use proxy route to avoid CORS issues
+    const response = await fetch('/api/pos/create-qr-proxy', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': '*',
       },
       body: JSON.stringify({
         ...request,
@@ -62,26 +60,16 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
       }),
     });
 
-    console.log('📡 External API response status:', response.status);
-    console.log('📡 External API response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('📡 Proxy API response status:', response.status);
     
     if (!response.ok) {
-      const responseText = await response.text();
-      console.error('❌ External API error response:', responseText.substring(0, 200));
-      throw new Error(`External API error: ${response.status} ${response.statusText}`);
-    }
-
-    const contentType = response.headers.get('content-type');
-    console.log('📄 Content-Type:', contentType);
-    
-    if (!contentType || !contentType.includes('application/json')) {
-      const responseText = await response.text();
-      console.error('❌ Non-JSON response received:', responseText.substring(0, 200));
-      throw new Error(`External API returned non-JSON response. Content-Type: ${contentType}`);
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('❌ Proxy API error:', errorData);
+      throw new Error(`Proxy API error: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
-    console.log('✅ External API success:', result);
+    console.log('✅ Proxy API success:', result);
     
     // Transform response to match expected format
     return {
@@ -91,18 +79,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
     };
 
   } catch (error) {
-    console.error('❌ External CreateQRPos API failed:', error);
-    
-    // Check if it's a network error
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      console.error('🌐 Network error - API server might be unreachable');
-    }
-    
-    // Check if it's a CORS error
-    if (error instanceof TypeError && error.message.includes('CORS')) {
-      console.error('🚫 CORS error - API server not allowing cross-origin requests');
-    }
-    
+    console.error('❌ Proxy CreateQRPos API failed:', error);
     console.log('🔄 Falling back to internal API...');
     
     // Fallback to internal API
