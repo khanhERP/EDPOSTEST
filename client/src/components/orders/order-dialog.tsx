@@ -114,30 +114,72 @@ export function OrderDialog({
             console.log(`📝 No new items to add to order ${existingOrder.id}, proceeding with order update only`);
           }
 
-          // Step 2: Always update order with current UI calculated totals
-          console.log(`📝 Updating order with current UI calculated totals for order ${existingOrder.id}`);
+          // Step 2: Calculate correct totals including existing items and new items
+          console.log(`📝 Calculating complete order totals for order ${existingOrder.id}`);
 
-          // Get the calculated values from the UI functions
-          const uiSubtotal = calculateTotal();    // Tiền tạm tính (đã tính đúng)
-          const uiTax = calculateTax();           // Thuế (đã tính đúng)
-          const uiGrandTotal = calculateGrandTotal(); // Tổng tiền (đã tính đúng)
+          // Calculate totals for ALL items (existing + new)
+          let totalSubtotal = 0;
+          let totalTax = 0;
 
-          console.log('💰 Using UI calculated totals for update:', {
-            subtotal: uiSubtotal,
-            tax: uiTax,
-            total: uiGrandTotal,
-            hasNewItems: orderData.items.length > 0
+          // Add existing items to calculation
+          if (existingItems.length > 0) {
+            existingItems.forEach((item) => {
+              const unitPrice = Number(item.unitPrice || 0);
+              const quantity = Number(item.quantity || 0);
+              
+              // Subtotal (tiền tạm tính)
+              totalSubtotal += unitPrice * quantity;
+              
+              // Tax calculation for existing items
+              const product = products?.find((p: Product) => p.id === item.productId);
+              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+                totalTax += taxPerUnit * quantity;
+              }
+            });
+          }
+
+          // Add new cart items to calculation
+          if (cart.length > 0) {
+            cart.forEach((item) => {
+              const unitPrice = parseFloat(item.product.price);
+              const quantity = item.quantity;
+              
+              // Subtotal (tiền tạm tính)
+              totalSubtotal += unitPrice * quantity;
+              
+              // Tax calculation for new items
+              const product = products?.find((p: Product) => p.id === item.product.id);
+              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+                totalTax += taxPerUnit * quantity;
+              }
+            });
+          }
+
+          // Calculate final total after discount
+          const finalTotal = Math.max(0, totalSubtotal + totalTax - discount);
+
+          console.log('💰 Complete order totals calculated:', {
+            existingItemsCount: existingItems.length,
+            newItemsCount: cart.length,
+            subtotal: totalSubtotal,
+            tax: totalTax,
+            discount: discount,
+            finalTotal: finalTotal
           });
 
-          // Step 3: Always update order with customer info AND UI calculated totals
-          console.log(`📝 Updating order with customer info and UI calculated totals for order ${existingOrder.id}`);
+          // Step 3: Update order with complete calculated totals
+          console.log(`📝 Updating order with complete calculated totals for order ${existingOrder.id}`);
           const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
             customerName: orderData.order.customerName,
             customerCount: orderData.order.customerCount,
-            subtotal: uiSubtotal.toString(),
-            tax: uiTax.toString(),
+            subtotal: totalSubtotal.toString(),
+            tax: totalTax.toString(),
             discount: discount.toString(),
-            total: uiGrandTotal.toString(),
+            total: finalTotal.toString(),
           });
 
           const updateResult = await updateResponse.json();
