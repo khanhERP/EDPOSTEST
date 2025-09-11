@@ -1736,53 +1736,58 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          // CRITICAL: For all final states (paid, cancelled), ALWAYS use stored total
-                          // These orders are finalized and should never be recalculated
+                          const discount = Math.floor(Number(order.discount || 0));
+                          
+                          // CRITICAL: For all final states (paid, cancelled), ALWAYS use stored total minus discount
                           if (order.status === 'paid' || order.status === 'cancelled') {
                             const storedTotal = Math.floor(Number(order.total || 0));
-                            console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - using STORED total ONLY: ${storedTotal}`);
+                            const finalTotal = Math.max(0, storedTotal - discount);
+                            console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - stored total: ${storedTotal}, discount: ${discount}, final: ${finalTotal}`);
 
                             return (
                               <span className="text-green-600">
-                                {formatCurrency(storedTotal)}
+                                {formatCurrency(finalTotal)}
                               </span>
                             );
                           }
 
-                          // For active orders only, use calculation logic
+                          // For active orders only, use calculation logic minus discount
                           const apiCalculatedTotal = (order as any).calculatedTotal;
                           const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
                           const hasCachedTotal = calculatedTotals.has(order.id);
 
-                          // Priority 1: Use API calculated total if available
+                          // Priority 1: Use API calculated total if available minus discount
                           if (hasApiTotal) {
                             const displayTotal = Math.floor(Number(apiCalculatedTotal));
-                            console.log(`💰 Active order ${order.orderNumber} - using API calculated total: ${displayTotal}`);
+                            const finalTotal = Math.max(0, displayTotal - discount);
+                            console.log(`💰 Active order ${order.orderNumber} - API total: ${displayTotal}, discount: ${discount}, final: ${finalTotal}`);
                             return (
                               <span className="text-green-600">
-                                {formatCurrency(displayTotal)}
+                                {formatCurrency(finalTotal)}
                               </span>
                             );
                           }
 
-                          // Priority 2: Use cached calculated total
+                          // Priority 2: Use cached calculated total minus discount
                           if (hasCachedTotal) {
                             const cachedTotal = calculatedTotals.get(order.id)!;
-                            console.log(`💰 Active order ${order.orderNumber} - using cached calculated total: ${cachedTotal}`);
+                            const finalTotal = Math.max(0, cachedTotal - discount);
+                            console.log(`💰 Active order ${order.orderNumber} - cached total: ${cachedTotal}, discount: ${discount}, final: ${finalTotal}`);
                             return (
                               <span className="text-green-600">
-                                {formatCurrency(cachedTotal)}
+                                {formatCurrency(finalTotal)}
                               </span>
                             );
                           }
 
-                          // Priority 3: Use stored total as fallback for active orders
+                          // Priority 3: Use stored total as fallback minus discount
                           const storedTotal = Math.floor(Number(order.total || 0));
                           if (storedTotal > 0) {
-                            console.log(`💰 Active order ${order.orderNumber} - using stored total as fallback: ${storedTotal}`);
+                            const finalTotal = Math.max(0, storedTotal - discount);
+                            console.log(`💰 Active order ${order.orderNumber} - stored fallback: ${storedTotal}, discount: ${discount}, final: ${finalTotal}`);
                             return (
                               <span className="text-orange-600">
-                                {formatCurrency(storedTotal)}
+                                {formatCurrency(finalTotal)}
                               </span>
                             );
                           }
