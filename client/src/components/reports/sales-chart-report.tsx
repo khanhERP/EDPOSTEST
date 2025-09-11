@@ -5385,35 +5385,37 @@ export function SalesChartReport() {
                         placeholder={t("reports.productFilterPlaceholder")}
                         value={productSearch}
                         onChange={(e) => setProductSearch(e.target.value)}
-                        className="pl-10 h                    className="pl-10 h-10 text-sm border-gray-200 hover:border-teal-300 focus:border-teal-500 transition-colors"
-                  />
+                        className="pl-10 h-10 text-sm border-gray-200 hover:border-teal-300 focus:border-teal-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                      {t("reports.status")}
+                    </Label>
+                    <Select defaultValue="all">
+                      <SelectTrigger className="h-10 text-sm border-gray-200 hover:border-teal-300 focus:border-teal-500 transition-colors">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="completed">
+                          {t("reports.completed")}
+                        </SelectItem>
+                        <SelectItem value="pending">
+                          {t("reports.pending")}
+                        </SelectItem>
+                        <SelectItem value="cancelled">
+                          {t("reports.cancelled")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
-                  {t("reports.status")}
-                </Label>
-                <Select defaultValue="all">
-                  <SelectTrigger className="h-10 text-sm border-gray-200 hover:border-teal-300 focus:border-teal-500 transition-colors">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    <SelectItem value="completed">
-                      {t("reports.completed")}
-                    </SelectItem>
-                    <SelectItem value="pending">
-                      {t("reports.pending")}
-                    </SelectItem>
-                    <SelectItem value="cancelled">
-                      {t("reports.cancelled")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
