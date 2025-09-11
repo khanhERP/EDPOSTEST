@@ -76,6 +76,7 @@ export function CustomerDisplay({
   }, []);
 
   useEffect(() => {
+    // CRITICAL: Force immediate state update with validation
     console.log("Customer Display Component: Props changed", {
       cartLength: cart.length,
       subtotal: subtotal,
@@ -83,36 +84,11 @@ export function CustomerDisplay({
       total: total
     });
 
-    // Only update if there's a meaningful change to prevent flickering
-    setCartItems(prevItems => {
-      // Check if cart actually changed
-      if (prevItems.length === cart.length) {
-        const hasChanged = !prevItems.every((prevItem, index) => {
-          const newItem = cart[index];
-          return newItem && 
-                 prevItem.id === newItem.id && 
-                 prevItem.quantity === newItem.quantity &&
-                 prevItem.name === newItem.name;
-        });
-        
-        if (!hasChanged) {
-          return prevItems; // No change, keep existing reference
-        }
-      }
-      
-      // Cart has changed, update with new data
-      return cart.map(item => ({
-        ...item,
-        name: item.name || item.product?.name || `Sản phẩm ${item.id}`,
-        price: item.price || '0',
-        total: item.total || '0'
-      }));
-    });
-
-    // Update totals only when they actually change
-    setCurrentSubtotal(prevSubtotal => prevSubtotal !== subtotal ? subtotal : prevSubtotal);
-    setCurrentTax(prevTax => prevTax !== tax ? tax : prevTax);
-    setCurrentTotal(prevTotal => prevTotal !== total ? total : prevTotal);
+    // Always update local state when props change
+    setCartItems([...cart]); // Force new array reference
+    setCurrentSubtotal(subtotal);
+    setCurrentTax(tax);
+    setCurrentTotal(total);
 
     // If cart is empty, ensure all totals are reset
     if (cart.length === 0) {

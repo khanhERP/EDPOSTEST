@@ -126,53 +126,50 @@ export default function CustomerDisplayPage() {
               case 'cart_update':
                 console.log("Customer Display: Processing cart update - Items:", data.cart?.length || 0, "Force update:", data.forceUpdate, "Attempt:", data.attempt);
 
-                // Debounce cart updates to prevent flickering
-                const processCartUpdate = (cartData) => {
-                  const newCart = Array.isArray(cartData) ? [...cartData] : [];
+                // CRITICAL: Force immediate state update with enhanced validation
+                const newCart = Array.isArray(data.cart) ? [...data.cart] : [];
+                
+                // IMMEDIATE: Set cart state with force update flag
+                setCart(prevCart => {
+                  console.log("Customer Display: FORCE Cart state changing from", prevCart.length, "to", newCart.length, "items");
                   
-                  // Single immediate state update to prevent flickering
-                  setCart(prevCart => {
-                    // If same length and content, avoid unnecessary re-render
-                    if (prevCart.length === newCart.length) {
-                      const isSameContent = prevCart.every((prevItem, index) => {
-                        const newItem = newCart[index];
-                        return newItem && 
-                               prevItem.id === newItem.id && 
-                               prevItem.quantity === newItem.quantity;
-                      });
-                      
-                      if (isSameContent) {
-                        console.log("Customer Display: Cart content unchanged, skipping update");
-                        return prevCart;
-                      }
-                    }
-                    
-                    console.log("Customer Display: Cart state changing from", prevCart.length, "to", newCart.length, "items");
-                    
-                    // Special handling for empty cart
-                    if (newCart.length === 0) {
-                      console.log("Customer Display: 🧹 Cart is now empty");
-                      return [];
-                    }
-                    
-                    // Return new cart with fresh references
-                    return newCart.map(item => ({
-                      ...item,
-                      name: item.name || item.product?.name || `Sản phẩm ${item.id}`,
-                      price: item.price || '0',
-                      total: item.total || '0'
-                    }));
-                  });
-
-                  // Clear QR payment for empty cart
+                  // Special handling for empty cart - ensure complete reset
                   if (newCart.length === 0) {
-                    console.log("Customer Display: 🧹 Clearing QR payment");
-                    setQrPayment(null);
+                    console.log("Customer Display: 🧹 FORCE CLEARING - Cart is now empty");
+                    return [];
                   }
-                };
+                  
+                  // Log cart details for debugging
+                  console.log("Customer Display: New cart contents:", newCart.map(item => ({
+                    id: item.id,
+                    name: item.product?.name || item.name || 'Unknown',
+                    quantity: item.quantity,
+                    price: item.price
+                  })));
 
-                // Process the cart update
-                processCartUpdate(data.cart);
+                  // Return completely new array reference to force re-render
+                  return newCart.map(item => ({ ...item }));
+                });
+
+                // IMMEDIATE: Clear QR payment for empty cart
+                if (newCart.length === 0) {
+                  console.log("Customer Display: 🧹 FORCE CLEARING QR payment");
+                  setQrPayment(null);
+                }
+
+                // CRITICAL: Multiple forced re-renders to ensure UI updates
+                [10, 50, 100, 200].forEach((delay, index) => {
+                  setTimeout(() => {
+                    console.log(`Customer Display: Force refresh ${index + 1} after ${delay}ms`);
+                    // Force a state update to trigger re-render
+                    setCart(current => {
+                      if (current.length === newCart.length) {
+                        return [...newCart.map(item => ({ ...item }))];
+                      }
+                      return current;
+                    });
+                  }, delay);
+                });
                 break;
               case 'store_info':
                 console.log("Customer Display: Updating store info:", data.storeInfo);

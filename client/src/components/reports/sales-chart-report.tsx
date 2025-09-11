@@ -2992,23 +2992,7 @@ export function SalesChartReport() {
                                 </TableCell>
                               )}
                               <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
-                                {formatCurrency(
-                                  (() => {
-                                    // Tính tổng doanh thu từ tất cả orderDetails của khách hàng này
-                                    let totalRevenue = 0;
-                                    if (item.orderDetails && Array.isArray(item.orderDetails)) {
-                                      item.orderDetails.forEach(order => {
-                                        // Chỉ tính các đơn hàng không bị hủy
-                                        if (order.status !== "cancelled") {
-                                          const orderSubtotal = Number(order.subtotal || 0);
-                                          const orderDiscount = Number(order.discount || 0);
-                                          totalRevenue += Math.max(0, orderSubtotal - orderDiscount);
-                                        }
-                                      });
-                                    }
-                                    return totalRevenue;
-                                  })()
-                                )}
+                                {formatCurrency(item.revenue)}
                               </TableCell>
                               <TableCell className="text-center min-w-[100px] px-4">
                                 <Badge
@@ -3161,23 +3145,7 @@ export function SalesChartReport() {
                         )}
                         <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                           {formatCurrency(
-                            (() => {
-                              // Tính tổng doanh thu từ tất cả orderDetails của tất cả khách hàng
-                              let totalRevenue = 0;
-                              data.forEach(customer => {
-                                if (customer.orderDetails && Array.isArray(customer.orderDetails)) {
-                                  customer.orderDetails.forEach(order => {
-                                    // Chỉ tính các đơn hàng không bị hủy
-                                    if (order.status !== "cancelled") {
-                                      const orderSubtotal = Number(order.subtotal || 0);
-                                      const orderDiscount = Number(order.discount || 0);
-                                      totalRevenue += Math.max(0, orderSubtotal - orderDiscount);
-                                    }
-                                  });
-                                }
-                              });
-                              return totalRevenue;
-                            })()
+                            data.reduce((sum, customer) => sum + customer.totalAmount, 0)
                           )}
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] px-4"></TableCell>
