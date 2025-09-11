@@ -3145,7 +3145,7 @@ export function SalesChartReport() {
                         )}
                         <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                           {formatCurrency(
-                            data.reduce((sum, customer) => sum + customer.revenue, 0)
+                            data.reduce((sum, customer) => sum + customer.totalAmount, 0)
                           )}
                         </TableCell>
                         <TableCell className="text-center min-w-[100px] px-4"></TableCell>
