@@ -2125,10 +2125,20 @@ export function OrderManagement() {
                       <span>{t('orders.tax')}</span>
                       <span>{formatCurrency(orderDetailsCalculation.tax)}</span>
                     </div>
+                    {selectedOrder?.discount && Number(selectedOrder.discount) > 0 && (
+                      <div className="flex justify-between text-red-600">
+                        <span>Giảm giá</span>
+                        <span>-{formatCurrency(Math.floor(Number(selectedOrder.discount)))}</span>
+                      </div>
+                    )}
                     <Separator />
                     <div className="flex justify-between font-medium">
                       <span>{t('orders.totalAmount')}:</span>
-                      <span>{formatCurrency(orderDetailsCalculation.total)}</span>
+                      <span>{formatCurrency((() => {
+                        const total = orderDetailsCalculation.total;
+                        const discount = Math.floor(Number(selectedOrder?.discount || 0));
+                        return Math.max(0, total - discount);
+                      })())}</span>
                     </div>
                   </div>
                 </div>
