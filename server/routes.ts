@@ -839,7 +839,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           whereConditions.length > 0 ? and(...whereConditions) : undefined,
         );
 
-      const totalCount = totalCountResult ? .count || 0;
+      const totalCount = totalCountResult?.count || 0;
       const totalPages = Math.ceil(totalCount / limitNum);
 
       // Get paginated orders
@@ -1892,7 +1892,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
                 .limit(1);
 
               if (
-                product ? .afterTaxPrice &&
+                product?.afterTaxPrice &&
                 product.afterTaxPrice !== null &&
                 product.afterTaxPrice !== ""
               ) {
