@@ -1744,11 +1744,7 @@ export function OrderManagement() {
                             const finalTotal = Math.max(0, storedTotal - discount);
                             console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - stored total: ${storedTotal}, discount: ${discount}, final: ${finalTotal}`);
 
-                            return (
-                              <span className="text-green-600">
-                                {formatCurrency(finalTotal)}
-                              </span>
-                            );
+                            return formatCurrency(finalTotal);
                           }
 
                           // For active orders only, use calculation logic minus discount
@@ -1761,11 +1757,7 @@ export function OrderManagement() {
                             const displayTotal = Math.floor(Number(apiCalculatedTotal));
                             const finalTotal = Math.max(0, displayTotal - discount);
                             console.log(`💰 Active order ${order.orderNumber} - API total: ${displayTotal}, discount: ${discount}, final: ${finalTotal}`);
-                            return (
-                              <span className="text-green-600">
-                                {formatCurrency(finalTotal)}
-                              </span>
-                            );
+                            return formatCurrency(finalTotal);
                           }
 
                           // Priority 2: Use cached calculated total minus discount
@@ -1773,11 +1765,7 @@ export function OrderManagement() {
                             const cachedTotal = calculatedTotals.get(order.id)!;
                             const finalTotal = Math.max(0, cachedTotal - discount);
                             console.log(`💰 Active order ${order.orderNumber} - cached total: ${cachedTotal}, discount: ${discount}, final: ${finalTotal}`);
-                            return (
-                              <span className="text-green-600">
-                                {formatCurrency(finalTotal)}
-                              </span>
-                            );
+                            return formatCurrency(finalTotal);
                           }
 
                           // Priority 3: Use stored total as fallback minus discount
@@ -1785,11 +1773,7 @@ export function OrderManagement() {
                           if (storedTotal > 0) {
                             const finalTotal = Math.max(0, storedTotal - discount);
                             console.log(`💰 Active order ${order.orderNumber} - stored fallback: ${storedTotal}, discount: ${discount}, final: ${finalTotal}`);
-                            return (
-                              <span className="text-orange-600">
-                                {formatCurrency(finalTotal)}
-                              </span>
-                            );
+                            return formatCurrency(finalTotal);
                           }
 
                           // Show loading state only if no total is available
