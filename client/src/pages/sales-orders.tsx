@@ -242,6 +242,7 @@ export default function SalesOrders() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log("Order items loaded:",data)
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error("Error fetching order items:", error);
@@ -720,7 +721,7 @@ export default function SalesOrders() {
           }
         })
         .sort((a: any, b: any) => {
-          // Sắp xếp theo ngày tạo mới nhất lên đầu tiên
+          // Sắp xếp theo ngày tạo mới nhất lên  �ầu tiên
           const dateA = new Date(
             a.orderedAt || a.createdAt || a.date || a.invoiceDate,
           );
@@ -1917,7 +1918,8 @@ export default function SalesOrders() {
                                                             </div>
                                                             <div className="col-span-1">
                                                               {formatCurrency(
-                                                                item.total -
+                                                                item.total *
+                                                                  item.taxRate -
                                                                   item.unitPrice,
                                                               )}
                                                             </div>
