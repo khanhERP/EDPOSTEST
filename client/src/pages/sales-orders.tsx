@@ -1351,9 +1351,9 @@ export default function SalesOrders() {
                                                       <div className="col-span-3">{item.productName}</div>
                                                       <div className="col-span-1">Cái</div>
                                                       <div className="col-span-1 text-center">{item.quantity}</div>
-                                                      <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
-                                                      <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
-                                                      <div className="col-span-1 text-center">{item.taxRate || 0}%</div>
+                                                      <div className="col-span-1 text-center">{formatCurrency(item.unitPrice)}</div>
+                                                      <div className="col-span-1 text-center">{formatCurrency(item.total)}</div>
+                                                      <div className="col-span-1 text-center">{formatCurrency(item.total - item.unitPrice)}</div>
                                                     </div>
                                                   ));
                                                 })()}
