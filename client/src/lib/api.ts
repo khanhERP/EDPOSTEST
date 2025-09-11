@@ -71,30 +71,12 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
     const result = await response.json();
     console.log('✅ Proxy API success:', result);
     
-    // DETAILED RESPONSE LOGGING FOR DEBUG
-    console.log('🔍 API CreateQRPos Response Details:');
-    console.log('📋 Full Response Object:', JSON.stringify(result, null, 2));
-    console.log('📄 Response Keys:', Object.keys(result));
-    console.log('📊 Response Data Fields:');
-    console.log('  - qrData:', result.qrData);
-    console.log('  - qrDataDecode:', result.qrDataDecode);
-    console.log('  - qrUrl:', result.qrUrl);
-    console.log('  - qrData type:', typeof result.qrData);
-    console.log('  - qrData length:', result.qrData?.length || 0);
-    console.log('  - qrDataDecode type:', typeof result.qrDataDecode);
-    console.log('  - qrDataDecode length:', result.qrDataDecode?.length || 0);
-    
     // Transform response to match expected format
-    const transformedResponse = {
+    return {
       qrDataDecode: result.qrDataDecode || result.qrData || '',
       qrUrl: result.qrUrl || '',
       qrData: result.qrData || result.qrDataDecode || ''
     };
-    
-    console.log('🔄 Transformed Response:', transformedResponse);
-    console.log('📏 Final qrData length:', transformedResponse.qrData.length);
-    
-    return transformedResponse;
     
   } catch (error) {
     console.error('❌ Proxy CreateQRPos API failed:', error);
@@ -118,15 +100,6 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
 
       const fallbackResult = await fallbackResponse.json();
       console.log('✅ Fallback API success:', fallbackResult);
-      
-      // DETAILED FALLBACK RESPONSE LOGGING
-      console.log('🔍 Fallback API CreateQRPos Response Details:');
-      console.log('📋 Full Fallback Response:', JSON.stringify(fallbackResult, null, 2));
-      console.log('📄 Fallback Response Keys:', Object.keys(fallbackResult));
-      console.log('📊 Fallback Response Data Fields:');
-      console.log('  - qrData:', fallbackResult.qrData);
-      console.log('  - qrDataDecode:', fallbackResult.qrDataDecode);
-      console.log('  - qrUrl:', fallbackResult.qrUrl);
       
       return fallbackResult;
     } catch (fallbackError) {

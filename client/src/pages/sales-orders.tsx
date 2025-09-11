@@ -1916,30 +1916,12 @@ export default function SalesOrders() {
                                                                 item.total,
                                                               )}
                                                             </div>
-                                                            <div className="col-span-1 text-right">
-                                                              {(() => {
-                                                                // Calculate tax using the same logic as other components
-                                                                const unitPrice = parseFloat(item.unitPrice || '0');
-                                                                const quantity = parseInt(item.quantity || '0');
-                                                                
-                                                                // Find the product to get afterTaxPrice
-                                                                // Since we don't have products data in this context, 
-                                                                // we'll calculate based on taxRate if available
-                                                                let taxAmount = 0;
-                                                                
-                                                                if (item.taxRate && parseFloat(item.taxRate) > 0) {
-                                                                  // Calculate tax as: (unitPrice * taxRate/100) * quantity
-                                                                  const taxRate = parseFloat(item.taxRate);
-                                                                  taxAmount = (unitPrice * taxRate / 100) * quantity;
-                                                                } else {
-                                                                  // If no tax rate, calculate from total - subtotal
-                                                                  const total = parseFloat(item.total || '0');
-                                                                  const subtotal = unitPrice * quantity;
-                                                                  taxAmount = Math.max(0, total - subtotal);
-                                                                }
-                                                                
-                                                                return formatCurrency(Math.floor(taxAmount));
-                                                              })()}
+                                                            <div className="col-span-1">
+                                                              {formatCurrency(
+                                                                item.total *
+                                                                  item.taxRate -
+                                                                  item.unitPrice,
+                                                              )}
                                                             </div>
                                                           </div>
                                                         ),
