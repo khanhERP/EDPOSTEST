@@ -1484,87 +1484,85 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrder(
     id: number,
-    orderData: any,
+    orderData: Partial<InsertOrder>,
     tenantDb?: any,
   ): Promise<Order | null> {
-    try {
-      const safeDb = this.getSafeDatabase(tenantDb, 'updateOrder');
+    const safeDb = this.getSafeDatabase(tenantDb, 'updateOrder');
 
-      console.log(`📝 Storage: Updating order ${id} with data:`, orderData);
+    console.log(`📝 Storage: Updating order ${id} with data:`, orderData);
 
-      const updateData: any = {
-        updatedAt: new Date().toISOString()
-      };
+    const updateData: any = {
+      updatedAt: new Date().toISOString()
+    };
 
-      // Add fields that are provided in orderData
-      if (orderData.customerName !== undefined) updateData.customerName = orderData.customerName;
-      if (orderData.customerCount !== undefined) updateData.customerCount = orderData.customerCount;
-      if (orderData.status !== undefined) updateData.status = orderData.status;
-      if (orderData.paymentMethod !== undefined) updateData.paymentMethod = orderData.paymentMethod;
-      if (orderData.paymentStatus !== undefined) updateData.paymentStatus = orderData.paymentStatus;
-      if (orderData.einvoiceStatus !== undefined) updateData.einvoiceStatus = orderData.einvoiceStatus;
-      if (orderData.templateNumber !== undefined) updateData.templateNumber = orderData.templateNumber;
-      if (orderData.symbol !== undefined) updateData.symbol = orderData.symbol;
-      if (orderData.invoiceNumber !== undefined) updateData.invoiceNumber = orderData.invoiceNumber;
-      if (orderData.notes !== undefined) updateData.notes = orderData.notes;
-      if (orderData.paidAt !== undefined) updateData.paidAt = orderData.paidAt;
-      if (orderData.servedAt !== undefined) updateData.servedAt = orderData.servedAt;
-      if (orderData.discount !== undefined) updateData.discount = orderData.discount; // Ensure discount is included
+    // Add fields that are provided in orderData
+    if (orderData.customerName !== undefined) updateData.customerName = orderData.customerName;
+    if (orderData.customerCount !== undefined) updateData.customerCount = orderData.customerCount;
+    if (orderData.status !== undefined) updateData.status = orderData.status;
+    if (orderData.paymentMethod !== undefined) updateData.paymentMethod = orderData.paymentMethod;
+    if (orderData.paymentStatus !== undefined) updateData.paymentStatus = orderData.paymentStatus;
+    if (orderData.einvoiceStatus !== undefined) updateData.einvoiceStatus = orderData.einvoiceStatus;
+    if (orderData.templateNumber !== undefined) updateData.templateNumber = orderData.templateNumber;
+    if (orderData.symbol !== undefined) updateData.symbol = orderData.symbol;
+    if (orderData.invoiceNumber !== undefined) updateData.invoiceNumber = orderData.invoiceNumber;
+    if (orderData.notes !== undefined) updateData.notes = orderData.notes;
+    if (orderData.paidAt !== undefined) updateData.paidAt = orderData.paidAt;
+    if (orderData.servedAt !== undefined) updateData.servedAt = orderData.servedAt;
+    if (orderData.discount !== undefined) updateData.discount = orderData.discount; // Ensure discount is included
 
-      // CRITICAL: Always update financial fields if provided
-      if (orderData.subtotal !== undefined) {
-        updateData.subtotal = orderData.subtotal.toString();
-        console.log(`💰 Storage: Updating subtotal to ${orderData.subtotal}`);
-      }
-      if (orderData.tax !== undefined) {
-        updateData.tax = orderData.tax.toString();
-        console.log(`💰 Storage: Updating tax to ${orderData.tax}`);
-      }
-      if (orderData.total !== undefined) {
-        updateData.total = orderData.total.toString();
-        console.log(`💰 Storage: Updating total to ${orderData.total}`);
-      }
-
-      // Remove undefined values to avoid overwriting with undefined
-      Object.keys(orderData).forEach(key => {
-        if (orderData[key as keyof typeof orderData] === undefined) {
-          delete orderData[key as keyof typeof orderData];
-        }
-      });
-
-      // Ensure discount is included if provided
-      if (orderData.discount !== undefined) {
-        console.log(`💰 Storage: Updating discount to ${orderData.discount}`);
-      }
-
-      console.log(`💾 Storage: Final update data for order ${id}:`, updateData);
-
-      const [updatedOrder] = await safeDb
-        .update(orders)
-        .set(updateData)
-        .where(eq(orders.id, id))
-        .returning();
-
-      if (updatedOrder) {
-        console.log(`✅ Storage: Order ${id} updated successfully:`, {
-          orderId: updatedOrder.id,
-          status: updatedOrder.status,
-          customerName: updatedOrder.customerName,
-          paymentMethod: updatedOrder.paymentMethod,
-          einvoiceStatus: updatedOrder.einvoiceStatus,
-          subtotal: updatedOrder.subtotal,
-          tax: updatedOrder.tax,
-          total: updatedOrder.total,
-          discount: updatedOrder.discount // Log discount if it was updated
-        });
-      }
-
-      return updatedOrder || null;
-    } catch (error) {
-      console.error('Storage: Error updating order:', error);
-      throw error;
+    // CRITICAL: Always update financial fields if provided
+    if (orderData.subtotal !== undefined) {
+      updateData.subtotal = orderData.subtotal.toString();
+      console.log(`💰 Storage: Updating subtotal to ${orderData.subtotal}`);
     }
+    if (orderData.tax !== undefined) {
+      updateData.tax = orderData.tax.toString();
+      console.log(`💰 Storage: Updating tax to ${orderData.tax}`);
+    }
+    if (orderData.total !== undefined) {
+      updateData.total = orderData.total.toString();
+      console.log(`💰 Storage: Updating total to ${orderData.total}`);
+    }
+
+    // Remove undefined values to avoid overwriting with undefined
+    Object.keys(orderData).forEach(key => {
+      if (orderData[key as keyof typeof orderData] === undefined) {
+        delete orderData[key as keyof typeof orderData];
+      }
+    });
+
+    // Ensure discount is included if provided
+    if (orderData.discount !== undefined) {
+      console.log(`💰 Storage: Updating discount to ${orderData.discount}`);
+    }
+
+    console.log(`💾 Storage: Final update data for order ${id}:`, updateData);
+
+    const [updatedOrder] = await safeDb
+      .update(orders)
+      .set(updateData)
+      .where(eq(orders.id, id))
+      .returning();
+
+    if (updatedOrder) {
+      console.log(`✅ Storage: Order ${id} updated successfully:`, {
+        orderId: updatedOrder.id,
+        status: updatedOrder.status,
+        customerName: updatedOrder.customerName,
+        paymentMethod: updatedOrder.paymentMethod,
+        einvoiceStatus: updatedOrder.einvoiceStatus,
+        subtotal: updatedOrder.subtotal,
+        tax: updatedOrder.tax,
+        total: updatedOrder.total,
+        discount: updatedOrder.discount // Log discount if it was updated
+      });
+    } else {
+      console.warn(`⚠️ Storage: No order found with ID ${id} to update`);
+    }
+
+    return updatedOrder || null;
   }
+
 
   // Validate database connection with comprehensive checks
   private validateDatabase(database: any, operation: string): void {
