@@ -45,6 +45,7 @@ export function OrderDialog({
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerCount, setCustomerCount] = useState(1);
+  const [discount, setDiscount] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [existingItems, setExistingItems] = useState<any[]>([]);
   const { toast } = useToast();
@@ -135,6 +136,7 @@ export function OrderDialog({
             customerCount: orderData.order.customerCount,
             subtotal: uiSubtotal.toString(),
             tax: uiTax.toString(),
+            discount: discount.toString(),
             total: uiGrandTotal.toString(),
           });
 
@@ -181,6 +183,7 @@ export function OrderDialog({
       setCart([]);
       setCustomerName("");
       setCustomerCount(1);
+      setDiscount(0);
       setExistingItems([]);
       onOpenChange(false);
 
@@ -347,7 +350,8 @@ export function OrderDialog({
 
 
   const calculateGrandTotal = () => {
-    return calculateTotal() + calculateTax();
+    const beforeDiscount = calculateTotal() + calculateTax();
+    return Math.max(0, beforeDiscount - discount);
   };
 
   const handlePlaceOrder = async () => {
@@ -424,6 +428,7 @@ export function OrderDialog({
         ...existingOrder,
         customerName: customerName || null,
         customerCount: parseInt(customerCount.toString()) || 1,
+        discount: discount.toString(),
       };
 
       console.log("📝 Processing order update:", {
@@ -464,7 +469,8 @@ export function OrderDialog({
         customerCount: parseInt(customerCount) || 1,
         subtotal: subtotalAmount.toString(),
         tax: taxAmount.toString(),
-        total: totalAmount.toString(),
+        discount: discount.toString(),
+        total: Math.max(0, totalAmount - discount).toString(),
         status: "served",
         paymentStatus: "pending",
         orderedAt: new Date().toISOString(),
@@ -505,6 +511,7 @@ export function OrderDialog({
     setCart([]);
     setCustomerName("");
     setCustomerCount(1);
+    setDiscount(0);
     setSelectedCategory(null);
     // Only clear existing items if we're not in edit mode
     if (mode !== "edit") {
@@ -518,8 +525,10 @@ export function OrderDialog({
       if (mode === "edit" && existingOrder) {
         setCustomerName(existingOrder.customerName || "");
         setCustomerCount(existingOrder.customerCount || 1);
+        setDiscount(parseFloat(existingOrder.discount || "0"));
       } else {
         setCustomerCount(Math.min(table.capacity, 1));
+        setDiscount(0);
       }
     }
   }, [table, open, mode, existingOrder]);
@@ -563,7 +572,7 @@ export function OrderDialog({
             {/* Customer Info */}
             <Card className="flex-shrink-0">
               <CardContent className="p-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="customerName">
                       {t("tables.customerName")} ({t("tables.optional")})
@@ -588,6 +597,21 @@ export function OrderDialog({
                       onChange={(e) =>
                         setCustomerCount(parseInt(e.target.value) || 1)
                       }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="discount">
+                      Giảm giá (₫)
+                    </Label>
+                    <Input
+                      id="discount"
+                      type="number"
+                      min={0}
+                      value={discount}
+                      onChange={(e) =>
+                        setDiscount(parseFloat(e.target.value) || 0)
+                      }
+                      placeholder="0"
                     />
                   </div>
                 </div>
@@ -991,6 +1015,17 @@ export function OrderDialog({
                     {Math.floor(calculateTax()).toLocaleString()} ₫
                   </span>
                 </div>
+                {discount > 0 && (
+                  <>
+                    <div className="w-px h-4 bg-gray-300"></div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600">Giảm giá</span>
+                      <span className="font-medium text-red-600">
+                        -{Math.floor(discount).toLocaleString()} ₫
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="w-px h-4 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600 font-bold">
