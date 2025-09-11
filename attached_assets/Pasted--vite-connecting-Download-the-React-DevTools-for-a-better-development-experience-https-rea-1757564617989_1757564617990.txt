@@ -1,0 +1,595 @@
+ [vite] connecting...
+ Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+ Customer Display: Component rendered with cart: 0 items, storeInfo: false qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display Component: Cart is empty, resetting all totals
+ Customer Display: Fetching initial data...
+ Customer Display: Initializing WebSocket connection
+ 자동 전체화면 실패: 
+(anonymous) @ customer-display:140
+ Customer Display: Store info loaded: Object
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Initial cart loaded: Object
+ Customer Display: Cart state updated with 0 items
+ Customer Display: Store info updated from cart API
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display Component: Cart is empty, resetting all totals
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ 💥 Customer Display: WebSocket error: Event
+ws.onerror @ src/components/pos/c…mer-display.tsx:115
+ ❌ Customer Display: Disconnected from WebSocket server
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display Component: Cart is empty, resetting all totals
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: QR payment cancelled, clearing QR and restoring cart
+ Customer Display: ⏭️ QR payment already cleared, ignoring cancellation
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Restoring cart display, clearing QR payment
+ Customer Display: QR payment force cleared to restore cart view
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: QR payment cancelled, clearing QR and restoring cart
+ Customer Display: ⏭️ QR payment already cleared, ignoring cancellation
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display Component: Cart is empty, resetting all totals
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display Component: Cart is empty, resetting all totals
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: QR payment cancelled, clearing QR and restoring cart
+ Customer Display: ⏭️ QR payment already cleared, ignoring cancellation
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Restoring cart display, clearing QR payment
+ Customer Display: QR payment force cleared to restore cart view
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: QR payment cancelled, clearing QR and restoring cart
+ Customer Display: ⏭️ QR payment already cleared, ignoring cancellation
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Restoring cart display, clearing QR payment
+ Customer Display: QR payment force cleared to restore cart view
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display Component: Cart is empty, resetting all totals
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 2 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 2 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 2 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 2 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display Component: Cart is empty, resetting all totals
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket error: Event
+ws.onerror @ src/pages/customer-display.tsx:277
+ Customer Display: WebSocket closed: 1006 
+ Customer Display: Attempting to reconnect...
+ Customer Display: WebSocket connected
+ Customer Display: Identification message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Unknown message type: connection_established
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Registration message sent
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🧹 Clearing QR payment due to empty cart
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 0 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 1 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: 🔄 Cart update: Object
+ Customer Display: Component rendered with cart: 2 items, storeInfo: true qrPayment: false
+ Customer Display Component: Props changed Object
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 2 items, storeInfo: true qrPayment: false
+ Customer Display: Received WebSocket message: Object
+ Customer Display: Processing cart update: Object
+ Customer Display: ⏭️ Skipping duplicate cart update
+ Customer Display: Component rendered with cart: 2 items, storeInfo: true qrPayment: false
