@@ -1955,7 +1955,7 @@ export default function SalesOrders() {
                                                                 item.total,
                                                               )}
                                                             </div>
-                                                            <div className="col-span-1 text-right">
+                                                            <div className="col-span-1">
                                                               {(() => {
                                                                 // Calculate tax using the same logic as other components
                                                                 const unitPrice = parseFloat(item.unitPrice || '0');
