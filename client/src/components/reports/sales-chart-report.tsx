@@ -2172,7 +2172,6 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
@@ -2969,7 +2968,7 @@ export function SalesChartReport() {
                                 <Badge
                                   variant={
                                     item.customerGroup ===
-                                    t("reports.reports.vip")
+                                    t("reports.vip")
                                       ? "default"
                                       : "secondary"
                                   }

@@ -3972,9 +3972,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           productSku: products.sku,
           categoryId: products.categoryId,
           categoryName: categories.name,
-          unitPrice: orderItemsTable.unitPrice, // This is the pre-tax price
+          unitPrice: orderItemsTable.unitPrice, // Direct unit price from order_items
           quantity: orderItemsTable.quantity,
-          total: orderItemsTable.total, // This should also be pre-tax total
+          total: orderItemsTable.total, // Direct total from order_items
           orderId: orderItemsTable.orderId,
           orderDate: orders.orderedAt,
           orderStatus: orders.status,
@@ -3996,18 +3996,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Found ${productSalesData.length} product sales records`);
 
-      // Group and aggregate data by product
+      // Group and aggregate data by product - simply sum up the values
       const productMap = new Map();
 
       productSalesData.forEach((item) => {
         const productId = item.productId;
         const quantity = Number(item.quantity || 0);
-        const revenue = Number(item.total || 0);
+        const unitPrice = Number(item.unitPrice || 0); // Direct from order_items
+        const itemRevenue = unitPrice * quantity; // Simple calculation: unitPrice * quantity
 
         if (productMap.has(productId)) {
           const existing = productMap.get(productId);
           existing.totalQuantity += quantity;
-          existing.totalRevenue += revenue;
+          existing.totalRevenue += itemRevenue;
           existing.orderCount += 1;
         } else {
           productMap.set(productId, {
@@ -4016,10 +4017,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             productSku: item.productSku,
             categoryId: item.categoryId,
             categoryName: item.categoryName,
-            productType: item.productType,
             totalQuantity: quantity,
-            totalRevenue: revenue,
-            averagePrice: Number(item.unitPrice || 0),
+            totalRevenue: itemRevenue, // unitPrice * quantity
+            averagePrice: unitPrice, // Direct unit price from order_items
             orderCount: 1,
           });
         }
