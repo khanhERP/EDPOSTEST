@@ -1333,7 +1333,7 @@ export default function SalesOrders() {
                                                   <div className="col-span-1">{t("common.quantity")}</div>
                                                   <div className="col-span-1">{t("common.unitPrice")}</div>
                                                   <div className="col-span-1">{t("common.totalAmount")}</div>
-                                                  <div className="col-span-1">{t("common.taxVAT")}</div>
+                                                  <div className="col-span-1">Tiền thuế</div>
                                                 </div>
                                                 {(() => {
                                                   const items = orderItems;
@@ -1344,18 +1344,27 @@ export default function SalesOrders() {
                                                       </div>
                                                     );
                                                   }
-                                                  return items.map((item: any, index: number) => (
-                                                    <div key={item.id} className="grid grid-cols-12 gap-2 text-xs p-2 border-t">
-                                                      <div className="col-span-1">{index + 1}</div>
-                                                      <div className="col-span-3">SP{String(item.productId).padStart(3, '0')}</div>
-                                                      <div className="col-span-3">{item.productName}</div>
-                                                      <div className="col-span-1">Cái</div>
-                                                      <div className="col-span-1 text-center">{item.quantity}</div>
-                                                      <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
-                                                      <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
-                                                      <div className="col-span-1 text-center">{item.taxRate || 0}%</div>
-                                                    </div>
-                                                  ));
+                                                  return items.map((item: any, index: number) => {
+                                                    // Calculate tax amount = total - (unitPrice * quantity)
+                                                    const unitPrice = parseFloat(item.unitPrice || '0');
+                                                    const quantity = parseInt(item.quantity || '0');
+                                                    const total = parseFloat(item.total || '0');
+                                                    const subtotal = unitPrice * quantity;
+                                                    const taxAmount = total - subtotal;
+                                                    
+                                                    return (
+                                                      <div key={item.id} className="grid grid-cols-12 gap-2 text-xs p-2 border-t">
+                                                        <div className="col-span-1">{index + 1}</div>
+                                                        <div className="col-span-3">SP{String(item.productId).padStart(3, '0')}</div>
+                                                        <div className="col-span-3">{item.productName}</div>
+                                                        <div className="col-span-1">Cái</div>
+                                                        <div className="col-span-1 text-center">{item.quantity}</div>
+                                                        <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
+                                                        <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
+                                                        <div className="col-span-1 text-right">{formatCurrency(taxAmount)}</div>
+                                                      </div>
+                                                    );
+                                                  });
                                                 })()}
                                               </div>
                                             </div>
