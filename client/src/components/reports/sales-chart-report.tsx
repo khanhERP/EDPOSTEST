@@ -1882,21 +1882,7 @@ export function SalesChartReport() {
                               {formatCurrency(order.revenue)}
                             </TableCell>
                             <TableCell className="text-right min-w-[100px] px-2">
-                              {(() => {
-                                // Calculate average tax rate from all items in the order
-                                if (order.items && order.items.length > 0) {
-                                  const totalTaxRate = order.items.reduce(
-                                    (sum: number, item: any) => {
-                                      return sum + (item.taxRate || 0);
-                                    },
-                                    0,
-                                  );
-                                  return totalTaxRate > 0
-                                    ? `${Math.floor(totalTaxRate)}%`
-                                    : "0%";
-                                }
-                                return "0%";
-                              })()}
+                              -
                             </TableCell>
                             <TableCell className="text-right min-w-[100px] px-2">
                               {formatCurrency(order.tax)}
@@ -5077,7 +5063,7 @@ export function SalesChartReport() {
         <CardContent className="pt-6">
           <div className="space-y-6">
             {/* Main Filter Row */}
-            <div className="grid grid-cols-3">
+            <div className="grid grid-cols-3 gap-4">
               {/* Analysis Type */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
