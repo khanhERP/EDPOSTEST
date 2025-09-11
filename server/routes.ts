@@ -2104,7 +2104,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
               let itemTax = 0;
               // Thuế = (after_tax_price - price) * quantity - EXACT same as order-dialog
               if (
-                product ? .afterTaxPrice &&
+                product?.afterTaxPrice &&
                 product.afterTaxPrice !== null &&
                 product.afterTaxPrice !== ""
               ) {
@@ -2491,9 +2491,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(safeItems);
     } catch (error) {
       console.error("=== GET ALL ORDER ITEMS ERROR ===");
-      console.error("Error type:", error ? .constructor ? .name || "Unknown");
-      console.error("Error message:", error ? .message || "Unknown error");
-      console.error("Error stack:", error ? .stack || "No stack trace");
+      console.error("Error type:", error?.constructor?.name || "Unknown");
+      console.error("Error message:", error?.message || "Unknown error");
+      console.error("Error stack:", error?.stack || "No stack trace");
 
       res.status(500).json({
         message: "Failed to fetch all order items",
@@ -2538,9 +2538,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(safeItems);
     } catch (error) {
       console.error("=== GET ORDER ITEMS ERROR ===");
-      console.error("Error type:", error ? .constructor ? .name || "Unknown");
-      console.error("Error message:", error ? .message || "Unknown error");
-      console.error("Error stack:", error ? .stack || "No stack trace");
+      console.error("Error type:", error?.constructor?.name || "Unknown");
+      console.error("Error message:", error?.message || "Unknown error");
+      console.error("Error stack:", error?.stack || "No stack trace");
       console.error("Order ID:", req.params.orderId);
 
       res.status(500).json({
@@ -2656,7 +2656,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         items
       } = req.body;
 
-      console.log(`📝 Adding ${items ? .length || 0} items to order ${orderId}`);
+      console.log(`📝 Adding ${items?.length || 0} items to order ${orderId}`);
 
       if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({
@@ -2772,7 +2772,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         let itemTax = 0;
         // Thuế = (after_tax_price - price) * quantity - EXACT same as order-dialog
         if (
-          product ? .afterTaxPrice &&
+          product?.afterTaxPrice &&
           product.afterTaxPrice !== null &&
           product.afterTaxPrice !== ""
         ) {
@@ -2940,7 +2940,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         tax: currentCartState.tax,
         total: currentCartState.total,
         hasStoreInfo: !!currentCartState.storeInfo,
-        storeName: currentCartState.storeInfo ? .storeName,
+        storeName: currentCartState.storeInfo?.storeName,
       });
 
       res.json(currentCartState);
@@ -4764,7 +4764,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         totalRevenue,
         totalQuantity,
         totalProducts,
-        topProduct: result.summary.topSellingProduct ? .productName,
+        topProduct: result.summary.topSellingProduct?.productName,
       });
 
       res.json(result);
@@ -5096,7 +5096,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           let employeeMatch = true;
           if (selectedEmployee !== "all") {
             employeeMatch =
-              order.employeeId ? .toString() === selectedEmployee ||
+              order.employeeId?.toString() === selectedEmployee ||
               (order.employeeName &&
                 order.employeeName
                 .toLowerCase()
@@ -5243,9 +5243,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
           const searchTerm = productSearch.toLowerCase();
           products = products.filter(
             (product) =>
-            product.name ? .toLowerCase().includes(searchTerm) ||
-            product.sku ? .toLowerCase().includes(searchTerm) ||
-            product.description ? .toLowerCase().includes(searchTerm),
+            product.name?.toLowerCase().includes(searchTerm) ||
+            product.sku?.toLowerCase().includes(searchTerm) ||
+            product.description?.toLowerCase().includes(searchTerm),
           );
         }
 
@@ -5289,11 +5289,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
           const searchTerm = customerSearch.toLowerCase();
           customers = customers.filter(
             (customer) =>
-            customer.name ? .toLowerCase().includes(searchTerm) ||
-            customer.phone ? .includes(customerSearch) ||
-            customer.email ? .toLowerCase().includes(searchTerm) ||
-            customer.customerId ? .toLowerCase().includes(searchTerm) ||
-            customer.address ? .toLowerCase().includes(searchTerm),
+            customer.name?.toLowerCase().includes(searchTerm) ||
+            customer.phone?.includes(customerSearch) ||
+            customer.email?.toLowerCase().includes(searchTerm) ||
+            customer.customerId?.toLowerCase().includes(searchTerm) ||
+            customer.address?.toLowerCase().includes(searchTerm),
           );
         }
 
@@ -5445,10 +5445,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
           message:
             result.message || "Hóa đơn điện tử đã được phát hành thành công",
           data: {
-            invoiceNo: result.data ? .invoiceNo,
-            invDate: result.data ? .invDate,
-            transactionID: result.data ? .transactionID,
-            macqt: result.data ? .macqt,
+            invoiceNo: result.data?.invoiceNo,
+            invDate: result.data?.invDate,
+            transactionID: result.data?.transactionID,
+            macqt: result.data?.macqt,
             originalRequest: {
               transactionID: publishRequest.transactionID,
               invRef: publishRequest.invRef,
@@ -5562,7 +5562,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         user: dbInfo.user_name,
         version: dbInfo.postgres_version,
         serverTime: dbInfo.server_time,
-        connectionString: process.env.DATABASE_URL ? .replace(
+        connectionString: process.env.DATABASE_URL?.replace(
           /:[^:@]*@/,
           ":****@",
         ),
@@ -5576,7 +5576,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.status(500).json({
         status: "unhealthy",
         error: errorMessage,
-        connectionString: process.env.DATABASE_URL ? .replace(
+        connectionString: process.env.DATABASE_URL?.replace(
           /:[^:@]*@/,
           ":****@",
         ),
