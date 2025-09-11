@@ -43,19 +43,31 @@ export interface CreateQRPosResponse {
 }
 
 export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: string, clientID: string): Promise<CreateQRPosResponse> => {
-  const response = await fetch(`/api/pos/create-qr?bankCode=${bankCode}&clientID=${clientID}`, {
+  // Use the new external API endpoint
+  const response = await fetch('http://1.55.212.135:9335/api/Ec/CreateQuickQr', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify({
+      ...request,
+      bankCode,
+      clientID
+    }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('CreateQRPos API error:', response.status, errorText);
+    console.error('CreateQuickQr API error:', response.status, errorText);
     throw new Error(`Failed to create QR payment: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  
+  // Transform response to match expected format if needed
+  return {
+    qrDataDecode: result.qrDataDecode || result.qrData,
+    qrUrl: result.qrUrl || '',
+    qrData: result.qrData || result.qrDataDecode || ''
+  };
 };
