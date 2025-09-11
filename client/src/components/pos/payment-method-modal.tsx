@@ -31,7 +31,7 @@ async function apiRequest(method: string, url: string, body?: any) {
   const options: RequestInit = {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     ...(body && { body: JSON.stringify(body) }),
   };
@@ -84,7 +84,7 @@ export function PaymentMethodModal({
     orderForPaymentTableId: orderForPayment?.tableId,
     receipt: receipt,
     products: products?.length || 0,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 
   // Validate orderForPayment exists or create fallback order info
@@ -93,7 +93,7 @@ export function PaymentMethodModal({
     total: total || 0,
     subtotal: total || 0,
     tax: 0,
-    items: cartItems || []
+    items: cartItems || [],
   };
 
   // Log for debugging but don't block the modal
@@ -105,14 +105,14 @@ export function PaymentMethodModal({
       cartItems: cartItems?.length,
       orderForPayment,
       orderInfo,
-      receipt
+      receipt,
     });
   }
 
   if (!orderInfo.id) {
     console.error(`❌ PAYMENT MODAL: orderInfo.id is missing`, {
       orderInfo,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } else {
     console.log(`✅ PAYMENT MODAL: orderInfo is valid`, {
@@ -120,7 +120,7 @@ export function PaymentMethodModal({
       status: orderInfo.status,
       tableId: orderInfo.tableId,
       total: orderInfo.total,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -316,12 +316,14 @@ export function PaymentMethodModal({
     console.log(`🚀 ========================================`);
     console.log(`🚀 HANDLESELECT FUNCTION ENTRY POINT`);
     console.log(`🚀 ========================================`);
-    console.log(`🔥 HANDLESELECT FUNCTION CALLED - Method: ${method}, Order ID: ${orderInfo.id}`);
+    console.log(
+      `🔥 HANDLESELECT FUNCTION CALLED - Method: ${method}, Order ID: ${orderInfo.id}`,
+    );
 
     // EARLY VALIDATION: Check if orderInfo exists and has an ID
     if (!orderInfo || !orderInfo.id) {
       console.error(`❌ CRITICAL ERROR: orderInfo is missing or has no ID`);
-      alert('Lỗi: Không tìm thấy thông tin đơn hàng để thanh toán');
+      alert("Lỗi: Không tìm thấy thông tin đơn hàng để thanh toán");
       return;
     }
 
@@ -335,7 +337,9 @@ export function PaymentMethodModal({
       setAmountReceived("");
       // Show cash payment input form ONLY - do NOT update order status yet
       setShowCashPayment(true);
-      console.log(`🔍 DEBUG: showCashPayment set to true, waiting for user input`);
+      console.log(
+        `🔍 DEBUG: showCashPayment set to true, waiting for user input`,
+      );
     } else if (method === "qrCode") {
       // Call CreateQRPos API for QR payment
       try {
@@ -394,8 +398,11 @@ export function PaymentMethodModal({
 
         // Generate QR code from the received QR data
         if (qrResponse.qrData) {
-          console.log("✅ Using actual QR data from CreateQRPos API:", qrResponse.qrData);
-          
+          console.log(
+            "✅ Using actual QR data from CreateQRPos API:",
+            qrResponse.qrData,
+          );
+
           // Use the raw qrData directly - it's already in the correct format for VietQR
           const qrUrl = await QRCodeLib.toDataURL(qrResponse.qrData, {
             width: 256,
@@ -411,16 +418,20 @@ export function PaymentMethodModal({
           // Send QR payment info to customer display via WebSocket - ENHANCED VERSION
           const sendQRPaymentToDisplay = () => {
             try {
-              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const protocol =
+                window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
-              console.log("🎯 QR Payment: Connecting to WebSocket for customer display:", wsUrl);
-              
+              console.log(
+                "🎯 QR Payment: Connecting to WebSocket for customer display:",
+                wsUrl,
+              );
+
               const ws = new WebSocket(wsUrl);
               let connectionTimeout: NodeJS.Timeout;
 
               ws.onopen = () => {
                 console.log("✅ QR Payment: WebSocket connected successfully");
-                
+
                 // Clear connection timeout since we're connected
                 if (connectionTimeout) {
                   clearTimeout(connectionTimeout);
@@ -435,19 +446,24 @@ export function PaymentMethodModal({
                   paymentMethod: "QR Code",
                   timestamp: new Date().toISOString(),
                 };
-                
-                console.log(`📤 QR Payment: Sending message to customer display:`, {
-                  type: qrPaymentMessage.type,
-                  amount: qrPaymentMessage.amount,
-                  hasQrCodeUrl: !!qrPaymentMessage.qrCodeUrl,
-                  qrCodeUrlLength: qrPaymentMessage.qrCodeUrl?.length || 0,
-                  transactionUuid: qrPaymentMessage.transactionUuid
-                });
-                
+
+                console.log(
+                  `📤 QR Payment: Sending message to customer display:`,
+                  {
+                    type: qrPaymentMessage.type,
+                    amount: qrPaymentMessage.amount,
+                    hasQrCodeUrl: !!qrPaymentMessage.qrCodeUrl,
+                    qrCodeUrlLength: qrPaymentMessage.qrCodeUrl?.length || 0,
+                    transactionUuid: qrPaymentMessage.transactionUuid,
+                  },
+                );
+
                 try {
                   ws.send(JSON.stringify(qrPaymentMessage));
-                  console.log("✅ QR Payment: Message sent successfully to customer display");
-                  
+                  console.log(
+                    "✅ QR Payment: Message sent successfully to customer display",
+                  );
+
                   // Send a second confirmation message after a delay
                   setTimeout(() => {
                     const confirmationMessage = {
@@ -455,19 +471,23 @@ export function PaymentMethodModal({
                       originalMessage: qrPaymentMessage,
                       timestamp: new Date().toISOString(),
                     };
-                    
+
                     ws.send(JSON.stringify(confirmationMessage));
                     console.log("✅ QR Payment: Confirmation message sent");
-                    
+
                     // Close connection after confirmation
                     setTimeout(() => {
-                      console.log("🔒 QR Payment: Closing WebSocket connection");
-                      ws.close(1000, 'QR payment sent successfully');
+                      console.log(
+                        "🔒 QR Payment: Closing WebSocket connection",
+                      );
+                      ws.close(1000, "QR payment sent successfully");
                     }, 500);
                   }, 500);
-                  
                 } catch (sendError) {
-                  console.error("❌ QR Payment: Error sending message:", sendError);
+                  console.error(
+                    "❌ QR Payment: Error sending message:",
+                    sendError,
+                  );
                   ws.close();
                 }
               };
@@ -483,9 +503,9 @@ export function PaymentMethodModal({
                 console.log("🔒 QR Payment: WebSocket closed", {
                   code: event.code,
                   reason: event.reason,
-                  wasClean: event.wasClean
+                  wasClean: event.wasClean,
                 });
-                
+
                 if (connectionTimeout) {
                   clearTimeout(connectionTimeout);
                 }
@@ -498,21 +518,27 @@ export function PaymentMethodModal({
                   ws.close();
                 }
               }, 5000);
-
             } catch (error) {
-              console.error("❌ QR Payment: Failed to create WebSocket connection:", error);
+              console.error(
+                "❌ QR Payment: Failed to create WebSocket connection:",
+                error,
+              );
             }
           };
 
           // Execute the function to send QR payment info
-          console.log("🚀 QR Payment: Starting QR payment transmission to customer display");
+          console.log(
+            "🚀 QR Payment: Starting QR payment transmission to customer display",
+          );
           sendQRPaymentToDisplay();
         } else {
           console.error("No QR data received from API");
           // Fallback: try to use qrDataDecode if available
-          const fallbackQrData = qrResponse.qrDataDecode || `00020101021238630010A000000727013300069711330119NPIPIFPHAN0100004190208QRIBFTTA53037045408${Math.floor(orderTotal)}.005802VN6304`;
+          const fallbackQrData =
+            qrResponse.qrDataDecode ||
+            `00020101021238630010A000000727013300069711330119NPIPIFPHAN0100004190208QRIBFTTA53037045408${Math.floor(orderTotal)}.005802VN6304`;
           console.log("📄 Using fallback QR data:", fallbackQrData);
-          
+
           const qrUrl = await QRCodeLib.toDataURL(fallbackQrData, {
             width: 256,
             margin: 2,
@@ -530,12 +556,17 @@ export function PaymentMethodModal({
               const protocol =
                 window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
-              console.log("Fallback QR Payment: Attempting to connect to WebSocket:", wsUrl);
-              
+              console.log(
+                "Fallback QR Payment: Attempting to connect to WebSocket:",
+                wsUrl,
+              );
+
               const ws = new WebSocket(wsUrl);
 
               ws.onopen = () => {
-                console.log("Fallback QR Payment: WebSocket connected successfully, sending QR payment info");
+                console.log(
+                  "Fallback QR Payment: WebSocket connected successfully, sending QR payment info",
+                );
                 const fallbackMessage = {
                   type: "qr_payment",
                   qrCodeUrl: qrUrl,
@@ -544,12 +575,19 @@ export function PaymentMethodModal({
                   paymentMethod: "QR Code",
                   timestamp: new Date().toISOString(),
                 };
-                console.log("Fallback QR Payment: Sending message:", fallbackMessage);
+                console.log(
+                  "Fallback QR Payment: Sending message:",
+                  fallbackMessage,
+                );
                 ws.send(JSON.stringify(fallbackMessage));
-                console.log("Fallback QR Payment: QR payment info sent to customer display successfully");
-                
+                console.log(
+                  "Fallback QR Payment: QR payment info sent to customer display successfully",
+                );
+
                 setTimeout(() => {
-                  console.log("Fallback QR Payment: Closing WebSocket connection");
+                  console.log(
+                    "Fallback QR Payment: Closing WebSocket connection",
+                  );
                   ws.close();
                 }, 2000);
               };
@@ -562,7 +600,7 @@ export function PaymentMethodModal({
                 console.log("Fallback QR Payment: WebSocket closed", {
                   code: event.code,
                   reason: event.reason,
-                  wasClean: event.wasClean
+                  wasClean: event.wasClean,
                 });
               };
             } catch (error) {
@@ -589,7 +627,7 @@ export function PaymentMethodModal({
           // Generate a valid VietQR format string
           const fallbackQrData = `00020101021238630010A000000727013300069711330119NPIPIFPHAN0100004190208QRIBFTTA53037045408${Math.floor(orderTotal)}.005802VN6304`;
           console.log("📄 Using error fallback VietQR data:", fallbackQrData);
-          
+
           const qrUrl = await QRCodeLib.toDataURL(fallbackQrData, {
             width: 256,
             margin: 2,
@@ -637,7 +675,9 @@ export function PaymentMethodModal({
           const ws = new WebSocket(wsUrl);
 
           ws.onopen = () => {
-            console.log("VNPay QR Payment: WebSocket connected, sending QR payment info");
+            console.log(
+              "VNPay QR Payment: WebSocket connected, sending QR payment info",
+            );
             ws.send(
               JSON.stringify({
                 type: "qr_payment",
@@ -648,7 +688,9 @@ export function PaymentMethodModal({
                 timestamp: new Date().toISOString(),
               }),
             );
-            console.log("VNPay QR Payment: QR payment info sent to customer display");
+            console.log(
+              "VNPay QR Payment: QR payment info sent to customer display",
+            );
             setTimeout(() => {
               ws.close();
             }, 1000);
@@ -659,7 +701,9 @@ export function PaymentMethodModal({
           };
 
           ws.onclose = () => {
-            console.log("VNPay QR Payment: WebSocket closed after sending QR info");
+            console.log(
+              "VNPay QR Payment: WebSocket closed after sending QR info",
+            );
           };
         } catch (error) {
           console.error(
@@ -674,29 +718,33 @@ export function PaymentMethodModal({
       }
     } else {
       // Check if this is a real order or temporary order
-      const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
+      const isTemporaryOrder = orderInfo.id.toString().startsWith("temp-");
 
       if (isTemporaryOrder) {
         console.log(`📝 Creating POS ${method} order:`, orderData);
         console.log("📦 Order items:", orderItems);
 
         // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
-        const receiptSubtotal = receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
+        const receiptSubtotal =
+          receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
         const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
         const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
-        console.log("💰 Other Payment Complete: Using exact receipt preview data:", {
-          receiptSubtotal,
-          receiptTax,
-          receiptTotal,
-          method,
-          source: "receipt_preview_exact"
-        });
+        console.log(
+          "💰 Other Payment Complete: Using exact receipt preview data:",
+          {
+            receiptSubtotal,
+            receiptTax,
+            receiptTotal,
+            method,
+            source: "receipt_preview_exact",
+          },
+        );
 
         const orderData = {
           orderNumber: `ORD-${Date.now()}`,
           tableId: null, // POS orders don't have tables
-          salesChannel: 'pos', // Mark as POS order
+          salesChannel: "pos", // Mark as POS order
           customerName: orderInfo.customerName || "Khách hàng lẻ",
           customerCount: 1,
           status: "paid", // Mark as paid immediately
@@ -706,33 +754,42 @@ export function PaymentMethodModal({
           tax: receiptTax.toString(),
           total: receiptTotal.toString(),
           notes: `POS ${method} Payment`,
-          paidAt: new Date().toISOString()
+          paidAt: new Date().toISOString(),
         };
 
         // Prepare order items
-        const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
-          productId: item.productId || item.id,
-          quantity: parseInt(item.quantity?.toString() || "1"),
-          unitPrice: item.unitPrice || item.price?.toString() || "0",
-          total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
-          notes: null
-        }));
+        const orderItems = (orderInfo.items || cartItems || []).map(
+          (item: any) => ({
+            productId: item.productId || item.id,
+            quantity: parseInt(item.quantity?.toString() || "1"),
+            unitPrice: item.unitPrice || item.price?.toString() || "0",
+            total:
+              item.total ||
+              (
+                parseFloat(item.price || "0") * parseInt(item.quantity || "1")
+              ).toString(),
+            notes: null,
+          }),
+        );
 
         // Create order via API
-        const createResponse = await fetch('/api/orders', {
-          method: 'POST',
+        const createResponse = await fetch("/api/orders", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             order: orderData,
-            items: orderItems
+            items: orderItems,
           }),
         });
 
         if (createResponse.ok) {
           const createdOrder = await createResponse.json();
-          console.log(`✅ POS ${method} order created successfully:`, createdOrder);
+          console.log(
+            `✅ POS ${method} order created successfully:`,
+            createdOrder,
+          );
 
           // Update orderInfo with the real order ID for E-Invoice
           orderInfo.id = createdOrder.id;
@@ -740,26 +797,33 @@ export function PaymentMethodModal({
 
           setSelectedPaymentMethod(method);
           setShowEInvoice(true);
-          console.log(`🔥 SHOWING E-INVOICE MODAL for created POS ${method} order ${createdOrder.id}`);
+          console.log(
+            `🔥 SHOWING E-INVOICE MODAL for created POS ${method} order ${createdOrder.id}`,
+          );
         } else {
           const errorText = await createResponse.text();
           console.error(`❌ Failed to create POS ${method} order:`, errorText);
-          alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+          alert("Lỗi: Không thể tạo đơn hàng trong hệ thống");
         }
       } else {
         // For other payment methods (card, digital wallets) on real orders, update order status first
-        console.log(`🚀 REAL ORDER OTHER PAYMENT METHOD (${method}) - updating order status to 'paid' for order ${orderInfo.id}`);
+        console.log(
+          `🚀 REAL ORDER OTHER PAYMENT METHOD (${method}) - updating order status to 'paid' for order ${orderInfo.id}`,
+        );
 
         try {
-          const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
+          const statusResponse = await fetch(
+            `/api/orders/${orderInfo.id}/status`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                status: "paid",
+              }),
             },
-            body: JSON.stringify({
-              status: 'paid'
-            }),
-          });
+          );
 
           if (statusResponse.ok) {
             const data = await statusResponse.json();
@@ -768,31 +832,38 @@ export function PaymentMethodModal({
             // Lưu phương thức thanh toán và hiển thị E-Invoice modal
             setSelectedPaymentMethod(method);
             setShowEInvoice(true);
-            console.log(`🔥 SHOWING E-INVOICE MODAL after successful ${method} payment`);
+            console.log(
+              `🔥 SHOWING E-INVOICE MODAL after successful ${method} payment`,
+            );
           } else {
             const errorText = await statusResponse.text();
             console.error(`❌ Failed to update order status:`, errorText);
-            alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+            alert("Lỗi: Không thể cập nhật trạng thái đơn hàng");
           }
         } catch (error) {
           console.error(`❌ Error updating order status:`, error);
-          alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+          alert("Lỗi: Không thể cập nhật trạng thái đơn hàng");
         }
       }
     }
   };
 
   const handleQRComplete = async () => {
-    console.log(`🚀 QR PAYMENT COMPLETE - checking order type for order ${orderInfo.id}`);
+    console.log(
+      `🚀 QR PAYMENT COMPLETE - checking order type for order ${orderInfo.id}`,
+    );
 
     // Check if this is a real order or temporary order
-    const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
+    const isTemporaryOrder = orderInfo.id.toString().startsWith("temp-");
 
     if (isTemporaryOrder) {
-      console.log(`🔄 TEMPORARY ORDER DETECTED - using receipt preview data for QR payment ${orderInfo.id}`);
+      console.log(
+        `🔄 TEMPORARY ORDER DETECTED - using receipt preview data for QR payment ${orderInfo.id}`,
+      );
 
       // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
-      const receiptSubtotal = receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
+      const receiptSubtotal =
+        receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
       const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
       const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
@@ -800,13 +871,13 @@ export function PaymentMethodModal({
         receiptSubtotal,
         receiptTax,
         receiptTotal,
-        source: "receipt_preview_exact"
+        source: "receipt_preview_exact",
       });
 
       const orderData = {
         orderNumber: `ORD-${Date.now()}`,
         tableId: null, // POS orders don't have tables
-        salesChannel: 'pos', // Mark as POS order
+        salesChannel: "pos", // Mark as POS order
         customerName: orderInfo.customerName || "Khách hàng lẻ",
         customerCount: 1,
         status: "paid", // Mark as paid immediately for QR
@@ -815,31 +886,37 @@ export function PaymentMethodModal({
         subtotal: receiptSubtotal.toString(),
         tax: receiptTax.toString(),
         total: receiptTotal.toString(),
-        notes: `POS QR Payment - Transaction: ${currentTransactionUuid || 'N/A'}`,
-        paidAt: new Date().toISOString()
+        notes: `POS QR Payment - Transaction: ${currentTransactionUuid || "N/A"}`,
+        paidAt: new Date().toISOString(),
       };
 
       // Prepare order items
-      const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
-        productId: item.productId || item.id,
-        quantity: parseInt(item.quantity?.toString() || "1"),
-        unitPrice: item.unitPrice || item.price?.toString() || "0",
-        total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
-        notes: null
-      }));
+      const orderItems = (orderInfo.items || cartItems || []).map(
+        (item: any) => ({
+          productId: item.productId || item.id,
+          quantity: parseInt(item.quantity?.toString() || "1"),
+          unitPrice: item.unitPrice || item.price?.toString() || "0",
+          total:
+            item.total ||
+            (
+              parseFloat(item.price || "0") * parseInt(item.quantity || "1")
+            ).toString(),
+          notes: null,
+        }),
+      );
 
       console.log("📝 Creating POS QR order:", orderData);
       console.log("📦 Order items:", orderItems);
 
       // Create order via API
-      const createResponse = await fetch('/api/orders', {
-        method: 'POST',
+      const createResponse = await fetch("/api/orders", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           order: orderData,
-          items: orderItems
+          items: orderItems,
         }),
       });
 
@@ -855,28 +932,37 @@ export function PaymentMethodModal({
         setQrCodeUrl("");
         setSelectedPaymentMethod("qrCode");
         setShowEInvoice(true);
-        console.log(`🔥 SHOWING E-INVOICE MODAL for created POS QR order ${createdOrder.id}`);
+        console.log(
+          `🔥 SHOWING E-INVOICE MODAL for created POS QR order ${createdOrder.id}`,
+        );
       } else {
         const errorText = await createResponse.text();
         console.error(`❌ Failed to create POS QR order:`, errorText);
-        alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+        alert("Lỗi: Không thể tạo đơn hàng trong hệ thống");
       }
     } else {
       // For real orders, update order status to 'paid'
-      console.log(`🚀 REAL ORDER QR PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
+      console.log(
+        `🚀 REAL ORDER QR PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`,
+      );
 
       try {
-        console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
+        console.log(
+          `🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`,
+        );
 
-        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
+        const statusResponse = await fetch(
+          `/api/orders/${orderInfo.id}/status`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: "paid",
+            }),
           },
-          body: JSON.stringify({
-            status: 'paid'
-          }),
-        });
+        );
 
         if (statusResponse.ok) {
           const data = await statusResponse.json();
@@ -892,11 +978,11 @@ export function PaymentMethodModal({
         } else {
           const errorText = await statusResponse.text();
           console.error(`❌ Failed to update order status:`, errorText);
-          alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+          alert("Lỗi: Không thể cập nhật trạng thái đơn hàng");
         }
       } catch (error) {
         console.error(`❌ Error updating order status:`, error);
-        alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+        alert("Lỗi: Không thể cập nhật trạng thái đơn hàng");
       }
     }
   };
@@ -944,11 +1030,12 @@ export function PaymentMethodModal({
     const receivedAmount = parseFloat(cashAmountInput || "0");
 
     // Use exact total with proper priority
-    const orderTotal = receipt?.exactTotal ??
-                      orderInfo?.exactTotal ??
-                      orderInfo?.total ??
-                      total ??
-                      0;
+    const orderTotal =
+      receipt?.exactTotal ??
+      orderInfo?.exactTotal ??
+      orderInfo?.total ??
+      total ??
+      0;
 
     // Tính tiền thối: Tiền khách đưa - Tiền cần thanh toán
     const changeAmount = receivedAmount - orderTotal;
@@ -959,7 +1046,7 @@ export function PaymentMethodModal({
       "Số tiền khách đưa": receivedAmount,
       "Tổng cần thanh toán": orderTotal,
       "Tiền thối": finalChange,
-      "Đủ tiền": receivedAmount >= orderTotal
+      "Đủ tiền": receivedAmount >= orderTotal,
     });
 
     if (receivedAmount < orderTotal) {
@@ -968,13 +1055,16 @@ export function PaymentMethodModal({
     }
 
     // Check if this is a real order or temporary order
-    const isTemporaryOrder = orderInfo.id.toString().startsWith('temp-');
+    const isTemporaryOrder = orderInfo.id.toString().startsWith("temp-");
 
     if (isTemporaryOrder) {
-      console.log(`🔄 TEMPORARY ORDER DETECTED - using receipt preview data for cash payment ${orderInfo.id}`);
+      console.log(
+        `🔄 TEMPORARY ORDER DETECTED - using receipt preview data for cash payment ${orderInfo.id}`,
+      );
 
       // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
-      const receiptSubtotal = receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
+      const receiptSubtotal =
+        receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
       const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
       const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
@@ -982,13 +1072,13 @@ export function PaymentMethodModal({
         receiptSubtotal,
         receiptTax,
         receiptTotal,
-        source: "receipt_preview_exact"
+        source: "receipt_preview_exact",
       });
 
       const orderData = {
         orderNumber: `ORD-${Date.now()}`,
         tableId: null, // POS orders don't have tables
-        salesChannel: 'pos', // Mark as POS order
+        salesChannel: "pos", // Mark as POS order
         customerName: orderInfo.customerName || "Khách hàng lẻ",
         customerCount: 1,
         status: "paid", // Mark as paid immediately for cash
@@ -1002,26 +1092,32 @@ export function PaymentMethodModal({
       };
 
       // Prepare order items
-      const orderItems = (orderInfo.items || cartItems || []).map((item: any) => ({
-        productId: item.productId || item.id,
-        quantity: parseInt(item.quantity?.toString() || "1"),
-        unitPrice: item.unitPrice || item.price?.toString() || "0",
-        total: item.total || (parseFloat(item.price || "0") * parseInt(item.quantity || "1")).toString(),
-        notes: null
-      }));
+      const orderItems = (orderInfo.items || cartItems || []).map(
+        (item: any) => ({
+          productId: item.productId || item.id,
+          quantity: parseInt(item.quantity?.toString() || "1"),
+          unitPrice: item.unitPrice || item.price?.toString() || "0",
+          total:
+            item.total ||
+            (
+              parseFloat(item.price || "0") * parseInt(item.quantity || "1")
+            ).toString(),
+          notes: null,
+        }),
+      );
 
       console.log("📝 Creating POS order:", orderData);
       console.log("📦 Order items:", orderItems);
 
       // Create order via API
-      const createResponse = await fetch('/api/orders', {
-        method: 'POST',
+      const createResponse = await fetch("/api/orders", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           order: orderData,
-          items: orderItems
+          items: orderItems,
         }),
       });
 
@@ -1039,28 +1135,37 @@ export function PaymentMethodModal({
         setCashAmountInput("");
         setSelectedPaymentMethod("cash");
         setShowEInvoice(true);
-        console.log(`🔥 SHOWING E-INVOICE MODAL for created POS order ${createdOrder.id}`);
+        console.log(
+          `🔥 SHOWING E-INVOICE MODAL for created POS order ${createdOrder.id}`,
+        );
       } else {
         const errorText = await createResponse.text();
         console.error(`❌ Failed to create POS order:`, errorText);
-        alert('Lỗi: Không thể tạo đơn hàng trong hệ thống');
+        alert("Lỗi: Không thể tạo đơn hàng trong hệ thống");
       }
     } else {
       // For real orders, update order status to 'paid' when cash payment is completed
-      console.log(`🚀 REAL ORDER CASH PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`);
+      console.log(
+        `🚀 REAL ORDER CASH PAYMENT COMPLETE - updating order status to 'paid' for order ${orderInfo.id}`,
+      );
 
       try {
-        console.log(`🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`);
+        console.log(
+          `🔥 MAKING API CALL: PUT /api/orders/${orderInfo.id}/status`,
+        );
 
-        const statusResponse = await fetch(`/api/orders/${orderInfo.id}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
+        const statusResponse = await fetch(
+          `/api/orders/${orderInfo.id}/status`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: "paid",
+            }),
           },
-          body: JSON.stringify({
-            status: 'paid'
-          }),
-        });
+        );
 
         if (statusResponse.ok) {
           const data = await statusResponse.json();
@@ -1074,15 +1179,17 @@ export function PaymentMethodModal({
           // Lưu phương thức thanh toán và hiển thị E-Invoice modal
           setSelectedPaymentMethod("cash");
           setShowEInvoice(true);
-          console.log(`🔥 SHOWING E-INVOICE MODAL after successful cash payment`);
+          console.log(
+            `🔥 SHOWING E-INVOICE MODAL after successful cash payment`,
+          );
         } else {
           const errorText = await statusResponse.text();
           console.error(`❌ Failed to update order status:`, errorText);
-          alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+          alert("Lỗi: Không thể cập nhật trạng thái đơn hàng");
         }
       } catch (error) {
         console.error(`❌ Error updating order status:`, error);
-        alert('Lỗi: Không thể cập nhật trạng thái đơn hàng');
+        alert("Lỗi: Không thể cập nhật trạng thái đơn hàng");
       }
     }
   };
@@ -1090,7 +1197,10 @@ export function PaymentMethodModal({
   // CRITICAL: Update handleEInvoiceComplete to correctly set receipt data and trigger receipt modal
   const handleEInvoiceComplete = (invoiceData: any) => {
     console.log("🎯 Payment Modal E-Invoice completed:", invoiceData);
-    console.log("📄 Invoice data received:", JSON.stringify(invoiceData, null, 2));
+    console.log(
+      "📄 Invoice data received:",
+      JSON.stringify(invoiceData, null, 2),
+    );
 
     // Always close the E-Invoice modal first
     setShowEInvoice(false);
@@ -1108,8 +1218,11 @@ export function PaymentMethodModal({
     }
 
     // Check if we have valid receipt data
-    if (invoiceData.receipt && typeof invoiceData.receipt === 'object') {
-      console.log("📄 Valid receipt data found, setting for receipt modal:", invoiceData.receipt);
+    if (invoiceData.receipt && typeof invoiceData.receipt === "object") {
+      console.log(
+        "📄 Valid receipt data found, setting for receipt modal:",
+        invoiceData.receipt,
+      );
 
       // Set receipt data for modal
       setReceiptDataForModal(invoiceData.receipt);
@@ -1119,13 +1232,15 @@ export function PaymentMethodModal({
         console.log("⏳ E-Invoice publish later completed - will show receipt");
         toast({
           title: "Thành công",
-          description: "Hóa đơn đã được lưu để phát hành sau. Đang hiển thị hóa đơn để in...",
+          description:
+            "Hóa đơn đã được lưu để phát hành sau. Đang hiển thị hóa đơn để in...",
         });
       } else if (invoiceData.publishedImmediately || invoiceData.success) {
         console.log("✅ E-Invoice published immediately - will show receipt");
         toast({
           title: "Thành công",
-          description: "Hóa đơn điện tử đã được phát hành thành công. Đang hiển thị hóa đơn để in...",
+          description:
+            "Hóa đơn điện tử đã được phát hành thành công. Đang hiển thị hóa đơn để in...",
         });
       } else {
         toast({
@@ -1143,15 +1258,18 @@ export function PaymentMethodModal({
         console.log("📄 SHOWING RECEIPT MODAL");
         setShowReceiptModal(true);
       }, 100);
-
     } else {
       // Even if no receipt data, still show success and close payment flow
-      if (invoiceData.success || invoiceData.publishLater || invoiceData.publishedImmediately) {
+      if (
+        invoiceData.success ||
+        invoiceData.publishLater ||
+        invoiceData.publishedImmediately
+      ) {
         toast({
           title: "Thành công",
-          description: invoiceData.publishLater ?
-            "Hóa đơn đã được lưu để phát hành sau" :
-            "Hóa đơn điện tử đã được phát hành thành công",
+          description: invoiceData.publishLater
+            ? "Hóa đơn đã được lưu để phát hành sau"
+            : "Hóa đơn điện tử đã được phát hành thành công",
         });
 
         // Close the entire payment modal after successful processing
@@ -1359,31 +1477,42 @@ export function PaymentMethodModal({
 
   return (
     <>
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          // When dialog is closed via X button or outside click
-          try {
-            const protocol =
-              window.location.protocol === "https:" ? "wss:" : "ws:";
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            const ws = new WebSocket(wsUrl);
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            // When dialog is closed via X button or outside click
+            try {
+              const protocol =
+                window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
 
-            ws.onopen = () => {
-              console.log(
-                "Payment Modal: Sending clear message from X button close",
-              );
-              // If QR code was showing, send cancellation and restore cart
-              if (showQRCode || qrCodeUrl) {
-                ws.send(
-                  JSON.stringify({
-                    type: "qr_payment_cancelled",
-                    timestamp: new Date().toISOString(),
-                  }),
+              ws.onopen = () => {
+                console.log(
+                  "Payment Modal: Sending clear message from X button close",
                 );
-                // Wait a bit then send cart restore message
-                setTimeout(() => {
+                // If QR code was showing, send cancellation and restore cart
+                if (showQRCode || qrCodeUrl) {
+                  ws.send(
+                    JSON.stringify({
+                      type: "qr_payment_cancelled",
+                      timestamp: new Date().toISOString(),
+                    }),
+                  );
+                  // Wait a bit then send cart restore message
+                  setTimeout(() => {
+                    ws.send(
+                      JSON.stringify({
+                        type: "restore_cart_display",
+                        timestamp: new Date().toISOString(),
+                        reason: "payment_dialog_x_button",
+                      }),
+                    );
+                    ws.close();
+                  }, 100);
+                } else {
+                  // Just send cart restore message if no QR code
                   ws.send(
                     JSON.stringify({
                       type: "restore_cart_display",
@@ -1392,148 +1521,29 @@ export function PaymentMethodModal({
                     }),
                   );
                   ws.close();
-                }, 100);
-              } else {
-                // Just send cart restore message if no QR code
-                ws.send(
-                  JSON.stringify({
-                    type: "restore_cart_display",
-                    timestamp: new Date().toISOString(),
-                    reason: "payment_dialog_x_button",
-                  }),
-                );
-                ws.close();
-              }
-            };
-          } catch (error) {
-            console.error(
-              "Failed to send clear message when X button clicked:",
-              error,
-            );
+                }
+              };
+            } catch (error) {
+              console.error(
+                "Failed to send clear message when X button clicked:",
+                error,
+              );
+            }
           }
-        }
-        onClose();
-      }}
-    >
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("common.selectPaymentMethod")}</DialogTitle>
-        </DialogHeader>
+          onClose();
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("common.selectPaymentMethod")}</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4 p-4">
-          {!showQRCode && !showCashPayment ? (
-            <>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">
-                  {t("common.totalAmount")}
-                </p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {/* Use exact total with proper priority for QR payment */}
-                  {Math.floor(
-                    receipt?.exactTotal ??
-                      orderInfo?.exactTotal ??
-                      orderInfo?.total ??
-                      total ??
-                      0,
-                  ).toLocaleString("vi-VN")}{" "}
-                  ₫
-                </p>
-              </div>
-
-              <div className="grid gap-3">
-                {paymentMethods.map((method) => {
-                  const IconComponent = method.icon;
-                  const isQRMethod =
-                    method.id === "qrCode" || method.id === "vnpay";
-                  const isLoading = qrLoading && isQRMethod;
-
-                  return (
-                    <Button
-                      key={method.id}
-                      variant="outline"
-                      className="flex items-center justify-start p-4 h-auto"
-                      onClick={() => {
-                        console.log(`🔥 BUTTON CLICKED - Method: ${method.id}, Order ID: ${orderInfo.id}`);
-                        console.log(`🔍 Button click debug:`, {
-                          methodId: method.id,
-                          methodName: method.name,
-                          orderForPayment: orderForPayment,
-                          orderInfoId: orderInfo.id,
-                          timestamp: new Date().toISOString()
-                        });
-                        handleSelect(method.id);
-                      }}
-                      disabled={isLoading}
-                    >
-                      <IconComponent className="mr-3" size={24} />
-                      <div className="text-left flex-1">
-                        <div className="font-medium">
-                          {isLoading ? t("common.generatingQr") : method.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {method.description}
-                        </div>
-                      </div>
-                      {isLoading && (
-                        <div className="ml-auto">
-                          <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
-                        </div>
-                      )}
-                    </Button>
-                  );
-                })}
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={() => {
-                  // Send clear message to customer display before closing
-                  try {
-                    const protocol =
-                      window.location.protocol === "https:" ? "wss:" : "ws:";
-                    const wsUrl = `${protocol}//${window.location.host}/ws`;
-                    const ws = new WebSocket(wsUrl);
-
-                    ws.onopen = () => {
-                      console.log(
-                        "Payment Modal: Sending clear message from cancel button",
-                      );
-                      ws.send(
-                        JSON.stringify({
-                          type: "restore_cart_display",
-                          timestamp: new Date().toISOString(),
-                          reason: "payment_cancel_button",
-                        }),
-                      );
-                      ws.close();
-                    };
-                  } catch (error) {
-                    console.error(
-                      "Failed to send clear message to customer display:",
-                      error,
-                    );
-                  }
-
-                  onClose();
-                }}
-                className="w-full"
-              >
-                {t("common.cancel")}
-              </Button>
-            </>
-          ) : showQRCode ? (
-            <>
-              <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <QrCode className="w-6 h-6" />
-                  <h3 className="text-lg font-semibold">
-                    {t("common.scanQrPayment")}
-                  </h3>
-                </div>
-
+          <div className="space-y-4 p-4">
+            {!showQRCode && !showCashPayment ? (
+              <>
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">
-                    {t("common.amountToPay")}
+                    {t("common.totalAmount")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
                     {/* Use exact total with proper priority for QR payment */}
@@ -1548,28 +1558,56 @@ export function PaymentMethodModal({
                   </p>
                 </div>
 
-                {qrCodeUrl && (
-                  <div className="flex justify-center">
-                    <div className="bg-white p-4 rounded-lg border-2 border-gray-200 shadow-lg">
-                      <img
-                        src={qrCodeUrl}
-                        alt="QR Code for Bank Transfer"
-                        className="w-64 h-64"
-                      />
-                    </div>
-                  </div>
-                )}
+                <div className="grid gap-3">
+                  {paymentMethods.map((method) => {
+                    const IconComponent = method.icon;
+                    const isQRMethod =
+                      method.id === "qrCode" || method.id === "vnpay";
+                    const isLoading = qrLoading && isQRMethod;
 
-                <p className="text-sm text-gray-600">
-                  {t("common.useBankingApp")}
-                </p>
-              </div>
+                    return (
+                      <Button
+                        key={method.id}
+                        variant="outline"
+                        className="flex items-center justify-start p-4 h-auto"
+                        onClick={() => {
+                          console.log(
+                            `🔥 BUTTON CLICKED - Method: ${method.id}, Order ID: ${orderInfo.id}`,
+                          );
+                          console.log(`🔍 Button click debug:`, {
+                            methodId: method.id,
+                            methodName: method.name,
+                            orderForPayment: orderForPayment,
+                            orderInfoId: orderInfo.id,
+                            timestamp: new Date().toISOString(),
+                          });
+                          handleSelect(method.id);
+                        }}
+                        disabled={isLoading}
+                      >
+                        <IconComponent className="mr-3" size={24} />
+                        <div className="text-left flex-1">
+                          <div className="font-medium">
+                            {isLoading ? t("common.generatingQr") : method.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {method.description}
+                          </div>
+                        </div>
+                        {isLoading && (
+                          <div className="ml-auto">
+                            <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                          </div>
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
 
-              <div className="flex gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
-                    // Send clear message to customer display before going back
+                    // Send clear message to customer display before closing
                     try {
                       const protocol =
                         window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -1578,476 +1616,630 @@ export function PaymentMethodModal({
 
                       ws.onopen = () => {
                         console.log(
-                          "Payment Modal: Sending clear message from back button",
+                          "Payment Modal: Sending clear message from cancel button",
                         );
                         ws.send(
                           JSON.stringify({
-                            type: "qr_payment_cancelled",
+                            type: "restore_cart_display",
                             timestamp: new Date().toISOString(),
+                            reason: "payment_cancel_button",
                           }),
                         );
-                        // Wait a bit then send cart restore message
-                        setTimeout(() => {
-                          ws.send(
-                            JSON.stringify({
-                              type: "restore_cart_display",
-                              timestamp: new Date().toISOString(),
-                              reason: "payment_back_button",
-                            }),
-                          );
-                          ws.close();
-                        }, 100);
+                        ws.close();
                       };
                     } catch (error) {
                       console.error(
-                        "Failed to send clear message from back button:",
+                        "Failed to send clear message to customer display:",
                         error,
                       );
                     }
 
-                    handleBack();
+                    onClose();
                   }}
-                  className="flex-1"
+                  className="w-full"
                 >
-                  {t("common.goBack")}
+                  {t("common.cancel")}
                 </Button>
-                <Button
-                  onClick={() => {
-                    // Send clear message to customer display before completing
-                    try {
-                      const protocol =
-                        window.location.protocol === "https:" ? "wss:" : "ws:";
-                      const wsUrl = `${protocol}//${window.location.host}/ws`;
-                      const ws = new WebSocket(wsUrl);
-
-                      ws.onopen = () => {
-                        console.log(
-                          "Payment Modal: Sending clear message from complete button",
-                        );
-                        ws.send(
-                          JSON.stringify({
-                            type: "qr_payment_cancelled",
-                            timestamp: new Date().toISOString(),
-                          }),
-                        );
-                        // Wait a bit then send cart restore message
-                        setTimeout(() => {
-                          ws.send(
-                            JSON.stringify({
-                              type: "restore_cart_display",
-                              timestamp: new Date().toISOString(),
-                              reason: "payment_complete_button",
-                            }),
-                          );
-                          ws.close();
-                        }, 100);
-                      };
-                    } catch (error) {
-                      console.error(
-                        "Failed to send clear message from complete button:",
-                        error,
-                      );
-                    }
-
-                    handleQRComplete();
-                  }}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
-                >
-                  {t("common.complete")}
-                </Button>
-              </div>
-            </>
-          ) : showCashPayment ? (
-            <>
-              <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <Banknote className="w-6 h-6" />
-                  <h3 className="text-lg font-semibold">
-                    {t("common.cashPayment")}
-                  </h3>
-                </div>
-
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600">
-                    {t("common.amountToPay")}
-                  </p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {/* Use exact total with proper priority for cash payment */}
-                    {Math.floor(
-                      receipt?.exactTotal ??
-                        orderInfo?.exactTotal ??
-                        orderInfo?.total ??
-                        total ??
-                        0,
-                    ).toLocaleString("vi-VN")}{" "}
-                    ₫
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t("common.customerAmount")}
-                    </label>
-                    <input
-                      ref={amountInputRef}
-                      type="number"
-                      step="1000"
-                      min="0"
-                      placeholder={t("common.enterCustomerAmount")}
-                      value={cashAmountInput}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        console.log("💰 Cash input changed to:", value);
-                        setCashAmountInput(value);
-                        setAmountReceived(value); // Sync for calculation
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg text-center"
-                      autoFocus
-                    />
+              </>
+            ) : showQRCode ? (
+              <>
+                <div className="text-center space-y-4">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <QrCode className="w-6 h-6" />
+                    <h3 className="text-lg font-semibold">
+                      {t("common.scanQrPayment")}
+                    </h3>
                   </div>
 
-                  {/* Virtual Keyboard Toggle */}
-                  <div className="flex justify-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={toggleVirtualKeyboard}
-                      className={`${showVirtualKeyboard ? "bg-blue-100 border-blue-300" : ""}`}
-                    >
-                      <Keyboard className="w-4 h-4 mr-2" />
-                      {showVirtualKeyboard ? t("common.hideKeyboard") : t("common.showVirtualKeyboard")}
-                    </Button>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                      {t("common.amountToPay")}
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {/* Use exact total with proper priority for QR payment */}
+                      {Math.floor(
+                        receipt?.exactTotal ??
+                          orderInfo?.exactTotal ??
+                          orderInfo?.total ??
+                          total ??
+                          0,
+                      ).toLocaleString("vi-VN")}{" "}
+                      ₫
+                    </p>
                   </div>
 
-                  {amountReceived && parseFloat(amountReceived || "0") > 0 && (
-                    <div className={`p-3 border rounded-lg ${
-                      (() => {
-                        const receivedAmount = parseFloat(cashAmountInput || "0");
-                        // Sử dụng exact priority order giống như table payment
-                        const orderTotal = receipt?.exactTotal ??
-                                         orderInfo?.exactTotal ??
-                                         orderInfo?.total ??
-                                         total;
-                        const changeAmount = receivedAmount - orderTotal;
-                        return changeAmount >= 0
-                          ? "bg-green-50 border-green-200"
-                          : "bg-red-50 border-red-200";
-                      })()
-                    }`}>
-                      <div className="flex justify-between items-center">
-                        <span className={`text-sm font-medium ${
-                          (() => {
-                            const receivedAmount = parseFloat(cashAmountInput || "0");
-                            const orderTotal = receipt?.exactTotal ??
-                                             orderInfo?.exactTotal ??
-                                             orderInfo?.total ??
-                                             total;
-                            const changeAmount = receivedAmount - orderTotal;
-                            return changeAmount >= 0 ? "text-green-800" : "text-red-800";
-                          })()
-                        }`}>
-                          {(() => {
-                            const receivedAmount = parseFloat(cashAmountInput || "0");
-                            const orderTotal = receipt?.exactTotal ??
-                                             orderInfo?.exactTotal ??
-                                             orderInfo?.total ??
-                                             total;
-                            const changeAmount = receivedAmount - orderTotal;
-                            return changeAmount >= 0 ? t("common.change") : t("common.insufficient") + ":";
-                          })()}
-                        </span>
-                        <span className={`text-lg font-bold ${
-                          (() => {
-                            const receivedAmount = parseFloat(cashAmountInput || "0");
-                            const orderTotal = receipt?.exactTotal ??
-                                             orderInfo?.exactTotal ??
-                                             orderInfo?.total ??
-                                             total;
-                            const changeAmount = receivedAmount - orderTotal;
-                            return changeAmount >= 0 ? "text-green-600" : "text-red-600";
-                          })()
-                        }`}>
-                          {(() => {
-                            // Sử dụng cashAmountInput thay vì amountReceived để tính toán chính xác
-                            const receivedAmount = parseFloat(cashAmountInput || "0");
-
-                            // Sử dụng exact priority order giống như table payment
-                            const orderTotal = receipt?.exactTotal ??
-                                             orderInfo?.exactTotal ??
-                                             orderInfo?.total ??
-                                             total;
-
-                            // Tính tiền thối: Tiền khách đưa - Tổng tiền cần thanh toán
-                            const changeAmount = receivedAmount - orderTotal;
-                            const displayAmount = changeAmount >= 0 ? changeAmount : Math.abs(changeAmount);
-
-                            return Math.floor(displayAmount).toLocaleString("vi-VN");
-                          })()}{" "}
-                          ₫
-                        </span>
+                  {qrCodeUrl && (
+                    <div className="flex justify-center">
+                      <div className="bg-white p-4 rounded-lg border-2 border-gray-200 shadow-lg">
+                        <img
+                          src={qrCodeUrl}
+                          alt="QR Code for Bank Transfer"
+                          className="w-64 h-64"
+                        />
                       </div>
+                    </div>
+                  )}
+
+                  <p className="text-sm text-gray-600">
+                    {t("common.useBankingApp")}
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      // Send clear message to customer display before going back
+                      try {
+                        const protocol =
+                          window.location.protocol === "https:"
+                            ? "wss:"
+                            : "ws:";
+                        const wsUrl = `${protocol}//${window.location.host}/ws`;
+                        const ws = new WebSocket(wsUrl);
+
+                        ws.onopen = () => {
+                          console.log(
+                            "Payment Modal: Sending clear message from back button",
+                          );
+                          ws.send(
+                            JSON.stringify({
+                              type: "qr_payment_cancelled",
+                              timestamp: new Date().toISOString(),
+                            }),
+                          );
+                          // Wait a bit then send cart restore message
+                          setTimeout(() => {
+                            ws.send(
+                              JSON.stringify({
+                                type: "restore_cart_display",
+                                timestamp: new Date().toISOString(),
+                                reason: "payment_back_button",
+                              }),
+                            );
+                            ws.close();
+                          }, 100);
+                        };
+                      } catch (error) {
+                        console.error(
+                          "Failed to send clear message from back button:",
+                          error,
+                        );
+                      }
+
+                      handleBack();
+                    }}
+                    className="flex-1"
+                  >
+                    {t("common.goBack")}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Send clear message to customer display before completing
+                      try {
+                        const protocol =
+                          window.location.protocol === "https:"
+                            ? "wss:"
+                            : "ws:";
+                        const wsUrl = `${protocol}//${window.location.host}/ws`;
+                        const ws = new WebSocket(wsUrl);
+
+                        ws.onopen = () => {
+                          console.log(
+                            "Payment Modal: Sending clear message from complete button",
+                          );
+                          ws.send(
+                            JSON.stringify({
+                              type: "qr_payment_cancelled",
+                              timestamp: new Date().toISOString(),
+                            }),
+                          );
+                          // Wait a bit then send cart restore message
+                          setTimeout(() => {
+                            ws.send(
+                              JSON.stringify({
+                                type: "restore_cart_display",
+                                timestamp: new Date().toISOString(),
+                                reason: "payment_complete_button",
+                              }),
+                            );
+                            ws.close();
+                          }, 100);
+                        };
+                      } catch (error) {
+                        console.error(
+                          "Failed to send clear message from complete button:",
+                          error,
+                        );
+                      }
+
+                      handleQRComplete();
+                    }}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                  >
+                    {t("common.complete")}
+                  </Button>
+                </div>
+              </>
+            ) : showCashPayment ? (
+              <>
+                <div className="text-center space-y-4">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <Banknote className="w-6 h-6" />
+                    <h3 className="text-lg font-semibold">
+                      {t("common.cashPayment")}
+                    </h3>
+                  </div>
+
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                      {t("common.amountToPay")}
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {/* Use exact total with proper priority for cash payment */}
+                      {Math.floor(
+                        receipt?.exactTotal ??
+                          orderInfo?.exactTotal ??
+                          orderInfo?.total ??
+                          total ??
+                          0,
+                      ).toLocaleString("vi-VN")}{" "}
+                      ₫
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t("common.customerAmount")}
+                      </label>
+                      <input
+                        ref={amountInputRef}
+                        type="number"
+                        step="1000"
+                        min="0"
+                        placeholder={t("common.enterCustomerAmount")}
+                        value={cashAmountInput}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          console.log("💰 Cash input changed to:", value);
+                          setCashAmountInput(value);
+                          setAmountReceived(value); // Sync for calculation
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg text-center"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Virtual Keyboard Toggle */}
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={toggleVirtualKeyboard}
+                        className={`${showVirtualKeyboard ? "bg-blue-100 border-blue-300" : ""}`}
+                      >
+                        <Keyboard className="w-4 h-4 mr-2" />
+                        {showVirtualKeyboard
+                          ? t("common.hideKeyboard")
+                          : t("common.showVirtualKeyboard")}
+                      </Button>
+                    </div>
+
+                    {amountReceived &&
+                      parseFloat(amountReceived || "0") > 0 && (
+                        <div
+                          className={`p-3 border rounded-lg ${(() => {
+                            const receivedAmount = parseFloat(
+                              cashAmountInput || "0",
+                            );
+                            // Sử dụng exact priority order giống như table payment
+                            const orderTotal =
+                              receipt?.exactTotal ??
+                              orderInfo?.exactTotal ??
+                              orderInfo?.total ??
+                              total;
+                            const changeAmount = receivedAmount - orderTotal;
+                            return changeAmount >= 0
+                              ? "bg-green-50 border-green-200"
+                              : "bg-red-50 border-red-200";
+                          })()}`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span
+                              className={`text-sm font-medium ${(() => {
+                                const receivedAmount = parseFloat(
+                                  cashAmountInput || "0",
+                                );
+                                const orderTotal =
+                                  receipt?.exactTotal ??
+                                  orderInfo?.exactTotal ??
+                                  orderInfo?.total ??
+                                  total;
+                                const changeAmount =
+                                  receivedAmount - orderTotal;
+                                return changeAmount >= 0
+                                  ? "text-green-800"
+                                  : "text-red-800";
+                              })()}`}
+                            >
+                              {(() => {
+                                const receivedAmount = parseFloat(
+                                  cashAmountInput || "0",
+                                );
+                                const orderTotal =
+                                  receipt?.exactTotal ??
+                                  orderInfo?.exactTotal ??
+                                  orderInfo?.total ??
+                                  total;
+                                const changeAmount =
+                                  receivedAmount - orderTotal;
+                                return changeAmount >= 0
+                                  ? t("common.change")
+                                  : t("common.insufficient") + ":";
+                              })()}
+                            </span>
+                            <span
+                              className={`text-lg font-bold ${(() => {
+                                const receivedAmount = parseFloat(
+                                  cashAmountInput || "0",
+                                );
+                                const orderTotal =
+                                  receipt?.exactTotal ??
+                                  orderInfo?.exactTotal ??
+                                  orderInfo?.total ??
+                                  total;
+                                const changeAmount =
+                                  receivedAmount - orderTotal;
+                                return changeAmount >= 0
+                                  ? "text-green-600"
+                                  : "text-red-600";
+                              })()}`}
+                            >
+                              {(() => {
+                                // Sử dụng cashAmountInput thay vì amountReceived để tính toán chính xác
+                                const receivedAmount = parseFloat(
+                                  cashAmountInput || "0",
+                                );
+
+                                // Sử dụng exact priority order giống như table payment
+                                const orderTotal =
+                                  receipt?.exactTotal ??
+                                  orderInfo?.exactTotal ??
+                                  orderInfo?.total ??
+                                  total;
+
+                                // Tính tiền thối: Tiền khách đưa - Tổng tiền cần thanh toán
+                                const changeAmount =
+                                  receivedAmount - orderTotal;
+                                const displayAmount =
+                                  changeAmount >= 0
+                                    ? changeAmount
+                                    : Math.abs(changeAmount);
+
+                                return Math.floor(displayAmount).toLocaleString(
+                                  "vi-VN",
+                                );
+                              })()}{" "}
+                              ₫
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                  </div>
+
+                  {/* Virtual Keyboard */}
+                  {showVirtualKeyboard && (
+                    <div className="mt-4">
+                      <VirtualKeyboard
+                        onKeyPress={handleVirtualKeyPress}
+                        onBackspace={handleVirtualBackspace}
+                        onEnter={handleVirtualEnter}
+                        isVisible={showVirtualKeyboard}
+                        className="border border-gray-200 rounded-lg"
+                      />
                     </div>
                   )}
                 </div>
 
-                {/* Virtual Keyboard */}
-                {showVirtualKeyboard && (
-                  <div className="mt-4">
-                    <VirtualKeyboard
-                      onKeyPress={handleVirtualKeyPress}
-                      onBackspace={handleVirtualBackspace}
-                      onEnter={handleVirtualEnter}
-                      isVisible={showVirtualKeyboard}
-                      className="border border-gray-200 rounded-lg"
-                    />
-                  </div>
-                )}
-              </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      // Send clear message to customer display before going back from cash payment
+                      try {
+                        const protocol =
+                          window.location.protocol === "https:"
+                            ? "wss:"
+                            : "ws:";
+                        const wsUrl = `${protocol}//${window.location.host}/ws`;
+                        const ws = new WebSocket(wsUrl);
 
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    // Send clear message to customer display before going back from cash payment
-                    try {
-                      const protocol =
-                        window.location.protocol === "https:" ? "wss:" : "ws:";
-                      const wsUrl = `${protocol}//${window.location.host}/ws`;
-                      const ws = new WebSocket(wsUrl);
+                        ws.onopen = () => {
+                          console.log(
+                            "Payment Modal: Sending clear message from cash payment back button",
+                          );
+                          ws.send(
+                            JSON.stringify({
+                              type: "restore_cart_display",
+                              timestamp: new Date().toISOString(),
+                              reason: "cash_payment_back_button",
+                            }),
+                          );
+                          ws.close();
+                        };
+                      } catch (error) {
+                        console.error(
+                          "Failed to send clear message from cash payment back button:",
+                          error,
+                        );
+                      }
 
-                      ws.onopen = () => {
-                        console.log(
-                          "Payment Modal: Sending clear message from cash payment back button",
+                      handleBack();
+                    }}
+                    className="flex-1"
+                  >
+                    {t("common.goBack")}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Send clear message to customer display before completing cash payment
+                      try {
+                        const protocol =
+                          window.location.protocol === "https:"
+                            ? "wss:"
+                            : "ws:";
+                        const wsUrl = `${protocol}//${window.location.host}/ws`;
+                        const ws = new WebSocket(wsUrl);
+
+                        ws.onopen = () => {
+                          console.log(
+                            "Payment Modal: Sending clear message from cash payment complete button",
+                          );
+                          ws.send(
+                            JSON.stringify({
+                              type: "restore_cart_display",
+                              timestamp: new Date().toISOString(),
+                              reason: "cash_payment_complete_button",
+                            }),
+                          );
+                          ws.close();
+                        };
+                      } catch (error) {
+                        console.error(
+                          "Failed to send clear message from cash payment complete button:",
+                          error,
                         );
-                        ws.send(
-                          JSON.stringify({
-                            type: "restore_cart_display",
-                            timestamp: new Date().toISOString(),
-                            reason: "cash_payment_back_button",
-                          }),
-                        );
-                        ws.close();
-                      };
-                    } catch (error) {
-                      console.error(
-                        "Failed to send clear message from cash payment back button:",
-                        error,
-                      );
+                      }
+
+                      handleCashPaymentComplete();
+                    }}
+                    disabled={
+                      !cashAmountInput ||
+                      parseFloat(cashAmountInput) <
+                        (receipt?.exactTotal ??
+                          orderInfo?.exactTotal ??
+                          orderInfo?.total ??
+                          total)
                     }
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-400"
+                  >
+                    {t("common.complete")}
+                  </Button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </DialogContent>
 
-                    handleBack();
-                  }}
-                  className="flex-1"
-                >
-                  {t("common.goBack")}
-                </Button>
-                <Button
-                  onClick={() => {
-                    // Send clear message to customer display before completing cash payment
-                    try {
-                      const protocol =
-                        window.location.protocol === "https:" ? "wss:" : "ws:";
-                      const wsUrl = `${protocol}//${window.location.host}/ws`;
-                      const ws = new WebSocket(wsUrl);
+        {/* E-Invoice Modal - CRITICAL: Always render when showEInvoice is true */}
+        {showEInvoice && (
+          <EInvoiceModal
+            isOpen={showEInvoice}
+            onClose={handleEInvoiceClose}
+            onConfirm={(invoiceData) => {
+              console.log(
+                "📧 E-Invoice confirmed from Payment Method Modal:",
+                invoiceData,
+              );
 
-                      ws.onopen = () => {
-                        console.log(
-                          "Payment Modal: Sending clear message from cash payment complete button",
-                        );
-                        ws.send(
-                          JSON.stringify({
-                            type: "restore_cart_display",
-                            timestamp: new Date().toISOString(),
-                            reason: "cash_payment_complete_button",
-                          }),
-                        );
-                        ws.close();
-                      };
-                    } catch (error) {
-                      console.error(
-                        "Failed to send clear message from cash payment complete button:",
-                        error,
-                      );
-                    }
+              // Always call handleEInvoiceComplete to ensure proper processing
+              handleEInvoiceComplete(invoiceData);
 
-                    handleCashPaymentComplete();
-                  }}
-                  disabled={
-                    !cashAmountInput ||
-                    parseFloat(cashAmountInput) <
-                      (receipt?.exactTotal ??
-                       orderInfo?.exactTotal ??
-                       orderInfo?.total ??
-                       total)
-                  }
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-400"
-                >
-                  {t("common.complete")}
-                </Button>
-              </div>
-            </>
-          ) : null}
-        </div>
-      </DialogContent>
-
-      {/* E-Invoice Modal - CRITICAL: Always render when showEInvoice is true */}
-      {showEInvoice && (
-        <EInvoiceModal
-          isOpen={showEInvoice}
-          onClose={handleEInvoiceClose}
-          onConfirm={(invoiceData) => {
-            console.log("📧 E-Invoice confirmed from Payment Method Modal:", invoiceData);
-
-            // Always call handleEInvoiceComplete to ensure proper processing
-            handleEInvoiceComplete(invoiceData);
-
-            // Also notify parent component with payment completion
-            onSelectMethod("paymentCompleted", {
-              success: true,
-              publishLater: invoiceData.publishLater,
-              receipt: invoiceData.receipt || receiptDataForModal,
-              shouldShowReceipt: true,
-              source: 'payment_method_modal_einvoice'
-            });
-          }}
-          total={(() => {
-            // Debug current data to understand the issue
-            console.log("🔥RENDERING E-INVOICE MODAL - Payment Modal EInvoice Total Debug:", {
-              showEInvoice: showEInvoice,
-              selectedPaymentMethod: selectedPaymentMethod,
-              orderForPayment: orderForPayment,
-              receipt: receipt,
-              propTotal: total,
-              orderInfoTotal: orderInfo?.total,
-              orderInfoExactTotal: orderInfo?.exactTotal,
-              receiptTotal: receipt?.total,
-              receiptExactTotal: receipt?.exactTotal
-            });
-
-            // Priority: orderInfo data first, then receipt, then fallback to prop total
-            let calculatedTotal = 0;
-
-            if (orderInfo?.total) {
-              calculatedTotal = parseFloat(orderInfo.total.toString());
-              console.log("💰 Using orderInfo.total for EInvoice:", calculatedTotal);
-            } else if (orderInfo?.exactTotal) {
-              calculatedTotal = parseFloat(orderInfo.exactTotal.toString());
-              console.log("💰 Using orderInfo.exactTotal for EInvoice:", calculatedTotal);
-            } else if (receipt?.exactTotal) {
-              calculatedTotal = parseFloat(receipt.exactTotal.toString());
-              console.log("💰 Using receipt.exactTotal for EInvoice:", calculatedTotal);
-            } else if (receipt?.total) {
-              calculatedTotal = parseFloat(receipt.total.toString());
-              console.log("💰 Using receipt.total for EInvoice:", calculatedTotal);
-            } else {
-              calculatedTotal = parseFloat(total?.toString() || "0");
-              console.log("💰 Using fallback total for EInvoice:", calculatedTotal);
-            }
-
-            console.log("💰 Final calculated total for EInvoice:", calculatedTotal);
-            return Math.floor(calculatedTotal || 0);
-          })()}
-          selectedPaymentMethod={selectedPaymentMethod}
-          cartItems={(() => {
-            // Use orderItems from orderInfo first, then fallback to other sources
-            const itemsToMap =
-              orderInfo?.items ||
-              receipt?.orderItems ||
-              cartItems ||
-              [];
-            console.log(
-              "📦 E-INVOICE MODAL: Mapping cart items for payment modal using exact Order Details data:",
-              itemsToMap.length,
-            );
-            console.log("📦 E-INVOICE MODAL: Payment Modal CartItems Debug:", {
-              orderForPayment: orderForPayment,
-              orderInfoItems: orderInfo?.items,
-              receipt: receipt,
-              receiptOrderItems: receipt?.orderItems,
-              cartItems: cartItems,
-              itemsToMap: itemsToMap,
-              products: products
-            });
-
-            return itemsToMap.map((item: any, index: number) => {
-              const product = Array.isArray(products)
-                ? products.find((p: any) => p.id === item.productId)
-                : null;
-
-              console.log(`📦 E-INVOICE MODAL: Mapping item ${index + 1}:`, {
-                rawItem: item,
-                foundProduct: product,
-                productId: item.productId,
-                productName: item.productName,
-                unitPrice: item.unitPrice,
-                quantity: item.quantity,
-                total: item.total,
-                taxRate: product?.taxRate || item.taxRate || 0
+              // Also notify parent component with payment completion
+              onSelectMethod("paymentCompleted", {
+                success: true,
+                publishLater: invoiceData.publishLater,
+                receipt: invoiceData.receipt || receiptDataForModal,
+                shouldShowReceipt: true,
+                source: "payment_method_modal_einvoice",
               });
+            }}
+            total={(() => {
+              // Debug current data to understand the issue
+              console.log(
+                "🔥RENDERING E-INVOICE MODAL - Payment Modal EInvoice Total Debug:",
+                {
+                  showEInvoice: showEInvoice,
+                  selectedPaymentMethod: selectedPaymentMethod,
+                  orderForPayment: orderForPayment,
+                  receipt: receipt,
+                  propTotal: total,
+                  orderInfoTotal: orderInfo?.total,
+                  orderInfoExactTotal: orderInfo?.exactTotal,
+                  receiptTotal: receipt?.total,
+                  receiptExactTotal: receipt?.exactTotal,
+                },
+              );
 
-              return {
-                id: item.productId || item.id,
-                name: item.productName || item.name,
-                price: parseFloat(item.unitPrice || item.price || "0"),
-                quantity: parseInt(item.quantity?.toString() || "1"),
-                sku: product?.sku || item.sku || `ITEM${String(item.productId || item.id).padStart(3, "0")}`,
-                taxRate: parseFloat(product?.taxRate?.toString() || item.taxRate?.toString() || "0"),
-              };
-            });
-          })()}
+              // Priority: orderInfo data first, then receipt, then fallback to prop total
+              let calculatedTotal = 0;
+
+              if (orderInfo?.total) {
+                calculatedTotal = parseFloat(orderInfo.total.toString());
+                console.log(
+                  "💰 Using orderInfo.total for EInvoice:",
+                  calculatedTotal,
+                );
+              } else if (orderInfo?.exactTotal) {
+                calculatedTotal = parseFloat(orderInfo.exactTotal.toString());
+                console.log(
+                  "💰 Using orderInfo.exactTotal for EInvoice:",
+                  calculatedTotal,
+                );
+              } else if (receipt?.exactTotal) {
+                calculatedTotal = parseFloat(receipt.exactTotal.toString());
+                console.log(
+                  "💰 Using receipt.exactTotal for EInvoice:",
+                  calculatedTotal,
+                );
+              } else if (receipt?.total) {
+                calculatedTotal = parseFloat(receipt.total.toString());
+                console.log(
+                  "💰 Using receipt.total for EInvoice:",
+                  calculatedTotal,
+                );
+              } else {
+                calculatedTotal = parseFloat(total?.toString() || "0");
+                console.log(
+                  "💰 Using fallback total for EInvoice:",
+                  calculatedTotal,
+                );
+              }
+
+              console.log(
+                "💰 Final calculated total for EInvoice:",
+                calculatedTotal,
+              );
+              return Math.floor(calculatedTotal || 0);
+            })()}
+            selectedPaymentMethod={selectedPaymentMethod}
+            cartItems={(() => {
+              // Use orderItems from orderInfo first, then fallback to other sources
+              const itemsToMap =
+                orderInfo?.items || receipt?.orderItems || cartItems || [];
+              console.log(
+                "📦 E-INVOICE MODAL: Mapping cart items for payment modal using exact Order Details data:",
+                itemsToMap.length,
+              );
+              console.log(
+                "📦 E-INVOICE MODAL: Payment Modal CartItems Debug:",
+                {
+                  orderForPayment: orderForPayment,
+                  orderInfoItems: orderInfo?.items,
+                  receipt: receipt,
+                  receiptOrderItems: receipt?.orderItems,
+                  cartItems: cartItems,
+                  itemsToMap: itemsToMap,
+                  products: products,
+                },
+              );
+
+              return itemsToMap.map((item: any, index: number) => {
+                const product = Array.isArray(products)
+                  ? products.find((p: any) => p.id === item.productId)
+                  : null;
+
+                console.log(`📦 E-INVOICE MODAL: Mapping item ${index + 1}:`, {
+                  rawItem: item,
+                  foundProduct: product,
+                  productId: item.productId,
+                  productName: item.productName,
+                  unitPrice: item.unitPrice,
+                  quantity: item.quantity,
+                  total: item.total,
+                  taxRate: product?.taxRate || item.taxRate || 0,
+                });
+
+                return {
+                  id: item.productId || item.id,
+                  name: item.productName || item.name,
+                  price: parseFloat(item.unitPrice || item.price || "0"),
+                  quantity: parseInt(item.quantity?.toString() || "1"),
+                  sku:
+                    product?.sku ||
+                    item.sku ||
+                    `ITEM${String(item.productId || item.id).padStart(3, "0")}`,
+                  taxRate: parseFloat(
+                    product?.taxRate?.toString() ||
+                      item.taxRate?.toString() ||
+                      "0",
+                  ),
+                };
+              });
+            })()}
+          />
+        )}
+
+        {/* Debug rendering states */}
+        {console.log("🔍 PAYMENT MODAL RENDER DEBUG:", {
+          showEInvoice: showEInvoice,
+          selectedPaymentMethod: selectedPaymentMethod,
+          shouldRenderEInvoice: showEInvoice && selectedPaymentMethod,
+          showReceiptModal: showReceiptModal,
+          receiptDataForModal: receiptDataForModal,
+          showPrintDialog: showPrintDialog, // Include showPrintDialog in debug log
+          timestamp: new Date().toISOString(),
+        })}
+      </Dialog>
+
+      {/* CRITICAL: Render Receipt Modal and PrintDialog outside Dialog to prevent conflicts */}
+      {showReceiptModal && receiptDataForModal && (
+        <ReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => {
+            console.log("🔒 Payment Modal: Receipt modal closed by user");
+            setShowReceiptModal(false);
+            setReceiptDataForModal(null);
+            // Optionally, trigger print dialog here if needed after receipt modal closes
+            // console.log("Triggering print dialog after receipt modal close");
+            // setShowPrintDialog(true);
+          }}
+          receipt={receiptDataForModal}
+          onPrint={() => {
+            console.log("🖨️ Payment Modal: Print triggered from receipt modal");
+            // When print is triggered from ReceiptModal, we want to open the PrintDialog
+            setShowPrintDialog(true);
+            // Keep receipt modal open while print dialog is active if necessary, or close it
+            // For now, let's assume we want to close the receipt modal once print is triggered
+            // setShowReceiptModal(false); // Uncomment if you want to close receipt modal immediately
+          }}
         />
       )}
 
-      {/* Debug rendering states */}
-      {console.log("🔍 PAYMENT MODAL RENDER DEBUG:", {
-        showEInvoice: showEInvoice,
-        selectedPaymentMethod: selectedPaymentMethod,
-        shouldRenderEInvoice: showEInvoice && selectedPaymentMethod,
-        showReceiptModal: showReceiptModal,
-        receiptDataForModal: receiptDataForModal,
-        showPrintDialog: showPrintDialog, // Include showPrintDialog in debug log
-        timestamp: new Date().toISOString()
-      })}
-    </Dialog>
-
-    {/* CRITICAL: Render Receipt Modal and PrintDialog outside Dialog to prevent conflicts */}
-    {showReceiptModal && receiptDataForModal && (
-      <ReceiptModal
-        isOpen={showReceiptModal}
-        onClose={() => {
-          console.log("🔒 Payment Modal: Receipt modal closed by user");
-          setShowReceiptModal(false);
-          setReceiptDataForModal(null);
-          // Optionally, trigger print dialog here if needed after receipt modal closes
-          // console.log("Triggering print dialog after receipt modal close");
-          // setShowPrintDialog(true);
-        }}
-        receipt={receiptDataForModal}
-        onPrint={() => {
-          console.log("🖨️ Payment Modal: Print triggered from receipt modal");
-          // When print is triggered from ReceiptModal, we want to open the PrintDialog
-          setShowPrintDialog(true);
-          // Keep receipt modal open while print dialog is active if necessary, or close it
-          // For now, let's assume we want to close the receipt modal once print is triggered
-          // setShowReceiptModal(false); // Uncomment if you want to close receipt modal immediately
-        }}
-      />
-    )}
-
-    {/* Print Dialog */}
-    {showPrintDialog && receiptDataForModal && (
-      <PrintDialog
-        isOpen={showPrintDialog}
-        onClose={() => {
-          console.log("🔒 Payment Modal: Print dialog closed");
-          setShowPrintDialog(false);
-          // Reset receipt data after print dialog is closed
-          setReceiptDataForModal(null);
-        }}
-        receiptData={receiptDataForModal}
-      />
-    )}
-  </>
+      {/* Print Dialog */}
+      {showPrintDialog && receiptDataForModal && (
+        <PrintDialog
+          isOpen={showPrintDialog}
+          onClose={() => {
+            console.log("🔒 Payment Modal: Print dialog closed");
+            setShowPrintDialog(false);
+            // Reset receipt data after print dialog is closed
+            setReceiptDataForModal(null);
+          }}
+          receiptData={receiptDataForModal}
+        />
+      )}
+    </>
   );
 }
