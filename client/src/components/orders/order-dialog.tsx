@@ -119,7 +119,7 @@ export function OrderDialog({
 
           // Get the calculated values from the UI functions
           const uiSubtotal = calculateTotal();    // Tiền tạm tính (đã tính đúng)
-          const uiTax = calculateTax();           // Thuế (đã tính đúng)  
+          const uiTax = calculateTax();           // Thuế (đã tính đúng)
           const uiGrandTotal = calculateGrandTotal(); // Tổng tiền (đã tính đúng)
 
           console.log('💰 Using UI calculated totals for update:', {

@@ -62,6 +62,7 @@ interface Invoice {
   salesChannel?: string;
   tableId?: number;
   orderedAt?: string;
+  discount?: string; // Added discount field
 }
 
 interface InvoiceItem {
@@ -105,6 +106,7 @@ interface Order {
   date?: string;
   displayNumber?: string;
   displayStatus?: number;
+  discount?: string; // Added discount field
 }
 
 // Helper function to safely determine item type
@@ -722,6 +724,7 @@ export default function SalesOrders() {
         paymentMethod: order.paymentMethod || "cash",
         notes: order.notes || "",
         createdAt: order.orderedAt, // Use orderedAt as createdAt
+        discount: order.discount || "0", // Map discount field
       }))
     : [];
 
@@ -994,7 +997,7 @@ export default function SalesOrders() {
         item.customerTaxCode || `KH000${String(index + 1).padStart(3, "0")}`;
       const customerName = item.customerName || "Khách lẻ";
       const subtotal = parseFloat(item.subtotal || "0");
-      const discount = 0;
+      const discount = parseFloat(item.discount || "0");
       const tax = parseFloat(item.tax || "0");
       const total = parseFloat(item.total || "0");
       const paid = total;
@@ -1409,7 +1412,7 @@ export default function SalesOrders() {
                               const customerCode =
                                 item.customerTaxCode ||
                                 `KH000${String(index + 1).padStart(3, "0")}`;
-                              const discount = 0;
+                              const discount = parseFloat(item.discount || "0");
                               const tax = parseFloat(item.tax || "0");
                               const subtotal = parseFloat(item.subtotal || "0");
                               const total = parseFloat(item.total || "0");
@@ -1996,7 +1999,9 @@ export default function SalesOrders() {
                                                           selectedInvoice.tax ||
                                                             "0",
                                                         );
-                                                        const discount = 0;
+                                                        const discount = parseFloat(
+                                                          selectedInvoice.discount || "0",
+                                                        );
                                                         const totalPayment =
                                                           subtotal +
                                                           tax -
@@ -2029,19 +2034,24 @@ export default function SalesOrders() {
                                                                 )}
                                                               </span>
                                                             </div>
-                                                            <div className="flex justify-between text-red-600">
-                                                              <span>
-                                                                {t(
-                                                                  "common.discount",
-                                                                )}
-                                                                :
-                                                              </span>
-                                                              <span>
-                                                                {formatCurrency(
-                                                                  discount,
-                                                                )}
-                                                              </span>
-                                                            </div>
+                                                            {(() => {
+                                                              const discountAmount = parseFloat(
+                                                                selectedInvoice.discount || "0"
+                                                              );
+                                                              return discountAmount > 0 ? (
+                                                                <div className="flex justify-between text-red-600">
+                                                                  <span>
+                                                                    {t(
+                                                                      "common.discount",
+                                                                    )}
+                                                                    :
+                                                                  </span>
+                                                                  <span className="font-bold">
+                                                                    -{formatCurrency(discountAmount)}
+                                                                  </span>
+                                                                </div>
+                                                              ) : null;
+                                                            })()}
                                                             <div className="flex justify-between">
                                                               <span>
                                                                 {t(

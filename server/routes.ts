@@ -1736,6 +1736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customerCount: 1,
           subtotal: subtotal.toFixed(2),
           tax: tax.toFixed(2),
+          discount: "0.00",
           total: total.toFixed(2),
           paymentMethod: null,
           paymentStatus: "pending",
