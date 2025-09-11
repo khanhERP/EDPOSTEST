@@ -2386,33 +2386,85 @@ export function SalesChartReport() {
             <CardContent>
               <div className="w-full">
                 <div className="overflow-x-auto">
-                  <Table className="w-full min-w-[1200px]">
+                  <Table className="w-full min-w-[1400px]">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-center bg-green-50 w-12">
-                          {/* Expand/Collapse column */}
-                        </TableHead>
-                        <TableHead className="text-center bg-green-50 min-w-[120px]">
+                        <TableHead
+                          className="text-center bg-green-50 w-12 font-bold"
+                          rowSpan={2}
+                        ></TableHead>
+                        <TableHead className="text-center border-r bg-green-50 min-w-[120px] font-bold" rowSpan={2}>
                           {t("reports.employeeId")}
                         </TableHead>
-                        <TableHead className="text-center bg-green-50 min-w-[150px]">
+                        <TableHead className="text-center border-r bg-green-50 min-w-[150px] font-bold" rowSpan={2}>
                           {t("reports.employeeName")}
                         </TableHead>
-                        <TableHead className="text-center min-w-[100px]">
+                        <TableHead className="text-center border-r min-w-[100px] font-bold" rowSpan={2}>
                           {t("reports.orders")}
                         </TableHead>
-                        <TableHead className="text-right min-w-[140px]">
+                        <TableHead className="text-right border-r min-w-[140px] font-bold" rowSpan={2}>
                           {t("reports.revenue")}
                         </TableHead>
-                        <TableHead className="text-right min-w-[120px]">
+                        <TableHead className="text-right border-r min-w-[120px] font-bold" rowSpan={2}>
                           {t("reports.discount")}
                         </TableHead>
-                        <TableHead className="text-right min-w-[120px]">
+                        <TableHead className="text-right border-r min-w-[120px] font-bold" rowSpan={2}>
                           {t("common.tax")}
                         </TableHead>
-                        <TableHead className="text-right min-w-[140px]">
+                        <TableHead className="text-right border-r min-w-[140px] font-bold" rowSpan={2}>
                           {t("reports.total")}
                         </TableHead>
+                        <TableHead
+                          className="text-center border-r bg-blue-50 min-w-[200px] font-bold"
+                          colSpan={(() => {
+                            // Get all unique payment methods from completed orders
+                            const allPaymentMethods = new Set();
+                            if (data && Array.isArray(data)) {
+                              data.forEach((employee: any) => {
+                                if (employee.orders && Array.isArray(employee.orders)) {
+                                  employee.orders.forEach((order: any) => {
+                                    const method = order.paymentMethod || "cash";
+                                    allPaymentMethods.add(method);
+                                  });
+                                }
+                              });
+                            }
+                            return allPaymentMethods.size;
+                          })()}
+                        >
+                          {t("reports.totalCustomerPayment")}
+                        </TableHead>
+                      </TableRow>
+                      <TableRow>
+                        {(() => {
+                          // Get all unique payment methods from employee orders
+                          const allPaymentMethods = new Set();
+                          if (data && Array.isArray(data)) {
+                            data.forEach((employee: any) => {
+                              if (employee.orders && Array.isArray(employee.orders)) {
+                                employee.orders.forEach((order: any) => {
+                                  const method = order.paymentMethod || "cash";
+                                  allPaymentMethods.add(method);
+                                });
+                              }
+                            });
+                          }
+
+                          const paymentMethodsArray = Array.from(allPaymentMethods).sort();
+
+                          return (
+                            <>
+                              {paymentMethodsArray.map((method: any, index: number) => (
+                                <TableHead
+                                  key={`payment-method-header-${index}-${method}`}
+                                  className="text-center border-r bg-blue-50 min-w-[130px] font-bold"
+                                >
+                                  {getPaymentMethodLabel(method)}
+                                </TableHead>
+                              ))}
+                            </>
+                          );
+                        })()}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -2436,27 +2488,59 @@ export function SalesChartReport() {
                                     {isExpanded ? "−" : "+"}
                                   </button>
                                 </TableCell>
-                                <TableCell className="text-center bg-green-50 font-medium">
+                                <TableCell className="text-center border-r bg-green-50 font-medium min-w-[120px] px-4">
                                   {item.employeeCode}
                                 </TableCell>
-                                <TableCell className="text-center bg-green-50 font-medium">
+                                <TableCell className="text-center border-r bg-green-50 font-medium min-w-[150px] px-4">
                                   {item.employeeName}
                                 </TableCell>
-                                <TableCell className="text-center">
+                                <TableCell className="text-center border-r min-w-[100px] px-4">
                                   {item.orderCount.toLocaleString()}
                                 </TableCell>
-                                <TableCell className="text-right text-green-600 font-medium">
+                                <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
                                   {formatCurrency(item.revenue)}
                                 </TableCell>
-                                <TableCell className="text-right text-orange-600">
+                                <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
                                   {formatCurrency(item.discount)}
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right border-r min-w-[120px] px-4">
                                   {formatCurrency(item.tax)}
                                 </TableCell>
-                                <TableCell className="text-right font-bold text-blue-600">
+                                <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                                   {formatCurrency(item.total)}
                                 </TableCell>
+                                {(() => {
+                                  // Get all unique payment methods from all employee data
+                                  const allPaymentMethods = new Set();
+                                  if (data && Array.isArray(data)) {
+                                    data.forEach((employee: any) => {
+                                      if (employee.orders && Array.isArray(employee.orders)) {
+                                        employee.orders.forEach((order: any) => {
+                                          const method = order.paymentMethod || "cash";
+                                          allPaymentMethods.add(method);
+                                        });
+                                      }
+                                    });
+                                  }
+
+                                  const paymentMethodsArray = Array.from(allPaymentMethods).sort();
+
+                                  return (
+                                    <>
+                                      {paymentMethodsArray.map((method: any) => {
+                                        const amount = item.paymentMethods[method] || 0;
+                                        return (
+                                          <TableCell
+                                            key={method}
+                                            className="text-right border-r font-medium min-w-[130px] px-4"
+                                          >
+                                            {amount > 0 ? formatCurrency(amount) : "-"}
+                                          </TableCell>
+                                        );
+                                      })}
+                                    </>
+                                  );
+                                })()}
                               </TableRow>
 
                               {/* Expanded Order Details */}
@@ -2537,27 +2621,70 @@ export function SalesChartReport() {
                       {data.length > 0 && (
                         <TableRow className="bg-gray-100 font-bold border-t-2">
                           <TableCell className="text-center border-r w-12"></TableCell>
-                          <TableCell className="text-center bg-green-100">
+                          <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
                             {t("common.total")}
                           </TableCell>
-                          <TableCell className="text-center bg-green-100">
+                          <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
                             {data.length} nhân viên
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center border-r min-w-[100px] px-4">
                             {data.reduce((sum, item) => sum + item.orderCount, 0).toLocaleString()}
                           </TableCell>
-                          <TableCell className="text-right text-green-600">
+                          <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
                             {formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0))}
                           </TableCell>
-                          <TableCell className="text-right text-orange-600">
+                          <TableCell className="text-right border-r text-orange-600 min-w-[120px] px-4">
                             {formatCurrency(data.reduce((sum, item) => sum + item.discount, 0))}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right border-r min-w-[120px] px-4">
                             {formatCurrency(data.reduce((sum, item) => sum + item.tax, 0))}
                           </TableCell>
-                          <TableCell className="text-right font-bold text-blue-600">
+                          <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                             {formatCurrency(data.reduce((sum, item) => sum + item.total, 0))}
                           </TableCell>
+                          {(() => {
+                            // Calculate total payment methods across all employees
+                            const totalPaymentMethods: { [method: string]: number } = {};
+                            
+                            data.forEach((employee: any) => {
+                              if (employee.paymentMethods) {
+                                Object.entries(employee.paymentMethods).forEach(([method, amount]) => {
+                                  totalPaymentMethods[method] = (totalPaymentMethods[method] || 0) + Number(amount);
+                                });
+                              }
+                            });
+
+                            // Get all unique payment methods from all employee data
+                            const allPaymentMethods = new Set();
+                            if (data && Array.isArray(data)) {
+                              data.forEach((employee: any) => {
+                                if (employee.orders && Array.isArray(employee.orders)) {
+                                  employee.orders.forEach((order: any) => {
+                                    const method = order.paymentMethod || "cash";
+                                    allPaymentMethods.add(method);
+                                  });
+                                }
+                              });
+                            }
+
+                            const paymentMethodsArray = Array.from(allPaymentMethods).sort();
+
+                            return (
+                              <>
+                                {paymentMethodsArray.map((method: any) => {
+                                  const total = totalPaymentMethods[method] || 0;
+                                  return (
+                                    <TableCell
+                                      key={method}
+                                      className="text-right border-r font-bold text-green-600 min-w-[130px] px-4"
+                                    >
+                                      {total > 0 ? formatCurrency(total) : "-"}
+                                    </TableCell>
+                                  );
+                                })}
+                              </>
+                            );
+                          })()}
                         </TableRow>
                       )}
                     </TableBody>
