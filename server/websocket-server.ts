@@ -186,7 +186,8 @@ export function initializeWebSocketServer(server: Server) {
             clientDetails: Array.from(clients).map(client => ({
               clientType: (client as any).clientType || 'unknown',
               isCustomerDisplay: (client as any).isCustomerDisplay || false,
-              readyState: client.readyState
+              readyState: client.readyState,
+              isOpen: client.readyState === WebSocket.OPEN
             }))
           });
 
@@ -208,6 +209,23 @@ export function initializeWebSocketServer(server: Server) {
                 if (isCustomerDisplay) {
                   customerDisplayCount++;
                   console.log(`✅ QR payment sent to customer display #${customerDisplayCount}`);
+                  
+                  // Send a verification message after a short delay to ensure delivery
+                  setTimeout(() => {
+                    if (client.readyState === WebSocket.OPEN) {
+                      try {
+                        client.send(JSON.stringify({
+                          type: 'qr_payment_confirmation',
+                          originalMessage: qrMessage,
+                          timestamp: new Date().toISOString(),
+                          verification: 'delivery_confirmation'
+                        }));
+                        console.log(`🔔 QR payment confirmation sent to customer display #${customerDisplayCount}`);
+                      } catch (confirmError) {
+                        console.error('❌ Error sending QR confirmation:', confirmError);
+                      }
+                    }
+                  }, 100);
                 }
               } catch (error) {
                 console.error('❌ Error broadcasting QR payment to client:', error);
@@ -236,7 +254,7 @@ export function initializeWebSocketServer(server: Server) {
             });
             console.log(`🔄 Additional QR payment broadcast sent to ${additionalBroadcastCount} customer displays`);
           }, 500);
-        } else if (data.type === 'customer_display_connected') {
+        } else if (data.type === 'customer_display_connected' || data.type === 'register_customer_display') {
           console.log('👥 Customer display connected - sending current state');
           // Mark this connection as customer display
           (ws as any).isCustomerDisplay = true;

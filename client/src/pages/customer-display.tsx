@@ -99,6 +99,7 @@ export default function CustomerDisplayPage() {
         ws.onopen = () => {
           console.log("Customer Display: WebSocket connected");
           isConnected = true;
+          
           // Send identification as customer display
           try {
             ws.send(JSON.stringify({ 
@@ -106,6 +107,21 @@ export default function CustomerDisplayPage() {
               timestamp: new Date().toISOString()
             }));
             console.log("Customer Display: Identification message sent");
+            
+            // Also register as customer display client for better routing
+            setTimeout(() => {
+              try {
+                ws.send(JSON.stringify({
+                  type: 'register_customer_display',
+                  clientType: 'customer_display',
+                  timestamp: new Date().toISOString()
+                }));
+                console.log("Customer Display: Registration message sent");
+              } catch (regError) {
+                console.error("Customer Display: Failed to send registration:", regError);
+              }
+            }, 100);
+            
           } catch (error) {
             console.error("Customer Display: Failed to send identification:", error);
           }
@@ -180,8 +196,8 @@ export default function CustomerDisplayPage() {
                   return newCart;
                 });
 
-                // Clear QR payment for empty cart
-                if (newCart.length === 0) {
+                // Clear QR payment for empty cart ONLY if no QR payment is active
+                if (newCart.length === 0 && !qrPayment) {
                   console.log("Customer Display: 🧹 Clearing QR payment due to empty cart");
                   setQrPayment(null);
                 }
@@ -213,18 +229,26 @@ export default function CustomerDisplayPage() {
                   
                   console.log("📱 Customer Display: Setting QR payment state:", qrPaymentData);
                   
-                  // Clear cart first to ensure clean state
-                  setCart([]);
-                  
-                  // Set QR payment state
+                  // Set QR payment state FIRST
                   setQrPayment(qrPaymentData);
+                  
+                  // Clear cart AFTER setting QR payment to prevent clearing QR state
+                  setTimeout(() => {
+                    setCart([]);
+                    console.log("🧹 Customer Display: Cart cleared after QR payment set");
+                  }, 50);
                   
                   console.log("🎉 Customer Display: QR payment state set successfully, QR should display now");
                   
-                  // Force a re-render to ensure UI updates
+                  // Verify state was set properly after a delay
                   setTimeout(() => {
-                    console.log("🔄 Customer Display: Force re-render triggered for QR display");
-                  }, 100);
+                    console.log("🔍 Customer Display: QR payment verification:", {
+                      qrPaymentSet: !!qrPayment,
+                      hasQrCodeUrl: !!qrPaymentData.qrCodeUrl,
+                      amount: qrPaymentData.amount,
+                      timestamp: new Date().toISOString()
+                    });
+                  }, 200);
                 } else {
                   console.error("❌ Customer Display: Invalid QR payment data received:", {
                     hasQrCodeUrl: !!data.qrCodeUrl,
@@ -259,6 +283,20 @@ export default function CustomerDisplayPage() {
                   console.log("Customer Display: Executing page reload now");
                   window.location.reload();
                 }, 500);
+                break;
+              case 'qr_payment_confirmation':
+                console.log("🔔 Customer Display: Received QR payment confirmation:", data);
+                // This is a verification message to ensure QR payment was received
+                if (data.originalMessage && !qrPayment) {
+                  console.log("🔄 Customer Display: Re-applying QR payment from confirmation message");
+                  const confirmationQrData = {
+                    qrCodeUrl: data.originalMessage.qrCodeUrl,
+                    amount: Number(data.originalMessage.amount),
+                    paymentMethod: data.originalMessage.paymentMethod || "QR Code",
+                    transactionUuid: data.originalMessage.transactionUuid
+                  };
+                  setQrPayment(confirmationQrData);
+                }
                 break;
               case 'restore_cart_display':
                 console.log("Customer Display: Restoring cart display, clearing QR payment");
