@@ -1495,9 +1495,8 @@ export function SalesChartReport() {
             : orderItemsForOrder.map((item: any) => {
                 // Sử dụng giá trị CHÍNH XÁC từ order_items và order
                 const itemQuantity = Number(item.quantity || 1);
-                const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items
-                const itemTotal =
-                  Number(item.total || 0) || itemUnitPrice * itemQuantity; // Thành tiền từ order_items hoặc tính
+                const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items (trước thuế)
+                const itemTotal = itemUnitPrice * itemQuantity; // Thành tiền = đơn giá * số lượng (trước thuế)
 
                 // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
                 const itemDiscountRatio =
