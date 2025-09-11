@@ -154,6 +154,36 @@ export default function CustomerDisplayPage() {
             });
 
             switch (data.type) {
+              case 'qr_payment':
+                console.log('📱 Customer Display Page: QR payment received:', {
+                  hasQrCodeUrl: !!data.qrCodeUrl,
+                  qrCodeUrlLength: data.qrCodeUrl?.length || 0,
+                  amount: data.amount,
+                  paymentMethod: data.paymentMethod,
+                  transactionUuid: data.transactionUuid,
+                  timestamp: data.timestamp
+                });
+                
+                // Validate QR payment data
+                if (data.qrCodeUrl && data.amount) {
+                  console.log('✅ Customer Display Page: Valid QR payment data, setting state');
+                  setQrPayment({
+                    qrCodeUrl: data.qrCodeUrl,
+                    amount: Number(data.amount),
+                    paymentMethod: data.paymentMethod || 'QR Code',
+                    transactionUuid: data.transactionUuid || `QR-${Date.now()}`
+                  });
+                  // Clear cart when showing QR payment
+                  setCart([]);
+                  console.log('📱 Customer Display Page: QR payment set and cart cleared');
+                } else {
+                  console.error('❌ Customer Display Page: Invalid QR payment data:', data);
+                }
+                break;
+              case 'qr_payment_cancelled':
+                console.log('🚫 Customer Display Page: QR payment cancelled');
+                setQrPayment(null);
+                break;
               case 'cart_update':
                 console.log("Customer Display: Processing cart update:", {
                   items: data.cart?.length || 0,

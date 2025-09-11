@@ -129,10 +129,17 @@ export function CustomerDisplay({
 
   // WebSocket connection setup
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:3001'); // Assuming your WebSocket server runs on port 3001
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       console.log('✅ Customer Display: Connected to WebSocket server');
+      // Register as customer display
+      ws.send(JSON.stringify({
+        type: 'register_customer_display',
+        timestamp: new Date().toISOString()
+      }));
     };
 
     ws.onclose = () => {
@@ -148,7 +155,24 @@ export function CustomerDisplay({
           const data = JSON.parse(event.data);
           console.log('📩 Customer Display: Received WebSocket message:', data);
 
-          if (data.type === 'cart_update') {
+          if (data.type === 'qr_payment') {
+            console.log('📱 Customer Display: QR payment received:', {
+              hasQrCodeUrl: !!data.qrCodeUrl,
+              amount: data.amount,
+              paymentMethod: data.paymentMethod,
+              transactionUuid: data.transactionUuid
+            });
+            
+            // Update QR payment state via props (this will be passed from parent)
+            if (data.qrCodeUrl && data.amount) {
+              console.log('✅ Customer Display: Setting QR payment data');
+              // This component receives qrPayment via props, so we need to update parent
+              // The parent (CustomerDisplayPage) should handle this message
+            }
+          } else if (data.type === 'qr_payment_cancelled') {
+            console.log('🚫 Customer Display: QR payment cancelled');
+            // Clear QR payment (handled by parent)
+          } else if (data.type === 'cart_update') {
             const newCartItems = Array.isArray(data.cart) ? data.cart : [];
 
             console.log('🔄 Customer Display: Updating cart items', {

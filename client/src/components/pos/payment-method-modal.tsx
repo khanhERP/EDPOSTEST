@@ -444,7 +444,7 @@ export function PaymentMethodModal({
                   const qrPaymentMessage = {
                     type: "qr_payment",
                     qrCodeUrl: qrUrl,
-                    amount: Math.floor(orderTotal),
+                    amount: orderTotal, // Don't floor the amount, keep original precision
                     transactionUuid: transactionUuid,
                     paymentMethod: "QR Code",
                     timestamp: new Date().toISOString(),
