@@ -502,16 +502,44 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                     onClick={(e) => {
                       e.preventDefault();
                       setPosMenuOpen(false);
-                      // Open customer display in new window with specific dimensions
-                      const width = 1024;
-                      const height = 768;
-                      const left = (screen.width - width) / 2;
-                      const top = (screen.height - height) / 2;
-                      window.open(
-                        '/customer-display',
-                        'customerDisplay',
-                        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,toolbar=no,menubar=no,location=no`
-                      );
+                      
+                      // Detect if multiple screens are available
+                      if (screen.availWidth > window.screen.width || window.screen.availLeft !== 0) {
+                        // Multiple screens detected - place on secondary screen
+                        const secondaryScreenLeft = screen.availLeft !== 0 ? 0 : screen.width;
+                        const width = Math.min(1024, screen.availWidth);
+                        const height = Math.min(768, screen.availHeight);
+                        
+                        const customerWindow = window.open(
+                          '/customer-display',
+                          'customerDisplay',
+                          `width=${width},height=${height},left=${secondaryScreenLeft},top=0,resizable=yes,scrollbars=yes,status=no,toolbar=no,menubar=no,location=no`
+                        );
+                        
+                        // Try to maximize on secondary screen after opening
+                        if (customerWindow) {
+                          setTimeout(() => {
+                            try {
+                              customerWindow.moveTo(secondaryScreenLeft, 0);
+                              customerWindow.resizeTo(screen.availWidth, screen.availHeight);
+                            } catch (error) {
+                              console.log('Cannot auto-resize customer display window due to browser security restrictions');
+                            }
+                          }, 500);
+                        }
+                      } else {
+                        // Single screen - open in center with standard size
+                        const width = 1024;
+                        const height = 768;
+                        const left = (screen.width - width) / 2;
+                        const top = (screen.height - height) / 2;
+                        
+                        window.open(
+                          '/customer-display',
+                          'customerDisplay',
+                          `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,toolbar=no,menubar=no,location=no`
+                        );
+                      }
                     }}
                   >
                     <Users className="w-4 h-4 mr-3" />
