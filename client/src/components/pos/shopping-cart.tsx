@@ -133,13 +133,14 @@ export function ShoppingCart({
     },
   });
 
-  // WebSocket setup for receiving refresh signals and broadcasting cart updates
+  // Single WebSocket connection for both refresh signals and cart broadcasting
+  const wsRef = useRef<WebSocket | null>(null);
+
   useEffect(() => {
-    console.log('📡 Shopping Cart: Initializing WebSocket connection for refresh signals and cart updates');
+    console.log('📡 Shopping Cart: Initializing single WebSocket connection');
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 
-    let ws: WebSocket | null = null;
     let reconnectTimer: NodeJS.Timeout | null = null;
     let shouldReconnect = true;
     let reconnectAttempts = 0;
@@ -152,11 +153,12 @@ export function ShoppingCart({
       }
 
       try {
-        ws = new WebSocket(wsUrl);
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log('📡 Shopping Cart: WebSocket connected for refresh signals');
-          reconnectAttempts = 0; // Reset attempts on successful connection
+          console.log('📡 Shopping Cart: WebSocket connected');
+          reconnectAttempts = 0;
 
           // Register as shopping cart client
           ws.send(JSON.stringify({
@@ -164,19 +166,10 @@ export function ShoppingCart({
             timestamp: new Date().toISOString()
           }));
 
-          // Send initial cart state to customer display
+          // Send initial cart state if cart has items
           if (cart.length > 0) {
-            console.log("📡 Shopping Cart: Sending initial cart state to customer display");
-            const cartUpdateMessage = {
-                type: 'cart_update',
-                cart: cart,
-                subtotal: subtotal,
-                tax: tax,
-                total: total,
-                orderNumber: activeOrderId || `POS-${Date.now()}`,
-                timestamp: new Date().toISOString()
-              };
-            ws.send(JSON.stringify(cartUpdateMessage));
+            console.log("📡 Shopping Cart: Sending initial cart state");
+            broadcastCartUpdate();
           }
         };
 
@@ -188,14 +181,9 @@ export function ShoppingCart({
             if (data.type === 'payment_success' || data.type === 'popup_close' || data.type === 'force_refresh' || data.type === 'einvoice_published') {
               console.log('🔄 Shopping Cart: Refreshing data due to WebSocket signal');
 
-              // Clear cart if payment was successful or other refresh signals
               if ((data.type === 'popup_close' && data.success) || data.type === 'payment_success' || data.type === 'einvoice_published' || data.type === 'force_refresh') {
                 console.log('🧹 Shopping Cart: Clearing cart due to signal');
-
-                // Multiple attempts to ensure cart is cleared
                 onClearCart();
-                setTimeout(() => onClearCart(), 100);
-                setTimeout(() => onClearCart(), 300);
 
                 // Clear any active orders
                 if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
@@ -209,16 +197,18 @@ export function ShoppingCart({
         };
 
         ws.onclose = () => {
-          console.log('📡 Shopping Cart: WebSocket disconnected, attempting reconnect...');
+          console.log('📡 Shopping Cart: WebSocket disconnected');
+          wsRef.current = null;
           if (shouldReconnect && reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
-            const delay = Math.min(2000 * reconnectAttempts, 10000); // Exponential backoff
+            const delay = Math.min(2000 * reconnectAttempts, 10000);
             reconnectTimer = setTimeout(connectWebSocket, delay);
           }
         };
 
         ws.onerror = (error) => {
           console.error('❌ Shopping Cart: WebSocket error:', error);
+          wsRef.current = null;
         };
       } catch (error) {
         console.error('❌ Shopping Cart: Failed to connect WebSocket:', error);
@@ -240,44 +230,8 @@ export function ShoppingCart({
         clearTimeout(reconnectTimer);
       }
 
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
-    };
-  }, [onClearCart, cart, subtotal, tax, total]);
-
-  // Store WebSocket reference for broadcasting cart updates
-  const wsRef = useRef<WebSocket | null>(null);
-
-  // Update WebSocket reference when connection is established
-  useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      console.log("📡 Shopping Cart: WebSocket connected for cart broadcasting");
-      wsRef.current = ws;
-      ws.send(JSON.stringify({
-        type: 'register_pos',
-        timestamp: new Date().toISOString()
-      }));
-    };
-
-    ws.onclose = () => {
-      console.log("📡 Shopping Cart: Cart broadcast WebSocket disconnected");
-      wsRef.current = null;
-    };
-
-    ws.onerror = (error) => {
-      console.error("📡 Shopping Cart: Cart broadcast WebSocket error:", error);
-      wsRef.current = null;
-    };
-
-    return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
       }
       wsRef.current = null;
     };
@@ -306,14 +260,11 @@ export function ShoppingCart({
         timestamp: new Date().toISOString()
       };
 
-      console.log("📡 Shopping Cart: Broadcasting cart update to customer display:", {
+      console.log("📡 Shopping Cart: Broadcasting cart update:", {
         cartItems: validatedCart.length,
         subtotal: subtotal,
         tax: tax,
-        total: total,
-        orderNumber: activeOrderId || `POS-${Date.now()}`,
-        sampleItem: validatedCart[0],
-        sampleItemName: validatedCart[0]?.name
+        total: total
       });
 
       try {
@@ -321,16 +272,17 @@ export function ShoppingCart({
       } catch (error) {
         console.error("📡 Shopping Cart: Error broadcasting cart update:", error);
       }
-    } else {
-      console.log("📡 Shopping Cart: WebSocket not available for broadcasting");
     }
   }, [cart, subtotal, tax, total, activeOrderId]);
 
-  // Helper to call broadcastCartUpdate after state changes
-  const triggerBroadcastUpdate = useCallback(() => {
-    // Use setTimeout to ensure state updates have been processed before broadcasting
-    setTimeout(() => broadcastCartUpdate(), 100);
-  }, [broadcastCartUpdate]);
+  // Broadcast cart updates when cart changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      broadcastCartUpdate();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [cart, subtotal, tax, total, broadcastCartUpdate]);
 
 
   
@@ -830,31 +782,39 @@ export function ShoppingCart({
               onClick={() => {
                 console.log("🧹 Shopping Cart: Clear cart button clicked");
                 
-                // First, broadcast empty cart to customer display immediately
-                if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                  const clearCartMessage = {
-                    type: 'cart_update',
-                    cart: [],
-                    subtotal: 0,
-                    tax: 0,
-                    total: 0,
-                    orderNumber: '',
-                    timestamp: new Date().toISOString()
-                  };
-                  
-                  console.log("📡 Shopping Cart: Broadcasting cart clear to customer display");
-                  
-                  try {
-                    wsRef.current.send(JSON.stringify(clearCartMessage));
-                  } catch (error) {
-                    console.error("📡 Shopping Cart: Error broadcasting cart clear:", error);
-                  }
-                }
-                
-                // Then clear the local cart state
+                // Clear the local cart state first
                 onClearCart();
                 
-                console.log("✅ Shopping Cart: Cart cleared and customer display notified");
+                // Clear any active orders
+                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                  (window as any).clearActiveOrder();
+                }
+                
+                // Broadcast empty cart to customer display
+                setTimeout(() => {
+                  if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                    const clearCartMessage = {
+                      type: 'cart_update',
+                      cart: [],
+                      subtotal: 0,
+                      tax: 0,
+                      total: 0,
+                      orderNumber: '',
+                      timestamp: new Date().toISOString(),
+                      isCartClear: true
+                    };
+                    
+                    console.log("📡 Shopping Cart: Broadcasting cart clear");
+                    
+                    try {
+                      wsRef.current.send(JSON.stringify(clearCartMessage));
+                    } catch (error) {
+                      console.error("📡 Shopping Cart: Error broadcasting cart clear:", error);
+                    }
+                  }
+                }, 50);
+                
+                console.log("✅ Shopping Cart: Cart cleared");
               }}
               className="text-red-500 hover:text-red-700 transition-colors"
             >
@@ -934,59 +894,8 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        console.log(`🗑️ Shopping Cart: Remove item ${item.id} (${item.name}) - SIMPLIFIED DELETION`);
-                        
-                        // Get the item to delete for reference
-                        const deletedItemId = item.id;
-                        const deletedItemName = item.name;
-                        
-                        // STEP 1: Remove item from local state FIRST
+                        console.log(`🗑️ Shopping Cart: Remove item ${item.id} (${item.name})`);
                         onRemoveItem(parseInt(item.id));
-                        
-                        // STEP 2: Wait for state to update, then broadcast the CURRENT cart state
-                        setTimeout(() => {
-                          const currentCart = cart.filter(cartItem => cartItem.id !== deletedItemId);
-                          
-                          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                            // Calculate totals for current cart (after deletion)
-                            const newSubtotal = currentCart.reduce((sum, cartItem) => sum + parseFloat(cartItem.total), 0);
-                            const newTax = currentCart.reduce((sum, cartItem) => {
-                              if (cartItem.taxRate && parseFloat(cartItem.taxRate) > 0) {
-                                const basePrice = parseFloat(cartItem.price);
-                                if (cartItem.afterTaxPrice && cartItem.afterTaxPrice !== null && cartItem.afterTaxPrice !== "") {
-                                  const afterTaxPrice = parseFloat(cartItem.afterTaxPrice);
-                                  const taxPerItem = afterTaxPrice - basePrice;
-                                  return sum + Math.floor(taxPerItem * cartItem.quantity);
-                                }
-                              }
-                              return sum;
-                            }, 0);
-                            const newTotal = Math.round(newSubtotal + newTax);
-                            
-                            // Send SINGLE definitive update
-                            const finalUpdate = {
-                              type: 'cart_update',
-                              cart: [...currentCart], // Clean cart without deleted item
-                              subtotal: newSubtotal,
-                              tax: newTax,
-                              total: newTotal,
-                              orderNumber: currentCart.length > 0 ? (activeOrderId || `ORD-${Date.now()}`) : '',
-                              timestamp: new Date().toISOString(),
-                              deletedItemId: deletedItemId,
-                              deletedItemName: deletedItemName,
-                              isItemDeletion: true
-                            };
-                            
-                            try {
-                              wsRef.current.send(JSON.stringify(finalUpdate));
-                              console.log(`📡 Shopping Cart: Item ${deletedItemId} deleted - sent final cart with ${currentCart.length} items`);
-                            } catch (error) {
-                              console.error("📡 Shopping Cart: Error sending final update:", error);
-                            }
-                          }
-                        }, 50);
-                        
-                        console.log(`✅ Shopping Cart: Item ${deletedItemId} (${deletedItemName}) deletion initiated`);
                       }}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
                     >
