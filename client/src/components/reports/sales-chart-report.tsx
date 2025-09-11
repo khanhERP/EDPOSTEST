@@ -2772,17 +2772,20 @@ export function SalesChartReport() {
         }
 
         const orderTotal = Number(order.total);
-        const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
+        const orderSubtotal = Number(order.subtotal || orderTotal); // Use subtotal from DB
         const orderDiscount = Number(order.discount || 0); // Default discount to 0
 
-        // Count all orders but only include revenue for non-cancelled orders
+        // Count all orders and add to orderDetails
         customerSales[customerId].orders += 1;
         customerSales[customerId].orderDetails.push(order);
         
+        // Always add to totals (including cancelled orders for total amount calculation)
+        customerSales[customerId].totalAmount += orderSubtotal;
+        customerSales[customerId].discount += orderDiscount;
+        
+        // Only add to revenue if not cancelled
         if (order.status !== "cancelled") {
-          customerSales[customerId].totalAmount += orderSubtotal;
-          customerSales[customerId].discount += orderDiscount;
-          customerSales[customerId].revenue += orderSubtotal - orderDiscount; // Doanh thu = subtotal - discount
+          customerSales[customerId].revenue += Math.max(0, orderSubtotal - orderDiscount); // Doanh thu = subtotal - discount
         }
 
         // Determine customer group based on total spending
@@ -2981,50 +2984,15 @@ export function SalesChartReport() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right border-r min-w-[140px] px-4">
-                                {(() => {
-                                  // Tính tổng thành tiền từ các đơn hàng con không bị hủy
-                                  let customerTotalAmount = 0;
-                                  if (item.orderDetails && Array.isArray(item.orderDetails)) {
-                                    item.orderDetails.forEach(order => {
-                                      if (order.status !== "cancelled") {
-                                        customerTotalAmount += Number(order.subtotal || 0);
-                                      }
-                                    });
-                                  }
-                                  return formatCurrency(customerTotalAmount);
-                                })()}
+                                {formatCurrency(item.totalAmount)}
                               </TableCell>
                               {analysisType !== "employee" && (
                                 <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
-                                  {(() => {
-                                    // Tính tổng giảm giá từ các đơn hàng con không bị hủy
-                                    let customerTotalDiscount = 0;
-                                    if (item.orderDetails && Array.isArray(item.orderDetails)) {
-                                      item.orderDetails.forEach(order => {
-                                        if (order.status !== "cancelled") {
-                                          customerTotalDiscount += Number(order.discount || 0);
-                                        }
-                                      });
-                                    }
-                                    return formatCurrency(customerTotalDiscount);
-                                  })()}
+                                  {formatCurrency(item.discount)}
                                 </TableCell>
                               )}
                               <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
-                                {(() => {
-                                  // Tính tổng doanh thu từ các đơn hàng con không bị hủy
-                                  let customerTotalRevenue = 0;
-                                  if (item.orderDetails && Array.isArray(item.orderDetails)) {
-                                    item.orderDetails.forEach(order => {
-                                      if (order.status !== "cancelled") {
-                                        const orderSubtotal = Number(order.subtotal || 0);
-                                        const orderDiscount = Number(order.discount || 0);
-                                        customerTotalRevenue += Math.max(0, orderSubtotal - orderDiscount);
-                                      }
-                                    });
-                                  }
-                                  return formatCurrency(customerTotalRevenue);
-                                })()}
+                                {formatCurrency(item.revenue)}
                               </TableCell>
                               <TableCell className="text-center min-w-[100px] px-4">
                                 <Badge
