@@ -73,21 +73,20 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
       throw new Error(`External API error: ${response.status} ${response.statusText}`);
     }
 
-    const responseText = await response.text();
-    console.log('📡 Raw external API response:', responseText);
-    
-    // Check if response is HTML
-    if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
-      console.error('❌ External API returned HTML instead of JSON');
-      throw new Error('External API returned HTML error page instead of JSON');
-    }
-    
     let result;
     try {
-      result = JSON.parse(responseText);
+      result = await response.json();
+      console.log('📡 External API JSON response:', result);
     } catch (parseError) {
+      const responseText = await response.text();
       console.error('❌ Failed to parse JSON response:', parseError);
       console.error('❌ Response text:', responseText);
+      
+      // Check if response is HTML
+      if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
+        throw new Error('External API returned HTML error page instead of JSON');
+      }
+      
       throw new Error('Invalid JSON response from external API');
     }
     
