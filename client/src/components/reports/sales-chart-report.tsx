@@ -5385,8 +5385,8 @@ export function SalesChartReport() {
                         placeholder={t("reports.productFilterPlaceholder")}
                         value={productSearch}
                         onChange={(e) => setProductSearch(e.target.value)}
-                        className="pl-10 h                    className="pl-10 h-10 text-sm border-gray-200 hover:border-teal-300 focus:border-teal-500 transition-colors"
-                  />
+                        className="pl-10 h-10 text-sm border-gray-200 hover:border-teal-300 focus:border-teal-500 transition-colors"
+                      />
                 </div>
               </div>
               <div className="space-y-2">
