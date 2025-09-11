@@ -3420,7 +3420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Menu Analysis API
   app.get("/api/menu-analysis", async (req, res) => {
     try {
-      const { startDate, endDate, categoryId } = req.query;
+      const { startDate, endDate, categoryId, productType, productSearch } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
       console.log("Menu Analysis API called with params:", {
@@ -3972,7 +3972,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           productSku: products.sku,
           categoryId: products.categoryId,
           categoryName: categories.name,
-          productType: products.productType,
           unitPrice: orderItemsTable.unitPrice,
           quantity: orderItemsTable.quantity,
           total: orderItemsTable.total,
