@@ -2118,7 +2118,7 @@ export function SalesChartReport() {
                       <TableCell className="text-center min-w-[120px] px-4">
                         -
                       </TableCell>
-                      <TableCell className="text-center min-w-[100px] px-4">
+                      <TableCell className="text-center min-w-[120px] px-4">
                         -
                       </TableCell>
                     </TableRow>
@@ -2177,7 +2177,9 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      setCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2705,7 +2707,7 @@ export function SalesChartReport() {
                                         {order.customerName || "Khách lẻ"}
                                       </Badge>
                                     </TableCell>
-                                    <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
+                                    <TableCell className="text-right text-green-600 font-medium text-sm min-w-[140px] px-4">
                                       {formatCurrency(
                                         Math.max(
                                           0,
@@ -2714,7 +2716,7 @@ export function SalesChartReport() {
                                         ),
                                       )}
                                     </TableCell>
-                                    <TableCell className="text-right border-r text-orange-600 text-sm min-w-[120px] px-4">
+                                    <TableCell className="text-right text-orange-600 text-sm min-w-[120px] px-4">
                                       {formatCurrency(
                                         Number(order.discount || 0),
                                       )}
