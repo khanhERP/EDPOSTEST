@@ -43,31 +43,66 @@ export interface CreateQRPosResponse {
 }
 
 export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: string, clientID: string): Promise<CreateQRPosResponse> => {
-  // Use the new external API endpoint
-  const response = await fetch('http://1.55.212.135:9335/api/Ec/CreateQuickQr', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      ...request,
-      bankCode,
-      clientID
-    }),
-  });
+  try {
+    console.log('🎯 Attempting to call external CreateQuickQr API...');
+    
+    // Try the new external API endpoint first
+    const response = await fetch('http://1.55.212.135:9335/api/Ec/CreateQuickQr', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        ...request,
+        bankCode,
+        clientID
+      }),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('CreateQuickQr API error:', response.status, errorText);
-    throw new Error(`Failed to create QR payment: ${response.status} ${response.statusText}`);
+    console.log('📡 External API response status:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`External API error: ${response.status} ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('External API returned non-JSON response');
+    }
+
+    const result = await response.json();
+    console.log('✅ External API success:', result);
+    
+    // Transform response to match expected format
+    return {
+      qrDataDecode: result.qrDataDecode || result.qrData || '',
+      qrUrl: result.qrUrl || '',
+      qrData: result.qrData || result.qrDataDecode || ''
+    };
+
+  } catch (error) {
+    console.error('❌ External CreateQuickQr API failed:', error);
+    console.log('🔄 Falling back to internal API...');
+    
+    // Fallback to internal API
+    const fallbackResponse = await fetch(`/api/pos/create-qr?bankCode=${bankCode}&clientID=${clientID}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!fallbackResponse.ok) {
+      const errorText = await fallbackResponse.text();
+      console.error('Fallback API error:', fallbackResponse.status, errorText);
+      throw new Error(`Failed to create QR payment: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
+    }
+
+    const fallbackResult = await fallbackResponse.json();
+    console.log('✅ Fallback API success:', fallbackResult);
+    
+    return fallbackResult;
   }
-
-  const result = await response.json();
-  
-  // Transform response to match expected format if needed
-  return {
-    qrDataDecode: result.qrDataDecode || result.qrData,
-    qrUrl: result.qrUrl || '',
-    qrData: result.qrData || result.qrDataDecode || ''
-  };
 };
