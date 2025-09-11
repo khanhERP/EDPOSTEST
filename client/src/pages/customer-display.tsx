@@ -12,6 +12,7 @@ export default function CustomerDisplayPage() {
     paymentMethod: string;
     transactionUuid: string;
   } | null>(null);
+  const [lastMessageTimestamp, setLastMessageTimestamp] = useState<string>('');
 
   console.log("Customer Display: Component rendered with cart:", cart.length, "items, storeInfo:", !!storeInfo, "qrPayment:", !!qrPayment);
 
@@ -113,6 +114,18 @@ export default function CustomerDisplayPage() {
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+            
+            // Skip duplicate messages based on timestamp and type
+            const messageId = `${data.type}-${data.timestamp}`;
+            if (data.timestamp && lastMessageTimestamp === messageId) {
+              console.log("Customer Display: ⏭️ Skipping duplicate message:", data.type);
+              return;
+            }
+            
+            if (data.timestamp) {
+              setLastMessageTimestamp(messageId);
+            }
+            
             console.log("Customer Display: Received WebSocket message:", {
               type: data.type,
               hasCart: !!data.cart,
@@ -138,6 +151,13 @@ export default function CustomerDisplayPage() {
                 
                 // SIMPLIFIED: Direct cart update without complex validation cycles
                 setCart(prevCart => {
+                  // Prevent unnecessary updates if cart is already the same
+                  if (prevCart.length === newCart.length && 
+                      JSON.stringify(prevCart) === JSON.stringify(newCart)) {
+                    console.log("Customer Display: ⏭️ Skipping duplicate cart update");
+                    return prevCart;
+                  }
+                  
                   console.log("Customer Display: 🔄 Cart update:", {
                     from: prevCart.length,
                     to: newCart.length,
@@ -219,6 +239,8 @@ export default function CustomerDisplayPage() {
                   if (prevQr) {
                     console.log("Customer Display: Clearing QR payment state");
                     return null;
+                  } else {
+                    console.log("Customer Display: ⏭️ QR payment already cleared, ignoring cancellation");
                   }
                   return prevQr;
                 });
