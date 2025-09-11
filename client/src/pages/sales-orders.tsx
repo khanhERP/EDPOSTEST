@@ -1880,51 +1880,56 @@ export default function SalesOrders() {
                                                         (
                                                           item: any,
                                                           index: number,
-                                                        ) => (
-                                                          <div
-                                                            key={item.id}
-                                                            className="grid grid-cols-12 gap-2 text-xs p-2 border-t"
-                                                          >
-                                                            <div className="col-span-1">
-                                                              {index + 1}
-                                                            </div>
-                                                            <div className="col-span-3">
-                                                              SP
-                                                              {String(
-                                                                item.productId,
-                                                              ).padStart(
-                                                                3,
-                                                                "0",
-                                                              )}
-                                                            </div>
-                                                            <div className="col-span-3">
-                                                              {item.productName}
-                                                            </div>
-                                                            <div className="col-span-1">
-                                                              Cái
-                                                            </div>
-                                                            <div className="col-span-1">
-                                                              {item.quantity}
-                                                            </div>
-                                                            <div className="col-span-1">
-                                                              {formatCurrency(
-                                                                item.unitPrice,
-                                                              )}
-                                                            </div>
-                                                            <div className="col-span-1">
-                                                              {formatCurrency(
-                                                                item.total,
-                                                              )}
-                                                            </div>
-                                                            <div className="col-span-1">
-                                                              {formatCurrency(
-                                                                item.total *
-                                                                  item.taxRate -
+                                                        ) => {
+                                                          // Tính toán tiền thuế = total - (unitPrice * quantity)
+                                                          const unitPrice = parseFloat(item.unitPrice || '0');
+                                                          const quantity = parseInt(item.quantity || '0');
+                                                          const total = parseFloat(item.total || '0');
+                                                          const subtotal = unitPrice * quantity;
+                                                          const taxAmount = Math.max(0, total - subtotal);
+                                                          
+                                                          return (
+                                                            <div
+                                                              key={item.id}
+                                                              className="grid grid-cols-12 gap-2 text-xs p-2 border-t"
+                                                            >
+                                                              <div className="col-span-1">
+                                                                {index + 1}
+                                                              </div>
+                                                              <div className="col-span-3">
+                                                                SP
+                                                                {String(
+                                                                  item.productId,
+                                                                ).padStart(
+                                                                  3,
+                                                                  "0",
+                                                                )}
+                                                              </div>
+                                                              <div className="col-span-3">
+                                                                {item.productName}
+                                                              </div>
+                                                              <div className="col-span-1">
+                                                                Cái
+                                                              </div>
+                                                              <div className="col-span-1 text-center">
+                                                                {item.quantity}
+                                                              </div>
+                                                              <div className="col-span-1 text-right">
+                                                                {formatCurrency(
                                                                   item.unitPrice,
-                                                              )}
+                                                                )}
+                                                              </div>
+                                                              <div className="col-span-1 text-right">
+                                                                {formatCurrency(
+                                                                  item.total,
+                                                                )}
+                                                              </div>
+                                                              <div className="col-span-1 text-right">
+                                                                {formatCurrency(taxAmount)}
+                                                              </div>
                                                             </div>
-                                                          </div>
-                                                        ),
+                                                          );
+                                                        }
                                                       );
                                                     })()}
                                                   </div>
