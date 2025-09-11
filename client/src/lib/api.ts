@@ -44,92 +44,45 @@ export interface CreateQRPosResponse {
 
 export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: string, clientID: string): Promise<CreateQRPosResponse> => {
   try {
-    console.log('🎯 Calling CreateQRPos API directly...');
+    console.log('🎯 Calling CreateQRPos API via proxy to avoid CORS...');
     console.log('📤 Request payload:', { ...request, bankCode, clientID });
     
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    // Use proxy route to avoid CORS issues
+    const response = await fetch(`/api/pos/create-qr-proxy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...request,
+        bankCode,
+        clientID
+      }),
+    });
+
+    console.log('📡 Proxy API response status:', response.status);
     
-    try {
-      // Call external API directly with timeout
-      const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'User-Agent': 'EDPOS-System/1.0',
-        },
-        body: JSON.stringify(request),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      
-      console.log('📡 External API response status:', response.status);
-      console.log('📡 External API response headers:', Object.fromEntries(response.headers.entries()));
-      
-      if (!response.ok) {
-        const responseText = await response.text();
-        console.error('❌ External API error response:', responseText);
-        
-        // Check if response is HTML (error page)
-        if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
-          console.error('❌ Received HTML instead of JSON - API endpoint may be incorrect');
-          throw new Error(`External API returned HTML error page instead of JSON`);
-        }
-        
-        throw new Error(`External API error: ${response.status} ${response.statusText}`);
-      }
-
-      let result;
-      try {
-        result = await response.json();
-        console.log('📡 External API JSON response:', result);
-      } catch (parseError) {
-        const responseText = await response.text();
-        console.error('❌ Failed to parse JSON response:', parseError);
-        console.error('❌ Response text:', responseText);
-        
-        // Check if response is HTML
-        if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
-          throw new Error('External API returned HTML error page instead of JSON');
-        }
-        
-        throw new Error('Invalid JSON response from external API');
-      }
-      
-      console.log('✅ External API success:', result);
-      
-      // Transform response to match expected format
-      return {
-        qrDataDecode: result.qrDataDecode || result.qrData || '',
-        qrUrl: result.qrUrl || '',
-        qrData: result.qrData || result.qrDataDecode || ''
-      };
-      
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      
-      // Handle specific fetch errors
-      if (fetchError.name === 'AbortError') {
-        console.error('❌ External API timeout after 10 seconds');
-        throw new Error('External API timeout - server may be slow or unreachable');
-      }
-      
-      if (fetchError.message.includes('Failed to fetch')) {
-        console.error('❌ Network error - cannot reach external API server');
-        throw new Error('Network error - external API server unreachable');
-      }
-      
-      throw fetchError;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Proxy API error response:', errorText);
+      throw new Error(`Proxy API error: ${response.status} ${response.statusText}`);
     }
 
-  } catch (error) {
-    console.error('❌ External CreateQRPos API failed:', error);
-    console.log('🔄 Falling back to internal API...');
+    const result = await response.json();
+    console.log('✅ Proxy API success:', result);
     
-    // Fallback to internal API
+    // Transform response to match expected format
+    return {
+      qrDataDecode: result.qrDataDecode || result.qrData || '',
+      qrUrl: result.qrUrl || '',
+      qrData: result.qrData || result.qrDataDecode || ''
+    };
+    
+  } catch (error) {
+    console.error('❌ Proxy CreateQRPos API failed:', error);
+    console.log('🔄 Falling back to alternative route...');
+    
+    // Fallback to alternative internal API route
     try {
       const fallbackResponse = await fetch(`/api/pos/create-qr?bankCode=${bankCode}&clientID=${clientID}`, {
         method: 'POST',
@@ -141,7 +94,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
 
       if (!fallbackResponse.ok) {
         const errorText = await fallbackResponse.text();
-        console.error('Fallback API error:', fallbackResponse.status, errorText);
+        console.error('❌ Fallback API error:', fallbackResponse.status, errorText);
         throw new Error(`Failed to create QR payment: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
       }
 
@@ -150,7 +103,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
       
       return fallbackResult;
     } catch (fallbackError) {
-      console.error('❌ Both external and fallback APIs failed:', fallbackError);
+      console.error('❌ Both proxy and fallback APIs failed:', fallbackError);
       
       // Return mock QR data as last resort
       console.log('🎭 Using mock QR data as last resort');

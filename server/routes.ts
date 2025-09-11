@@ -1003,10 +1003,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 app.post('/api/pos/create-qr-proxy', async (req, res) => {
   try {
     const { bankCode, clientID, ...qrRequest } = req.body;
-    
+
     console.log('🎯 Proxying CreateQRPos request:', { qrRequest, bankCode, clientID });
     console.log('🌐 Target URL:', `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`);
-    
+
     // Forward request to external API (using HTTP as requested)
     const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
       method: 'POST',
@@ -1018,13 +1018,13 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
       body: JSON.stringify(qrRequest),
       timeout: 30000, // 30 second timeout
     });
-    
+
     console.log('📡 External API response status:', response.status);
     console.log('📡 External API response headers:', Object.fromEntries(response.headers.entries()));
-    
+
     const responseText = await response.text();
     console.log('📡 External API raw response:', responseText.substring(0, 500)); // Log first 500 chars
-    
+
     // Check if response is HTML (error page)
     if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
       console.error('❌ External API returned HTML instead of JSON');
@@ -1035,7 +1035,7 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
         apiUrl: `http://1.55.212.135:9335/api/CreateQRPos`
       });
     }
-    
+
     if (!response.ok) {
       console.error('❌ External API error:', responseText);
       return res.status(response.status).json({ 
@@ -1044,7 +1044,7 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
         statusText: response.statusText
       });
     }
-    
+
     let result;
     try {
       result = JSON.parse(responseText);
@@ -1055,15 +1055,15 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
         rawResponse: responseText.substring(0, 200)
       });
     }
-    
+
     console.log('✅ External API success:', result);
-    
+
     // Return the result
     res.json(result);
-    
+
   } catch (error) {
     console.error('❌ Proxy API error:', error);
-    
+
     // Provide more detailed error information
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({ 
@@ -1072,7 +1072,7 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
         apiUrl: 'http://1.55.212.135:9335/api/CreateQRPos'
       });
     }
-    
+
     if (error.code === 'ENOTFOUND') {
       return res.status(503).json({ 
         error: 'External API server not found',
@@ -1080,7 +1080,7 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
         apiUrl: 'http://1.55.212.135:9335/api/CreateQRPos'
       });
     }
-    
+
     res.status(500).json({ 
       error: 'Internal server error while calling external API',
       details: error.message,
@@ -1094,9 +1094,9 @@ app.post('/api/pos/create-qr', async (req, res) => {
   try {
     const { bankCode, clientID } = req.query;
     const qrRequest = req.body;
-    
+
     console.log('🎯 Fallback CreateQRPos request:', { qrRequest, bankCode, clientID });
-    
+
     // Forward to external API
     const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
       method: 'POST',
@@ -1108,9 +1108,9 @@ app.post('/api/pos/create-qr', async (req, res) => {
       body: JSON.stringify(qrRequest),
       timeout: 30000,
     });
-    
+
     const responseText = await response.text();
-    
+
     if (!response.ok) {
       return res.status(response.status).json({ 
         error: responseText,
@@ -1118,7 +1118,7 @@ app.post('/api/pos/create-qr', async (req, res) => {
         statusText: response.statusText
       });
     }
-    
+
     let result;
     try {
       result = JSON.parse(responseText);
@@ -1128,9 +1128,9 @@ app.post('/api/pos/create-qr', async (req, res) => {
         rawResponse: responseText.substring(0, 200)
       });
     }
-    
+
     res.json(result);
-    
+
   } catch (error) {
     console.error('❌ Fallback CreateQRPos API error:', error);
     res.status(500).json({ 
@@ -4210,7 +4210,7 @@ app.post('/api/pos/create-qr', async (req, res) => {
     }
   });
 
-  // Enhanced API endpoints for sales chart report - using same data source as dashboard
+  // // Enhanced API endpoints for sales chart report - using same data source as dashboard
   app.get(
     "/api/dashboard-data/:startDate/:endDate",
     async (req: TenantRequest, res) => {
