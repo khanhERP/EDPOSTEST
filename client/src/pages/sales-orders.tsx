@@ -2775,7 +2775,7 @@ export default function SalesOrders() {
                           );
                         }
                         return items.map((item: any, index: number) => (
-                          <tr key={item.id} className="border-t">
+                          <tr className="border-t">
                             <td className="p-2">{item.productName}</td>
                             <td className="p-2 text-center">{item.quantity}</td>
                             <td className="p-2 text-right">

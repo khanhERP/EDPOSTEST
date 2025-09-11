@@ -1509,6 +1509,7 @@ export class DatabaseStorage implements IStorage {
       if (orderData.notes !== undefined) updateData.notes = orderData.notes;
       if (orderData.paidAt !== undefined) updateData.paidAt = orderData.paidAt;
       if (orderData.servedAt !== undefined) updateData.servedAt = orderData.servedAt;
+      if (orderData.discount !== undefined) updateData.discount = orderData.discount; // Ensure discount is included
 
       // CRITICAL: Always update financial fields if provided
       if (orderData.subtotal !== undefined) {
@@ -1522,6 +1523,18 @@ export class DatabaseStorage implements IStorage {
       if (orderData.total !== undefined) {
         updateData.total = orderData.total.toString();
         console.log(`💰 Storage: Updating total to ${orderData.total}`);
+      }
+
+      // Remove undefined values to avoid overwriting with undefined
+      Object.keys(orderData).forEach(key => {
+        if (orderData[key as keyof typeof orderData] === undefined) {
+          delete orderData[key as keyof typeof orderData];
+        }
+      });
+
+      // Ensure discount is included if provided
+      if (orderData.discount !== undefined) {
+        console.log(`💰 Storage: Updating discount to ${orderData.discount}`);
       }
 
       console.log(`💾 Storage: Final update data for order ${id}:`, updateData);
@@ -1541,7 +1554,8 @@ export class DatabaseStorage implements IStorage {
           einvoiceStatus: updatedOrder.einvoiceStatus,
           subtotal: updatedOrder.subtotal,
           tax: updatedOrder.tax,
-          total: updatedOrder.total
+          total: updatedOrder.total,
+          discount: updatedOrder.discount // Log discount if it was updated
         });
       }
 
