@@ -45,6 +45,7 @@ export interface CreateQRPosResponse {
 export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: string, clientID: string): Promise<CreateQRPosResponse> => {
   try {
     console.log('🎯 Attempting to call external CreateQRPos API...');
+    console.log('📤 Request payload:', { ...request, bankCode, clientID });
     
     // Try the new external API endpoint first
     const response = await fetch('http://1.55.212.138:9335/api/CreateQRPos', {
@@ -52,6 +53,7 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Access-Control-Allow-Origin': '*',
       },
       body: JSON.stringify({
         ...request,
@@ -61,14 +63,21 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
     });
 
     console.log('📡 External API response status:', response.status);
+    console.log('📡 External API response headers:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
+      const responseText = await response.text();
+      console.error('❌ External API error response:', responseText.substring(0, 200));
       throw new Error(`External API error: ${response.status} ${response.statusText}`);
     }
 
     const contentType = response.headers.get('content-type');
+    console.log('📄 Content-Type:', contentType);
+    
     if (!contentType || !contentType.includes('application/json')) {
-      throw new Error('External API returned non-JSON response');
+      const responseText = await response.text();
+      console.error('❌ Non-JSON response received:', responseText.substring(0, 200));
+      throw new Error(`External API returned non-JSON response. Content-Type: ${contentType}`);
     }
 
     const result = await response.json();
@@ -83,6 +92,17 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
 
   } catch (error) {
     console.error('❌ External CreateQRPos API failed:', error);
+    
+    // Check if it's a network error
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('🌐 Network error - API server might be unreachable');
+    }
+    
+    // Check if it's a CORS error
+    if (error instanceof TypeError && error.message.includes('CORS')) {
+      console.error('🚫 CORS error - API server not allowing cross-origin requests');
+    }
+    
     console.log('🔄 Falling back to internal API...');
     
     // Fallback to internal API
