@@ -236,7 +236,8 @@ export function SalesChartReport() {
 
   // Utility functions
   const formatCurrency = (amount: number) => {
-    return `${amount.toLocaleString()} ₫`;
+    // Remove decimal formatting and use floor to remove decimals
+    return `${Math.floor(Number(amount || 0)).toLocaleString()} ₫`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -1635,10 +1636,10 @@ export function SalesChartReport() {
                     "Tên hàng": "Tổng đơn hàng",
                     ĐVT: "-",
                     "Số lượng bán": order.items.length,
-                    "Đơn giá": order.totalAmount,
-                    "Thành tiền": order.totalAmount,
-                    "Giảm giá": order.discount,
-                    "Doanh thu": order.revenue,
+                    "Đơn giá": "-", // Hide unit price for parent row
+                    "Thành tiền": formatCurrency(order.totalAmount),
+                    "Giảm giá": formatCurrency(order.discount),
+                    "Doanh thu": formatCurrency(order.revenue),
                     "Thuế suất": (() => {
                       if (order.items && order.items.length > 0) {
                         const totalTaxRate = order.items.reduce(
@@ -1647,13 +1648,14 @@ export function SalesChartReport() {
                           },
                           0,
                         );
-                        const avgTaxRate = totalTaxRate / order.items.length;
-                        return `${avgTaxRate.toFixed(1)}%`;
+                        return totalTaxRate > 0
+                          ? `${Math.floor(totalTaxRate)}%`
+                          : "0%";
                       }
                       return "0%";
                     })(),
-                    "Thuế GTGT": order.tax,
-                    "Tổng tiền": order.totalMoney,
+                    "Thuế GTGT": formatCurrency(order.tax),
+                    "Tổng tiền": formatCurrency(order.totalMoney),
                     "Ghi chú": order.notes || "",
                     "Kênh bán": order.salesChannel || "",
                     Bàn: order.tableName || "",
@@ -1677,13 +1679,13 @@ export function SalesChartReport() {
                       "Tên hàng": item.productName,
                       ĐVT: item.unit,
                       "Số lượng bán": item.quantity,
-                      "Đơn giá": item.unitPrice,
-                      "Thành tiền": item.totalAmount,
-                      "Giảm giá": item.discount,
-                      "Doanh thu": item.revenue,
+                      "Đơn giá": formatCurrency(item.unitPrice),
+                      "Thành tiền": formatCurrency(item.totalAmount),
+                      "Giảm giá": formatCurrency(item.discount),
+                      "Doanh thu": formatCurrency(item.revenue),
                       "Thuế suất": `${item.taxRate || 0}%`,
-                      "Thuế GTGT": item.vat,
-                      "Tổng tiền": item.totalMoney,
+                      "Thuế GTGT": formatCurrency(item.vat),
+                      "Tổng tiền": formatCurrency(item.totalMoney),
                       "Ghi chú": order.notes || "",
                       "Kênh bán": order.salesChannel || "",
                       Bàn: order.tableName || "",
@@ -1703,9 +1705,9 @@ export function SalesChartReport() {
                   ĐVT: "",
                   "Số lượng bán": totalQuantity,
                   "Đơn giá": "",
-                  "Thành tiền": totalAmount,
-                  "Giảm giá": totalDiscount,
-                  "Doanh thu": totalRevenue,
+                  "Thành tiền": formatCurrency(totalAmount),
+                  "Giảm giá": formatCurrency(totalDiscount),
+                  "Doanh thu": formatCurrency(totalRevenue),
                   "Thuế suất": (() => {
                     if (totalTax > 0 && totalAmount > 0) {
                       const avgTaxRate = (totalTax / totalAmount) * 100;
@@ -1713,8 +1715,8 @@ export function SalesChartReport() {
                     }
                     return "0%";
                   })(),
-                  "Thuế GTGT": totalTax,
-                  "Tổng tiền": totalMoney,
+                  "Thuế GTGT": formatCurrency(totalTax),
+                  "Tổng tiền": formatCurrency(totalMoney),
                   "Ghi chú": "",
                   "Kênh bán": "",
                   Bàn: "",
@@ -1889,10 +1891,8 @@ export function SalesChartReport() {
                                     },
                                     0,
                                   );
-                                  const avgTaxRate =
-                                    totalTaxRate / order.items.length;
-                                  return avgTaxRate > 0
-                                    ? `${avgTaxRate.toFixed(1)}%`
+                                  return totalTaxRate > 0
+                                    ? `${Math.floor(totalTaxRate)}%`
                                     : "0%";
                                 }
                                 return "0%";
@@ -2177,7 +2177,9 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      setCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2193,9 +2195,9 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
+            )}
+          </CardContent>
+        </Card>
       </Card>
     );
   };
@@ -2364,10 +2366,10 @@ export function SalesChartReport() {
                       "Ngày giờ": "",
                       "Khách hàng": "",
                       "Số đơn": item.orderCount,
-                      "Doanh thu": item.revenue,
-                      "Giảm giá": item.discount,
-                      Thuế: item.tax,
-                      "Tổng cộng": item.total,
+                      "Doanh thu": formatCurrency(item.revenue),
+                      "Giảm giá": formatCurrency(item.discount),
+                      Thuế: formatCurrency(item.tax),
+                      "Tổng cộng": formatCurrency(item.total),
                       "Phương thức thanh toán": "Tất cả",
                     });
 
@@ -2385,18 +2387,22 @@ export function SalesChartReport() {
                         ).toLocaleString("vi-VN"),
                         "Khách hàng": order.customerName || "Khách lẻ",
                         "Số đơn": 1,
-                        "Doanh thu": Math.max(
-                          0,
-                          Number(order.subtotal || 0) -
-                            Number(order.discount || 0),
+                        "Doanh thu": formatCurrency(
+                          Math.max(
+                            0,
+                            Number(order.subtotal || 0) -
+                              Number(order.discount || 0),
+                          ),
                         ),
-                        "Giảm giá": Number(order.discount || 0),
-                        Thuế: Math.max(
-                          0,
-                          Number(order.total || 0) -
-                            Number(order.subtotal || 0),
+                        "Giảm giá": formatCurrency(Number(order.discount || 0)),
+                        Thuế: formatCurrency(
+                          Math.max(
+                            0,
+                            Number(order.total || 0) -
+                              Number(order.subtotal || 0),
+                          ),
                         ),
-                        "Tổng cộng": Number(order.total || 0),
+                        "Tổng cộng": formatCurrency(Number(order.total || 0)),
                         "Phương thức thanh toán": getPaymentMethodLabel(
                           order.paymentMethod || "cash",
                         ),
@@ -2416,18 +2422,15 @@ export function SalesChartReport() {
                       (sum, item) => sum + item.orderCount,
                       0,
                     ),
-                    "Doanh thu": data.reduce(
-                      (sum, item) => sum + item.revenue,
-                      0,
+                    "Doanh thu": formatCurrency(
+                      data.reduce((sum, item) => sum + item.revenue, 0),
                     ),
-                    "Giảm giá": data.reduce(
-                      (sum, item) => sum + item.discount,
-                      0,
+                    "Giảm giá": formatCurrency(
+                      data.reduce((sum, item) => sum + item.discount, 0),
                     ),
-                    Thuế: data.reduce((sum, item) => sum + item.tax, 0),
-                    "Tổng cộng": data.reduce(
-                      (sum, item) => sum + item.total,
-                      0,
+                    Thuế: formatCurrency(data.reduce((sum, item) => sum + item.tax, 0)),
+                    "Tổng cộng": formatCurrency(
+                      data.reduce((sum, item) => sum + item.total, 0),
                     ),
                     "Phương thức thanh toán": "Tất cả",
                   });
@@ -2661,7 +2664,7 @@ export function SalesChartReport() {
                                         └
                                       </div>
                                     </TableCell>
-                                    <TableCell className="text-center border-r bg-blue-50 text-blue-600 text-sm min-w-[120px] px-4">
+                                    <TableCell className="text-center border-r text-blue-600 text-sm min-w-[120px] px-4">
                                       <button
                                         onClick={() => {
                                           const orderNumber =
@@ -3497,7 +3500,7 @@ export function SalesChartReport() {
                       )}
                       <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
                         {formatCurrency(
-                          data.reduce((sum, customer) => sum + customer.revenue, 0)
+                          data.reduce((sum, customer) => sum + customer.revenue, 0),
                         )}
                       </TableCell>
                       <TableCell className="text-center min-w-[100px] px-4"></TableCell>
