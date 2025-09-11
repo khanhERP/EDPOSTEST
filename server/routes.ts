@@ -1005,26 +1005,57 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
     const { bankCode, clientID, ...qrRequest } = req.body;
     
     console.log('🎯 Proxying CreateQRPos request:', { qrRequest, bankCode, clientID });
+    console.log('🌐 Target URL:', `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`);
     
     // Forward request to external API (using HTTP as requested)
     const response = await fetch(`http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': '*/*',
+        'Accept': 'application/json',
+        'User-Agent': 'EDPOS-System/1.0',
       },
       body: JSON.stringify(qrRequest),
+      timeout: 30000, // 30 second timeout
     });
     
     console.log('📡 External API response status:', response.status);
+    console.log('📡 External API response headers:', Object.fromEntries(response.headers.entries()));
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ External API error:', errorText);
-      return res.status(response.status).json({ error: errorText });
+    const responseText = await response.text();
+    console.log('📡 External API raw response:', responseText.substring(0, 500)); // Log first 500 chars
+    
+    // Check if response is HTML (error page)
+    if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
+      console.error('❌ External API returned HTML instead of JSON');
+      console.error('❌ This usually means the API endpoint is incorrect or the server returned an error page');
+      return res.status(502).json({ 
+        error: 'External API returned HTML error page instead of JSON',
+        details: 'API endpoint may be incorrect or unavailable',
+        apiUrl: `http://1.55.212.135:9335/api/CreateQRPos`
+      });
     }
     
-    const result = await response.json();
+    if (!response.ok) {
+      console.error('❌ External API error:', responseText);
+      return res.status(response.status).json({ 
+        error: responseText,
+        statusCode: response.status,
+        statusText: response.statusText
+      });
+    }
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('❌ Failed to parse JSON from external API:', parseError);
+      return res.status(502).json({ 
+        error: 'Invalid JSON response from external API',
+        rawResponse: responseText.substring(0, 200)
+      });
+    }
+    
     console.log('✅ External API success:', result);
     
     // Return the result
@@ -1032,7 +1063,29 @@ app.post('/api/pos/create-qr-proxy', async (req, res) => {
     
   } catch (error) {
     console.error('❌ Proxy API error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    
+    // Provide more detailed error information
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({ 
+        error: 'Cannot connect to external API server',
+        details: 'Connection refused - API server may be down',
+        apiUrl: 'http://1.55.212.135:9335/api/CreateQRPos'
+      });
+    }
+    
+    if (error.code === 'ENOTFOUND') {
+      return res.status(503).json({ 
+        error: 'External API server not found',
+        details: 'DNS lookup failed - check API server address',
+        apiUrl: 'http://1.55.212.135:9335/api/CreateQRPos'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Internal server error while calling external API',
+      details: error.message,
+      errorType: error.constructor.name
+    });
   }
 });
 
