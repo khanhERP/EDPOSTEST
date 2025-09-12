@@ -226,10 +226,13 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/tables'] })
       ]);
 
-      toast({
-        title: 'Thanh toán thành công',
-        description: 'Đơn hàng đã được thanh toán thành công',
-      });
+      // Don't show toast immediately to avoid conflicts with receipt modal
+      setTimeout(() => {
+        toast({
+          title: 'Thanh toán thành công',
+          description: 'Đơn hàng đã được thanh toán thành công',
+        });
+      }, 1000);
 
       // Dispatch UI refresh events
       if (typeof window !== 'undefined') {
@@ -1051,22 +1054,22 @@ export function OrderManagement() {
       setShowReceiptModal(false);
       setSelectedReceipt(null);
 
-      // Wait a moment for state updates
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Step 9: Set new state for receipt preview
+      // Step 9: Set new state for receipt preview immediately
       setSelectedOrder(order);
       setOrderForPayment(orderForPaymentData);
       setPreviewReceipt(receiptPreview);
 
-      // Force the receipt preview modal to open
+      // Force the receipt preview modal to open immediately
       console.log('🚀 Order Management: Opening receipt preview modal with data:', {
         hasPreviewReceipt: !!receiptPreview,
         hasOrderForPayment: !!orderForPaymentData,
         receiptId: receiptPreview.id
       });
 
-      setShowReceiptPreview(true);
+      // Use setTimeout to ensure state updates are processed
+      setTimeout(() => {
+        setShowReceiptPreview(true);
+      }, 50);
 
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
@@ -2947,14 +2950,13 @@ export function OrderManagement() {
 
       {/* Receipt Modal - Step 1: "Xem trước hóa đơn" */}
       <ReceiptModal
-        isOpen={showReceiptPreview && !!previewReceipt}
+        isOpen={showReceiptPreview}
         onClose={() => {
           console.log("🔴 Order Management: Closing receipt preview modal");
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
-          // Ensure payment modal states are also cleared
-          setShowPaymentMethodModal(false);
           setOrderForPayment(null);
+          setShowPaymentMethodModal(false);
         }}
         onConfirm={() => {
           console.log("📄 Order Management: Receipt preview confirmed, starting payment flow");
@@ -2971,7 +2973,7 @@ export function OrderManagement() {
 
           console.log('💳 Opening payment method modal with order:', {
             orderId: orderForPayment.id,
-            calculatedTotal: orderForPayment.calculatedTotal
+            exactTotal: orderForPayment.exactTotal
           });
 
           // Close preview and show payment method modal
@@ -2980,10 +2982,10 @@ export function OrderManagement() {
         }}
         isPreview={true}
         receipt={previewReceipt}
-        cartItems={previewReceipt?.items?.map((item: any) => ({
+        cartItems={previewReceipt?.orderItems?.map((item: any) => ({
           id: item.productId || item.id,
           name: item.productName || item.name,
-          price: parseFloat(item.price || item.unitPrice || '0'),
+          price: parseFloat(item.unitPrice || item.price || '0'),
           quantity: parseInt(item.quantity || '1'),
           sku: item.sku || `SP${item.productId}`,
           taxRate: parseFloat(item.taxRate || '0'),
