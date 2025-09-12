@@ -659,38 +659,51 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               {(() => {
-                // For preview mode (cartItems), use data from total prop passed from parent
+                // For preview mode (cartItems), calculate values properly from cart items
                 if (isPreview && cartItems && cartItems.length > 0) {
-                  // Use the exact values passed from parent component (from cart state)
-                  // These values are calculated correctly in shopping cart component
+                  // Calculate subtotal from base prices (without tax)
                   const subtotal = cartItems.reduce((sum, item) => {
                     const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
                     return sum + (price * item.quantity);
                   }, 0);
 
-                  // Calculate tax from the difference between total and subtotal
-                  // This matches how it's calculated in the shopping cart
-                  const tax = Math.max(0, total - subtotal);
+                  // Calculate tax from individual items using afterTaxPrice - basePrice formula
+                  const tax = cartItems.reduce((sum, item) => {
+                    if (item.taxRate && parseFloat(item.taxRate) > 0) {
+                      const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                        const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                        const taxPerUnit = afterTaxPrice - basePrice;
+                        return sum + Math.floor(taxPerUnit * item.quantity);
+                      }
+                    }
+                    return sum;
+                  }, 0);
 
-                  // Get discount from multiple sources for comprehensive discount handling
+                  // Calculate discount from items and receipt
                   const itemDiscounts = cartItems.reduce((sum, item) => {
                     return sum + (parseFloat(item.discount || "0") * item.quantity);
                   }, 0);
                   
-                  // Check multiple sources for discount data
                   const receiptDiscount = parseFloat((receipt as any)?.discount?.toString() || "0");
-                  
-                  // Use the highest discount found from available sources (items and receipt)
                   const discount = Math.max(itemDiscounts, receiptDiscount);
 
-                  console.log("🔍 Receipt Modal Discount Debug:", {
+                  // Total with tax
+                  const totalWithTax = subtotal + tax;
+
+                  console.log("🔍 Receipt Modal Tax Debug:", {
                     subtotal,
-                    tax, 
-                    total,
-                    itemDiscounts,
-                    receiptDiscount,
-                    finalDiscount: discount,
-                    mode: isPreview ? "preview" : "final"
+                    tax,
+                    totalWithTax,
+                    discount,
+                    finalTotal: totalWithTax - discount,
+                    itemsWithTax: cartItems.map(item => ({
+                      name: item.name,
+                      price: item.price,
+                      afterTaxPrice: item.afterTaxPrice,
+                      taxRate: item.taxRate,
+                      quantity: item.quantity
+                    }))
                   });
 
                   return (
@@ -718,7 +731,7 @@ export function ReceiptModal({
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(Math.max(0, total - discount)).toLocaleString("vi-VN")} ₫
+                          {Math.round(Math.max(0, totalWithTax - discount)).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>
