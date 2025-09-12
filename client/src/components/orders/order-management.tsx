@@ -964,15 +964,15 @@ export function OrderManagement() {
         orderItems: processedItems,
         subtotal: Math.floor(subtotal).toString(),
         tax: Math.floor(taxAmount).toString(),
-        discount: discountAmount.toString(),
-        total: Math.floor(finalTotal).toString(), // Use final total AFTER discount for display
-        exactTotal: Math.floor(finalTotal), // Final total AFTER discount
+        discount: discountAmount.toString(), // Ensure discount is properly set
+        total: Math.floor(baseTotal).toString(), // Use BASE total (before discount) for receipt display consistency
+        exactTotal: Math.floor(finalTotal), // Final total AFTER discount for payment
         exactSubtotal: Math.floor(subtotal),
         exactTax: Math.floor(taxAmount),
-        exactDiscount: discountAmount,
+        exactDiscount: discountAmount, // Explicit discount amount
         exactBaseTotal: Math.floor(baseTotal), // Store base total for reference
         paymentMethod: 'preview',
-        amountReceived: Math.floor(finalTotal).toString(),
+        amountReceived: Math.floor(finalTotal).toString(), // Amount to receive after discount
         change: '0.00',
         cashierName: 'Order Management',
         createdAt: new Date().toISOString(),
@@ -993,6 +993,19 @@ export function OrderManagement() {
         receiptDiscount: receiptPreview.discount,
         receiptExactDiscount: receiptPreview.exactDiscount
       });
+
+      // Store receipt preview data globally for Receipt Modal to access discount correctly
+      if (typeof window !== 'undefined') {
+        (window as any).previewReceipt = receiptPreview;
+        (window as any).orderForPayment = orderForPaymentData;
+        console.log('💾 Order Management: Stored preview data globally with discount:', {
+          receiptDiscount: receiptPreview.discount,
+          receiptExactDiscount: receiptPreview.exactDiscount,
+          orderDiscount: orderForPaymentData.discount,
+          orderExactDiscount: orderForPaymentData.exactDiscount,
+          hasDiscount: discountAmount > 0
+        });
+      }
 
       // Step 7: Create order data for payment flow matching Order Details with proper discount
       const orderForPaymentData = {
