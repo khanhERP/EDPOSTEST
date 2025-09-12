@@ -159,7 +159,7 @@ export function OrderDialog({
             });
           }
 
-          // Calculate final total after discount - IMPORTANT: Save total AFTER discount
+          // Calculate totals - IMPORTANT: Save correct total AFTER discount deduction
           const totalBeforeDiscount = totalSubtotal + totalTax;
           const finalTotal = Math.max(0, totalBeforeDiscount - discount);
 
@@ -169,7 +169,8 @@ export function OrderDialog({
             subtotal: totalSubtotal,
             tax: totalTax,
             discount: discount,
-            finalTotal: finalTotal
+            totalBeforeDiscount: totalBeforeDiscount,
+            finalTotalAfterDiscount: finalTotal
           });
 
           // Step 3: Update order with complete calculated totals (SAVE TOTAL AFTER DISCOUNT)
@@ -181,7 +182,7 @@ export function OrderDialog({
             subtotal: totalSubtotal.toString(),
             tax: totalTax.toString(),
             discount: discount.toString(),
-            total: finalTotal.toString(), // This is total AFTER discount subtraction
+            total: finalTotal.toString(), // This saves the total AFTER discount subtraction
           });
 
           const updateResult = await updateResponse.json();
@@ -414,8 +415,14 @@ export function OrderDialog({
 
 
   const calculateGrandTotal = () => {
-    const beforeDiscount = calculateTotal(); // calculateTotal now includes tax
-    return Math.max(0, beforeDiscount - discount);
+    const beforeDiscount = calculateTotal(); // calculateTotal now includes tax (subtotal + tax)
+    const finalTotal = Math.max(0, beforeDiscount - discount);
+    console.log('💰 Order Dialog - Grand Total Calculation:', {
+      subtotalPlusTax: beforeDiscount,
+      discount: discount,
+      finalTotal: finalTotal
+    });
+    return finalTotal;
   };
 
   const handlePlaceOrder = async () => {
