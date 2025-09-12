@@ -159,30 +159,29 @@ export function OrderDialog({
             });
           }
 
-          // Calculate totals - IMPORTANT: Save total BEFORE discount deduction
-          const totalBeforeDiscount = totalSubtotal + totalTax;
-          const fullTotal = totalBeforeDiscount; // Store full amount, not discounted
+          // Calculate totals - total = subtotal + tax (discount stored separately)
+        const totalAmount = totalSubtotal + totalTax;
 
-          console.log('💰 Complete order totals calculated:', {
-            existingItemsCount: existingItems.length,
-            newItemsCount: cart.length,
-            subtotal: totalSubtotal,
-            tax: totalTax,
-            discount: discount,
-            fullTotalBeforeDiscount: fullTotal
-          });
+        console.log('💰 Complete order totals calculated:', {
+          existingItemsCount: existingItems.length,
+          newItemsCount: cart.length,
+          subtotal: totalSubtotal,
+          tax: totalTax,
+          discount: discount,
+          total: totalAmount
+        });
 
-          // Step 3: Update order with complete calculated totals (SAVE TOTAL BEFORE DISCOUNT)
-          console.log(`📝 Updating order with complete calculated totals for order ${existingOrder.id}`);
-          console.log(`💰 Saving totals: subtotal=${totalSubtotal}, tax=${totalTax}, discount=${discount}, fullTotal=${fullTotal}`);
-          const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
-            customerName: orderData.order.customerName,
-            customerCount: orderData.order.customerCount,
-            subtotal: totalSubtotal.toString(),
-            tax: totalTax.toString(),
-            discount: discount.toString(),
-            total: fullTotal.toString(), // This saves the total BEFORE discount subtraction
-          });
+        // Step 3: Update order with complete calculated totals (total = subtotal + tax)
+        console.log(`📝 Updating order with complete calculated totals for order ${existingOrder.id}`);
+        console.log(`💰 Saving totals: subtotal=${totalSubtotal}, tax=${totalTax}, discount=${discount}, total=${totalAmount}`);
+        const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
+          customerName: orderData.order.customerName,
+          customerCount: orderData.order.customerCount,
+          subtotal: totalSubtotal.toString(),
+          tax: totalTax.toString(),
+          discount: discount.toString(),
+          total: totalAmount.toString(), // total = subtotal + tax
+        });
 
           const updateResult = await updateResponse.json();
           console.log('✅ Order updated successfully with current totals:', updateResult);

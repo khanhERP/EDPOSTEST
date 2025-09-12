@@ -247,7 +247,7 @@ export function ReceiptModal({
           if (printWindow.closed) {
             clearInterval(checkClosed);
             console.log("🖨️ Print window closed manually - triggering cleanup");
-            
+
             // Same cleanup as automatic close
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -852,10 +852,8 @@ export function ReceiptModal({
                         discountSource: orderDiscount > 0 ? 'order-level' : 'item-level'
                       });
 
-                  // Calculate final total after discount - use base total before tax, then add tax, then subtract discount
-                  const totalWithTax = subtotal + tax;
-                  const finalTotal = Math.max(0, totalWithTax - finalDiscount);
-
+                  // Total is always subtotal + tax (discount handled separately in payment)
+                  const finalTotal = subtotal + tax;
                   return (
                     <>
                       <div className="flex justify-between text-sm">

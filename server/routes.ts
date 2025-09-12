@@ -2155,6 +2155,30 @@ export async function registerRoutes(app: Express): Promise < Server > {
         paymentMethod: orderData.paymentMethod,
       });
 
+      // Ensure total = subtotal + tax (discount stored separately)
+      if (orderData.subtotal && orderData.tax) {
+        const expectedTotal = Number(orderData.subtotal) + Number(orderData.tax);
+
+        // If total is provided, validate it matches subtotal + tax
+        if (orderData.total) {
+          const actualTotal = Number(orderData.total);
+          if (Math.abs(expectedTotal - actualTotal) > 0.01) {
+            console.warn(`⚠️ Storage: Total inconsistency detected, correcting:`, {
+              subtotal: orderData.subtotal,
+              tax: orderData.tax,
+              providedTotal: orderData.total,
+              correctedTotal: expectedTotal.toFixed(2)
+            });
+            orderData.total = expectedTotal.toFixed(2);
+          }
+        } else {
+          // Calculate total if not provided
+          orderData.total = expectedTotal.toFixed(2);
+        }
+
+        console.log(`✅ Storage: Total calculation: ${orderData.subtotal} + ${orderData.tax} = ${orderData.total}`);
+      }
+
       const order = await storage.updateOrder(id, orderData, tenantDb);
 
       if (!order) {
@@ -2177,8 +2201,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         updatedTotal: order.total,
       });
 
-      res.json({ 
-        ...order,
+      res.json({ ...order,
         updated: true,
         updateTimestamp: new Date().toISOString()
       });
@@ -4707,6 +4730,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
             productName: item.productName,
             productSku: item.productSku,
             categoryId: item.categoryId,
+            categoryName: item.categoryName,
             categoryName: item.categoryName,
             productType: item.productType,
             totalQuantity: quantity,

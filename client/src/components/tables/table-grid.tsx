@@ -1118,9 +1118,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       calculatedTotal = Number(selectedOrder.total || 0);
     }
 
-    // Apply discount to get final total
-    const discount = Number(selectedOrder.discount || 0);
-    const finalTotal = Math.max(0, calculatedTotal - discount);
+    // Final total is the calculated total (subtotal + tax)
+    // Discount is applied separately in payment processing
+    const finalTotal = calculatedTotal;
 
     const pointsValue = customerPoints * 1000; // 1 point = 1000 VND
 
