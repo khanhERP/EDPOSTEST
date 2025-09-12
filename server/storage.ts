@@ -1397,7 +1397,7 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`📝 Final order data with salesChannel: ${orderData.salesChannel}`, orderData);
 
-      // Create the order - ensure proper field mapping
+      // Create the order - ensure proper field mapping (save discount without recalculating total)
       const orderInsertData = {
         orderNumber: orderData.orderNumber,
         tableId: orderData.tableId,
@@ -1405,10 +1405,10 @@ export class DatabaseStorage implements IStorage {
         status: orderData.status,
         customerName: orderData.customerName,
         customerCount: orderData.customerCount,
-        subtotal: orderData.subtotal ? parseFloat(orderData.subtotal) : 0,
-        tax: orderData.tax ? parseFloat(orderData.tax) : 0,
-        discount: orderData.discount ? parseFloat(orderData.discount) : 0,
-        total: orderData.total ? parseFloat(orderData.total) : 0,
+        subtotal: orderData.subtotal ? parseFloat(orderData.subtotal.toString()) : 0,
+        tax: orderData.tax ? parseFloat(orderData.tax.toString()) : 0,
+        discount: orderData.discount ? parseFloat(orderData.discount.toString()) : 0,
+        total: orderData.total ? parseFloat(orderData.total.toString()) : 0,
         paymentMethod: orderData.paymentMethod,
         paymentStatus: orderData.paymentStatus,
         einvoiceStatus: orderData.einvoiceStatus || 0,
@@ -1511,7 +1511,7 @@ export class DatabaseStorage implements IStorage {
     if (orderData.servedAt !== undefined) updateData.servedAt = orderData.servedAt;
     if (orderData.discount !== undefined) updateData.discount = orderData.discount; // Ensure discount is included
 
-    // CRITICAL: Always update financial fields if provided
+    // CRITICAL: Always update financial fields if provided (save discount without recalculating)
     if (orderData.subtotal !== undefined) {
       updateData.subtotal = orderData.subtotal.toString();
       console.log(`💰 Storage: Updating subtotal to ${orderData.subtotal}`);
@@ -1523,6 +1523,10 @@ export class DatabaseStorage implements IStorage {
     if (orderData.total !== undefined) {
       updateData.total = orderData.total.toString();
       console.log(`💰 Storage: Updating total to ${orderData.total}`);
+    }
+    if (orderData.discount !== undefined) {
+      updateData.discount = orderData.discount.toString();
+      console.log(`💰 Storage: Updating discount to ${orderData.discount} (save only, no recalculation)`);
     }
 
     // Remove undefined values to avoid overwriting with undefined
