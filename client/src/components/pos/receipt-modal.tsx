@@ -127,6 +127,16 @@ export function ReceiptModal({
   const handlePrint = () => {
     console.log('🖨️ Receipt Modal: Print button clicked - processing like POS');
 
+    // Set flag to prevent modal reopening after print
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('preventReceiptPreview', 'true');
+      window.sessionStorage.setItem('printCompleted', 'true');
+      
+      // Clear any pending preview data to prevent reopening
+      (window as any).previewReceipt = null;
+      (window as any).orderForPayment = null;
+    }
+
     const printContent = document.getElementById('receipt-content');
     if (printContent) {
       const printWindow = window.open('', '_blank');

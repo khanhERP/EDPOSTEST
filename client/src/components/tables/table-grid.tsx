@@ -3489,6 +3489,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               "🔴 Table: Receipt modal closing - AGGRESSIVE data refresh starting",
             );
 
+            // Check if this is due to print completion
+            const isPrintCompletion = typeof window !== 'undefined' && 
+              window.sessionStorage.getItem('printCompleted') === 'true';
+
+            if (isPrintCompletion) {
+              console.log('🖨️ Receipt modal closed after print completion - preventing reopening');
+              // Clear flags and global preview data
+              window.sessionStorage.removeItem('preventReceiptPreview');
+              window.sessionStorage.removeItem('printCompleted');
+              (window as any).previewReceipt = null;
+              (window as any).orderForPayment = null;
+            }
+
             // IMMEDIATE: Clear all modal states first
             setShowReceiptModal(false);
             setSelectedReceipt(null);
