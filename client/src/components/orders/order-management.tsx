@@ -60,6 +60,36 @@ export function OrderManagement() {
     }
   }, [previewReceipt, orderForPayment, showReceiptPreview]);
 
+  // Effect to handle receipt modal close events and prevent reopening
+  useEffect(() => {
+    const handleReceiptModalClosed = (event: CustomEvent) => {
+      console.log('🔒 Order Management: Receipt modal closed event received, clearing all states', event.detail);
+      
+      if (event.detail?.clearAllStates || event.detail?.preventReopening) {
+        // Clear all receipt-related states to prevent reopening
+        setShowReceiptPreview(false);
+        setShowReceiptModal(false);
+        setPreviewReceipt(null);
+        setOrderForPayment(null);
+        setSelectedReceipt(null);
+        
+        // Clear any global preview data
+        if (typeof window !== 'undefined') {
+          (window as any).previewReceipt = null;
+          (window as any).orderForPayment = null;
+        }
+        
+        console.log('✅ Order Management: All receipt modal states cleared');
+      }
+    };
+
+    window.addEventListener('receiptModalClosed', handleReceiptModalClosed as EventListener);
+    
+    return () => {
+      window.removeEventListener('receiptModalClosed', handleReceiptModalClosed as EventListener);
+    };
+  }, []);
+
   // Prevent automatic receipt modal reopening after payment completion
   useEffect(() => {
     if (showReceiptModal && selectedReceipt && !orderForPayment) {

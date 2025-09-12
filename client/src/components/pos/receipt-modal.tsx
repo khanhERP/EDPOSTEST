@@ -994,10 +994,25 @@ export function ReceiptModal({
               </Button>
               <Button
                 onClick={() => {
-                  console.log('🔴 Receipt Modal: Close button clicked - forcing data refresh');
+                  console.log('🔴 Receipt Modal: Close button clicked - forcing data refresh and preventing reopening');
 
-                  // Force clear cart when close button is clicked
+                  // CRITICAL: Clear all preview data that might cause modal to reopen
                   if (typeof window !== 'undefined') {
+                    // Clear preview receipt data completely
+                    (window as any).previewReceipt = null;
+                    (window as any).orderForPayment = null;
+                    
+                    // Dispatch event to clear all modal-related states in parent components
+                    window.dispatchEvent(new CustomEvent('receiptModalClosed', {
+                      detail: {
+                        source: 'receipt_close_button',
+                        clearAllStates: true,
+                        preventReopening: true,
+                        timestamp: new Date().toISOString()
+                      }
+                    }));
+
+                    // Force clear cart when close button is clicked
                     window.dispatchEvent(new CustomEvent('clearCart', {
                       detail: {
                         source: 'receipt_close_button',
@@ -1020,6 +1035,7 @@ export function ReceiptModal({
                           success: true,
                           action: 'receipt_modal_closed_manually',
                           refreshTables: true,
+                          preventReopening: true,
                           timestamp: new Date().toISOString()
                         },
                         {
@@ -1027,6 +1043,7 @@ export function ReceiptModal({
                           success: true,
                           refreshTables: true,
                           refreshOrders: true,
+                          clearPreviewData: true,
                           timestamp: new Date().toISOString()
                         },
                         {
@@ -1034,6 +1051,7 @@ export function ReceiptModal({
                           modalType: 'receipt',
                           forceRefresh: true,
                           refreshTables: true,
+                          clearAllModalStates: true,
                           timestamp: new Date().toISOString()
                         }
                       ];
@@ -1055,8 +1073,10 @@ export function ReceiptModal({
                     console.error("Failed to send refresh signals:", error);
                   }
 
-                  // Close the modal
-                  onClose();
+                  // Close the modal with a slight delay to ensure all cleanup is done
+                  setTimeout(() => {
+                    onClose();
+                  }, 100);
                 }}
                 variant="outline"
                 className="ml-2"
