@@ -806,19 +806,23 @@ export function OrderManagement() {
         return;
       }
 
-      // Step 2: Calculate totals using EXACT same logic as Order Details display
-      let calculatedSubtotal = 0;
-      let calculatedTax = 0;
+      // Step 2: Use EXACT same calculation as orderDetailsCalculation memo
+      let subtotal = 0;
+      let taxAmount = 0;
 
-      console.log('💰 Calculating totals for', orderItemsData.length, 'items');
-      console.log('📦 Products available:', Array.isArray(products) ? products.length : 0);
+      console.log(`🧮 Order Payment: Calculating totals for ${orderItemsData.length} items using Order Details logic`);
 
-      const processedItems = orderItemsData.map((item: any) => {
+      orderItemsData.forEach((item: any) => {
         const unitPrice = Number(item.unitPrice || 0);
         const quantity = Number(item.quantity || 0);
         const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
 
-        console.log(`📊 Processing item ${item.id}:`, {
+        if (unitPrice <= 0 || quantity <= 0) {
+          console.warn(`⚠️ Order Payment: Invalid item data: unitPrice=${unitPrice}, quantity=${quantity}`);
+          return;
+        }
+
+        console.log(`📊 Order Payment: Processing item ${item.id}:`, {
           productId: item.productId,
           productName: item.productName,
           unitPrice,
@@ -826,80 +830,44 @@ export function OrderManagement() {
           productFound: !!product
         });
 
-        // Subtotal = unitPrice * quantity
+        // Calculate subtotal (base price * quantity) - EXACT same as Order Details
         const itemSubtotal = unitPrice * quantity;
-        calculatedSubtotal += itemSubtotal;
+        subtotal += itemSubtotal;
 
-        // Tax calculation from afterTaxPrice if available
-        let itemTax = 0;
+        // Calculate tax using afterTaxPrice if available (EXACT same logic as Order Details)
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const originalPrice = parseFloat(product.price || unitPrice);
-          const taxPerUnit = Math.max(0, afterTaxPrice - originalPrice);
-          itemTax = taxPerUnit * quantity;
-          calculatedTax += itemTax;
-          console.log(`💸 Tax calculated for ${item.productName}:`, {
+          const taxPerUnit = afterTaxPrice - unitPrice;
+          const itemTax = taxPerUnit * quantity;
+          taxAmount += itemTax;
+
+          console.log(`💸 Order Payment: Tax calculated for ${item.productName}:`, {
             afterTaxPrice,
-            originalPrice,
+            unitPrice,
             taxPerUnit,
             quantity,
             itemTax
           });
         }
-
-        return {
-          id: item.id,
-          productId: item.productId,
-          productName: item.productName || 'Unknown Product',
-          quantity: quantity,
-          unitPrice: unitPrice,
-          price: unitPrice,
-          total: itemSubtotal,
-          sku: item.productSku || product?.sku || `SP${item.productId}`,
-          taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
-          afterTaxPrice: product?.afterTaxPrice || null
-        };
       });
 
-      let finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
+      const baseTotal = Math.floor(subtotal + taxAmount);
 
-      console.log('💰 Final calculation results:', {
-        subtotal: calculatedSubtotal,
-        tax: calculatedTax,
-        absTax: Math.abs(calculatedTax),
-        finalTotal: finalTotal,
-        itemsProcessed: processedItems.length,
-        orderItemsData: orderItemsData.length,
-        productsAvailable: Array.isArray(products) ? products.length : 0
+      console.log(`💰 Order Payment: Calculation results (Order Details logic):`, {
+        subtotal: subtotal,
+        tax: taxAmount,
+        baseTotal: baseTotal,
+        itemsProcessed: orderItemsData.length
       });
 
-      // CRITICAL CHECK: Verify calculated values are valid
-      if (calculatedSubtotal === 0 && finalTotal === 0) {
-        console.error('❌ CALCULATION ERROR: All calculated values are 0!', {
-          orderItemsData: orderItemsData,
-          products: Array.isArray(products) ? products.slice(0, 3) : null,
-          processedItems: processedItems
-        });
-        toast({
-          title: 'Lỗi tính toán',
-          description: 'Không thể tính toán tổng tiền đơn hàng. Vui lòng kiểm tra dữ liệu sản phẩm.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Step 3: Create comprehensive order data for payment - MATCH TABLE GRID FORMAT
-      // Calculate discount exactly like table-grid
+      // Step 3: Apply discount exactly like Order Details
       const discountAmount = Math.floor(Number(order.discount || 0));
-     finalTotal = Math.max(0, finalTotal - discountAmount);
+      const finalTotal = Math.max(0, baseTotal - discountAmount);
 
-      console.log('💰 Order Management: Final calculation (matching table-grid):', {
-        baseSubtotal: calculatedSubtotal,
-        baseTax: calculatedTax,
-        baseTotal: finalTotal, // Use finalTotal as baseTotal here, as it's calculated from items
+      console.log('💰 Order Payment: Final calculation with discount:', {
+        baseTotal: baseTotal,
         discountAmount: discountAmount,
-        finalTotal: finalTotal,
-        itemsProcessed: processedItems.length
+        finalTotal: finalTotal
       });
 
       // Validate calculated total
@@ -913,7 +881,27 @@ export function OrderManagement() {
         return;
       }
 
-      // Create receipt preview data exactly like table-grid
+      // Step 4: Create processed items exactly like Order Details
+      const processedItems = orderItemsData.map((item: any) => {
+        const unitPrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+        return {
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName || 'Unknown Product',
+          quantity: quantity,
+          unitPrice: unitPrice,
+          price: unitPrice,
+          total: unitPrice * quantity,
+          sku: item.productSku || product?.sku || `SP${item.productId}`,
+          taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
+          afterTaxPrice: product?.afterTaxPrice || null
+        };
+      });
+
+      // Step 5: Create receipt preview data matching Order Details display
       const receiptPreview = {
         id: order.id,
         orderId: order.id,
@@ -932,13 +920,13 @@ export function OrderManagement() {
           taxRate: item.taxRate,
         })),
         orderItems: processedItems,
-        subtotal: Math.floor(calculatedSubtotal).toString(),
-        tax: Math.floor(calculatedTax).toString(),
+        subtotal: Math.floor(subtotal).toString(),
+        tax: Math.floor(taxAmount).toString(),
         discount: discountAmount.toString(),
         total: Math.floor(finalTotal).toString(),
         exactTotal: Math.floor(finalTotal),
-        exactSubtotal: Math.floor(calculatedSubtotal),
-        exactTax: Math.floor(calculatedTax),
+        exactSubtotal: Math.floor(subtotal),
+        exactTax: Math.floor(taxAmount),
         exactDiscount: discountAmount,
         paymentMethod: 'preview',
         amountReceived: Math.floor(finalTotal).toString(),
@@ -953,24 +941,24 @@ export function OrderManagement() {
         storePhone: '02-1234-5678'
       };
 
-      // Create order data for payment flow exactly like table-grid
+      // Step 6: Create order data for payment flow matching Order Details
       const orderForPaymentData = {
         ...order,
         id: order.id,
         orderItems: processedItems,
         processedItems: processedItems,
-        subtotal: Math.floor(calculatedSubtotal).toString(),
-        tax: Math.floor(calculatedTax).toString(),
+        subtotal: Math.floor(subtotal).toString(),
+        tax: Math.floor(taxAmount).toString(),
         discount: discountAmount.toString(),
         total: Math.floor(finalTotal).toString(),
-        exactSubtotal: Math.floor(calculatedSubtotal),
-        exactTax: Math.floor(calculatedTax),
+        exactSubtotal: Math.floor(subtotal),
+        exactTax: Math.floor(taxAmount),
         exactDiscount: discountAmount,
         exactTotal: Math.floor(finalTotal),
         tableNumber: order.tableId ? `T${order.tableId}` : 'N/A'
       };
 
-      console.log('✅ Order Management: Payment data prepared (matching table-grid):', {
+      console.log('✅ Order Management: Payment data prepared matching Order Details:', {
         receiptTotal: receiptPreview.total,
         receiptExactTotal: receiptPreview.exactTotal,
         receiptDiscount: receiptPreview.discount,
@@ -980,14 +968,14 @@ export function OrderManagement() {
         orderId: orderForPaymentData.id
       });
 
-      // Step 5: Close order details modal and show receipt preview
+      // Step 7: Close order details modal and show receipt preview
       setOrderDetailsOpen(false);
       setSelectedOrder(order);
       setOrderForPayment(orderForPaymentData);
       setPreviewReceipt(receiptPreview);
       setShowReceiptPreview(true);
 
-      console.log('🚀 Order Management: Hiển thị receipt preview modal');
+      console.log('🚀 Order Management: Showing receipt preview modal');
 
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
