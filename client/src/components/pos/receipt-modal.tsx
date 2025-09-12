@@ -581,7 +581,13 @@ export function ReceiptModal({
               <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
+                          {(() => {
+                            // Use exact total from receipt with proper priority
+                            const exactTotal = receipt?.exactTotal ?? parseFloat(receipt?.total || "0");
+                            const discount = parseFloat(receipt?.discount || "0");
+                            const finalTotal = Math.max(0, exactTotal - discount);
+                            return Math.round(finalTotal).toLocaleString("vi-VN");
+                          })()} ₫
                         </span>
                       </div>
             </div>
@@ -816,7 +822,18 @@ export function ReceiptModal({
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(finalTotal).toLocaleString("vi-VN")} ₫
+                          {(() => {
+                            // For preview mode, use exact total from props with proper priority
+                            if (typeof total === 'object' && total.exactTotal !== undefined) {
+                              const exactTotal = parseFloat(total.exactTotal.toString());
+                              const discount = parseFloat(total.discount || total.exactDiscount || "0");
+                              const finalTotal = Math.max(0, exactTotal - discount);
+                              return Math.round(finalTotal).toLocaleString("vi-VN");
+                            } else {
+                              // Fallback to calculated total
+                              return Math.round(finalTotal).toLocaleString("vi-VN");
+                            }
+                          })()} ₫
                         </span>
                       </div>
                     </>
@@ -868,9 +885,10 @@ export function ReceiptModal({
                         <span>{t("pos.total")}</span>
                         <span>
                           {(() => {
-                            const dbTotal = parseFloat(receipt.total || "0");
-                            const dbDiscount = parseFloat(receipt.discount || "0");
-                            const finalTotal = Math.max(0, dbTotal - dbDiscount);
+                            // Use exact total with proper priority for database receipts
+                            const exactTotal = receipt?.exactTotal ?? parseFloat(receipt?.total || "0");
+                            const dbDiscount = parseFloat(receipt?.discount || "0");
+                            const finalTotal = Math.max(0, exactTotal - dbDiscount);
                             return Math.round(finalTotal).toLocaleString("vi-VN");
                           })()} ₫
                         </span>
