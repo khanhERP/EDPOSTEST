@@ -700,7 +700,7 @@ export function ShoppingCart({
   useEffect(() => {
     // Handle global popup close events
     const handleCloseAllPopups = (event: CustomEvent) => {
-      console.log('🔄 POS: Received closeAllPopups event:', event.detail);
+      console.log('🔄 Shopping Cart: Received closeAllPopups event:', event.detail);
 
       // Close all modals
       setShowReceiptPreview(false);
@@ -715,6 +715,12 @@ export function ShoppingCart({
       setSelectedReceipt(null);
       setLastCartItems([]);
 
+      // Clear cart after print completion
+      if (event.detail.source === 'print_dialog' || event.detail.action === 'print_completed') {
+        console.log('🧹 Shopping Cart: Clearing cart after print completion');
+        clearCart();
+      }
+
       // Show success notification if requested
       if (event.detail.showSuccessNotification) {
         toast({
@@ -726,14 +732,51 @@ export function ShoppingCart({
 
     // Handle cart clear events
     const handleClearCart = (event: CustomEvent) => {
-      console.log('🗑️ POS: Received clearCart event:', event.detail);
+      console.log('🗑️ Shopping Cart: Received clearCart event:', event.detail);
       clearCart(); // Use the memoized clearCart function
+    };
+
+    // Handle print completion events
+    const handlePrintCompleted = (event: CustomEvent) => {
+      console.log('🖨️ Shopping Cart: Received print completed event:', event.detail);
+      
+      // Close all modals and clear states
+      setShowReceiptPreview(false);
+      setShowReceiptModal(false);
+      setShowPaymentModal(false);
+      setShowEInvoiceModal(false);
+      setShowPrintDialog(false);
+      
+      // Clear all states
+      setPreviewReceipt(null);
+      setOrderForPayment(null);
+      setSelectedReceipt(null);
+      setLastCartItems([]);
+      
+      // Clear cart
+      clearCart();
+      
+      // Send WebSocket refresh signal to other components
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'force_refresh',
+          source: 'shopping_cart_print_completed',
+          success: true,
+          timestamp: new Date().toISOString()
+        }));
+      }
+      
+      toast({
+        title: "Thành công",
+        description: "In hóa đơn hoàn tất. Dữ liệu đã được cập nhật.",
+      });
     };
 
     // Add event listeners
     if (typeof window !== 'undefined') {
       window.addEventListener('closeAllPopups', handleCloseAllPopups as EventListener);
       window.addEventListener('clearCart', handleClearCart as EventListener);
+      window.addEventListener('printCompleted', handlePrintCompleted as EventListener);
     }
 
     return () => {
@@ -741,9 +784,10 @@ export function ShoppingCart({
         delete (window as any).eInvoiceCartItems;
         window.removeEventListener('closeAllPopups', handleCloseAllPopups as EventListener);
         window.removeEventListener('clearCart', handleClearCart as EventListener);
+        window.removeEventListener('printCompleted', handlePrintCompleted as EventListener);
       }
     };
-  }, [clearCart, toast]); // Depend on clearCart and toast
+  }, [clearCart, toast, wsRef]); // Depend on clearCart, toast, and wsRef
 
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
@@ -1131,7 +1175,7 @@ export function ShoppingCart({
         <ReceiptModal
           isOpen={showReceiptModal}
           onClose={() => {
-            console.log('🔄 Shopping Cart: Receipt modal closing, clearing cart and sending refresh signal');
+            console.log('🔄 Shopping Cart: Receipt modal closing, clearing cart and sending comprehensive refresh signal');
 
             // Close modal and clear states
             setShowReceiptModal(false);
@@ -1141,29 +1185,83 @@ export function ShoppingCart({
             setPreviewReceipt(null);
             setIsProcessingPayment(false);
 
-            // Clear cart
+            // Clear cart immediately
             clearCart(); // Use the memoized clearCart function
 
-            // Send popup close signal to refresh other components
+            // Send comprehensive refresh signals
             try {
-              const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-              const wsUrl = `${protocol}//${window.location.host}/ws`;
-              const ws = new WebSocket(wsUrl);
-
-              ws.onopen = () => {
-                ws.send(JSON.stringify({
+              if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                // Send multiple signals to ensure all components refresh
+                wsRef.current.send(JSON.stringify({
                   type: 'popup_close',
                   success: true,
-                  source: 'shopping-cart',
+                  source: 'shopping-cart-receipt',
                   timestamp: new Date().toISOString()
                 }));
-                ws.close();
-              };
+                
+                wsRef.current.send(JSON.stringify({
+                  type: 'force_refresh',
+                  source: 'shopping-cart-receipt-close',
+                  success: true,
+                  timestamp: new Date().toISOString()
+                }));
+                
+                wsRef.current.send(JSON.stringify({
+                  type: 'payment_success',
+                  source: 'shopping-cart-receipt-complete',
+                  success: true,
+                  timestamp: new Date().toISOString()
+                }));
+              } else {
+                // Fallback WebSocket connection if main one is not available
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                const fallbackWs = new WebSocket(wsUrl);
+
+                fallbackWs.onopen = () => {
+                  fallbackWs.send(JSON.stringify({
+                    type: 'popup_close',
+                    success: true,
+                    source: 'shopping-cart-receipt-fallback',
+                    timestamp: new Date().toISOString()
+                  }));
+                  
+                  fallbackWs.send(JSON.stringify({
+                    type: 'force_refresh',
+                    source: 'shopping-cart-receipt-fallback',
+                    success: true,
+                    timestamp: new Date().toISOString()
+                  }));
+                  
+                  setTimeout(() => fallbackWs.close(), 100);
+                };
+              }
             } catch (error) {
               console.error('❌ Shopping Cart: Failed to send refresh signal:', error);
             }
 
-            console.log('✅ Shopping Cart: Receipt modal closed and refresh signal sent');
+            // Dispatch custom events for components that might not use WebSocket
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('closeAllPopups', {
+                detail: { 
+                  source: 'shopping_cart_receipt_close',
+                  success: true,
+                  action: 'receipt_modal_closed',
+                  showSuccessNotification: true,
+                  message: 'Thanh toán hoàn tất. Dữ liệu đã được cập nhật.',
+                  timestamp: new Date().toISOString() 
+                }
+              }));
+              
+              window.dispatchEvent(new CustomEvent('refreshAllData', {
+                detail: { 
+                  source: 'shopping_cart_receipt_close',
+                  timestamp: new Date().toISOString() 
+                }
+              }));
+            }
+
+            console.log('✅ Shopping Cart: Receipt modal closed with comprehensive refresh signals sent');
           }}
           receipt={selectedReceipt}
           cartItems={selectedReceipt?.items || lastCartItems.map((item) => ({
