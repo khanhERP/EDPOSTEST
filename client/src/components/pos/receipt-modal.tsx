@@ -695,6 +695,13 @@ export function ReceiptModal({
                     console.log("✅ Found total prop discount:", totalPropDiscount, "final order discount:", orderDiscount);
                   }
 
+                  // Check if receipt prop has discount info (for table-grid preview)
+                  if (receipt && parseFloat(receipt.discount || "0") > 0) {
+                    const receiptDiscount = parseFloat(receipt.discount || "0");
+                    orderDiscount = Math.max(orderDiscount, receiptDiscount);
+                    console.log("✅ Found receipt discount:", receiptDiscount, "final order discount:", orderDiscount);
+                  }
+
                   // Get discount from cart items if available (for preview mode)
                   const itemLevelDiscount = cartItems.reduce((sum, item) => {
                     console.log("🔍 Checking discount for item:", {

@@ -3133,7 +3133,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             exactSubtotal: previewReceipt.exactSubtotal,
             exactTax: previewReceipt.exactTax,
             exactTotal: previewReceipt.exactTotal,
-            discount: selectedOrder?.discount || 0, // Ensure discount is preserved
+            discount: previewReceipt.discount || selectedOrder?.discount || 0, // Use discount from preview receipt first
           };
 
           console.log(
