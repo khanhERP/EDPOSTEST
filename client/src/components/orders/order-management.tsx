@@ -830,19 +830,49 @@ export function OrderManagement() {
   const handlePaymentClick = async (order: Order) => {
     console.log('🎯 Payment button clicked for order:', order.id, order.orderNumber);
 
+    // Validate order first
+    if (!order || !order.id) {
+      console.error('❌ Invalid order data:', order);
+      toast({
+        title: 'Lỗi',
+        description: 'Dữ liệu đơn hàng không hợp lệ',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       // Step 1: Fetch order items for calculation
       console.log('📦 Fetching order items for order:', order.id);
-      const orderItemsResponse = await apiRequest('GET', `/api/order-items/${order.id}`);
-
-      if (!orderItemsResponse.ok) {
-        throw new Error('Failed to fetch order items');
+      
+      let orderItemsResponse;
+      try {
+        orderItemsResponse = await apiRequest('GET', `/api/order-items/${order.id}`);
+      } catch (apiError) {
+        console.error('❌ API request failed:', apiError);
+        throw new Error(`API request failed: ${apiError.message || 'Unknown error'}`);
       }
 
-      const orderItemsData = await orderItemsResponse.json();
-      console.log('📦 Order items fetched:', orderItemsData.length, 'items');
+      if (!orderItemsResponse || !orderItemsResponse.ok) {
+        console.error('❌ API response not ok:', {
+          status: orderItemsResponse?.status,
+          statusText: orderItemsResponse?.statusText
+        });
+        throw new Error(`Failed to fetch order items: ${orderItemsResponse?.status} ${orderItemsResponse?.statusText}`);
+      }
+
+      let orderItemsData;
+      try {
+        orderItemsData = await orderItemsResponse.json();
+      } catch (parseError) {
+        console.error('❌ Failed to parse response JSON:', parseError);
+        throw new Error('Failed to parse order items response');
+      }
+
+      console.log('📦 Order items fetched:', orderItemsData?.length || 0, 'items');
 
       if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
+        console.warn('⚠️ No order items found for order:', order.id);
         toast({
           title: 'Lỗi',
           description: 'Không tìm thấy món ăn trong đơn hàng này',
@@ -851,50 +881,89 @@ export function OrderManagement() {
         return;
       }
 
-      // Step 2: Use EXACT same calculation as orderDetailsCalculation memo
+      // Step 2: Validate products data before calculation
+      if (!products || !Array.isArray(products)) {
+        console.error('❌ Products data not available for calculation');
+        toast({
+          title: 'Lỗi',
+          description: 'Dữ liệu sản phẩm không khả dụng. Vui lòng tải lại trang.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Step 3: Use EXACT same calculation as orderDetailsCalculation memo
       let subtotal = 0;
       let taxAmount = 0;
 
       console.log(`🧮 Order Payment: Calculating totals for ${orderItemsData.length} items using Order Details logic`);
 
-      orderItemsData.forEach((item: any) => {
-        const unitPrice = Number(item.unitPrice || 0);
-        const quantity = Number(item.quantity || 0);
-        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+      try {
+        orderItemsData.forEach((item: any) => {
+          // Validate item data
+          if (!item || typeof item !== 'object') {
+            console.warn('⚠️ Order Payment: Invalid item object:', item);
+            return;
+          }
 
-        if (unitPrice <= 0 || quantity <= 0) {
-          console.warn(`⚠️ Order Payment: Invalid item data: unitPrice=${unitPrice}, quantity=${quantity}`);
-          return;
-        }
+          const unitPrice = Number(item.unitPrice || 0);
+          const quantity = Number(item.quantity || 0);
+          
+          if (isNaN(unitPrice) || isNaN(quantity) || unitPrice <= 0 || quantity <= 0) {
+            console.warn(`⚠️ Order Payment: Invalid item data: unitPrice=${unitPrice}, quantity=${quantity}`, item);
+            return;
+          }
 
-        console.log(`📊 Order Payment: Processing item ${item.id}:`, {
-          productId: item.productId,
-          productName: item.productName,
-          unitPrice,
-          quantity,
-          productFound: !!product
-        });
+          const product = products.find((p: any) => p && p.id === item.productId);
 
-        // Calculate subtotal (base price * quantity) - EXACT same as Order Details
-        const itemSubtotal = unitPrice * quantity;
-        subtotal += itemSubtotal;
-
-        // Calculate tax using afterTaxPrice if available (EXACT same logic as Order Details)
-        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const taxPerUnit = afterTaxPrice - unitPrice;
-          const itemTax = taxPerUnit * quantity;
-          taxAmount += itemTax;
-
-          console.log(`💸 Order Payment: Tax calculated for ${item.productName}:`, {
-            afterTaxPrice,
+          console.log(`📊 Order Payment: Processing item ${item.id}:`, {
+            productId: item.productId,
+            productName: item.productName,
             unitPrice,
-            taxPerUnit,
             quantity,
-            itemTax
+            productFound: !!product
           });
-        }
-      });
+
+          // Calculate subtotal (base price * quantity) - EXACT same as Order Details
+          const itemSubtotal = unitPrice * quantity;
+          if (!isNaN(itemSubtotal) && itemSubtotal > 0) {
+            subtotal += itemSubtotal;
+          }
+
+          // Calculate tax using afterTaxPrice if available (EXACT same logic as Order Details)
+          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+            try {
+              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+              if (!isNaN(afterTaxPrice) && afterTaxPrice > unitPrice) {
+                const taxPerUnit = afterTaxPrice - unitPrice;
+                const itemTax = taxPerUnit * quantity;
+                if (!isNaN(itemTax) && itemTax > 0) {
+                  taxAmount += itemTax;
+
+                  console.log(`💸 Order Payment: Tax calculated for ${item.productName}:`, {
+                    afterTaxPrice,
+                    unitPrice,
+                    taxPerUnit,
+                    quantity,
+                    itemTax
+                  });
+                }
+              }
+            } catch (taxError) {
+              console.warn(`⚠️ Tax calculation error for item ${item.id}:`, taxError);
+            }
+          }
+        });
+      } catch (calculationError) {
+        console.error('❌ Error during order calculation:', calculationError);
+        throw new Error(`Calculation failed: ${calculationError.message}`);
+      }
+
+      // Validate calculation results
+      if (isNaN(subtotal) || isNaN(taxAmount) || subtotal < 0 || taxAmount < 0) {
+        console.error('❌ Invalid calculation results:', { subtotal, taxAmount });
+        throw new Error('Invalid calculation results');
+      }
 
       const baseTotal = Math.floor(subtotal + taxAmount);
 
@@ -907,6 +976,11 @@ export function OrderManagement() {
 
       // Step 3: Apply discount exactly like Order Details
       const discountAmount = Math.floor(Number(order.discount || 0));
+      if (isNaN(discountAmount) || discountAmount < 0) {
+        console.error('❌ Invalid discount amount:', order.discount);
+        throw new Error('Invalid discount amount');
+      }
+
       const finalTotal = Math.max(0, baseTotal - discountAmount);
 
       console.log('💰 Order Payment: Final calculation with discount:', {
@@ -916,7 +990,7 @@ export function OrderManagement() {
       });
 
       // Validate calculated total
-      if (finalTotal < 0) {
+      if (isNaN(finalTotal) || finalTotal < 0) {
         console.error('❌ Invalid final total after discount:', finalTotal);
         toast({
           title: 'Lỗi',
@@ -924,6 +998,11 @@ export function OrderManagement() {
           variant: 'destructive',
         });
         return;
+      }
+
+      // Additional validation: ensure we have meaningful totals
+      if (finalTotal === 0 && orderItemsData.length > 0) {
+        console.warn('⚠️ Final total is 0 but order has items. This might be incorrect.');
       }
 
       // Step 4: Create processed items exactly like Order Details
@@ -1111,11 +1190,32 @@ export function OrderManagement() {
 
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Không thể chuẩn bị dữ liệu thanh toán. Vui lòng thử lại.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('API request failed')) {
+          errorMessage = 'Lỗi kết nối API. Vui lòng kiểm tra kết nối mạng.';
+        } else if (error.message.includes('Failed to parse')) {
+          errorMessage = 'Lỗi xử lý dữ liệu từ server. Vui lòng thử lại.';
+        } else if (error.message.includes('Calculation failed')) {
+          errorMessage = 'Lỗi tính toán tổng tiền. Vui lòng kiểm tra dữ liệu đơn hàng.';
+        } else if (error.message.includes('Invalid')) {
+          errorMessage = 'Dữ liệu đơn hàng không hợp lệ. Vui lòng tải lại trang.';
+        }
+      }
+
       toast({
         title: 'Lỗi',
-        description: 'Không thể chuẩn bị dữ liệu thanh toán. Vui lòng thử lại.',
+        description: errorMessage,
         variant: 'destructive',
       });
+
+      // Clear any partial state that might have been set
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      setOrderForPayment(null);
     }
   };
 
