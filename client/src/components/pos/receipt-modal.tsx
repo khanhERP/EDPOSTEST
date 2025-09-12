@@ -125,7 +125,7 @@ export function ReceiptModal({
   }
 
   const handlePrint = () => {
-    console.log('🖨️ Receipt Modal: Print button clicked - triggering print and data refresh flow');
+    console.log('🖨️ Receipt Modal: Print button clicked - closing modal immediately after print');
 
     const printContent = document.getElementById('receipt-content');
     if (printContent) {
@@ -179,124 +179,60 @@ export function ReceiptModal({
         printWindow.onload = () => {
           setTimeout(() => {
             printWindow.print();
-
-            // Monitor print completion and handle cleanup
-            const handlePrintComplete = () => {
-              console.log('🖨️ Print completed - closing all popups and refreshing data with notification');
-
-              // Close print window
-              if (!printWindow.closed) {
-                printWindow.close();
-              }
-
-              // Send refresh signals and clear cart
-              try {
-                const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-                const wsUrl = `${protocol}//${window.location.host}/ws`;
-                const ws = new WebSocket(wsUrl);
-
-                ws.onopen = () => {
-                  ws.send(JSON.stringify({
-                    type: "print_completed",
-                    action: "refresh_all_data",
-                    clearCart: true,
-                    showNotification: true,
-                    timestamp: new Date().toISOString(),
-                  }));
-                  ws.close();
-                };
-              } catch (error) {
-                console.error("Failed to send refresh signal after print:", error);
-              }
-
-              // Clear all popup states
-              if (typeof window !== 'undefined') {
-                (window as any).previewReceipt = null;
-                (window as any).orderForPayment = null;
-
-                // Send event to close all popups
-                window.dispatchEvent(new CustomEvent('closeAllPopups', {
-                  detail: {
-                    source: 'print_completed',
-                    showSuccessNotification: true,
-                    message: 'In hóa đơn thành công',
-                    timestamp: new Date().toISOString()
-                  }
-                }));
-
-                // Clear cart
-                window.dispatchEvent(new CustomEvent('clearCart', {
-                  detail: {
-                    source: 'print_completed',
-                    timestamp: new Date().toISOString()
-                  }
-                }));
-              }
-
-              // Close receipt modal
-              onClose();
-            };
-
-            // Auto-close after short delay to ensure print starts
-            setTimeout(handlePrintComplete, 2000);
           }, 500);
         };
 
-        // Also handle manual close of print window
-        const checkClosed = setInterval(() => {
-          if (printWindow.closed) {
-            clearInterval(checkClosed);
-            console.log("🖨️ Print window closed manually - triggering cleanup");
-
-            // Same cleanup as automatic close
-            try {
-              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-              const wsUrl = `${protocol}//${window.location.host}/ws`;
-              const ws = new WebSocket(wsUrl);
-
-              ws.onopen = () => {
-                ws.send(JSON.stringify({
-                  type: "print_completed",
-                  action: "refresh_all_data",
-                  clearCart: true,
-                  showNotification: true,
-                  timestamp: new Date().toISOString(),
-                }));
-                ws.close();
-              };
-            } catch (error) {
-              console.error("Failed to send refresh signal:", error);
-            }
-
-            if (typeof window !== 'undefined') {
-              (window as any).previewReceipt = null;
-              (window as any).orderForPayment = null;
-
-              window.dispatchEvent(new CustomEvent('closeAllPopups', {
-                detail: {
-                  source: 'print_window_closed',
-                  showSuccessNotification: true,
-                  message: 'In hóa đơn thành công',
-                  timestamp: new Date().toISOString()
-                }
-              }));
-
-              window.dispatchEvent(new CustomEvent('clearCart', {
-                detail: {
-                  source: 'print_window_closed',
-                  timestamp: new Date().toISOString()
-                }
-              }));
-            }
-
-            onClose();
-          }
-        }, 500);
-
-        // Clear interval after timeout
+        // Close modal immediately after opening print window
         setTimeout(() => {
-          clearInterval(checkClosed);
-        }, 15000);
+          console.log('🖨️ Closing receipt modal after print window opened');
+          
+          // Send refresh signals and clear cart
+          try {
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+              ws.send(JSON.stringify({
+                type: "print_completed",
+                action: "refresh_all_data",
+                clearCart: true,
+                showNotification: true,
+                timestamp: new Date().toISOString(),
+              }));
+              ws.close();
+            };
+          } catch (error) {
+            console.error("Failed to send refresh signal after print:", error);
+          }
+
+          // Clear all popup states
+          if (typeof window !== 'undefined') {
+            (window as any).previewReceipt = null;
+            (window as any).orderForPayment = null;
+
+            // Send event to close all popups
+            window.dispatchEvent(new CustomEvent('closeAllPopups', {
+              detail: {
+                source: 'print_completed',
+                showSuccessNotification: true,
+                message: 'In hóa đơn thành công',
+                timestamp: new Date().toISOString()
+              }
+            }));
+
+            // Clear cart
+            window.dispatchEvent(new CustomEvent('clearCart', {
+              detail: {
+                source: 'print_completed',
+                timestamp: new Date().toISOString()
+              }
+            }));
+          }
+
+          // Force close receipt modal
+          onClose();
+        }, 100);
       }
     }
   };
