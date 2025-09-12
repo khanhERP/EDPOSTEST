@@ -50,18 +50,13 @@ export function OrderManagement() {
 
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
-    // Check if receipt modal has been permanently closed for this session
-    const isPermanentlyClosed = typeof window !== 'undefined' && (window as any).receiptModalPermanentlyClosed;
-    
-    if (previewReceipt && orderForPayment && !showReceiptPreview && !isPermanentlyClosed) {
+    if (previewReceipt && orderForPayment && !showReceiptPreview) {
       console.log('🚀 Receipt preview modal opening automatically with data:', {
         previewReceiptId: previewReceipt.id,
         orderForPaymentId: orderForPayment.id,
         showReceiptPreview
       });
       setShowReceiptPreview(true);
-    } else if (isPermanentlyClosed) {
-      console.log('🔒 Receipt modal permanently closed - preventing automatic opening');
     }
   }, [previewReceipt, orderForPayment, showReceiptPreview]);
 
@@ -69,16 +64,6 @@ export function OrderManagement() {
   useEffect(() => {
     const handleReceiptModalClosed = (event: CustomEvent) => {
       console.log('🔒 Order Management: Receipt modal closed event received, clearing all states', event.detail);
-      
-      // If this is from print completion, mark as permanent closure
-      if (event.detail?.source === 'print_completed' || event.detail?.preventReopening) {
-        console.log('🔒 Order Management: PERMANENT closure - preventing all future receipt modal openings');
-        
-        // Set a flag to prevent any future receipt modal openings for this session
-        if (typeof window !== 'undefined') {
-          (window as any).receiptModalPermanentlyClosed = true;
-        }
-      }
       
       // Always clear all modal states when receipt modal is closed
       setShowReceiptPreview(false);
