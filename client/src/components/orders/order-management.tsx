@@ -2979,15 +2979,17 @@ export function OrderManagement() {
           setShowPaymentMethodModal(true);
         }}
         isPreview={true}
+        receipt={previewReceipt}
         cartItems={previewReceipt?.items?.map((item: any) => ({
           id: item.productId || item.id,
           name: item.productName || item.name,
           price: parseFloat(item.price || item.unitPrice || '0'),
-          quantity: item.quantity,
+          quantity: parseInt(item.quantity || '1'),
           sku: item.sku || `SP${item.productId}`,
-          taxRate: parseFloat(item.taxRate || '0')
+          taxRate: parseFloat(item.taxRate || '0'),
+          afterTaxPrice: item.afterTaxPrice || null
         })) || []}
-        total={previewReceipt ? parseFloat(previewReceipt.total || '0') : 0}
+        total={previewReceipt ? parseFloat(previewReceipt.exactTotal || previewReceipt.total || '0') : 0}
       />
 
       {/* Payment Method Modal */}
