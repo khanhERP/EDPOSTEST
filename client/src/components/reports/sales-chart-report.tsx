@@ -721,7 +721,7 @@ export function SalesChartReport() {
                 {t("common.exportExcel")}
               </Button>
             </CardDescription>
-          </CardHeader></old_str>
+          </CardHeader>
           <CardContent>
             <div className="w-full">
               <div className="overflow-x-auto xl:overflow-x-visible">
@@ -1320,7 +1320,6 @@ export function SalesChartReport() {
             )}
           </CardContent>
         </Card>
-      </>
     );
   };
 
