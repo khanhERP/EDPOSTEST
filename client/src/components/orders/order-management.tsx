@@ -2188,6 +2188,7 @@ export function OrderManagement() {
                           exactSubtotal: calculatedSubtotal,
                           exactTax: calculatedTax,
                           exactTotal: finalTotal,
+                          discount: selectedOrder.discount || "0", // Pass discount from order
                           paymentMethod: 'preview',
                           amountReceived: finalTotal.toString(),
                           change: '0.00',
@@ -2208,7 +2209,8 @@ export function OrderManagement() {
                           calculatedSubtotal: calculatedSubtotal,
                           calculatedTax: calculatedTax,
                           calculatedTotal: finalTotal,
-                          total: finalTotal // Override total với calculated value
+                          total: finalTotal, // Override total với calculated value
+                          discount: selectedOrder.discount || 0 // Preserve discount from order
                         };
 
                         console.log('✅ Thiết lập dữ liệu để hiển thị preview:', {
