@@ -262,7 +262,7 @@ export function ReceiptModal({
                 // Clear any stored preview data that might cause reopening
                 (window as any).previewReceipt = null;
                 (window as any).orderForPayment = null;
-                
+
                 // Send event to clear all modal states in parent components
                 window.dispatchEvent(new CustomEvent('receiptModalClosed', {
                   detail: {
@@ -307,7 +307,7 @@ export function ReceiptModal({
             if (typeof window !== 'undefined') {
               (window as any).previewReceipt = null;
               (window as any).orderForPayment = null;
-              
+
               window.dispatchEvent(new CustomEvent('receiptModalClosed', {
                 detail: {
                   source: 'print_window_closed',
@@ -497,6 +497,26 @@ export function ReceiptModal({
   if (!isOpen) {
     return null;
   }
+
+  const handleClose = () => {
+    console.log("🔴 Receipt Modal: handleClose called");
+
+    // Clear local state first
+    onClose();
+
+    // Dispatch global event to notify other components after a short delay
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('receiptModalClosed', {
+          detail: {
+            clearAllStates: true,
+            preventReopening: true,
+            timestamp: new Date().toISOString()
+          }
+        }));
+      }
+    }, 100);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -872,14 +892,14 @@ export function ReceiptModal({
                           {(() => {
                             // For order-management preview: use exact total from orderForPayment
                             const isFromOrderManagement = typeof window !== 'undefined' && (window as any).orderForPayment;
-                            
+
                             if (isFromOrderManagement) {
                               const orderForPayment = (window as any).orderForPayment;
                               // Use exactTotal first, then total as fallback
                               const exactTotal = orderForPayment.exactTotal || orderForPayment.total;
                               return Math.round(parseFloat(exactTotal || "0")).toLocaleString("vi-VN");
                             }
-                            
+
                             // For other screens: use calculated finalTotal
                             return Math.round(finalTotal).toLocaleString("vi-VN");
                           })()} ₫
@@ -973,7 +993,7 @@ export function ReceiptModal({
         <div className="flex justify-center p-2 border-t">
           {isPreview ? (
             <div className="flex space-x-3 w-full">
-              <Button onClick={onClose} variant="outline" className="flex-1">
+              <Button onClick={handleClose} variant="outline" className="flex-1">
                 {t("pos.cancel")}
               </Button>
               <Button
@@ -993,91 +1013,7 @@ export function ReceiptModal({
                 {t("pos.printReceipt")}
               </Button>
               <Button
-                onClick={() => {
-                  console.log('🔴 Receipt Modal: Close button clicked - forcing data refresh and preventing reopening');
-
-                  // CRITICAL: Clear all preview data that might cause modal to reopen
-                  if (typeof window !== 'undefined') {
-                    // Clear preview receipt data completely
-                    (window as any).previewReceipt = null;
-                    (window as any).orderForPayment = null;
-                    
-                    // Dispatch event to clear all modal-related states in parent components
-                    window.dispatchEvent(new CustomEvent('receiptModalClosed', {
-                      detail: {
-                        source: 'receipt_close_button',
-                        clearAllStates: true,
-                        preventReopening: true,
-                        timestamp: new Date().toISOString()
-                      }
-                    }));
-
-                    // Force clear cart when close button is clicked
-                    window.dispatchEvent(new CustomEvent('clearCart', {
-                      detail: {
-                        source: 'receipt_close_button',
-                        timestamp: new Date().toISOString()
-                      }
-                    }));
-                  }
-
-                  // Send enhanced refresh signals to update table data
-                  try {
-                    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-                    const wsUrl = `${protocol}//${window.location.host}/ws`;
-                    const ws = new WebSocket(wsUrl);
-
-                    ws.onopen = () => {
-                      // Send multiple refresh signals for table data update
-                      const refreshSignals = [
-                        {
-                          type: "popup_close",
-                          success: true,
-                          action: 'receipt_modal_closed_manually',
-                          refreshTables: true,
-                          preventReopening: true,
-                          timestamp: new Date().toISOString()
-                        },
-                        {
-                          type: "invoice_modal_closed",
-                          success: true,
-                          refreshTables: true,
-                          refreshOrders: true,
-                          clearPreviewData: true,
-                          timestamp: new Date().toISOString()
-                        },
-                        {
-                          type: "modal_closed",
-                          modalType: 'receipt',
-                          forceRefresh: true,
-                          refreshTables: true,
-                          clearAllModalStates: true,
-                          timestamp: new Date().toISOString()
-                        }
-                      ];
-
-                      refreshSignals.forEach((signal, index) => {
-                        setTimeout(() => {
-                          console.log('📡 Receipt Modal: Sending refresh signal:', signal.type);
-                          ws.send(JSON.stringify(signal));
-                        }, index * 50);
-                      });
-
-                      setTimeout(() => ws.close(), 300);
-                    };
-
-                    ws.onerror = (error) => {
-                      console.error("WebSocket error when closing receipt modal:", error);
-                    };
-                  } catch (error) {
-                    console.error("Failed to send refresh signals:", error);
-                  }
-
-                  // Close the modal with a slight delay to ensure all cleanup is done
-                  setTimeout(() => {
-                    onClose();
-                  }, 100);
-                }}
+                onClick={handleClose}
                 variant="outline"
                 className="ml-2"
               >
