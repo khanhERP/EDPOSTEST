@@ -655,16 +655,24 @@ export function PaymentMethodModal({
       // Generate QR code for VNPay
       try {
         setQrLoading(true);
-        // Use exact total with proper priority and discount consideration for QR payment
+        // Use exact total with proper priority and discount consideration for VNPay QR payment
         const baseTotal = receipt?.exactTotal ??
+          orderForPayment?.exactTotal ??
+          orderForPayment?.total ??
           orderInfo?.exactTotal ??
           orderInfo?.total ??
           total ??
           0;
 
-        // Get discount amount
+        // Get discount amount from multiple sources
         const discountAmount = Math.floor(
-          parseFloat(receipt?.discount || orderInfo?.discount || "0")
+          parseFloat(
+            receipt?.discount ||
+            receipt?.exactDiscount ||
+            orderForPayment?.discount ||
+            orderInfo?.discount ||
+            "0"
+          )
         );
 
         // Calculate final total after discount
