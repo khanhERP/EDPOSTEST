@@ -257,6 +257,22 @@ export function ReceiptModal({
                 console.error("Failed to send refresh signal after print:", error);
               }
 
+              // PREVENT modal from reopening by clearing all related states
+              if (typeof window !== 'undefined') {
+                // Clear any stored preview data that might cause reopening
+                (window as any).previewReceipt = null;
+                (window as any).orderForPayment = null;
+                
+                // Send event to clear all modal states in parent components
+                window.dispatchEvent(new CustomEvent('receiptModalClosed', {
+                  detail: {
+                    source: 'print_completion',
+                    clearAllStates: true,
+                    timestamp: new Date().toISOString()
+                  }
+                }));
+              }
+
               // Close the receipt modal
               onClose();
             }, 2000);
@@ -269,7 +285,7 @@ export function ReceiptModal({
             clearInterval(checkClosed);
             console.log("🖨️ Print window closed - print completed");
 
-            // Also trigger refresh when print window is manually closed
+            // PREVENT modal from reopening when print window closes
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -286,6 +302,25 @@ export function ReceiptModal({
             } catch (error) {
               console.error("Failed to send refresh signal after print window closed:", error);
             }
+
+            // Clear preview data and close modal immediately
+            if (typeof window !== 'undefined') {
+              (window as any).previewReceipt = null;
+              (window as any).orderForPayment = null;
+              
+              window.dispatchEvent(new CustomEvent('receiptModalClosed', {
+                detail: {
+                  source: 'print_window_closed',
+                  clearAllStates: true,
+                  timestamp: new Date().toISOString()
+                }
+              }));
+            }
+
+            // Force close modal if it's still open
+            setTimeout(() => {
+              onClose();
+            }, 100);
           }
         }, 500);
 
