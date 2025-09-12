@@ -968,14 +968,6 @@ export function ShoppingCart({
                 placeholder="0"
                 className="text-right"
               />
-              {parseFloat(discountAmount || "0") > 0 && (
-                <div className="flex justify-between text-sm text-red-600">
-                  <span>Giảm giá:</span>
-                  <span className="font-bold">
-                    -{parseFloat(discountAmount || "0").toLocaleString("vi-VN")} ₫
-                  </span>
-                </div>
-              )}
             </div>
 
             <div className="border-t pt-2">
