@@ -1273,15 +1273,10 @@ export function PaymentMethodModal({
         });
       }
 
-      // Close payment modal first
-      console.log("🔄 Closing payment modal");
-      onClose();
-
-      // Show receipt modal immediately after closing payment modal
-      setTimeout(() => {
-        console.log("📄 SHOWING RECEIPT MODAL");
-        setShowReceiptModal(true);
-      }, 100);
+      // Don't close payment modal, show receipt modal directly
+      console.log("📄 SHOWING RECEIPT MODAL immediately");
+      setShowReceiptModal(true);
+      
     } else {
       // Even if no receipt data, still show success and close payment flow
       if (
@@ -2159,9 +2154,8 @@ export function PaymentMethodModal({
             console.log("🔒 Payment Modal: Receipt modal closed by user");
             setShowReceiptModal(false);
             setReceiptDataForModal(null);
-            // Optionally, trigger print dialog here if needed after receipt modal closes
-            // console.log("Triggering print dialog after receipt modal close");
-            // setShowPrintDialog(true);
+            // Close payment modal when receipt modal is closed
+            onClose();
           }}
           receipt={receiptDataForModal}
           onPrint={() => {
