@@ -707,6 +707,7 @@ export function ReceiptModal({
                   const tax = totalTax;
 
                   // Check for discount from multiple sources with priority order
+                  let orderDiscount = 0;
 
                       // 1. Check receipt exactDiscount first (most reliable for exact calculations)
                       if (receipt && receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
