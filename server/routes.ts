@@ -2054,12 +2054,20 @@ export async function registerRoutes(app: Express): Promise < Server > {
         currentTotal: existingOrder.total,
       });
 
-      // If updating financial fields from table-grid, recalculate using order-dialog logic
+      // Skip recalculation if this is an update with discount or from order-dialog
       if (
+        orderData.discount !== undefined ||
+        orderData.skipRecalculation ||
+        (orderData.subtotal !== undefined && orderData.tax !== undefined && orderData.total !== undefined)
+      ) {
+        console.log(
+          `💰 Skipping recalculation - using provided totals (discount=${orderData.discount}, skipRecalc=${orderData.skipRecalculation})`,
+        );
+        // Use the provided values as-is to preserve discount calculations
+      } else if (
         (orderData.subtotal !== undefined ||
           orderData.tax !== undefined ||
-          orderData.total !== undefined) &&
-        !orderData.skipRecalculation
+          orderData.total !== undefined)
       ) {
         console.log(
           `💰 Recalculating totals from order items for order ${id} (using order-dialog logic)`,
