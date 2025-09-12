@@ -47,6 +47,7 @@ export function ShoppingCart({
 }: ShoppingCartProps) {
   const [paymentMethod, setPaymentMethod] = useState<string>("bankTransfer");
   const [amountReceived, setAmountReceived] = useState<string>("");
+  const [discountAmount, setDiscountAmount] = useState<string>("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTableSelection, setShowTableSelection] = useState(false);
   const [currentOrderForPayment, setCurrentOrderForPayment] = useState<any>(null);
@@ -95,10 +96,12 @@ export function ShoppingCart({
       }
       return sum;
     }, 0);
+  const discount = parseFloat(discountAmount || "0");
   const total = Math.round(subtotal + tax);
+  const finalTotal = Math.max(0, total - discount);
   const change =
     paymentMethod === "cash"
-      ? Math.max(0, parseFloat(amountReceived || "0") - total)
+      ? Math.max(0, parseFloat(amountReceived || "0") - finalTotal)
       : 0;
 
   // Helper functions for receipt generation (used in handlePaymentMethodSelect)
@@ -119,7 +122,8 @@ export function ShoppingCart({
         }
         return sum;
       }, 0);
-  const calculateTotal = () => Math.round(calculateSubtotal() + calculateTax());
+  const calculateDiscount = () => parseFloat(discountAmount || "0");
+  const calculateTotal = () => Math.max(0, Math.round(calculateSubtotal() + calculateTax()) - calculateDiscount());
 
   // Fetch products to calculate tax correctly based on afterTaxPrice
   const { data: products } = useQuery<any[]>({
@@ -460,7 +464,8 @@ export function ShoppingCart({
     // Use recalculated values if they differ significantly
     const finalSubtotal = Math.abs(recalculatedSubtotal - subtotal) > 1 ? recalculatedSubtotal : subtotal;
     const finalTax = Math.abs(recalculatedTax - tax) > 1 ? recalculatedTax : tax;
-    const finalTotal = Math.abs(recalculatedTotal - total) > 1 ? recalculatedTotal : total;
+    const finalDiscount = calculateDiscount();
+    const finalTotal = Math.max(0, Math.abs(recalculatedTotal - total) > 1 ? recalculatedTotal : total) - finalDiscount;
 
     console.log("Final totals to use:", {
       finalSubtotal,
@@ -523,9 +528,11 @@ export function ShoppingCart({
       })),
       subtotal: finalSubtotal.toString(),
       tax: finalTax.toString(),
+      discount: finalDiscount.toString(),
       total: finalTotal.toString(),
       exactSubtotal: finalSubtotal,
       exactTax: finalTax,
+      exactDiscount: finalDiscount,
       exactTotal: finalTotal,
       status: "pending",
       paymentStatus: "pending",
@@ -567,11 +574,12 @@ export function ShoppingCart({
       })),
       subtotal: finalSubtotal,
       tax: finalTax,
+      discount: finalDiscount.toString(),
       total: finalTotal,
       exactSubtotal: finalSubtotal,
       exactTax: finalTax,
+      exactDiscount: finalDiscount,
       exactTotal: finalTotal,
-      discount: "0", // Default discount if not applied at order level
       orderedAt: new Date().toISOString()
     };
 
@@ -943,13 +951,37 @@ export function ShoppingCart({
                 {Math.round(tax).toLocaleString("vi-VN")} ₫
               </span>
             </div>
+            
+            {/* Discount Input */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium pos-text-primary">
+                Giảm giá
+              </Label>
+              <Input
+                type="number"
+                step="1000"
+                placeholder="0"
+                value={discountAmount}
+                onChange={(e) => setDiscountAmount(e.target.value)}
+                className="text-right"
+              />
+              {parseFloat(discountAmount || "0") > 0 && (
+                <div className="flex justify-between text-sm text-red-600">
+                  <span>Giảm giá:</span>
+                  <span className="font-medium">
+                    -{Math.round(parseFloat(discountAmount || "0")).toLocaleString("vi-VN")} ₫
+                  </span>
+                </div>
+              )}
+            </div>
+            
             <div className="border-t pt-2">
               <div className="flex justify-between">
                 <span className="text-lg font-bold pos-text-primary">
                   {t("tables.total")}:
                 </span>
                 <span className="text-lg font-bold text-blue-600">
-                  {Math.round(total).toLocaleString("vi-VN")} ₫
+                  {Math.round(Math.max(0, total - parseFloat(discountAmount || "0"))).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
             </div>
