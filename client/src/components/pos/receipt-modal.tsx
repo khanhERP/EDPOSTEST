@@ -681,8 +681,11 @@ export function ReceiptModal({
 
                   // Get discount from cart items if available (for preview mode, discount might come from parent)
                   const discount = cartItems.reduce((sum, item) => {
-                    return sum + (parseFloat(item.discount || "0"));
+                    return sum + (parseFloat(item.discount || "0") * item.quantity);
                   }, 0);
+
+                  // Calculate final total after discount
+                  const finalTotal = Math.max(0, total - discount);
 
                   return (
                     <>
@@ -709,7 +712,7 @@ export function ReceiptModal({
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(Math.max(0, total - discount)).toLocaleString("vi-VN")} ₫
+                          {Math.round(finalTotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>
