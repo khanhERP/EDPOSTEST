@@ -678,6 +678,7 @@ export function EInvoiceModal({
       onConfirm(completeInvoiceData);
       console.log("✅ PUBLISH LATER: onConfirm called - parent will handle modal states");
 
+      // Don't close the modal immediately, let parent handle the flow
       console.log("--------------------------------------------------");
 
     } catch (error) {
@@ -1265,6 +1266,7 @@ export function EInvoiceModal({
         onConfirm(completeInvoiceData);
         console.log("✅ PUBLISH: onConfirm called - parent will handle modal states");
 
+        // Don't close the modal immediately, let parent handle the flow
         console.log("--------------------------------------------------");
       } else {
         // If invoice publishing failed, still try to create a transaction for the payment

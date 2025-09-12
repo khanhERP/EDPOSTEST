@@ -2010,12 +2010,16 @@ export function PaymentMethodModal({
               // Always call handleEInvoiceComplete to ensure proper processing
               handleEInvoiceComplete(invoiceData);
 
-              // Also notify parent component with payment completion
+              // Close E-Invoice modal first
+              setShowEInvoice(false);
+
+              // Then notify parent component with payment completion to show receipt
               onSelectMethod("paymentCompleted", {
                 success: true,
                 publishLater: invoiceData.publishLater,
                 receipt: invoiceData.receipt || receiptDataForModal,
                 shouldShowReceipt: true,
+                showReceiptModal: true,
                 source: "payment_method_modal_einvoice",
               });
             }}
