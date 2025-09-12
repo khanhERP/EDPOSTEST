@@ -69,6 +69,9 @@ export function ShoppingCart({
   const [lastCartItems, setLastCartItems] = useState<CartItem[]>([]);
   const [orderForPayment, setOrderForPayment] = useState(null);
 
+  // State to manage the visibility of the print dialog
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -621,68 +624,12 @@ export function ShoppingCart({
     });
   };
 
-  const handleEInvoiceConfirm = (invoiceData: any) => {
-    console.log("🎯 POS: E-Invoice confirmed in shopping cart:", invoiceData);
-
-    if (!invoiceData) {
-      console.error("❌ No invoice data received");
-      toast({
-        title: "Lỗi",
-        description: "Không nhận được dữ liệu hóa đơn",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Close E-Invoice modal immediately
+  // Handler for E-invoice completion
+  const handleEInvoiceComplete = async (invoiceData: any) => {
+    console.log("📧 POS: E-Invoice completed with data:", invoiceData);
     setShowEInvoiceModal(false);
-    setIsProcessingPayment(false);
 
-    // Show success message based on action type
-    if (invoiceData.publishLater) {
-      toast({
-        title: "Thành công",
-        description: "Hóa đơn đã được lưu để phát hành sau",
-      });
-    } else {
-      toast({
-        title: "Thành công",
-        description: "Hóa đơn điện tử đã được phát hành thành công",
-      });
-    }
-
-    // Prepare receipt data exactly like table grid
-    let subtotal = 0;
-    let totalTax = 0;
-
-    const currentOrderItems = lastCartItems.length > 0 ? lastCartItems :
-                             orderForPayment?.items || cart;
-
-    if (Array.isArray(currentOrderItems) && Array.isArray(products)) {
-      currentOrderItems.forEach((item: any) => {
-        const basePrice = Number(item.price || 0);
-        const quantity = Number(item.quantity || 0);
-        const product = products.find((p: any) => p.id === item.id);
-
-        // Calculate subtotal (base price without tax)
-        subtotal += basePrice * quantity;
-
-        // Use EXACT same tax calculation logic as table grid
-        if (
-          product?.afterTaxPrice &&
-          product.afterTaxPrice !== null &&
-          product.afterTaxPrice !== ""
-        ) {
-          const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const taxPerUnit = afterTaxPrice - basePrice;
-          totalTax += taxPerUnit * quantity;
-        }
-      });
-    }
-
-    const finalTotal = subtotal + totalTax;
-
-    // Create proper receipt data with calculated values
+    // Use the financial data from E-invoice processing (which includes all calculations)
     const receiptData = {
       transactionId: invoiceData.transactionId || `TXN-${Date.now()}`,
       invoiceNumber: invoiceData.invoiceNumber,
@@ -691,10 +638,10 @@ export function ShoppingCart({
       customerName: invoiceData.customerName || "Khách hàng lẻ",
       customerTaxCode: invoiceData.taxCode,
       paymentMethod: "einvoice",
-      originalPaymentMethod: selectedPaymentMethod || "cash",
-      amountReceived: Math.floor(finalTotal).toString(),
-      change: "0.00",
-      items: currentOrderItems.map((item: any) => ({
+      originalPaymentMethod: invoiceData.paymentMethod || selectedPaymentMethod || "cash",
+      amountReceived: Math.floor(invoiceData.total || 0).toString(),
+      change: "0", // E-invoice doesn't have change
+      items: lastCartItems.map((item: any) => ({ // Use lastCartItems for consistency
         id: item.id,
         productId: item.id,
         productName: item.name,
@@ -704,43 +651,99 @@ export function ShoppingCart({
         sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
         taxRate: item.taxRate || 0,
       })),
-      subtotal: Math.floor(subtotal).toString(),
-      tax: Math.floor(totalTax).toString(),
-      total: Math.floor(finalTotal).toString(),
+      subtotal: Math.floor(invoiceData.subtotal || 0).toString(),
+      tax: Math.floor(invoiceData.tax || 0).toString(),
+      total: Math.floor(invoiceData.total || 0).toString(),
+      discount: Math.floor(invoiceData.discount || 0).toString(),
+      einvoiceStatus: invoiceData.einvoiceStatus || 0,
     };
 
-    console.log("📄 POS: Showing receipt modal after E-invoice with proper data");
-    console.log("💰 Receipt data:", {
-      itemsCount: receiptData.items.length,
-      subtotal: receiptData.subtotal,
-      tax: receiptData.tax,
-      total: receiptData.total,
-    });
+    console.log("📄 POS: Showing receipt modal after E-invoice with complete financial data");
+    console.log("💰 Receipt data with all details:", receiptData);
 
-    // Set receipt data and show modal immediately
+    // Clear preview states
+    setPreviewReceipt(null);
+    setOrderForPayment(null);
+    setShowReceiptPreview(false);
+
+    // Show final receipt for printing
     setSelectedReceipt(receiptData);
     setShowReceiptModal(true);
-
-    // Close other modals
-    setShowPaymentModal(false);
-    setShowReceiptPreview(false);
-    setShowPaymentMethodModal(false);
-
-    console.log("✅ POS: Receipt modal displayed immediately after E-invoice");
-
-    // Clear cart after receipt modal is shown
-    setTimeout(() => {
-      console.log("🧹 POS: Clearing cart after receipt modal is displayed");
-      onClearCart();
-
-      // Clear any active orders
-      if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-        (window as any).clearActiveOrder();
-      }
-    }, 100);
   };
 
   const canCheckout = cart.length > 0;
+
+  // Helper to clear cart and related states
+  const clearCart = useCallback(() => {
+    console.log("🧹 Shopping Cart: Clearing cart and states");
+    onClearCart();
+    setLastCartItems([]);
+    setOrderForPayment(null);
+    setPreviewReceipt(null);
+    setShowReceiptPreview(false);
+    setShowPaymentModal(false);
+    setShowEInvoiceModal(false);
+    setShowReceiptModal(false);
+    setSelectedReceipt(null);
+
+    // Clear any active orders
+    if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+      (window as any).clearActiveOrder();
+    }
+
+    // Broadcast empty cart
+    broadcastCartUpdate();
+  }, [onClearCart, broadcastCartUpdate]);
+
+
+  // Cleanup when component unmounts and handle global events
+  useEffect(() => {
+    // Handle global popup close events
+    const handleCloseAllPopups = (event: CustomEvent) => {
+      console.log('🔄 POS: Received closeAllPopups event:', event.detail);
+
+      // Close all modals
+      setShowReceiptPreview(false);
+      setShowReceiptModal(false);
+      setShowPaymentModal(false);
+      setShowEInvoiceModal(false);
+      setShowPrintDialog(false); // Ensure print dialog is also closed
+
+      // Clear states
+      setPreviewReceipt(null);
+      setOrderForPayment(null);
+      setSelectedReceipt(null);
+      setLastCartItems([]);
+
+      // Show success notification if requested
+      if (event.detail.showSuccessNotification) {
+        toast({
+          title: "Thành công",
+          description: event.detail.message || "Thao tác hoàn tất",
+        });
+      }
+    };
+
+    // Handle cart clear events
+    const handleClearCart = (event: CustomEvent) => {
+      console.log('🗑️ POS: Received clearCart event:', event.detail);
+      clearCart(); // Use the memoized clearCart function
+    };
+
+    // Add event listeners
+    if (typeof window !== 'undefined') {
+      window.addEventListener('closeAllPopups', handleCloseAllPopups as EventListener);
+      window.addEventListener('clearCart', handleClearCart as EventListener);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).eInvoiceCartItems;
+        window.removeEventListener('closeAllPopups', handleCloseAllPopups as EventListener);
+        window.removeEventListener('clearCart', handleClearCart as EventListener);
+      }
+    };
+  }, [clearCart, toast]); // Depend on clearCart and toast
 
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
@@ -800,40 +803,7 @@ export function ShoppingCart({
             <button
               onClick={() => {
                 console.log("🧹 Shopping Cart: Clear cart button clicked");
-
-                // Clear the local cart state first
-                onClearCart();
-
-                // Clear any active orders
-                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-                  (window as any).clearActiveOrder();
-                }
-
-                // Broadcast empty cart to customer display
-                setTimeout(() => {
-                  if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                    const clearCartMessage = {
-                      type: 'cart_update',
-                      cart: [],
-                      subtotal: 0,
-                      tax: 0,
-                      total: 0,
-                      orderNumber: '',
-                      timestamp: new Date().toISOString(),
-                      isCartClear: true
-                    };
-
-                    console.log("📡 Shopping Cart: Broadcasting cart clear");
-
-                    try {
-                      wsRef.current.send(JSON.stringify(clearCartMessage));
-                    } catch (error) {
-                      console.error("📡 Shopping Cart: Error broadcasting cart clear:", error);
-                    }
-                  }
-                }, 50);
-
-                console.log("✅ Shopping Cart: Cart cleared");
+                clearCart(); // Use the memoized clearCart function
               }}
               className="text-red-500 hover:text-red-700 transition-colors"
             >
@@ -1172,15 +1142,7 @@ export function ShoppingCart({
             setIsProcessingPayment(false);
 
             // Clear cart
-            onClearCart();
-
-            // Clear any active orders
-            if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
-              (window as any).clearActiveOrder();
-            }
-
-            // Broadcast empty cart
-            broadcastCartUpdate();
+            clearCart(); // Use the memoized clearCart function
 
             // Send popup close signal to refresh other components
             try {
@@ -1231,7 +1193,7 @@ export function ShoppingCart({
             setShowEInvoiceModal(false);
             setIsProcessingPayment(false);
           }}
-          onConfirm={handleEInvoiceConfirm}
+          onConfirm={handleEInvoiceComplete}
           total={(() => {
             // Use the most accurate total available
             const totalToUse = orderForPayment?.exactTotal ||

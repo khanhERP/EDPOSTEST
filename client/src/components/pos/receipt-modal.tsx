@@ -125,62 +125,7 @@ export function ReceiptModal({
   }
 
   const handlePrint = () => {
-    console.log('🖨️ Receipt Modal: Print button clicked - triggering data refresh');
-
-    // Force clear cart immediately when print is clicked
-    if (typeof window !== 'undefined') {
-      // Dispatch custom event to clear cart
-      window.dispatchEvent(new CustomEvent('clearCart', {
-        detail: {
-          source: 'receipt_print',
-          timestamp: new Date().toISOString()
-        }
-      }));
-    }
-
-    // Send enhanced refresh signals to ensure all components refresh
-    try {
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        // Send multiple signals to ensure all components refresh
-        const signals = [
-          {
-            type: "popup_close",
-            success: true,
-            action: 'print_receipt_requested',
-            forceRefresh: true,
-            timestamp: new Date().toISOString()
-          },
-          {
-            type: "payment_completed",
-            success: true,
-            action: 'receipt_printed',
-            refreshTables: true,
-            timestamp: new Date().toISOString()
-          },
-          {
-            type: "force_refresh",
-            reason: 'receipt_modal_print',
-            refreshTables: true,
-            refreshOrders: true,
-            timestamp: new Date().toISOString()
-          }
-        ];
-
-        signals.forEach((signal, index) => {
-          setTimeout(() => {
-            ws.send(JSON.stringify(signal));
-          }, index * 100);
-        });
-
-        setTimeout(() => ws.close(), 500);
-      };
-    } catch (error) {
-      console.error("Failed to send refresh signals:", error);
-    }
+    console.log('🖨️ Receipt Modal: Print button clicked - triggering print and data refresh flow');
 
     const printContent = document.getElementById('receipt-content');
     if (printContent) {
@@ -235,11 +180,16 @@ export function ReceiptModal({
           setTimeout(() => {
             printWindow.print();
 
-            // Auto-close receipt modal after printing and refresh data
-            setTimeout(() => {
-              console.log('🔄 Auto-closing receipt modal after print start and refreshing data');
+            // Monitor print completion and handle cleanup
+            const handlePrintComplete = () => {
+              console.log('🖨️ Print completed - closing all popups and refreshing data with notification');
 
-              // Send refresh signal to update table status and clear cart
+              // Close print window
+              if (!printWindow.closed) {
+                printWindow.close();
+              }
+
+              // Send refresh signals and clear cart
               try {
                 const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
                 const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -247,8 +197,10 @@ export function ReceiptModal({
 
                 ws.onopen = () => {
                   ws.send(JSON.stringify({
-                    type: "refresh_data_after_print",
-                    action: "refresh_tables_and_clear_cart",
+                    type: "print_completed",
+                    action: "refresh_all_data",
+                    clearCart: true,
+                    showNotification: true,
                     timestamp: new Date().toISOString(),
                   }));
                   ws.close();
@@ -257,35 +209,46 @@ export function ReceiptModal({
                 console.error("Failed to send refresh signal after print:", error);
               }
 
-              // PREVENT modal from reopening by clearing all related states
+              // Clear all popup states
               if (typeof window !== 'undefined') {
-                // Clear any stored preview data that might cause reopening
                 (window as any).previewReceipt = null;
                 (window as any).orderForPayment = null;
 
-                // Send event to clear all modal states in parent components
-                window.dispatchEvent(new CustomEvent('receiptModalClosed', {
+                // Send event to close all popups
+                window.dispatchEvent(new CustomEvent('closeAllPopups', {
                   detail: {
-                    source: 'print_completion',
-                    clearAllStates: true,
+                    source: 'print_completed',
+                    showSuccessNotification: true,
+                    message: 'In hóa đơn thành công',
+                    timestamp: new Date().toISOString()
+                  }
+                }));
+
+                // Clear cart
+                window.dispatchEvent(new CustomEvent('clearCart', {
+                  detail: {
+                    source: 'print_completed',
                     timestamp: new Date().toISOString()
                   }
                 }));
               }
 
-              // Close the receipt modal
+              // Close receipt modal
               onClose();
-            }, 2000);
+            };
+
+            // Auto-close after short delay to ensure print starts
+            setTimeout(handlePrintComplete, 2000);
           }, 500);
         };
 
-        // Monitor print completion
+        // Also handle manual close of print window
         const checkClosed = setInterval(() => {
           if (printWindow.closed) {
             clearInterval(checkClosed);
-            console.log("🖨️ Print window closed - print completed");
-
-            // PREVENT modal from reopening when print window closes
+            console.log("🖨️ Print window closed manually - triggering cleanup");
+            
+            // Same cleanup as automatic close
             try {
               const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -293,45 +256,44 @@ export function ReceiptModal({
 
               ws.onopen = () => {
                 ws.send(JSON.stringify({
-                  type: "refresh_data_after_print",
-                  action: "refresh_tables_and_clear_cart",
+                  type: "print_completed",
+                  action: "refresh_all_data",
+                  clearCart: true,
+                  showNotification: true,
                   timestamp: new Date().toISOString(),
                 }));
                 ws.close();
               };
             } catch (error) {
-              console.error("Failed to send refresh signal after print window closed:", error);
+              console.error("Failed to send refresh signal:", error);
             }
 
-            // Clear preview data and close modal immediately
             if (typeof window !== 'undefined') {
               (window as any).previewReceipt = null;
               (window as any).orderForPayment = null;
 
-              window.dispatchEvent(new CustomEvent('receiptModalClosed', {
+              window.dispatchEvent(new CustomEvent('closeAllPopups', {
                 detail: {
                   source: 'print_window_closed',
-                  clearAllStates: true,
+                  showSuccessNotification: true,
+                  message: 'In hóa đơn thành công',
+                  timestamp: new Date().toISOString()
+                }
+              }));
+
+              window.dispatchEvent(new CustomEvent('clearCart', {
+                detail: {
+                  source: 'print_window_closed',
                   timestamp: new Date().toISOString()
                 }
               }));
             }
 
-            // Force close modal if it's still open
-            setTimeout(() => {
-              onClose();
-            }, 100);
+            onClose();
           }
         }, 500);
 
-        // Force close print window after 10 seconds and clear interval after 15 seconds
-        setTimeout(() => {
-          if (!printWindow.closed) {
-            console.log("🖨️ Force closing print window after 10s timeout");
-            printWindow.close();
-          }
-        }, 10000);
-
+        // Clear interval after timeout
         setTimeout(() => {
           clearInterval(checkClosed);
         }, 15000);
@@ -499,23 +461,53 @@ export function ReceiptModal({
   }
 
   const handleClose = () => {
-    console.log("🔴 Receipt Modal: handleClose called");
+    console.log("🔴 Receipt Modal: handleClose called - closing all popups and refreshing data without notification");
 
-    // Clear local state first
-    onClose();
+    // Send refresh signal without notification
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const ws = new WebSocket(wsUrl);
 
-    // Dispatch global event to notify other components after a short delay
-    setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('receiptModalClosed', {
-          detail: {
-            clearAllStates: true,
-            preventReopening: true,
-            timestamp: new Date().toISOString()
-          }
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: "receipt_closed",
+          action: "refresh_all_data",
+          clearCart: true,
+          showNotification: false, // No notification when just closing
+          timestamp: new Date().toISOString(),
         }));
-      }
-    }, 100);
+        ws.close();
+      };
+    } catch (error) {
+      console.error("Failed to send refresh signal:", error);
+    }
+
+    // Clear all popup states
+    if (typeof window !== 'undefined') {
+      (window as any).previewReceipt = null;
+      (window as any).orderForPayment = null;
+
+      // Send event to close all popups without notification
+      window.dispatchEvent(new CustomEvent('closeAllPopups', {
+        detail: {
+          source: 'receipt_modal_closed',
+          showSuccessNotification: false, // No notification
+          timestamp: new Date().toISOString()
+        }
+      }));
+
+      // Clear cart
+      window.dispatchEvent(new CustomEvent('clearCart', {
+        detail: {
+          source: 'receipt_modal_closed',
+          timestamp: new Date().toISOString()
+        }
+      }));
+    }
+
+    // Close the modal
+    onClose();
   };
 
   return (
