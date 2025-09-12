@@ -956,15 +956,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           const receiptData = {
             ...completedOrder,
             transactionId: `TXN-${Date.now()}`,
+            items: processedItems,
+            subtotal: orderDetailsSubtotal.toString(),
+            tax: orderDetailsTax.toString(),
             total: (orderDetailsSubtotal + orderDetailsTax).toString(),
             paymentMethod: variables.paymentMethod || "cash",
             amountReceived: (orderDetailsSubtotal + orderDetailsTax).toString(),
             change: "0.00",
             cashierName: "Table Service",
             createdAt: new Date().toISOString(),
-            items: processedItems,
-            subtotal: orderDetailsSubtotal.toString(),
-            tax: orderDetailsTax.toString(),
           };
 
           console.log("📄 Table receipt data prepared:", receiptData);
@@ -2778,14 +2778,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ {t("orders.displaying")} {itemsToRender.length}{" "}
-                                {t("orders.items")} - {t("orders.totalQuantity")}{" "}
+                                ✅ Hiển thị {itemsToRender.length} món - Tổng số
+                                lượng{" "}
                                 {itemsToRender.reduce(
                                   (sum, item) => sum + (item.quantity || 0),
                                   0,
                                 )}{" "}
-                                - {t("orders.orderNumber")}{" "}
-                                {selectedOrder?.orderNumber}
+                                - Đơn hàng {selectedOrder?.orderNumber}
                               </p>
                               {itemsToRender.map((item: any, index: number) => (
                                 <div
@@ -2907,7 +2906,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           basePrice,
                           taxPerUnit,
                           itemTax,
-                          runningTotalTax: totalTax,
+                          quantity,
                         });
 
                         console.log(`💰 Table Grid - Tax calculated:`, {
@@ -3026,7 +3025,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         // Calculate subtotal exactly as Order Details
                         orderDetailsSubtotal += basePrice * quantity;
 
-                        // Use EXACT SAME tax calculation logic as Order Details
+                        // Use EXACT same tax calculation logic as Order Details
                         if (
                           product?.afterTaxPrice &&
                           product.afterTaxPrice !== null &&

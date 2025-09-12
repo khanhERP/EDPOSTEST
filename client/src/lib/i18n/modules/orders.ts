@@ -351,8 +351,5 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       completed: "Hoàn thành",
     },
     orderCount: "đơn",
-    displaying: "Hiển thị",
-    items: "món",
-    totalQuantity: "Tổng số lượng",
   },
 };
