@@ -957,14 +957,36 @@ export function ShoppingCart({
               <Label className="text-sm font-medium pos-text-primary">
                 Giảm giá
               </Label>
-              <Input
-                type="number"
-                step="1000"
-                placeholder="0"
-                value={discountAmount}
-                onChange={(e) => setDiscountAmount(e.target.value)}
-                className="text-right"
-              />
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="0 ₫"
+                  value={discountAmount ? Math.round(parseFloat(discountAmount)).toLocaleString("vi-VN") + " ₫" : ""}
+                  onChange={(e) => {
+                    // Remove non-numeric characters except for digits
+                    const value = e.target.value.replace(/[^\d]/g, "");
+                    setDiscountAmount(value);
+                  }}
+                  onFocus={(e) => {
+                    // On focus, show raw number for editing
+                    if (discountAmount) {
+                      e.target.value = discountAmount;
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // On blur, format the display
+                    const value = e.target.value.replace(/[^\d]/g, "");
+                    if (value) {
+                      setDiscountAmount(value);
+                      e.target.value = Math.round(parseFloat(value)).toLocaleString("vi-VN") + " ₫";
+                    }
+                  }}
+                  className="text-right pr-8"
+                />
+                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                  {!discountAmount && "₫"}
+                </span>
+              </div>
               {parseFloat(discountAmount || "0") > 0 && (
                 <div className="flex justify-between text-sm text-red-600">
                   <span>Giảm giá:</span>
