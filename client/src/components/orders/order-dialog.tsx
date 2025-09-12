@@ -159,8 +159,9 @@ export function OrderDialog({
             });
           }
 
-          // Calculate final total after discount
-          const finalTotal = Math.max(0, totalSubtotal + totalTax - discount);
+          // Calculate final total after discount - IMPORTANT: Save total AFTER discount
+          const totalBeforeDiscount = totalSubtotal + totalTax;
+          const finalTotal = Math.max(0, totalBeforeDiscount - discount);
 
           console.log('💰 Complete order totals calculated:', {
             existingItemsCount: existingItems.length,
@@ -171,15 +172,16 @@ export function OrderDialog({
             finalTotal: finalTotal
           });
 
-          // Step 3: Update order with complete calculated totals
+          // Step 3: Update order with complete calculated totals (SAVE TOTAL AFTER DISCOUNT)
           console.log(`📝 Updating order with complete calculated totals for order ${existingOrder.id}`);
+          console.log(`💰 Saving totals: subtotal=${totalSubtotal}, tax=${totalTax}, discount=${discount}, finalTotal=${finalTotal}`);
           const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
             customerName: orderData.order.customerName,
             customerCount: orderData.order.customerCount,
             subtotal: totalSubtotal.toString(),
             tax: totalTax.toString(),
             discount: discount.toString(),
-            total: finalTotal.toString(),
+            total: finalTotal.toString(), // This is total AFTER discount subtraction
           });
 
           const updateResult = await updateResponse.json();
@@ -509,8 +511,6 @@ export function OrderDialog({
       createOrderMutation.mutate({ order: updatedOrder, items });
     } else {
       // Create mode - calculate with correct mapping
-      const orderNumber = `ORD-${Date.now()}`;
-
       // Subtotal = tiền tạm tính (giá trước thuế * số lượng)
       const subtotalAmount = cart.reduce(
         (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
@@ -523,6 +523,9 @@ export function OrderDialog({
       // Total = tổng tiền (subtotal + tax)
       const totalAmount = subtotalAmount + taxAmount;
 
+      // Calculate final total after discount for new orders
+      const finalOrderTotal = Math.max(0, totalAmount - discount);
+
       const order = {
         orderNumber: `ORD-${Date.now()}`,
         tableId: table.id,
@@ -532,7 +535,7 @@ export function OrderDialog({
         subtotal: subtotalAmount.toString(),
         tax: taxAmount.toString(),
         discount: discount.toString(),
-        total: Math.max(0, totalAmount - discount).toString(),
+        total: finalOrderTotal.toString(), // Save total AFTER discount
         status: "served",
         paymentStatus: "pending",
         orderedAt: new Date().toISOString(),
@@ -565,6 +568,7 @@ export function OrderDialog({
       });
 
       console.log("Placing order:", { order, items });
+      console.log(`💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, finalTotal=${finalOrderTotal}`);
       createOrderMutation.mutate({ order, items });
     }
   };
