@@ -80,7 +80,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     return product?.name || `Product #${productId}`;
   };
 
-  const { data: tables, isLoading, refetch: refetchTables } = useQuery({
+  const {
+    data: tables,
+    isLoading,
+    refetch: refetchTables,
+  } = useQuery({
     queryKey: ["/api/tables"],
     staleTime: 60 * 1000, // Cache 1 phút
     gcTime: 5 * 60 * 1000, // Giữ cache 5 phút
@@ -174,7 +178,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   // Extract active orders, subtotal, tax, and total from the `orders` data
   const activeOrders = Array.isArray(orders)
-    ? orders.filter((order: Order) => !["paid", "cancelled"].includes(order.status))
+    ? orders.filter(
+        (order: Order) => !["paid", "cancelled"].includes(order.status),
+      )
     : [];
 
   // Calculate subtotal, tax, and total from active orders for broadcasting
@@ -193,9 +199,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   // Only refetch order items when dialog opens and no cached data exists
   useEffect(() => {
     if (orderDetailsOpen && selectedOrder?.id) {
-      const cachedData = queryClient.getQueryData(["/api/order-items", selectedOrder.id]);
+      const cachedData = queryClient.getQueryData([
+        "/api/order-items",
+        selectedOrder.id,
+      ]);
       if (!cachedData) {
-        console.log(`🔍 Table Grid: Loading order items for order ${selectedOrder.id} (no cached data)`);
+        console.log(
+          `🔍 Table Grid: Loading order items for order ${selectedOrder.id} (no cached data)`,
+        );
         refetchOrderItems();
       }
     }
@@ -204,7 +215,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   // Handle events but only refresh when absolutely necessary
   useEffect(() => {
     const handlePaymentCompleted = (event: CustomEvent) => {
-      console.log('🛡️ Table Grid: Payment completed event received');
+      console.log("🛡️ Table Grid: Payment completed event received");
 
       // Only invalidate - don't force refetch, let cache handle it
       if (!event.detail?.skipAllRefetch) {
@@ -214,23 +225,24 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     };
 
     const handleOrderUpdate = (event: CustomEvent) => {
-      console.log('🛡️ Table Grid: Order update event received');
+      console.log("🛡️ Table Grid: Order update event received");
 
       // Only invalidate specific data that changed
       if (!event.detail?.skipAllRefetch && event.detail?.orderId) {
-        queryClient.invalidateQueries({ queryKey: ["/api/order-items", event.detail.orderId] });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/order-items", event.detail.orderId],
+        });
       }
     };
 
-    window.addEventListener('paymentCompleted', handlePaymentCompleted);
-    window.addEventListener('orderTotalsUpdated', handleOrderUpdate);
+    window.addEventListener("paymentCompleted", handlePaymentCompleted);
+    window.addEventListener("orderTotalsUpdated", handleOrderUpdate);
 
     return () => {
-      window.removeEventListener('paymentCompleted', handlePaymentCompleted);
-      window.removeEventListener('orderTotalsUpdated', handleOrderUpdate);
+      window.removeEventListener("paymentCompleted", handlePaymentCompleted);
+      window.removeEventListener("orderTotalsUpdated", handleOrderUpdate);
     };
   }, []);
-
 
   // Enhanced WebSocket connection for AGGRESSIVE real-time updates
   useEffect(() => {
@@ -240,19 +252,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     const connectWebSocket = () => {
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const wsUrl = `${protocol}//${window.location.host}/ws`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log('🔌 TableGrid: WebSocket connected successfully');
+          console.log("🔌 TableGrid: WebSocket connected successfully");
           wsRef.current = ws;
 
           // Register as table grid client
-          ws.send(JSON.stringify({
-            type: 'register_table_grid',
-            timestamp: new Date().toISOString()
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "register_table_grid",
+              timestamp: new Date().toISOString(),
+            }),
+          );
 
           // Send initial cart state if there are active orders
           if (activeOrders.length > 0) {
@@ -267,20 +281,24 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             const data = JSON.parse(event.data);
 
             // Expanded list of events that trigger aggressive refresh for table grid
-            if (data.type === 'popup_close' ||
-                data.type === 'payment_success' ||
-                data.type === 'order_status_update' ||
-                data.type === 'force_refresh' ||
-                data.type === 'einvoice_published' ||
-                data.type === 'einvoice_saved_for_later' ||
-                data.type === 'payment_completed' ||
-                data.type === 'modal_closed' ||
-                data.type === 'refresh_data_after_print' ||
-                data.type === 'invoice_modal_closed' ||
-                data.force_refresh === true) {
-
-              console.log('🔄 TableGrid: IMMEDIATE data refresh triggered by:', data.type);
-              console.log('📊 TableGrid: Event details:', data);
+            if (
+              data.type === "popup_close" ||
+              data.type === "payment_success" ||
+              data.type === "order_status_update" ||
+              data.type === "force_refresh" ||
+              data.type === "einvoice_published" ||
+              data.type === "einvoice_saved_for_later" ||
+              data.type === "payment_completed" ||
+              data.type === "modal_closed" ||
+              data.type === "refresh_data_after_print" ||
+              data.type === "invoice_modal_closed" ||
+              data.force_refresh === true
+            ) {
+              console.log(
+                "🔄 TableGrid: IMMEDIATE data refresh triggered by:",
+                data.type,
+              );
+              console.log("📊 TableGrid: Event details:", data);
 
               // IMMEDIATE MULTI-STRATEGY REFRESH
               try {
@@ -292,38 +310,49 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 const timestamp = Date.now().toString();
                 const cacheBuster = `${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
 
-                console.log('📡 TableGrid: Fetching fresh data with cache buster:', cacheBuster);
+                console.log(
+                  "📡 TableGrid: Fetching fresh data with cache buster:",
+                  cacheBuster,
+                );
 
                 const [freshTables, freshOrders] = await Promise.all([
-                  fetch(`/api/tables?_ws_refresh=${cacheBuster}&_force=true&_timestamp=${timestamp}`, {
-                    cache: "no-store",
-                    headers: { 
-                      "Cache-Control": "no-cache, no-store, must-revalidate",
-                      "Pragma": "no-cache",
-                      "Expires": "0",
-                      "X-Requested-With": "XMLHttpRequest"
-                    }
-                  }).then(r => {
-                    if (!r.ok) throw new Error(`Tables fetch failed: ${r.status}`);
+                  fetch(
+                    `/api/tables?_ws_refresh=${cacheBuster}&_force=true&_timestamp=${timestamp}`,
+                    {
+                      cache: "no-store",
+                      headers: {
+                        "Cache-Control": "no-cache, no-store, must-revalidate",
+                        Pragma: "no-cache",
+                        Expires: "0",
+                        "X-Requested-With": "XMLHttpRequest",
+                      },
+                    },
+                  ).then((r) => {
+                    if (!r.ok)
+                      throw new Error(`Tables fetch failed: ${r.status}`);
                     return r.json();
                   }),
-                  fetch(`/api/orders?_ws_refresh=${cacheBuster}&_force=true&_timestamp=${timestamp}`, {
-                    cache: "no-store",
-                    headers: { 
-                      "Cache-Control": "no-cache, no-store, must-revalidate",
-                      "Pragma": "no-cache",
-                      "Expires": "0",
-                      "X-Requested-With": "XMLHttpRequest"
-                    }
-                  }).then(r => {
-                    if (!r.ok) throw new Error(`Orders fetch failed: ${r.status}`);
+                  fetch(
+                    `/api/orders?_ws_refresh=${cacheBuster}&_force=true&_timestamp=${timestamp}`,
+                    {
+                      cache: "no-store",
+                      headers: {
+                        "Cache-Control": "no-cache, no-store, must-revalidate",
+                        Pragma: "no-cache",
+                        Expires: "0",
+                        "X-Requested-With": "XMLHttpRequest",
+                      },
+                    },
+                  ).then((r) => {
+                    if (!r.ok)
+                      throw new Error(`Orders fetch failed: ${r.status}`);
                     return r.json();
-                  })
+                  }),
                 ]);
 
-                console.log('✅ TableGrid: Fresh data fetched successfully:', {
+                console.log("✅ TableGrid: Fresh data fetched successfully:", {
                   tables: freshTables?.length || 0,
-                  orders: freshOrders?.length || 0
+                  orders: freshOrders?.length || 0,
                 });
 
                 // Strategy 3: Set fresh data immediately with forced update
@@ -332,47 +361,56 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                 // Strategy 4: Multiple timed invalidations with force refetch
                 setTimeout(() => {
-                  console.log('🔄 TableGrid: First invalidation wave');
+                  console.log("🔄 TableGrid: First invalidation wave");
                   queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
                   queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
                 }, 50);
 
                 setTimeout(() => {
-                  console.log('🔄 TableGrid: Second refetch wave');
+                  console.log("🔄 TableGrid: Second refetch wave");
                   queryClient.refetchQueries({ queryKey: ["/api/tables"] });
                   queryClient.refetchQueries({ queryKey: ["/api/orders"] });
                 }, 200);
 
                 setTimeout(() => {
-                  console.log('🔄 TableGrid: Final force refresh wave');
+                  console.log("🔄 TableGrid: Final force refresh wave");
                   queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
                   queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
                   refetchTables();
                   refetchOrders();
                 }, 500);
 
-                console.log('🎉 TableGrid: All refresh strategies completed successfully');
-
+                console.log(
+                  "🎉 TableGrid: All refresh strategies completed successfully",
+                );
               } catch (refreshError) {
-                console.error('❌ TableGrid: WebSocket refresh failed, using fallback:', refreshError);
+                console.error(
+                  "❌ TableGrid: WebSocket refresh failed, using fallback:",
+                  refreshError,
+                );
 
                 // Enhanced fallback strategy
                 queryClient.clear();
                 queryClient.removeQueries();
 
                 try {
-                  await Promise.all([
-                    refetchTables(),
-                    refetchOrders()
-                  ]);
-                  console.log('✅ TableGrid: Fallback refresh completed');
+                  await Promise.all([refetchTables(), refetchOrders()]);
+                  console.log("✅ TableGrid: Fallback refresh completed");
                 } catch (fallbackError) {
-                  console.error('❌ TableGrid: Even fallback failed:', fallbackError);
+                  console.error(
+                    "❌ TableGrid: Even fallback failed:",
+                    fallbackError,
+                  );
 
                   // Last resort: force page reload for critical data
                   setTimeout(() => {
-                    if (data.type === 'payment_success' || data.type === 'einvoice_published') {
-                      console.warn('⚠️ TableGrid: Critical refresh failed, considering page reload...');
+                    if (
+                      data.type === "payment_success" ||
+                      data.type === "einvoice_published"
+                    ) {
+                      console.warn(
+                        "⚠️ TableGrid: Critical refresh failed, considering page reload...",
+                      );
                       // Don't auto-reload, just log the issue
                     }
                   }, 1000);
@@ -380,49 +418,64 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               }
 
               // Strategy 5: Dispatch custom events for cross-component coordination
-              window.dispatchEvent(new CustomEvent('refreshTableData', {
-                detail: {
-                  source: 'table_grid_websocket_enhanced',
-                  reason: data.type,
-                  action: data.action || 'aggressive_refresh',
-                  invoiceId: data.invoiceId || null,
-                  orderId: data.orderId || null,
-                  forceRefresh: true,
-                  timestamp: new Date().toISOString(),
-                  success: true
-                }
-              }));
+              window.dispatchEvent(
+                new CustomEvent("refreshTableData", {
+                  detail: {
+                    source: "table_grid_websocket_enhanced",
+                    reason: data.type,
+                    action: data.action || "aggressive_refresh",
+                    invoiceId: data.invoiceId || null,
+                    orderId: data.orderId || null,
+                    forceRefresh: true,
+                    timestamp: new Date().toISOString(),
+                    success: true,
+                  },
+                }),
+              );
 
               // Also dispatch to window for other components
-              window.dispatchEvent(new CustomEvent('dataRefreshCompleted', {
-                detail: {
-                  component: 'table_grid',
-                  reason: data.type,
-                  timestamp: new Date().toISOString()
-                }
-              }));
+              window.dispatchEvent(
+                new CustomEvent("dataRefreshCompleted", {
+                  detail: {
+                    component: "table_grid",
+                    reason: data.type,
+                    timestamp: new Date().toISOString(),
+                  },
+                }),
+              );
             }
           } catch (error) {
-            console.error('❌ TableGrid: Error processing WebSocket message:', error);
+            console.error(
+              "❌ TableGrid: Error processing WebSocket message:",
+              error,
+            );
           }
         };
 
         ws.onerror = (error) => {
-          console.error('❌ TableGrid: WebSocket error:', error);
+          console.error("❌ TableGrid: WebSocket error:", error);
         };
 
         ws.onclose = (event) => {
-          console.log('🔌 TableGrid: WebSocket connection closed:', event.code, event.reason);
+          console.log(
+            "🔌 TableGrid: WebSocket connection closed:",
+            event.code,
+            event.reason,
+          );
 
           // Attempt reconnection if still needed
           if (shouldReconnect) {
-            console.log('🔄 TableGrid: Attempting WebSocket reconnection in 2 seconds...');
+            console.log(
+              "🔄 TableGrid: Attempting WebSocket reconnection in 2 seconds...",
+            );
             reconnectTimeout = setTimeout(connectWebSocket, 2000);
           }
         };
-
       } catch (error) {
-        console.error('❌ TableGrid: Failed to create WebSocket connection:', error);
+        console.error(
+          "❌ TableGrid: Failed to create WebSocket connection:",
+          error,
+        );
 
         // Retry connection after delay
         if (shouldReconnect) {
@@ -436,7 +489,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     // Cleanup function
     return () => {
-      console.log('🧹 TableGrid: Cleaning up WebSocket connection');
+      console.log("🧹 TableGrid: Cleaning up WebSocket connection");
       shouldReconnect = false;
 
       if (reconnectTimeout) {
@@ -444,173 +497,216 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       }
 
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close(1000, 'Component unmounting');
+        ws.close(1000, "Component unmounting");
       }
     };
   }, [queryClient, refetchTables, refetchOrders]);
 
   // Broadcast cart updates to customer display - only for selected table
-  const broadcastCartUpdate = useCallback(async (specificTableId?: number) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      let cartItems = [];
-      let orderSubtotal = 0;
-      let orderTax = 0;
-      let orderTotal = 0;
+  const broadcastCartUpdate = useCallback(
+    async (specificTableId?: number) => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        let cartItems = [];
+        let orderSubtotal = 0;
+        let orderTax = 0;
+        let orderTotal = 0;
 
-      // If specific table ID is provided, get detailed order items for that table
-      if (specificTableId) {
-        const tableOrders = activeOrders.filter(order => order.tableId === specificTableId);
+        // If specific table ID is provided, get detailed order items for that table
+        if (specificTableId) {
+          const tableOrders = activeOrders.filter(
+            (order) => order.tableId === specificTableId,
+          );
 
-        // If table has orders, get detailed items
-        if (tableOrders.length > 0) {
-          console.log("📡 Table Grid: Getting detailed items for table", specificTableId, "with", tableOrders.length, "orders");
+          // If table has orders, get detailed items
+          if (tableOrders.length > 0) {
+            console.log(
+              "📡 Table Grid: Getting detailed items for table",
+              specificTableId,
+              "with",
+              tableOrders.length,
+              "orders",
+            );
 
-          try {
-            // Get detailed order items for all orders of this table
-            for (const order of tableOrders) {
-              console.log("📡 Table Grid: Fetching items for order", order.id);
+            try {
+              // Get detailed order items for all orders of this table
+              for (const order of tableOrders) {
+                console.log(
+                  "📡 Table Grid: Fetching items for order",
+                  order.id,
+                );
 
-              // Fetch order items for this order
-              const response = await apiRequest("GET", `/api/order-items/${order.id}`);
-              const orderItemsData = await response.json();
+                // Fetch order items for this order
+                const response = await apiRequest(
+                  "GET",
+                  `/api/order-items/${order.id}`,
+                );
+                const orderItemsData = await response.json();
 
-              if (Array.isArray(orderItemsData) && orderItemsData.length > 0) {
-                console.log("📡 Table Grid: Found", orderItemsData.length, "items for order", order.id);
+                if (
+                  Array.isArray(orderItemsData) &&
+                  orderItemsData.length > 0
+                ) {
+                  console.log(
+                    "📡 Table Grid: Found",
+                    orderItemsData.length,
+                    "items for order",
+                    order.id,
+                  );
 
-                // Convert order items to cart format with full product details
-                const orderCartItems = orderItemsData.map((item: any) => {
-                  const basePrice = Number(item.unitPrice || 0);
-                  const quantity = Number(item.quantity || 0);
-                  const product = Array.isArray(products) 
-                    ? products.find((p: any) => p.id === item.productId)
-                    : null;
+                  // Convert order items to cart format with full product details
+                  const orderCartItems = orderItemsData.map((item: any) => {
+                    const basePrice = Number(item.unitPrice || 0);
+                    const quantity = Number(item.quantity || 0);
+                    const product = Array.isArray(products)
+                      ? products.find((p: any) => p.id === item.productId)
+                      : null;
 
-                  // Calculate subtotal for this item
-                  const itemSubtotal = basePrice * quantity;
-                  orderSubtotal += itemSubtotal;
+                    // Calculate subtotal for this item
+                    const itemSubtotal = basePrice * quantity;
+                    orderSubtotal += itemSubtotal;
 
-                  // Calculate tax for this item using same logic as order details
-                  let itemTax = 0;
-                  if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                    const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                    const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-                    itemTax = Math.floor(taxPerUnit * quantity);
-                    orderTax += itemTax;
-                  }
-
-                  const itemTotal = itemSubtotal + itemTax;
-                  orderTotal += itemTotal;
-
-                  return {
-                    id: item.id,
-                    productId: item.productId,
-                    name: item.productName || getProductName(item.productId),
-                    productName: item.productName || getProductName(item.productId),
-                    price: basePrice.toString(),
-                    quantity: quantity,
-                    total: itemTotal.toString(),
-                    taxRate: product?.taxRate || "0",
-                    afterTaxPrice: product?.afterTaxPrice || null,
-                    unitPrice: item.unitPrice,
-                    notes: item.notes,
-                    orderNumber: order.orderNumber,
-                    product: {
-                      id: item.productId,
-                      name: item.productName || getProductName(item.productId),
-                      price: basePrice.toString(),
-                      afterTaxPrice: product?.afterTaxPrice || null,
-                      taxRate: product?.taxRate || "0"
+                    // Calculate tax for this item using same logic as order details
+                    let itemTax = 0;
+                    if (
+                      product?.afterTaxPrice &&
+                      product.afterTaxPrice !== null &&
+                      product.afterTaxPrice !== ""
+                    ) {
+                      const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                      const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                      itemTax = Math.floor(taxPerUnit * quantity);
+                      orderTax += itemTax;
                     }
-                  };
-                });
 
-                cartItems.push(...orderCartItems);
+                    const itemTotal = itemSubtotal + itemTax;
+                    orderTotal += itemTotal;
+
+                    return {
+                      id: item.id,
+                      productId: item.productId,
+                      name: item.productName || getProductName(item.productId),
+                      productName:
+                        item.productName || getProductName(item.productId),
+                      price: basePrice.toString(),
+                      quantity: quantity,
+                      total: itemTotal.toString(),
+                      taxRate: product?.taxRate || "0",
+                      afterTaxPrice: product?.afterTaxPrice || null,
+                      unitPrice: item.unitPrice,
+                      notes: item.notes,
+                      orderNumber: order.orderNumber,
+                      product: {
+                        id: item.productId,
+                        name:
+                          item.productName || getProductName(item.productId),
+                        price: basePrice.toString(),
+                        afterTaxPrice: product?.afterTaxPrice || null,
+                        taxRate: product?.taxRate || "0",
+                      },
+                    };
+                  });
+
+                  cartItems.push(...orderCartItems);
+                }
               }
-            }
 
-            console.log("📡 Table Grid: Total cart items for table", specificTableId, ":", cartItems.length);
-            console.log("📡 Table Grid: Calculated totals:", {
-              subtotal: orderSubtotal,
-              tax: orderTax,
-              total: orderTotal
-            });
+              console.log(
+                "📡 Table Grid: Total cart items for table",
+                specificTableId,
+                ":",
+                cartItems.length,
+              );
+              console.log("📡 Table Grid: Calculated totals:", {
+                subtotal: orderSubtotal,
+                tax: orderTax,
+                total: orderTotal,
+              });
+            } catch (error) {
+              console.error(
+                "📡 Table Grid: Error fetching detailed order items:",
+                error,
+              );
 
-          } catch (error) {
-            console.error("📡 Table Grid: Error fetching detailed order items:", error);
-
-            // Fallback to basic order data if detailed fetch fails
-            cartItems = tableOrders.map(order => ({
-              id: order.id,
-              productId: order.productId || order.id,
-              name: order.name || `Đơn hàng ${order.orderNumber}`,
-              productName: order.name || `Đơn hàng ${order.orderNumber}`,
-              price: order.price || "0",
-              quantity: order.quantity || 1,
-              total: order.total || "0",
-              taxRate: order.taxRate || "0",
-              afterTaxPrice: order.afterTaxPrice,
-              orderNumber: order.orderNumber,
-              product: {
-                id: order.productId || order.id,
+              // Fallback to basic order data if detailed fetch fails
+              cartItems = tableOrders.map((order) => ({
+                id: order.id,
+                productId: order.productId || order.id,
                 name: order.name || `Đơn hàng ${order.orderNumber}`,
+                productName: order.name || `Đơn hàng ${order.orderNumber}`,
                 price: order.price || "0",
+                quantity: order.quantity || 1,
+                total: order.total || "0",
+                taxRate: order.taxRate || "0",
                 afterTaxPrice: order.afterTaxPrice,
-                taxRate: order.taxRate || "0"
-              }
-            }));
+                orderNumber: order.orderNumber,
+                product: {
+                  id: order.productId || order.id,
+                  name: order.name || `Đơn hàng ${order.orderNumber}`,
+                  price: order.price || "0",
+                  afterTaxPrice: order.afterTaxPrice,
+                  taxRate: order.taxRate || "0",
+                },
+              }));
 
-            // Use stored totals as fallback
-            tableOrders.forEach(order => {
-              orderSubtotal += parseFloat(order.subtotal || "0");
-              orderTax += parseFloat(order.tax || "0");
-              orderTotal += parseFloat(order.total || "0");
-            });
+              // Use stored totals as fallback
+              tableOrders.forEach((order) => {
+                orderSubtotal += parseFloat(order.subtotal || "0");
+                orderTax += parseFloat(order.tax || "0");
+                orderTotal += parseFloat(order.total || "0");
+              });
+            }
           }
+        } else {
+          // If no specific table, clear the display
+          cartItems = [];
+          orderSubtotal = 0;
+          orderTax = 0;
+          orderTotal = 0;
+        }
+
+        const cartData = {
+          type: "cart_update",
+          cart: cartItems,
+          subtotal: Math.floor(orderSubtotal),
+          tax: Math.floor(orderTax),
+          total: Math.floor(orderTotal),
+          tableId: specificTableId || null,
+          orderNumber: cartItems.length > 0 ? cartItems[0]?.orderNumber : null,
+          timestamp: new Date().toISOString(),
+        };
+
+        console.log(
+          "📡 Table Grid: Broadcasting detailed cart update for table:",
+          {
+            tableId: specificTableId,
+            cartItemsCount: cartItems.length,
+            subtotal: Math.floor(orderSubtotal),
+            tax: Math.floor(orderTax),
+            total: Math.floor(orderTotal),
+            orderNumber: cartData.orderNumber,
+            sampleItems: cartItems.slice(0, 3).map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              total: item.total,
+            })),
+          },
+        );
+
+        try {
+          wsRef.current.send(JSON.stringify(cartData));
+        } catch (error) {
+          console.error(
+            "📡 Table Grid: Error broadcasting cart update:",
+            error,
+          );
         }
       } else {
-        // If no specific table, clear the display
-        cartItems = [];
-        orderSubtotal = 0;
-        orderTax = 0;
-        orderTotal = 0;
+        console.log("📡 Table Grid: WebSocket not available for broadcasting");
       }
-
-      const cartData = {
-        type: 'cart_update',
-        cart: cartItems,
-        subtotal: Math.floor(orderSubtotal),
-        tax: Math.floor(orderTax),
-        total: Math.floor(orderTotal),
-        tableId: specificTableId || null,
-        orderNumber: cartItems.length > 0 ? cartItems[0]?.orderNumber : null,
-        timestamp: new Date().toISOString()
-      };
-
-      console.log("📡 Table Grid: Broadcasting detailed cart update for table:", {
-        tableId: specificTableId,
-        cartItemsCount: cartItems.length,
-        subtotal: Math.floor(orderSubtotal),
-        tax: Math.floor(orderTax),
-        total: Math.floor(orderTotal),
-        orderNumber: cartData.orderNumber,
-        sampleItems: cartItems.slice(0, 3).map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          total: item.total
-        }))
-      });
-
-      try {
-        wsRef.current.send(JSON.stringify(cartData));
-      } catch (error) {
-        console.error("📡 Table Grid: Error broadcasting cart update:", error);
-      }
-    } else {
-      console.log("📡 Table Grid: WebSocket not available for broadcasting");
-    }
-  }, [activeOrders, products, getProductName]);
-
+    },
+    [activeOrders, products, getProductName],
+  );
 
   // Clear customer display when no order details are open
   useEffect(() => {
@@ -620,12 +716,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   }, [orderDetailsOpen, selectedOrder, broadcastCartUpdate]);
 
-
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
       apiRequest("PUT", `/api/tables/${tableId}/status`, { status }),
     onSuccess: async (data, variables) => {
-      console.log(`🔄 Table Grid: Table ${variables.tableId} status updated to ${variables.status}`);
+      console.log(
+        `🔄 Table Grid: Table ${variables.tableId} status updated to ${variables.status}`,
+      );
 
       // Clear cache and force immediate refresh for immediate UI update
       queryClient.removeQueries({ queryKey: ["/api/tables"] });
@@ -633,10 +730,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       // Force immediate fresh fetch
       try {
-        await Promise.all([
-          refetchTables(),
-          refetchOrders()
-        ]);
+        await Promise.all([refetchTables(), refetchOrders()]);
         console.log("✅ Table status update refresh completed");
       } catch (error) {
         console.error("❌ Table status update refresh failed:", error);
@@ -675,7 +769,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       queryClient.clear();
       queryClient.removeQueries();
 
-      console.log("🔄 Table: Starting aggressive data refresh after payment success");
+      console.log(
+        "🔄 Table: Starting aggressive data refresh after payment success",
+      );
 
       // IMMEDIATE: Force fresh API calls with no-cache headers
       try {
@@ -683,12 +779,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         const [freshTables, freshOrders] = await Promise.all([
           fetch("/api/tables", {
             cache: "no-store",
-            headers: { "Cache-Control": "no-cache" }
-          }).then(r => r.json()),
+            headers: { "Cache-Control": "no-cache" },
+          }).then((r) => r.json()),
           fetch("/api/orders", {
             cache: "no-store",
-            headers: { "Cache-Control": "no-cache" }
-          }).then(r => r.json())
+            headers: { "Cache-Control": "no-cache" },
+          }).then((r) => r.json()),
         ]);
 
         // Set fresh data immediately in cache
@@ -702,44 +798,43 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
           queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
         }, 50);
-
       } catch (fetchError) {
-        console.error("❌ Table: Error during immediate fresh fetch:", fetchError);
+        console.error(
+          "❌ Table: Error during immediate fresh fetch:",
+          fetchError,
+        );
 
         // Fallback to normal refetch
-        await Promise.all([
-          refetchTables(),
-          refetchOrders()
-        ]);
+        await Promise.all([refetchTables(), refetchOrders()]);
       }
 
       // Strategy 5: Dispatch custom events for cross-component coordination
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const events = [
-          new CustomEvent('paymentCompleted', {
+          new CustomEvent("paymentCompleted", {
             detail: {
               orderId: variables.orderId,
               paymentMethod: variables.paymentMethod,
-              timestamp: new Date().toISOString()
-            }
+              timestamp: new Date().toISOString(),
+            },
           }),
-          new CustomEvent('orderStatusUpdated', {
+          new CustomEvent("orderStatusUpdated", {
             detail: {
               orderId: variables.orderId,
-              status: 'paid',
-              timestamp: new Date().toISOString()
-            }
+              status: "paid",
+              timestamp: new Date().toISOString(),
+            },
           }),
-          new CustomEvent('forceRefresh', {
+          new CustomEvent("forceRefresh", {
             detail: {
-              reason: 'payment_completed',
+              reason: "payment_completed",
               orderId: variables.orderId,
-              source: 'table-grid'
-            }
-          })
+              source: "table-grid",
+            },
+          }),
         ];
 
-        events.forEach(event => {
+        events.forEach((event) => {
           console.log("📡 Table: Dispatching refresh event:", event.type);
           window.dispatchEvent(event);
         });
@@ -989,7 +1084,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     // Calculate correct order total from order items
     let calculatedTotal = 0;
-    if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+    if (
+      Array.isArray(orderItems) &&
+      orderItems.length > 0 &&
+      Array.isArray(products)
+    ) {
       let subtotal = 0;
       let totalTax = 0;
 
@@ -1420,8 +1519,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     return latestOrder;
   };
 
-
-
   // Helper function to get table info
   const getTableInfo = (tableId: number) => {
     const table = Array.isArray(tables)
@@ -1683,7 +1780,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     console.log("💳 Table Grid: Payment method selected:", method, paymentData);
 
     if (method === "paymentCompleted" && paymentData?.success) {
-      console.log('✅ Table Grid: Payment completed successfully', paymentData);
+      console.log("✅ Table Grid: Payment completed successfully", paymentData);
 
       try {
         // STEP 1: Clear ALL cache aggressively
@@ -1696,28 +1793,36 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
         // Strategy A: Direct fetch with no-cache headers
         const [freshTables, freshOrders] = await Promise.all([
-          fetch("/api/tables?" + new URLSearchParams({ 
-            _t: Date.now().toString(),
-            _force: "true" 
-          }), {
-            cache: "no-store",
-            headers: { 
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              "Pragma": "no-cache",
-              "Expires": "0"
-            }
-          }).then(r => r.json()),
-          fetch("/api/orders?" + new URLSearchParams({ 
-            _t: Date.now().toString(),
-            _force: "true" 
-          }), {
-            cache: "no-store",
-            headers: { 
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              "Pragma": "no-cache", 
-              "Expires": "0"
-            }
-          }).then(r => r.json())
+          fetch(
+            "/api/tables?" +
+              new URLSearchParams({
+                _t: Date.now().toString(),
+                _force: "true",
+              }),
+            {
+              cache: "no-store",
+              headers: {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                Pragma: "no-cache",
+                Expires: "0",
+              },
+            },
+          ).then((r) => r.json()),
+          fetch(
+            "/api/orders?" +
+              new URLSearchParams({
+                _t: Date.now().toString(),
+                _force: "true",
+              }),
+            {
+              cache: "no-store",
+              headers: {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                Pragma: "no-cache",
+                Expires: "0",
+              },
+            },
+          ).then((r) => r.json()),
         ]);
 
         // STEP 3: Set fresh data immediately in cache
@@ -1745,30 +1850,31 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
         // Show success message
         toast({
-          title: 'Thành công',
+          title: "Thành công",
           description: paymentData.publishLater
-            ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
-            : 'Đơn hàng đã được thanh toán thành công',
+            ? "Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau"
+            : "Đơn hàng đã được thanh toán thành công",
         });
 
         // Show receipt if provided
         if (paymentData.receipt && paymentData.shouldShowReceipt !== false) {
-          console.log('📄 Table Grid: Showing final receipt modal');
+          console.log("📄 Table Grid: Showing final receipt modal");
           setSelectedReceipt(paymentData.receipt);
           setShowReceiptModal(true);
         }
 
-        console.log('🎉 Table Grid: Payment flow completed and data refreshed successfully');
-
+        console.log(
+          "🎉 Table Grid: Payment flow completed and data refreshed successfully",
+        );
       } catch (error) {
-        console.error('❌ Table Grid: Error refreshing data after payment:', error);
+        console.error(
+          "❌ Table Grid: Error refreshing data after payment:",
+          error,
+        );
 
         // Fallback refresh with forced refetch
         try {
-          await Promise.all([
-            refetchTables(),
-            refetchOrders()
-          ]);
+          await Promise.all([refetchTables(), refetchOrders()]);
           console.log("✅ Fallback refresh completed");
         } catch (fallbackError) {
           console.error("❌ Fallback refresh also failed:", fallbackError);
@@ -1782,9 +1888,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       console.error("❌ Table Grid: Payment failed", paymentData);
 
       toast({
-        title: 'Lỗi',
-        description: paymentData.error || 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
-        variant: 'destructive',
+        title: "Lỗi",
+        description:
+          paymentData.error ||
+          "Không thể hoàn tất thanh toán. Vui lòng thử lại.",
+        variant: "destructive",
       });
 
       // Close modal and clear states
@@ -1812,9 +1920,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         setOrderForEInvoice({
           ...orderForPayment,
           orderItems: orderItems || orderForPayment.orderItems, // Ensure orderItems are available
-          exactSubtotal: orderForPayment.exactSubtotal || parseFloat(orderForPayment.subtotal || "0"),
-          exactTax: orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0"),
-          exactTotal: orderForPayment.exactTotal || parseFloat(orderForPayment.total || "0"),
+          exactSubtotal:
+            orderForPayment.exactSubtotal ||
+            parseFloat(orderForPayment.subtotal || "0"),
+          exactTax:
+            orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0"),
+          exactTotal:
+            orderForPayment.exactTotal ||
+            parseFloat(orderForPayment.total || "0"),
         });
         return;
       }
@@ -1833,20 +1946,33 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         paymentMethod: method,
         amountReceived: paymentData?.amountReceived?.toString(),
         change: paymentData?.change?.toString(),
-        items: orderItems?.map((item: any) => ({
-          id: item.id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          price: item.unitPrice,
-          total: item.total,
-        })) || [],
-        subtotal: (orderForPayment.exactSubtotal || parseFloat(orderForPayment.subtotal || "0")).toString(),
-        tax: (orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0")).toString(),
-        total: (orderForPayment.exactTotal || parseFloat(orderForPayment.total || "0")).toString(),
-        exactTotal: orderForPayment.exactTotal || parseFloat(orderForPayment.total || "0"),
-        exactSubtotal: orderForPayment.exactSubtotal || parseFloat(orderForPayment.subtotal || "0"),
-        exactTax: orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0"),
+        items:
+          orderItems?.map((item: any) => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            price: item.unitPrice,
+            total: item.total,
+          })) || [],
+        subtotal: (
+          orderForPayment.exactSubtotal ||
+          parseFloat(orderForPayment.subtotal || "0")
+        ).toString(),
+        tax: (
+          orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0")
+        ).toString(),
+        total: (
+          orderForPayment.exactTotal || parseFloat(orderForPayment.total || "0")
+        ).toString(),
+        exactTotal:
+          orderForPayment.exactTotal ||
+          parseFloat(orderForPayment.total || "0"),
+        exactSubtotal:
+          orderForPayment.exactSubtotal ||
+          parseFloat(orderForPayment.subtotal || "0"),
+        exactTax:
+          orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0"),
       };
 
       setSelectedReceipt(receiptPreview);
@@ -1897,10 +2023,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       // Force fresh fetch immediately
       try {
-        await Promise.all([
-          refetchTables(),
-          refetchOrders()
-        ]);
+        await Promise.all([refetchTables(), refetchOrders()]);
         console.log("✅ Table: Data refreshed successfully after payment");
       } catch (refreshError) {
         console.error("❌ Table: Error during data refresh:", refreshError);
@@ -1913,12 +2036,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          ws.send(JSON.stringify({
-            type: 'popup_close',
-            success: true,
-            source: 'table_grid_receipt_confirm',
-            timestamp: new Date().toISOString()
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "popup_close",
+              success: true,
+              source: "table_grid_receipt_confirm",
+              timestamp: new Date().toISOString(),
+            }),
+          );
 
           setTimeout(() => ws.close(), 100);
         };
@@ -1927,19 +2052,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       }
 
       // Dispatch custom event as backup
-      window.dispatchEvent(new CustomEvent('forceDataRefresh', {
-        detail: {
-          source: 'table_grid_receipt_confirm',
-          reason: 'payment_completed',
-          timestamp: new Date().toISOString()
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("forceDataRefresh", {
+          detail: {
+            source: "table_grid_receipt_confirm",
+            reason: "payment_completed",
+            timestamp: new Date().toISOString(),
+          },
+        }),
+      );
 
       toast({
         title: "Thành công",
-        description: "Thanh toán đã được hoàn thành và dữ liệu đã được cập nhật",
+        description:
+          "Thanh toán đã được hoàn thành và dữ liệu đã được cập nhật",
       });
-
     } catch (error) {
       console.error("❌ Error completing payment from table:", error);
       toast({
@@ -2000,9 +2127,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             product.afterTaxPrice !== null &&
             product.afterTaxPrice !== ""
           ) {
-            const afterTaxPrice = parseFloat(
-              product.afterTaxPrice,
-            );
+            const afterTaxPrice = parseFloat(product.afterTaxPrice);
             const taxPerUnit = afterTaxPrice - basePrice;
             totalTax += taxPerUnit * quantity;
           }
@@ -2041,10 +2166,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         customerName: invoiceData.customerName || orderForPayment.customerName,
         customerTaxCode: invoiceData.taxCode,
         invoiceNumber: invoiceData.invoiceNumber,
-        tableNumber: getTableInfo(orderForPayment.tableId)?.tableNumber || "N/A",
+        tableNumber:
+          getTableInfo(orderForPayment.tableId)?.tableNumber || "N/A",
       };
 
-      console.log("📄 Table: Showing receipt modal after E-invoice with proper data");
+      console.log(
+        "📄 Table: Showing receipt modal after E-invoice with proper data",
+      );
       console.log("💰 Receipt data:", {
         itemsCount: receiptData.items.length,
         subtotal: receiptData.subtotal,
@@ -2450,14 +2578,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         </div>
                         <div className="font-medium text-gray-900">
                           {(() => {
-                            const total = Math.floor(Number(activeOrder.total || 0));
-                            const discount = Math.floor(Number(activeOrder.discount || 0));
-                            
+                            const total = Math.floor(
+                              Number(activeOrder.total || 0),
+                            );
+                            const discount = Math.floor(
+                              Number(activeOrder.discount || 0),
+                            );
+
                             // Always show final total after discount for all orders
                             const finalTotal = Math.max(0, total - discount);
-                            console.log(`💰 Table order ${activeOrder.orderNumber} - final total after discount: ${finalTotal} (original: ${total}, discount: ${discount})`);
+                            console.log(
+                              `💰 Table order ${activeOrder.orderNumber} - final total after discount: ${finalTotal} (original: ${total}, discount: ${discount})`,
+                            );
                             return finalTotal.toLocaleString("vi-VN");
-                          })()} ₫
+                          })()}{" "}
+                          ₫
                         </div>
                       </div>
                     )}
@@ -2526,14 +2661,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       />
 
       {/* Order Details Dialog */}
-      <Dialog open={orderDetailsOpen} onOpenChange={(open) => {
-        setOrderDetailsOpen(open);
-        // Clear customer display when closing order details
-        if (!open) {
-          setSelectedOrder(null);
-          broadcastCartUpdate(null);
-        }
-      }}>
+      <Dialog
+        open={orderDetailsOpen}
+        onOpenChange={(open) => {
+          setOrderDetailsOpen(open);
+          // Clear customer display when closing order details
+          if (!open) {
+            setSelectedOrder(null);
+            broadcastCartUpdate(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("orders.orderDetails")}</DialogTitle>
@@ -2640,7 +2778,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ Hiển thị {itemsToRender.length} món - tổng số lượng {itemsToRender.reduce((sum, item) => sum + (item.quantity || 0), 0)} - Đơn hàng {selectedOrder?.orderNumber}
+                                ✅ Hiển thị {itemsToRender.length} món - Tổng số
+                                lượng{" "}
+                                {itemsToRender.reduce(
+                                  (sum, item) => sum + (item.quantity || 0),
+                                  0,
+                                )}{" "}
+                                - Đơn hàng {selectedOrder?.orderNumber}
                               </p>
                               {itemsToRender.map((item: any, index: number) => (
                                 <div
@@ -2725,15 +2869,18 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         (p: any) => p.id === item.productId,
                       );
 
-                      console.log(`🔍 Table Grid - Tax calculation for item ${item.id}:`, {
-                        productId: item.productId,
-                        productName: item.productName,
-                        basePrice,
-                        quantity,
-                        productFound: !!product,
-                        afterTaxPrice: product?.afterTaxPrice,
-                        taxRate: product?.taxRate
-                      });
+                      console.log(
+                        `🔍 Table Grid - Tax calculation for item ${item.id}:`,
+                        {
+                          productId: item.productId,
+                          productName: item.productName,
+                          basePrice,
+                          quantity,
+                          productFound: !!product,
+                          afterTaxPrice: product?.afterTaxPrice,
+                          taxRate: product?.taxRate,
+                        },
+                      );
 
                       // Calculate subtotal (base price without tax)
                       subtotal += basePrice * quantity;
@@ -2744,11 +2891,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         product.afterTaxPrice !== null &&
                         product.afterTaxPrice !== ""
                       ) {
-                        const afterTaxPrice = parseFloat(
-                          product.afterTaxPrice,
-                        );
+                        const afterTaxPrice = parseFloat(product.afterTaxPrice);
                         // Tax per unit = afterTaxPrice - basePrice
-                        const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                        const taxPerUnit = Math.max(
+                          0,
+                          afterTaxPrice - basePrice,
+                        );
                         const itemTax = Math.floor(taxPerUnit * quantity);
                         totalTax += itemTax;
 
@@ -2758,7 +2906,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           basePrice,
                           taxPerUnit,
                           itemTax,
-                          quantity
+                          quantity,
                         });
 
                         console.log(`💰 Table Grid - Tax calculated:`, {
@@ -2767,13 +2915,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           taxPerUnit,
                           quantity,
                           itemTax,
-                          runningTotalTax: totalTax
+                          runningTotalTax: totalTax,
                         });
                       } else {
-                        console.log(`⚪ Table Grid - No tax (no afterTaxPrice):`, {
-                          productName: item.productName,
-                          afterTaxPrice: product?.afterTaxPrice
-                        });
+                        console.log(
+                          `⚪ Table Grid - No tax (no afterTaxPrice):`,
+                          {
+                            productName: item.productName,
+                            afterTaxPrice: product?.afterTaxPrice,
+                          },
+                        );
                       }
                       // No tax calculation if no afterTaxPrice in database
                     });
@@ -2782,7 +2933,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   const grandTotal = subtotal + totalTax;
 
                   // Get discount amount from selected order
-                  const discountAmount = selectedOrder ? Number(selectedOrder.discount || 0) : 0;
+                  const discountAmount = selectedOrder
+                    ? Number(selectedOrder.discount || 0)
+                    : 0;
                   const finalTotal = Math.max(0, grandTotal - discountAmount);
 
                   console.log(`📊 Table Grid - Final totals:`, {
@@ -2791,7 +2944,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     grandTotal,
                     discountAmount,
                     finalTotal,
-                    itemsCount: orderItems?.length
+                    itemsCount: orderItems?.length,
                   });
 
                   return (
@@ -2807,14 +2960,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Thuế:</span>
                         <span className="font-medium">
-                          {Math.abs(Math.floor(totalTax)).toLocaleString("vi-VN")} ₫
+                          {Math.abs(Math.floor(totalTax)).toLocaleString(
+                            "vi-VN",
+                          )}{" "}
+                          ₫
                         </span>
                       </div>
                       {discountAmount > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Giảm giá:</span>
                           <span className="font-medium text-red-600">
-                            -{Math.floor(discountAmount).toLocaleString("vi-VN")} ₫
+                            -
+                            {Math.floor(discountAmount).toLocaleString("vi-VN")}{" "}
+                            ₫
                           </span>
                         </div>
                       )}
@@ -2882,18 +3040,26 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                         return {
                           id: item.productId,
-                          name: item.productName || getProductName(item.productId),
+                          name:
+                            item.productName || getProductName(item.productId),
                           price: parseFloat(item.unitPrice),
                           quantity: item.quantity,
-                          sku: item.productSku || `FOOD${String(item.productId).padStart(5, "0")}`,
+                          sku:
+                            item.productSku ||
+                            `FOOD${String(item.productId).padStart(5, "0")}`,
                           taxRate: parseFloat(product?.taxRate || "0"),
                           afterTaxPrice: product?.afterTaxPrice || null,
                         };
                       });
 
                       // Apply discount from selected order
-                      const discountAmount = selectedOrder ? Number(selectedOrder.discount || 0) : 0;
-                      const finalTotal = Math.max(0, (orderDetailsSubtotal + orderDetailsTax) - discountAmount);
+                      const discountAmount = selectedOrder
+                        ? Number(selectedOrder.discount || 0)
+                        : 0;
+                      const finalTotal = Math.max(
+                        0,
+                        orderDetailsSubtotal + orderDetailsTax - discountAmount,
+                      );
 
                       // Create preview receipt data using EXACT values from Order Details - like POS
                       const previewData = {
@@ -3024,7 +3190,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   (p: any) => p.id === item.productId,
                                 )
                               : null;
-                            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+                            return product?.taxRate
+                              ? parseFloat(product.taxRate)
+                              : 10;
                           })(),
                         }));
 
@@ -3162,7 +3330,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             name: item.productName || item.name,
             price: parseFloat(item.price || item.unitPrice || "0"),
             quantity: item.quantity,
-            sku: item.sku || `FOOD${String(item.productId || item.id).padStart(5, "0")}`,
+            sku:
+              item.sku ||
+              `FOOD${String(item.productId || item.id).padStart(5, "0")}`,
             taxRate: parseFloat(item.taxRate || "0"),
             afterTaxPrice: item.afterTaxPrice || null,
             discount: item.discount || "0",
@@ -3170,7 +3340,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             originalPrice: item.originalPrice || item.price,
           })) || []
         }
-        total={previewReceipt ? previewReceipt.exactTotal || parseFloat(previewReceipt.total) : 0}
+        total={
+          previewReceipt
+            ? previewReceipt.exactTotal || parseFloat(previewReceipt.total)
+            : 0
+        }
       />
 
       {/* Payment Method Modal - Step 2: Chọn phương thức thanh toán */}
@@ -3189,31 +3363,31 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
             try {
               // Refresh data
-              await Promise.all([
-                refetchTables(),
-                refetchOrders()
-              ]);
+              await Promise.all([refetchTables(), refetchOrders()]);
 
-              console.log('✅ Table: Data refreshed after payment');
+              console.log("✅ Table: Data refreshed after payment");
 
               toast({
-                title: 'Thành công',
+                title: "Thành công",
                 description: data.publishLater
-                  ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
-                  : 'Đơn hàng đã được thanh toán thành công',
+                  ? "Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau"
+                  : "Đơn hàng đã được thanh toán thành công",
               });
 
               // Always show receipt modal after successful payment - prioritize receipt display
               if (data.receipt) {
-                console.log('📄 Table: Showing receipt modal after successful payment');
+                console.log(
+                  "📄 Table: Showing receipt modal after successful payment",
+                );
                 setSelectedReceipt(data.receipt);
                 setShowReceiptModal(true);
               } else {
-                console.warn('⚠️ Table: No receipt data found after payment completion');
+                console.warn(
+                  "⚠️ Table: No receipt data found after payment completion",
+                );
               }
-
             } catch (error) {
-              console.error('❌ Error refreshing data after payment:', error);
+              console.error("❌ Error refreshing data after payment:", error);
             }
 
             // Close order details if open
@@ -3225,9 +3399,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             console.error("❌ Table: Payment failed", data);
 
             toast({
-              title: 'Lỗi',
-              description: data.error || 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
-              variant: 'destructive',
+              title: "Lỗi",
+              description:
+                data.error ||
+                "Không thể hoàn tất thanh toán. Vui lòng thử lại.",
+              variant: "destructive",
             });
           }
 
@@ -3264,33 +3440,40 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             const exactTotal = orderForEInvoice?.exactTotal;
             const storedTotal = orderForEInvoice?.total;
 
-            const finalTotal = calculatedTotal || exactTotal || storedTotal || 0;
+            const finalTotal =
+              calculatedTotal || exactTotal || storedTotal || 0;
 
-            console.log('🔍 Table Grid E-Invoice Modal: Total calculation:', {
+            console.log("🔍 Table Grid E-Invoice Modal: Total calculation:", {
               calculatedTotal,
               exactTotal,
               storedTotal,
               finalTotal,
-              orderForEInvoiceId: orderForEInvoice?.id
+              orderForEInvoiceId: orderForEInvoice?.id,
             });
 
             return Math.floor(finalTotal);
           })()}
-          cartItems={orderForEInvoice?.orderItems?.map((item: any) => ({
-            id: item.productId,
-            name: item.productName,
-            price: parseFloat(item.unitPrice || '0'),
-            quantity: item.quantity,
-            sku: item.productSku || `SP${item.productId}`,
-            taxRate: (() => {
-              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })(),
-            afterTaxPrice: (() => {
-              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-              return product?.afterTaxPrice || null;
-            })()
-          })) || []}
+          cartItems={
+            orderForEInvoice?.orderItems?.map((item: any) => ({
+              id: item.productId,
+              name: item.productName,
+              price: parseFloat(item.unitPrice || "0"),
+              quantity: item.quantity,
+              sku: item.productSku || `SP${item.productId}`,
+              taxRate: (() => {
+                const product = Array.isArray(products)
+                  ? products.find((p: any) => p.id === item.productId)
+                  : null;
+                return product?.taxRate ? parseFloat(product.taxRate) : 10;
+              })(),
+              afterTaxPrice: (() => {
+                const product = Array.isArray(products)
+                  ? products.find((p: any) => p.id === item.productId)
+                  : null;
+                return product?.afterTaxPrice || null;
+              })(),
+            })) || []
+          }
           source="table"
           orderId={orderForEInvoice?.id}
         />
@@ -3301,7 +3484,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         <ReceiptModal
           isOpen={showReceiptModal}
           onClose={async () => {
-            console.log("🔴 Table: Receipt modal closing - AGGRESSIVE data refresh starting");
+            console.log(
+              "🔴 Table: Receipt modal closing - AGGRESSIVE data refresh starting",
+            );
 
             // IMMEDIATE: Clear all modal states first
             setShowReceiptModal(false);
@@ -3316,7 +3501,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setSelectedPaymentMethod("");
 
             // AGGRESSIVE DATA REFRESH - Multiple strategies
-            console.log("🔄 Table: Starting MULTI-STRATEGY data refresh after receipt modal close");
+            console.log(
+              "🔄 Table: Starting MULTI-STRATEGY data refresh after receipt modal close",
+            );
 
             try {
               // Strategy 1: Complete cache clearing
@@ -3328,27 +3515,29 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               const [freshTables, freshOrders] = await Promise.all([
                 fetch(`/api/tables?_t=${timestamp}&_force=refresh`, {
                   cache: "no-store",
-                  headers: { 
+                  headers: {
                     "Cache-Control": "no-cache, no-store, must-revalidate",
-                    "Pragma": "no-cache",
-                    "Expires": "0"
-                  }
-                }).then(r => r.json()),
+                    Pragma: "no-cache",
+                    Expires: "0",
+                  },
+                }).then((r) => r.json()),
                 fetch(`/api/orders?_t=${timestamp}&_force=refresh`, {
                   cache: "no-store",
-                  headers: { 
+                  headers: {
                     "Cache-Control": "no-cache, no-store, must-revalidate",
-                    "Pragma": "no-cache",
-                    "Expires": "0"
-                  }
-                }).then(r => r.json())
+                    Pragma: "no-cache",
+                    Expires: "0",
+                  },
+                }).then((r) => r.json()),
               ]);
 
               // Strategy 3: Set fresh data immediately in cache
               queryClient.setQueryData(["/api/tables"], freshTables);
               queryClient.setQueryData(["/api/orders"], freshOrders);
 
-              console.log("✅ Table: Fresh data loaded and cached after receipt modal close");
+              console.log(
+                "✅ Table: Fresh data loaded and cached after receipt modal close",
+              );
 
               // Strategy 4: Multiple timed invalidations to force re-renders
               setTimeout(() => {
@@ -3365,25 +3554,28 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 // Force one more invalidation to ensure UI updates
                 queryClient.invalidateQueries();
               }, 300);
-
             } catch (fetchError) {
-              console.error("❌ Table: Error during aggressive fetch, falling back:", fetchError);
+              console.error(
+                "❌ Table: Error during aggressive fetch, falling back:",
+                fetchError,
+              );
 
               // Strategy 5: Fallback with forced refetch
               try {
-                await Promise.all([
-                  refetchTables(),
-                  refetchOrders()
-                ]);
+                await Promise.all([refetchTables(), refetchOrders()]);
                 console.log("✅ Table: Fallback refresh completed");
               } catch (fallbackError) {
-                console.error("❌ Table: Fallback refresh also failed:", fallbackError);
+                console.error(
+                  "❌ Table: Fallback refresh also failed:",
+                  fallbackError,
+                );
               }
             }
 
             // Strategy 6: Send WebSocket signal for cross-page coordination
             try {
-              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const protocol =
+                window.location.protocol === "https:" ? "wss:" : "ws:";
               const wsUrl = `${protocol}//${window.location.host}/ws`;
               const ws = new WebSocket(wsUrl);
 
@@ -3394,48 +3586,54 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   source: "table-grid-receipt-close",
                   reason: "receipt_modal_closed_with_payment",
                   force_refresh: true,
-                  timestamp: new Date().toISOString()
+                  timestamp: new Date().toISOString(),
                 };
 
-                console.log("📡 Table: Sending AGGRESSIVE WebSocket refresh signal:", refreshSignal);
+                console.log(
+                  "📡 Table: Sending AGGRESSIVE WebSocket refresh signal:",
+                  refreshSignal,
+                );
                 ws.send(JSON.stringify(refreshSignal));
 
                 setTimeout(() => ws.close(), 100);
               };
             } catch (wsError) {
-              console.warn("⚠️ Table: WebSocket signal failed (non-critical):", wsError);
+              console.warn(
+                "⚠️ Table: WebSocket signal failed (non-critical):",
+                wsError,
+              );
             }
 
             // Strategy 7: Dispatch multiple refresh events
             const refreshEvents = [
-              new CustomEvent('forceDataRefresh', {
+              new CustomEvent("forceDataRefresh", {
                 detail: {
-                  reason: 'receipt_modal_closed_aggressive',
-                  source: 'table-grid',
+                  reason: "receipt_modal_closed_aggressive",
+                  source: "table-grid",
                   forceRefresh: true,
                   aggressive: true,
-                  timestamp: new Date().toISOString()
-                }
+                  timestamp: new Date().toISOString(),
+                },
               }),
-              new CustomEvent('paymentCompleted', {
+              new CustomEvent("paymentCompleted", {
                 detail: {
-                  action: 'modal_closed_force_refresh',
-                  source: 'table-grid',
+                  action: "modal_closed_force_refresh",
+                  source: "table-grid",
                   forceRefresh: true,
-                  timestamp: new Date().toISOString()
-                }
+                  timestamp: new Date().toISOString(),
+                },
               }),
-              new CustomEvent('refreshTableData', {
+              new CustomEvent("refreshTableData", {
                 detail: {
-                  reason: 'receipt_modal_closed',
-                  source: 'table-grid',
+                  reason: "receipt_modal_closed",
+                  source: "table-grid",
                   forceRefresh: true,
-                  timestamp: new Date().toISOString()
-                }
-              })
+                  timestamp: new Date().toISOString(),
+                },
+              }),
             ];
 
-            refreshEvents.forEach(event => {
+            refreshEvents.forEach((event) => {
               console.log(`📡 Table: Dispatching ${event.type} event`);
               window.dispatchEvent(event);
             });
@@ -3445,7 +3643,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               description: "Thanh toán hoàn tất và dữ liệu đã được cập nhật",
             });
 
-            console.log("✅ Table: AGGRESSIVE receipt modal close and data refresh completed");
+            console.log(
+              "✅ Table: AGGRESSIVE receipt modal close and data refresh completed",
+            );
           }}
           receipt={selectedReceipt}
           cartItems={
@@ -3496,14 +3696,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   <span className="font-medium">
                     {(() => {
                       // Calculate correct total from order items for payment calculation
-                      if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+                      if (
+                        Array.isArray(orderItems) &&
+                        orderItems.length > 0 &&
+                        Array.isArray(products)
+                      ) {
                         let subtotal = 0;
                         let totalTax = 0;
 
                         orderItems.forEach((item: any) => {
                           const basePrice = Number(item.unitPrice || 0);
                           const quantity = Number(item.quantity || 0);
-                          const product = products.find((p: any) => p.id === item.productId);
+                          const product = products.find(
+                            (p: any) => p.id === item.productId,
+                          );
 
                           // Calculate subtotal (base price without tax)
                           subtotal += basePrice * quantity;
@@ -3514,8 +3720,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             product.afterTaxPrice !== null &&
                             product.afterTaxPrice !== ""
                           ) {
-                            const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                            const afterTaxPrice = parseFloat(
+                              product.afterTaxPrice,
+                            );
+                            const taxPerUnit = Math.max(
+                              0,
+                              afterTaxPrice - basePrice,
+                            );
                             totalTax += Math.floor(taxPerUnit * quantity);
                           }
                         });
@@ -3525,32 +3736,46 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       }
 
                       // Fallback to stored total if calculation not possible
-                      return Math.floor(Number(selectedOrder.total)).toLocaleString();
-                    })()} ₫
+                      return Math.floor(
+                        Number(selectedOrder.total),
+                      ).toLocaleString();
+                    })()}{" "}
+                    ₫
                   </span>
                 </div>
-                {selectedOrder.discount && Number(selectedOrder.discount) > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-red-600">Giảm giá:</span>
-                    <span className="font-medium text-red-600">
-                      -{Math.floor(Number(selectedOrder.discount)).toLocaleString()} ₫
-                    </span>
-                  </div>
-                )}
+                {selectedOrder.discount &&
+                  Number(selectedOrder.discount) > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-red-600">Giảm giá:</span>
+                      <span className="font-medium text-red-600">
+                        -
+                        {Math.floor(
+                          Number(selectedOrder.discount),
+                        ).toLocaleString()}{" "}
+                        ₫
+                      </span>
+                    </div>
+                  )}
                 <div className="flex justify-between text-sm font-bold border-t pt-2 mt-2">
                   <span>{t("orders.pointsPaymentDialog.totalAmount")}</span>
                   <span className="font-bold text-green-600">
                     {(() => {
                       // Calculate correct total from order items for payment calculation
                       let calculatedTotal = 0;
-                      if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+                      if (
+                        Array.isArray(orderItems) &&
+                        orderItems.length > 0 &&
+                        Array.isArray(products)
+                      ) {
                         let subtotal = 0;
                         let totalTax = 0;
 
                         orderItems.forEach((item: any) => {
                           const basePrice = Number(item.unitPrice || 0);
                           const quantity = Number(item.quantity || 0);
-                          const product = products.find((p: any) => p.id === item.productId);
+                          const product = products.find(
+                            (p: any) => p.id === item.productId,
+                          );
 
                           // Calculate subtotal (base price without tax)
                           subtotal += basePrice * quantity;
@@ -3561,8 +3786,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             product.afterTaxPrice !== null &&
                             product.afterTaxPrice !== ""
                           ) {
-                            const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                            const afterTaxPrice = parseFloat(
+                              product.afterTaxPrice,
+                            );
+                            const taxPerUnit = Math.max(
+                              0,
+                              afterTaxPrice - basePrice,
+                            );
                             totalTax += Math.floor(taxPerUnit * quantity);
                           }
                         });
@@ -3574,10 +3804,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                       // Apply discount
                       const discount = Number(selectedOrder.discount || 0);
-                      const finalTotal = Math.max(0, calculatedTotal - discount);
+                      const finalTotal = Math.max(
+                        0,
+                        calculatedTotal - discount,
+                      );
 
                       return Math.floor(finalTotal).toLocaleString();
-                    })()} ₫
+                    })()}{" "}
+                    ₫
                   </span>
                 </div>
               </div>
@@ -3665,14 +3899,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       {(() => {
                         // Calculate correct total from order items for payment calculation
                         let calculatedTotal = 0;
-                        if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+                        if (
+                          Array.isArray(orderItems) &&
+                          orderItems.length > 0 &&
+                          Array.isArray(products)
+                        ) {
                           let subtotal = 0;
                           let totalTax = 0;
 
                           orderItems.forEach((item: any) => {
                             const basePrice = Number(item.unitPrice || 0);
                             const quantity = Number(item.quantity || 0);
-                            const product = products.find((p: any) => p.id === item.productId);
+                            const product = products.find(
+                              (p: any) => p.id === item.productId,
+                            );
 
                             // Calculate subtotal (base price without tax)
                             subtotal += basePrice * quantity;
@@ -3683,8 +3923,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               product.afterTaxPrice !== null &&
                               product.afterTaxPrice !== ""
                             ) {
-                              const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                              const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                              const afterTaxPrice = parseFloat(
+                                product.afterTaxPrice,
+                              );
+                              const taxPerUnit = Math.max(
+                                0,
+                                afterTaxPrice - basePrice,
+                              );
                               totalTax += Math.floor(taxPerUnit * quantity);
                             }
                           });
@@ -3696,23 +3941,33 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                         // Apply discount
                         const discount = Number(selectedOrder.discount || 0);
-                        const finalTotal = Math.max(0, calculatedTotal - discount);
+                        const finalTotal = Math.max(
+                          0,
+                          calculatedTotal - discount,
+                        );
 
                         return Math.floor(finalTotal).toLocaleString();
-                      })()} ₫
+                      })()}{" "}
+                      ₫
                     </span>
                   </div>
                   {(() => {
                     // Calculate total for comparison with discount applied
                     let calculatedTotal = 0;
-                    if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+                    if (
+                      Array.isArray(orderItems) &&
+                      orderItems.length > 0 &&
+                      Array.isArray(products)
+                    ) {
                       let subtotal = 0;
                       let totalTax = 0;
 
                       orderItems.forEach((item: any) => {
                         const basePrice = Number(item.unitPrice || 0);
                         const quantity = Number(item.quantity || 0);
-                        const product = products.find((p: any) => p.id === item.productId);
+                        const product = products.find(
+                          (p: any) => p.id === item.productId,
+                        );
 
                         subtotal += basePrice * quantity;
 
@@ -3721,8 +3976,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           product.afterTaxPrice !== null &&
                           product.afterTaxPrice !== ""
                         ) {
-                          const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                          const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                          const afterTaxPrice = parseFloat(
+                            product.afterTaxPrice,
+                          );
+                          const taxPerUnit = Math.max(
+                            0,
+                            afterTaxPrice - basePrice,
+                          );
                           totalTax += Math.floor(taxPerUnit * quantity);
                         }
                       });
@@ -3735,7 +3995,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     // Apply discount to get final total
                     const discount = Number(selectedOrder.discount || 0);
                     const finalTotal = Math.max(0, calculatedTotal - discount);
-                    const customerPointsValue = (selectedCustomer.points || 0) * 1000;
+                    const customerPointsValue =
+                      (selectedCustomer.points || 0) * 1000;
 
                     return customerPointsValue >= finalTotal ? (
                       <div className="text-green-600 text-sm">
@@ -3744,8 +4005,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     ) : (
                       <div className="text-orange-600 text-sm">
                         ⚠ Cần thanh toán thêm:{" "}
-                        {(finalTotal - customerPointsValue).toLocaleString()}{" "}
-                        ₫
+                        {(finalTotal - customerPointsValue).toLocaleString()} ₫
                       </div>
                     );
                   })()}
@@ -3821,7 +4081,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <p className="text-xs text-blue-600">
                       Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}
                       P (-
-                      {(mixedPaymentData.pointsToUse * 1000).toLocaleString()}{" "}
+                      {(
+                        mixedPaymentData.pointsToUse * 1000
+                      ).toLocaleString()}{" "}
                       ₫)
                     </p>
                   </div>
@@ -3898,7 +4160,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       {mixedPaymentData.pointsToUse.toLocaleString()}P
                       <span className="ml-1">
                         (-
-                        {(mixedPaymentData.pointsToUse * 1000).toLocaleString()}{" "}
+                        {(
+                          mixedPaymentData.pointsToUse * 1000
+                        ).toLocaleString()}{" "}
                         ₫)
                       </span>
                     </span>
