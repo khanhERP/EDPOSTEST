@@ -746,7 +746,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     purchaseReportDescription: "구매 활동에 대한 상세 보고서",
 
     // Sales chart report
-    salesChart: "매출 차트",
+    salesChart: "판매 차트",
     salesChartDescription: "매출 세부 분석 및 시간별 분석",
     salesReport: "매출 보고서",
 

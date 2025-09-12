@@ -653,7 +653,7 @@ export function SalesChartReport() {
             <CardTitle>{t("reports.dailySales")}</CardTitle>
             <CardDescription className="flex items-center justify-between">
               <span>
-                Báo cáo chi tiết về doanh số và phân tích theo thời gian
+                {t("reports.salesChartDescription")}
               </span>
               <Button
                 onClick={() => {
@@ -718,10 +718,10 @@ export function SalesChartReport() {
                 className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Xuất Excel
+                {t("common.exportExcel")}
               </Button>
             </CardDescription>
-          </CardHeader>
+          </CardHeader></old_str>
           <CardContent>
             <div className="w-full">
               <div className="overflow-x-auto xl:overflow-x-visible">
