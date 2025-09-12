@@ -2354,7 +2354,7 @@ export function OrderManagement() {
                             receiptDiscount: receiptPreview.discount,
                             receiptExactDiscount: receiptPreview.exactDiscount,
                             orderDiscount: paymentOrderData.discount,
-                            orderExactDiscount: paymentOrderData.exactDiscount
+                            orderExactDiscount: paymentData.exactDiscount
                           });
                         }
 
