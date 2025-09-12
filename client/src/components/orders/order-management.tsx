@@ -888,7 +888,10 @@ export function OrderManagement() {
         return;
       }
 
-      // Step 3: Create comprehensive order data for payment
+      // Step 3: Create comprehensive order data for payment - MATCH TABLE GRID FORMAT
+      const discount = Math.floor(Number(order.discount || 0));
+      const finalTotalAfterDiscount = Math.max(0, finalTotal - discount);
+
       const orderForPaymentData = {
         ...order,
         id: order.id,
@@ -896,11 +899,14 @@ export function OrderManagement() {
         processedItems: processedItems,
         calculatedSubtotal: calculatedSubtotal,
         calculatedTax: calculatedTax,
-        calculatedTotal: finalTotal,
-        total: finalTotal
+        calculatedTotal: finalTotal, // Base total before discount
+        total: finalTotalAfterDiscount, // Final total after discount
+        discount: order.discount || "0", // Keep as string
+        exactDiscount: discount, // Numeric discount
+        tableNumber: order.tableId ? `T${order.tableId}` : 'N/A'
       };
 
-      // Step 4: Create receipt preview data
+      // Step 4: Create receipt preview data - MATCH TABLE GRID FORMAT
       const receiptPreview = {
         id: order.id,
         orderId: order.id,
@@ -912,24 +918,32 @@ export function OrderManagement() {
         orderItems: processedItems,
         subtotal: calculatedSubtotal.toString(),
         tax: calculatedTax.toString(),
-        total: finalTotal.toString(),
+        discount: order.discount || "0", // Pass discount
+        total: finalTotalAfterDiscount.toString(), // Final after discount
         exactSubtotal: calculatedSubtotal,
         exactTax: calculatedTax,
-        exactTotal: finalTotal,
+        exactDiscount: discount,
+        exactTotal: finalTotalAfterDiscount, // Final after discount
         paymentMethod: 'preview',
-        amountReceived: finalTotal.toString(),
+        amountReceived: finalTotalAfterDiscount.toString(),
         change: '0.00',
         cashierName: 'Order Management',
         createdAt: new Date().toISOString(),
         transactionId: `TXN-PREVIEW-${Date.now()}`,
         calculatedSubtotal: calculatedSubtotal,
         calculatedTax: calculatedTax,
-        calculatedTotal: finalTotal
+        calculatedTotal: finalTotal, // Base before discount
+        // Add table info like table grid
+        tableName: order.tableId ? `Bàn T${order.tableId}` : 'Bàn không xác định',
+        storeLocation: 'Cửa hàng chính',
+        storeAddress: '서울시 강남구 테헤란로 123',
+        storePhone: '02-1234-5678'
       };
 
       console.log('✅ Payment data prepared:', {
         orderId: orderForPaymentData.id,
-        calculatedTotal: orderForPaymentData.calculatedTotal,
+        calculatedTotal: orderForPaymentData.calculatedTotal, // Base total
+        finalTotalAfterDiscount: orderForPaymentData.total, // Total after discount
         itemsCount: processedItems.length,
         receiptTotal: receiptPreview.total,
         receiptExactTotal: receiptPreview.exactTotal
@@ -1022,7 +1036,8 @@ export function OrderManagement() {
       console.log('💳 Order Management: Processing direct payment for order:', orderForPayment.id);
 
       // Use centralized payment completion
-      await completeOrderPayment(orderForPayment.id, {
+      await completePaymentMutation.mutate({
+        orderId: orderForPayment.id,
         paymentMethod: typeof method === 'string' ? method : method.nameKey,
       });
 
@@ -2208,8 +2223,8 @@ export function OrderManagement() {
                           processedItems: processedItems,
                           calculatedSubtotal: calculatedSubtotal,
                           calculatedTax: calculatedTax,
-                          calculatedTotal: finalTotal,
-                          total: finalTotal, // Override total với calculated value
+                          calculatedTotal: finalTotal, // Override total với calculated value
+                          total: finalTotal, // Override total with calculated value
                           discount: selectedOrder.discount || 0 // Preserve discount from order
                         };
 
@@ -2878,7 +2893,7 @@ export function OrderManagement() {
             }
           }
         }}
-        total={orderForPayment?.calculatedTotal ? Math.round(orderForPayment.calculatedTotal) : 0}
+        total={orderForPayment?.total ? Math.round(orderForPayment.total) : 0}
         onShowEInvoice={() => setShowEInvoiceModal(true)}
         cartItems={orderForPayment?.processedItems?.map((item: any) => ({
           id: item.productId,
@@ -2903,7 +2918,7 @@ export function OrderManagement() {
             setOrderForPayment(null);
           }}
           onConfirm={handleEInvoiceConfirm}
-          total={orderForPayment?.calculatedTotal ? Math.round(orderForPayment.calculatedTotal) : 0}
+          total={orderForPayment?.total ? Math.round(orderForPayment.total) : 0}
           cartItems={orderForPayment?.processedItems?.map((item: any) => ({
             id: item.productId,
             name: item.productName,
