@@ -573,6 +573,14 @@ export function ReceiptModal({
                   {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
+              {parseFloat(receipt.discount || "0") > 0 && (
+                <div className="flex justify-between text-sm text-red-600">
+                  <span>Giảm giá:</span>
+                  <span className="font-medium">
+                    -{Math.floor(parseFloat(receipt.discount || "0")).toLocaleString("vi-VN")} ₫
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between font-bold">
                 <span>{t("pos.total")}</span>
                 <span>
@@ -670,7 +678,7 @@ export function ReceiptModal({
                   });
 
                   const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
-                  
+
                   // Get discount from cart items if available (for preview mode, discount might come from parent)
                   const discount = cartItems.reduce((sum, item) => {
                     return sum + (parseFloat(item.discount || "0"));
