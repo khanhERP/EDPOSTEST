@@ -901,7 +901,7 @@ export function OrderManagement() {
         };
       });
 
-      // Step 5: Create receipt preview data matching Order Details display
+      // Step 5: Create receipt preview data matching Order Details display with proper discount
       const receiptPreview = {
         id: order.id,
         orderId: order.id,
@@ -923,8 +923,8 @@ export function OrderManagement() {
         subtotal: Math.floor(subtotal).toString(),
         tax: Math.floor(taxAmount).toString(),
         discount: discountAmount.toString(),
-        total: Math.floor(finalTotal).toString(),
-        exactTotal: Math.floor(finalTotal),
+        total: Math.floor(baseTotal).toString(), // Base total BEFORE discount
+        exactTotal: Math.floor(finalTotal), // Final total AFTER discount
         exactSubtotal: Math.floor(subtotal),
         exactTax: Math.floor(taxAmount),
         exactDiscount: discountAmount,
@@ -941,7 +941,17 @@ export function OrderManagement() {
         storePhone: '02-1234-5678'
       };
 
-      // Step 6: Create order data for payment flow matching Order Details
+      console.log('💰 Order Management: Receipt preview created with discount:', {
+        baseTotal: baseTotal,
+        discountAmount: discountAmount,
+        finalTotal: finalTotal,
+        receiptTotal: receiptPreview.total,
+        receiptExactTotal: receiptPreview.exactTotal,
+        receiptDiscount: receiptPreview.discount,
+        receiptExactDiscount: receiptPreview.exactDiscount
+      });
+
+      // Step 6: Create order data for payment flow matching Order Details with proper discount
       const orderForPaymentData = {
         ...order,
         id: order.id,
@@ -950,13 +960,22 @@ export function OrderManagement() {
         subtotal: Math.floor(subtotal).toString(),
         tax: Math.floor(taxAmount).toString(),
         discount: discountAmount.toString(),
-        total: Math.floor(finalTotal).toString(),
+        total: Math.floor(finalTotal).toString(), // Final total after discount for payment
+        baseTotal: Math.floor(baseTotal), // Store base total before discount
         exactSubtotal: Math.floor(subtotal),
         exactTax: Math.floor(taxAmount),
         exactDiscount: discountAmount,
         exactTotal: Math.floor(finalTotal),
         tableNumber: order.tableId ? `T${order.tableId}` : 'N/A'
       };
+
+      console.log('💰 Order Management: Order for payment created with discount:', {
+        orderDiscount: orderForPaymentData.discount,
+        orderExactDiscount: orderForPaymentData.exactDiscount,
+        orderTotal: orderForPaymentData.total,
+        orderExactTotal: orderForPaymentData.exactTotal,
+        orderBaseTotal: orderForPaymentData.baseTotal
+      });
 
       console.log('✅ Order Management: Payment data prepared matching Order Details:', {
         receiptTotal: receiptPreview.total,
@@ -2256,6 +2275,15 @@ export function OrderManagement() {
                           storeAddress: '서울시 강남구 테헤란로 123',
                           storePhone: '02-1234-5678'
                         };
+
+                        console.log('💰 Order Details: Receipt preview created with discount details:', {
+                          originalOrderDiscount: selectedOrder.discount,
+                          calculatedDiscount: discountAmount,
+                          baseTotal: baseTotal,
+                          finalTotal: finalTotal,
+                          receiptDiscount: receiptPreview.discount,
+                          receiptExactDiscount: receiptPreview.exactDiscount
+                        });
 
                         // Store receipt data globally for receipt modal access
                         if (typeof window !== 'undefined') {
