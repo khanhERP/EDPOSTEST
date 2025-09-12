@@ -159,9 +159,9 @@ export function OrderDialog({
             });
           }
 
-          // Calculate totals - IMPORTANT: Save correct total AFTER discount deduction
+          // Calculate totals - IMPORTANT: Save total BEFORE discount deduction
           const totalBeforeDiscount = totalSubtotal + totalTax;
-          const finalTotal = Math.max(0, totalBeforeDiscount - discount);
+          const fullTotal = totalBeforeDiscount; // Store full amount, not discounted
 
           console.log('💰 Complete order totals calculated:', {
             existingItemsCount: existingItems.length,
@@ -169,20 +169,19 @@ export function OrderDialog({
             subtotal: totalSubtotal,
             tax: totalTax,
             discount: discount,
-            totalBeforeDiscount: totalBeforeDiscount,
-            finalTotalAfterDiscount: finalTotal
+            fullTotalBeforeDiscount: fullTotal
           });
 
-          // Step 3: Update order with complete calculated totals (SAVE TOTAL AFTER DISCOUNT)
+          // Step 3: Update order with complete calculated totals (SAVE TOTAL BEFORE DISCOUNT)
           console.log(`📝 Updating order with complete calculated totals for order ${existingOrder.id}`);
-          console.log(`💰 Saving totals: subtotal=${totalSubtotal}, tax=${totalTax}, discount=${discount}, finalTotal=${finalTotal}`);
+          console.log(`💰 Saving totals: subtotal=${totalSubtotal}, tax=${totalTax}, discount=${discount}, fullTotal=${fullTotal}`);
           const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
             customerName: orderData.order.customerName,
             customerCount: orderData.order.customerCount,
             subtotal: totalSubtotal.toString(),
             tax: totalTax.toString(),
             discount: discount.toString(),
-            total: finalTotal.toString(), // This saves the total AFTER discount subtraction
+            total: fullTotal.toString(), // This saves the total BEFORE discount subtraction
           });
 
           const updateResult = await updateResponse.json();
@@ -530,8 +529,8 @@ export function OrderDialog({
       // Total = tổng tiền (subtotal + tax)
       const totalAmount = subtotalAmount + taxAmount;
 
-      // Calculate final total after discount for new orders
-      const finalOrderTotal = Math.max(0, totalAmount - discount);
+      // Store total BEFORE discount subtraction (full order value)
+      const fullOrderTotal = totalAmount;
 
       const order = {
         orderNumber: `ORD-${Date.now()}`,
@@ -542,7 +541,7 @@ export function OrderDialog({
         subtotal: subtotalAmount.toString(),
         tax: taxAmount.toString(),
         discount: discount.toString(),
-        total: finalOrderTotal.toString(), // Save total AFTER discount
+        total: fullOrderTotal.toString(), // Save total BEFORE discount subtraction
         status: "served",
         paymentStatus: "pending",
         orderedAt: new Date().toISOString(),
@@ -575,7 +574,7 @@ export function OrderDialog({
       });
 
       console.log("Placing order:", { order, items });
-      console.log(`💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, finalTotal=${finalOrderTotal}`);
+      console.log(`💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, fullTotal=${fullOrderTotal}`);
       createOrderMutation.mutate({ order, items });
     }
   };
