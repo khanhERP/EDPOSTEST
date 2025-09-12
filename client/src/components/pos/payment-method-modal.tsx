@@ -1741,7 +1741,6 @@ export function PaymentMethodModal({
 
                         return displayTotal.toLocaleString("vi-VN");
                       })()} ₫</p>
-                    </p>
                   </div>
 
                   {qrCodeUrl && (
@@ -1901,7 +1900,6 @@ export function PaymentMethodModal({
 
                         return displayTotal.toLocaleString("vi-VN");
                       })()} ₫</p>
-                    </p>
                   </div>
 
                   <div className="space-y-3">

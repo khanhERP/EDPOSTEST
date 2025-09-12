@@ -2306,12 +2306,12 @@ export function OrderManagement() {
                         // Store receipt data globally for receipt modal access
                         if (typeof window !== 'undefined') {
                           (window as any).previewReceipt = receiptPreview;
-                          (window as any).orderForPayment = orderForPaymentData;
+                          (window as any).orderForPayment = receiptPreview;
                           console.log('💾 Stored discount data globally:', {
                             receiptDiscount: receiptPreview.discount,
                             receiptExactDiscount: receiptPreview.exactDiscount,
-                            orderDiscount: orderForPaymentData.discount,
-                            orderExactDiscount: orderForPaymentData.exactDiscount
+                            orderDiscount: receiptPreview.discount,
+                            orderExactDiscount: receiptPreview.exactDiscount
                           });
                         }
 
