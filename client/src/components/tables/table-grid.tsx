@@ -2444,22 +2444,31 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             },
                           )}
                         </div>
-                        <div className="font-medium text-gray-900">
-                          {(() => {
-                            const total = Math.floor(Number(activeOrder.total || 0));
-                            const discount = Math.floor(Number(activeOrder.discount || 0));
-                            
-                            // For active orders (not paid/cancelled), show total without subtracting discount
-                            if (activeOrder.status !== 'paid' && activeOrder.status !== 'cancelled') {
-                              console.log(`💰 Table active order ${activeOrder.orderNumber} - showing total: ${total} (discount ${discount} not subtracted)`);
-                              return total.toLocaleString("vi-VN");
-                            }
-                            
-                            // For paid orders, subtract discount to show final amount paid
-                            const finalTotal = Math.max(0, total - discount);
-                            console.log(`💰 Table ${activeOrder.status} order ${activeOrder.orderNumber} - final: ${finalTotal}`);
-                            return finalTotal.toLocaleString("vi-VN");
-                          })()} ₫
+                        <div className="space-y-1">
+                          <div className="font-medium text-gray-900">
+                            {(() => {
+                              const total = Math.floor(Number(activeOrder.total || 0));
+                              const discount = Math.floor(Number(activeOrder.discount || 0));
+                              
+                              // Always show original total (before discount) for active orders
+                              if (activeOrder.status !== 'paid' && activeOrder.status !== 'cancelled') {
+                                console.log(`💰 Table active order ${activeOrder.orderNumber} - showing original total: ${total} (discount ${discount} not subtracted)`);
+                                return total.toLocaleString("vi-VN");
+                              }
+                              
+                              // For paid orders, subtract discount to show final amount paid
+                              const finalTotal = Math.max(0, total - discount);
+                              console.log(`💰 Table ${activeOrder.status} order ${activeOrder.orderNumber} - final: ${finalTotal}`);
+                              return finalTotal.toLocaleString("vi-VN");
+                            })()} ₫
+                          </div>
+                          {/* Show discount info for active orders if discount exists */}
+                          {activeOrder.status !== 'paid' && activeOrder.status !== 'cancelled' && 
+                           Number(activeOrder.discount || 0) > 0 && (
+                            <div className="text-xs text-red-600">
+                              Giảm: -{Math.floor(Number(activeOrder.discount)).toLocaleString("vi-VN")} ₫
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
