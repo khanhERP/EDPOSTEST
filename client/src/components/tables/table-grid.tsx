@@ -2778,12 +2778,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ Hiển thị {itemsToRender.length} món - Số lượng{" "}
+                                ✅ {t("orders.displaying")} {itemsToRender.length}{" "}
+                                {t("orders.items")} - {t("orders.quantity")}{" "}
                                 {itemsToRender.reduce(
                                   (sum, item) => sum + (item.quantity || 0),
                                   0,
                                 )}{" "}
-                                - Đơn hàng {selectedOrder?.orderNumber}
+                                - {t("orders.orderNumber")} {selectedOrder?.orderNumber}
                               </p>
                               {itemsToRender.map((item: any, index: number) => (
                                 <div

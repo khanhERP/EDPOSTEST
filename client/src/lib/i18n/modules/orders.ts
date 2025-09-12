@@ -115,6 +115,9 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       completed: "완료됨",
     },
     orderCount: "주문",
+    displaying: "Hiển thị",
+    items: "món",
+    quantity: "Số lượng",
   },
   en: {
     orderManagement: "Order Management",
@@ -233,6 +236,9 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       completed: "Completed",
     },
     orderCount: "orders",
+    displaying: "Displaying",
+    items: "items",
+    quantity: "Quantity",
   },
   vi: {
     orderManagement: "Quản lý đơn hàng",
@@ -351,5 +357,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       completed: "Hoàn thành",
     },
     orderCount: "đơn",
+    displaying: "Hiển thị",
+    items: "món",
+    quantity: "Số lượng",
   },
 };
