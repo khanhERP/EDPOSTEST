@@ -1969,7 +1969,7 @@ export function PaymentMethodModal({
                             );
 
                             // Calculate final total after discount
-                            const orderTotal = Math.max(0, baseTotal - discountAmount);
+                            const orderTotal = Math.max(0, Math.floor(baseTotal) - discountAmount);
                             const changeAmount = receivedAmount - orderTotal;
                             return changeAmount >= 0
                               ? "bg-green-50 border-green-200"
@@ -2000,7 +2000,7 @@ export function PaymentMethodModal({
                                 );
 
                                 // Calculate final total after discount
-                                const orderTotal = Math.max(0, baseTotal - discountAmount);
+                                const orderTotal = Math.max(0, Math.floor(baseTotal) - discountAmount);
                                 const changeAmount =
                                   receivedAmount - orderTotal;
                                 return changeAmount >= 0
@@ -2030,14 +2030,21 @@ export function PaymentMethodModal({
                                 );
 
                                 // Calculate final total after discount
-                                const orderTotal = Math.max(0, baseTotal - discountAmount);
-                                const changeAmount =
-                                  receivedAmount - orderTotal;
+                                const orderTotal = Math.max(0, Math.floor(baseTotal) - discountAmount);
+                                const changeAmount = receivedAmount - orderTotal;
+
+                                console.log("💰 Cash Payment Calculation Debug:", {
+                                  receivedAmount,
+                                  baseTotal,
+                                  orderTotal,
+                                  changeAmount,
+                                  isEnough: changeAmount >= 0
+                                });
+
                                 return changeAmount >= 0
-                                  ? t("common.change")
-                                  : t("common.insufficient") + ":";
-                              })()}
-                            </span>
+                                  ? "Tiền thối:"
+                                  : "Còn thiếu:";
+                              })()}</span>
                             <span
                               className={`text-lg font-bold ${(() => {
                                 const receivedAmount = parseFloat(
@@ -2096,12 +2103,12 @@ export function PaymentMethodModal({
                                 );
 
                                 // Calculate final total after discount
-                                const orderTotal = Math.max(0, baseTotal - discountAmount);
+                                const orderTotal = Math.max(0, Math.floor(baseTotal) - discountAmount);
 
                                 // Tính tiền thối: Tiền khách đưa - Tổng tiền cần thanh toán
                                 const changeAmount = receivedAmount - orderTotal;
-                                const displayAmount = changeAmount >= 0 
-                                  ? changeAmount 
+                                const displayAmount = changeAmount >= 0
+                                  ? changeAmount
                                   : Math.abs(changeAmount);
 
                                 console.log("💰 Cash Payment Display Debug:", {
@@ -2110,7 +2117,6 @@ export function PaymentMethodModal({
                                   discountAmount,
                                   orderTotal,
                                   changeAmount,
-                                  displayAmount,
                                   isChange: changeAmount >= 0
                                 });
 
