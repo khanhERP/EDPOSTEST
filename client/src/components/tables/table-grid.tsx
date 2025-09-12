@@ -3499,6 +3499,18 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setOrderDetailsOpen(false);
             setSelectedOrder(null);
             setSelectedPaymentMethod("");
+            
+            // Send event to prevent receipt modal from reopening
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('receiptModalClosed', {
+                detail: { 
+                  source: 'table_grid_close',
+                  clearAllStates: true, 
+                  preventReopening: true,
+                  timestamp: new Date().toISOString()
+                }
+              }));
+            }
 
             // AGGRESSIVE DATA REFRESH - Multiple strategies
             console.log(
