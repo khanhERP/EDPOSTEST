@@ -861,7 +861,7 @@ export function OrderManagement() {
         };
       });
 
-      const finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
+      let finalTotal = calculatedSubtotal + Math.abs(calculatedTax);
 
       console.log('💰 Final calculation results:', {
         subtotal: calculatedSubtotal,
@@ -891,7 +891,7 @@ export function OrderManagement() {
       // Step 3: Create comprehensive order data for payment - MATCH TABLE GRID FORMAT
       // Calculate discount exactly like table-grid
       const discountAmount = Math.floor(Number(order.discount || 0));
-      const finalTotal = Math.max(0, finalTotal - discountAmount);
+     finalTotal = Math.max(0, finalTotal - discountAmount);
 
       console.log('💰 Order Management: Final calculation (matching table-grid):', {
         baseSubtotal: calculatedSubtotal,
