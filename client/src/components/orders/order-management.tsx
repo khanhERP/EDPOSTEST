@@ -2129,10 +2129,10 @@ export function OrderManagement() {
                   <div className="flex gap-2 pt-4">
                     <Button
                       onClick={() => {
-                        console.log('🎯 Order Management: Bắt đầu thanh toán - kiểm tra dữ liệu');
+                        console.log('🎯 Order Management: Payment button clicked - preparing data with discount handling');
 
                         if (!selectedOrder || !orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
-                          console.error('❌ Thiếu dữ liệu đơn hàng:', {
+                          console.error('❌ Missing order data:', {
                             selectedOrder: !!selectedOrder,
                             orderItems: orderItems?.length || 0,
                             orderItemsArray: Array.isArray(orderItems)
@@ -2145,10 +2145,15 @@ export function OrderManagement() {
                           return;
                         }
 
-                        // Use memoized calculations for better performance
-                        const { subtotal: calculatedSubtotal, tax: calculatedTax, total: finalTotal } = orderDetailsCalculation;
+                        // Use memoized calculations (base total before discount)
+                        const { subtotal: calculatedSubtotal, tax: calculatedTax, total: baseTotal } = orderDetailsCalculation;
 
-                        console.log('💰 Using memoized calculation:', { calculatedSubtotal, calculatedTax, finalTotal });
+                        console.log('💰 Order Management: Using memoized calculation:', { 
+                          calculatedSubtotal, 
+                          calculatedTax, 
+                          baseTotal,
+                          orderDiscount: selectedOrder.discount 
+                        });
 
                         const processedItems = orderItems.map((item: any) => {
                           const unitPrice = Number(item.unitPrice || 0);
@@ -2169,25 +2174,31 @@ export function OrderManagement() {
                           };
                         });
 
-                        console.log('💰 Kết quả tính toán cuối:', {
-                          subtotal: calculatedSubtotal,
-                          tax: calculatedTax,
-                          finalTotal: finalTotal,
+                        // Calculate discount and final total (MATCH table-grid logic)
+                        const discount = Math.floor(Number(selectedOrder.discount || 0));
+                        const finalTotalAfterDiscount = Math.max(0, baseTotal - discount);
+
+                        console.log('💰 Order Management: Final calculation with discount:', {
+                          baseSubtotal: calculatedSubtotal,
+                          baseTax: calculatedTax,
+                          baseTotal: baseTotal,
+                          discount: discount,
+                          finalTotalAfterDiscount: finalTotalAfterDiscount,
                           itemsProcessed: processedItems.length
                         });
 
-                        // Kiểm tra tổng tiền hợp lệ
-                        if (finalTotal <= 0) {
-                          console.error('❌ Tổng tiền không hợp lệ:', finalTotal);
+                        // Validate final total
+                        if (finalTotalAfterDiscount < 0) {
+                          console.error('❌ Invalid final total after discount:', finalTotalAfterDiscount);
                           toast({
                             title: 'Lỗi',
-                            description: 'Tổng tiền đơn hàng không hợp lệ. Vui lòng kiểm tra lại.',
+                            description: 'Tổng tiền sau giảm giá không hợp lệ. Vui lòng kiểm tra lại.',
                             variant: 'destructive',
                           });
                           return;
                         }
 
-                        // Tạo receipt preview data với định dạng đúng
+                        // Create receipt preview data (MATCH table-grid format)
                         const receiptPreview = {
                           id: selectedOrder.id,
                           orderId: selectedOrder.id,
@@ -2199,47 +2210,64 @@ export function OrderManagement() {
                           orderItems: processedItems,
                           subtotal: calculatedSubtotal.toString(),
                           tax: calculatedTax.toString(),
-                          total: finalTotal.toString(),
+                          discount: selectedOrder.discount || "0", // Pass discount string
+                          total: finalTotalAfterDiscount.toString(), // Final after discount
                           exactSubtotal: calculatedSubtotal,
                           exactTax: calculatedTax,
-                          exactTotal: finalTotal,
-                          discount: selectedOrder.discount || "0", // Pass discount from order
+                          exactDiscount: discount, // Numeric discount
+                          exactTotal: finalTotalAfterDiscount, // Final after discount
                           paymentMethod: 'preview',
-                          amountReceived: finalTotal.toString(),
+                          amountReceived: finalTotalAfterDiscount.toString(),
                           change: '0.00',
                           cashierName: 'Order Management',
                           createdAt: new Date().toISOString(),
                           transactionId: `TXN-PREVIEW-${Date.now()}`,
                           calculatedSubtotal: calculatedSubtotal,
                           calculatedTax: calculatedTax,
-                          calculatedTotal: finalTotal
+                          calculatedTotal: baseTotal, // Base before discount
+                          // Add table info like table-grid
+                          tableName: selectedOrder.tableId ? `Bàn T${selectedOrder.tableId}` : 'Bàn không xác định',
+                          storeLocation: 'Cửa hàng chính',
+                          storeAddress: '서울시 강남구 테헤란로 123',
+                          storePhone: '02-1234-5678'
                         };
 
-                        // Tạo order data đầy đủ cho payment flow
+                        // Create order data for payment flow (MATCH table-grid format)
                         const orderForPaymentData = {
                           ...selectedOrder,
-                          id: selectedOrder.id, // Đảm bảo có ID
+                          id: selectedOrder.id,
                           orderItems: processedItems,
                           processedItems: processedItems,
                           calculatedSubtotal: calculatedSubtotal,
                           calculatedTax: calculatedTax,
-                          calculatedTotal: finalTotal, // Override total với calculated value
-                          total: finalTotal, // Override total with calculated value
-                          discount: selectedOrder.discount || 0 // Preserve discount from order
+                          calculatedTotal: baseTotal, // Base total before discount
+                          total: finalTotalAfterDiscount, // Final total after discount
+                          discount: selectedOrder.discount || "0", // Keep as string
+                          exactDiscount: discount, // Numeric discount
+                          exactSubtotal: calculatedSubtotal,
+                          exactTax: calculatedTax,
+                          exactTotal: finalTotalAfterDiscount, // Final after discount
+                          tableNumber: selectedOrder.tableId ? `T${selectedOrder.tableId}` : 'N/A'
                         };
 
-                        console.log('✅ Thiết lập dữ liệu để hiển thị preview:', {
-                          receiptTotal: receiptPreview.total,
-                          receiptExactTotal: receiptPreview.exactTotal,
-                          orderTotal: orderForPaymentData.calculatedTotal,
+                        console.log('✅ Order Management: Payment data prepared with discount handling:', {
+                          receiptTotal: receiptPreview.total, // Should show final after discount
+                          receiptExactTotal: receiptPreview.exactTotal, // Should show final after discount
+                          receiptDiscount: receiptPreview.discount,
+                          receiptExactDiscount: receiptPreview.exactDiscount,
+                          orderTotal: orderForPaymentData.total, // Should show final after discount
+                          orderCalculatedTotal: orderForPaymentData.calculatedTotal, // Base before discount
                           orderId: orderForPaymentData.id
                         });
 
-                        // Set states và hiển thị preview ngay lập tức
-                        setPreviewReceipt(receiptPreview);
+                        // Close order details modal and show receipt preview
+                        setOrderDetailsOpen(false);
+                        setSelectedOrder(selectedOrder);
                         setOrderForPayment(orderForPaymentData);
+                        setPreviewReceipt(receiptPreview);
                         setShowReceiptPreview(true);
-                        console.log('🚀 Order Management: Đang hiển thị receipt preview modal');
+                        
+                        console.log('🚀 Order Management: Showing receipt preview modal with correct discount data');
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
