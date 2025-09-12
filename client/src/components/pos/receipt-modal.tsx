@@ -676,16 +676,15 @@ export function ReceiptModal({
                   const itemDiscounts = cartItems.reduce((sum, item) => {
                     return sum + (parseFloat(item.discount || "0") * item.quantity);
                   }, 0);
-                  
-                  // Check multiple sources for discount data
+
                   const receiptDiscount = parseFloat((receipt as any)?.discount?.toString() || "0");
-                  
+
                   // Use the highest discount found from available sources (items and receipt)
                   const discount = Math.max(itemDiscounts, receiptDiscount);
 
                   console.log("🔍 Receipt Modal Discount Debug:", {
                     subtotal,
-                    tax, 
+                    tax,
                     total,
                     itemDiscounts,
                     receiptDiscount,
