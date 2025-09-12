@@ -960,7 +960,7 @@ export function ShoppingCart({
               </Label>
               <Input
                 type="text"
-                value={discount > 0 ? discount.toLocaleString('vi-VN') : ''}
+                value={discountAmount && parseFloat(discountAmount) > 0 ? parseFloat(discountAmount).toLocaleString('vi-VN') : ''}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^\d]/g, ''); // Chỉ giữ lại số
                   setDiscountAmount(value || "0");
