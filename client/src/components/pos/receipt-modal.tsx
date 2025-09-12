@@ -179,21 +179,21 @@ export function ReceiptModal({
         printWindow.onload = () => {
           setTimeout(() => {
             printWindow.print();
-            
+
             // Auto close after print and refresh data
             setTimeout(() => {
               console.log('🖨️ Receipt Modal: Auto-closing after print and refreshing data');
-              
+
               // Close this modal
               onClose();
-              
+
               // Dispatch events to close all modals and refresh data
               if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('printCompleted', { 
-                  detail: { 
+                window.dispatchEvent(new CustomEvent('printCompleted', {
+                  detail: {
                     closeAllModals: true,
-                    refreshData: true 
-                  } 
+                    refreshData: true
+                  }
                 }));
                 window.dispatchEvent(new CustomEvent('refreshOrders', { detail: { immediate: true } }));
                 window.dispatchEvent(new CustomEvent('refreshTables', { detail: { immediate: true } }));
@@ -490,28 +490,30 @@ export function ReceiptModal({
 
             <div className="space-y-2 mb-3">
               {(receipt.items || []).map((item) => {
-                // For receipt display, show the unit price (base price without tax) and total from order details
-                const unitPrice = parseFloat(item.price || "0");
+                        // For receipt display, use the actual unit price from database (not calculated)
+                        const actualUnitPrice = parseFloat(item.unitPrice || item.price || "0");
+                        const quantity = item.quantity || 1;
+                        const actualTotal = parseFloat(item.total || "0");
 
-                return (
-                  <div key={item.id || Math.random()}>
-                    <div className="flex justify-between text-sm">
-                      <div className="flex-1">
-                        <div>{item.productName || item.name || "Unknown Product"}</div>
-                        <div className="text-xs text-gray-600">
-                          SKU:{" "}
-                          {`FOOD${String(item.productId || item.id || "0").padStart(5, "0")}`}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {item.quantity || 1} x{" "}
-                          {Math.floor(parseFloat(item.total || "0") / (item.quantity || 1)).toLocaleString("vi-VN")} ₫
-                        </div>
-                      </div>
-                      <div>{Math.floor(parseFloat(item.total || "0")).toLocaleString("vi-VN")} ₫</div>
-                    </div>
-                  </div>
-                );
-              })}
+                        return (
+                          <div key={item.id || Math.random()}>
+                            <div className="flex justify-between text-sm">
+                              <div className="flex-1">
+                                <div>{item.productName || item.name || "Unknown Product"}</div>
+                                <div className="text-xs text-gray-600">
+                                  SKU:{" "}
+                                  {`FOOD${String(item.productId || item.id || "0").padStart(5, "0")}`}
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  {quantity} x{" "}
+                                  {Math.floor(actualUnitPrice).toLocaleString("vi-VN")} ₫
+                                </div>
+                              </div>
+                              <div>{Math.floor(actualTotal).toLocaleString("vi-VN")} ₫</div>
+                            </div>
+                          </div>
+                        );
+                      })}
             </div>
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
