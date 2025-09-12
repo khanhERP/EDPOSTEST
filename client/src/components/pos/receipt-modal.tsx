@@ -659,38 +659,34 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               {(() => {
-                // For preview mode (cartItems), calculate exactly like shopping cart
+                // For preview mode (cartItems), calculate values from cart
                 if (isPreview && cartItems && cartItems.length > 0) {
-                  // Calculate subtotal - base price only
                   const subtotal = cartItems.reduce((sum, item) => {
                     const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
                     return sum + (price * item.quantity);
                   }, 0);
 
-                  // Calculate tax using the same formula as shopping cart
-                  const tax = cartItems.reduce((sum, item) => {
-                    if (item.taxRate && parseFloat(item.taxRate) > 0) {
-                      const basePrice = parseFloat(item.price);
-                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-                        const afterTaxPrice = parseFloat(item.afterTaxPrice);
-                        const totalItemTax = Math.floor((afterTaxPrice - basePrice) * item.quantity);
-                        return sum + totalItemTax;
-                      }
+                  // Calculate tax from individual items if they have afterTaxPrice
+                  let totalTax = 0;
+                  cartItems.forEach((item) => {
+                    if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                      const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                      const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                      const taxPerUnit = afterTaxPrice - basePrice;
+                      totalTax += Math.floor(taxPerUnit * item.quantity);
                     }
-                    return sum;
+                  });
+
+                  const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
+
+                  // Get discount from cart items if available (for preview mode, discount might come from parent)
+                  const discount = cartItems.reduce((sum, item) => {
+                    return sum + (parseFloat(item.discount || "0") * item.quantity);
                   }, 0);
 
-                  // Get discount - order level discount only
-                  const orderDiscount = parseFloat((receipt as any)?.discount?.toString() || "0");
-
-                  console.log("🔍 Receipt Modal Preview - Using shopping cart logic:", {
-                    subtotal,
-                    tax,
-                    orderDiscount,
-                    calculatedTotal: subtotal + tax,
-                    finalTotal: Math.max(0, subtotal + tax - orderDiscount),
-                    mode: "preview"
-                  });
+                  // Calculate final total after discount - use base total before tax, then add tax, then subtract discount
+                  const totalWithTax = subtotal + tax;
+                  const finalTotal = Math.max(0, totalWithTax - discount);
 
                   return (
                     <>
@@ -706,34 +702,40 @@ export function ReceiptModal({
                           {Math.floor(tax).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
-                      {orderDiscount > 0 && (
+                      {discount > 0 && (
                         <div className="flex justify-between text-sm text-red-600">
                           <span>Giảm giá:</span>
                           <span className="font-medium">
-                            -{Math.floor(orderDiscount).toLocaleString("vi-VN")} ₫
+                            -{Math.floor(discount).toLocaleString("vi-VN")} ₫
                           </span>
                         </div>
                       )}
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(Math.max(0, subtotal + tax - orderDiscount)).toLocaleString("vi-VN")} ₫
+                          {Math.round(finalTotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>
                   );
                 } else if (receipt) {
-                  // For final receipt, use exact database values
+                  // For final receipt, ALWAYS use values directly from database without any calculation
+                  // This ensures exact match with what's stored in the orders table
                   const dbSubtotal = parseFloat(receipt.subtotal || "0");
                   const dbTax = parseFloat(receipt.tax || "0");
                   const dbTotal = parseFloat(receipt.total || "0");
                   const dbDiscount = parseFloat(receipt.discount || "0");
 
-                  console.log("🔍 Receipt Modal Final - Using database values:", {
-                    dbSubtotal,
-                    dbTax,
-                    dbTotal,
-                    dbDiscount,
+                  console.log("🔍 Receipt Modal: Using EXACT database values:", {
+                    rawSubtotal: receipt.subtotal,
+                    rawTax: receipt.tax,
+                    rawTotal: receipt.total,
+                    rawDiscount: receipt.discount,
+                    parsedSubtotal: dbSubtotal,
+                    parsedTax: dbTax,
+                    parsedTotal: dbTotal,
+                    parsedDiscount: dbDiscount,
+                    receiptId: receipt.id,
                     source: "database_exact"
                   });
 
@@ -762,7 +764,7 @@ export function ReceiptModal({
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(dbTotal).toLocaleString("vi-VN")} ₫
+                          {Math.round(Math.max(0, dbTotal - dbDiscount)).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>

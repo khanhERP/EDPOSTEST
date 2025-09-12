@@ -2448,7 +2448,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           {(() => {
                             const total = Math.floor(Number(activeOrder.total || 0));
                             const discount = Math.floor(Number(activeOrder.discount || 0));
-
+                            
                             // Always show final total after discount for all orders
                             const finalTotal = Math.max(0, total - discount);
                             console.log(`💰 Table order ${activeOrder.orderNumber} - final total after discount: ${finalTotal} (original: ${total}, discount: ${discount})`);
@@ -2894,13 +2894,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         };
                       });
 
-                      // Get discount amount from selected order
-                      const discountAmount = parseFloat(selectedOrder?.discount || "0");
-                      const totalBeforeDiscount = Math.floor(orderDetailsSubtotal + orderDetailsTax);
-                      const finalTotalAfterDiscount = Math.max(0, totalBeforeDiscount - discountAmount);
-
                       // Create preview receipt data using EXACT values from Order Details
                       const previewData = {
+                        ...selectedOrder,
                         transactionId: `PREVIEW-${Date.now()}`,
                         createdAt: new Date().toISOString(),
                         cashierName: "Table Service",
@@ -2908,12 +2904,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         items: processedItems,
                         subtotal: Math.floor(orderDetailsSubtotal).toString(),
                         tax: Math.floor(orderDetailsTax).toString(),
-                        total: finalTotalAfterDiscount.toString(), // Use final total after discount
-                        discount: discountAmount.toString(), // Pass discount from order
-                        exactTotal: finalTotalAfterDiscount,
+                        total: Math.floor(
+                          orderDetailsSubtotal + orderDetailsTax
+                        ).toString(),
+                        exactTotal: Math.floor(orderDetailsSubtotal + orderDetailsTax),
                         exactSubtotal: Math.floor(orderDetailsSubtotal),
                         exactTax: Math.floor(orderDetailsTax),
-                        exactDiscount: discountAmount,
                         orderItems: orderItems, // Keep original order items for payment flow
                       };
 
