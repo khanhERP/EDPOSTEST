@@ -594,10 +594,10 @@ export function SalesChartReport() {
         const orderSubtotal = Number(order.subtotal || 0); // Tiền hàng (chưa thuế) = Thành tiền
         const orderDiscount = Number(order.discount || 0); // Giảm giá
         const orderTax = orderTotal - orderSubtotal; // Thuế = total - subtotal
-        const actualRevenue = Math.max(0, orderSubtotal - orderDiscount); // Doanh thu = Thành tiền - Giảm giá
+        const actualRevenue = orderSubtotal; // Doanh thu = Thành tiền (subtotal)
 
         dailySales[dateStr].orders += 1;
-        dailySales[dateStr].revenue += actualRevenue; // Doanh thu = Thành tiền - Giảm giá
+        dailySales[dateStr].revenue += actualRevenue; // Doanh thu = Thành tiền (subtotal)
         dailySales[dateStr].customers += Number(order.customerCount || 1);
         dailySales[dateStr].discount += orderDiscount; // Giảm giá từ DB
         dailySales[dateStr].tax += orderTax; // Thuế = total - subtotal
@@ -1467,7 +1467,7 @@ export function SalesChartReport() {
         Number(order.tax || 0) ||
         Number(order.total || 0) - Number(order.subtotal || 0); // Thuế từ DB hoặc tính từ total-subtotal
       const orderTotal = Number(order.total || 0); // Tổng tiền từ DB
-      const orderRevenue = Math.max(0, orderSubtotal - orderDiscount); // Doanh thu = thành tiền - giảm giá
+      const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = thành tiền - giảm giá
 
       const orderSummary = {
         orderDate: order.orderedAt || order.createdAt || order.created_at,
@@ -1522,7 +1522,7 @@ export function SalesChartReport() {
                   orderSubtotal > 0 ? itemTotal / orderSubtotal : 0; // Avoid division by zero
                 const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
                 const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
-                const itemRevenue = Math.max(0, itemTotal - itemDiscount); // Doanh thu = thành tiền - giảm giá
+                const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
                 const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
 
                 // Get tax rate from product database, default to 0 if not available
@@ -2104,6 +2104,9 @@ export function SalesChartReport() {
                       <TableCell className="text-center min-w-[120px] px-4">
                         -
                       </TableCell>
+                      <TableCell className="text-center min-w-[120px] px-4">
+                        -
+                      </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -2160,9 +2163,7 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(prev + 1, totalPages),
-                      )
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2170,15 +2171,8 @@ export function SalesChartReport() {
                     ›
                   </button>
                   <button
-                    onClick={() =>
-                      setCurrentPage(
-                        Math.ceil(Object.entries(dailySales).length / pageSize),
-                      )
-                    }
-                    disabled={
-                      currentPage ===
-                      Math.ceil(Object.entries(dailySales).length / pageSize)
-                    }
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     »
