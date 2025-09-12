@@ -50,12 +50,15 @@ export function OrderManagement() {
 
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
-    if (shouldOpenReceiptPreview && previewReceipt && orderForPayment) {
-      console.log('🚀 Receipt preview modal should now be open');
+    if (previewReceipt && orderForPayment && !showReceiptPreview) {
+      console.log('🚀 Receipt preview modal opening automatically with data:', {
+        previewReceiptId: previewReceipt.id,
+        orderForPaymentId: orderForPayment.id,
+        showReceiptPreview
+      });
       setShowReceiptPreview(true);
-      setShouldOpenReceiptPreview(false); // Reset the flag
     }
-  }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
+  }, [previewReceipt, orderForPayment, showReceiptPreview]);
 
   // Prevent automatic receipt modal reopening after payment completion
   useEffect(() => {
@@ -987,14 +990,29 @@ export function OrderManagement() {
         orderId: orderForPaymentData.id
       });
 
-      // Step 7: Close order details modal and show receipt preview
+      // Step 7: Force close any existing modals first to prevent conflicts
       setOrderDetailsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
+
+      // Wait a moment for state updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Step 8: Set new state for receipt preview
       setSelectedOrder(order);
       setOrderForPayment(orderForPaymentData);
       setPreviewReceipt(receiptPreview);
+      
+      // Force the receipt preview modal to open
+      console.log('🚀 Order Management: Opening receipt preview modal with data:', {
+        hasPreviewReceipt: !!receiptPreview,
+        hasOrderForPayment: !!orderForPaymentData,
+        receiptId: receiptPreview.id
+      });
+      
       setShowReceiptPreview(true);
-
-      console.log('🚀 Order Management: Showing receipt preview modal');
 
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
