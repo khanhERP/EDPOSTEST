@@ -346,13 +346,20 @@ export function PaymentMethodModal({
         setQrLoading(true);
         const transactionUuid = `TXN-${Date.now()}`;
 
-        // Use exact total with proper priority
-        const orderTotal =
-          receipt?.exactTotal ??
+        // Use exact total with proper priority and discount consideration
+        const baseTotal = receipt?.exactTotal ??
           orderInfo?.exactTotal ??
           orderInfo?.total ??
           total ??
           0;
+        
+        // Get discount amount
+        const discountAmount = Math.floor(
+          parseFloat(receipt?.discount || orderInfo?.discount || "0")
+        );
+        
+        // Calculate final total after discount
+        const orderTotal = Math.max(0, baseTotal - discountAmount);
 
         const qrRequest: CreateQRPosRequest = {
           transactionUuid,
@@ -648,13 +655,20 @@ export function PaymentMethodModal({
       // Generate QR code for VNPay
       try {
         setQrLoading(true);
-        // Use exact total with proper priority for QR payment
-        const orderTotal =
-          receipt?.exactTotal ??
+        // Use exact total with proper priority and discount consideration for QR payment
+        const baseTotal = receipt?.exactTotal ??
           orderInfo?.exactTotal ??
           orderInfo?.total ??
           total ??
           0;
+        
+        // Get discount amount
+        const discountAmount = Math.floor(
+          parseFloat(receipt?.discount || orderInfo?.discount || "0")
+        );
+        
+        // Calculate final total after discount
+        const orderTotal = Math.max(0, baseTotal - discountAmount);
         const qrData = `Payment via ${method}\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
         const qrUrl = await QRCodeLib.toDataURL(qrData, {
           width: 256,
@@ -1546,15 +1560,32 @@ export function PaymentMethodModal({
                     {t("common.totalAmount")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {/* Use exact total with proper priority for QR payment */}
-                    {Math.floor(
-                      receipt?.exactTotal ??
+                    {/* Use exact total with proper priority and discount consideration */}
+                    {(() => {
+                      // Get base total
+                      const baseTotal = receipt?.exactTotal ??
                         orderInfo?.exactTotal ??
                         orderInfo?.total ??
                         total ??
-                        0,
-                    ).toLocaleString("vi-VN")}{" "}
-                    ₫
+                        0;
+                      
+                      // Get discount amount
+                      const discountAmount = Math.floor(
+                        parseFloat(receipt?.discount || orderInfo?.discount || "0")
+                      );
+                      
+                      // Calculate final total after discount
+                      const finalTotal = Math.max(0, baseTotal - discountAmount);
+                      
+                      console.log("💰 Payment Modal - Total calculation:", {
+                        baseTotal,
+                        discountAmount,
+                        finalTotal,
+                        source: "payment_method_modal"
+                      });
+                      
+                      return Math.floor(finalTotal).toLocaleString("vi-VN");
+                    })()} ₫
                   </p>
                 </div>
 
@@ -1796,15 +1827,25 @@ export function PaymentMethodModal({
                       {t("common.amountToPay")}
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {/* Use exact total with proper priority for cash payment */}
-                      {Math.floor(
-                        receipt?.exactTotal ??
+                      {/* Use exact total with proper priority and discount consideration for cash payment */}
+                      {(() => {
+                        // Get base total
+                        const baseTotal = receipt?.exactTotal ??
                           orderInfo?.exactTotal ??
                           orderInfo?.total ??
                           total ??
-                          0,
-                      ).toLocaleString("vi-VN")}{" "}
-                      ₫
+                          0;
+                        
+                        // Get discount amount
+                        const discountAmount = Math.floor(
+                          parseFloat(receipt?.discount || orderInfo?.discount || "0")
+                        );
+                        
+                        // Calculate final total after discount
+                        const finalTotal = Math.max(0, baseTotal - discountAmount);
+                        
+                        return Math.floor(finalTotal).toLocaleString("vi-VN");
+                      })()} ₫
                     </p>
                   </div>
 
@@ -1922,12 +1963,19 @@ export function PaymentMethodModal({
                                   cashAmountInput || "0",
                                 );
 
-                                // Sử dụng exact priority order giống như table payment
-                                const orderTotal =
-                                  receipt?.exactTotal ??
+                                // Sử dụng exact priority order giống như table payment với discount
+                                const baseTotal = receipt?.exactTotal ??
                                   orderInfo?.exactTotal ??
                                   orderInfo?.total ??
                                   total;
+                                
+                                // Get discount amount
+                                const discountAmount = Math.floor(
+                                  parseFloat(receipt?.discount || orderInfo?.discount || "0")
+                                );
+                                
+                                // Calculate final total after discount
+                                const orderTotal = Math.max(0, baseTotal - discountAmount);
 
                                 // Tính tiền thối: Tiền khách đưa - Tổng tiền cần thanh toán
                                 const changeAmount =
