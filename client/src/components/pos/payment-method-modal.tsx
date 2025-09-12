@@ -352,12 +352,12 @@ export function PaymentMethodModal({
           orderInfo?.total ??
           total ??
           0;
-        
+
         // Get discount amount
         const discountAmount = Math.floor(
           parseFloat(receipt?.discount || orderInfo?.discount || "0")
         );
-        
+
         // Calculate final total after discount
         const orderTotal = Math.max(0, baseTotal - discountAmount);
 
@@ -661,12 +661,12 @@ export function PaymentMethodModal({
           orderInfo?.total ??
           total ??
           0;
-        
+
         // Get discount amount
         const discountAmount = Math.floor(
           parseFloat(receipt?.discount || orderInfo?.discount || "0")
         );
-        
+
         // Calculate final total after discount
         const orderTotal = Math.max(0, baseTotal - discountAmount);
         const qrData = `Payment via ${method}\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
@@ -1562,31 +1562,41 @@ export function PaymentMethodModal({
                   <p className="text-2xl font-bold text-blue-600">
                     {/* Use exact total with proper priority and discount consideration */}
                     {(() => {
-                      // Get base total
+                      // PRIORITY ORDER: receipt > orderForPayment > orderInfo > fallback
                       const baseTotal = receipt?.exactTotal ??
+                        orderForPayment?.exactTotal ??
+                        orderForPayment?.total ??
                         orderInfo?.exactTotal ??
                         orderInfo?.total ??
                         total ??
                         0;
-                      
-                      // Get discount amount
+
+                      // Get discount from multiple sources
                       const discountAmount = Math.floor(
-                        parseFloat(receipt?.discount || orderInfo?.discount || "0")
+                        parseFloat(
+                          receipt?.discount ||
+                          receipt?.exactDiscount ||
+                          orderForPayment?.discount ||
+                          orderInfo?.discount ||
+                          "0"
+                        )
                       );
-                      
+
                       // Calculate final total after discount
                       const finalTotal = Math.max(0, baseTotal - discountAmount);
-                      
-                      console.log("💰 Payment Modal - Total calculation:", {
+
+                      console.log("💰 Payment Modal - Total calculation with discount:", {
                         baseTotal,
                         discountAmount,
                         finalTotal,
+                        receiptDiscount: receipt?.discount,
+                        orderForPaymentDiscount: orderForPayment?.discount,
+                        orderInfoDiscount: orderInfo?.discount,
                         source: "payment_method_modal"
                       });
-                      
+
                       return Math.floor(finalTotal).toLocaleString("vi-VN");
-                    })()} ₫
-                  </p>
+                    })()} ₫</p>
                 </div>
 
                 <div className="grid gap-3">
@@ -1829,21 +1839,39 @@ export function PaymentMethodModal({
                     <p className="text-2xl font-bold text-blue-600">
                       {/* Use exact total with proper priority and discount consideration for cash payment */}
                       {(() => {
-                        // Get base total
+                        // PRIORITY ORDER: receipt > orderForPayment > orderInfo > fallback
                         const baseTotal = receipt?.exactTotal ??
+                          orderForPayment?.exactTotal ??
+                          orderForPayment?.total ??
                           orderInfo?.exactTotal ??
                           orderInfo?.total ??
                           total ??
                           0;
-                        
-                        // Get discount amount
+
+                        // Get discount from multiple sources
                         const discountAmount = Math.floor(
-                          parseFloat(receipt?.discount || orderInfo?.discount || "0")
+                          parseFloat(
+                            receipt?.discount ||
+                            receipt?.exactDiscount ||
+                            orderForPayment?.discount ||
+                            orderInfo?.discount ||
+                            "0"
+                          )
                         );
-                        
+
                         // Calculate final total after discount
                         const finalTotal = Math.max(0, baseTotal - discountAmount);
-                        
+
+                        console.log("💰 Payment Modal - Total calculation with discount:", {
+                          baseTotal,
+                          discountAmount,
+                          finalTotal,
+                          receiptDiscount: receipt?.discount,
+                          orderForPaymentDiscount: orderForPayment?.discount,
+                          orderInfoDiscount: orderInfo?.discount,
+                          source: "payment_method_modal"
+                        });
+
                         return Math.floor(finalTotal).toLocaleString("vi-VN");
                       })()} ₫
                     </p>
@@ -1968,12 +1996,12 @@ export function PaymentMethodModal({
                                   orderInfo?.exactTotal ??
                                   orderInfo?.total ??
                                   total;
-                                
+
                                 // Get discount amount
                                 const discountAmount = Math.floor(
                                   parseFloat(receipt?.discount || orderInfo?.discount || "0")
                                 );
-                                
+
                                 // Calculate final total after discount
                                 const orderTotal = Math.max(0, baseTotal - discountAmount);
 
