@@ -2835,7 +2835,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   <Button
                     onClick={() => {
                       console.log(
-                        "🎯 Table: Starting payment flow - using exact Order Details values",
+                        "🎯 Table: Starting receipt preview flow like POS",
                       );
 
                       if (
@@ -2881,49 +2881,56 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         }
 
                         return {
-                          id: item.id,
-                          productId: item.productId,
-                          productName:
-                            item.productName || getProductName(item.productId),
+                          id: item.productId,
+                          name: item.productName || getProductName(item.productId),
+                          price: parseFloat(item.unitPrice),
                           quantity: item.quantity,
-                          price: item.unitPrice,
-                          total: item.total,
-                          sku: item.productSku || `SP${item.productId}`,
-                          taxRate: (() => {
-                            const product = Array.isArray(products)
-                              ? products.find((p: any) => p.id === item.productId)
-                              : null;
-                            return product?.taxRate ? parseFloat(product.taxRate) : 10;
-                          })(),
+                          sku: item.productSku || `FOOD${String(item.productId).padStart(5, "0")}`,
+                          taxRate: parseFloat(product?.taxRate || "0"),
+                          afterTaxPrice: product?.afterTaxPrice || null,
                         };
                       });
 
-                      // Create preview receipt data using EXACT values from Order Details
+                      // Apply discount from selected order
+                      const discountAmount = selectedOrder ? Number(selectedOrder.discount || 0) : 0;
+                      const finalTotal = Math.max(0, (orderDetailsSubtotal + orderDetailsTax) - discountAmount);
+
+                      // Create preview receipt data using EXACT values from Order Details - like POS
                       const previewData = {
                         ...selectedOrder,
                         transactionId: `PREVIEW-${Date.now()}`,
                         createdAt: new Date().toISOString(),
                         cashierName: "Table Service",
                         paymentMethod: "preview", // Placeholder method
-                        items: processedItems,
+                        items: processedItems.map((item: any) => ({
+                          id: item.id,
+                          productId: item.id,
+                          productName: item.name,
+                          quantity: item.quantity,
+                          price: item.price.toString(),
+                          total: (item.price * item.quantity).toString(),
+                          sku: item.sku,
+                          taxRate: item.taxRate,
+                        })),
                         subtotal: Math.floor(orderDetailsSubtotal).toString(),
                         tax: Math.floor(orderDetailsTax).toString(),
-                        total: Math.floor(
-                          orderDetailsSubtotal + orderDetailsTax
-                        ).toString(),
-                        exactTotal: Math.floor(orderDetailsSubtotal + orderDetailsTax),
+                        total: Math.floor(finalTotal).toString(),
+                        discount: discountAmount.toString(),
+                        exactTotal: Math.floor(finalTotal),
                         exactSubtotal: Math.floor(orderDetailsSubtotal),
                         exactTax: Math.floor(orderDetailsTax),
+                        exactDiscount: discountAmount,
                         orderItems: orderItems, // Keep original order items for payment flow
                       };
 
                       console.log(
-                        "📄 Table: Showing receipt preview with exact Order Details values",
+                        "📄 Table: Showing receipt preview like POS with exact Order Details values",
                       );
                       console.log("💰 Exact values passed:", {
                         subtotal: orderDetailsSubtotal,
                         tax: orderDetailsTax,
-                        total: orderDetailsSubtotal + orderDetailsTax,
+                        discount: discountAmount,
+                        total: finalTotal,
                       });
                       setPreviewReceipt(previewData);
                       setOrderDetailsOpen(false);
@@ -3108,7 +3115,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Receipt Preview Modal - Step 1: "Xem trước hóa đơn" */}
+      {/* Receipt Preview Modal - Step 1: "Xem trước hóa đơn" - Exactly like POS */}
       <ReceiptModal
         isOpen={showReceiptPreview}
         onClose={() => {
@@ -3118,7 +3125,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         }}
         onConfirm={() => {
           console.log(
-            "📄 Table: Receipt preview confirmed, starting payment flow",
+            "📄 Table: Receipt preview confirmed, starting payment flow like POS",
           );
 
           if (!previewReceipt) {
@@ -3126,43 +3133,44 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             return;
           }
 
-          // Prepare complete order data for payment flow
+          // Prepare complete order data for payment flow - exactly like POS
           const completeOrderData = {
             ...selectedOrder,
             orderItems: previewReceipt.orderItems || orderItems || [],
             exactSubtotal: previewReceipt.exactSubtotal,
             exactTax: previewReceipt.exactTax,
             exactTotal: previewReceipt.exactTotal,
-            discount: previewReceipt.discount || selectedOrder?.discount || 0, // Use discount from preview receipt first
+            exactDiscount: previewReceipt.exactDiscount || 0,
+            discount: previewReceipt.discount || selectedOrder?.discount || 0,
           };
 
           console.log(
-            "💾 Table: Setting order for payment with complete data:",
+            "💾 Table: Setting order for payment with complete data like POS:",
             completeOrderData,
           );
           setOrderForPayment(completeOrderData);
 
-          // Close preview and show payment method modal
+          // Close preview and show payment method modal - exactly like POS
           setShowReceiptPreview(false);
           setShowPaymentMethodModal(true);
         }}
         isPreview={true}
+        receipt={previewReceipt}
         cartItems={
           previewReceipt?.items?.map((item: any) => ({
             id: item.productId || item.id,
             name: item.productName || item.name,
             price: parseFloat(item.price || item.unitPrice || "0"),
             quantity: item.quantity,
-            sku: item.sku || `SP${item.productId}`,
-            taxRate: (() => {
-              const product = Array.isArray(products)
-                ? products.find((p: any) => p.id === item.productId)
-                : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })(),
+            sku: item.sku || `FOOD${String(item.productId || item.id).padStart(5, "0")}`,
+            taxRate: parseFloat(item.taxRate || "0"),
+            afterTaxPrice: item.afterTaxPrice || null,
+            discount: item.discount || "0",
+            discountAmount: item.discountAmount || "0",
+            originalPrice: item.originalPrice || item.price,
           })) || []
         }
-        total={previewReceipt ? parseFloat(previewReceipt.total) : 0}
+        total={previewReceipt ? previewReceipt.exactTotal || parseFloat(previewReceipt.total) : 0}
       />
 
       {/* Payment Method Modal - Step 2: Chọn phương thức thanh toán */}
