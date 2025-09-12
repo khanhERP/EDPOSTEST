@@ -277,6 +277,27 @@ export function PrintDialog({
         setTimeout(() => {
           printWindow.print();
           printWindow.close();
+          
+          // Auto close current print dialog and all other modals
+          setTimeout(() => {
+            console.log('🖨️ Print Dialog: Auto-closing after print and refreshing data');
+            
+            // Close this print dialog
+            onClose();
+            
+            // Dispatch events to close all modals and refresh data
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('printCompleted', { 
+                detail: { 
+                  closeAllModals: true,
+                  refreshData: true,
+                  orderId: receiptData.orderId 
+                } 
+              }));
+              window.dispatchEvent(new CustomEvent('refreshOrders', { detail: { immediate: true } }));
+              window.dispatchEvent(new CustomEvent('refreshTables', { detail: { immediate: true } }));
+            }
+          }, 1000);
         }, 500);
       };
     } catch (error) {

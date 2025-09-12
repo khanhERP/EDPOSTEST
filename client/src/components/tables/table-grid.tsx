@@ -72,6 +72,36 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [orderForEInvoice, setOrderForEInvoice] = useState<any>(null);
   const wsRef = useRef<WebSocket | null>(null); // Ref for WebSocket connection
 
+  // Listen for print completion event
+  useEffect(() => {
+    const handlePrintCompleted = (event: CustomEvent) => {
+      console.log('🍽️ Table Grid: Print completed, closing all modals and refreshing');
+
+      // Close all table-related modals
+      setSelectedTable(null);
+      setOrderDetailsOpen(false);
+      setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptModal(false);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      setSelectedOrder(null);
+      setOrderForPayment(null);
+      setSelectedReceipt(null);
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+    };
+
+    window.addEventListener('printCompleted', handlePrintCompleted as EventListener);
+
+    return () => {
+      window.removeEventListener('printCompleted', handlePrintCompleted as EventListener);
+    };
+  }, [queryClient]);
+
   // Helper function to get product name - defined early to avoid hoisting issues
   const getProductName = (productId: number) => {
     const product = Array.isArray(products)
@@ -957,15 +987,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           const receiptData = {
             ...completedOrder,
             transactionId: `TXN-${Date.now()}`,
+            createdAt: new Date().toISOString(),
+            cashierName: "Table Service",
+            paymentMethod: variables.paymentMethod || "cash",
+            amountReceived: (orderDetailsSubtotal + orderDetailsTax).toString(),
+            change: "0.00",
             items: processedItems,
             subtotal: orderDetailsSubtotal.toString(),
             tax: orderDetailsTax.toString(),
             total: (orderDetailsSubtotal + orderDetailsTax).toString(),
-            paymentMethod: variables.paymentMethod || "cash",
-            amountReceived: (orderDetailsSubtotal + orderDetailsTax).toString(),
-            change: "0.00",
-            cashierName: "Table Service",
-            createdAt: new Date().toISOString(),
+            exactTotal: orderDetailsSubtotal + orderDetailsTax,
+            exactSubtotal: orderDetailsSubtotal,
+            exactTax: orderDetailsTax,
+            tableNumber:
+              getTableInfo(completedOrder.tableId)?.tableNumber || "N/A",
           };
 
           console.log("📄 Table receipt data prepared:", receiptData);
@@ -2119,7 +2154,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           const quantity = Number(item.quantity || 0);
           const product = products.find((p: any) => p.id === item.productId);
 
-          // Calculate subtotal (base price without tax)
+          // Calculate subtotal
           subtotal += basePrice * quantity;
 
           // Use EXACT same tax calculation logic as Order Details
@@ -2907,7 +2942,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           basePrice,
                           taxPerUnit,
                           itemTax,
-                          quantity,
+                          runningTotalTax: totalTax,
                         });
 
                         console.log(`💰 Table Grid - Tax calculated:`, {

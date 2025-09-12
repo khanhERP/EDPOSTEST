@@ -19,6 +19,8 @@ import QRCodeLib from "qrcode";
 import type { Order, Table, Product, OrderItem } from "@shared/schema";
 
 export function OrderManagement() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -45,8 +47,36 @@ export function OrderManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(12);
   const { toast } = useToast();
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
+  const [calculatedTotals, setCalculatedTotals] = useState<Map<number, number>>(new Map());
+
+  // Listen for print completion event
+  useEffect(() => {
+    const handlePrintCompleted = (event: CustomEvent) => {
+      console.log('📋 Order Management: Print completed, closing all modals and refreshing');
+
+      // Close all order-related modals
+      setSelectedOrder(null);
+      setOrderDetailsOpen(false);
+      setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptModal(false);
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      setOrderForPayment(null);
+      setSelectedReceipt(null);
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+    };
+
+    window.addEventListener('printCompleted', handlePrintCompleted as EventListener);
+
+    return () => {
+      window.removeEventListener('printCompleted', handlePrintCompleted as EventListener);
+    };
+  }, [queryClient]);
 
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
@@ -64,7 +94,7 @@ export function OrderManagement() {
   useEffect(() => {
     const handleReceiptModalClosed = (event: CustomEvent) => {
       console.log('🔒 Order Management: Receipt modal closed event received, clearing all states', event.detail);
-      
+
       // Always clear all modal states when receipt modal is closed
       setShowReceiptPreview(false);
       setShowReceiptModal(false);
@@ -75,18 +105,18 @@ export function OrderManagement() {
       setSelectedOrder(null);
       setShowPaymentMethodModal(false);
       setShowEInvoiceModal(false);
-      
+
       // Clear any global preview data
       if (typeof window !== 'undefined') {
         (window as any).previewReceipt = null;
         (window as any).orderForPayment = null;
       }
-      
+
       console.log('✅ Order Management: All receipt modal states cleared');
     };
 
     window.addEventListener('receiptModalClosed', handleReceiptModalClosed as EventListener);
-    
+
     return () => {
       window.removeEventListener('receiptModalClosed', handleReceiptModalClosed as EventListener);
     };
@@ -125,7 +155,7 @@ export function OrderManagement() {
           salesChannel: o.salesChannel,
           tableId: o.tableId,
           storedTotal: o.total,
-          calculatedTotal: o.calculatedTotal
+          calculatedTotal: o.total
         }))
       });
       // Filter to ensure only table orders are returned
@@ -135,9 +165,6 @@ export function OrderManagement() {
       console.error(`❌ DEBUG: Table orders query onError:`, error);
     }
   });
-
-  // Create a map to store calculated totals for orders with items
-  const [calculatedTotals, setCalculatedTotals] = useState<Map<number, number>>(new Map());
 
   const { data: tables } = useQuery({
     queryKey: ['/api/tables'],
@@ -272,7 +299,7 @@ export function OrderManagement() {
         description: 'Không thể hoàn tất thanh toán',
         variant: "destructive",
       });
-      
+
       // Clear states on error too
       setOrderForPayment(null);
       setShowReceiptPreview(false);
@@ -665,7 +692,7 @@ export function OrderManagement() {
   const getOrderTotal = React.useCallback((order: Order) => {
     // Get base total using priority system
     let baseTotal = 0;
-    
+
     // Priority 1: API calculated total (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
@@ -688,7 +715,7 @@ export function OrderManagement() {
     const finalTotal = Math.max(0, baseTotal - discount);
 
     console.log(`💰 Order ${order.orderNumber} (${order.status}) - base: ${baseTotal}, discount: ${discount}, final: ${finalTotal}`);
-    
+
     return finalTotal;
   }, [calculatedTotals]);
 
@@ -855,9 +882,9 @@ export function OrderManagement() {
     try {
       // Step 3: Fetch order items with proper error handling
       console.log('📦 Fetching order items for order:', order.id);
-      
+
       const orderItemsResponse = await apiRequest('GET', `/api/order-items/${order.id}`);
-      
+
       if (!orderItemsResponse.ok) {
         const errorText = await orderItemsResponse.text();
         console.error('❌ API response not ok:', {
@@ -896,7 +923,7 @@ export function OrderManagement() {
 
         const unitPrice = Number(item.unitPrice || 0);
         const quantity = Number(item.quantity || 0);
-        
+
         if (isNaN(unitPrice) || isNaN(quantity) || unitPrice <= 0 || quantity <= 0) {
           console.warn(`⚠️ Invalid item data:`, { unitPrice, quantity, item });
           continue;
@@ -1117,9 +1144,9 @@ export function OrderManagement() {
 
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
-      
+
       let errorMessage = 'Không thể chuẩn bị dữ liệu thanh toán';
-      
+
       if (error instanceof Error) {
         // Use the error message directly if it's in Vietnamese (custom errors)
         if (error.message.includes('Không thể') || error.message.includes('không hợp lệ')) {
@@ -1825,10 +1852,10 @@ export function OrderManagement() {
 
     const handleReceiptModalClosed = (event: CustomEvent) => {
       console.log("🔴 Order Management: Receipt modal closed event received:", event.detail);
-      
+
       if (event.detail?.clearAllStates) {
         console.log("🧹 Order Management: Clearing all modal states to prevent reopening");
-        
+
         // Clear ALL modal states immediately
         setShowReceiptPreview(false);
         setPreviewReceipt(null);
@@ -1843,13 +1870,13 @@ export function OrderManagement() {
         setShowQRPayment(false);
         setPointsPaymentOpen(false);
         setMixedPaymentOpen(false);
-        
+
         // Clear any stored data
         if (typeof window !== 'undefined') {
           (window as any).previewReceipt = null;
           (window as any).orderForPayment = null;
         }
-        
+
         // Force data refresh
         refreshData();
       }
@@ -1857,7 +1884,7 @@ export function OrderManagement() {
 
     const handlePrintCompleted = (event: CustomEvent) => {
       console.log("🖨️ Order Management: Print completed event received - closing all modals like POS");
-      
+
       // Close all modals immediately like POS
       setShowReceiptPreview(false);
       setPreviewReceipt(null);
@@ -1868,13 +1895,13 @@ export function OrderManagement() {
       setSelectedReceipt(null);
       setOrderDetailsOpen(false);
       setSelectedOrder(null);
-      
+
       // Clear any stored data
       if (typeof window !== 'undefined') {
         (window as any).previewReceipt = null;
         (window as any).orderForPayment = null;
       }
-      
+
       // Force data refresh
       refreshData();
     };
@@ -1994,7 +2021,7 @@ export function OrderManagement() {
                         {(() => {
                           // Use getOrderTotal function for consistent calculation
                           const finalTotal = getOrderTotal(order);
-                          
+
                           console.log(`💰 Order ${order.orderNumber} (${order.status}) - final total: ${finalTotal}`);
 
                           if (finalTotal === 0) {

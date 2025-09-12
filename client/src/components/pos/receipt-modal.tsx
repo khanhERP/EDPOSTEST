@@ -179,6 +179,26 @@ export function ReceiptModal({
         printWindow.onload = () => {
           setTimeout(() => {
             printWindow.print();
+            
+            // Auto close after print and refresh data
+            setTimeout(() => {
+              console.log('🖨️ Receipt Modal: Auto-closing after print and refreshing data');
+              
+              // Close this modal
+              onClose();
+              
+              // Dispatch events to close all modals and refresh data
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('printCompleted', { 
+                  detail: { 
+                    closeAllModals: true,
+                    refreshData: true 
+                  } 
+                }));
+                window.dispatchEvent(new CustomEvent('refreshOrders', { detail: { immediate: true } }));
+                window.dispatchEvent(new CustomEvent('refreshTables', { detail: { immediate: true } }));
+              }
+            }, 1000);
           }, 500);
         };
 

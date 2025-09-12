@@ -120,6 +120,35 @@ const getItemType = (item: any): "invoice" | "order" => {
 export default function SalesOrders() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showInvoiceDetails, setShowInvoiceDetails] = useState(false);
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+
+  // Listen for print completion event
+  useEffect(() => {
+    const handlePrintCompleted = (event: CustomEvent) => {
+      console.log('📄 Sales Orders: Print completed, closing all modals and refreshing');
+
+      // Close all modals
+      setSelectedInvoice(null);
+      setShowInvoiceDetails(false);
+      setShowPublishDialog(false);
+      setShowCancelDialog(false);
+      setShowPrintDialog(false);
+      setShowEInvoiceModal(false);
+      setPrintReceiptData(null);
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+    };
+
+    window.addEventListener('printCompleted', handlePrintCompleted as EventListener);
+
+    return () => {
+      window.removeEventListener('printCompleted', handlePrintCompleted as EventListener);
+    };
+  }, [queryClient]);
 
   // Auto-refresh when new orders are created
   useEffect(() => {
