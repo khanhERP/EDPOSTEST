@@ -2448,7 +2448,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           {(() => {
                             const total = Math.floor(Number(activeOrder.total || 0));
                             const discount = Math.floor(Number(activeOrder.discount || 0));
+                            
+                            // For active orders (not paid/cancelled), show total without subtracting discount
+                            if (activeOrder.status !== 'paid' && activeOrder.status !== 'cancelled') {
+                              console.log(`💰 Table active order ${activeOrder.orderNumber} - showing total: ${total} (discount ${discount} not subtracted)`);
+                              return total.toLocaleString("vi-VN");
+                            }
+                            
+                            // For paid orders, subtract discount to show final amount paid
                             const finalTotal = Math.max(0, total - discount);
+                            console.log(`💰 Table ${activeOrder.status} order ${activeOrder.orderNumber} - final: ${finalTotal}`);
                             return finalTotal.toLocaleString("vi-VN");
                           })()} ₫
                         </div>

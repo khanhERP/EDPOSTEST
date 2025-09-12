@@ -126,10 +126,10 @@ export function OrderDialog({
             existingItems.forEach((item) => {
               const unitPrice = Number(item.unitPrice || 0);
               const quantity = Number(item.quantity || 0);
-              
+
               // Subtotal (tiền tạm tính)
               totalSubtotal += unitPrice * quantity;
-              
+
               // Tax calculation for existing items
               const product = products?.find((p: Product) => p.id === item.productId);
               if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
@@ -145,10 +145,10 @@ export function OrderDialog({
             cart.forEach((item) => {
               const unitPrice = parseFloat(item.product.price);
               const quantity = item.quantity;
-              
+
               // Subtotal (tiền tạm tính)
               totalSubtotal += unitPrice * quantity;
-              
+
               // Tax calculation for new items
               const product = products?.find((p: Product) => p.id === item.product.id);
               if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
@@ -326,27 +326,47 @@ export function OrderDialog({
   };
 
   const calculateTotal = () => {
-    // Tính subtotal (tiền tạm tính - trước thuế) cho cart items
-    const cartSubtotal = cart.reduce(
-      (total, item) => {
-        const preTaxPrice = parseFloat(item.product.price); // Giá trước thuế
-        const itemSubtotal = preTaxPrice * item.quantity;
-        return total + itemSubtotal;
-      },
-      0,
-    );
+    let totalSubtotal = 0;
+    let totalTax = 0;
 
-    // In edit mode, add existing items subtotal (pre-tax)
-    const existingSubtotal =
-      mode === "edit" && existingItems.length > 0
-        ? existingItems.reduce((total, item) => {
-            // Use unitPrice * quantity for existing items (tiền tạm tính)
-            const preTaxAmount = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-            return total + preTaxAmount;
-          }, 0)
-        : 0;
+    // Add existing order items if in edit mode
+    if (mode === "edit" && existingOrderItems && Array.isArray(existingOrderItems)) {
+      existingOrderItems.forEach(item => {
+        const unitPrice = parseFloat(item.unitPrice);
+        const quantity = parseInt(item.quantity);
 
-    return cartSubtotal + existingSubtotal; // Trả về subtotal (tiền tạm tính)
+        // Add to subtotal
+        totalSubtotal += unitPrice * quantity;
+
+        // Calculate tax for existing items
+        const product = products?.find((p: Product) => p.id === item.productId);
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+          totalTax += taxPerUnit * quantity;
+        }
+      });
+    }
+
+    // Add new cart items
+    cart.forEach((item) => {
+      const unitPrice = parseFloat(item.product.price);
+      const quantity = item.quantity;
+
+      // Add to subtotal
+      totalSubtotal += unitPrice * quantity;
+
+      // Calculate tax for new items
+      const product = products?.find((p: Product) => p.id === item.product.id);
+      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        const afterTaxPrice = parseFloat(product.afterTaxPrice);
+        const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+        totalTax += taxPerUnit * quantity;
+      }
+    });
+
+    // Return total INCLUDING tax but NOT subtracting discount (show full order value)
+    return totalSubtotal + totalTax;
   };
 
   const calculateTax = () => {
@@ -392,7 +412,7 @@ export function OrderDialog({
 
 
   const calculateGrandTotal = () => {
-    const beforeDiscount = calculateTotal() + calculateTax();
+    const beforeDiscount = calculateTotal(); // calculateTotal now includes tax
     return Math.max(0, beforeDiscount - discount);
   };
 

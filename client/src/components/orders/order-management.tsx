@@ -984,7 +984,7 @@ export function OrderManagement() {
           description: 'Đơn hàng đã được thanh toán thành công',
         });
 
-        // DO NOT show receipt modal automatically - prevent duplicate display
+        // DO NOT show receipt modal automatically after payment completion - prevent duplicate display
         console.log('✅ Order Management: Payment completed, no automatic receipt display');
 
       } catch (error) {
@@ -1323,8 +1323,8 @@ export function OrderManagement() {
       console.log(`🔄 Preloading totals for ${preloadOrders.length} orders around current page ${currentPage}`);
 
       // Batch preload in background with low priority
-      const preloadBatch = preloadOrders.filter(order => 
-        !calculatedTotals.has(order.id) && 
+      const preloadBatch = preloadOrders.filter(order =>
+        !calculatedTotals.has(order.id) &&
         order.status !== 'cancelled' &&
         !currentOrders.some(currentOrder => currentOrder.id === order.id) // Don't duplicate current page
       );
@@ -1739,52 +1739,51 @@ export function OrderManagement() {
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
                           const discount = Math.floor(Number(order.discount || 0));
-                          
-                          // CRITICAL: For all final states (paid, cancelled), ALWAYS use stored total minus discount
-                          if (order.status === 'paid' || order.status === 'cancelled') {
+
+                          // For paid orders, display stored total minus discount (for completed transactions)
+                          if (order.status === 'paid') {
                             const storedTotal = Math.floor(Number(order.total || 0));
                             const finalTotal = Math.max(0, storedTotal - discount);
-                            console.log(`💰 ${order.status.toUpperCase()} Order ${order.orderNumber} - stored total: ${storedTotal}, discount: ${discount}, final: ${finalTotal}`);
-
+                            console.log(`💰 PAID Order ${order.orderNumber} - stored total: ${storedTotal}, discount: ${discount}, final: ${finalTotal}`);
                             return formatCurrency(finalTotal);
                           }
 
-                          // For active orders only, use calculation logic minus discount
+                          // For cancelled orders, show original total without discount
+                          if (order.status === 'cancelled') {
+                            const storedTotal = Math.floor(Number(order.total || 0));
+                            console.log(`💰 CANCELLED Order ${order.orderNumber} - showing original total: ${storedTotal}`);
+                            return formatCurrency(storedTotal);
+                          }
+
+                          // For all active orders (pending, confirmed, etc.), show total WITHOUT subtracting discount
                           const apiCalculatedTotal = (order as any).calculatedTotal;
                           const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
                           const hasCachedTotal = calculatedTotals.has(order.id);
 
-                          // Priority 1: Use API calculated total if available minus discount
+                          // Priority 1: Use API calculated total (no discount subtraction for active orders)
                           if (hasApiTotal) {
                             const displayTotal = Math.floor(Number(apiCalculatedTotal));
-                            const finalTotal = Math.max(0, displayTotal - discount);
-                            console.log(`💰 Active order ${order.orderNumber} - API total: ${displayTotal}, discount: ${discount}, final: ${finalTotal}`);
-                            return formatCurrency(finalTotal);
+                            console.log(`💰 Active order ${order.orderNumber} - API total: ${displayTotal} (discount ${discount} not subtracted)`);
+                            return formatCurrency(displayTotal);
                           }
 
-                          // Priority 2: Use cached calculated total minus discount
+                          // Priority 2: Use cached calculated total (no discount subtraction for active orders)
                           if (hasCachedTotal) {
                             const cachedTotal = calculatedTotals.get(order.id)!;
-                            const finalTotal = Math.max(0, cachedTotal - discount);
-                            console.log(`💰 Active order ${order.orderNumber} - cached total: ${cachedTotal}, discount: ${discount}, final: ${finalTotal}`);
-                            return formatCurrency(finalTotal);
+                            console.log(`💰 Active order ${order.orderNumber} - cached total: ${cachedTotal} (discount ${discount} not subtracted)`);
+                            return formatCurrency(cachedTotal);
                           }
 
-                          // Priority 3: Use stored total as fallback minus discount
+                          // Priority 3: Use stored total as fallback (no discount subtraction for active orders)
                           const storedTotal = Math.floor(Number(order.total || 0));
                           if (storedTotal > 0) {
-                            const finalTotal = Math.max(0, storedTotal - discount);
-                            console.log(`💰 Active order ${order.orderNumber} - stored fallback: ${storedTotal}, discount: ${discount}, final: ${finalTotal}`);
-                            return formatCurrency(finalTotal);
+                            console.log(`💰 Active order ${order.orderNumber} - stored fallback: ${storedTotal} (discount ${discount} not subtracted)`);
+                            return formatCurrency(storedTotal);
                           }
 
                           // Show loading state only if no total is available
-                          console.log(`💰 Active order ${order.orderNumber} - showing loading state`);
-                          return (
-                            <span className="text-sm text-gray-500 italic animate-pulse">
-                              Đang tính...
-                            </span>
-                          );
+                          console.log(`💰 Active order ${order.orderNumber} - loading...`);
+                          return <span className="text-gray-400">Đang tính...</span>;
                         })()}
                       </span>
                     </div>
@@ -2451,7 +2450,7 @@ export function OrderManagement() {
                       const discount = Math.floor(Number(selectedOrder.discount || 0));
                       const finalTotal = Math.max(0, orderTotal - discount);
                       const customerPointsValue = (selectedCustomer.points || 0) * 1000;
-                      
+
                       return customerPointsValue < finalTotal && (
                         <p className="text-sm text-orange-600 mt-1">
                           Cần thanh toán thêm: {(finalTotal - customerPointsValue).toLocaleString()} ₫
