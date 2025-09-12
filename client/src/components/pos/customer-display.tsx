@@ -333,7 +333,7 @@ export function CustomerDisplay({
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center py-4 border-t-2 border-green-200">
+                    <div className="flex items-center justify-between py-4 border-t-2 border-green-200 gap-x-4">
                       <span className="text-xl font-bold text-gray-800">
                         Tổng cộng:
                       </span>
