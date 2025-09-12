@@ -183,7 +183,6 @@ export function OrderDialog({
             tax: totalTax.toString(),
             discount: discount.toString(),
             total: finalTotal.toString(), // This saves the total AFTER discount subtraction
-            skipRecalculation: true, // Prevent API from recalculating - use our provided totals
           });
 
           const updateResult = await updateResponse.json();
