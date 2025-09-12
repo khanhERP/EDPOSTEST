@@ -1,0 +1,39 @@
+🔍 Order Management: E-invoice status for order 518 : 
+Object {einvoiceStatus: 0, type: "number"}
+💰 ACTIVE Order ORD-1757648865073 (served) - using calculation priority
+💰 Priority 2 - Cached calculated total for ORD-1757648865073: 974500
+💰 ACTIVE Order ORD-1757648865073 (served) - using calculation priority
+💰 Priority 2 - Cached calculated total for ORD-1757648865073: 974500
+❌ Receipt Modal: Modal is closed
+🔍 PAYMENT MODAL PROPS DEBUG: 
+Object {isOpen: false, total: 0, cartItems: 0, orderForPayment: null, orderForPaymentId: undefined, …}
+⚠️ WARNING: orderForPayment is undefined, using fallback
+🔍 Payment Modal Debug - Using fallback order: 
+Object {isOpen: false, total: 0, cartItems: 0, orderForPayment: null, orderInfo: {…}, …}
+✅ PAYMENT MODAL: orderInfo is valid 
+Object {id: "temp-1757654328513", status: undefined, tableId: undefined, total: 0, timestamp: "2025-09-12T05:18:48.513Z"}
+All payment methods: 
+(9) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Enabled payment methods: 
+(2) [{…}, {…}]
+💰 Payment Modal - Total calculation with discount: 
+Object {baseTotal: 0, discountAmount: 0, finalTotal: 0, receiptDiscount: undefined, orderForPaymentDiscount: undefined, …}
+🔍 PAYMENT MODAL RENDER DEBUG: 
+Object {showEInvoice: false, selectedPaymentMethod: "", shouldRenderEInvoice: false, showReceiptModal: false, receiptDataForModal: null, …}
+❌ Receipt Modal: Modal is closed
+🔄 Preloading totals for 24 orders around current page 1
+🧮 Current page orders changed, triggering total calculations for 12 displayed orders (page 1)
+⏭️ SKIPPING calculation for paid order ORD-1757643159375 - stored total is final
+⏭️ SKIPPING calculation for paid order ORD-1757642056217 - stored total is final
+⏭️ SKIPPING calculation for paid order ORD-1757641666034 - stored total is final
+⏭️ SKIPPING calculation for paid order ORD-1757494616293 - stored total is final
+⏭️ SKIPPING calculation for paid order ORD-1757490064594 - stored total is final
+🎯 Order Management: Payment button clicked - preparing data with discount handling
+💰 Order Management: Using memoized calculation: 
+Object {calculatedSubtotal: 895000, calculatedTax: 79500, baseTotal: 974500, orderDiscount: "385400.00"}
+💰 Order Management: Final calculation (matching table-grid): 
+Object {baseSubtotal: 895000, baseTax: 79500, baseTotal: 974500, discountAmount: 385400, finalTotal: 589100, …}
+💰 Order Details: Receipt preview created with discount details: 
+Object {originalOrderDiscount: "385400.00", calculatedDiscount: 385400, baseTotal: 974500, finalTotal: 589100, receiptDiscount: "385400", …}
+Cannot access 'orderForPaymentData' before initialization
+Cannot access 'orderForPaymentData' before initialization
