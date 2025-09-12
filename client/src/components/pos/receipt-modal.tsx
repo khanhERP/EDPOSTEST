@@ -669,15 +669,45 @@ export function ReceiptModal({
                   // Calculate tax from individual items if they have afterTaxPrice
                   let totalTax = 0;
                   cartItems.forEach((item) => {
+                    console.log('🔍 Receipt Modal - Tax calculation for item:', {
+                      name: item.name,
+                      basePrice: item.price,
+                      afterTaxPrice: item.afterTaxPrice,
+                      quantity: item.quantity,
+                      taxRate: item.taxRate
+                    });
+
                     if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
                       const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
                       const afterTaxPrice = parseFloat(item.afterTaxPrice);
-                      const taxPerUnit = afterTaxPrice - basePrice;
-                      totalTax += Math.floor(taxPerUnit * item.quantity);
+                      const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+                      const itemTax = Math.floor(taxPerUnit * item.quantity);
+                      totalTax += itemTax;
+                      
+                      console.log('💸 Tax calculated using afterTaxPrice:', {
+                        basePrice,
+                        afterTaxPrice,
+                        taxPerUnit,
+                        quantity: item.quantity,
+                        itemTax
+                      });
+                    } else if (item.taxRate && parseFloat(item.taxRate) > 0) {
+                      // Fallback to taxRate if afterTaxPrice not available
+                      const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                      const taxRate = parseFloat(item.taxRate) / 100;
+                      const itemTax = Math.floor(basePrice * taxRate * item.quantity);
+                      totalTax += itemTax;
+                      
+                      console.log('💸 Tax calculated using taxRate:', {
+                        basePrice,
+                        taxRate: item.taxRate,
+                        quantity: item.quantity,
+                        itemTax
+                      });
                     }
                   });
 
-                  const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
+                  const tax = totalTax;
 
                   // Check for order-level discount first (from orderForPayment or parent props)
                   let orderDiscount = 0;
