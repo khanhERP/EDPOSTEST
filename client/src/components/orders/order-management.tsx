@@ -1740,50 +1740,31 @@ export function OrderManagement() {
                         {(() => {
                           const discount = Math.floor(Number(order.discount || 0));
 
-                          // For paid orders, display stored total minus discount (for completed transactions)
-                          if (order.status === 'paid') {
-                            const storedTotal = Math.floor(Number(order.total || 0));
-                            const finalTotal = Math.max(0, storedTotal - discount);
-                            console.log(`💰 PAID Order ${order.orderNumber} - stored total: ${storedTotal}, discount: ${discount}, final: ${finalTotal}`);
-                            return formatCurrency(finalTotal);
-                          }
+                          // For all orders, show final total after discount subtraction
+                          let baseTotal = 0;
 
-                          // For cancelled orders, show original total without discount
-                          if (order.status === 'cancelled') {
-                            const storedTotal = Math.floor(Number(order.total || 0));
-                            console.log(`💰 CANCELLED Order ${order.orderNumber} - showing original total: ${storedTotal}`);
-                            return formatCurrency(storedTotal);
-                          }
-
-                          // For all active orders (pending, confirmed, etc.), show total WITHOUT subtracting discount
+                          // Determine base total to use
                           const apiCalculatedTotal = (order as any).calculatedTotal;
                           const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
                           const hasCachedTotal = calculatedTotals.has(order.id);
 
-                          // Priority 1: Use API calculated total (no discount subtraction for active orders)
                           if (hasApiTotal) {
-                            const displayTotal = Math.floor(Number(apiCalculatedTotal));
-                            console.log(`💰 Active order ${order.orderNumber} - API total: ${displayTotal} (discount ${discount} not subtracted)`);
-                            return formatCurrency(displayTotal);
+                            baseTotal = Math.floor(Number(apiCalculatedTotal));
+                          } else if (hasCachedTotal) {
+                            baseTotal = calculatedTotals.get(order.id)!;
+                          } else {
+                            baseTotal = Math.floor(Number(order.total || 0));
                           }
 
-                          // Priority 2: Use cached calculated total (no discount subtraction for active orders)
-                          if (hasCachedTotal) {
-                            const cachedTotal = calculatedTotals.get(order.id)!;
-                            console.log(`💰 Active order ${order.orderNumber} - cached total: ${cachedTotal} (discount ${discount} not subtracted)`);
-                            return formatCurrency(cachedTotal);
+                          // Always subtract discount to show final total
+                          const finalTotal = Math.max(0, baseTotal - discount);
+                          console.log(`💰 Order ${order.orderNumber} (${order.status}) - base: ${baseTotal}, discount: ${discount}, final: ${finalTotal}`);
+
+                          if (baseTotal === 0) {
+                            return <span className="text-gray-400">Đang tính...</span>;
                           }
 
-                          // Priority 3: Use stored total as fallback (no discount subtraction for active orders)
-                          const storedTotal = Math.floor(Number(order.total || 0));
-                          if (storedTotal > 0) {
-                            console.log(`💰 Active order ${order.orderNumber} - stored fallback: ${storedTotal} (discount ${discount} not subtracted)`);
-                            return formatCurrency(storedTotal);
-                          }
-
-                          // Show loading state only if no total is available
-                          console.log(`💰 Active order ${order.orderNumber} - loading...`);
-                          return <span className="text-gray-400">Đang tính...</span>;
+                          return formatCurrency(finalTotal);
                         })()}
                       </span>
                     </div>
