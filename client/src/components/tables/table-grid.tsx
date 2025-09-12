@@ -460,23 +460,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       // If specific table ID is provided, get detailed order items for that table
       if (specificTableId) {
         const tableOrders = activeOrders.filter(order => order.tableId === specificTableId);
-        
+
         // If table has orders, get detailed items
         if (tableOrders.length > 0) {
           console.log("📡 Table Grid: Getting detailed items for table", specificTableId, "with", tableOrders.length, "orders");
-          
+
           try {
             // Get detailed order items for all orders of this table
             for (const order of tableOrders) {
               console.log("📡 Table Grid: Fetching items for order", order.id);
-              
+
               // Fetch order items for this order
               const response = await apiRequest("GET", `/api/order-items/${order.id}`);
               const orderItemsData = await response.json();
-              
+
               if (Array.isArray(orderItemsData) && orderItemsData.length > 0) {
                 console.log("📡 Table Grid: Found", orderItemsData.length, "items for order", order.id);
-                
+
                 // Convert order items to cart format with full product details
                 const orderCartItems = orderItemsData.map((item: any) => {
                   const basePrice = Number(item.unitPrice || 0);
@@ -484,11 +484,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   const product = Array.isArray(products) 
                     ? products.find((p: any) => p.id === item.productId)
                     : null;
-                  
+
                   // Calculate subtotal for this item
                   const itemSubtotal = basePrice * quantity;
                   orderSubtotal += itemSubtotal;
-                  
+
                   // Calculate tax for this item using same logic as order details
                   let itemTax = 0;
                   if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
@@ -497,10 +497,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     itemTax = Math.floor(taxPerUnit * quantity);
                     orderTax += itemTax;
                   }
-                  
+
                   const itemTotal = itemSubtotal + itemTax;
                   orderTotal += itemTotal;
-                  
+
                   return {
                     id: item.id,
                     productId: item.productId,
@@ -523,21 +523,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     }
                   };
                 });
-                
+
                 cartItems.push(...orderCartItems);
               }
             }
-            
+
             console.log("📡 Table Grid: Total cart items for table", specificTableId, ":", cartItems.length);
             console.log("📡 Table Grid: Calculated totals:", {
               subtotal: orderSubtotal,
               tax: orderTax,
               total: orderTotal
             });
-            
+
           } catch (error) {
             console.error("📡 Table Grid: Error fetching detailed order items:", error);
-            
+
             // Fallback to basic order data if detailed fetch fails
             cartItems = tableOrders.map(order => ({
               id: order.id,
@@ -558,7 +558,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 taxRate: order.taxRate || "0"
               }
             }));
-            
+
             // Use stored totals as fallback
             tableOrders.forEach(order => {
               orderSubtotal += parseFloat(order.subtotal || "0");
@@ -1416,7 +1416,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     return latestOrder;
   };
 
-  
+
 
   // Helper function to get table info
   const getTableInfo = (tableId: number) => {
@@ -2744,7 +2744,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
                         const itemTax = Math.floor(taxPerUnit * quantity);
                         totalTax += itemTax;
-                        
+
                         console.log(`💰 Table Grid - Tax details:`, {
                           productTaxRate: product?.taxRate || 0,
                           afterTaxPrice,
@@ -2773,7 +2773,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   }
 
                   const grandTotal = subtotal + totalTax;
-                  
+
                   // Get discount amount from selected order
                   const discountAmount = selectedOrder ? Number(selectedOrder.discount || 0) : 0;
                   const finalTotal = Math.max(0, grandTotal - discountAmount);
@@ -2882,9 +2882,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           price: item.unitPrice,
                           total: item.total,
                           sku: item.productSku || `SP${item.productId}`,
-                          taxRate: product?.taxRate
-                            ? parseFloat(product.taxRate)
-                            : 10,
+                          taxRate: (() => {
+                            const product = Array.isArray(products)
+                              ? products.find((p: any) => p.id === item.productId)
+                              : null;
+                            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+                          })(),
                         };
                       });
 
@@ -3181,7 +3184,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 title: 'Thành công',
                 description: data.publishLater
                   ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
-                  : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
+                  : 'Đơn hàng đã được thanh toán thành công',
               });
 
               // Always show receipt modal after successful payment - prioritize receipt display
@@ -3476,7 +3479,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   <span>{t("orders.pointsPaymentDialog.totalAmount")}</span>
                   <span className="font-medium">
                     {(() => {
-                      // Calculate correct total from order items like other parts of the component
+                      // Calculate correct total from order items for payment calculation
                       if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
                         let subtotal = 0;
                         let totalTax = 0;
