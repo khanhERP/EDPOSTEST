@@ -952,7 +952,7 @@ export function ShoppingCart({
                 {Math.round(tax).toLocaleString("vi-VN")} ₫
               </span>
             </div>
-            
+
             {/* Discount Input */}
             <div className="space-y-2">
               <Label className="text-sm font-medium pos-text-primary">
@@ -963,23 +963,21 @@ export function ShoppingCart({
                 value={discount > 0 ? discount.toLocaleString('vi-VN') : ''}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^\d]/g, ''); // Chỉ giữ lại số
-                  const numericValue = parseFloat(value) || 0;
                   setDiscountAmount(value || "0");
-                  setDiscount(numericValue);
                 }}
                 placeholder="0"
                 className="text-right"
               />
               {parseFloat(discountAmount || "0") > 0 && (
-                <div className="flex justify-between text-sm text-red-600 bg-red-50 p-2 rounded">
-                  <span className="font-medium">Giảm giá:</span>
+                <div className="flex justify-between text-sm text-red-600">
+                  <span>Giảm giá:</span>
                   <span className="font-bold">
                     -{parseFloat(discountAmount || "0").toLocaleString("vi-VN")} ₫
                   </span>
                 </div>
               )}
             </div>
-            
+
             <div className="border-t pt-2">
               <div className="flex justify-between">
                 <span className="text-lg font-bold pos-text-primary">
