@@ -48,6 +48,7 @@ export function ShoppingCart({
   const [paymentMethod, setPaymentMethod] = useState<string>("bankTransfer");
   const [amountReceived, setAmountReceived] = useState<string>("");
   const [discountAmount, setDiscountAmount] = useState<string>("");
+  const [discount, setDiscount] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTableSelection, setShowTableSelection] = useState(false);
   const [currentOrderForPayment, setCurrentOrderForPayment] = useState<any>(null);
@@ -955,91 +956,25 @@ export function ShoppingCart({
             {/* Discount Input */}
             <div className="space-y-2">
               <Label className="text-sm font-medium pos-text-primary">
-                Giảm giá
+                Giảm giá (₫)
               </Label>
-              <div className="relative">
-                <Input
-                  type="text"
-                  placeholder="0 ₫"
-                  value={(() => {
-                    if (!discountAmount || discountAmount === "0") return "";
-                    const numericValue = parseFloat(discountAmount);
-                    return numericValue.toLocaleString("vi-VN", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }) + " ₫";
-                  })()}
-                  onChange={(e) => {
-                    // Remove all non-numeric characters
-                    const cleaned = e.target.value.replace(/[^\d]/g, "");
-                    setDiscountAmount(cleaned || "0");
-                  }}
-                  onFocus={(e) => {
-                    // On focus, show clean number for editing
-                    if (discountAmount && discountAmount !== "0") {
-                      e.target.value = discountAmount;
-                      e.target.setSelectionRange(0, e.target.value.length);
-                    } else {
-                      e.target.value = "";
-                    }
-                  }}
-                  onBlur={(e) => {
-                    // On blur, reformat with currency
-                    const value = e.target.value.replace(/[^\d]/g, "");
-                    const numericValue = parseFloat(value || "0");
-                    if (numericValue > 0) {
-                      setDiscountAmount(value);
-                      e.target.value = numericValue.toLocaleString("vi-VN", {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      }) + " ₫";
-                    } else {
-                      setDiscountAmount("0");
-                      e.target.value = "";
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    // Allow navigation and editing keys
-                    const allowedKeys = [
-                      8,  // Backspace
-                      9,  // Tab
-                      13, // Enter
-                      27, // Escape
-                      46, // Delete
-                      35, // End
-                      36, // Home
-                      37, // Left Arrow
-                      38, // Up Arrow
-                      39, // Right Arrow
-                      40  // Down Arrow
-                    ];
-
-                    // Allow all control key combinations
-                    if (e.ctrlKey || e.metaKey || allowedKeys.includes(e.keyCode)) {
-                      return;
-                    }
-
-                    // Only allow numeric keys (0-9) from both main keyboard and numpad
-                    const isNumeric = (e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105);
-                    
-                    if (!isNumeric) {
-                      e.preventDefault();
-                    }
-                  }}
-                  className="text-right pr-8 font-medium"
-                />
-                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-sm">
-                  {(!discountAmount || discountAmount === "0") && "₫"}
-                </span>
-              </div>
+              <Input
+                type="text"
+                value={discount > 0 ? discount.toLocaleString('vi-VN') : ''}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, ''); // Chỉ giữ lại số
+                  const numericValue = parseFloat(value) || 0;
+                  setDiscountAmount(value || "0");
+                  setDiscount(numericValue);
+                }}
+                placeholder="0"
+                className="text-right"
+              />
               {parseFloat(discountAmount || "0") > 0 && (
                 <div className="flex justify-between text-sm text-red-600 bg-red-50 p-2 rounded">
                   <span className="font-medium">Giảm giá:</span>
                   <span className="font-bold">
-                    -{parseFloat(discountAmount || "0").toLocaleString("vi-VN", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })} ₫
+                    -{parseFloat(discountAmount || "0").toLocaleString("vi-VN")} ₫
                   </span>
                 </div>
               )}
