@@ -1039,7 +1039,7 @@ export function SalesChartReport() {
                                       )}
                                       <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.subtotal || 0),
+                                          Math.max(0, Number(transaction.subtotal || 0) - Number(transaction.discount || 0)),
                                         )}
                                       </TableCell>
                                       <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
