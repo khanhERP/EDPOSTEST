@@ -1051,9 +1051,11 @@ export function PaymentMethodModal({
   const handleCashPaymentComplete = async () => {
     const receivedAmount = parseFloat(cashAmountInput || "0");
 
-    // Use exact total with proper priority
+    // Use exact total from previous screen
     const orderTotal =
       receipt?.exactTotal ??
+      orderForPayment?.exactTotal ??
+      orderForPayment?.total ??
       orderInfo?.exactTotal ??
       orderInfo?.total ??
       total ??
