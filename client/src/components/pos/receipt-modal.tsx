@@ -628,7 +628,13 @@ export function ReceiptModal({
               <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
+                          {(() => {
+                            const dbSubtotal = parseFloat(receipt.subtotal || "0");
+                            const dbTax = parseFloat(receipt.tax || "0");
+                            const dbDiscount = parseFloat(receipt.discount || "0");
+                            const actualTotal = Math.round(dbSubtotal + dbTax - dbDiscount);
+                            return actualTotal.toLocaleString("vi-VN");
+                          })()} ₫
                         </span>
                       </div>
             </div>
