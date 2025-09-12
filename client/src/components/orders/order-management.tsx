@@ -825,6 +825,14 @@ export function OrderManagement() {
           return;
         }
 
+        console.log(`📊 Order Payment: Processing item ${item.id}:`, {
+          productId: item.productId,
+          productName: item.productName,
+          unitPrice,
+          quantity,
+          productFound: !!product
+        });
+
         // Calculate subtotal (base price * quantity) - EXACT same as Order Details
         const itemSubtotal = unitPrice * quantity;
         subtotal += itemSubtotal;
@@ -835,12 +843,35 @@ export function OrderManagement() {
           const taxPerUnit = afterTaxPrice - unitPrice;
           const itemTax = taxPerUnit * quantity;
           taxAmount += itemTax;
+
+          console.log(`💸 Order Payment: Tax calculated for ${item.productName}:`, {
+            afterTaxPrice,
+            unitPrice,
+            taxPerUnit,
+            quantity,
+            itemTax
+          });
         }
       });
 
       const baseTotal = Math.floor(subtotal + taxAmount);
+
+      console.log(`💰 Order Payment: Calculation results (Order Details logic):`, {
+        subtotal: subtotal,
+        tax: taxAmount,
+        baseTotal: baseTotal,
+        itemsProcessed: orderItemsData.length
+      });
+
+      // Step 3: Apply discount exactly like Order Details
       const discountAmount = Math.floor(Number(order.discount || 0));
       const finalTotal = Math.max(0, baseTotal - discountAmount);
+
+      console.log('💰 Order Payment: Final calculation with discount:', {
+        baseTotal: baseTotal,
+        discountAmount: discountAmount,
+        finalTotal: finalTotal
+      });
 
       // Validate calculated total
       if (finalTotal < 0) {
@@ -853,7 +884,7 @@ export function OrderManagement() {
         return;
       }
 
-      // Step 3: Create processed items exactly like Order Details
+      // Step 4: Create processed items exactly like Order Details
       const processedItems = orderItemsData.map((item: any) => {
         const unitPrice = Number(item.unitPrice || 0);
         const quantity = Number(item.quantity || 0);
@@ -873,7 +904,57 @@ export function OrderManagement() {
         };
       });
 
-      // Step 4: Create unified order data for payment modal (consistent with all tabs)
+      // Step 5: Create receipt preview data matching Order Details display with proper discount
+      const receiptPreview = {
+        id: order.id,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        tableId: order.tableId,
+        customerCount: order.customerCount,
+        customerName: order.customerName,
+        items: processedItems.map(item => ({
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity.toString(),
+          price: item.unitPrice,
+          total: (item.unitPrice * item.quantity).toString(),
+          sku: item.sku,
+          taxRate: item.taxRate,
+        })),
+        orderItems: processedItems,
+        subtotal: Math.floor(subtotal).toString(),
+        tax: Math.floor(taxAmount).toString(),
+        discount: discountAmount.toString(),
+        total: Math.floor(baseTotal).toString(), // Base total BEFORE discount
+        exactTotal: Math.floor(finalTotal), // Final total AFTER discount
+        exactSubtotal: Math.floor(subtotal),
+        exactTax: Math.floor(taxAmount),
+        exactDiscount: discountAmount,
+        paymentMethod: 'preview',
+        amountReceived: Math.floor(finalTotal).toString(),
+        change: '0.00',
+        cashierName: 'Order Management',
+        createdAt: new Date().toISOString(),
+        transactionId: `TXN-PREVIEW-${Date.now()}`,
+        // Table info
+        tableName: order.tableId ? `Bàn T${order.tableId}` : 'Bàn không xác định',
+        storeLocation: 'Cửa hàng chính',
+        storeAddress: '서울시 강남구 테헤란로 123',
+        storePhone: '02-1234-5678'
+      };
+
+      console.log('💰 Order Management: Receipt preview created with discount:', {
+        baseTotal: baseTotal,
+        discountAmount: discountAmount,
+        finalTotal: finalTotal,
+        receiptTotal: receiptPreview.total,
+        receiptExactTotal: receiptPreview.exactTotal,
+        receiptDiscount: receiptPreview.discount,
+        receiptExactDiscount: receiptPreview.exactDiscount
+      });
+
+      // Step 7: Create order data for payment flow matching Order Details with proper discount
       const orderForPaymentData = {
         ...order,
         id: order.id,
@@ -883,35 +964,55 @@ export function OrderManagement() {
         tax: Math.floor(taxAmount).toString(),
         discount: discountAmount.toString(),
         total: Math.floor(finalTotal).toString(), // Final total after discount for payment
+        baseTotal: Math.floor(baseTotal), // Store base total before discount
         exactSubtotal: Math.floor(subtotal),
         exactTax: Math.floor(taxAmount),
         exactDiscount: discountAmount,
         exactTotal: Math.floor(finalTotal),
-        tableNumber: order.tableId ? `T${order.tableId}` : 'N/A',
-        salesChannel: 'table' // Mark as table order
+        tableNumber: order.tableId ? `T${order.tableId}` : 'N/A'
       };
 
-      console.log('💰 Order Management: Unified payment data created:', {
-        orderId: orderForPaymentData.id,
-        subtotal: orderForPaymentData.exactSubtotal,
-        tax: orderForPaymentData.exactTax,
-        discount: orderForPaymentData.exactDiscount,
-        total: orderForPaymentData.exactTotal,
-        salesChannel: orderForPaymentData.salesChannel
+      console.log('💰 Order Management: Order for payment created with discount:', {
+        orderDiscount: orderForPaymentData.discount,
+        orderExactDiscount: orderForPaymentData.exactDiscount,
+        orderTotal: orderForPaymentData.total,
+        orderExactTotal: orderForPaymentData.exactTotal,
+        orderBaseTotal: orderForPaymentData.baseTotal
       });
 
-      // Step 5: Force close any existing modals first to prevent conflicts
+      console.log('✅ Order Management: Payment data prepared matching Order Details:', {
+        receiptTotal: receiptPreview.total,
+        receiptExactTotal: receiptPreview.exactTotal,
+        receiptDiscount: receiptPreview.discount,
+        receiptExactDiscount: receiptPreview.exactDiscount,
+        orderTotal: orderForPaymentData.total,
+        orderExactTotal: orderForPaymentData.exactTotal,
+        orderId: orderForPaymentData.id
+      });
+
+      // Step 8: Force close any existing modals first to prevent conflicts
       setOrderDetailsOpen(false);
+      setShowPaymentMethodModal(false);
       setShowEInvoiceModal(false);
       setShowReceiptModal(false);
       setSelectedReceipt(null);
 
-      // Step 6: Set unified state and open payment modal directly
+      // Wait a moment for state updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Step 9: Set new state for receipt preview
       setSelectedOrder(order);
       setOrderForPayment(orderForPaymentData);
-      setShowPaymentMethodModal(true);
-
-      console.log('🚀 Order Management: Opening payment method modal with unified data');
+      setPreviewReceipt(receiptPreview);
+      
+      // Force the receipt preview modal to open
+      console.log('🚀 Order Management: Opening receipt preview modal with data:', {
+        hasPreviewReceipt: !!receiptPreview,
+        hasOrderForPayment: !!orderForPaymentData,
+        receiptId: receiptPreview.id
+      });
+      
+      setShowReceiptPreview(true);
 
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);

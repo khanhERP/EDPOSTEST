@@ -2020,40 +2020,62 @@ export function PaymentMethodModal({
               });
             }}
             total={(() => {
-              console.log('💰 PaymentMethodModal: Determining final total with priority check');
+              // Debug current data to understand the issue
+              console.log(
+                "🔥RENDERING E-INVOICE MODAL - Payment Modal EInvoice Total Debug:",
+                {
+                  showEInvoice: showEInvoice,
+                  selectedPaymentMethod: selectedPaymentMethod,
+                  orderForPayment: orderForPayment,
+                  receipt: receipt,
+                  propTotal: total,
+                  orderInfoTotal: orderInfo?.total,
+                  orderInfoExactTotal: orderInfo?.exactTotal,
+                  receiptTotal: receipt?.total,
+                  receiptExactTotal: receipt?.exactTotal,
+                },
+              );
 
-              // Priority 1: orderForPayment exact total (most accurate from all screens)
-              if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
-                const finalTotal = Math.floor(Number(orderForPayment.exactTotal));
-                console.log('💰 Priority 1 - orderForPayment exactTotal:', finalTotal);
-                return finalTotal;
+              // Priority: orderInfo data first, then receipt, then fallback to prop total
+              let calculatedTotal = 0;
+
+              if (orderInfo?.total) {
+                calculatedTotal = parseFloat(orderInfo.total.toString());
+                console.log(
+                  "💰 Using orderInfo.total for EInvoice:",
+                  calculatedTotal,
+                );
+              } else if (orderInfo?.exactTotal) {
+                calculatedTotal = parseFloat(orderInfo.exactTotal.toString());
+                console.log(
+                  "💰 Using orderInfo.exactTotal for EInvoice:",
+                  calculatedTotal,
+                );
+              } else if (receipt?.exactTotal) {
+                calculatedTotal = parseFloat(receipt.exactTotal.toString());
+                console.log(
+                  "💰 Using receipt.exactTotal for EInvoice:",
+                  calculatedTotal,
+                );
+              } else if (receipt?.total) {
+                calculatedTotal = parseFloat(receipt.total.toString());
+                console.log(
+                  "💰 Using receipt.total for EInvoice:",
+                  calculatedTotal,
+                );
+              } else {
+                calculatedTotal = parseFloat(total?.toString() || "0");
+                console.log(
+                  "💰 Using fallback total for EInvoice:",
+                  calculatedTotal,
+                );
               }
 
-              // Priority 2: receipt exact total (fallback from receipt flow)
-              if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
-                const finalTotal = Math.floor(Number(receipt.exactTotal));
-                console.log('💰 Priority 2 - receipt exactTotal:', finalTotal);
-                return finalTotal;
-              }
-
-              // Priority 3: orderForPayment total string
-              if (orderForPayment?.total !== undefined && orderForPayment.total !== null) {
-                const finalTotal = Math.floor(Number(orderForPayment.total));
-                console.log('💰 Priority 3 - orderForPayment total:', finalTotal);
-                return finalTotal;
-              }
-
-              // Priority 4: receipt total string
-              if (receipt?.total !== undefined && receipt.total !== null) {
-                const finalTotal = Math.floor(Number(receipt.total));
-                console.log('💰 Priority 4 - receipt total:', finalTotal);
-                return finalTotal;
-              }
-
-              // Priority 5: prop total as fallback (POS screen)
-              const finalTotal = Math.floor(Number(total || 0));
-              console.log('💰 Priority 5 - prop total fallback:', finalTotal);
-              return finalTotal;
+              console.log(
+                "💰 Final calculated total for EInvoice:",
+                calculatedTotal,
+              );
+              return Math.floor(calculatedTotal || 0);
             })()}
             selectedPaymentMethod={selectedPaymentMethod}
             cartItems={(() => {

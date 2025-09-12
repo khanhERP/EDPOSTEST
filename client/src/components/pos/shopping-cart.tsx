@@ -550,22 +550,38 @@ export function ShoppingCart({
     });
 
     // Step 3: Prepare order data for payment with CORRECTED totals
-    // Prepare unified order data for payment modal (consistent with table orders)
     const orderForPaymentData = {
-      id: Date.now(), // Temporary ID for POS orders
+      id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
-      orderItems: cart,
-      processedItems: cart,
-      subtotal: finalSubtotal.toString(),
-      tax: finalTax.toString(),
+      tableId: null,
+      customerName: "Khách hàng lẻ",
+      status: "pending",
+      paymentStatus: "pending",
+      items: cartItemsForEInvoice.map(item => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price.toString(),
+        total: (item.price * item.quantity).toString(),
+        productSku: item.sku,
+        price: item.price.toString(),
+        sku: item.sku,
+        taxRate: item.taxRate,
+        afterTaxPrice: item.afterTaxPrice,
+        discount: item.discount,
+        discountAmount: item.discountAmount,
+        originalPrice: item.originalPrice
+      })),
+      subtotal: finalSubtotal,
+      tax: finalTax,
       discount: finalDiscount.toString(),
-      total: finalTotal.toString(),
+      total: finalTotal,
       exactSubtotal: finalSubtotal,
       exactTax: finalTax,
       exactDiscount: finalDiscount,
       exactTotal: finalTotal,
-      tableNumber: 'N/A',
-      salesChannel: 'pos' // Mark as POS order
+      orderedAt: new Date().toISOString()
     };
 
     console.log("📦 POS: Order for payment prepared:", orderForPaymentData);
@@ -949,6 +965,7 @@ export function ShoppingCart({
                   const value = e.target.value.replace(/[^\d]/g, ''); // Chỉ giữ lại số
                   setDiscountAmount(value || "0");
                 }}
+                placeholder="0"
                 className="text-right"
               />
             </div>

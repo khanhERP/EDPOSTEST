@@ -655,54 +655,54 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 orderTotal += parseFloat(order.total || "0");
               });
             }
-          } else {
-            // If no specific table, clear the display
-            cartItems = [];
-            orderSubtotal = 0;
-            orderTax = 0;
-            orderTotal = 0;
           }
+        } else {
+          // If no specific table, clear the display
+          cartItems = [];
+          orderSubtotal = 0;
+          orderTax = 0;
+          orderTotal = 0;
+        }
 
-          const cartData = {
-            type: "cart_update",
-            cart: cartItems,
+        const cartData = {
+          type: "cart_update",
+          cart: cartItems,
+          subtotal: Math.floor(orderSubtotal),
+          tax: Math.floor(orderTax),
+          total: Math.floor(orderTotal),
+          tableId: specificTableId || null,
+          orderNumber: cartItems.length > 0 ? cartItems[0]?.orderNumber : null,
+          timestamp: new Date().toISOString(),
+        };
+
+        console.log(
+          "📡 Table Grid: Broadcasting detailed cart update for table:",
+          {
+            tableId: specificTableId,
+            cartItemsCount: cartItems.length,
             subtotal: Math.floor(orderSubtotal),
             tax: Math.floor(orderTax),
             total: Math.floor(orderTotal),
-            tableId: specificTableId || null,
-            orderNumber: cartItems.length > 0 ? cartItems[0]?.orderNumber : null,
-            timestamp: new Date().toISOString(),
-          };
+            orderNumber: cartData.orderNumber,
+            sampleItems: cartItems.slice(0, 3).map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              total: item.total,
+            })),
+          },
+        );
 
-          console.log(
-            "📡 Table Grid: Broadcasting detailed cart update for table:",
-            {
-              tableId: specificTableId,
-              cartItemsCount: cartItems.length,
-              subtotal: Math.floor(orderSubtotal),
-              tax: Math.floor(orderTax),
-              total: Math.floor(orderTotal),
-              orderNumber: cartData.orderNumber,
-              sampleItems: cartItems.slice(0, 3).map((item) => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price,
-                total: item.total,
-              })),
-            },
+        try {
+          wsRef.current.send(JSON.stringify(cartData));
+        } catch (error) {
+          console.error(
+            "📡 Table Grid: Error broadcasting cart update:",
+            error,
           );
-
-          try {
-            wsRef.current.send(JSON.stringify(cartData));
-          } catch (error) {
-            console.error(
-              "📡 Table Grid: Error broadcasting cart update:",
-              error,
-            );
-          }
-        } else {
-          console.log("📡 Table Grid: WebSocket not available for broadcasting");
         }
+      } else {
+        console.log("📡 Table Grid: WebSocket not available for broadcasting");
       }
     },
     [activeOrders, products, getProductName],
@@ -3012,8 +3012,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       }
 
                       // Use EXACT SAME calculation logic as displayed in Order Details
-                      let calculatedSubtotal = 0;
-                      let calculatedTax = 0;
+                      let orderDetailsSubtotal = 0;
+                      let orderDetailsTax = 0;
 
                       const processedItems = orderItems.map((item: any) => {
                         const basePrice = Number(item.unitPrice || 0);
@@ -3023,7 +3023,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           : null;
 
                         // Calculate subtotal exactly as Order Details
-                        calculatedSubtotal += basePrice * quantity;
+                        orderDetailsSubtotal += basePrice * quantity;
 
                         // Use EXACT same tax calculation logic as Order Details
                         if (
@@ -3035,7 +3035,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             product.afterTaxPrice,
                           );
                           const taxPerUnit = afterTaxPrice - basePrice;
-                          calculatedTax += Math.floor(taxPerUnit * quantity);
+                          orderDetailsTax += Math.floor(taxPerUnit * quantity);
                         }
 
                         return {
@@ -3058,83 +3058,49 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         : 0;
                       const finalTotal = Math.max(
                         0,
-                        calculatedSubtotal + calculatedTax - discountAmount,
+                        orderDetailsSubtotal + orderDetailsTax - discountAmount,
                       );
 
                       // Create preview receipt data using EXACT values from Order Details - like POS
-                      const receiptPreview = {
+                      const previewData = {
                         ...selectedOrder,
-                        id: selectedOrder.id,
-                        orderId: selectedOrder.id,
-                        orderNumber: selectedOrder.orderNumber,
-                        tableId: selectedOrder.tableId,
-                        customerCount: selectedOrder.customerCount,
-                        customerName: selectedOrder.customerName,
+                        transactionId: `PREVIEW-${Date.now()}`,
+                        createdAt: new Date().toISOString(),
+                        cashierName: "Table Service",
+                        paymentMethod: "preview", // Placeholder method
                         items: processedItems.map((item: any) => ({
                           id: item.id,
-                          productId: item.productId,
-                          productName: item.productName,
-                          quantity: item.quantity.toString(),
-                          price: item.unitPrice,
-                          total: (item.unitPrice * item.quantity).toString(),
+                          productId: item.id,
+                          productName: item.name,
+                          quantity: item.quantity,
+                          price: item.price.toString(),
+                          total: (item.price * item.quantity).toString(),
                           sku: item.sku,
                           taxRate: item.taxRate,
                         })),
-                        orderItems: processedItems,
-                        subtotal: Math.floor(calculatedSubtotal).toString(),
-                        tax: Math.floor(calculatedTax).toString(),
+                        subtotal: Math.floor(orderDetailsSubtotal).toString(),
+                        tax: Math.floor(orderDetailsTax).toString(),
+                        total: Math.floor(finalTotal).toString(),
                         discount: discountAmount.toString(),
-                        total: Math.floor(finalTotal).toString(), // Final total after discount
                         exactTotal: Math.floor(finalTotal),
-                        exactSubtotal: Math.floor(calculatedSubtotal),
-                        exactTax: Math.floor(calculatedTax),
+                        exactSubtotal: Math.floor(orderDetailsSubtotal),
+                        exactTax: Math.floor(orderDetailsTax),
                         exactDiscount: discountAmount,
-                        paymentMethod: "preview",
-                        amountReceived: Math.floor(finalTotal).toString(),
-                        change: "0.00",
-                        cashierName: "Order Management",
-                        createdAt: new Date().toISOString(),
-                        transactionId: `TXN-PREVIEW-${Date.now()}`,
-                        // Table info
-                        tableName: selectedOrder.tableId
-                          ? `Bàn T${selectedOrder.tableId}`
-                          : "Bàn không xác định",
-                        storeLocation: "Cửa hàng chính",
-                        storeAddress: "서울시 강남구 테헤란로 123",
-                        storePhone: "02-1234-5678",
+                        orderItems: orderItems, // Keep original order items for payment flow
                       };
 
                       console.log(
-                        "💰 Order Details: Receipt preview created with discount details:",
-                        {
-                          originalOrderDiscount: selectedOrder.discount,
-                          calculatedDiscount: discountAmount,
-                          finalTotal: finalTotal,
-                          receiptDiscount: receiptPreview.discount,
-                          receiptExactDiscount: receiptPreview.exactDiscount,
-                        },
+                        "📄 Table: Showing receipt preview like POS with exact Order Details values",
                       );
-
-                      // Store receipt data globally for receipt modal access
-                      if (typeof window !== "undefined") {
-                        (window as any).previewReceipt = receiptPreview;
-                        (window as any).orderForPayment = receiptPreview;
-                        console.log("💾 Stored discount data globally:", {
-                          receiptDiscount: receiptPreview.discount,
-                          receiptExactDiscount: receiptPreview.exactDiscount,
-                          orderDiscount: receiptPreview.discount,
-                          orderExactDiscount: receiptPreview.exactDiscount,
-                        });
-                      }
-
-                      // Close order details modal and show receipt preview
+                      console.log("💰 Exact values passed:", {
+                        subtotal: orderDetailsSubtotal,
+                        tax: orderDetailsTax,
+                        discount: discountAmount,
+                        total: finalTotal,
+                      });
+                      setPreviewReceipt(previewData);
                       setOrderDetailsOpen(false);
-                      setSelectedOrder(selectedOrder);
-                      setOrderForPayment(receiptPreview); // Use receiptPreview as orderForPayment for the next step
-                      setPreviewReceipt(receiptPreview);
                       setShowReceiptPreview(true);
-
-                      console.log("🚀 Order Details: Showing receipt preview modal");
                     }}
                     className="w-full bg-green-600 hover:bg-green-700"
                     size="lg"
@@ -3172,34 +3138,44 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         return;
                       }
 
-                      // Use exact same calculation logic as Order Details
-                      let calculatedSubtotal = 0;
-                      let calculatedTax = 0;
+                      try {
+                        // Use exact same calculation logic as Order Details
+                        let subtotal = 0;
+                        let totalTax = 0;
 
-                      const processedItems = orderItems.map((item: any) => {
-                        const basePrice = Number(item.unitPrice || 0);
-                        const quantity = Number(item.quantity || 0);
-                        const product = Array.isArray(products)
-                          ? products.find((p: any) => p.id === item.productId)
-                          : null;
-
-                        // Calculate subtotal exactly as Order Details
-                        calculatedSubtotal += basePrice * quantity;
-
-                        // Use EXACT same tax calculation logic as Order Details
                         if (
-                          product?.afterTaxPrice &&
-                          product.afterTaxPrice !== null &&
-                          product.afterTaxPrice !== ""
+                          Array.isArray(orderItems) &&
+                          Array.isArray(products)
                         ) {
-                          const afterTaxPrice = parseFloat(
-                            product.afterTaxPrice,
-                          );
-                          const taxPerUnit = afterTaxPrice - basePrice;
-                          calculatedTax += taxPerUnit * quantity;
+                          orderItems.forEach((item: any) => {
+                            const basePrice = Number(item.unitPrice || 0);
+                            const quantity = Number(item.quantity || 0);
+                            const product = products.find(
+                              (p: any) => p.id === item.productId,
+                            );
+
+                            // Calculate subtotal exactly as Order Details
+                            subtotal += basePrice * quantity;
+
+                            // Use EXACT same tax calculation logic as Order Details
+                            if (
+                              product?.afterTaxPrice &&
+                              product.afterTaxPrice !== null &&
+                              product.afterTaxPrice !== ""
+                            ) {
+                              const afterTaxPrice = parseFloat(
+                                product.afterTaxPrice,
+                              );
+                              const taxPerUnit = afterTaxPrice - basePrice;
+                              totalTax += taxPerUnit * quantity;
+                            }
+                          });
                         }
 
-                        return {
+                        const grandTotal = subtotal + totalTax;
+
+                        // Create receipt data using EXACT same values as Order Details
+                        const processedItems = orderItems.map((item: any) => ({
                           id: item.id,
                           productId: item.productId,
                           productName:
@@ -3218,71 +3194,81 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               ? parseFloat(product.taxRate)
                               : 10;
                           })(),
-                        };
-                      });
+                        }));
 
-                      // Use exact same calculation values as displayed in Order Details
-                      let orderDetailsSubtotal = 0;
-                      let orderDetailsTax = 0;
+                        // Use exact same calculation values as displayed in Order Details
+                        let orderDetailsSubtotal = 0;
+                        let orderDetailsTax = 0;
 
-                      if (
-                        Array.isArray(orderItems) &&
-                        Array.isArray(products)
-                      ) {
-                        orderItems.forEach((item: any) => {
-                          const basePrice = Number(item.unitPrice || 0);
-                          const quantity = Number(item.quantity || 0);
-                          const product = products.find(
-                            (p: any) => p.id === item.productId,
-                          );
-
-                          // Calculate subtotal exactly as Order Details
-                          orderDetailsSubtotal += basePrice * quantity;
-
-                          // Use EXACT same tax calculation logic as Order Details
-                          if (
-                            product?.afterTaxPrice &&
-                            product.afterTaxPrice !== null &&
-                            product.afterTaxPrice !== ""
-                          ) {
-                            const afterTaxPrice = parseFloat(
-                              product.afterTaxPrice,
+                        if (
+                          Array.isArray(orderItems) &&
+                          Array.isArray(products)
+                        ) {
+                          orderItems.forEach((item: any) => {
+                            const basePrice = Number(item.unitPrice || 0);
+                            const quantity = Number(item.quantity || 0);
+                            const product = products.find(
+                              (p: any) => p.id === item.productId,
                             );
-                            const taxPerUnit = afterTaxPrice - basePrice;
-                            orderDetailsTax += taxPerUnit * quantity;
-                          }
+
+                            // Calculate subtotal exactly as Order Details
+                            orderDetailsSubtotal += basePrice * quantity;
+
+                            // Use EXACT same tax calculation logic as Order Details
+                            if (
+                              product?.afterTaxPrice &&
+                              product.afterTaxPrice !== null &&
+                              product.afterTaxPrice !== ""
+                            ) {
+                              const afterTaxPrice = parseFloat(
+                                product.afterTaxPrice,
+                              );
+                              const taxPerUnit = afterTaxPrice - basePrice;
+                              orderDetailsTax += taxPerUnit * quantity;
+                            }
+                          });
+                        }
+
+                        const billData = {
+                          ...selectedOrder,
+                          transactionId:
+                            selectedOrder.orderNumber ||
+                            `BILL-${selectedOrder.id}`,
+                          items: processedItems,
+                          subtotal: orderDetailsSubtotal.toString(),
+                          tax: orderDetailsTax.toString(),
+                          total: (
+                            orderDetailsSubtotal + orderDetailsTax
+                          ).toString(),
+                          paymentMethod: "unpaid",
+                          amountReceived: "0",
+                          change: "0",
+                          cashierName: "Table Service",
+                          createdAt:
+                            selectedOrder.orderedAt || new Date().toISOString(),
+                          customerName: selectedOrder.customerName,
+                          customerTaxCode: null,
+                          invoiceNumber: null,
+                        };
+
+                        console.log(
+                          "📄 Table: Showing receipt modal for bill printing",
+                        );
+                        console.log("📊 Bill data:", billData);
+
+                        // Show receipt modal without auto-printing
+                        setSelectedReceipt(billData);
+                        setOrderDetailsOpen(false);
+                        setShowReceiptModal(true);
+                      } catch (error) {
+                        console.error("❌ Error preparing bill:", error);
+                        toast({
+                          title: "Lỗi",
+                          description:
+                            "Không thể tạo hóa đơn. Vui lòng thử lại.",
+                          variant: "destructive",
                         });
                       }
-
-                      const billData = {
-                        ...selectedOrder,
-                        transactionId:
-                          selectedOrder.orderNumber ||
-                          `BILL-${selectedOrder.id}`,
-                        items: processedItems,
-                        subtotal: orderDetailsSubtotal.toString(),
-                        tax: orderDetailsTax.toString(),
-                        total: (orderDetailsSubtotal + orderDetailsTax).toString(),
-                        paymentMethod: "unpaid",
-                        amountReceived: "0",
-                        change: "0",
-                        cashierName: "Table Service",
-                        createdAt:
-                          selectedOrder.orderedAt || new Date().toISOString(),
-                        customerName: selectedOrder.customerName,
-                        customerTaxCode: null,
-                        invoiceNumber: null,
-                      };
-
-                      console.log(
-                        "📄 Table: Showing receipt modal for bill printing",
-                      );
-                      console.log("📊 Bill data:", billData);
-
-                      // Show receipt modal without auto-printing
-                      setSelectedReceipt(billData);
-                      setOrderDetailsOpen(false);
-                      setShowReceiptModal(true);
                     }}
                     className="w-full bg-gray-600 hover:bg-gray-700 text-white"
                     size="lg"
@@ -3304,7 +3290,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           console.log("🔴 Table: Closing receipt preview modal");
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
-          setOrderForPayment(null); // Clear orderForPayment as well
         }}
         onConfirm={() => {
           console.log(
@@ -3323,7 +3308,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             exactSubtotal: previewReceipt.exactSubtotal,
             exactTax: previewReceipt.exactTax,
             exactTotal: previewReceipt.exactTotal,
-            exactDiscount: previewReceipt.exactDiscount,
+            exactDiscount: previewReceipt.exactDiscount || 0,
             discount: previewReceipt.discount || selectedOrder?.discount || 0,
           };
 
