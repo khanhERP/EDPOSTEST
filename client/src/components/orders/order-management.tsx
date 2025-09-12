@@ -50,18 +50,6 @@ export function OrderManagement() {
 
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
-    // Check if print was completed to prevent modal reopening
-    const preventModal = typeof window !== 'undefined' && 
-      window.sessionStorage.getItem('preventReceiptPreview') === 'true';
-    
-    if (preventModal) {
-      console.log('🚫 Preventing receipt preview modal from opening due to recent print completion');
-      // Clear the flag after checking
-      window.sessionStorage.removeItem('preventReceiptPreview');
-      window.sessionStorage.removeItem('printCompleted');
-      return;
-    }
-
     if (previewReceipt && orderForPayment && !showReceiptPreview) {
       console.log('🚀 Receipt preview modal opening automatically with data:', {
         previewReceiptId: previewReceipt.id,
