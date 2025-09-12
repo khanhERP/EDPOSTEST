@@ -97,9 +97,9 @@ export function ShoppingCart({
       }
       return sum;
     }, 0);
-  const discount = parseFloat(discountAmount || "0");
+  const discountValue = parseFloat(discountAmount || "0");
   const total = Math.round(subtotal + tax);
-  const finalTotal = Math.max(0, total - discount);
+  const finalTotal = Math.max(0, total - discountValue);
   const change =
     paymentMethod === "cash"
       ? Math.max(0, parseFloat(amountReceived || "0") - finalTotal)
@@ -984,7 +984,7 @@ export function ShoppingCart({
                   {t("tables.total")}:
                 </span>
                 <span className="text-lg font-bold text-blue-600">
-                  {Math.round(Math.max(0, total - parseFloat(discountAmount || "0"))).toLocaleString("vi-VN")} ₫
+                  {Math.round(Math.max(0, total - discountValue)).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
             </div>
