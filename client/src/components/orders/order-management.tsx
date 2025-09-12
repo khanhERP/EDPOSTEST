@@ -2217,7 +2217,7 @@ export function OrderManagement() {
                           return;
                         }
 
-                        // Create receipt preview data (MATCH table-grid format)
+                        // Create receipt preview data (MATCH table-grid format) with proper discount
                         const receiptPreview = {
                           id: selectedOrder.id,
                           orderId: selectedOrder.id,
@@ -2239,8 +2239,8 @@ export function OrderManagement() {
                           subtotal: Math.floor(calculatedSubtotal).toString(),
                           tax: Math.floor(calculatedTax).toString(),
                           discount: discountAmount.toString(),
-                          total: Math.floor(finalTotal).toString(),
-                          exactTotal: Math.floor(finalTotal),
+                          total: Math.floor(baseTotal).toString(), // Base total before discount
+                          exactTotal: Math.floor(finalTotal), // Final total after discount
                           exactSubtotal: Math.floor(calculatedSubtotal),
                           exactTax: Math.floor(calculatedTax),
                           exactDiscount: discountAmount,
@@ -2256,6 +2256,18 @@ export function OrderManagement() {
                           storeAddress: '서울시 강남구 테헤란로 123',
                           storePhone: '02-1234-5678'
                         };
+
+                        // Store receipt data globally for receipt modal access
+                        if (typeof window !== 'undefined') {
+                          (window as any).previewReceipt = receiptPreview;
+                          (window as any).orderForPayment = orderForPaymentData;
+                          console.log('💾 Stored discount data globally:', {
+                            receiptDiscount: receiptPreview.discount,
+                            receiptExactDiscount: receiptPreview.exactDiscount,
+                            orderDiscount: orderForPaymentData.discount,
+                            orderExactDiscount: orderForPaymentData.exactDiscount
+                          });
+                        }
 
                         // Create order data for payment flow (MATCH table-grid format)
                         const orderForPaymentData = {

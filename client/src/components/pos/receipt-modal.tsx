@@ -683,7 +683,7 @@ export function ReceiptModal({
                       const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
                       const itemTax = Math.floor(taxPerUnit * item.quantity);
                       totalTax += itemTax;
-                      
+
                       console.log('💸 Tax calculated using afterTaxPrice:', {
                         basePrice,
                         afterTaxPrice,
@@ -697,7 +697,7 @@ export function ReceiptModal({
                       const taxRate = parseFloat(item.taxRate) / 100;
                       const itemTax = Math.floor(basePrice * taxRate * item.quantity);
                       totalTax += itemTax;
-                      
+
                       console.log('💸 Tax calculated using taxRate:', {
                         basePrice,
                         taxRate: item.taxRate,
@@ -779,14 +779,15 @@ export function ReceiptModal({
                     return sum;
                   }, 0);
 
-                  // Use the higher of item-level discount or order-level discount
-                  const finalDiscount = Math.max(itemLevelDiscount, orderDiscount);
+                      // Use order-level discount as priority, then item-level discount as fallback
+                      const finalDiscount = orderDiscount > 0 ? orderDiscount : itemLevelDiscount;
 
-                  console.log("💰 Final discount calculation:", {
-                    itemLevelDiscount: itemLevelDiscount,
-                    orderLevelDiscount: orderDiscount,
-                    finalDiscount: finalDiscount
-                  });
+                      console.log("💰 Final discount calculation (order-management priority):", {
+                        itemLevelDiscount: itemLevelDiscount,
+                        orderLevelDiscount: orderDiscount,
+                        finalDiscount: finalDiscount,
+                        discountSource: orderDiscount > 0 ? 'order-level' : 'item-level'
+                      });
 
                   // Calculate final total after discount - use base total before tax, then add tax, then subtract discount
                   const totalWithTax = subtotal + tax;
