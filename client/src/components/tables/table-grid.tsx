@@ -3209,6 +3209,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         }
 
                         const grandTotal = subtotal + totalTax;
+                        
+                        // Get discount amount from selected order
+                        const discountAmount = selectedOrder
+                          ? Number(selectedOrder.discount || 0)
+                          : 0;
+                        const finalTotal = Math.max(0, grandTotal - discountAmount);
 
                         // Create receipt data using EXACT same values as Order Details
                         const processedItems = orderItems.map((item: any) => ({
@@ -3271,11 +3277,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             selectedOrder.orderNumber ||
                             `BILL-${selectedOrder.id}`,
                           items: processedItems,
-                          subtotal: orderDetailsSubtotal.toString(),
-                          tax: orderDetailsTax.toString(),
-                          total: (
-                            orderDetailsSubtotal + orderDetailsTax
-                          ).toString(),
+                          subtotal: subtotal.toString(),
+                          tax: totalTax.toString(),
+                          discount: discountAmount.toString(),
+                          exactDiscount: discountAmount,
+                          total: finalTotal.toString(),
+                          exactTotal: finalTotal,
+                          exactSubtotal: subtotal,
+                          exactTax: totalTax,
                           paymentMethod: "unpaid",
                           amountReceived: "0",
                           change: "0",
@@ -3285,6 +3294,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           customerName: selectedOrder.customerName,
                           customerTaxCode: null,
                           invoiceNumber: null,
+                          tableNumber:
+                            getTableInfo(selectedOrder.tableId)?.tableNumber || "N/A",
                         };
 
                         console.log(
