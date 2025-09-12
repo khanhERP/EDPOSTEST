@@ -2151,9 +2151,50 @@ export function PaymentMethodModal({
         <ReceiptModal
           isOpen={showReceiptModal}
           onClose={() => {
-            console.log("🔒 Payment Modal: Receipt modal closed by user");
+            console.log("🔒 Payment Modal: Receipt modal closed by user - triggering complete cleanup");
             setShowReceiptModal(false);
             setReceiptDataForModal(null);
+            
+            // Trigger complete cleanup and API reload
+            if (typeof window !== 'undefined') {
+              // Close all popups
+              window.dispatchEvent(new CustomEvent('closeAllPopups', {
+                detail: {
+                  source: 'payment_modal_receipt_close',
+                  timestamp: new Date().toISOString()
+                }
+              }));
+
+              // Reload all APIs
+              window.dispatchEvent(new CustomEvent('reloadAllAPIs', {
+                detail: {
+                  source: 'payment_modal_receipt_close',
+                  timestamp: new Date().toISOString()
+                }
+              }));
+            }
+
+            // Send WebSocket signal for global refresh
+            try {
+              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+              const wsUrl = `${protocol}//${window.location.host}/ws`;
+              const ws = new WebSocket(wsUrl);
+
+              ws.onopen = () => {
+                ws.send(JSON.stringify({
+                  type: "force_refresh_all",
+                  success: true,
+                  action: 'payment_receipt_modal_closed',
+                  closeAllPopups: true,
+                  refreshAll: true,
+                  timestamp: new Date().toISOString()
+                }));
+                ws.close();
+              };
+            } catch (error) {
+              console.error("Failed to send refresh signal:", error);
+            }
+
             // Close payment modal when receipt modal is closed
             onClose();
           }}

@@ -933,7 +933,7 @@ export function ReceiptModal({
               </Button>
               <Button
                 onClick={() => {
-                  console.log('🔴 Receipt Modal: Close button clicked - forcing data refresh');
+                  console.log('🔴 Receipt Modal: Close button clicked - forcing complete cleanup and API reload');
 
                   // Force clear cart when close button is clicked
                   if (typeof window !== 'undefined') {
@@ -943,48 +943,72 @@ export function ReceiptModal({
                         timestamp: new Date().toISOString()
                       }
                     }));
+
+                    // Dispatch global event to close all popups
+                    window.dispatchEvent(new CustomEvent('closeAllPopups', {
+                      detail: {
+                        source: 'receipt_modal_close',
+                        timestamp: new Date().toISOString()
+                      }
+                    }));
+
+                    // Dispatch event to reload all APIs
+                    window.dispatchEvent(new CustomEvent('reloadAllAPIs', {
+                      detail: {
+                        source: 'receipt_modal_close',
+                        timestamp: new Date().toISOString()
+                      }
+                    }));
                   }
 
-                  // Send enhanced refresh signals to update table data
+                  // Send enhanced refresh signals to update all data
                   try {
                     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
                     const wsUrl = `${protocol}//${window.location.host}/ws`;
                     const ws = new WebSocket(wsUrl);
 
                     ws.onopen = () => {
-                      // Send multiple refresh signals for table data update
+                      // Send comprehensive refresh signals
                       const refreshSignals = [
                         {
                           type: "popup_close",
                           success: true,
                           action: 'receipt_modal_closed_manually',
+                          closeAllPopups: true,
                           refreshTables: true,
+                          refreshOrders: true,
+                          refreshProducts: true,
                           timestamp: new Date().toISOString()
                         },
                         {
-                          type: "invoice_modal_closed",
+                          type: "force_refresh_all",
                           success: true,
                           refreshTables: true,
                           refreshOrders: true,
+                          refreshProducts: true,
+                          refreshCategories: true,
+                          refreshEmployees: true,
+                          forceRefresh: true,
                           timestamp: new Date().toISOString()
                         },
                         {
                           type: "modal_closed",
                           modalType: 'receipt',
+                          closeAllPopups: true,
                           forceRefresh: true,
-                          refreshTables: true,
+                          refreshAll: true,
                           timestamp: new Date().toISOString()
                         }
                       ];
 
                       refreshSignals.forEach((signal, index) => {
                         setTimeout(() => {
-                          console.log('📡 Receipt Modal: Sending refresh signal:', signal.type);
+                          console.log('📡 Receipt Modal: Sending comprehensive refresh signal:', signal.type);
                           ws.send(JSON.stringify(signal));
                         }, index * 50);
                       });
 
-                      setTimeout(() => ws.close(), 300);
+                      setTimeout(() => ws.close(), 500);
                     };
 
                     ws.onerror = (error) => {

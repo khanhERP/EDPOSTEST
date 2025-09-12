@@ -20,6 +20,11 @@ export default function POS({ onLogout }: POSPageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [lastCartItems, setLastCartItems] = useState<any[]>([]);
   const queryClient = useQueryClient();
+  // State for receipt preview in receipt modal
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [receiptData, setReceiptData] = useState(null);
+  const [previewReceipt, setPreviewReceipt] = useState(null);
+
 
   const {
     cart,
@@ -156,6 +161,61 @@ export default function POS({ onLogout }: POSPageProps) {
     };
   }, [clearCart, orders, switchOrder]);
 
+  // Add event listeners for global popup close and API reload
+  useEffect(() => {
+    const handleClearCart = () => {
+      console.log('🧹 POS: Received cart clear event from external component');
+      clearCart();
+    };
+
+    const handleCloseAllPopups = () => {
+      console.log('🔴 POS: Closing all popups from global event');
+      setShowReceiptModal(false);
+      setShowReceiptPreview(false);
+      setReceiptData(null);
+      setPreviewReceipt(null);
+      clearCart();
+    };
+
+    const handleReloadAllAPIs = async () => {
+      console.log('🔄 POS: Reloading all APIs from global event');
+      try {
+        // Force refresh all queries
+        await queryClient.invalidateQueries();
+        await queryClient.refetchQueries();
+
+        // Clear cache and reload
+        queryClient.clear();
+
+        // Refetch specific queries
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/products'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/categories'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/products'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/categories'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/tables'] })
+        ]);
+
+        console.log('✅ POS: All APIs reloaded successfully');
+      } catch (error) {
+        console.error('❌ POS: Error reloading APIs:', error);
+      }
+    };
+
+    window.addEventListener('clearCart', handleClearCart);
+    window.addEventListener('closeAllPopups', handleCloseAllPopups);
+    window.addEventListener('reloadAllAPIs', handleReloadAllAPIs);
+
+    return () => {
+      window.removeEventListener('clearCart', handleClearCart);
+      window.removeEventListener('closeAllPopups', handleCloseAllPopups);
+      window.removeEventListener('reloadAllAPIs', handleReloadAllAPIs);
+    };
+  }, [clearCart, queryClient]);
+
   const handleCheckout = async (paymentData: any) => {
     console.log("=== POS PAGE CHECKOUT DEBUG ===");
     console.log("Cart before checkout:", cart);
@@ -166,7 +226,7 @@ export default function POS({ onLogout }: POSPageProps) {
       // Ensure price is a number
       let itemPrice = item.price;
       if (typeof itemPrice === 'string') {
-        itemPrice = parseFloat(itemPrice);
+        itemPrice = parseFloat(item.price);
       }
       if (isNaN(itemPrice) || itemPrice <= 0) {
         itemPrice = 0;
@@ -175,7 +235,7 @@ export default function POS({ onLogout }: POSPageProps) {
       // Ensure quantity is a positive integer
       let itemQuantity = item.quantity;
       if (typeof itemQuantity === 'string') {
-        itemQuantity = parseInt(itemQuantity);
+        itemQuantity = parseInt(item.quantity);
       }
       if (isNaN(itemQuantity) || itemQuantity <= 0) {
         itemQuantity = 1;
@@ -184,7 +244,7 @@ export default function POS({ onLogout }: POSPageProps) {
       // Ensure taxRate is a number
       let itemTaxRate = item.taxRate;
       if (typeof itemTaxRate === 'string') {
-        itemTaxRate = parseFloat(itemTaxRate);
+        itemTaxRate = parseFloat(item.taxRate);
       }
       if (isNaN(itemTaxRate)) {
         itemTaxRate = 10; // Default 10%
