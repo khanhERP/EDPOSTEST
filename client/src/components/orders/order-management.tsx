@@ -616,38 +616,35 @@ export function OrderManagement() {
     };
   }, [selectedOrder, orderItems, products]);
 
-  // Function to get order total - use consistent calculation logic
+  // Function to get order total - use consistent calculation logic with proper discount handling
   const getOrderTotal = React.useCallback((order: Order) => {
-    // CRITICAL: For all final states (paid, cancelled), ALWAYS use stored total only
-    // These orders are finalized and should NEVER be recalculated
-    if (order.status === 'paid' || order.status === 'cancelled') {
-      const storedTotal = Math.floor(Number(order.total || 0));
-      console.log(`💰 FINAL STATE Order ${order.orderNumber} (${order.status}) - using STORED total ONLY: ${storedTotal}`);
-      return storedTotal;
-    }
-
-    // For active orders only (pending, confirmed, preparing, ready, served), use calculation priority
-    console.log(`💰 ACTIVE Order ${order.orderNumber} (${order.status}) - using calculation priority`);
-
+    // Get base total using priority system
+    let baseTotal = 0;
+    
     // Priority 1: API calculated total (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
-      const total = Math.floor(Number(apiCalculatedTotal));
-      console.log(`💰 Priority 1 - API calculated total for ${order.orderNumber}: ${total}`);
-      return total;
+      baseTotal = Math.floor(Number(apiCalculatedTotal));
+      console.log(`💰 Priority 1 - API calculated total for ${order.orderNumber}: ${baseTotal}`);
     }
-
-    // Priority 2: Cached calculated total
-    if (calculatedTotals.has(order.id)) {
-      const cachedTotal = calculatedTotals.get(order.id)!;
-      console.log(`💰 Priority 2 - Cached calculated total for ${order.orderNumber}: ${cachedTotal}`);
-      return cachedTotal;
+    // Priority 2: Cached calculated total (for active orders)
+    else if (calculatedTotals.has(order.id) && order.status !== 'paid' && order.status !== 'cancelled') {
+      baseTotal = calculatedTotals.get(order.id)!;
+      console.log(`💰 Priority 2 - Cached calculated total for ${order.orderNumber}: ${baseTotal}`);
     }
-
     // Priority 3: Stored total as fallback
-    const storedTotal = Math.floor(Number(order.total || 0));
-    console.log(`💰 Priority 3 - Stored total fallback for ${order.orderNumber}: ${storedTotal}`);
-    return storedTotal;
+    else {
+      baseTotal = Math.floor(Number(order.total || 0));
+      console.log(`💰 Priority 3 - Stored total for ${order.orderNumber}: ${baseTotal}`);
+    }
+
+    // Apply discount calculation consistently
+    const discount = Math.floor(Number(order.discount || 0));
+    const finalTotal = Math.max(0, baseTotal - discount);
+
+    console.log(`💰 Order ${order.orderNumber} (${order.status}) - base: ${baseTotal}, discount: ${discount}, final: ${finalTotal}`);
+    
+    return finalTotal;
   }, [calculatedTotals]);
 
   const formatTime = (dateString: string | Date) => {
@@ -1811,29 +1808,12 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          const discount = Math.floor(Number(order.discount || 0));
+                          // Use getOrderTotal function for consistent calculation
+                          const finalTotal = getOrderTotal(order);
+                          
+                          console.log(`💰 Order ${order.orderNumber} (${order.status}) - final total: ${finalTotal}`);
 
-                          // For all orders, show final total after discount subtraction
-                          let baseTotal = 0;
-
-                          // Determine base total to use
-                          const apiCalculatedTotal = (order as any).calculatedTotal;
-                          const hasApiTotal = apiCalculatedTotal && Number(apiCalculatedTotal) > 0;
-                          const hasCachedTotal = calculatedTotals.has(order.id);
-
-                          if (hasApiTotal) {
-                            baseTotal = Math.floor(Number(apiCalculatedTotal));
-                          } else if (hasCachedTotal) {
-                            baseTotal = calculatedTotals.get(order.id)!;
-                          } else {
-                            baseTotal = Math.floor(Number(order.total || 0));
-                          }
-
-                          // Always subtract discount to show final total
-                          const finalTotal = Math.max(0, baseTotal - discount);
-                          console.log(`💰 Order ${order.orderNumber} (${order.status}) - base: ${baseTotal}, discount: ${discount}, final: ${finalTotal}`);
-
-                          if (baseTotal === 0) {
+                          if (finalTotal === 0) {
                             return <span className="text-gray-400">Đang tính...</span>;
                           }
 
