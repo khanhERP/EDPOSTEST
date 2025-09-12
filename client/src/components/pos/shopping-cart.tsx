@@ -961,37 +961,72 @@ export function ShoppingCart({
                 <Input
                   type="text"
                   placeholder="0 ₫"
-                  value={discountAmount ? Math.round(parseFloat(discountAmount)).toLocaleString("vi-VN") + " ₫" : ""}
+                  value={(() => {
+                    if (!discountAmount || discountAmount === "0") return "";
+                    const numericValue = parseFloat(discountAmount);
+                    return numericValue.toLocaleString("vi-VN", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }) + " ₫";
+                  })()}
                   onChange={(e) => {
-                    // Remove non-numeric characters except for digits
-                    const value = e.target.value.replace(/[^\d]/g, "");
-                    setDiscountAmount(value);
+                    // Remove all non-numeric characters
+                    const cleaned = e.target.value.replace(/[^\d]/g, "");
+                    setDiscountAmount(cleaned || "0");
                   }}
                   onFocus={(e) => {
-                    // On focus, show raw number for editing
-                    if (discountAmount) {
+                    // On focus, show clean number for editing
+                    if (discountAmount && discountAmount !== "0") {
                       e.target.value = discountAmount;
+                      e.target.setSelectionRange(0, e.target.value.length);
+                    } else {
+                      e.target.value = "";
                     }
                   }}
                   onBlur={(e) => {
-                    // On blur, format the display
+                    // On blur, reformat with currency
                     const value = e.target.value.replace(/[^\d]/g, "");
-                    if (value) {
+                    const numericValue = parseFloat(value || "0");
+                    if (numericValue > 0) {
                       setDiscountAmount(value);
-                      e.target.value = Math.round(parseFloat(value)).toLocaleString("vi-VN") + " ₫";
+                      e.target.value = numericValue.toLocaleString("vi-VN", {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }) + " ₫";
+                    } else {
+                      setDiscountAmount("0");
+                      e.target.value = "";
                     }
                   }}
-                  className="text-right pr-8"
+                  onKeyDown={(e) => {
+                    // Allow: backspace, delete, tab, escape, enter
+                    if ([8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+                        // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                        (e.keyCode === 65 && e.ctrlKey === true) ||
+                        (e.keyCode === 67 && e.ctrlKey === true) ||
+                        (e.keyCode === 86 && e.ctrlKey === true) ||
+                        (e.keyCode === 88 && e.ctrlKey === true)) {
+                      return;
+                    }
+                    // Ensure that it is a number and stop the keypress
+                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="text-right pr-8 font-medium"
                 />
-                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                  {!discountAmount && "₫"}
+                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-sm">
+                  {(!discountAmount || discountAmount === "0") && "₫"}
                 </span>
               </div>
               {parseFloat(discountAmount || "0") > 0 && (
-                <div className="flex justify-between text-sm text-red-600">
-                  <span>Giảm giá:</span>
-                  <span className="font-medium">
-                    -{Math.round(parseFloat(discountAmount || "0")).toLocaleString("vi-VN")} ₫
+                <div className="flex justify-between text-sm text-red-600 bg-red-50 p-2 rounded">
+                  <span className="font-medium">Giảm giá:</span>
+                  <span className="font-bold">
+                    -{parseFloat(discountAmount || "0").toLocaleString("vi-VN", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })} ₫
                   </span>
                 </div>
               )}
