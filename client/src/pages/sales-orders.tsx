@@ -1568,10 +1568,13 @@ export default function SalesOrders() {
                                     <td className="px-3 py-3 text-right">
                                       <div className="text-sm font-medium">
                                         {(() => {
-                                          // Always show final total after discount for all orders
-                                          const originalTotal = parseFloat(item.total || "0");
+                                          // Calculate correct final total: subtotal + tax - discount
+                                          const subtotal = parseFloat(item.subtotal || "0");
+                                          const tax = parseFloat(item.tax || "0");
                                           const discountAmount = parseFloat(item.discount || "0");
-                                          const finalTotal = Math.max(0, originalTotal - discountAmount);
+                                          
+                                          // Final total = subtotal + tax - discount
+                                          const finalTotal = Math.max(0, subtotal + tax - discountAmount);
                                           return formatCurrency(Math.floor(finalTotal));
                                         })()}
                                       </div>
