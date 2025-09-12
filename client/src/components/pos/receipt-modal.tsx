@@ -584,12 +584,7 @@ export function ReceiptModal({
               <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {(() => {
-                            const dbTotal = parseFloat(receipt.total || "0");
-                            const dbDiscount = parseFloat(receipt.discount || "0");
-                            const finalTotal = Math.max(0, dbTotal - dbDiscount);
-                            return Math.round(finalTotal).toLocaleString("vi-VN");
-                          })()} ₫
+                          {Math.round(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
             </div>
