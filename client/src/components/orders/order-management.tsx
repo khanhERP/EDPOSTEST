@@ -955,7 +955,7 @@ export function OrderManagement() {
       });
 
       // Step 7: Create order data for payment flow matching Order Details with proper discount
-      let orderForPaymentData = {
+      const orderForPaymentData = {
         ...order,
         id: order.id,
         orderItems: processedItems,
@@ -2316,7 +2316,7 @@ export function OrderManagement() {
                         }
 
                         // Create order data for payment flow (MATCH table-grid format)
-                        const orderForPaymentData = {
+                        const paymentOrderData = {
                           ...selectedOrder,
                           id: selectedOrder.id,
                           orderItems: processedItems,
@@ -2337,15 +2337,27 @@ export function OrderManagement() {
                           receiptExactTotal: receiptPreview.exactTotal,
                           receiptDiscount: receiptPreview.discount,
                           receiptExactDiscount: receiptPreview.exactDiscount,
-                          orderTotal: orderForPaymentData.total,
-                          orderExactTotal: orderForPaymentData.exactTotal,
-                          orderId: orderForPaymentData.id
+                          orderTotal: paymentOrderData.total,
+                          orderExactTotal: paymentOrderData.exactTotal,
+                          orderId: paymentOrderData.id
                         });
+
+                        // Store payment data globally for receipt modal access
+                        if (typeof window !== 'undefined') {
+                          (window as any).previewReceipt = receiptPreview;
+                          (window as any).orderForPayment = paymentOrderData;
+                          console.log('💾 Stored discount data globally:', {
+                            receiptDiscount: receiptPreview.discount,
+                            receiptExactDiscount: receiptPreview.exactDiscount,
+                            orderDiscount: paymentOrderData.discount,
+                            orderExactDiscount: paymentOrderData.exactDiscount
+                          });
+                        }
 
                         // Close order details modal and show receipt preview
                         setOrderDetailsOpen(false);
                         setSelectedOrder(selectedOrder);
-                        setOrderForPayment(orderForPaymentData);
+                        setOrderForPayment(paymentOrderData);
                         setPreviewReceipt(receiptPreview);
                         setShowReceiptPreview(true);
 
