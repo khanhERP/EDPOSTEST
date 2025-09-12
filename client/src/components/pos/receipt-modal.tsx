@@ -532,7 +532,7 @@ export function ReceiptModal({
               {(() => {
                 // Check for discount from multiple sources with priority
                 let displayDiscount = 0;
-
+                
                 // Priority 1: exactDiscount (most accurate)
                 if (receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
                   displayDiscount = parseFloat(receipt.exactDiscount.toString());
@@ -543,7 +543,7 @@ export function ReceiptModal({
                   displayDiscount = parseFloat(receipt.discount.toString());
                   console.log("📄 Receipt Modal: Using discount:", displayDiscount);
                 }
-
+                
                 if (displayDiscount > 0) {
                   return (
                     <div className="flex justify-between text-sm text-red-600">
@@ -690,19 +690,8 @@ export function ReceiptModal({
 
                   const tax = totalTax;
 
-                  {/* Improved discount detection logic to check multiple sources with better priority */}
-                  let finalDiscount = 0;
-
-                  console.log("🔍 Receipt Modal Preview - Discount Detection Debug:", {
-                    isPreview,
-                    hasReceipt: !!receipt,
-                    hasCartItems: cartItems?.length || 0,
-                    receiptData: receipt ? {
-                      exactDiscount: receipt.exactDiscount,
-                      discount: receipt.discount
-                    } : null,
-                    totalProp: typeof total === 'object' ? total : { value: total }
-                  });
+                  // Check for discount from multiple sources with priority order
+                  let orderDiscount = 0;
 
                   // Check if this is from order-management specifically
                   const isFromOrderManagement = typeof window !== 'undefined' && (window as any).orderForPayment;
@@ -710,78 +699,97 @@ export function ReceiptModal({
                   if (isFromOrderManagement) {
                     // For order-management: prioritize orderForPayment data
                     const orderForPayment = (window as any).orderForPayment;
-                    console.log("🎯 Order Management Mode - checking orderForPayment:", {
-                      exactDiscount: orderForPayment?.exactDiscount,
-                      discount: orderForPayment?.discount
-                    });
 
                     // Priority 1: exactDiscount (most accurate)
-                    if (orderForPayment?.exactDiscount !== undefined && orderForPayment.exactDiscount !== null && Number(orderForPayment.exactDiscount) > 0) {
-                      finalDiscount = Math.floor(Number(orderForPayment.exactDiscount));
-                      console.log("✅ Order Management: Using orderForPayment exactDiscount:", finalDiscount);
+                    if (orderForPayment.exactDiscount !== undefined && orderForPayment.exactDiscount !== null) {
+                      orderDiscount = Math.floor(Number(orderForPayment.exactDiscount));
+                      console.log("✅ Order Management: Using orderForPayment exactDiscount:", orderDiscount);
                     }
                     // Priority 2: discount property
-                    else if (orderForPayment?.discount !== undefined && orderForPayment.discount !== null && Number(orderForPayment.discount) > 0) {
-                      finalDiscount = Math.floor(Number(orderForPayment.discount));
-                      console.log("✅ Order Management: Using orderForPayment discount:", finalDiscount);
+                    else if (orderForPayment.discount !== undefined && orderForPayment.discount !== null) {
+                      orderDiscount = Math.floor(Number(orderForPayment.discount));
+                      console.log("✅ Order Management: Using orderForPayment discount:", orderDiscount);
                     }
-                  }
-
-                  // If no order-level discount found, check receipt data
-                  if (finalDiscount === 0 && receipt) {
-                    // Priority 1: exactDiscount from receipt
-                    if (receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && Number(receipt.exactDiscount) > 0) {
-                      finalDiscount = Math.floor(Number(receipt.exactDiscount));
-                      console.log("✅ Using receipt exactDiscount:", finalDiscount);
-                    }
-                    // Priority 2: discount from receipt
-                    else if (receipt.discount !== undefined && receipt.discount !== null && Number(receipt.discount) > 0) {
-                      finalDiscount = Math.floor(Number(receipt.discount));
-                      console.log("✅ Using receipt discount:", finalDiscount);
-                    }
-                  }
-
-                  // If still no discount found, check total prop (for complex total objects)
-                  if (finalDiscount === 0 && typeof total === 'object' && total !== null) {
-                    if (total.exactDiscount !== undefined && total.exactDiscount !== null && Number(total.exactDiscount) > 0) {
-                      finalDiscount = Math.floor(Number(total.exactDiscount));
-                      console.log("✅ Using total.exactDiscount:", finalDiscount);
-                    } else if (total.discount !== undefined && total.discount !== null && Number(total.discount) > 0) {
-                      finalDiscount = Math.floor(Number(total.discount));
-                      console.log("✅ Using total.discount:", finalDiscount);
-                    }
-                  }
-
-                  // Fallback: Get discount from cart items (for item-level discounts)
-                  if (finalDiscount === 0 && cartItems && cartItems.length > 0) {
-                    const itemLevelDiscount = cartItems.reduce((sum, item) => {
-                      let itemDiscount = 0;
-
-                      // Check various discount properties
-                      if (item.discount && Number(item.discount) > 0) {
-                        itemDiscount = Number(item.discount) * item.quantity;
-                      } else if (item.discountAmount && Number(item.discountAmount) > 0) {
-                        itemDiscount = Number(item.discountAmount);
-                      } else if (item.originalPrice && Number(item.originalPrice) > Number(item.price)) {
-                        itemDiscount = (Number(item.originalPrice) - Number(item.price)) * item.quantity;
+                    // Priority 3: receipt discount as fallback
+                    else if (receipt) {
+                      if (receipt.exactDiscount !== undefined && receipt.exactDiscount !== null) {
+                        orderDiscount = Math.floor(Number(receipt.exactDiscount));
+                        console.log("✅ Order Management: Using receipt exactDiscount (fallback):", orderDiscount);
+                      } else if (receipt.discount !== undefined && receipt.discount !== null) {
+                        orderDiscount = Math.floor(Number(receipt.discount));
+                        console.log("✅ Order Management: Using receipt discount (fallback):", orderDiscount);
                       }
-
-                      return sum + itemDiscount;
-                    }, 0);
-
-                    if (itemLevelDiscount > 0) {
-                      finalDiscount = Math.floor(itemLevelDiscount);
-                      console.log("✅ Using item-level discount:", finalDiscount);
+                    }
+                  } else {
+                    // For other screens (POS, etc.): keep original logic
+                    // 1. Check receipt exactDiscount first (most reliable for exact calculations)
+                    if (receipt && receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
+                      const exactDiscount = parseFloat(receipt.exactDiscount.toString());
+                      orderDiscount = exactDiscount;
+                      console.log("✅ Using receipt exactDiscount (highest priority):", exactDiscount);
+                    }
+                    // 2. Check receipt discount property
+                    else if (receipt && parseFloat(receipt.discount || "0") > 0) {
+                      const receiptDiscount = parseFloat(receipt.discount || "0");
+                      orderDiscount = receiptDiscount;
+                      console.log("✅ Using receipt discount:", receiptDiscount);
+                    }
+                    // 3. Check if total prop contains discount info
+                    else if (typeof total === 'object' && total.discount) {
+                      const totalPropDiscount = parseFloat(total.discount) || 0;
+                      orderDiscount = totalPropDiscount;
+                      console.log("✅ Using total prop discount:", totalPropDiscount);
                     }
                   }
 
-                  console.log("💰 Final discount calculation result:", {
-                    finalDiscount,
-                    source: isFromOrderManagement ? 'order-management' : 'receipt-modal',
-                    willDisplay: finalDiscount > 0
-                  });
+                  // Get discount from cart items if available (for preview mode)
+                  const itemLevelDiscount = cartItems.reduce((sum, item) => {
+                    console.log("🔍 Checking discount for item:", {
+                      id: item.id,
+                      name: item.name,
+                      discount: item.discount,
+                      discountAmount: item.discountAmount,
+                      originalPrice: item.originalPrice,
+                      currentPrice: item.price,
+                      quantity: item.quantity
+                    });
 
-                  // Total calculation for preview
+                    // Check if item has discount property (per unit discount)
+                    if (item.discount && parseFloat(item.discount) > 0) {
+                      const itemDiscount = parseFloat(item.discount) * item.quantity;
+                      console.log("✅ Found per-unit discount:", itemDiscount);
+                      return sum + itemDiscount;
+                    }
+
+                    // Check if item has discountAmount property (total discount for item)
+                    if (item.discountAmount && parseFloat(item.discountAmount) > 0) {
+                      const itemDiscount = parseFloat(item.discountAmount);
+                      console.log("✅ Found total discount amount:", itemDiscount);
+                      return sum + itemDiscount;
+                    }
+
+                    // Check if item has originalPrice vs current price difference (implicit discount)
+                    if (item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price)) {
+                      const itemDiscount = (parseFloat(item.originalPrice) - parseFloat(item.price)) * item.quantity;
+                      console.log("✅ Found price difference discount:", itemDiscount);
+                      return sum + itemDiscount;
+                    }
+
+                    console.log("❌ No discount found for this item");
+                    return sum;
+                  }, 0);
+
+                      // Use order-level discount as priority, then item-level discount as fallback
+                      const finalDiscount = orderDiscount > 0 ? orderDiscount : itemLevelDiscount;
+
+                      console.log("💰 Final discount calculation (order-management priority):", {
+                        itemLevelDiscount: itemLevelDiscount,
+                        orderLevelDiscount: orderDiscount,
+                        finalDiscount: finalDiscount,
+                        discountSource: orderDiscount > 0 ? 'order-level' : 'item-level'
+                      });
+
+                  // Total is always subtotal + tax (discount handled separately in payment)
                   const finalTotal = subtotal + tax;
                   return (
                     <>
@@ -864,7 +872,7 @@ export function ReceiptModal({
                       {(() => {
                         // For final receipt mode, check multiple discount sources
                         let displayDiscount = 0;
-
+                        
                         // Priority 1: exactDiscount
                         if (receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
                           displayDiscount = parseFloat(receipt.exactDiscount.toString());
@@ -873,7 +881,7 @@ export function ReceiptModal({
                         else if (dbDiscount > 0) {
                           displayDiscount = dbDiscount;
                         }
-
+                        
                         if (displayDiscount > 0) {
                           return (
                             <div className="flex justify-between text-sm text-red-600">
