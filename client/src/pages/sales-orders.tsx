@@ -1573,7 +1573,7 @@ export default function SalesOrders() {
                                           const subtotal = parseFloat(item.subtotal || "0");
                                           const tax = parseFloat(item.tax || "0");
                                           const discountAmount = parseFloat(item.discount || "0");
-                                          
+
                                           // Final total = subtotal + tax - discount
                                           const finalTotal = Math.max(0, subtotal + tax - discountAmount);
                                           return formatCurrency(Math.floor(finalTotal));
@@ -2292,101 +2292,37 @@ export default function SalesOrders() {
                                                         variant="outline"
                                                         className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
                                                         onClick={() => {
-                                                          if (selectedInvoice) {
-                                                            const printContent = `
-                                                          <!DOCTYPE html>
-                                                          <html>
-                                                            <head>
-                                                              <title>Hóa đơn ${selectedInvoice.displayNumber}</title>
-                                                              <style>
-                                                                body { font-family: Arial, sans-serif; margin: 20px; }
-                                                                .header { text-align: center; margin-bottom: 20px; }
-                                                                .invoice-details { margin-bottom: 20px; }
-                                                                .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                                                                .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                                                                .items-table th { background-color: #f2f2f2; }
-                                                                .total-section { text-align: right; margin-top: 20px; }
-                                                              </style>
-                                                            </head>
-                                                            <body>
-                                                              <div class="header">
-                                                                <h1>HÓA ĐƠN BÁN HÀNG</h1>
-                                                                <p>Số: ${selectedInvoice.displayNumber}</p>
-                                                                <p>Ngày: ${formatDate(selectedInvoice.date)}</p>
-                                                              </div>
-                                                              <div class="invoice-details">
-                                                                <p><strong>Khách hàng:</strong> ${selectedInvoice.customerName}</p>
-                                                                <p><strong>Điện thoại:</strong> ${selectedInvoice.customerPhone || "-"}</p>
-                                                                <p><strong>Địa chỉ:</strong> ${selectedInvoice.customerAddress || "-"}</p>
-                                                              </div>
-                                                              <table class="items-table">
-                                                                <thead>
-                                                                  <tr>
-                                                                    <th>STT</th>
-                                                                    <th>Tên hàng hóa</th>
-                                                                    <th>Đơn vị tính</th>
-                                                                    <th>Số lượng</th>
-                                                                    <th>Đơn giá</th>
-                                                                    <th>Thành tiền</th>
-                                                                  </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                  ${(() => {
-                                                                    const items =
-                                                                      orderItems;
-                                                                    if (
-                                                                      !items ||
-                                                                      items.length ===
-                                                                        0
-                                                                    )
-                                                                      return '<tr><td colspan="6">Không có sản phẩm</td></tr>';
-                                                                    return items
-                                                                      .map(
-                                                                        (
-                                                                          item: any,
-                                                                          index: number,
-                                                                        ) => `
-                                                                      <tr>
-                                                                        <td>${index + 1}</td>
-                                                                        <td>${item.productName}</td>
-                                                                        <td>Cái</td>
-                                                                        <td>${item.quantity}</td>
-                                                                        <td>${formatCurrency(item.unitPrice)}</td>
-                                                                        <td>${formatCurrency(item.total)}</td>
-                                                                      </tr>
-                                                                    `,
-                                                                      )
-                                                                      .join("");
-                                                                  })()}
-                                                                </tbody>
-                                                              </table>
-                                                              <div class="total-section">
-                                                                <p><strong>Thành tiền:</strong> ${formatCurrency(selectedInvoice.subtotal)} ₫</p>
-                                                                <p><strong>Thuế GTGT:</strong> ${formatCurrency(selectedInvoice.tax)} ₫</p>
-                                                                <p><strong>Tổng cộng:</strong> ${formatCurrency(selectedInvoice.total)} ₫</p>
-                                                              </div>
-                                                            </body>
-                                                          </html>
-                                                        `;
+                                                          if (selectedInvoice && orderItems.length > 0) {
+                                                            const items = orderItems;
+                                                            const receiptData = {
+                                                              transactionId: selectedInvoice.displayNumber || `TXN-${selectedInvoice.id}`,
+                                                              orderId: selectedInvoice.id,
+                                                              items: items.map((item: any) => ({
+                                                                id: item.productId || item.id,
+                                                                productName: item.productName || item.name,
+                                                                price: item.unitPrice || item.price || "0",
+                                                                quantity: item.quantity || 1,
+                                                                total: item.total || "0",
+                                                                sku: item.sku || `SKU${item.productId || item.id}`,
+                                                                taxRate: parseFloat(item.taxRate || "0"),
+                                                              })),
+                                                              subtotal: selectedInvoice.subtotal || "0",
+                                                              tax: selectedInvoice.tax || "0",
+                                                              total: selectedInvoice.total || "0",
+                                                              discount: selectedInvoice.discount || "0",
+                                                              paymentMethod: getItemType(selectedInvoice) === "order" ? selectedInvoice.paymentMethod : "invoice",
+                                                              amountReceived: selectedInvoice.total || "0",
+                                                              change: "0",
+                                                              cashierName: "System User",
+                                                              createdAt: selectedInvoice.date || new Date().toISOString(),
+                                                              customerName: selectedInvoice.customerName || "Khách hàng lẻ",
+                                                              customerTaxCode: selectedInvoice.customerTaxCode || null,
+                                                              invoiceNumber: selectedInvoice.invoiceNumber || null,
+                                                            };
 
-                                                            const printWindow =
-                                                              window.open(
-                                                                "",
-                                                                "_blank",
-                                                              );
-                                                            if (printWindow) {
-                                                              printWindow.document.write(
-                                                                printContent,
-                                                              );
-                                                              printWindow.document.close();
-                                                              printWindow.focus();
-                                                              printWindow.print();
-                                                              printWindow.close();
-                                                            } else {
-                                                              alert(
-                                                                "Không thể mở cửa sổ in. Vui lòng kiểm tra popup blocker.",
-                                                              );
-                                                            }
+                                                            console.log("📄 Sales Orders: Showing receipt modal for printing");
+                                                            setPrintReceiptData(receiptData);
+                                                            setShowPrintDialog(true);
                                                           }
                                                         }}
                                                       >
@@ -2641,59 +2577,6 @@ export default function SalesOrders() {
       </AlertDialog>
 
       {/* EInvoiceModal is now used for publishing, the old AlertDialog is commented out */}
-      <EInvoiceModal
-        isOpen={showPublishDialog}
-        onClose={() => setShowPublishDialog(false)}
-        onConfirm={(invoiceData) => {
-          console.log(
-            "📧 E-Invoice confirmed from Sales Orders:",
-            invoiceData,
-          );
-
-          if (invoiceData.success) {
-            if (invoiceData.publishLater) {
-              // Handle "Phát hành sau" case
-              toast({
-                title: "Thành công",
-                description:
-                  "Thông tin hóa đơn điện tử đã được lưu để phát hành sau",
-              });
-            } else {
-              // Handle direct publish case
-              toast({
-                title: "Thành công",
-                description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceData.invoiceNumber || "N/A"}`,
-              });
-            }
-
-            // Refresh data
-            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-          } else {
-            toast({
-              title: "Lỗi",
-              description: invoiceData.message || "Lỗi không xác định khi phát hành hóa đơn",
-              variant: "destructive",
-            });
-          }
-
-          setShowPublishDialog(false);
-        }}
-        total={parseFloat(selectedInvoice?.total || "0")}
-        cartItems={orderItems.map((item: any) => ({
-          id: item.productId || item.id,
-          name: item.productName,
-          price: parseFloat(item.unitPrice || "0"),
-          quantity: item.quantity || 1,
-          sku: item.sku || `ITEM${item.productId}`,
-          taxRate: parseFloat(item.taxRate || "0"), // This tax rate is from order item, might not be the final one
-        }))}
-        source="sales_orders"
-        orderId={selectedInvoice?.id}
-        selectedPaymentMethod={selectedInvoice?.paymentMethod}
-      />
-
-      {/* The old AlertDialog for publishing is commented out as EInvoiceModal is used instead */}
       {/*
       {false && selectedInvoice && (
         <AlertDialog
