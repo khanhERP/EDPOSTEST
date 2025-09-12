@@ -954,26 +954,8 @@ export function OrderManagement() {
         receiptExactDiscount: receiptPreview.exactDiscount
       });
 
-      // Step 6: Create order data for payment flow matching Order Details with proper discount
-      const orderForPaymentData = {
-        ...order,
-        id: order.id,
-        orderItems: processedItems,
-        processedItems: processedItems,
-        subtotal: Math.floor(subtotal).toString(),
-        tax: Math.floor(taxAmount).toString(),
-        discount: discountAmount.toString(),
-        total: Math.floor(finalTotal).toString(), // Final total after discount for payment
-        baseTotal: Math.floor(baseTotal), // Store base total before discount
-        exactSubtotal: Math.floor(subtotal),
-        exactTax: Math.floor(taxAmount),
-        exactDiscount: discountAmount,
-        exactTotal: Math.floor(finalTotal),
-        tableNumber: order.tableId ? `T${order.tableId}` : 'N/A'
-      };
-
       // Step 7: Create order data for payment flow matching Order Details with proper discount
-      const orderForPaymentData = {
+      let orderForPaymentData = {
         ...order,
         id: order.id,
         orderItems: processedItems,
