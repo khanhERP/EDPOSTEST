@@ -280,12 +280,12 @@ export function ShoppingCart({
     const timer = setTimeout(() => {
       broadcastCartUpdate();
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [cart, subtotal, tax, total, broadcastCartUpdate]);
 
 
-  
+
 
 
   const getPaymentMethods = () => {
@@ -315,7 +315,7 @@ export function ShoppingCart({
   // Handler for when receipt preview is confirmed - move to payment method selection
   const handleReceiptPreviewConfirm = () => {
     console.log("🎯 POS: Receipt preview confirmed, showing payment method modal");
-    
+
     // Update receipt preview with correct tax calculation before proceeding
     if (previewReceipt && orderForPayment) {
       const updatedReceipt = {
@@ -325,7 +325,7 @@ export function ShoppingCart({
         total: total.toString(),
         exactTotal: total
       };
-      
+
       const updatedOrder = {
         ...orderForPayment,
         tax: tax,
@@ -333,10 +333,10 @@ export function ShoppingCart({
         total: total,
         exactTotal: total
       };
-      
+
       setPreviewReceipt(updatedReceipt);
       setOrderForPayment(updatedOrder);
-      
+
       console.log("🔧 Updated receipt and order with correct tax:", {
         tax: tax,
         total: total,
@@ -344,7 +344,7 @@ export function ShoppingCart({
         updatedOrder: updatedOrder
       });
     }
-    
+
     setShowReceiptPreview(false);
     setShowPaymentModal(true);
   };
@@ -482,7 +482,10 @@ export function ShoppingCart({
       quantity: item.quantity,
       sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
       taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 0),
-      afterTaxPrice: item.afterTaxPrice
+      afterTaxPrice: item.afterTaxPrice,
+      discount: item.discount || "0",
+      discountAmount: item.discountAmount || "0",
+      originalPrice: item.originalPrice || item.price,
     }));
 
     console.log("✅ Cart items prepared for E-invoice:", cartItemsForEInvoice);
@@ -513,7 +516,10 @@ export function ShoppingCart({
         price: item.price.toString(),
         sku: item.sku,
         taxRate: item.taxRate,
-        afterTaxPrice: item.afterTaxPrice
+        afterTaxPrice: item.afterTaxPrice,
+        discount: item.discount,
+        discountAmount: item.discountAmount,
+        originalPrice: item.originalPrice
       })),
       subtotal: finalSubtotal.toString(),
       tax: finalTax.toString(),
@@ -554,7 +560,10 @@ export function ShoppingCart({
         price: item.price.toString(),
         sku: item.sku,
         taxRate: item.taxRate,
-        afterTaxPrice: item.afterTaxPrice
+        afterTaxPrice: item.afterTaxPrice,
+        discount: item.discount,
+        discountAmount: item.discountAmount,
+        originalPrice: item.originalPrice
       })),
       subtotal: finalSubtotal,
       tax: finalTax,
@@ -562,6 +571,7 @@ export function ShoppingCart({
       exactSubtotal: finalSubtotal,
       exactTax: finalTax,
       exactTotal: finalTotal,
+      discount: "0", // Default discount if not applied at order level
       orderedAt: new Date().toISOString()
     };
 
@@ -781,15 +791,15 @@ export function ShoppingCart({
             <button
               onClick={() => {
                 console.log("🧹 Shopping Cart: Clear cart button clicked");
-                
+
                 // Clear the local cart state first
                 onClearCart();
-                
+
                 // Clear any active orders
                 if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
                   (window as any).clearActiveOrder();
                 }
-                
+
                 // Broadcast empty cart to customer display
                 setTimeout(() => {
                   if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -803,9 +813,9 @@ export function ShoppingCart({
                       timestamp: new Date().toISOString(),
                       isCartClear: true
                     };
-                    
+
                     console.log("📡 Shopping Cart: Broadcasting cart clear");
-                    
+
                     try {
                       wsRef.current.send(JSON.stringify(clearCartMessage));
                     } catch (error) {
@@ -813,7 +823,7 @@ export function ShoppingCart({
                     }
                   }
                 }, 50);
-                
+
                 console.log("✅ Shopping Cart: Cart cleared");
               }}
               className="text-red-500 hover:text-red-700 transition-colors"
@@ -985,14 +995,28 @@ export function ShoppingCart({
 
       {/* Receipt Preview Modal - Shows first like order management */}
       <ReceiptModal
-        isOpen={showReceiptPreview}
-        onClose={handleReceiptPreviewCancel}
-        receipt={previewReceipt}
-        cartItems={previewReceipt?.items || []}
-        isPreview={true}
-        onConfirm={handleReceiptPreviewConfirm}
-        onCancel={handleReceiptPreviewCancel}
-      />
+          isOpen={showReceiptPreview}
+          onClose={handleReceiptPreviewCancel}
+          receipt={previewReceipt}
+          cartItems={cart.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            sku: `ITEM${String(item.id).padStart(3, "0")}`,
+            taxRate: parseFloat(item.taxRate || "0"),
+            discount: item.discount || "0",
+            discountAmount: item.discountAmount || "0",
+            originalPrice: item.originalPrice || item.price,
+          }))}
+          total={orderForPayment ? {
+            amount: total,
+            discount: orderForPayment.discount || "0",
+            exactDiscount: parseFloat(orderForPayment.discount || "0")
+          } : total}
+          isPreview={true}
+          onConfirm={handleReceiptPreviewConfirm}
+        />
 
       {/* Payment Method Modal - Shows after receipt preview confirmation */}
       {showPaymentModal && orderForPayment && previewReceipt && (
@@ -1158,7 +1182,7 @@ export function ShoppingCart({
             name: item.name,
             price: parseFloat(item.price),
             quantity: item.quantity,
-            sku: item.sku || `ITEM${String(item.id).padStart(3, "0")}`,
+            sku: `ITEM${String(item.id).padStart(3, "0")}`,
             taxRate: parseFloat(item.taxRate || "0"),
           })) || cart.map((item) => ({
             id: item.id,

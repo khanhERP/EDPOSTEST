@@ -679,8 +679,24 @@ export function ReceiptModal({
 
                   const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
 
-                  // Get discount from cart items if available (for preview mode, discount might come from parent)
-                  const discount = cartItems.reduce((sum, item) => {
+                  // Check for order-level discount first (from orderForPayment or parent props)
+                  let orderDiscount = 0;
+                  
+                  // Check if there's discount in orderForPayment (passed from parent)
+                  if (typeof window !== 'undefined' && (window as any).orderForPayment?.discount) {
+                    orderDiscount = parseFloat((window as any).orderForPayment.discount) || 0;
+                    console.log("✅ Found orderForPayment discount:", orderDiscount);
+                  }
+                  
+                  // Check if total prop contains discount info
+                  if (typeof total === 'object' && total.discount) {
+                    const totalPropDiscount = parseFloat(total.discount) || 0;
+                    orderDiscount = Math.max(orderDiscount, totalPropDiscount);
+                    console.log("✅ Found total prop discount:", totalPropDiscount, "final order discount:", orderDiscount);
+                  }
+
+                  // Get discount from cart items if available (for preview mode)
+                  const itemLevelDiscount = cartItems.reduce((sum, item) => {
                     console.log("🔍 Checking discount for item:", {
                       id: item.id,
                       name: item.name,
@@ -712,29 +728,15 @@ export function ReceiptModal({
                       return sum + itemDiscount;
                     }
 
-                    // Check if there's a discount field in the parent order data passed as total prop
-                    if (total && typeof total === 'object' && total.discount && parseFloat(total.discount) > 0) {
-                      console.log("✅ Found order-level discount:", parseFloat(total.discount));
-                      return sum + parseFloat(total.discount);
-                    }
-
                     console.log("❌ No discount found for this item");
                     return sum;
                   }, 0);
 
-                  console.log("💰 Total discount calculated:", discount);
-
-                  // Check for order-level discount passed as prop
-                  let orderDiscount = 0;
-                  if (typeof total === 'object' && total.discount) {
-                    orderDiscount = parseFloat(total.discount) || 0;
-                  }
-
                   // Use the higher of item-level discount or order-level discount
-                  const finalDiscount = Math.max(discount, orderDiscount);
+                  const finalDiscount = Math.max(itemLevelDiscount, orderDiscount);
                   
                   console.log("💰 Final discount calculation:", {
-                    itemLevelDiscount: discount,
+                    itemLevelDiscount: itemLevelDiscount,
                     orderLevelDiscount: orderDiscount,
                     finalDiscount: finalDiscount
                   });
