@@ -1538,7 +1538,13 @@ export default function SalesOrders() {
                                     </td>
                                     <td className="px-3 py-3 text-right">
                                       <div className="text-sm font-medium">
-                                        {formatCurrency(paid)}
+                                        {(() => {
+                                          // Always show final total after discount for all orders
+                                          const originalTotal = parseFloat(item.total || "0");
+                                          const discountAmount = parseFloat(item.discount || "0");
+                                          const finalTotal = Math.max(0, originalTotal - discountAmount);
+                                          return formatCurrency(Math.floor(finalTotal));
+                                        })()}
                                       </div>
                                     </td>
                                     <td className="px-3 py-3">
