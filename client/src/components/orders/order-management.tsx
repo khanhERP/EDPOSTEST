@@ -830,7 +830,7 @@ export function OrderManagement() {
   const handlePaymentClick = async (order: Order) => {
     console.log('🎯 Payment button clicked for order:', order.id, order.orderNumber);
 
-    // Validate order first
+    // Step 1: Basic validation
     if (!order || !order.id) {
       console.error('❌ Invalid order data:', order);
       toast({
@@ -841,34 +841,34 @@ export function OrderManagement() {
       return;
     }
 
+    // Step 2: Validate products data is available
+    if (!products || !Array.isArray(products)) {
+      console.error('❌ Products data not available for calculation');
+      toast({
+        title: 'Lỗi',
+        description: 'Dữ liệu sản phẩm không khả dụng. Vui lòng tải lại trang.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
-      // Step 1: Fetch order items for calculation
+      // Step 3: Fetch order items with proper error handling
       console.log('📦 Fetching order items for order:', order.id);
       
-      let orderItemsResponse;
-      try {
-        orderItemsResponse = await apiRequest('GET', `/api/order-items/${order.id}`);
-      } catch (apiError) {
-        console.error('❌ API request failed:', apiError);
-        throw new Error(`API request failed: ${apiError.message || 'Unknown error'}`);
-      }
-
-      if (!orderItemsResponse || !orderItemsResponse.ok) {
+      const orderItemsResponse = await apiRequest('GET', `/api/order-items/${order.id}`);
+      
+      if (!orderItemsResponse.ok) {
+        const errorText = await orderItemsResponse.text();
         console.error('❌ API response not ok:', {
-          status: orderItemsResponse?.status,
-          statusText: orderItemsResponse?.statusText
+          status: orderItemsResponse.status,
+          statusText: orderItemsResponse.statusText,
+          errorText
         });
-        throw new Error(`Failed to fetch order items: ${orderItemsResponse?.status} ${orderItemsResponse?.statusText}`);
+        throw new Error(`Không thể tải dữ liệu món ăn: ${orderItemsResponse.status}`);
       }
 
-      let orderItemsData;
-      try {
-        orderItemsData = await orderItemsResponse.json();
-      } catch (parseError) {
-        console.error('❌ Failed to parse response JSON:', parseError);
-        throw new Error('Failed to parse order items response');
-      }
-
+      const orderItemsData = await orderItemsResponse.json();
       console.log('📦 Order items fetched:', orderItemsData?.length || 0, 'items');
 
       if (!Array.isArray(orderItemsData) || orderItemsData.length === 0) {
@@ -881,135 +881,100 @@ export function OrderManagement() {
         return;
       }
 
-      // Step 2: Validate products data before calculation
-      if (!products || !Array.isArray(products)) {
-        console.error('❌ Products data not available for calculation');
-        toast({
-          title: 'Lỗi',
-          description: 'Dữ liệu sản phẩm không khả dụng. Vui lòng tải lại trang.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Step 3: Use EXACT same calculation as orderDetailsCalculation memo
+      // Step 4: Calculate totals using EXACT same logic as orderDetailsCalculation
       let subtotal = 0;
       let taxAmount = 0;
 
-      console.log(`🧮 Order Payment: Calculating totals for ${orderItemsData.length} items using Order Details logic`);
+      console.log(`🧮 Order Payment: Calculating totals for ${orderItemsData.length} items`);
 
-      try {
-        orderItemsData.forEach((item: any) => {
-          // Validate item data
-          if (!item || typeof item !== 'object') {
-            console.warn('⚠️ Order Payment: Invalid item object:', item);
-            return;
-          }
+      for (const item of orderItemsData) {
+        // Validate each item
+        if (!item || typeof item !== 'object') {
+          console.warn('⚠️ Invalid item object:', item);
+          continue;
+        }
 
-          const unitPrice = Number(item.unitPrice || 0);
-          const quantity = Number(item.quantity || 0);
-          
-          if (isNaN(unitPrice) || isNaN(quantity) || unitPrice <= 0 || quantity <= 0) {
-            console.warn(`⚠️ Order Payment: Invalid item data: unitPrice=${unitPrice}, quantity=${quantity}`, item);
-            return;
-          }
+        const unitPrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        
+        if (isNaN(unitPrice) || isNaN(quantity) || unitPrice <= 0 || quantity <= 0) {
+          console.warn(`⚠️ Invalid item data:`, { unitPrice, quantity, item });
+          continue;
+        }
 
-          const product = products.find((p: any) => p && p.id === item.productId);
+        const product = products.find((p: any) => p && p.id === item.productId);
 
-          console.log(`📊 Order Payment: Processing item ${item.id}:`, {
-            productId: item.productId,
-            productName: item.productName,
-            unitPrice,
-            quantity,
-            productFound: !!product
-          });
+        console.log(`📊 Processing item ${item.id}:`, {
+          productId: item.productId,
+          productName: item.productName,
+          unitPrice,
+          quantity,
+          productFound: !!product
+        });
 
-          // Calculate subtotal (base price * quantity) - EXACT same as Order Details
-          const itemSubtotal = unitPrice * quantity;
-          if (!isNaN(itemSubtotal) && itemSubtotal > 0) {
-            subtotal += itemSubtotal;
-          }
+        // Calculate subtotal (base price * quantity)
+        const itemSubtotal = unitPrice * quantity;
+        if (itemSubtotal > 0) {
+          subtotal += itemSubtotal;
+        }
 
-          // Calculate tax using afterTaxPrice if available (EXACT same logic as Order Details)
-          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-            try {
-              const afterTaxPrice = parseFloat(product.afterTaxPrice);
-              if (!isNaN(afterTaxPrice) && afterTaxPrice > unitPrice) {
-                const taxPerUnit = afterTaxPrice - unitPrice;
-                const itemTax = taxPerUnit * quantity;
-                if (!isNaN(itemTax) && itemTax > 0) {
-                  taxAmount += itemTax;
+        // Calculate tax using afterTaxPrice if available (EXACT same logic as Order Details)
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          if (!isNaN(afterTaxPrice) && afterTaxPrice > unitPrice) {
+            const taxPerUnit = afterTaxPrice - unitPrice;
+            const itemTax = taxPerUnit * quantity;
+            if (itemTax > 0) {
+              taxAmount += itemTax;
 
-                  console.log(`💸 Order Payment: Tax calculated for ${item.productName}:`, {
-                    afterTaxPrice,
-                    unitPrice,
-                    taxPerUnit,
-                    quantity,
-                    itemTax
-                  });
-                }
-              }
-            } catch (taxError) {
-              console.warn(`⚠️ Tax calculation error for item ${item.id}:`, taxError);
+              console.log(`💸 Tax calculated for ${item.productName}:`, {
+                afterTaxPrice,
+                unitPrice,
+                taxPerUnit,
+                quantity,
+                itemTax
+              });
             }
           }
-        });
-      } catch (calculationError) {
-        console.error('❌ Error during order calculation:', calculationError);
-        throw new Error(`Calculation failed: ${calculationError.message}`);
+        }
       }
 
-      // Validate calculation results
+      // Step 5: Validate calculation results
       if (isNaN(subtotal) || isNaN(taxAmount) || subtotal < 0 || taxAmount < 0) {
         console.error('❌ Invalid calculation results:', { subtotal, taxAmount });
-        throw new Error('Invalid calculation results');
+        throw new Error('Kết quả tính toán không hợp lệ');
       }
 
       const baseTotal = Math.floor(subtotal + taxAmount);
 
-      console.log(`💰 Order Payment: Calculation results (Order Details logic):`, {
-        subtotal: subtotal,
-        tax: taxAmount,
-        baseTotal: baseTotal,
-        itemsProcessed: orderItemsData.length
-      });
-
-      // Step 3: Apply discount exactly like Order Details
+      // Step 6: Apply discount
       const discountAmount = Math.floor(Number(order.discount || 0));
       if (isNaN(discountAmount) || discountAmount < 0) {
         console.error('❌ Invalid discount amount:', order.discount);
-        throw new Error('Invalid discount amount');
+        throw new Error('Số tiền giảm giá không hợp lệ');
       }
 
       const finalTotal = Math.max(0, baseTotal - discountAmount);
 
-      console.log('💰 Order Payment: Final calculation with discount:', {
-        baseTotal: baseTotal,
-        discountAmount: discountAmount,
-        finalTotal: finalTotal
+      console.log('💰 Order Payment: Final calculation:', {
+        subtotal,
+        taxAmount,
+        baseTotal,
+        discountAmount,
+        finalTotal
       });
 
-      // Validate calculated total
+      // Step 7: Validate final total
       if (isNaN(finalTotal) || finalTotal < 0) {
-        console.error('❌ Invalid final total after discount:', finalTotal);
-        toast({
-          title: 'Lỗi',
-          description: 'Tổng tiền sau giảm giá không hợp lệ. Vui lòng kiểm tra lại.',
-          variant: 'destructive',
-        });
-        return;
+        console.error('❌ Invalid final total:', finalTotal);
+        throw new Error('Tổng tiền cuối cùng không hợp lệ');
       }
 
-      // Additional validation: ensure we have meaningful totals
-      if (finalTotal === 0 && orderItemsData.length > 0) {
-        console.warn('⚠️ Final total is 0 but order has items. This might be incorrect.');
-      }
-
-      // Step 4: Create processed items exactly like Order Details
+      // Step 8: Create processed items
       const processedItems = orderItemsData.map((item: any) => {
         const unitPrice = Number(item.unitPrice || 0);
         const quantity = Number(item.quantity || 0);
-        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+        const product = products.find((p: any) => p && p.id === item.productId);
 
         return {
           id: item.id,
@@ -1025,7 +990,7 @@ export function OrderManagement() {
         };
       });
 
-      // Step 5: Create receipt preview data matching Order Details display with proper discount
+      // Step 9: Create receipt preview data with proper discount handling
       const receiptPreview = {
         id: order.id,
         orderId: order.id,
@@ -1054,15 +1019,15 @@ export function OrderManagement() {
         })),
         subtotal: Math.floor(subtotal).toString(),
         tax: Math.floor(taxAmount).toString(),
-        discount: discountAmount.toString(), // Ensure discount is properly set
-        total: Math.floor(finalTotal).toString(), // Use FINAL total (after discount) for receipt display
-        exactTotal: Math.floor(finalTotal), // Final total AFTER discount for payment
+        discount: discountAmount.toString(),
+        total: Math.floor(finalTotal).toString(), // Final total after discount
+        exactTotal: Math.floor(finalTotal),
         exactSubtotal: Math.floor(subtotal),
         exactTax: Math.floor(taxAmount),
-        exactDiscount: discountAmount, // Explicit discount amount
-        exactBaseTotal: Math.floor(baseTotal), // Store base total for reference
+        exactDiscount: discountAmount,
+        exactBaseTotal: Math.floor(baseTotal),
         paymentMethod: 'preview',
-        amountReceived: Math.floor(finalTotal).toString(), // Amount to receive after discount
+        amountReceived: Math.floor(finalTotal).toString(),
         change: '0.00',
         cashierName: 'Order Management',
         createdAt: new Date().toISOString(),
@@ -1083,30 +1048,7 @@ export function OrderManagement() {
         templateNumber: order.templateNumber || null
       };
 
-      console.log('💰 Order Management: Receipt preview created with discount:', {
-        baseTotal: baseTotal,
-        discountAmount: discountAmount,
-        finalTotal: finalTotal,
-        receiptTotal: receiptPreview.total,
-        receiptExactTotal: receiptPreview.exactTotal,
-        receiptDiscount: receiptPreview.discount,
-        receiptExactDiscount: receiptPreview.exactDiscount
-      });
-
-      // Store receipt preview data globally for Receipt Modal to access discount correctly
-      if (typeof window !== 'undefined') {
-        (window as any).previewReceipt = receiptPreview;
-        (window as any).orderForPayment = orderForPaymentData;
-        console.log('💾 Order Management: Stored preview data globally with discount:', {
-          receiptDiscount: receiptPreview.discount,
-          receiptExactDiscount: receiptPreview.exactDiscount,
-          orderDiscount: orderForPaymentData.discount,
-          orderExactDiscount: orderForPaymentData.exactDiscount,
-          hasDiscount: discountAmount > 0
-        });
-      }
-
-      // Step 7: Create order data for payment flow matching Order Details with proper discount
+      // Step 10: Create order data for payment flow
       const orderForPaymentData = {
         ...order,
         id: order.id,
@@ -1119,71 +1061,56 @@ export function OrderManagement() {
         subtotal: Math.floor(subtotal).toString(),
         tax: Math.floor(taxAmount).toString(),
         discount: discountAmount.toString(),
-        total: Math.floor(finalTotal).toString(), // Final total after discount for payment
-        baseTotal: Math.floor(baseTotal), // Store base total before discount
+        total: Math.floor(finalTotal).toString(),
         exactSubtotal: Math.floor(subtotal),
         exactTax: Math.floor(taxAmount),
         exactDiscount: discountAmount,
         exactTotal: Math.floor(finalTotal),
-        exactBaseTotal: Math.floor(baseTotal), // Add base total for reference
+        exactBaseTotal: Math.floor(baseTotal),
         tableNumber: order.tableId ? `T${order.tableId}` : 'N/A',
-        // Additional info for receipt
+        // Additional info
         status: order.status,
         orderedAt: order.orderedAt,
         servedAt: order.servedAt,
         salesChannel: order.salesChannel || 'table',
-        // Payment info
         paymentMethod: order.paymentMethod || null,
         paymentStatus: order.paymentStatus || 'pending',
         paidAt: order.paidAt || null,
-        // E-invoice info
         einvoiceStatus: order.einvoiceStatus || 0,
         invoiceNumber: order.invoiceNumber || null,
         symbol: order.symbol || null,
         templateNumber: order.templateNumber || null,
-        // Employee info
         employeeId: order.employeeId || null,
         notes: order.notes || null
       };
 
-      console.log('💰 Order Management: Order for payment created with discount:', {
-        orderDiscount: orderForPaymentData.discount,
-        orderExactDiscount: orderForPaymentData.exactDiscount,
-        orderTotal: orderForPaymentData.total,
-        orderExactTotal: orderForPaymentData.exactTotal,
-        orderId: orderForPaymentData.id
+      console.log('✅ Payment data prepared successfully:', {
+        orderId: order.id,
+        finalTotal,
+        itemsCount: processedItems.length,
+        hasDiscount: discountAmount > 0
       });
 
-      console.log('✅ Order Management: Payment data prepared matching Order Details:', {
-        receiptTotal: receiptPreview.total,
-        receiptExactTotal: receiptPreview.exactTotal,
-        receiptDiscount: receiptPreview.discount,
-        receiptExactDiscount: receiptPreview.exactDiscount,
-        orderTotal: orderForPaymentData.total,
-        orderExactTotal: orderForPaymentData.exactTotal,
-        orderId: orderForPaymentData.id
-      });
+      // Step 11: Store data globally for Receipt Modal access
+      if (typeof window !== 'undefined') {
+        (window as any).previewReceipt = receiptPreview;
+        (window as any).orderForPayment = orderForPaymentData;
+      }
 
-      // Step 8: Force close any existing modals first to prevent conflicts
+      // Step 12: Close existing modals and set new state
       setOrderDetailsOpen(false);
       setShowPaymentMethodModal(false);
       setShowEInvoiceModal(false);
       setShowReceiptModal(false);
       setSelectedReceipt(null);
 
-      // Step 9: Set new state for receipt preview immediately
+      // Set new state
       setSelectedOrder(order);
       setOrderForPayment(orderForPaymentData);
       setPreviewReceipt(receiptPreview);
 
-      // Force the receipt preview modal to open immediately
-      console.log('🚀 Order Management: Opening receipt preview modal with data:', {
-        hasPreviewReceipt: !!receiptPreview,
-        hasOrderForPayment: !!orderForPaymentData,
-        receiptId: receiptPreview.id
-      });
-
-      // Use setTimeout to ensure state updates are processed
+      // Open receipt preview modal
+      console.log('🚀 Opening receipt preview modal');
       setTimeout(() => {
         setShowReceiptPreview(true);
       }, 50);
@@ -1191,28 +1118,28 @@ export function OrderManagement() {
     } catch (error) {
       console.error('❌ Error preparing payment data:', error);
       
-      // Provide more specific error messages
-      let errorMessage = 'Không thể chuẩn bị dữ liệu thanh toán. Vui lòng thử lại.';
+      let errorMessage = 'Không thể chuẩn bị dữ liệu thanh toán';
       
       if (error instanceof Error) {
-        if (error.message.includes('API request failed')) {
-          errorMessage = 'Lỗi kết nối API. Vui lòng kiểm tra kết nối mạng.';
-        } else if (error.message.includes('Failed to parse')) {
-          errorMessage = 'Lỗi xử lý dữ liệu từ server. Vui lòng thử lại.';
-        } else if (error.message.includes('Calculation failed')) {
-          errorMessage = 'Lỗi tính toán tổng tiền. Vui lòng kiểm tra dữ liệu đơn hàng.';
-        } else if (error.message.includes('Invalid')) {
-          errorMessage = 'Dữ liệu đơn hàng không hợp lệ. Vui lòng tải lại trang.';
+        // Use the error message directly if it's in Vietnamese (custom errors)
+        if (error.message.includes('Không thể') || error.message.includes('không hợp lệ')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('API') || error.message.includes('fetch')) {
+          errorMessage = 'Lỗi kết nối với server. Vui lòng thử lại.';
+        } else if (error.message.includes('parse') || error.message.includes('JSON')) {
+          errorMessage = 'Lỗi xử lý dữ liệu từ server.';
+        } else {
+          errorMessage = `Lỗi: ${error.message}`;
         }
       }
 
       toast({
-        title: 'Lỗi',
+        title: 'Lỗi chuẩn bị thanh toán',
         description: errorMessage,
         variant: 'destructive',
       });
 
-      // Clear any partial state that might have been set
+      // Clear any partial state
       setShowReceiptPreview(false);
       setPreviewReceipt(null);
       setOrderForPayment(null);
