@@ -562,6 +562,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dashboardDescription: "총 매출 및 운영 상태 대시보드",
     salesAnalysis: "매출 분석",
     menuAnalysis: "메뉴 분석",
+    totalMoney: "총 금액",
     tableAnalysis: "테이블 분석",
     backToTables: "테이블로 돌아가기",
 
