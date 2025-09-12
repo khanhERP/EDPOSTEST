@@ -1276,7 +1276,7 @@ export function PaymentMethodModal({
       // Don't close payment modal, show receipt modal directly
       console.log("📄 SHOWING RECEIPT MODAL immediately");
       setShowReceiptModal(true);
-      
+
     } else {
       // Even if no receipt data, still show success and close payment flow
       if (

@@ -47,6 +47,7 @@ export function usePOS() {
         customerCount: 1,
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
+        discount: paymentData.discount ? parseFloat(paymentData.discount.toString()).toFixed(2) : '0.00',
         total: total.toFixed(2),
         paymentMethod: paymentData.paymentMethod === 'einvoice' ? paymentData.originalPaymentMethod || 'cash' : paymentData.paymentMethod,
         paymentStatus: paymentData.paymentMethod === 'einvoice' ? 'pending' : 'paid',
