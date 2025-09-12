@@ -686,16 +686,15 @@ export function ReceiptModal({
                   
                   // Check multiple sources for discount data
                   const receiptDiscount = parseFloat((receipt as any)?.discount?.toString() || "0");
-                  const orderDiscount = parseFloat((selectedOrder as any)?.discount?.toString() || "0");
+                  // Remove selectedOrder reference since it's not available in this component
                   const propsDiscount = parseFloat((props as any)?.discount?.toString() || "0");
                   
-                  // Use the highest discount found from any source
-                  const discount = Math.max(itemDiscounts, receiptDiscount, orderDiscount, propsDiscount);
+                  // Use the highest discount found from available sources
+                  const discount = Math.max(itemDiscounts, receiptDiscount, propsDiscount);
 
                   console.log("🔍 Receipt Modal Discount Debug:", {
                     itemDiscounts,
                     receiptDiscount,
-                    orderDiscount,
                     propsDiscount,
                     finalDiscount: discount,
                     mode: isPreview ? "preview" : "final"
