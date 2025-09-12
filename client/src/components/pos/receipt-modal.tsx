@@ -681,25 +681,67 @@ export function ReceiptModal({
 
                   // Get discount from cart items if available (for preview mode, discount might come from parent)
                   const discount = cartItems.reduce((sum, item) => {
-                    // Check if item has discount property
+                    console.log("🔍 Checking discount for item:", {
+                      id: item.id,
+                      name: item.name,
+                      discount: item.discount,
+                      discountAmount: item.discountAmount,
+                      originalPrice: item.originalPrice,
+                      currentPrice: item.price,
+                      quantity: item.quantity
+                    });
+
+                    // Check if item has discount property (per unit discount)
                     if (item.discount && parseFloat(item.discount) > 0) {
-                      return sum + (parseFloat(item.discount) * item.quantity);
+                      const itemDiscount = parseFloat(item.discount) * item.quantity;
+                      console.log("✅ Found per-unit discount:", itemDiscount);
+                      return sum + itemDiscount;
                     }
-                    // Check if item has discountAmount property
+                    
+                    // Check if item has discountAmount property (total discount for item)
                     if (item.discountAmount && parseFloat(item.discountAmount) > 0) {
-                      return sum + parseFloat(item.discountAmount);
+                      const itemDiscount = parseFloat(item.discountAmount);
+                      console.log("✅ Found total discount amount:", itemDiscount);
+                      return sum + itemDiscount;
                     }
+                    
                     // Check if item has originalPrice vs current price difference (implicit discount)
                     if (item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price)) {
                       const itemDiscount = (parseFloat(item.originalPrice) - parseFloat(item.price)) * item.quantity;
+                      console.log("✅ Found price difference discount:", itemDiscount);
                       return sum + itemDiscount;
                     }
+
+                    // Check if there's a discount field in the parent order data passed as total prop
+                    if (total && typeof total === 'object' && total.discount && parseFloat(total.discount) > 0) {
+                      console.log("✅ Found order-level discount:", parseFloat(total.discount));
+                      return sum + parseFloat(total.discount);
+                    }
+
+                    console.log("❌ No discount found for this item");
                     return sum;
                   }, 0);
 
+                  console.log("💰 Total discount calculated:", discount);
+
+                  // Check for order-level discount passed as prop
+                  let orderDiscount = 0;
+                  if (typeof total === 'object' && total.discount) {
+                    orderDiscount = parseFloat(total.discount) || 0;
+                  }
+
+                  // Use the higher of item-level discount or order-level discount
+                  const finalDiscount = Math.max(discount, orderDiscount);
+                  
+                  console.log("💰 Final discount calculation:", {
+                    itemLevelDiscount: discount,
+                    orderLevelDiscount: orderDiscount,
+                    finalDiscount: finalDiscount
+                  });
+
                   // Calculate final total after discount - use base total before tax, then add tax, then subtract discount
                   const totalWithTax = subtotal + tax;
-                  const finalTotal = Math.max(0, totalWithTax - discount);
+                  const finalTotal = Math.max(0, totalWithTax - finalDiscount);
 
                   return (
                     <>
@@ -715,11 +757,11 @@ export function ReceiptModal({
                           {Math.floor(tax).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
-                      {discount > 0 && (
+                      {finalDiscount > 0 && (
                         <div className="flex justify-between text-sm text-red-600">
                           <span>Giảm giá:</span>
                           <span className="font-medium">
-                            -{Math.floor(discount).toLocaleString("vi-VN")} ₫
+                            -{Math.floor(finalDiscount).toLocaleString("vi-VN")} ₫
                           </span>
                         </div>
                       )}
