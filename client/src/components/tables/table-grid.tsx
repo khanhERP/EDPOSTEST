@@ -205,7 +205,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       ]);
       if (!cachedData) {
         console.log(
-          "🔍 Table Grid: Loading order items for order ${selectedOrder.id} (no cached data)",
+          `🔍 Table Grid: Loading order items for order ${selectedOrder.id} (no cached data)`,
         );
         refetchOrderItems();
       }
@@ -243,85 +243,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       window.removeEventListener("orderTotalsUpdated", handleOrderUpdate);
     };
   }, []);
-
-  // Enhanced useEffect for global data refresh events
-  useEffect(() => {
-    const handleGlobalRefresh = async (event: any) => {
-      console.log("🔄 Table Grid: Received global refresh event:", event.detail);
-
-      try {
-        // Clear all cache
-        queryClient.clear();
-
-        // Force refresh with fresh data
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
-          queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
-          queryClient.refetchQueries({ queryKey: ["/api/tables"] }),
-          queryClient.refetchQueries({ queryKey: ["/api/orders"] })
-        ]);
-
-        console.log("✅ Table Grid: Global refresh completed");
-      } catch (error) {
-        console.error("❌ Table Grid: Global refresh failed:", error);
-      }
-    };
-
-    const handleCloseAllPopups = () => {
-      console.log('🔴 Table Grid: Closing all popups from global event');
-      setShowReceiptModal(false);
-      setSelectedReceipt(null);
-      setOrderForPayment(null);
-      setShowPaymentMethodModal(false);
-      setShowEInvoiceModal(false);
-      setShowReceiptPreview(false);
-      setPreviewReceipt(null);
-      setOrderDetailsOpen(false);
-      setSelectedOrder(null);
-      setSelectedPaymentMethod("");
-    };
-
-    const handleReloadAllAPIs = async () => {
-      console.log('🔄 Table Grid: Reloading all APIs from global event');
-      try {
-        // Force refresh all queries
-        await queryClient.invalidateQueries();
-        await queryClient.refetchQueries();
-
-        // Clear cache and reload specific APIs
-        queryClient.clear();
-
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-          queryClient.invalidateQueries({ queryKey: ['/api/products'] }),
-          queryClient.invalidateQueries({ queryKey: ['/api/employees'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/tables'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/products'] }),
-          queryClient.refetchQueries({ queryKey: ['/api/employees'] })
-        ]);
-
-        console.log('✅ Table Grid: All APIs reloaded successfully');
-      } catch (error) {
-        console.error('❌ Table Grid: Error reloading APIs:', error);
-      }
-    };
-
-    // Listen for various refresh events
-    window.addEventListener("forceDataRefresh", handleGlobalRefresh);
-    window.addEventListener("orderManagementRefresh", handleGlobalRefresh);
-    window.addEventListener('closeAllPopups', handleCloseAllPopups);
-    window.addEventListener('reloadAllAPIs', handleReloadAllAPIs);
-
-    return () => {
-      window.removeEventListener("forceDataRefresh", handleGlobalRefresh);
-      window.removeEventListener("orderManagementRefresh", handleGlobalRefresh);
-      window.removeEventListener('closeAllPopups', handleCloseAllPopups);
-      window.removeEventListener('reloadAllAPIs', handleReloadAllAPIs);
-    };
-  }, [queryClient]);
-
 
   // Enhanced WebSocket connection for AGGRESSIVE real-time updates
   useEffect(() => {
@@ -2985,7 +2906,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           basePrice,
                           taxPerUnit,
                           itemTax,
-                          runningTotalTax: totalTax,
+                          quantity,
                         });
 
                         console.log(`💰 Table Grid - Tax calculated:`, {
@@ -3128,9 +3049,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             `FOOD${String(item.productId).padStart(5, "0")}`,
                           taxRate: parseFloat(product?.taxRate || "0"),
                           afterTaxPrice: product?.afterTaxPrice || null,
-                          discount: item.discount || "0",
-                          discountAmount: item.discountAmount || "0",
-                          originalPrice: item.originalPrice || item.price,
                         };
                       });
 
@@ -3151,7 +3069,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         cashierName: "Table Service",
                         paymentMethod: "preview", // Placeholder method
                         items: processedItems.map((item: any) => ({
-                          id: item.productId,
+                          id: item.id,
                           productId: item.id,
                           productName: item.name,
                           quantity: item.quantity,
@@ -3272,7 +3190,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   (p: any) => p.id === item.productId,
                                 )
                               : null;
-                            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+                            return product?.taxRate
+                              ? parseFloat(product.taxRate)
+                              : 10;
                           })(),
                         }));
 
@@ -3413,12 +3333,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             sku:
               item.sku ||
               `FOOD${String(item.productId || item.id).padStart(5, "0")}`,
-            taxRate: (() => {
-              const product = Array.isArray(products)
-                ? products.find((p: any) => p.id === item.productId)
-                : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })(),
+            taxRate: parseFloat(item.taxRate || "0"),
+            afterTaxPrice: item.afterTaxPrice || null,
+            discount: item.discount || "0",
+            discountAmount: item.discountAmount || "0",
+            originalPrice: item.originalPrice || item.price,
           })) || []
         }
         total={
