@@ -953,22 +953,30 @@ export function OrderManagement() {
         orderNumber: order.orderNumber,
         tableId: order.tableId,
         customerCount: order.customerCount,
-        customerName: order.customerName,
+        customerName: order.customerName || 'Khách hàng',
+        customerTaxCode: order.customerTaxCode || null,
         items: processedItems.map(item => ({
           id: item.id,
           productId: item.productId,
           productName: item.productName,
           quantity: item.quantity.toString(),
-          price: item.unitPrice,
+          price: item.unitPrice.toString(),
+          unitPrice: item.unitPrice.toString(),
           total: (item.unitPrice * item.quantity).toString(),
           sku: item.sku,
-          taxRate: item.taxRate,
+          taxRate: item.taxRate.toString(),
+          afterTaxPrice: item.afterTaxPrice,
         })),
-        orderItems: processedItems,
+        orderItems: processedItems.map(item => ({
+          ...item,
+          unitPrice: item.unitPrice.toString(),
+          total: (item.unitPrice * item.quantity).toString(),
+          taxRate: item.taxRate.toString(),
+        })),
         subtotal: Math.floor(subtotal).toString(),
         tax: Math.floor(taxAmount).toString(),
         discount: discountAmount.toString(), // Ensure discount is properly set
-        total: Math.floor(baseTotal).toString(), // Use BASE total (before discount) for receipt display consistency
+        total: Math.floor(finalTotal).toString(), // Use FINAL total (after discount) for receipt display
         exactTotal: Math.floor(finalTotal), // Final total AFTER discount for payment
         exactSubtotal: Math.floor(subtotal),
         exactTax: Math.floor(taxAmount),
@@ -984,7 +992,16 @@ export function OrderManagement() {
         tableName: order.tableId ? `Bàn T${order.tableId}` : 'Bàn không xác định',
         storeLocation: 'Cửa hàng chính',
         storeAddress: '서울시 강남구 테헤란로 123',
-        storePhone: '02-1234-5678'
+        storePhone: '02-1234-5678',
+        // Order status info
+        status: order.status,
+        orderedAt: order.orderedAt,
+        servedAt: order.servedAt,
+        // E-invoice info
+        einvoiceStatus: order.einvoiceStatus || 0,
+        invoiceNumber: order.invoiceNumber || null,
+        symbol: order.symbol || null,
+        templateNumber: order.templateNumber || null
       };
 
       console.log('💰 Order Management: Receipt preview created with discount:', {
@@ -1014,6 +1031,10 @@ export function OrderManagement() {
       const orderForPaymentData = {
         ...order,
         id: order.id,
+        orderNumber: order.orderNumber,
+        tableId: order.tableId,
+        customerName: order.customerName || 'Khách hàng',
+        customerCount: order.customerCount || 1,
         orderItems: processedItems,
         processedItems: processedItems,
         subtotal: Math.floor(subtotal).toString(),
@@ -1026,7 +1047,24 @@ export function OrderManagement() {
         exactDiscount: discountAmount,
         exactTotal: Math.floor(finalTotal),
         exactBaseTotal: Math.floor(baseTotal), // Add base total for reference
-        tableNumber: order.tableId ? `T${order.tableId}` : 'N/A'
+        tableNumber: order.tableId ? `T${order.tableId}` : 'N/A',
+        // Additional info for receipt
+        status: order.status,
+        orderedAt: order.orderedAt,
+        servedAt: order.servedAt,
+        salesChannel: order.salesChannel || 'table',
+        // Payment info
+        paymentMethod: order.paymentMethod || null,
+        paymentStatus: order.paymentStatus || 'pending',
+        paidAt: order.paidAt || null,
+        // E-invoice info
+        einvoiceStatus: order.einvoiceStatus || 0,
+        invoiceNumber: order.invoiceNumber || null,
+        symbol: order.symbol || null,
+        templateNumber: order.templateNumber || null,
+        // Employee info
+        employeeId: order.employeeId || null,
+        notes: order.notes || null
       };
 
       console.log('💰 Order Management: Order for payment created with discount:', {
@@ -2973,7 +3011,8 @@ export function OrderManagement() {
 
           console.log('💳 Opening payment method modal with order:', {
             orderId: orderForPayment.id,
-            exactTotal: orderForPayment.exactTotal
+            exactTotal: orderForPayment.exactTotal,
+            hasItems: orderForPayment.orderItems?.length || 0
           });
 
           // Close preview and show payment method modal
@@ -2989,7 +3028,10 @@ export function OrderManagement() {
           quantity: parseInt(item.quantity || '1'),
           sku: item.sku || `SP${item.productId}`,
           taxRate: parseFloat(item.taxRate || '0'),
-          afterTaxPrice: item.afterTaxPrice || null
+          afterTaxPrice: item.afterTaxPrice || null,
+          discount: item.discount || '0',
+          discountAmount: item.discountAmount || '0',
+          originalPrice: item.originalPrice || item.unitPrice || item.price
         })) || []}
         total={previewReceipt ? parseFloat(previewReceipt.exactTotal || previewReceipt.total || '0') : 0}
       />
