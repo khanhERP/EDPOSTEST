@@ -1320,6 +1320,7 @@ export function SalesChartReport() {
             )}
           </CardContent>
         </Card>
+      </>
     );
   };
 
@@ -1732,7 +1733,7 @@ export function SalesChartReport() {
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
             >
               <Download className="w-4 h-4" />
-              Xuất Excel
+              {t("common.exportExcel")}
             </Button>
           </CardDescription>
         </CardHeader>
@@ -2428,7 +2429,7 @@ export function SalesChartReport() {
                 className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Xuất Excel
+                {t("common.exportExcel")}
               </Button>
             </CardDescription>
           </CardHeader>
@@ -3224,7 +3225,7 @@ export function SalesChartReport() {
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
             >
               <Download className="w-4 h-4" />
-              Xuất Excel
+              {t("common.exportExcel")}
             </Button>
           </CardDescription>
         </CardHeader>
@@ -3759,7 +3760,7 @@ export function SalesChartReport() {
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
             >
               <Download className="w-4 h-4" />
-              Xuất Excel
+              {t("common.exportExcel")}
             </Button>
           </CardDescription>
         </CardHeader>
@@ -4494,7 +4495,7 @@ export function SalesChartReport() {
               className="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
             >
               <Download className="w-4 h-4" />
-              Xuất Excel
+              {t("common.exportExcel")}
             </Button>
           </CardDescription>
         </CardHeader>
