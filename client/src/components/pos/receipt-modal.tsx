@@ -679,16 +679,27 @@ export function ReceiptModal({
 
                   const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
 
-                  // Get discount from cart items if available (for preview mode, discount might come from parent)
-                  // Check if there's a discount in the receipt prop or total props passed to modal
+                  // Get discount from multiple sources for comprehensive discount handling
                   const itemDiscounts = cartItems.reduce((sum, item) => {
                     return sum + (parseFloat(item.discount || "0") * item.quantity);
                   }, 0);
                   
-                  // For preview mode, also check if discount was passed via total calculation
-                  // This handles cases where discount is applied at order level
-                  const orderDiscount = (receipt as any)?.discount || 0;
-                  const discount = Math.max(itemDiscounts, parseFloat(orderDiscount.toString() || "0"));
+                  // Check multiple sources for discount data
+                  const receiptDiscount = parseFloat((receipt as any)?.discount?.toString() || "0");
+                  const orderDiscount = parseFloat((selectedOrder as any)?.discount?.toString() || "0");
+                  const propsDiscount = parseFloat((props as any)?.discount?.toString() || "0");
+                  
+                  // Use the highest discount found from any source
+                  const discount = Math.max(itemDiscounts, receiptDiscount, orderDiscount, propsDiscount);
+
+                  console.log("🔍 Receipt Modal Discount Debug:", {
+                    itemDiscounts,
+                    receiptDiscount,
+                    orderDiscount,
+                    propsDiscount,
+                    finalDiscount: discount,
+                    mode: isPreview ? "preview" : "final"
+                  });
 
                   // Calculate final total after discount - use base total before tax, then add tax, then subtract discount
                   const totalWithTax = subtotal + tax;
@@ -719,7 +730,7 @@ export function ReceiptModal({
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(finalTotal).toLocaleString("vi-VN")} ₫
+                          {Math.round(Math.max(0, finalTotal - discount)).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>

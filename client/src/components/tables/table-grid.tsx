@@ -2894,6 +2894,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         };
                       });
 
+                      // Get discount amount from selected order
+                      const discountAmount = parseFloat(selectedOrder?.discount || "0");
+                      const totalBeforeDiscount = Math.floor(orderDetailsSubtotal + orderDetailsTax);
+                      const finalTotalAfterDiscount = Math.max(0, totalBeforeDiscount - discountAmount);
+
                       // Create preview receipt data using EXACT values from Order Details
                       const previewData = {
                         transactionId: `PREVIEW-${Date.now()}`,
@@ -2903,13 +2908,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         items: processedItems,
                         subtotal: Math.floor(orderDetailsSubtotal).toString(),
                         tax: Math.floor(orderDetailsTax).toString(),
-                        total: Math.floor(
-                          orderDetailsSubtotal + orderDetailsTax
-                        ).toString(),
-                        discount: selectedOrder?.discount || "0", // Pass discount from order
-                        exactTotal: Math.floor(orderDetailsSubtotal + orderDetailsTax),
+                        total: finalTotalAfterDiscount.toString(), // Use final total after discount
+                        discount: discountAmount.toString(), // Pass discount from order
+                        exactTotal: finalTotalAfterDiscount,
                         exactSubtotal: Math.floor(orderDetailsSubtotal),
                         exactTax: Math.floor(orderDetailsTax),
+                        exactDiscount: discountAmount,
                         orderItems: orderItems, // Keep original order items for payment flow
                       };
 
