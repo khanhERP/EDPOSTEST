@@ -681,7 +681,20 @@ export function ReceiptModal({
 
                   // Get discount from cart items if available (for preview mode, discount might come from parent)
                   const discount = cartItems.reduce((sum, item) => {
-                    return sum + (parseFloat(item.discount || "0") * item.quantity);
+                    // Check if item has discount property
+                    if (item.discount && parseFloat(item.discount) > 0) {
+                      return sum + (parseFloat(item.discount) * item.quantity);
+                    }
+                    // Check if item has discountAmount property
+                    if (item.discountAmount && parseFloat(item.discountAmount) > 0) {
+                      return sum + parseFloat(item.discountAmount);
+                    }
+                    // Check if item has originalPrice vs current price difference (implicit discount)
+                    if (item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price)) {
+                      const itemDiscount = (parseFloat(item.originalPrice) - parseFloat(item.price)) * item.quantity;
+                      return sum + itemDiscount;
+                    }
+                    return sum;
                   }, 0);
 
                   // Calculate final total after discount - use base total before tax, then add tax, then subtract discount
