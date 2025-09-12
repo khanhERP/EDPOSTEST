@@ -434,23 +434,20 @@ export function ReceiptModal({
   };
 
   const handleConfirmAndSelectPayment = () => {
-    // Pass complete receipt data to parent for payment flow
-    if (onConfirm) {
-      console.log('📄 Receipt Modal: Confirming receipt and proceeding to payment method selection');
-      console.log('🎯 Receipt data being passed:', {
-        receipt,
-        cartItems,
-        total,
-        subtotal: receipt?.subtotal,
-        tax: receipt?.tax,
-        exactTotal: receipt?.exactTotal,
-        exactSubtotal: receipt?.exactSubtotal,
-        exactTax: receipt?.exactTax
-      });
+    console.log('📄 Receipt Modal: Confirming receipt and proceeding to payment method selection');
+    console.log('🎯 Receipt data being passed:', {
+      receipt,
+      cartItems,
+      total,
+      subtotal: receipt?.subtotal,
+      tax: receipt?.tax,
+      exactTotal: receipt?.exactTotal,
+      exactSubtotal: receipt?.exactSubtotal,
+      exactTax: receipt?.exactTax
+    });
 
-      // Call onConfirm to proceed to payment method selection
-      onConfirm();
-    }
+    // Show payment method modal directly
+    setShowPaymentMethodModal(true);
   };
 
   // Placeholder for handlePaymentMethodSelect, assuming it's defined elsewhere or in a parent component
@@ -1015,12 +1012,27 @@ export function ReceiptModal({
           isOpen={showPaymentMethodModal}
           onClose={() => setShowPaymentMethodModal(false)}
           onSelectMethod={handlePaymentMethodSelect}
-          total={
-            typeof receipt?.total === "string"
-              ? parseFloat(receipt.total)
-              : receipt?.total || 0
-          }
+          total={(() => {
+            // Use exact total with proper priority for receipt modal
+            if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+              return Math.floor(Number(receipt.exactTotal));
+            } else if (receipt?.total !== undefined && receipt.total !== null) {
+              return Math.floor(Number(receipt.total));
+            } else {
+              return Math.floor(Number(total || 0));
+            }
+          })()}
           cartItems={cartItems}
+          receipt={receipt}
+          orderForPayment={receipt ? {
+            id: receipt.id || `temp-${Date.now()}`,
+            total: receipt.total,
+            exactTotal: receipt.exactTotal,
+            subtotal: receipt.subtotal,
+            tax: receipt.tax,
+            discount: receipt.discount,
+            items: cartItems
+          } : null}
           onShowEInvoice={() => setShowEInvoiceModal(true)}
         />
       )}
