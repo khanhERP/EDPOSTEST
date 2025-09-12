@@ -26,7 +26,7 @@ export function CustomerDisplay({
   tax,
   total,
   storeInfo,
-  qrPayment
+  qrPayment,
 }: CustomerDisplayProps) {
   const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -36,28 +36,30 @@ export function CustomerDisplay({
   const [currentTax, setCurrentTax] = useState(tax);
   const [currentTotal, setCurrentTotal] = useState(total);
   const [currentOrder, setCurrentOrder] = useState<any>(null);
-  const [orderNumber, setOrderNumber] = useState<string>('');
+  const [orderNumber, setOrderNumber] = useState<string>("");
 
   // Calculate correct subtotal from cart items (pre-tax price * quantity)
   const calculateCorrectSubtotal = () => {
     return cartItems.reduce((sum, item) => {
       // Use the base price (before tax) for subtotal calculation
-      const basePrice = parseFloat(item.price || '0');
+      const basePrice = parseFloat(item.price || "0");
       const quantity = item.quantity || 0;
-      return sum + (basePrice * quantity);
+      return sum + basePrice * quantity;
     }, 0);
   };
 
-  // Calculate correct tax from cart items  
+  // Calculate correct tax from cart items
   const calculateCorrectTax = () => {
     return cartItems.reduce((sum, item) => {
-      const basePrice = parseFloat(item.price || '0');
+      const basePrice = parseFloat(item.price || "0");
       const quantity = item.quantity || 0;
-      const afterTaxPrice = item.afterTaxPrice ? parseFloat(item.afterTaxPrice) : null;
+      const afterTaxPrice = item.afterTaxPrice
+        ? parseFloat(item.afterTaxPrice)
+        : null;
 
       if (afterTaxPrice && afterTaxPrice > basePrice) {
         const taxPerUnit = afterTaxPrice - basePrice;
-        return sum + (taxPerUnit * quantity);
+        return sum + taxPerUnit * quantity;
       }
       return sum;
     }, 0);
@@ -81,7 +83,7 @@ export function CustomerDisplay({
       cartLength: cart.length,
       subtotal: subtotal,
       tax: tax,
-      total: total
+      total: total,
     });
 
     // Always update local state when props change
@@ -92,43 +94,45 @@ export function CustomerDisplay({
 
     // If cart is empty, ensure all totals are reset
     if (cart.length === 0) {
-      console.log("Customer Display Component: Cart is empty, resetting all totals");
+      console.log(
+        "Customer Display Component: Cart is empty, resetting all totals",
+      );
       setCurrentSubtotal(0);
       setCurrentTax(0);
       setCurrentTotal(0);
     }
   }, [cart, subtotal, tax, total]);
 
-
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
+    return date.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
     });
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('vi-VN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("vi-VN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   // Helper function to format currency, ensuring it handles potential NaN or undefined values
-  const formatCurrency = (amount: number | string | undefined | null): string => {
+  const formatCurrency = (
+    amount: number | string | undefined | null,
+  ): string => {
     const num = parseFloat(amount as string);
     if (isNaN(num)) {
-      return '0 ₫'; // Default to '0 ₫' if parsing fails
+      return "0 ₫"; // Default to '0 ₫' if parsing fails
     }
-    return num.toLocaleString('vi-VN') + ' ₫';
+    return num.toLocaleString("vi-VN") + " ₫";
   };
 
   // WebSocket logic is now handled by the parent page component
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
@@ -163,13 +167,16 @@ export function CustomerDisplay({
           {qrPayment ? (
             // QR Payment Display - Optimized for no scrolling
             <div className="flex flex-col items-center justify-center h-full py-4">
-              {console.log("🎯 Customer Display: Rendering QR payment section:", {
-                hasQrPayment: !!qrPayment,
-                qrCodeUrl: qrPayment?.qrCodeUrl?.substring(0, 50) + "...",
-                amount: qrPayment?.amount,
-                paymentMethod: qrPayment?.paymentMethod,
-                timestamp: new Date().toISOString()
-              })}
+              {console.log(
+                "🎯 Customer Display: Rendering QR payment section:",
+                {
+                  hasQrPayment: !!qrPayment,
+                  qrCodeUrl: qrPayment?.qrCodeUrl?.substring(0, 50) + "...",
+                  amount: qrPayment?.amount,
+                  paymentMethod: qrPayment?.paymentMethod,
+                  timestamp: new Date().toISOString(),
+                },
+              )}
               <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
                 <div className="text-center mb-4">
                   <div className="text-4xl mb-2">📱</div>
@@ -182,8 +189,10 @@ export function CustomerDisplay({
                 </div>
 
                 <div className="bg-gray-50 rounded-2xl p-4 mb-4">
-                  <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-sm text-gray-600 mb-1">
+                    Số tiền cần thanh toán
+                  </p>
+                  <p className="text-2xl font-bold text-green-600 text-center">
                     {qrPayment.amount.toLocaleString("vi-VN", {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
@@ -200,12 +209,23 @@ export function CustomerDisplay({
                         alt="QR Code thanh toán"
                         className="w-56 h-56 max-w-full max-h-full object-contain"
                         onLoad={() => {
-                          console.log("✅ Customer Display: QR Code image loaded successfully");
-                          console.log("🎯 Customer Display: QR Code URL preview:", qrPayment.qrCodeUrl.substring(0, 50) + "...");
+                          console.log(
+                            "✅ Customer Display: QR Code image loaded successfully",
+                          );
+                          console.log(
+                            "🎯 Customer Display: QR Code URL preview:",
+                            qrPayment.qrCodeUrl.substring(0, 50) + "...",
+                          );
                         }}
                         onError={(e) => {
-                          console.error("❌ Customer Display: QR Code image failed to load:", e);
-                          console.error("❌ Customer Display: Failed QR URL:", qrPayment.qrCodeUrl);
+                          console.error(
+                            "❌ Customer Display: QR Code image failed to load:",
+                            e,
+                          );
+                          console.error(
+                            "❌ Customer Display: Failed QR URL:",
+                            qrPayment.qrCodeUrl,
+                          );
                         }}
                       />
                     ) : (
@@ -255,14 +275,24 @@ export function CustomerDisplay({
 
                   <div className="space-y-4 max-h-96 overflow-y-auto">
                     {cartItems.map((item, index) => (
-                      <div key={`${item.id}-${index}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border-l-4 border-green-400">
+                      <div
+                        key={`${item.id}-${index}`}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border-l-4 border-green-400"
+                      >
                         <div className="flex items-center space-x-4">
                           <div className="bg-green-100 text-green-800 rounded-full min-w-[32px] h-8 flex items-center justify-center text-xs font-medium px-2">
-                            {orderNumber || currentOrder?.orderNumber || `#${index + 1}`}
+                            {orderNumber ||
+                              currentOrder?.orderNumber ||
+                              `#${index + 1}`}
                           </div>
                           <div>
                             <h3 className="font-semibold text-lg text-gray-800">
-                              {item.name || item.productName || item.product?.name || (orderNumber ? `${orderNumber}` : `Sản phẩm ${item.id || item.productId}`)}
+                              {item.name ||
+                                item.productName ||
+                                item.product?.name ||
+                                (orderNumber
+                                  ? `${orderNumber}`
+                                  : `Sản phẩm ${item.id || item.productId}`)}
                             </h3>
                             <p className="text-sm text-gray-600">
                               {formatCurrency(item.price)} × {item.quantity}
@@ -318,7 +348,10 @@ export function CustomerDisplay({
                         Tổng số sản phẩm
                       </div>
                       <div className="text-2xl font-bold text-green-800">
-                        {cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                        {cartItems.reduce(
+                          (sum, item) => sum + (item.quantity || 0),
+                          0,
+                        )}
                       </div>
                     </div>
                   </div>
