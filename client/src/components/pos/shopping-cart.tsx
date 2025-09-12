@@ -999,17 +999,30 @@ export function ShoppingCart({
                     }
                   }}
                   onKeyDown={(e) => {
-                    // Allow: backspace, delete, tab, escape, enter
-                    if ([8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
-                        // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-                        (e.keyCode === 65 && e.ctrlKey === true) ||
-                        (e.keyCode === 67 && e.ctrlKey === true) ||
-                        (e.keyCode === 86 && e.ctrlKey === true) ||
-                        (e.keyCode === 88 && e.ctrlKey === true)) {
+                    // Allow navigation and editing keys
+                    const allowedKeys = [
+                      8,  // Backspace
+                      9,  // Tab
+                      13, // Enter
+                      27, // Escape
+                      46, // Delete
+                      35, // End
+                      36, // Home
+                      37, // Left Arrow
+                      38, // Up Arrow
+                      39, // Right Arrow
+                      40  // Down Arrow
+                    ];
+
+                    // Allow all control key combinations
+                    if (e.ctrlKey || e.metaKey || allowedKeys.includes(e.keyCode)) {
                       return;
                     }
-                    // Ensure that it is a number and stop the keypress
-                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+
+                    // Only allow numeric keys (0-9) from both main keyboard and numpad
+                    const isNumeric = (e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105);
+                    
+                    if (!isNumeric) {
                       e.preventDefault();
                     }
                   }}
