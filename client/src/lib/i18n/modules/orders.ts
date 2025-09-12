@@ -115,9 +115,9 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       completed: "완료됨",
     },
     orderCount: "주문",
-    displaying: "Hiển thị",
-    items: "món",
-    quantity: "Số lượng",
+    displaying: "표시 중",
+    items: "항목",
+    quantity: "수량",
   },
   en: {
     orderManagement: "Order Management",
