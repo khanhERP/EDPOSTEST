@@ -582,11 +582,16 @@ export function ReceiptModal({
                 </div>
               )}
               <div className="flex justify-between font-bold">
-                <span>{t("pos.total")}</span>
-                <span>
-                  {Math.round(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
-                </span>
-              </div>
+                        <span>{t("pos.total")}</span>
+                        <span>
+                          {(() => {
+                            const dbTotal = parseFloat(receipt.total || "0");
+                            const dbDiscount = parseFloat(receipt.discount || "0");
+                            const finalTotal = Math.max(0, dbTotal - dbDiscount);
+                            return Math.round(finalTotal).toLocaleString("vi-VN");
+                          })()} ₫
+                        </span>
+                      </div>
             </div>
           </div>
         ) : isPreview && hasCartData && total > 0 ? (
@@ -681,25 +686,35 @@ export function ReceiptModal({
 
                   // Check for order-level discount first (from orderForPayment or parent props)
                   let orderDiscount = 0;
-                  
-                  // Check if there's discount in orderForPayment (passed from parent)
-                  if (typeof window !== 'undefined' && (window as any).orderForPayment?.discount) {
-                    orderDiscount = parseFloat((window as any).orderForPayment.discount) || 0;
-                    console.log("✅ Found orderForPayment discount:", orderDiscount);
+
+                  // Check for discount from multiple sources (table-grid specific)
+
+                  // 1. Check receipt prop first (most reliable for table-grid)
+                  if (receipt && parseFloat(receipt.discount || "0") > 0) {
+                    const receiptDiscount = parseFloat(receipt.discount || "0");
+                    orderDiscount = Math.max(orderDiscount, receiptDiscount);
+                    console.log("✅ Found receipt discount (table-grid):", receiptDiscount, "final order discount:", orderDiscount);
                   }
-                  
-                  // Check if total prop contains discount info
+
+                  // 2. Check if there's discount in orderForPayment (passed from parent)
+                  if (typeof window !== 'undefined' && (window as any).orderForPayment?.discount) {
+                    const windowDiscount = parseFloat((window as any).orderForPayment.discount) || 0;
+                    orderDiscount = Math.max(orderDiscount, windowDiscount);
+                    console.log("✅ Found orderForPayment discount:", windowDiscount, "final order discount:", orderDiscount);
+                  }
+
+                  // 3. Check if total prop contains discount info
                   if (typeof total === 'object' && total.discount) {
                     const totalPropDiscount = parseFloat(total.discount) || 0;
                     orderDiscount = Math.max(orderDiscount, totalPropDiscount);
                     console.log("✅ Found total prop discount:", totalPropDiscount, "final order discount:", orderDiscount);
                   }
 
-                  // Check if receipt prop has discount info (for table-grid preview)
-                  if (receipt && parseFloat(receipt.discount || "0") > 0) {
-                    const receiptDiscount = parseFloat(receipt.discount || "0");
-                    orderDiscount = Math.max(orderDiscount, receiptDiscount);
-                    console.log("✅ Found receipt discount:", receiptDiscount, "final order discount:", orderDiscount);
+                  // 4. Check receipt exactDiscount property (for table-grid exact values)
+                  if (receipt && receipt.exactDiscount && parseFloat(receipt.exactDiscount.toString()) > 0) {
+                    const exactDiscount = parseFloat(receipt.exactDiscount.toString());
+                    orderDiscount = Math.max(orderDiscount, exactDiscount);
+                    console.log("✅ Found receipt exactDiscount:", exactDiscount, "final order discount:", orderDiscount);
                   }
 
                   // Get discount from cart items if available (for preview mode)
@@ -720,14 +735,14 @@ export function ReceiptModal({
                       console.log("✅ Found per-unit discount:", itemDiscount);
                       return sum + itemDiscount;
                     }
-                    
+
                     // Check if item has discountAmount property (total discount for item)
                     if (item.discountAmount && parseFloat(item.discountAmount) > 0) {
                       const itemDiscount = parseFloat(item.discountAmount);
                       console.log("✅ Found total discount amount:", itemDiscount);
                       return sum + itemDiscount;
                     }
-                    
+
                     // Check if item has originalPrice vs current price difference (implicit discount)
                     if (item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price)) {
                       const itemDiscount = (parseFloat(item.originalPrice) - parseFloat(item.price)) * item.quantity;
@@ -741,7 +756,7 @@ export function ReceiptModal({
 
                   // Use the higher of item-level discount or order-level discount
                   const finalDiscount = Math.max(itemLevelDiscount, orderDiscount);
-                  
+
                   console.log("💰 Final discount calculation:", {
                     itemLevelDiscount: itemLevelDiscount,
                     orderLevelDiscount: orderDiscount,
@@ -828,7 +843,12 @@ export function ReceiptModal({
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
-                          {Math.round(Math.max(0, dbTotal - dbDiscount)).toLocaleString("vi-VN")} ₫
+                          {(() => {
+                            const dbTotal = parseFloat(receipt.total || "0");
+                            const dbDiscount = parseFloat(receipt.discount || "0");
+                            const finalTotal = Math.max(0, dbTotal - dbDiscount);
+                            return Math.round(finalTotal).toLocaleString("vi-VN");
+                          })()} ₫
                         </span>
                       </div>
                     </>
