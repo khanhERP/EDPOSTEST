@@ -1238,11 +1238,13 @@ export function OrderManagement() {
 
     const currentPoints = selectedCustomer.points || 0;
     const orderTotal = getOrderTotal(selectedOrder);
+    const discount = Math.floor(Number(selectedOrder.discount || 0));
+    const finalTotal = Math.max(0, orderTotal - discount);
     const pointsValue = currentPoints * 1000; // 1 điểm = 1000đ
 
-    if (pointsValue >= orderTotal) {
+    if (pointsValue >= finalTotal) {
       // Đủ điểm để thanh toán toàn bộ
-      const pointsNeeded = Math.ceil(orderTotal / 1000);
+      const pointsNeeded = Math.ceil(finalTotal / 1000);
       pointsPaymentMutation.mutate({
         customerId: selectedCustomer.id,
         points: pointsNeeded,
@@ -1252,7 +1254,7 @@ export function OrderManagement() {
       });
     } else {
       // Không đủ điểm, cần thanh toán hỗn hợp
-      const remainingAmount = orderTotal - pointsValue;
+      const remainingAmount = finalTotal - pointsValue;
       setMixedPaymentData({
         customerId: selectedCustomer.id,
         pointsToUse: currentPoints,
@@ -2419,8 +2421,23 @@ export function OrderManagement() {
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-gray-600">{t('orders.orderNumber')}: {selectedOrder.orderNumber}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(getOrderTotal(selectedOrder))}
+                  {(() => {
+                    const orderTotal = getOrderTotal(selectedOrder);
+                    const discount = Math.floor(Number(selectedOrder.discount || 0));
+                    const finalTotal = Math.max(0, orderTotal - discount);
+                    return formatCurrency(finalTotal);
+                  })()}
                 </p>
+                {selectedOrder.discount && Number(selectedOrder.discount) > 0 && (
+                  <div className="mt-1">
+                    <p className="text-sm text-gray-600">
+                      Tổng gốc: {formatCurrency(getOrderTotal(selectedOrder))}
+                    </p>
+                    <p className="text-sm text-red-600">
+                      Giảm giá: -{formatCurrency(Math.floor(Number(selectedOrder.discount)))}
+                    </p>
+                  </div>
+                )}
                 {selectedCustomer && (
                   <div className="mt-2 pt-2 border-t border-blue-200">
                     <p className="text-sm text-gray-600">
@@ -2429,11 +2446,18 @@ export function OrderManagement() {
                         (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
                       </span>
                     </p>
-                    {((selectedCustomer.points || 0) * 1000) < getOrderTotal(selectedOrder) && (
-                      <p className="text-sm text-orange-600 mt-1">
-                        Cần thanh toán thêm: {(getOrderTotal(selectedOrder) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
-                      </p>
-                    )}
+                    {(() => {
+                      const orderTotal = getOrderTotal(selectedOrder);
+                      const discount = Math.floor(Number(selectedOrder.discount || 0));
+                      const finalTotal = Math.max(0, orderTotal - discount);
+                      const customerPointsValue = (selectedCustomer.points || 0) * 1000;
+                      
+                      return customerPointsValue < finalTotal && (
+                        <p className="text-sm text-orange-600 mt-1">
+                          Cần thanh toán thêm: {(finalTotal - customerPointsValue).toLocaleString()} ₫
+                        </p>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -2491,16 +2515,18 @@ export function OrderManagement() {
                   <h4 className="font-medium mb-2">Chi tiết thanh toán</h4>
                   {(() => {
                     const orderTotal = getOrderTotal(selectedOrder);
+                    const discount = Math.floor(Number(selectedOrder.discount || 0));
+                    const finalTotal = Math.max(0, orderTotal - discount);
                     const customerPointsValue = (selectedCustomer.points || 0) * 1000;
 
-                    return customerPointsValue >= orderTotal ? (
+                    return customerPointsValue >= finalTotal ? (
                       <div className="text-green-600">
                         <p className="text-sm">✓ Đủ điểm để thanh toán toàn bộ đơn hàng</p>
                         <p className="text-sm">
-                          Sử dụng: {Math.ceil(orderTotal / 1000).toLocaleString()}P
+                          Sử dụng: {Math.ceil(finalTotal / 1000).toLocaleString()}P
                         </p>
                         <p className="text-sm">
-                          Còn lại: {((selectedCustomer.points || 0) - Math.ceil(orderTotal / 1000)).toLocaleString()}P
+                          Còn lại: {((selectedCustomer.points || 0) - Math.ceil(finalTotal / 1000)).toLocaleString()}P
                         </p>
                       </div>
                     ) : (
@@ -2511,7 +2537,7 @@ export function OrderManagement() {
                           (≈ {customerPointsValue.toLocaleString()} ₫)
                         </p>
                         <p className="text-sm">
-                          Cần thanh toán thêm: {(orderTotal - customerPointsValue).toLocaleString()} ₫
+                          Cần thanh toán thêm: {(finalTotal - customerPointsValue).toLocaleString()} ₫
                         </p>
                       </div>
                     );
@@ -2535,8 +2561,14 @@ export function OrderManagement() {
               className="bg-blue-600 hover:bg-blue-700"
             >
               {pointsPaymentMutation.isPending ? 'Đang xử lý...' :
-               ((selectedCustomer?.points || 0) * 1000) >= getOrderTotal(selectedOrder || { id: 0, total: 0 } as any) ?
-               'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp'}
+               (() => {
+                 if (!selectedOrder || !selectedCustomer) return 'Thanh toán bằng điểm';
+                 const orderTotal = getOrderTotal(selectedOrder);
+                 const discount = Math.floor(Number(selectedOrder.discount || 0));
+                 const finalTotal = Math.max(0, orderTotal - discount);
+                 const customerPointsValue = (selectedCustomer.points || 0) * 1000;
+                 return customerPointsValue >= finalTotal ? 'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp';
+               })()}
             </Button>
           </div>
         </DialogContent>
