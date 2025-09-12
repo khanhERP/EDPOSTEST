@@ -684,8 +684,9 @@ export function ReceiptModal({
                     return sum + (parseFloat(item.discount || "0") * item.quantity);
                   }, 0);
 
-                  // Calculate final total after discount
-                  const finalTotal = Math.max(0, total - discount);
+                  // Calculate final total after discount - use base total before tax, then add tax, then subtract discount
+                  const totalWithTax = subtotal + tax;
+                  const finalTotal = Math.max(0, totalWithTax - discount);
 
                   return (
                     <>
