@@ -706,38 +706,38 @@ export function ReceiptModal({
 
                   const tax = totalTax;
 
-                  // Check for order-level discount first (from orderForPayment or parent props)
-                  let orderDiscount = 0;
+                  // Check for discount from multiple sources with priority order
 
-                  // Check for discount from multiple sources (table-grid specific)
-
-                  // 1. Check receipt prop first (most reliable for table-grid)
-                  if (receipt && parseFloat(receipt.discount || "0") > 0) {
-                    const receiptDiscount = parseFloat(receipt.discount || "0");
-                    orderDiscount = Math.max(orderDiscount, receiptDiscount);
-                    console.log("✅ Found receipt discount (table-grid):", receiptDiscount, "final order discount:", orderDiscount);
-                  }
-
-                  // 2. Check if there's discount in orderForPayment (passed from parent)
-                  if (typeof window !== 'undefined' && (window as any).orderForPayment?.discount) {
-                    const windowDiscount = parseFloat((window as any).orderForPayment.discount) || 0;
-                    orderDiscount = Math.max(orderDiscount, windowDiscount);
-                    console.log("✅ Found orderForPayment discount:", windowDiscount, "final order discount:", orderDiscount);
-                  }
-
-                  // 3. Check if total prop contains discount info
-                  if (typeof total === 'object' && total.discount) {
-                    const totalPropDiscount = parseFloat(total.discount) || 0;
-                    orderDiscount = Math.max(orderDiscount, totalPropDiscount);
-                    console.log("✅ Found total prop discount:", totalPropDiscount, "final order discount:", orderDiscount);
-                  }
-
-                  // 4. Check receipt exactDiscount property (for table-grid exact values)
-                  if (receipt && receipt.exactDiscount && parseFloat(receipt.exactDiscount.toString()) > 0) {
-                    const exactDiscount = parseFloat(receipt.exactDiscount.toString());
-                    orderDiscount = Math.max(orderDiscount, exactDiscount);
-                    console.log("✅ Found receipt exactDiscount:", exactDiscount, "final order discount:", orderDiscount);
-                  }
+                      // 1. Check receipt exactDiscount first (most reliable for exact calculations)
+                      if (receipt && receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
+                        const exactDiscount = parseFloat(receipt.exactDiscount.toString());
+                        orderDiscount = exactDiscount;
+                        console.log("✅ Using receipt exactDiscount (highest priority):", exactDiscount);
+                      }
+                      // 2. Check receipt discount property
+                      else if (receipt && parseFloat(receipt.discount || "0") > 0) {
+                        const receiptDiscount = parseFloat(receipt.discount || "0");
+                        orderDiscount = receiptDiscount;
+                        console.log("✅ Using receipt discount:", receiptDiscount);
+                      }
+                      // 3. Check if there's discount in orderForPayment (passed from parent)
+                      else if (typeof window !== 'undefined' && (window as any).orderForPayment?.discount) {
+                        const windowDiscount = parseFloat((window as any).orderForPayment.discount) || 0;
+                        orderDiscount = windowDiscount;
+                        console.log("✅ Using orderForPayment discount:", windowDiscount);
+                      }
+                      // 4. Check if total prop contains discount info
+                      else if (typeof total === 'object' && total.discount) {
+                        const totalPropDiscount = parseFloat(total.discount) || 0;
+                        orderDiscount = totalPropDiscount;
+                        console.log("✅ Using total prop discount:", totalPropDiscount);
+                      }
+                      // 5. Check if orderForPayment has exactDiscount
+                      else if (typeof window !== 'undefined' && (window as any).orderForPayment?.exactDiscount) {
+                        const exactDiscount = parseFloat((window as any).orderForPayment.exactDiscount.toString()) || 0;
+                        orderDiscount = exactDiscount;
+                        console.log("✅ Using orderForPayment exactDiscount:", exactDiscount);
+                      }
 
                   // Get discount from cart items if available (for preview mode)
                   const itemLevelDiscount = cartItems.reduce((sum, item) => {

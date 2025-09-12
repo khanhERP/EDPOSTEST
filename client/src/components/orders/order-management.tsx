@@ -926,11 +926,12 @@ export function OrderManagement() {
         subtotal: Math.floor(subtotal).toString(),
         tax: Math.floor(taxAmount).toString(),
         discount: discountAmount.toString(),
-        total: Math.floor(baseTotal).toString(), // Base total BEFORE discount
+        total: Math.floor(finalTotal).toString(), // Use final total AFTER discount for display
         exactTotal: Math.floor(finalTotal), // Final total AFTER discount
         exactSubtotal: Math.floor(subtotal),
         exactTax: Math.floor(taxAmount),
         exactDiscount: discountAmount,
+        exactBaseTotal: Math.floor(baseTotal), // Store base total for reference
         paymentMethod: 'preview',
         amountReceived: Math.floor(finalTotal).toString(),
         change: '0.00',
@@ -969,6 +970,7 @@ export function OrderManagement() {
         exactTax: Math.floor(taxAmount),
         exactDiscount: discountAmount,
         exactTotal: Math.floor(finalTotal),
+        exactBaseTotal: Math.floor(baseTotal), // Add base total for reference
         tableNumber: order.tableId ? `T${order.tableId}` : 'N/A'
       };
 
@@ -977,7 +979,7 @@ export function OrderManagement() {
         orderExactDiscount: orderForPaymentData.exactDiscount,
         orderTotal: orderForPaymentData.total,
         orderExactTotal: orderForPaymentData.exactTotal,
-        orderBaseTotal: orderForPaymentData.baseTotal
+        orderId: orderForPaymentData.id
       });
 
       console.log('✅ Order Management: Payment data prepared matching Order Details:', {
@@ -1004,14 +1006,14 @@ export function OrderManagement() {
       setSelectedOrder(order);
       setOrderForPayment(orderForPaymentData);
       setPreviewReceipt(receiptPreview);
-      
+
       // Force the receipt preview modal to open
       console.log('🚀 Order Management: Opening receipt preview modal with data:', {
         hasPreviewReceipt: !!receiptPreview,
         hasOrderForPayment: !!orderForPaymentData,
         receiptId: receiptPreview.id
       });
-      
+
       setShowReceiptPreview(true);
 
     } catch (error) {
@@ -2276,11 +2278,12 @@ export function OrderManagement() {
                           subtotal: Math.floor(calculatedSubtotal).toString(),
                           tax: Math.floor(calculatedTax).toString(),
                           discount: discountAmount.toString(),
-                          total: Math.floor(baseTotal).toString(), // Base total before discount
-                          exactTotal: Math.floor(finalTotal), // Final total after discount
+                          total: Math.floor(finalTotal).toString(), // Use final total AFTER discount for display
+                          exactTotal: Math.floor(finalTotal), // Final total AFTER discount
                           exactSubtotal: Math.floor(calculatedSubtotal),
                           exactTax: Math.floor(calculatedTax),
                           exactDiscount: discountAmount,
+                          exactBaseTotal: Math.floor(baseTotal), // Store base total for reference
                           paymentMethod: 'preview',
                           amountReceived: Math.floor(finalTotal).toString(),
                           change: '0.00',
@@ -2329,6 +2332,7 @@ export function OrderManagement() {
                           exactTax: Math.floor(calculatedTax),
                           exactDiscount: discountAmount,
                           exactTotal: Math.floor(finalTotal),
+                          exactBaseTotal: Math.floor(baseTotal), // Add base total for reference
                           tableNumber: selectedOrder.tableId ? `T${selectedOrder.tableId}` : 'N/A'
                         };
 
