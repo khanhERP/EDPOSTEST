@@ -1572,10 +1572,17 @@ export function PaymentMethodModal({
                   <p className="text-2xl font-bold text-blue-600">
                     {/* Use exact total from previous screen - NO recalculation */}
                     {(() => {
-                      // PRIORITY: Use exact values passed from previous screen without any calculation
+                      // PRIORITY: Use exact values from shopping cart/order management without recalculation
                       let displayTotal = 0;
 
-                      if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+                      // Check global storage first (for order management flow)
+                      if (typeof window !== 'undefined' && (window as any).orderForPayment?.exactTotal) {
+                        displayTotal = Math.floor(Number((window as any).orderForPayment.exactTotal));
+                        console.log("💰 Payment Modal - Using global order exact total:", displayTotal);
+                      } else if (typeof window !== 'undefined' && (window as any).previewReceipt?.exactTotal) {
+                        displayTotal = Math.floor(Number((window as any).previewReceipt.exactTotal));
+                        console.log("💰 Payment Modal - Using global receipt exact total:", displayTotal);
+                      } else if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
                         displayTotal = Math.floor(Number(receipt.exactTotal));
                         console.log("💰 Payment Modal - Using receipt exact total:", displayTotal);
                       } else if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
@@ -1591,6 +1598,8 @@ export function PaymentMethodModal({
 
                       console.log("💰 Payment Modal - Final display total (NO recalculation):", {
                         displayTotal,
+                        globalOrderTotal: (window as any)?.orderForPayment?.exactTotal,
+                        globalReceiptTotal: (window as any)?.previewReceipt?.exactTotal,
                         receiptExactTotal: receipt?.exactTotal,
                         orderExactTotal: orderForPayment?.exactTotal,
                         orderTotal: orderForPayment?.total,
@@ -1704,7 +1713,14 @@ export function PaymentMethodModal({
                       {(() => {
                         let displayTotal = 0;
 
-                        if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+                        // Check global storage first (for order management flow)
+                        if (typeof window !== 'undefined' && (window as any).orderForPayment?.exactTotal) {
+                          displayTotal = Math.floor(Number((window as any).orderForPayment.exactTotal));
+                          console.log("💰 QR Payment - Using global order exact total:", displayTotal);
+                        } else if (typeof window !== 'undefined' && (window as any).previewReceipt?.exactTotal) {
+                          displayTotal = Math.floor(Number((window as any).previewReceipt.exactTotal));
+                          console.log("💰 QR Payment - Using global receipt exact total:", displayTotal);
+                        } else if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
                           displayTotal = Math.floor(Number(receipt.exactTotal));
                         } else if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
                           displayTotal = Math.floor(Number(orderForPayment.exactTotal));
@@ -1855,7 +1871,14 @@ export function PaymentMethodModal({
                       {(() => {
                         let displayTotal = 0;
 
-                        if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+                        // Check global storage first (for order management flow)
+                        if (typeof window !== 'undefined' && (window as any).orderForPayment?.exactTotal) {
+                          displayTotal = Math.floor(Number((window as any).orderForPayment.exactTotal));
+                          console.log("💰 Cash Payment - Using global order exact total:", displayTotal);
+                        } else if (typeof window !== 'undefined' && (window as any).previewReceipt?.exactTotal) {
+                          displayTotal = Math.floor(Number((window as any).previewReceipt.exactTotal));
+                          console.log("💰 Cash Payment - Using global receipt exact total:", displayTotal);
+                        } else if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
                           displayTotal = Math.floor(Number(receipt.exactTotal));
                         } else if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
                           displayTotal = Math.floor(Number(orderForPayment.exactTotal));
