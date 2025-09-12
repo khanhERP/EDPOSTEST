@@ -181,14 +181,12 @@ export function ReceiptModal({
             printWindow.print();
           }, 500);
         };
-
-        // Close modal immediately after opening print window - like POS
-        setTimeout(() => {
-          console.log('🖨️ Closing receipt modal immediately after print (like POS)');
-          onClose();
-        }, 50);
       }
     }
+
+    // Close modal immediately after print window opens
+    console.log('🖨️ Closing receipt modal immediately after print');
+    handleClose();
   };
 
   const handleBrowserPrint = async () => {
@@ -351,29 +349,9 @@ export function ReceiptModal({
   }
 
   const handleClose = () => {
-    console.log("🔴 Receipt Modal: handleClose called - closing all popups and refreshing data without notification");
+    console.log("🔴 Receipt Modal: handleClose called - closing modal immediately");
 
-    // Send refresh signal without notification
-    try {
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        ws.send(JSON.stringify({
-          type: "receipt_closed",
-          action: "refresh_all_data",
-          clearCart: true,
-          showNotification: false, // No notification when just closing
-          timestamp: new Date().toISOString(),
-        }));
-        ws.close();
-      };
-    } catch (error) {
-      console.error("Failed to send refresh signal:", error);
-    }
-
-    // Clear all popup states
+    // Clear all popup states immediately without WebSocket signals
     if (typeof window !== 'undefined') {
       (window as any).previewReceipt = null;
       (window as any).orderForPayment = null;
@@ -382,13 +360,13 @@ export function ReceiptModal({
       window.dispatchEvent(new CustomEvent('closeAllPopups', {
         detail: {
           source: 'receipt_modal_closed',
-          showSuccessNotification: false, // No notification
+          showSuccessNotification: false,
           timestamp: new Date().toISOString()
         }
       }));
 
-      // Clear cart
-      window.dispatchEvent(new CustomEvent('clearCart', {
+      // Send close event specifically for receipt modal
+      window.dispatchEvent(new CustomEvent('receiptModalClosed', {
         detail: {
           source: 'receipt_modal_closed',
           timestamp: new Date().toISOString()
@@ -396,7 +374,7 @@ export function ReceiptModal({
       }));
     }
 
-    // Close the modal
+    // Close the modal immediately
     onClose();
   };
 
