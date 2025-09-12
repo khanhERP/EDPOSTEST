@@ -680,9 +680,15 @@ export function ReceiptModal({
                   const tax = totalTax > 0 ? totalTax : Math.max(0, total - subtotal);
 
                   // Get discount from cart items if available (for preview mode, discount might come from parent)
-                  const discount = cartItems.reduce((sum, item) => {
+                  // Check if there's a discount in the receipt prop or total props passed to modal
+                  const itemDiscounts = cartItems.reduce((sum, item) => {
                     return sum + (parseFloat(item.discount || "0") * item.quantity);
                   }, 0);
+                  
+                  // For preview mode, also check if discount was passed via total calculation
+                  // This handles cases where discount is applied at order level
+                  const orderDiscount = (receipt as any)?.discount || 0;
+                  const discount = Math.max(itemDiscounts, parseFloat(orderDiscount.toString() || "0"));
 
                   // Calculate final total after discount - use base total before tax, then add tax, then subtract discount
                   const totalWithTax = subtotal + tax;

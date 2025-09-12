@@ -2448,7 +2448,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           {(() => {
                             const total = Math.floor(Number(activeOrder.total || 0));
                             const discount = Math.floor(Number(activeOrder.discount || 0));
-                            
+
                             // Always show final total after discount for all orders
                             const finalTotal = Math.max(0, total - discount);
                             console.log(`💰 Table order ${activeOrder.orderNumber} - final total after discount: ${finalTotal} (original: ${total}, discount: ${discount})`);
@@ -2896,7 +2896,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                       // Create preview receipt data using EXACT values from Order Details
                       const previewData = {
-                        ...selectedOrder,
                         transactionId: `PREVIEW-${Date.now()}`,
                         createdAt: new Date().toISOString(),
                         cashierName: "Table Service",
@@ -2907,6 +2906,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         total: Math.floor(
                           orderDetailsSubtotal + orderDetailsTax
                         ).toString(),
+                        discount: selectedOrder?.discount || "0", // Pass discount from order
                         exactTotal: Math.floor(orderDetailsSubtotal + orderDetailsTax),
                         exactSubtotal: Math.floor(orderDetailsSubtotal),
                         exactTax: Math.floor(orderDetailsTax),
