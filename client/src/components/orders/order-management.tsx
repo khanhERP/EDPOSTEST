@@ -2233,14 +2233,14 @@ export function OrderManagement() {
                         });
 
                         // Calculate discount and final total (MATCH table-grid logic)
-                        const discountAmount = Math.floor(Number(selectedOrder.discount || 0));
-                        const finalTotal = Math.max(0, baseTotal - discountAmount);
+                        const orderDiscount = Math.floor(Number(selectedOrder.discount || 0));
+                        const finalTotal = Math.max(0, baseTotal - orderDiscount);
 
                         console.log('💰 Order Management: Final calculation (matching table-grid):', {
                           baseSubtotal: calculatedSubtotal,
                           baseTax: calculatedTax,
                           baseTotal: baseTotal,
-                          discountAmount: discountAmount,
+                          orderDiscount: orderDiscount,
                           finalTotal: finalTotal,
                           itemsProcessed: processedItems.length
                         });
@@ -2277,12 +2277,12 @@ export function OrderManagement() {
                           orderItems: processedItems,
                           subtotal: Math.floor(calculatedSubtotal).toString(),
                           tax: Math.floor(calculatedTax).toString(),
-                          discount: discountAmount.toString(),
+                          discount: orderDiscount.toString(),
                           total: Math.floor(finalTotal).toString(), // Use final total AFTER discount for display
                           exactTotal: Math.floor(finalTotal), // Final total AFTER discount
                           exactSubtotal: Math.floor(calculatedSubtotal),
                           exactTax: Math.floor(calculatedTax),
-                          exactDiscount: discountAmount,
+                          exactDiscount: orderDiscount,
                           exactBaseTotal: Math.floor(baseTotal), // Store base total for reference
                           paymentMethod: 'preview',
                           amountReceived: Math.floor(finalTotal).toString(),
@@ -2299,7 +2299,7 @@ export function OrderManagement() {
 
                         console.log('💰 Order Details: Receipt preview created with discount details:', {
                           originalOrderDiscount: selectedOrder.discount,
-                          calculatedDiscount: discountAmount,
+                          calculatedDiscount: orderDiscount,
                           baseTotal: baseTotal,
                           finalTotal: finalTotal,
                           receiptDiscount: receiptPreview.discount,
@@ -2326,11 +2326,11 @@ export function OrderManagement() {
                           processedItems: processedItems,
                           subtotal: Math.floor(calculatedSubtotal).toString(),
                           tax: Math.floor(calculatedTax).toString(),
-                          discount: discountAmount.toString(),
+                          discount: orderDiscount.toString(),
                           total: Math.floor(finalTotal).toString(),
                           exactSubtotal: Math.floor(calculatedSubtotal),
                           exactTax: Math.floor(calculatedTax),
-                          exactDiscount: discountAmount,
+                          exactDiscount: orderDiscount,
                           exactTotal: Math.floor(finalTotal),
                           exactBaseTotal: Math.floor(baseTotal), // Add base total for reference
                           tableNumber: selectedOrder.tableId ? `T${selectedOrder.tableId}` : 'N/A'
