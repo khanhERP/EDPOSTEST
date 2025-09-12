@@ -889,24 +889,31 @@ export function OrderManagement() {
       }
 
       // Step 3: Create comprehensive order data for payment - MATCH TABLE GRID FORMAT
-      const discount = Math.floor(Number(order.discount || 0));
-      const finalTotalAfterDiscount = Math.max(0, finalTotal - discount);
+      // Calculate discount exactly like table-grid
+      const discountAmount = Math.floor(Number(order.discount || 0));
+      const finalTotal = Math.max(0, finalTotal - discountAmount);
 
-      const orderForPaymentData = {
-        ...order,
-        id: order.id,
-        orderItems: processedItems,
-        processedItems: processedItems,
-        calculatedSubtotal: calculatedSubtotal,
-        calculatedTax: calculatedTax,
-        calculatedTotal: finalTotal, // Base total before discount
-        total: finalTotalAfterDiscount, // Final total after discount
-        discount: order.discount || "0", // Keep as string
-        exactDiscount: discount, // Numeric discount
-        tableNumber: order.tableId ? `T${order.tableId}` : 'N/A'
-      };
+      console.log('💰 Order Management: Final calculation (matching table-grid):', {
+        baseSubtotal: calculatedSubtotal,
+        baseTax: calculatedTax,
+        baseTotal: finalTotal, // Use finalTotal as baseTotal here, as it's calculated from items
+        discountAmount: discountAmount,
+        finalTotal: finalTotal,
+        itemsProcessed: processedItems.length
+      });
 
-      // Step 4: Create receipt preview data - MATCH TABLE GRID FORMAT
+      // Validate calculated total
+      if (finalTotal < 0) {
+        console.error('❌ Invalid final total after discount:', finalTotal);
+        toast({
+          title: 'Lỗi',
+          description: 'Tổng tiền sau giảm giá không hợp lệ. Vui lòng kiểm tra lại.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Create receipt preview data exactly like table-grid
       const receiptPreview = {
         id: order.id,
         orderId: order.id,
@@ -914,39 +921,63 @@ export function OrderManagement() {
         tableId: order.tableId,
         customerCount: order.customerCount,
         customerName: order.customerName,
-        items: processedItems,
+        items: processedItems.map(item => ({
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity.toString(),
+          price: item.unitPrice,
+          total: (item.unitPrice * item.quantity).toString(),
+          sku: item.sku,
+          taxRate: item.taxRate,
+        })),
         orderItems: processedItems,
-        subtotal: calculatedSubtotal.toString(),
-        tax: calculatedTax.toString(),
-        discount: order.discount || "0", // Pass discount
-        total: finalTotalAfterDiscount.toString(), // Final after discount
-        exactSubtotal: calculatedSubtotal,
-        exactTax: calculatedTax,
-        exactDiscount: discount,
-        exactTotal: finalTotalAfterDiscount, // Final after discount
+        subtotal: Math.floor(calculatedSubtotal).toString(),
+        tax: Math.floor(calculatedTax).toString(),
+        discount: discountAmount.toString(),
+        total: Math.floor(finalTotal).toString(),
+        exactTotal: Math.floor(finalTotal),
+        exactSubtotal: Math.floor(calculatedSubtotal),
+        exactTax: Math.floor(calculatedTax),
+        exactDiscount: discountAmount,
         paymentMethod: 'preview',
-        amountReceived: finalTotalAfterDiscount.toString(),
+        amountReceived: Math.floor(finalTotal).toString(),
         change: '0.00',
         cashierName: 'Order Management',
         createdAt: new Date().toISOString(),
         transactionId: `TXN-PREVIEW-${Date.now()}`,
-        calculatedSubtotal: calculatedSubtotal,
-        calculatedTax: calculatedTax,
-        calculatedTotal: finalTotal, // Base before discount
-        // Add table info like table grid
+        // Table info
         tableName: order.tableId ? `Bàn T${order.tableId}` : 'Bàn không xác định',
         storeLocation: 'Cửa hàng chính',
         storeAddress: '서울시 강남구 테헤란로 123',
         storePhone: '02-1234-5678'
       };
 
-      console.log('✅ Payment data prepared:', {
-        orderId: orderForPaymentData.id,
-        calculatedTotal: orderForPaymentData.calculatedTotal, // Base total
-        finalTotalAfterDiscount: orderForPaymentData.total, // Total after discount
-        itemsCount: processedItems.length,
+      // Create order data for payment flow exactly like table-grid
+      const orderForPaymentData = {
+        ...order,
+        id: order.id,
+        orderItems: processedItems,
+        processedItems: processedItems,
+        subtotal: Math.floor(calculatedSubtotal).toString(),
+        tax: Math.floor(calculatedTax).toString(),
+        discount: discountAmount.toString(),
+        total: Math.floor(finalTotal).toString(),
+        exactSubtotal: Math.floor(calculatedSubtotal),
+        exactTax: Math.floor(calculatedTax),
+        exactDiscount: discountAmount,
+        exactTotal: Math.floor(finalTotal),
+        tableNumber: order.tableId ? `T${order.tableId}` : 'N/A'
+      };
+
+      console.log('✅ Order Management: Payment data prepared (matching table-grid):', {
         receiptTotal: receiptPreview.total,
-        receiptExactTotal: receiptPreview.exactTotal
+        receiptExactTotal: receiptPreview.exactTotal,
+        receiptDiscount: receiptPreview.discount,
+        receiptExactDiscount: receiptPreview.exactDiscount,
+        orderTotal: orderForPaymentData.total,
+        orderExactTotal: orderForPaymentData.exactTotal,
+        orderId: orderForPaymentData.id
       });
 
       // Step 5: Close order details modal and show receipt preview
@@ -2148,11 +2179,11 @@ export function OrderManagement() {
                         // Use memoized calculations (base total before discount)
                         const { subtotal: calculatedSubtotal, tax: calculatedTax, total: baseTotal } = orderDetailsCalculation;
 
-                        console.log('💰 Order Management: Using memoized calculation:', { 
-                          calculatedSubtotal, 
-                          calculatedTax, 
+                        console.log('💰 Order Management: Using memoized calculation:', {
+                          calculatedSubtotal,
+                          calculatedTax,
                           baseTotal,
-                          orderDiscount: selectedOrder.discount 
+                          orderDiscount: selectedOrder.discount
                         });
 
                         const processedItems = orderItems.map((item: any) => {
@@ -2168,28 +2199,28 @@ export function OrderManagement() {
                             unitPrice: unitPrice,
                             price: unitPrice,
                             total: unitPrice * quantity,
-                            sku: item.productSku || product?.sku || `SP${item.productId}`,
+                            sku: item.sku || product?.sku || `SP${item.productId}`,
                             taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
                             afterTaxPrice: product?.afterTaxPrice || null
                           };
                         });
 
                         // Calculate discount and final total (MATCH table-grid logic)
-                        const discount = Math.floor(Number(selectedOrder.discount || 0));
-                        const finalTotalAfterDiscount = Math.max(0, baseTotal - discount);
+                        const discountAmount = Math.floor(Number(selectedOrder.discount || 0));
+                        const finalTotal = Math.max(0, baseTotal - discountAmount);
 
-                        console.log('💰 Order Management: Final calculation with discount:', {
+                        console.log('💰 Order Management: Final calculation (matching table-grid):', {
                           baseSubtotal: calculatedSubtotal,
                           baseTax: calculatedTax,
                           baseTotal: baseTotal,
-                          discount: discount,
-                          finalTotalAfterDiscount: finalTotalAfterDiscount,
+                          discountAmount: discountAmount,
+                          finalTotal: finalTotal,
                           itemsProcessed: processedItems.length
                         });
 
-                        // Validate final total
-                        if (finalTotalAfterDiscount < 0) {
-                          console.error('❌ Invalid final total after discount:', finalTotalAfterDiscount);
+                        // Validate calculated total
+                        if (finalTotal < 0) {
+                          console.error('❌ Invalid final total after discount:', finalTotal);
                           toast({
                             title: 'Lỗi',
                             description: 'Tổng tiền sau giảm giá không hợp lệ. Vui lòng kiểm tra lại.',
@@ -2206,26 +2237,32 @@ export function OrderManagement() {
                           tableId: selectedOrder.tableId,
                           customerCount: selectedOrder.customerCount,
                           customerName: selectedOrder.customerName,
-                          items: processedItems,
+                          items: processedItems.map(item => ({
+                            id: item.id,
+                            productId: item.productId,
+                            productName: item.productName,
+                            quantity: item.quantity.toString(),
+                            price: item.unitPrice,
+                            total: (item.unitPrice * item.quantity).toString(),
+                            sku: item.sku,
+                            taxRate: item.taxRate,
+                          })),
                           orderItems: processedItems,
-                          subtotal: calculatedSubtotal.toString(),
-                          tax: calculatedTax.toString(),
-                          discount: selectedOrder.discount || "0", // Pass discount string
-                          total: finalTotalAfterDiscount.toString(), // Final after discount
-                          exactSubtotal: calculatedSubtotal,
-                          exactTax: calculatedTax,
-                          exactDiscount: discount, // Numeric discount
-                          exactTotal: finalTotalAfterDiscount, // Final after discount
+                          subtotal: Math.floor(calculatedSubtotal).toString(),
+                          tax: Math.floor(calculatedTax).toString(),
+                          discount: discountAmount.toString(),
+                          total: Math.floor(finalTotal).toString(),
+                          exactTotal: Math.floor(finalTotal),
+                          exactSubtotal: Math.floor(calculatedSubtotal),
+                          exactTax: Math.floor(calculatedTax),
+                          exactDiscount: discountAmount,
                           paymentMethod: 'preview',
-                          amountReceived: finalTotalAfterDiscount.toString(),
+                          amountReceived: Math.floor(finalTotal).toString(),
                           change: '0.00',
                           cashierName: 'Order Management',
                           createdAt: new Date().toISOString(),
                           transactionId: `TXN-PREVIEW-${Date.now()}`,
-                          calculatedSubtotal: calculatedSubtotal,
-                          calculatedTax: calculatedTax,
-                          calculatedTotal: baseTotal, // Base before discount
-                          // Add table info like table-grid
+                          // Table info
                           tableName: selectedOrder.tableId ? `Bàn T${selectedOrder.tableId}` : 'Bàn không xác định',
                           storeLocation: 'Cửa hàng chính',
                           storeAddress: '서울시 강남구 테헤란로 123',
@@ -2238,25 +2275,24 @@ export function OrderManagement() {
                           id: selectedOrder.id,
                           orderItems: processedItems,
                           processedItems: processedItems,
-                          calculatedSubtotal: calculatedSubtotal,
-                          calculatedTax: calculatedTax,
-                          calculatedTotal: baseTotal, // Base total before discount
-                          total: finalTotalAfterDiscount, // Final total after discount
-                          discount: selectedOrder.discount || "0", // Keep as string
-                          exactDiscount: discount, // Numeric discount
-                          exactSubtotal: calculatedSubtotal,
-                          exactTax: calculatedTax,
-                          exactTotal: finalTotalAfterDiscount, // Final after discount
+                          subtotal: Math.floor(calculatedSubtotal).toString(),
+                          tax: Math.floor(calculatedTax).toString(),
+                          discount: discountAmount.toString(),
+                          total: Math.floor(finalTotal).toString(),
+                          exactSubtotal: Math.floor(calculatedSubtotal),
+                          exactTax: Math.floor(calculatedTax),
+                          exactDiscount: discountAmount,
+                          exactTotal: Math.floor(finalTotal),
                           tableNumber: selectedOrder.tableId ? `T${selectedOrder.tableId}` : 'N/A'
                         };
 
-                        console.log('✅ Order Management: Payment data prepared with discount handling:', {
-                          receiptTotal: receiptPreview.total, // Should show final after discount
-                          receiptExactTotal: receiptPreview.exactTotal, // Should show final after discount
+                        console.log('✅ Order Management: Payment data prepared (matching table-grid):', {
+                          receiptTotal: receiptPreview.total,
+                          receiptExactTotal: receiptPreview.exactTotal,
                           receiptDiscount: receiptPreview.discount,
                           receiptExactDiscount: receiptPreview.exactDiscount,
-                          orderTotal: orderForPaymentData.total, // Should show final after discount
-                          orderCalculatedTotal: orderForPaymentData.calculatedTotal, // Base before discount
+                          orderTotal: orderForPaymentData.total,
+                          orderExactTotal: orderForPaymentData.exactTotal,
                           orderId: orderForPaymentData.id
                         });
 
@@ -2266,8 +2302,8 @@ export function OrderManagement() {
                         setOrderForPayment(orderForPaymentData);
                         setPreviewReceipt(receiptPreview);
                         setShowReceiptPreview(true);
-                        
-                        console.log('🚀 Order Management: Showing receipt preview modal with correct discount data');
+
+                        console.log('🚀 Order Management: Showing receipt preview modal');
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
