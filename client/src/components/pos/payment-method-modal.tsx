@@ -1709,33 +1709,38 @@ export function PaymentMethodModal({
                       {t("common.amountToPay")}
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {/* Use exact total from previous screen - NO recalculation for QR payment */}
+                      {/* Use exact total from POS screen with highest priority */}
                       {(() => {
                         let displayTotal = 0;
 
-                        // Check global storage first (for order management flow)
-                        if (typeof window !== 'undefined' && (window as any).orderForPayment?.exactTotal) {
+                        // PRIORITY 1: Props passed directly from POS screen
+                        if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(orderForPayment.exactTotal));
+                          console.log("💰 QR Payment - Using orderForPayment exact total:", displayTotal);
+                        } else if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(receipt.exactTotal));
+                          console.log("💰 QR Payment - Using receipt exact total:", displayTotal);
+                        } else if (orderForPayment?.total !== undefined && orderForPayment.total !== null) {
+                          displayTotal = Math.floor(Number(orderForPayment.total));
+                          console.log("💰 QR Payment - Using orderForPayment total:", displayTotal);
+                        } else if (orderInfo?.exactTotal !== undefined && orderInfo.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(orderInfo.exactTotal));
+                          console.log("💰 QR Payment - Using orderInfo exact total:", displayTotal);
+                        } else if (typeof window !== 'undefined' && (window as any).orderForPayment?.exactTotal) {
                           displayTotal = Math.floor(Number((window as any).orderForPayment.exactTotal));
                           console.log("💰 QR Payment - Using global order exact total:", displayTotal);
                         } else if (typeof window !== 'undefined' && (window as any).previewReceipt?.exactTotal) {
                           displayTotal = Math.floor(Number((window as any).previewReceipt.exactTotal));
                           console.log("💰 QR Payment - Using global receipt exact total:", displayTotal);
-                        } else if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
-                          displayTotal = Math.floor(Number(receipt.exactTotal));
-                        } else if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
-                          displayTotal = Math.floor(Number(orderForPayment.exactTotal));
-                        } else if (orderForPayment?.total !== undefined && orderForPayment.total !== null) {
-                          displayTotal = Math.floor(Number(orderForPayment.total));
-                        } else if (orderInfo?.exactTotal !== undefined && orderInfo.exactTotal !== null) {
-                          displayTotal = Math.floor(Number(orderInfo.exactTotal));
                         } else {
                           displayTotal = Math.floor(Number(orderInfo?.total ?? total ?? 0));
+                          console.log("💰 QR Payment - Using fallback total:", displayTotal);
                         }
 
-                        console.log("💰 QR Payment - Using exact total from previous screen:", displayTotal);
+                        console.log("💰 QR Payment - Final total with POS priority:", displayTotal);
 
                         return displayTotal.toLocaleString("vi-VN");
-                      })()} ₫
+                      })()} ₫</p>
                     </p>
                   </div>
 
@@ -1867,31 +1872,35 @@ export function PaymentMethodModal({
                       {t("common.amountToPay")}
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {/* Use exact total from previous screen - NO recalculation for cash payment */}
+                      {/* Use exact total from POS screen with highest priority */}
                       {(() => {
                         let displayTotal = 0;
 
-                        // Check global storage first (for order management flow)
-                        if (typeof window !== 'undefined' && (window as any).orderForPayment?.exactTotal) {
+                        // PRIORITY 1: Props passed directly from POS screen
+                        if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(orderForPayment.exactTotal));
+                          console.log("💰 Cash Payment - Using orderForPayment exact total:", displayTotal);
+                        } else if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(receipt.exactTotal));
+                          console.log("💰 Cash Payment - Using receipt exact total:", displayTotal);
+                        } else if (orderForPayment?.total !== undefined && orderForPayment.total !== null) {
+                          displayTotal = Math.floor(Number(orderForPayment.total));
+                          console.log("💰 Cash Payment - Using orderForPayment total:", displayTotal);
+                        } else if (typeof window !== 'undefined' && (window as any).orderForPayment?.exactTotal) {
                           displayTotal = Math.floor(Number((window as any).orderForPayment.exactTotal));
                           console.log("💰 Cash Payment - Using global order exact total:", displayTotal);
                         } else if (typeof window !== 'undefined' && (window as any).previewReceipt?.exactTotal) {
                           displayTotal = Math.floor(Number((window as any).previewReceipt.exactTotal));
                           console.log("💰 Cash Payment - Using global receipt exact total:", displayTotal);
-                        } else if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
-                          displayTotal = Math.floor(Number(receipt.exactTotal));
-                        } else if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
-                          displayTotal = Math.floor(Number(orderForPayment.exactTotal));
-                        } else if (orderForPayment?.total !== undefined && orderForPayment.total !== null) {
-                          displayTotal = Math.floor(Number(orderForPayment.total));
                         } else {
                           displayTotal = Math.floor(Number(total || 0));
+                          console.log("💰 Cash Payment - Using fallback total:", displayTotal);
                         }
 
-                        console.log("💰 Cash Payment - Using exact total from previous screen:", displayTotal);
+                        console.log("💰 Cash Payment - Final total with POS priority:", displayTotal);
 
                         return displayTotal.toLocaleString("vi-VN");
-                      })()} ₫
+                      })()} ₫</p>
                     </p>
                   </div>
 
