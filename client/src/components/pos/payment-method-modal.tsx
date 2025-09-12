@@ -1570,42 +1570,35 @@ export function PaymentMethodModal({
                     {t("common.totalAmount")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {/* Use exact total with proper priority and discount consideration */}
+                    {/* Use exact total from previous screen - NO recalculation */}
                     {(() => {
-                      // PRIORITY ORDER: receipt > orderForPayment > orderInfo > fallback
-                      const baseTotal = receipt?.exactTotal ??
-                        orderForPayment?.exactTotal ??
-                        orderForPayment?.total ??
-                        orderInfo?.exactTotal ??
-                        orderInfo?.total ??
-                        total ??
-                        0;
+                      // PRIORITY: Use exact values passed from previous screen without any calculation
+                      let displayTotal = 0;
 
-                      // Get discount from multiple sources
-                      const discountAmount = Math.floor(
-                        parseFloat(
-                          receipt?.discount ||
-                          receipt?.exactDiscount ||
-                          orderForPayment?.discount ||
-                          orderInfo?.discount ||
-                          "0"
-                        )
-                      );
+                      if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+                        displayTotal = Math.floor(Number(receipt.exactTotal));
+                        console.log("💰 Payment Modal - Using receipt exact total:", displayTotal);
+                      } else if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
+                        displayTotal = Math.floor(Number(orderForPayment.exactTotal));
+                        console.log("💰 Payment Modal - Using order exact total:", displayTotal);
+                      } else if (orderForPayment?.total !== undefined && orderForPayment.total !== null) {
+                        displayTotal = Math.floor(Number(orderForPayment.total));
+                        console.log("💰 Payment Modal - Using order total:", displayTotal);
+                      } else {
+                        displayTotal = Math.floor(Number(total || 0));
+                        console.log("💰 Payment Modal - Using fallback total:", displayTotal);
+                      }
 
-                      // Calculate final total after discount
-                      const finalTotal = Math.max(0, baseTotal - discountAmount);
-
-                      console.log("💰 Payment Modal - Total calculation with discount:", {
-                        baseTotal,
-                        discountAmount,
-                        finalTotal,
-                        receiptDiscount: receipt?.discount,
-                        orderForPaymentDiscount: orderForPayment?.discount,
-                        orderInfoDiscount: orderInfo?.discount,
-                        source: "payment_method_modal"
+                      console.log("💰 Payment Modal - Final display total (NO recalculation):", {
+                        displayTotal,
+                        receiptExactTotal: receipt?.exactTotal,
+                        orderExactTotal: orderForPayment?.exactTotal,
+                        orderTotal: orderForPayment?.total,
+                        fallbackTotal: total,
+                        source: "payment_method_modal_no_recalc"
                       });
 
-                      return Math.floor(finalTotal).toLocaleString("vi-VN");
+                      return displayTotal.toLocaleString("vi-VN");
                     })()} ₫</p>
                 </div>
 
@@ -1707,15 +1700,26 @@ export function PaymentMethodModal({
                       {t("common.amountToPay")}
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {/* Use exact total with proper priority for QR payment */}
-                      {Math.floor(
-                        receipt?.exactTotal ??
-                          orderInfo?.exactTotal ??
-                          orderInfo?.total ??
-                          total ??
-                          0,
-                      ).toLocaleString("vi-VN")}{" "}
-                      ₫
+                      {/* Use exact total from previous screen - NO recalculation for QR payment */}
+                      {(() => {
+                        let displayTotal = 0;
+
+                        if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(receipt.exactTotal));
+                        } else if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(orderForPayment.exactTotal));
+                        } else if (orderForPayment?.total !== undefined && orderForPayment.total !== null) {
+                          displayTotal = Math.floor(Number(orderForPayment.total));
+                        } else if (orderInfo?.exactTotal !== undefined && orderInfo.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(orderInfo.exactTotal));
+                        } else {
+                          displayTotal = Math.floor(Number(orderInfo?.total ?? total ?? 0));
+                        }
+
+                        console.log("💰 QR Payment - Using exact total from previous screen:", displayTotal);
+
+                        return displayTotal.toLocaleString("vi-VN");
+                      })()} ₫
                     </p>
                   </div>
 
@@ -1847,42 +1851,23 @@ export function PaymentMethodModal({
                       {t("common.amountToPay")}
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {/* Use exact total with proper priority and discount consideration for cash payment */}
+                      {/* Use exact total from previous screen - NO recalculation for cash payment */}
                       {(() => {
-                        // PRIORITY ORDER: receipt > orderForPayment > orderInfo > fallback
-                        const baseTotal = receipt?.exactTotal ??
-                          orderForPayment?.exactTotal ??
-                          orderForPayment?.total ??
-                          orderInfo?.exactTotal ??
-                          orderInfo?.total ??
-                          total ??
-                          0;
+                        let displayTotal = 0;
 
-                        // Get discount from multiple sources
-                        const discountAmount = Math.floor(
-                          parseFloat(
-                            receipt?.discount ||
-                            receipt?.exactDiscount ||
-                            orderForPayment?.discount ||
-                            orderInfo?.discount ||
-                            "0"
-                          )
-                        );
+                        if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(receipt.exactTotal));
+                        } else if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
+                          displayTotal = Math.floor(Number(orderForPayment.exactTotal));
+                        } else if (orderForPayment?.total !== undefined && orderForPayment.total !== null) {
+                          displayTotal = Math.floor(Number(orderForPayment.total));
+                        } else {
+                          displayTotal = Math.floor(Number(total || 0));
+                        }
 
-                        // Calculate final total after discount
-                        const finalTotal = Math.max(0, baseTotal - discountAmount);
+                        console.log("💰 Cash Payment - Using exact total from previous screen:", displayTotal);
 
-                        console.log("💰 Payment Modal - Total calculation with discount:", {
-                          baseTotal,
-                          discountAmount,
-                          finalTotal,
-                          receiptDiscount: receipt?.discount,
-                          orderForPaymentDiscount: orderForPayment?.discount,
-                          orderInfoDiscount: orderInfo?.discount,
-                          source: "payment_method_modal"
-                        });
-
-                        return Math.floor(finalTotal).toLocaleString("vi-VN");
+                        return displayTotal.toLocaleString("vi-VN");
                       })()} ₫
                     </p>
                   </div>
