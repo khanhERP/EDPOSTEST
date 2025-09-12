@@ -2052,119 +2052,108 @@ export async function registerRoutes(app: Express): Promise < Server > {
         currentSubtotal: existingOrder.subtotal,
         currentTax: existingOrder.tax,
         currentTotal: existingOrder.total,
+        currentDiscount: existingOrder.discount,
       });
 
-      // If updating financial fields from table-grid, recalculate using order-dialog logic
-      if (
-        (orderData.subtotal !== undefined ||
-          orderData.tax !== undefined ||
-          orderData.total !== undefined) &&
-        !orderData.skipRecalculation
-      ) {
-        console.log(
-          `💰 Recalculating totals from order items for order ${id} (using order-dialog logic)`,
-        );
+      // Always recalculate financial fields to ensure accuracy
+      console.log(`💰 Recalculating ALL financial fields for order ${id}`);
 
-        try {
-          // Fetch current order items
-          const orderItemsResponse = await db
-            .select()
-            .from(orderItemsTable)
-            .where(eq(orderItemsTable.orderId, id));
+      try {
+        // Fetch current order items
+        const orderItemsResponse = await db
+          .select()
+          .from(orderItemsTable)
+          .where(eq(orderItemsTable.orderId, id));
 
-          if (orderItemsResponse && orderItemsResponse.length > 0) {
-            console.log(
-              `📦 Found ${orderItemsResponse.length} items for calculation`,
-            );
-
-            // Get products for tax calculation (same as order-dialog)
-            const allProducts = await db.select().from(products);
-            const productMap = new Map(allProducts.map((p) => [p.id, p]));
-
-            // EXACT same logic as order-dialog calculateTotal()
-            let calculatedSubtotal = 0; // Tiền tạm tính (trước thuế)
-
-            orderItemsResponse.forEach((item) => {
-              const unitPrice = Number(item.unitPrice || 0); // Giá trước thuế
-              const quantity = Number(item.quantity || 0);
-
-              // Calculate subtotal (base price * quantity) - EXACT same as order-dialog
-              const itemSubtotal = unitPrice * quantity;
-              calculatedSubtotal += itemSubtotal;
-            });
-
-            // EXACT same logic as order-dialog calculateTax()
-            let calculatedTax = 0; // Tổng thuế
-
-            orderItemsResponse.forEach((item) => {
-              const unitPrice = Number(item.unitPrice || 0);
-              const quantity = Number(item.quantity || 0);
-              const product = productMap.get(item.productId);
-
-              let itemTax = 0;
-              // Thuế = (after_tax_price - price) * quantity - EXACT same as order-dialog
-              if (
-                product?.afterTaxPrice &&
-                product.afterTaxPrice !== null &&
-                product.afterTaxPrice !== ""
-              ) {
-                const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
-                const preTaxPrice = unitPrice; // Giá trước thuế
-                const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
-                itemTax = taxPerUnit * quantity;
-              }
-              // Không có thuế nếu không có afterTaxPrice
-              calculatedTax += itemTax;
-            });
-
-            // EXACT same logic as order-dialog calculateGrandTotal()
-            const calculatedTotal = calculatedSubtotal + calculatedTax;
-
-            console.log(`💰 Calculated totals using order-dialog logic:`, {
-              subtotal: calculatedSubtotal,
-              tax: calculatedTax,
-              total: calculatedTotal,
-              itemsCount: orderItemsResponse.length,
-              calculationMethod: "order-dialog-exact",
-            });
-
-            // Update orderData with calculated values (same format as order-dialog)
-            orderData.subtotal = calculatedSubtotal.toString();
-            orderData.tax = calculatedTax.toString();
-            orderData.total = calculatedTotal.toString();
-
-            console.log(
-              `✅ Updated order data with order-dialog calculated totals`,
-            );
-          } else {
-            console.log(
-              `⚠️ No items found for order ${id}, setting totals to zero`,
-            );
-            orderData.subtotal = "0";
-            orderData.tax = "0";
-            orderData.total = "0";
-          }
-        } catch (calcError) {
-          console.error(
-            `❌ Error calculating totals for order ${id}:`,
-            calcError,
+        if (orderItemsResponse && orderItemsResponse.length > 0) {
+          console.log(
+            `📦 Found ${orderItemsResponse.length} items for recalculation`,
           );
-          // Continue with original values if calculation fails
-        }
-      }
 
-      // Log the data being updated, especially financial fields
-      if (
-        orderData.subtotal !== undefined ||
-        orderData.tax !== undefined ||
-        orderData.total !== undefined
-      ) {
-        console.log(`💰 Updating financial fields:`, {
-          subtotal: orderData.subtotal,
-          tax: orderData.tax,
-          total: orderData.total,
+          // Get products for tax calculation
+          const allProducts = await db.select().from(products);
+          const productMap = new Map(allProducts.map((p) => [p.id, p]));
+
+          // Calculate subtotal (base price * quantity)
+          let calculatedSubtotal = 0;
+          orderItemsResponse.forEach((item) => {
+            const unitPrice = Number(item.unitPrice || 0);
+            const quantity = Number(item.quantity || 0);
+            calculatedSubtotal += unitPrice * quantity;
+          });
+
+          // Calculate tax using afterTaxPrice method
+          let calculatedTax = 0;
+          orderItemsResponse.forEach((item) => {
+            const unitPrice = Number(item.unitPrice || 0);
+            const quantity = Number(item.quantity || 0);
+            const product = productMap.get(item.productId);
+
+            if (
+              product?.afterTaxPrice &&
+              product.afterTaxPrice !== null &&
+              product.afterTaxPrice !== ""
+            ) {
+              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+              const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+              calculatedTax += Math.floor(taxPerUnit * quantity);
+            }
+          });
+
+          // Handle discount - prioritize incoming data, then existing data
+          let finalDiscount = 0;
+          if (orderData.discount !== undefined && orderData.discount !== null) {
+            finalDiscount = Math.floor(Number(orderData.discount));
+            console.log(`💰 Using incoming discount: ${finalDiscount}`);
+          } else if (existingOrder.discount) {
+            finalDiscount = Math.floor(Number(existingOrder.discount));
+            console.log(`💰 Using existing discount: ${finalDiscount}`);
+          }
+
+          // Calculate total with discount
+          const calculatedTotal = Math.max(0, calculatedSubtotal + calculatedTax - finalDiscount);
+
+          console.log(`💰 Recalculated financial data:`, {
+            subtotal: calculatedSubtotal,
+            tax: calculatedTax,
+            discount: finalDiscount,
+            total: calculatedTotal,
+            itemsCount: orderItemsResponse.length,
+            calculationMethod: "server-side-accurate",
+          });
+
+          // Update orderData with accurate calculated values
+          orderData.subtotal = calculatedSubtotal.toString();
+          orderData.tax = calculatedTax.toString();
+          orderData.discount = finalDiscount.toString();
+          orderData.total = calculatedTotal.toString();
+
+          console.log(`✅ Updated order data with accurate financial calculations`);
+        } else {
+          console.log(`⚠️ No items found for order ${id}, setting totals to zero`);
+          orderData.subtotal = "0";
+          orderData.tax = "0";
+          orderData.discount = orderData.discount || existingOrder.discount || "0";
+          orderData.total = "0";
+        }
+      } catch (calcError) {
+        console.error(`❌ Error calculating totals for order ${id}:`, calcError);
+        // Don't continue with potentially incorrect values - return error
+        return res.status(500).json({
+          message: "Failed to calculate order totals",
+          error: calcError instanceof Error ? calcError.message : String(calcError),
         });
       }
+
+      // Log the final data being updated
+      console.log(`💰 Final update data:`, {
+        subtotal: orderData.subtotal,
+        tax: orderData.tax,
+        discount: orderData.discount,
+        total: orderData.total,
+        status: orderData.status,
+        paymentMethod: orderData.paymentMethod,
+      });
 
       const order = await storage.updateOrder(id, orderData, tenantDb);
 
@@ -2177,16 +2166,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       console.log(`✅ Order update API completed successfully:`, {
         orderId: order.id,
+        orderNumber: order.orderNumber,
         status: order.status,
         paymentMethod: order.paymentMethod,
         paidAt: order.paidAt,
         einvoiceStatus: order.einvoiceStatus,
         updatedSubtotal: order.subtotal,
         updatedTax: order.tax,
+        updatedDiscount: order.discount,
         updatedTotal: order.total,
       });
 
-      res.json({ ...order,
+      res.json({ 
+        ...order,
         updated: true,
         updateTimestamp: new Date().toISOString()
       });

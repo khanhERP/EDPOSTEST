@@ -1490,55 +1490,85 @@ export class DatabaseStorage implements IStorage {
   ): Promise<Order | null> {
     const safeDb = this.getSafeDatabase(tenantDb, 'updateOrder');
 
-    console.log(`📝 Storage: Updating order ${id} with data:`, orderData);
+    console.log(`💾 Storage: Starting order update for ID ${id} with data:`, orderData);
 
+    // Prepare update data with proper type conversion and validation
     const updateData: any = {
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
-    // Add fields that are provided in orderData
-    if (orderData.customerName !== undefined) updateData.customerName = orderData.customerName;
-    if (orderData.customerCount !== undefined) updateData.customerCount = orderData.customerCount;
+    // Handle all possible fields that might be updated
     if (orderData.status !== undefined) updateData.status = orderData.status;
     if (orderData.paymentMethod !== undefined) updateData.paymentMethod = orderData.paymentMethod;
     if (orderData.paymentStatus !== undefined) updateData.paymentStatus = orderData.paymentStatus;
+    if (orderData.customerName !== undefined) updateData.customerName = orderData.customerName;
+    if (orderData.tableId !== undefined) updateData.tableId = orderData.tableId;
+    if (orderData.employeeId !== undefined) updateData.employeeId = orderData.employeeId;
+    if (orderData.customerCount !== undefined) updateData.customerCount = orderData.customerCount;
+    if (orderData.notes !== undefined) updateData.notes = orderData.notes;
     if (orderData.einvoiceStatus !== undefined) updateData.einvoiceStatus = orderData.einvoiceStatus;
+    if (orderData.invoiceNumber !== undefined) updateData.invoiceNumber = orderData.invoiceNumber;
+    if (orderData.invoiceId !== undefined) updateData.invoiceId = orderData.invoiceId;
     if (orderData.templateNumber !== undefined) updateData.templateNumber = orderData.templateNumber;
     if (orderData.symbol !== undefined) updateData.symbol = orderData.symbol;
-    if (orderData.invoiceNumber !== undefined) updateData.invoiceNumber = orderData.invoiceNumber;
-    if (orderData.notes !== undefined) updateData.notes = orderData.notes;
     if (orderData.paidAt !== undefined) updateData.paidAt = orderData.paidAt;
     if (orderData.servedAt !== undefined) updateData.servedAt = orderData.servedAt;
-    if (orderData.discount !== undefined) updateData.discount = orderData.discount; // Ensure discount is included
 
-    // CRITICAL: Always update financial fields if provided (save discount without recalculating)
+    // Handle financial fields with strict validation and formatting
     if (orderData.subtotal !== undefined) {
-      updateData.subtotal = orderData.subtotal.toString();
-      console.log(`💰 Storage: Updating subtotal to ${orderData.subtotal}`);
-    }
-    if (orderData.tax !== undefined) {
-      updateData.tax = orderData.tax.toString();
-      console.log(`💰 Storage: Updating tax to ${orderData.tax}`);
-    }
-    if (orderData.total !== undefined) {
-      updateData.total = orderData.total.toString();
-      console.log(`💰 Storage: Updating total to ${orderData.total}`);
-    }
-    if (orderData.discount !== undefined) {
-      updateData.discount = orderData.discount.toString();
-      console.log(`💰 Storage: Updating discount to ${orderData.discount} (save only, no recalculation)`);
-    }
-
-    // Remove undefined values to avoid overwriting with undefined
-    Object.keys(orderData).forEach(key => {
-      if (orderData[key as keyof typeof orderData] === undefined) {
-        delete orderData[key as keyof typeof orderData];
+      const subtotal = Number(orderData.subtotal);
+      if (isNaN(subtotal)) {
+        throw new Error(`Invalid subtotal value: ${orderData.subtotal}`);
       }
-    });
+      updateData.subtotal = subtotal.toFixed(2);
+      console.log(`💰 Storage: Updated subtotal: ${updateData.subtotal}`);
+    }
 
-    // Ensure discount is included if provided
+    if (orderData.tax !== undefined) {
+      const tax = Number(orderData.tax);
+      if (isNaN(tax)) {
+        throw new Error(`Invalid tax value: ${orderData.tax}`);
+      }
+      updateData.tax = tax.toFixed(2);
+      console.log(`💰 Storage: Updated tax: ${updateData.tax}`);
+    }
+
     if (orderData.discount !== undefined) {
-      console.log(`💰 Storage: Updating discount to ${orderData.discount}`);
+      const discount = Number(orderData.discount);
+      if (isNaN(discount)) {
+        throw new Error(`Invalid discount value: ${orderData.discount}`);
+      }
+      updateData.discount = discount.toFixed(2);
+      console.log(`💰 Storage: Updated discount: ${updateData.discount}`);
+    }
+
+    if (orderData.total !== undefined) {
+      const total = Number(orderData.total);
+      if (isNaN(total)) {
+        throw new Error(`Invalid total value: ${orderData.total}`);
+      }
+      updateData.total = total.toFixed(2);
+      console.log(`💰 Storage: Updated total: ${updateData.total}`);
+    }
+
+    // Validate financial consistency if all fields are present
+    if (updateData.subtotal && updateData.tax && updateData.discount && updateData.total) {
+      const expectedTotal = Number(updateData.subtotal) + Number(updateData.tax) - Number(updateData.discount);
+      const actualTotal = Number(updateData.total);
+
+      if (Math.abs(expectedTotal - actualTotal) > 0.01) {
+        console.warn(`⚠️ Storage: Financial inconsistency detected:`, {
+          subtotal: updateData.subtotal,
+          tax: updateData.tax,
+          discount: updateData.discount,
+          expectedTotal: expectedTotal.toFixed(2),
+          actualTotal: updateData.total,
+          difference: (expectedTotal - actualTotal).toFixed(2)
+        });
+        // Correct the total to match the calculation
+        updateData.total = expectedTotal.toFixed(2);
+        console.log(`🔧 Storage: Corrected total to: ${updateData.total}`);
+      }
     }
 
     console.log(`💾 Storage: Final update data for order ${id}:`, updateData);
@@ -1549,23 +1579,24 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, id))
       .returning();
 
-    if (updatedOrder) {
-      console.log(`✅ Storage: Order ${id} updated successfully:`, {
-        orderId: updatedOrder.id,
-        status: updatedOrder.status,
-        customerName: updatedOrder.customerName,
-        paymentMethod: updatedOrder.paymentMethod,
-        einvoiceStatus: updatedOrder.einvoiceStatus,
-        subtotal: updatedOrder.subtotal,
-        tax: updatedOrder.tax,
-        total: updatedOrder.total,
-        discount: updatedOrder.discount // Log discount if it was updated
-      });
-    } else {
-      console.warn(`⚠️ Storage: No order found with ID ${id} to update`);
+    if (!updatedOrder) {
+      console.error(`❌ Storage: No order returned after update for ID: ${id}`);
+      return null;
     }
 
-    return updatedOrder || null;
+    console.log(`✅ Storage: Order ${id} updated successfully:`, {
+      id: updatedOrder.id,
+      orderNumber: updatedOrder.orderNumber,
+      status: updatedOrder.status,
+      subtotal: updatedOrder.subtotal,
+      tax: updatedOrder.tax,
+      discount: updatedOrder.discount,
+      total: updatedOrder.total,
+      paymentMethod: updatedOrder.paymentMethod,
+      updatedAt: updatedOrder.updatedAt,
+    });
+
+    return updatedOrder;
   }
 
 
