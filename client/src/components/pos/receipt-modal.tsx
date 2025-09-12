@@ -125,7 +125,7 @@ export function ReceiptModal({
   }
 
   const handlePrint = () => {
-    console.log('🖨️ Receipt Modal: Print button clicked - closing modal immediately after print');
+    console.log('🖨️ Receipt Modal: Print button clicked - processing like POS');
 
     const printContent = document.getElementById('receipt-content');
     if (printContent) {
@@ -182,57 +182,11 @@ export function ReceiptModal({
           }, 500);
         };
 
-        // Close modal immediately after opening print window
+        // Close modal immediately after opening print window - like POS
         setTimeout(() => {
-          console.log('🖨️ Closing receipt modal after print window opened');
-          
-          // Send refresh signals and clear cart
-          try {
-            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            const ws = new WebSocket(wsUrl);
-
-            ws.onopen = () => {
-              ws.send(JSON.stringify({
-                type: "print_completed",
-                action: "refresh_all_data",
-                clearCart: true,
-                showNotification: true,
-                timestamp: new Date().toISOString(),
-              }));
-              ws.close();
-            };
-          } catch (error) {
-            console.error("Failed to send refresh signal after print:", error);
-          }
-
-          // Clear all popup states
-          if (typeof window !== 'undefined') {
-            (window as any).previewReceipt = null;
-            (window as any).orderForPayment = null;
-
-            // Send event to close all popups
-            window.dispatchEvent(new CustomEvent('closeAllPopups', {
-              detail: {
-                source: 'print_completed',
-                showSuccessNotification: true,
-                message: 'In hóa đơn thành công',
-                timestamp: new Date().toISOString()
-              }
-            }));
-
-            // Clear cart
-            window.dispatchEvent(new CustomEvent('clearCart', {
-              detail: {
-                source: 'print_completed',
-                timestamp: new Date().toISOString()
-              }
-            }));
-          }
-
-          // Force close receipt modal
+          console.log('🖨️ Closing receipt modal immediately after print (like POS)');
           onClose();
-        }, 100);
+        }, 50);
       }
     }
   };

@@ -1855,12 +1855,37 @@ export function OrderManagement() {
       }
     };
 
+    const handlePrintCompleted = (event: CustomEvent) => {
+      console.log("🖨️ Order Management: Print completed event received - closing all modals like POS");
+      
+      // Close all modals immediately like POS
+      setShowReceiptPreview(false);
+      setPreviewReceipt(null);
+      setOrderForPayment(null);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setShowReceiptModal(false);
+      setSelectedReceipt(null);
+      setOrderDetailsOpen(false);
+      setSelectedOrder(null);
+      
+      // Clear any stored data
+      if (typeof window !== 'undefined') {
+        (window as any).previewReceipt = null;
+        (window as any).orderForPayment = null;
+      }
+      
+      // Force data refresh
+      refreshData();
+    };
+
     // Add event listeners
     window.addEventListener('orderStatusUpdated', handleOrderStatusUpdate as EventListener);
     window.addEventListener('paymentCompleted', handlePaymentCompleted as EventListener);
     window.addEventListener('refreshOrders', handleRefreshOrders as EventListener);
     window.addEventListener('newOrderCreated', handleNewOrderFromTable as EventListener);
     window.addEventListener('receiptModalClosed', handleReceiptModalClosed as EventListener);
+    window.addEventListener('printCompleted', handlePrintCompleted as EventListener);
 
     // Cleanup event listeners
     return () => {
@@ -1869,6 +1894,7 @@ export function OrderManagement() {
       window.removeEventListener('refreshOrders', handleRefreshOrders as EventListener);
       window.removeEventListener('newOrderCreated', handleNewOrderFromTable as EventListener);
       window.removeEventListener('receiptModalClosed', handleReceiptModalClosed as EventListener);
+      window.removeEventListener('printCompleted', handlePrintCompleted as EventListener);
     };
   }, [refreshData]);
 

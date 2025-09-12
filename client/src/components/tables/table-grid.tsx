@@ -292,6 +292,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               data.type === "modal_closed" ||
               data.type === "refresh_data_after_print" ||
               data.type === "invoice_modal_closed" ||
+              data.type === "print_completed" ||
               data.force_refresh === true
             ) {
               console.log(
