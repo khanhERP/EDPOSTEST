@@ -529,14 +529,33 @@ export function ReceiptModal({
                   {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
-              {parseFloat(receipt.discount || "0") > 0 && (
-                <div className="flex justify-between text-sm text-red-600">
-                  <span>Giảm giá:</span>
-                  <span className="font-medium">
-                    -{Math.floor(parseFloat(receipt.discount || "0")).toLocaleString("vi-VN")} ₫
-                  </span>
-                </div>
-              )}
+              {(() => {
+                // Check for discount from multiple sources with priority
+                let displayDiscount = 0;
+                
+                // Priority 1: exactDiscount (most accurate)
+                if (receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
+                  displayDiscount = parseFloat(receipt.exactDiscount.toString());
+                  console.log("📄 Receipt Modal: Using exactDiscount:", displayDiscount);
+                }
+                // Priority 2: discount property 
+                else if (receipt.discount !== undefined && receipt.discount !== null && parseFloat(receipt.discount.toString()) > 0) {
+                  displayDiscount = parseFloat(receipt.discount.toString());
+                  console.log("📄 Receipt Modal: Using discount:", displayDiscount);
+                }
+                
+                if (displayDiscount > 0) {
+                  return (
+                    <div className="flex justify-between text-sm text-red-600">
+                      <span>Giảm giá:</span>
+                      <span className="font-medium">
+                        -{Math.floor(displayDiscount).toLocaleString("vi-VN")} ₫
+                      </span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
@@ -850,14 +869,31 @@ export function ReceiptModal({
                           {Math.floor(dbTax).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
-                      {dbDiscount > 0 && (
-                        <div className="flex justify-between text-sm text-red-600">
-                          <span>Giảm giá:</span>
-                          <span className="font-medium">
-                            -{Math.floor(dbDiscount).toLocaleString("vi-VN")} ₫
-                          </span>
-                        </div>
-                      )}
+                      {(() => {
+                        // For final receipt mode, check multiple discount sources
+                        let displayDiscount = 0;
+                        
+                        // Priority 1: exactDiscount
+                        if (receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
+                          displayDiscount = parseFloat(receipt.exactDiscount.toString());
+                        }
+                        // Priority 2: discount
+                        else if (dbDiscount > 0) {
+                          displayDiscount = dbDiscount;
+                        }
+                        
+                        if (displayDiscount > 0) {
+                          return (
+                            <div className="flex justify-between text-sm text-red-600">
+                              <span>Giảm giá:</span>
+                              <span className="font-medium">
+                                -{Math.floor(displayDiscount).toLocaleString("vi-VN")} ₫
+                              </span>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
                         <span>
