@@ -72,13 +72,21 @@ export function ReceiptModal({
         receipt,
         cartItems: cartItems?.length || 0,
         onConfirm: !!onConfirm,
-        hasReceiptData: !!(receipt && typeof receipt === 'object'),
-        hasValidData: !!(receipt && typeof receipt === 'object') || (isPreview && cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0)
+        hasReceiptData: !!(receipt && typeof receipt === "object"),
+        hasValidData:
+          !!(receipt && typeof receipt === "object") ||
+          (isPreview &&
+            cartItems &&
+            Array.isArray(cartItems) &&
+            cartItems.length > 0 &&
+            total > 0),
       });
 
       // Force show modal when receipt data exists
-      if (receipt && typeof receipt === 'object') {
-        console.log("✅ Receipt Modal: Valid receipt data found - modal will display");
+      if (receipt && typeof receipt === "object") {
+        console.log(
+          "✅ Receipt Modal: Valid receipt data found - modal will display",
+        );
       }
     }
   }, [isOpen, receipt, isPreview, cartItems, total, onConfirm]);
@@ -90,16 +98,18 @@ export function ReceiptModal({
   }
 
   // Handle missing data cases
-  const hasReceiptData = receipt && typeof receipt === 'object';
-  const hasCartData = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
-  const hasValidData = hasReceiptData || (isPreview && hasCartData && total > 0);
+  const hasReceiptData = receipt && typeof receipt === "object";
+  const hasCartData =
+    cartItems && Array.isArray(cartItems) && cartItems.length > 0;
+  const hasValidData =
+    hasReceiptData || (isPreview && hasCartData && total > 0);
 
   if (!hasValidData) {
     console.log("❌ Receipt Modal: No valid data for display", {
       hasReceiptData,
       hasCartData,
       isPreview,
-      total
+      total,
     });
 
     return (
@@ -112,8 +122,7 @@ export function ReceiptModal({
             <p>
               {isPreview
                 ? "Không có sản phẩm trong giỏ hàng để xem trước hóa đơn"
-                : "Không có dữ liệu hóa đơn để hiển thị"
-              }
+                : "Không có dữ liệu hóa đơn để hiển thị"}
             </p>
             <Button onClick={onClose} className="mt-4">
               Đóng
@@ -125,11 +134,11 @@ export function ReceiptModal({
   }
 
   const handlePrint = () => {
-    console.log('🖨️ Receipt Modal: Print button clicked - processing like POS');
+    console.log("🖨️ Receipt Modal: Print button clicked - processing like POS");
 
-    const printContent = document.getElementById('receipt-content');
+    const printContent = document.getElementById("receipt-content");
     if (printContent) {
-      const printWindow = window.open('', '_blank');
+      const printWindow = window.open("", "_blank");
       if (printWindow) {
         printWindow.document.write(`
           <html>
@@ -182,21 +191,33 @@ export function ReceiptModal({
 
             // Auto close after print and refresh data
             setTimeout(() => {
-              console.log('🖨️ Receipt Modal: Auto-closing after print and refreshing data');
+              console.log(
+                "🖨️ Receipt Modal: Auto-closing after print and refreshing data",
+              );
 
               // Close this modal
               onClose();
 
               // Dispatch events to close all modals and refresh data
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('printCompleted', {
-                  detail: {
-                    closeAllModals: true,
-                    refreshData: true
-                  }
-                }));
-                window.dispatchEvent(new CustomEvent('refreshOrders', { detail: { immediate: true } }));
-                window.dispatchEvent(new CustomEvent('refreshTables', { detail: { immediate: true } }));
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                  new CustomEvent("printCompleted", {
+                    detail: {
+                      closeAllModals: true,
+                      refreshData: true,
+                    },
+                  }),
+                );
+                window.dispatchEvent(
+                  new CustomEvent("refreshOrders", {
+                    detail: { immediate: true },
+                  }),
+                );
+                window.dispatchEvent(
+                  new CustomEvent("refreshTables", {
+                    detail: { immediate: true },
+                  }),
+                );
               }
             }, 1000);
           }, 500);
@@ -204,7 +225,9 @@ export function ReceiptModal({
 
         // Close modal immediately after opening print window - like POS
         setTimeout(() => {
-          console.log('🖨️ Closing receipt modal immediately after print (like POS)');
+          console.log(
+            "🖨️ Closing receipt modal immediately after print (like POS)",
+          );
           onClose();
         }, 50);
       }
@@ -341,8 +364,10 @@ export function ReceiptModal({
   };
 
   const handleConfirmAndSelectPayment = () => {
-    console.log('📄 Receipt Modal: Confirming receipt and proceeding to payment method selection');
-    console.log('🎯 Receipt data being passed:', {
+    console.log(
+      "📄 Receipt Modal: Confirming receipt and proceeding to payment method selection",
+    );
+    console.log("🎯 Receipt data being passed:", {
       receipt,
       cartItems,
       total,
@@ -350,7 +375,7 @@ export function ReceiptModal({
       tax: receipt?.tax,
       exactTotal: receipt?.exactTotal,
       exactSubtotal: receipt?.exactSubtotal,
-      exactTax: receipt?.exactTax
+      exactTax: receipt?.exactTax,
     });
 
     // Show payment method modal directly
@@ -371,7 +396,9 @@ export function ReceiptModal({
   }
 
   const handleClose = () => {
-    console.log("🔴 Receipt Modal: handleClose called - closing all popups and refreshing data without notification");
+    console.log(
+      "🔴 Receipt Modal: handleClose called - closing all popups and refreshing data without notification",
+    );
 
     // Send refresh signal without notification
     try {
@@ -380,13 +407,15 @@ export function ReceiptModal({
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        ws.send(JSON.stringify({
-          type: "receipt_closed",
-          action: "refresh_all_data",
-          clearCart: true,
-          showNotification: false, // No notification when just closing
-          timestamp: new Date().toISOString(),
-        }));
+        ws.send(
+          JSON.stringify({
+            type: "receipt_closed",
+            action: "refresh_all_data",
+            clearCart: true,
+            showNotification: false, // No notification when just closing
+            timestamp: new Date().toISOString(),
+          }),
+        );
         ws.close();
       };
     } catch (error) {
@@ -394,26 +423,30 @@ export function ReceiptModal({
     }
 
     // Clear all popup states
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       (window as any).previewReceipt = null;
       (window as any).orderForPayment = null;
 
       // Send event to close all popups without notification
-      window.dispatchEvent(new CustomEvent('closeAllPopups', {
-        detail: {
-          source: 'receipt_modal_closed',
-          showSuccessNotification: false, // No notification
-          timestamp: new Date().toISOString()
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("closeAllPopups", {
+          detail: {
+            source: "receipt_modal_closed",
+            showSuccessNotification: false, // No notification
+            timestamp: new Date().toISOString(),
+          },
+        }),
+      );
 
       // Clear cart
-      window.dispatchEvent(new CustomEvent('clearCart', {
-        detail: {
-          source: 'receipt_modal_closed',
-          timestamp: new Date().toISOString()
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("clearCart", {
+          detail: {
+            source: "receipt_modal_closed",
+            timestamp: new Date().toISOString(),
+          },
+        }),
+      );
     }
 
     // Close the modal
@@ -425,9 +458,7 @@ export function ReceiptModal({
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isPreview
-              ? t("pos.receiptPreview")
-              : t("pos.receipt")}
+            {isPreview ? t("pos.receiptPreview") : t("pos.receipt")}
           </DialogTitle>
         </DialogHeader>
 
@@ -439,7 +470,8 @@ export function ReceiptModal({
           >
             <div className="text-center mb-4">
               <p className="text-xs font-semibold mb-1">
-                {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
+                {storeSettings?.storeName ||
+                  "Easy Digital Point Of Sale Service"}
               </p>
               <p className="text-xs mb-0.5">{t("pos.mainStoreLocation")}</p>
               <p className="text-xs mb-0.5">
@@ -490,89 +522,123 @@ export function ReceiptModal({
 
             <div className="space-y-2 mb-3">
               {(receipt.items || []).map((item) => {
-                        // For receipt display, use the actual unit price from database (not calculated)
-                        const actualUnitPrice = parseFloat(item.unitPrice || item.price || "0");
-                        const quantity = item.quantity || 1;
-                        const actualTotal = parseFloat(item.total || "0");
+                // For receipt display, use the actual unit price from database (not calculated)
+                const actualUnitPrice = parseFloat(
+                  item.unitPrice || item.price || "0",
+                );
+                const quantity = item.quantity || 1;
+                const actualTotal = parseFloat(item.total || "0");
 
-                        return (
-                          <div key={item.id || Math.random()}>
-                            <div className="flex justify-between text-sm">
-                              <div className="flex-1">
-                                <div>{item.productName || item.name || "Unknown Product"}</div>
-                                <div className="text-xs text-gray-600">
-                                  SKU:{" "}
-                                  {`FOOD${String(item.productId || item.id || "0").padStart(5, "0")}`}
-                                </div>
-                                <div className="text-xs text-gray-600">
-                                  {quantity} x{" "}
-                                  {Math.floor(actualUnitPrice).toLocaleString("vi-VN")} ₫
-                                </div>
-                              </div>
-                              <div>{Math.floor(actualTotal).toLocaleString("vi-VN")} ₫</div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                return (
+                  <div key={item.id || Math.random()}>
+                    <div className="flex justify-between text-sm">
+                      <div className="flex-1">
+                        <div>
+                          {item.productName || item.name || "Unknown Product"}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          SKU:{" "}
+                          {`FOOD${String(item.productId || item.id || "0").padStart(5, "0")}`}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {quantity} x{" "}
+                          {Math.floor(actualUnitPrice).toLocaleString("vi-VN")}{" "}
+                          ₫
+                        </div>
+                      </div>
+                      <div>
+                        {Math.floor(actualTotal).toLocaleString("vi-VN")} ₫
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               <div className="flex justify-between text-sm">
                 <span>{t("pos.subtotal")}</span>
                 <span>
-                  {Math.round(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.round(
+                    parseFloat(receipt.subtotal || "0"),
+                  ).toLocaleString("vi-VN")}{" "}
+                  ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>{t("pos.tax")}</span>
                 <span>
-                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString(
+                    "vi-VN",
+                  )}{" "}
+                  ₫
                 </span>
               </div>
               {(() => {
                 // Check for discount from multiple sources with priority
                 let displayDiscount = 0;
-                
+                console.log("receipt_trường", receipt);
                 // Priority 1: exactDiscount (most accurate)
-                if (receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
-                  displayDiscount = parseFloat(receipt.exactDiscount.toString());
-                  console.log("📄 Receipt Modal: Using exactDiscount:", displayDiscount);
-                }
-                // Priority 2: discount property 
-                else if (receipt.discount !== undefined && receipt.discount !== null && parseFloat(receipt.discount.toString()) > 0) {
-                  displayDiscount = parseFloat(receipt.discount.toString());
-                  console.log("📄 Receipt Modal: Using discount:", displayDiscount);
-                }
-                
-                if (displayDiscount > 0) {
-                  return (
-                    <div className="flex justify-between text-sm text-red-600">
-                      <span>Giảm giá:</span>
-                      <span className="font-medium">
-                        -{Math.floor(displayDiscount).toLocaleString("vi-VN")} ₫
-                      </span>
-                    </div>
+                if (
+                  receipt.exactDiscount !== undefined &&
+                  receipt.exactDiscount !== null &&
+                  parseFloat(receipt.exactDiscount.toString()) > 0
+                ) {
+                  displayDiscount = parseFloat(
+                    receipt.exactDiscount.toString(),
+                  );
+                  console.log(
+                    "📄 Receipt Modal: Using exactDiscount:",
+                    displayDiscount,
                   );
                 }
-                return null;
+                // Priority 2: discount property
+                else if (
+                  receipt.discount !== undefined &&
+                  receipt.discount !== null &&
+                  parseFloat(receipt.discount.toString()) > 0
+                ) {
+                  displayDiscount = parseFloat(receipt.discount.toString());
+                  console.log(
+                    "📄 Receipt Modal: Using discount:",
+                    displayDiscount,
+                  );
+                }
+
+                return (
+                  <div className="flex justify-between text-sm text-red-600">
+                    <span>Giảm giá:</span>
+                    <span className="font-medium">
+                      -
+                      {Math.floor(displayDiscount || "0").toLocaleString(
+                        "vi-VN",
+                      )}{" "}
+                      ₫
+                    </span>
+                  </div>
+                );
               })()}
               <div className="flex justify-between font-bold">
-                        <span>{t("pos.total")}</span>
-                        <span>
-                          {(() => {
-                            // Use EXACT database total directly without calculation
-                            // This ensures exact match with what's stored in database
-                            const dbTotal = parseFloat(receipt.total || "0");
-                            console.log("📄 Receipt Modal: Using EXACT database total:", {
-                              rawTotal: receipt.total,
-                              parsedTotal: dbTotal,
-                              receiptId: receipt.id,
-                              source: "database_exact"
-                            });
-                            return Math.round(dbTotal).toLocaleString("vi-VN");
-                          })()} ₫
-                        </span>
-                      </div>
+                <span>{t("pos.total")}</span>
+                <span>
+                  {(() => {
+                    // Use EXACT database total directly without calculation
+                    // This ensures exact match with what's stored in database
+                    const dbTotal = parseFloat(receipt.total || "0");
+                    console.log(
+                      "📄 Receipt Modal: Using EXACT database total:",
+                      {
+                        rawTotal: receipt.total,
+                        parsedTotal: dbTotal,
+                        receiptId: receipt.id,
+                        source: "database_exact",
+                      },
+                    );
+                    return Math.round(dbTotal).toLocaleString("vi-VN");
+                  })()}{" "}
+                  ₫
+                </span>
+              </div>
             </div>
           </div>
         ) : isPreview && hasCartData && total > 0 ? (
@@ -584,7 +650,8 @@ export function ReceiptModal({
           >
             <div className="text-center mb-4">
               <p className="text-xs font-semibold mb-1">
-                {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
+                {storeSettings?.storeName ||
+                  "Easy Digital Point Of Sale Service"}
               </p>
               <p className="text-xs mb-0.5">{t("pos.mainStoreLocation")}</p>
               <p className="text-xs mb-0.5">
@@ -620,23 +687,26 @@ export function ReceiptModal({
                     <div className="flex-1">
                       <div>{item.name}</div>
                       <div className="text-xs text-gray-600">
-                        SKU: {item.sku || `FOOD${String(item.id).padStart(5, "0")}`}
+                        SKU:{" "}
+                        {item.sku || `FOOD${String(item.id).padStart(5, "0")}`}
                       </div>
                       <div className="text-xs text-gray-600">
                         {item.quantity} x{" "}
                         {Math.floor(
                           typeof item.price === "string"
                             ? parseFloat(item.price)
-                            : item.price
-                        ).toLocaleString("vi-VN")} ₫
+                            : item.price,
+                        ).toLocaleString("vi-VN")}{" "}
+                        ₫
                       </div>
                     </div>
                     <div>
                       {Math.floor(
                         (typeof item.price === "string"
                           ? parseFloat(item.price)
-                          : item.price) * item.quantity
-                      ).toLocaleString("vi-VN")} ₫
+                          : item.price) * item.quantity,
+                      ).toLocaleString("vi-VN")}{" "}
+                      ₫
                     </div>
                   </div>
                 </div>
@@ -648,47 +718,65 @@ export function ReceiptModal({
                 // For preview mode (cartItems), calculate values from cart
                 if (isPreview && cartItems && cartItems.length > 0) {
                   const subtotal = cartItems.reduce((sum, item) => {
-                    const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                    return sum + (price * item.quantity);
+                    const price =
+                      typeof item.price === "string"
+                        ? parseFloat(item.price)
+                        : item.price;
+                    return sum + price * item.quantity;
                   }, 0);
 
                   // Calculate tax from individual items if they have afterTaxPrice
                   let totalTax = 0;
                   cartItems.forEach((item) => {
-                    console.log('🔍 Receipt Modal - Tax calculation for item:', {
-                      name: item.name,
-                      basePrice: item.price,
-                      afterTaxPrice: item.afterTaxPrice,
-                      quantity: item.quantity,
-                      taxRate: item.taxRate
-                    });
+                    console.log(
+                      "🔍 Receipt Modal - Tax calculation for item:",
+                      {
+                        name: item.name,
+                        basePrice: item.price,
+                        afterTaxPrice: item.afterTaxPrice,
+                        quantity: item.quantity,
+                        taxRate: item.taxRate,
+                      },
+                    );
 
-                    if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-                      const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                    if (
+                      item.afterTaxPrice &&
+                      item.afterTaxPrice !== null &&
+                      item.afterTaxPrice !== ""
+                    ) {
+                      const basePrice =
+                        typeof item.price === "string"
+                          ? parseFloat(item.price)
+                          : item.price;
                       const afterTaxPrice = parseFloat(item.afterTaxPrice);
                       const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
                       const itemTax = Math.floor(taxPerUnit * item.quantity);
                       totalTax += itemTax;
 
-                      console.log('💸 Tax calculated using afterTaxPrice:', {
+                      console.log("💸 Tax calculated using afterTaxPrice:", {
                         basePrice,
                         afterTaxPrice,
                         taxPerUnit,
                         quantity: item.quantity,
-                        itemTax
+                        itemTax,
                       });
                     } else if (item.taxRate && parseFloat(item.taxRate) > 0) {
                       // Fallback to taxRate if afterTaxPrice not available
-                      const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                      const basePrice =
+                        typeof item.price === "string"
+                          ? parseFloat(item.price)
+                          : item.price;
                       const taxRate = parseFloat(item.taxRate) / 100;
-                      const itemTax = Math.floor(basePrice * taxRate * item.quantity);
+                      const itemTax = Math.floor(
+                        basePrice * taxRate * item.quantity,
+                      );
                       totalTax += itemTax;
 
-                      console.log('💸 Tax calculated using taxRate:', {
+                      console.log("💸 Tax calculated using taxRate:", {
                         basePrice,
                         taxRate: item.taxRate,
                         quantity: item.quantity,
-                        itemTax
+                        itemTax,
                       });
                     }
                   });
@@ -699,51 +787,104 @@ export function ReceiptModal({
                   let orderDiscount = 0;
 
                   // Check if this is from order-management specifically
-                  const isFromOrderManagement = typeof window !== 'undefined' && (window as any).orderForPayment;
+                  const isFromOrderManagement =
+                    typeof window !== "undefined" &&
+                    (window as any).orderForPayment;
 
                   if (isFromOrderManagement) {
                     // For order-management: prioritize orderForPayment data
                     const orderForPayment = (window as any).orderForPayment;
 
                     // Priority 1: exactDiscount (most accurate)
-                    if (orderForPayment.exactDiscount !== undefined && orderForPayment.exactDiscount !== null) {
-                      orderDiscount = Math.floor(Number(orderForPayment.exactDiscount));
-                      console.log("✅ Order Management: Using orderForPayment exactDiscount:", orderDiscount);
+                    if (
+                      orderForPayment.exactDiscount !== undefined &&
+                      orderForPayment.exactDiscount !== null
+                    ) {
+                      orderDiscount = Math.floor(
+                        Number(orderForPayment.exactDiscount),
+                      );
+                      console.log(
+                        "✅ Order Management: Using orderForPayment exactDiscount:",
+                        orderDiscount,
+                      );
                     }
                     // Priority 2: discount property
-                    else if (orderForPayment.discount !== undefined && orderForPayment.discount !== null) {
-                      orderDiscount = Math.floor(Number(orderForPayment.discount));
-                      console.log("✅ Order Management: Using orderForPayment discount:", orderDiscount);
+                    else if (
+                      orderForPayment.discount !== undefined &&
+                      orderForPayment.discount !== null
+                    ) {
+                      orderDiscount = Math.floor(
+                        Number(orderForPayment.discount),
+                      );
+                      console.log(
+                        "✅ Order Management: Using orderForPayment discount:",
+                        orderDiscount,
+                      );
                     }
                     // Priority 3: receipt discount as fallback
                     else if (receipt) {
-                      if (receipt.exactDiscount !== undefined && receipt.exactDiscount !== null) {
-                        orderDiscount = Math.floor(Number(receipt.exactDiscount));
-                        console.log("✅ Order Management: Using receipt exactDiscount (fallback):", orderDiscount);
-                      } else if (receipt.discount !== undefined && receipt.discount !== null) {
+                      if (
+                        receipt.exactDiscount !== undefined &&
+                        receipt.exactDiscount !== null
+                      ) {
+                        orderDiscount = Math.floor(
+                          Number(receipt.exactDiscount),
+                        );
+                        console.log(
+                          "✅ Order Management: Using receipt exactDiscount (fallback):",
+                          orderDiscount,
+                        );
+                      } else if (
+                        receipt.discount !== undefined &&
+                        receipt.discount !== null
+                      ) {
                         orderDiscount = Math.floor(Number(receipt.discount));
-                        console.log("✅ Order Management: Using receipt discount (fallback):", orderDiscount);
+                        console.log(
+                          "✅ Order Management: Using receipt discount (fallback):",
+                          orderDiscount,
+                        );
                       }
                     }
                   } else {
                     // For other screens (POS, etc.): keep original logic
                     // 1. Check receipt exactDiscount first (most reliable for exact calculations)
-                    if (receipt && receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
-                      const exactDiscount = parseFloat(receipt.exactDiscount.toString());
+                    if (
+                      receipt &&
+                      receipt.exactDiscount !== undefined &&
+                      receipt.exactDiscount !== null &&
+                      parseFloat(receipt.exactDiscount.toString()) > 0
+                    ) {
+                      const exactDiscount = parseFloat(
+                        receipt.exactDiscount.toString(),
+                      );
                       orderDiscount = exactDiscount;
-                      console.log("✅ Using receipt exactDiscount (highest priority):", exactDiscount);
+                      console.log(
+                        "✅ Using receipt exactDiscount (highest priority):",
+                        exactDiscount,
+                      );
                     }
                     // 2. Check receipt discount property
-                    else if (receipt && parseFloat(receipt.discount || "0") > 0) {
-                      const receiptDiscount = parseFloat(receipt.discount || "0");
+                    else if (
+                      receipt &&
+                      parseFloat(receipt.discount || "0") > 0
+                    ) {
+                      const receiptDiscount = parseFloat(
+                        receipt.discount || "0",
+                      );
                       orderDiscount = receiptDiscount;
-                      console.log("✅ Using receipt discount:", receiptDiscount);
+                      console.log(
+                        "✅ Using receipt discount:",
+                        receiptDiscount,
+                      );
                     }
                     // 3. Check if total prop contains discount info
-                    else if (typeof total === 'object' && total.discount) {
+                    else if (typeof total === "object" && total.discount) {
                       const totalPropDiscount = parseFloat(total.discount) || 0;
                       orderDiscount = totalPropDiscount;
-                      console.log("✅ Using total prop discount:", totalPropDiscount);
+                      console.log(
+                        "✅ Using total prop discount:",
+                        totalPropDiscount,
+                      );
                     }
                   }
 
@@ -756,27 +897,43 @@ export function ReceiptModal({
                       discountAmount: item.discountAmount,
                       originalPrice: item.originalPrice,
                       currentPrice: item.price,
-                      quantity: item.quantity
+                      quantity: item.quantity,
                     });
 
                     // Check if item has discount property (per unit discount)
                     if (item.discount && parseFloat(item.discount) > 0) {
-                      const itemDiscount = parseFloat(item.discount) * item.quantity;
+                      const itemDiscount =
+                        parseFloat(item.discount) * item.quantity;
                       console.log("✅ Found per-unit discount:", itemDiscount);
                       return sum + itemDiscount;
                     }
 
                     // Check if item has discountAmount property (total discount for item)
-                    if (item.discountAmount && parseFloat(item.discountAmount) > 0) {
+                    if (
+                      item.discountAmount &&
+                      parseFloat(item.discountAmount) > 0
+                    ) {
                       const itemDiscount = parseFloat(item.discountAmount);
-                      console.log("✅ Found total discount amount:", itemDiscount);
+                      console.log(
+                        "✅ Found total discount amount:",
+                        itemDiscount,
+                      );
                       return sum + itemDiscount;
                     }
 
                     // Check if item has originalPrice vs current price difference (implicit discount)
-                    if (item.originalPrice && parseFloat(item.originalPrice) > parseFloat(item.price)) {
-                      const itemDiscount = (parseFloat(item.originalPrice) - parseFloat(item.price)) * item.quantity;
-                      console.log("✅ Found price difference discount:", itemDiscount);
+                    if (
+                      item.originalPrice &&
+                      parseFloat(item.originalPrice) > parseFloat(item.price)
+                    ) {
+                      const itemDiscount =
+                        (parseFloat(item.originalPrice) -
+                          parseFloat(item.price)) *
+                        item.quantity;
+                      console.log(
+                        "✅ Found price difference discount:",
+                        itemDiscount,
+                      );
                       return sum + itemDiscount;
                     }
 
@@ -784,15 +941,20 @@ export function ReceiptModal({
                     return sum;
                   }, 0);
 
-                      // Use order-level discount as priority, then item-level discount as fallback
-                      const finalDiscount = orderDiscount > 0 ? orderDiscount : itemLevelDiscount;
+                  // Use order-level discount as priority, then item-level discount as fallback
+                  const finalDiscount =
+                    orderDiscount > 0 ? orderDiscount : itemLevelDiscount;
 
-                      console.log("💰 Final discount calculation (order-management priority):", {
-                        itemLevelDiscount: itemLevelDiscount,
-                        orderLevelDiscount: orderDiscount,
-                        finalDiscount: finalDiscount,
-                        discountSource: orderDiscount > 0 ? 'order-level' : 'item-level'
-                      });
+                  console.log(
+                    "💰 Final discount calculation (order-management priority):",
+                    {
+                      itemLevelDiscount: itemLevelDiscount,
+                      orderLevelDiscount: orderDiscount,
+                      finalDiscount: finalDiscount,
+                      discountSource:
+                        orderDiscount > 0 ? "order-level" : "item-level",
+                    },
+                  );
 
                   // Total is always subtotal + tax (discount handled separately in payment)
                   const finalTotal = subtotal + tax;
@@ -806,15 +968,14 @@ export function ReceiptModal({
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>{t("pos.tax")}</span>
-                        <span>
-                          {Math.floor(tax).toLocaleString("vi-VN")} ₫
-                        </span>
+                        <span>{Math.floor(tax).toLocaleString("vi-VN")} ₫</span>
                       </div>
                       {finalDiscount > 0 && (
                         <div className="flex justify-between text-sm text-red-600">
                           <span>Giảm giá:</span>
                           <span className="font-medium">
-                            -{Math.floor(finalDiscount).toLocaleString("vi-VN")} ₫
+                            -{Math.floor(finalDiscount).toLocaleString("vi-VN")}{" "}
+                            ₫
                           </span>
                         </div>
                       )}
@@ -823,18 +984,28 @@ export function ReceiptModal({
                         <span>
                           {(() => {
                             // For order-management preview: use exact total from orderForPayment
-                            const isFromOrderManagement = typeof window !== 'undefined' && (window as any).orderForPayment;
+                            const isFromOrderManagement =
+                              typeof window !== "undefined" &&
+                              (window as any).orderForPayment;
 
                             if (isFromOrderManagement) {
-                              const orderForPayment = (window as any).orderForPayment;
+                              const orderForPayment = (window as any)
+                                .orderForPayment;
                               // Use exactTotal first, then total as fallback
-                              const exactTotal = orderForPayment.exactTotal || orderForPayment.total;
-                              return Math.round(parseFloat(exactTotal || "0")).toLocaleString("vi-VN");
+                              const exactTotal =
+                                orderForPayment.exactTotal ||
+                                orderForPayment.total;
+                              return Math.round(
+                                parseFloat(exactTotal || "0"),
+                              ).toLocaleString("vi-VN");
                             }
 
                             // For other screens: use calculated finalTotal
-                            return Math.round(finalTotal).toLocaleString("vi-VN");
-                          })()} ₫
+                            return Math.round(finalTotal).toLocaleString(
+                              "vi-VN",
+                            );
+                          })()}{" "}
+                          ₫
                         </span>
                       </div>
                     </>
@@ -847,18 +1018,21 @@ export function ReceiptModal({
                   const dbTotal = parseFloat(receipt.total || "0");
                   const dbDiscount = parseFloat(receipt.discount || "0");
 
-                  console.log("🔍 Receipt Modal: Using EXACT database values:", {
-                    rawSubtotal: receipt.subtotal,
-                    rawTax: receipt.tax,
-                    rawTotal: receipt.total,
-                    rawDiscount: receipt.discount,
-                    parsedSubtotal: dbSubtotal,
-                    parsedTax: dbTax,
-                    parsedTotal: dbTotal,
-                    parsedDiscount: dbDiscount,
-                    receiptId: receipt.id,
-                    source: "database_exact"
-                  });
+                  console.log(
+                    "🔍 Receipt Modal: Using EXACT database values:",
+                    {
+                      rawSubtotal: receipt.subtotal,
+                      rawTax: receipt.tax,
+                      rawTotal: receipt.total,
+                      rawDiscount: receipt.discount,
+                      parsedSubtotal: dbSubtotal,
+                      parsedTax: dbTax,
+                      parsedTotal: dbTotal,
+                      parsedDiscount: dbDiscount,
+                      receiptId: receipt.id,
+                      source: "database_exact",
+                    },
+                  );
 
                   return (
                     <>
@@ -875,29 +1049,50 @@ export function ReceiptModal({
                         </span>
                       </div>
                       {(() => {
-                        // For final receipt mode, check multiple discount sources
+                        // Check for discount from multiple sources with priority
                         let displayDiscount = 0;
-                        
-                        // Priority 1: exactDiscount
-                        if (receipt.exactDiscount !== undefined && receipt.exactDiscount !== null && parseFloat(receipt.exactDiscount.toString()) > 0) {
-                          displayDiscount = parseFloat(receipt.exactDiscount.toString());
-                        }
-                        // Priority 2: discount
-                        else if (dbDiscount > 0) {
-                          displayDiscount = dbDiscount;
-                        }
-                        
-                        if (displayDiscount > 0) {
-                          return (
-                            <div className="flex justify-between text-sm text-red-600">
-                              <span>Giảm giá:</span>
-                              <span className="font-medium">
-                                -{Math.floor(displayDiscount).toLocaleString("vi-VN")} ₫
-                              </span>
-                            </div>
+                        console.log("receipt_trường 2", receipt);
+                        // Priority 1: exactDiscount (most accurate)
+                        if (
+                          receipt.exactDiscount !== undefined &&
+                          receipt.exactDiscount !== null &&
+                          parseFloat(receipt.exactDiscount.toString()) > 0
+                        ) {
+                          displayDiscount = parseFloat(
+                            receipt.exactDiscount.toString(),
+                          );
+                          console.log(
+                            "📄 Receipt Modal: Using exactDiscount Print Invoice:",
+                            displayDiscount,
                           );
                         }
-                        return null;
+                        // Priority 2: discount property
+                        else if (
+                          receipt.discount !== undefined &&
+                          receipt.discount !== null &&
+                          parseFloat(receipt.discount.toString()) > 0
+                        ) {
+                          displayDiscount = parseFloat(
+                            receipt.discount.toString(),
+                          );
+                          console.log(
+                            "📄 Receipt Modal: Using discount:",
+                            displayDiscount,
+                          );
+                        }
+
+                        return (
+                          <div className="flex justify-between text-sm text-red-600">
+                            <span>Giảm giá:</span>
+                            <span className="font-medium">
+                              -
+                              {Math.floor(displayDiscount).toLocaleString(
+                                "vi-VN",
+                              )}{" "}
+                              ₫
+                            </span>
+                          </div>
+                        );
                       })()}
                       <div className="flex justify-between font-bold">
                         <span>{t("pos.total")}</span>
@@ -905,14 +1100,18 @@ export function ReceiptModal({
                           {(() => {
                             // Use EXACT database total directly - no calculation
                             const dbTotal = parseFloat(receipt.total || "0");
-                            console.log("📄 Receipt Modal (Final): Using EXACT database total:", {
-                              rawTotal: receipt.total,
-                              parsedTotal: dbTotal,
-                              receiptId: receipt.id,
-                              mode: "final_receipt"
-                            });
+                            console.log(
+                              "📄 Receipt Modal (Final): Using EXACT database total:",
+                              {
+                                rawTotal: receipt.total,
+                                parsedTotal: dbTotal,
+                                receiptId: receipt.id,
+                                mode: "final_receipt",
+                              },
+                            );
                             return Math.round(dbTotal).toLocaleString("vi-VN");
-                          })()} ₫
+                          })()}{" "}
+                          ₫
                         </span>
                       </div>
                     </>
@@ -952,7 +1151,11 @@ export function ReceiptModal({
         <div className="flex justify-center p-2 border-t">
           {isPreview ? (
             <div className="flex space-x-3 w-full">
-              <Button onClick={handleClose} variant="outline" className="flex-1">
+              <Button
+                onClick={handleClose}
+                variant="outline"
+                className="flex-1"
+              >
                 {t("pos.cancel")}
               </Button>
               <Button
@@ -971,11 +1174,7 @@ export function ReceiptModal({
                 <Printer className="mr-2" size={16} />
                 {t("pos.printReceipt")}
               </Button>
-              <Button
-                onClick={handleClose}
-                variant="outline"
-                className="ml-2"
-              >
+              <Button onClick={handleClose} variant="outline" className="ml-2">
                 {t("common.close")}
               </Button>
             </div>
@@ -991,7 +1190,10 @@ export function ReceiptModal({
           onSelectMethod={handlePaymentMethodSelect}
           total={(() => {
             // Use exact total with proper priority for receipt modal
-            if (receipt?.exactTotal !== undefined && receipt.exactTotal !== null) {
+            if (
+              receipt?.exactTotal !== undefined &&
+              receipt.exactTotal !== null
+            ) {
               return Math.floor(Number(receipt.exactTotal));
             } else if (receipt?.total !== undefined && receipt.total !== null) {
               return Math.floor(Number(receipt.total));
@@ -1001,15 +1203,19 @@ export function ReceiptModal({
           })()}
           cartItems={cartItems}
           receipt={receipt}
-          orderForPayment={receipt ? {
-            id: receipt.id || `temp-${Date.now()}`,
-            total: receipt.total,
-            exactTotal: receipt.exactTotal,
-            subtotal: receipt.subtotal,
-            tax: receipt.tax,
-            discount: receipt.discount,
-            items: cartItems
-          } : null}
+          orderForPayment={
+            receipt
+              ? {
+                  id: receipt.id || `temp-${Date.now()}`,
+                  total: receipt.total,
+                  exactTotal: receipt.exactTotal,
+                  subtotal: receipt.subtotal,
+                  tax: receipt.tax,
+                  discount: receipt.discount,
+                  items: cartItems,
+                }
+              : null
+          }
           onShowEInvoice={() => setShowEInvoiceModal(true)}
         />
       )}

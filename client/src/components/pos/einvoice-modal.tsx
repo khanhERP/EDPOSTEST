@@ -22,7 +22,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 
-
 // E-invoice software providers mapping
 const EINVOICE_PROVIDERS = [
   { name: "EasyInvoice", value: "1" },
@@ -87,11 +86,11 @@ export function EInvoiceModal({
   const [isTaxCodeLoading, setIsTaxCodeLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false); // State for general publishing process
   const [isProcessingPublish, setIsProcessingPublish] = useState(false); // State for "Phát hành" button
-  const [isProcessingPublishLater, setIsProcessingPublishLater] = useState(false); // State for "Phát hành sau" button
+  const [isProcessingPublishLater, setIsProcessingPublishLater] =
+    useState(false); // State for "Phát hành sau" button
   const [lastActionTime, setLastActionTime] = useState(0); // Debounce timestamp
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [activeInputField, setActiveInputField] = useState<string | null>(null);
-
 
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -139,9 +138,11 @@ export function EInvoiceModal({
     }
   };
 
-
   // Log the pre-selected payment method for debugging
-  console.log("💳 E-invoice modal received payment method:", selectedPaymentMethod);
+  console.log(
+    "💳 E-invoice modal received payment method:",
+    selectedPaymentMethod,
+  );
 
   // Mutation để hoàn tất thanh toán và cập nhật trạng thái
   const completePaymentMutation = useMutation({
@@ -422,7 +423,9 @@ export function EInvoiceModal({
 
     // Prevent duplicate calls
     if (isProcessingPublishLater || isPublishing) {
-      console.log("⚠️ Already processing publish later, skipping duplicate call");
+      console.log(
+        "⚠️ Already processing publish later, skipping duplicate call",
+      );
       return;
     }
 
@@ -598,6 +601,7 @@ export function EInvoiceModal({
       );
 
       // Create receipt data for receipt modal
+      console.log("formData_trường GGGGG", formData);
       const receiptData = {
         transactionId:
           savedInvoice.invoice?.invoiceNumber || `TXN-${Date.now()}`,
@@ -664,26 +668,30 @@ export function EInvoiceModal({
         showReceiptModal: true, // Flag for parent component to show receipt modal
         shouldShowReceipt: true, // Additional flag for receipt display
         einvoiceStatus: 0, // 0 = Not issued yet (for publish later)
-        status: 'draft', // Draft status for publish later
+        status: "draft", // Draft status for publish later
         cartItems: cartItems, // Include cart items for receipt
         total: total, // Include total
         subtotal: total - calculatedTax, // Calculate from total - tax
         tax: calculatedTax,
         invoiceId: savedInvoice.invoice?.id,
         source: source || "pos",
-        orderId: orderId
+        orderId: orderId,
       };
 
       console.log("✅ PUBLISH LATER: Prepared data for onConfirm");
       console.log("📄 PUBLISH LATER: Receipt data to pass:", receiptData);
-      console.log("📦 PUBLISH LATER: Complete invoice data:", completeInvoiceData);
+      console.log(
+        "📦 PUBLISH LATER: Complete invoice data:",
+        completeInvoiceData,
+      );
 
       // Call onConfirm to trigger receipt modal display
       onConfirm(completeInvoiceData);
-      console.log("✅ PUBLISH LATER: onConfirm called - parent will handle modal states");
+      console.log(
+        "✅ PUBLISH LATER: onConfirm called - parent will handle modal states",
+      );
 
       console.log("--------------------------------------------------");
-
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 
@@ -706,15 +714,11 @@ export function EInvoiceModal({
     }
   };
 
-  const handleConfirm = async () => { // Removed event parameter as it's not used here in the new logic
+  const handleConfirm = async () => {
+    // Removed event parameter as it's not used here in the new logic
     // Extracting relevant data from formData and props for clarity
-    const {
-      customerName,
-      taxCode,
-      address,
-      email,
-      selectedTemplateId
-    } = formData;
+    const { customerName, taxCode, address, email, selectedTemplateId } =
+      formData;
 
     // Validate required fields
     if (!customerName.trim()) {
@@ -773,14 +777,30 @@ export function EInvoiceModal({
           address: address.trim() || null,
           email: email.trim() || null,
           total: total,
-          items: cartItems.map(item => ({
+          items: cartItems.map((item) => ({
             productName: item.name,
-            quantity: typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity,
-            unitPrice: typeof item.price === "string" ? parseFloat(item.price) : item.price,
-            total: ( (typeof item.price === "string" ? parseFloat(item.price) : item.price) * (typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity) ).toFixed(2),
+            quantity:
+              typeof item.quantity === "string"
+                ? parseInt(item.quantity)
+                : item.quantity,
+            unitPrice:
+              typeof item.price === "string"
+                ? parseFloat(item.price)
+                : item.price,
+            total: (
+              (typeof item.price === "string"
+                ? parseFloat(item.price)
+                : item.price) *
+              (typeof item.quantity === "string"
+                ? parseInt(item.quantity)
+                : item.quantity)
+            ).toFixed(2),
             taxRate: item.taxRate || 0,
             // Include afterTaxPrice if available for accurate tax calculation on receipt
-            afterTaxPrice: item.afterTaxPrice !== undefined ? parseFloat(item.afterTaxPrice.toString()) : undefined
+            afterTaxPrice:
+              item.afterTaxPrice !== undefined
+                ? parseFloat(item.afterTaxPrice.toString())
+                : undefined,
           })),
           templateNumber: templateNumber || "01GTKT0/001", // Fallback template number
           symbol: symbol || "AA/25E", // Fallback symbol
@@ -797,14 +817,19 @@ export function EInvoiceModal({
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({})); // Attempt to parse error details
-          throw new Error(errorData.message || `Phát hành hóa đơn thất bại (Status: ${response.status})`);
+          throw new Error(
+            errorData.message ||
+              `Phát hành hóa đơn thất bại (Status: ${response.status})`,
+          );
         }
 
         const result = await response.json();
         console.log("Invoice publish result:", result);
 
         if (!result.success) {
-            throw new Error(result.message || "Phát hành hóa đơn không thành công.");
+          throw new Error(
+            result.message || "Phát hành hóa đơn không thành công.",
+          );
         }
 
         toast({
@@ -817,10 +842,19 @@ export function EInvoiceModal({
         let calculatedTax = 0;
         let discountAmount = 0; // Assuming discount is not handled here, set to 0
 
-        cartItems.forEach(item => {
-          const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-          const quantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-          const taxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
+        cartItems.forEach((item) => {
+          const price =
+            typeof item.price === "string"
+              ? parseFloat(item.price)
+              : item.price;
+          const quantity =
+            typeof item.quantity === "string"
+              ? parseInt(item.quantity)
+              : item.quantity;
+          const taxRate =
+            typeof item.taxRate === "string"
+              ? parseFloat(item.taxRate || "0")
+              : item.taxRate || 0;
 
           const itemSubtotal = price * quantity;
           const itemTax = (itemSubtotal * taxRate) / 100;
@@ -829,12 +863,16 @@ export function EInvoiceModal({
           calculatedTax += itemTax;
 
           // If afterTaxPrice is provided, it can be used for more precise tax calculation
-          if (item.afterTaxPrice !== undefined && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-              const afterTaxPrice = parseFloat(item.afterTaxPrice.toString());
-              if (!isNaN(afterTaxPrice)) {
-                  const taxPerUnit = afterTaxPrice - price;
-                  calculatedTax += taxPerUnit * quantity; // Add tax calculated from afterTaxPrice
-              }
+          if (
+            item.afterTaxPrice !== undefined &&
+            item.afterTaxPrice !== null &&
+            item.afterTaxPrice !== ""
+          ) {
+            const afterTaxPrice = parseFloat(item.afterTaxPrice.toString());
+            if (!isNaN(afterTaxPrice)) {
+              const taxPerUnit = afterTaxPrice - price;
+              calculatedTax += taxPerUnit * quantity; // Add tax calculated from afterTaxPrice
+            }
           }
         });
 
@@ -856,15 +894,21 @@ export function EInvoiceModal({
           address: address.trim() || null, // Address from form
           email: email.trim() || null, // Email from form
           customerTaxCode: taxCode.trim() || null, // For receipt data structure
-          receipt: { // Construct receipt object
+          receipt: {
+            // Construct receipt object
             transactionId: result.data?.invoiceNo || `INV-${Date.now()}`,
-            items: invoiceData.items.map(item => ({ // Use processed items
-              productId: cartItems.find(ci => ci.name === item.productName)?.id || Math.random(), // Placeholder ID if not found
+            items: invoiceData.items.map((item) => ({
+              // Use processed items
+              productId:
+                cartItems.find((ci) => ci.name === item.productName)?.id ||
+                Math.random(), // Placeholder ID if not found
               productName: item.productName,
               price: item.unitPrice.toFixed(2),
               quantity: item.quantity,
               total: item.total,
-              sku: cartItems.find(ci => ci.name === item.productName)?.sku || `SKU-${Math.random()}`, // Placeholder SKU
+              sku:
+                cartItems.find((ci) => ci.name === item.productName)?.sku ||
+                `SKU-${Math.random()}`, // Placeholder SKU
               taxRate: item.taxRate,
             })),
             subtotal: calculatedSubtotal.toFixed(2),
@@ -878,7 +922,7 @@ export function EInvoiceModal({
             invoiceNumber: result.data?.invoiceNo || null,
             customerName: customerName.trim(),
             customerTaxCode: taxCode.trim() || null,
-          }
+          },
         });
       } else {
         // Phát hành sau - chỉ lưu thông tin
@@ -907,10 +951,19 @@ export function EInvoiceModal({
         let calculatedTax = 0;
         let discountAmount = 0; // Assuming discount is not handled here, set to 0
 
-        cartItems.forEach(item => {
-          const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-          const quantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-          const taxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
+        cartItems.forEach((item) => {
+          const price =
+            typeof item.price === "string"
+              ? parseFloat(item.price)
+              : item.price;
+          const quantity =
+            typeof item.quantity === "string"
+              ? parseInt(item.quantity)
+              : item.quantity;
+          const taxRate =
+            typeof item.taxRate === "string"
+              ? parseFloat(item.taxRate || "0")
+              : item.taxRate || 0;
 
           const itemSubtotal = price * quantity;
           const itemTax = (itemSubtotal * taxRate) / 100;
@@ -919,12 +972,16 @@ export function EInvoiceModal({
           calculatedTax += itemTax;
 
           // If afterTaxPrice is provided, it can be used for more precise tax calculation
-          if (item.afterTaxPrice !== undefined && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-              const afterTaxPrice = parseFloat(item.afterTaxPrice.toString());
-              if (!isNaN(afterTaxPrice)) {
-                  const taxPerUnit = afterTaxPrice - price;
-                  calculatedTax += taxPerUnit * quantity; // Add tax calculated from afterTaxPrice
-              }
+          if (
+            item.afterTaxPrice !== undefined &&
+            item.afterTaxPrice !== null &&
+            item.afterTaxPrice !== ""
+          ) {
+            const afterTaxPrice = parseFloat(item.afterTaxPrice.toString());
+            if (!isNaN(afterTaxPrice)) {
+              const taxPerUnit = afterTaxPrice - price;
+              calculatedTax += taxPerUnit * quantity; // Add tax calculated from afterTaxPrice
+            }
           }
         });
 
@@ -934,13 +991,30 @@ export function EInvoiceModal({
           address: address.trim() || null,
           email: email.trim() || null,
           total: total,
-          items: cartItems.map(item => ({ // Process items for consistency
+          items: cartItems.map((item) => ({
+            // Process items for consistency
             productName: item.name,
-            quantity: typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity,
-            unitPrice: typeof item.price === "string" ? parseFloat(item.price) : item.price,
-            total: ( (typeof item.price === "string" ? parseFloat(item.price) : item.price) * (typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity) ).toFixed(2),
+            quantity:
+              typeof item.quantity === "string"
+                ? parseInt(item.quantity)
+                : item.quantity,
+            unitPrice:
+              typeof item.price === "string"
+                ? parseFloat(item.price)
+                : item.price,
+            total: (
+              (typeof item.price === "string"
+                ? parseFloat(item.price)
+                : item.price) *
+              (typeof item.quantity === "string"
+                ? parseInt(item.quantity)
+                : item.quantity)
+            ).toFixed(2),
             taxRate: item.taxRate || 0,
-            afterTaxPrice: item.afterTaxPrice !== undefined ? parseFloat(item.afterTaxPrice.toString()) : undefined
+            afterTaxPrice:
+              item.afterTaxPrice !== undefined
+                ? parseFloat(item.afterTaxPrice.toString())
+                : undefined,
           })),
           templateNumber: templateNumber || "01GTKT0/001", // Fallback template number
           symbol: symbol || "AA/25E", // Fallback symbol
@@ -958,15 +1032,20 @@ export function EInvoiceModal({
           address: address.trim() || null, // Address
           email: email.trim() || null, // Email
           customerTaxCode: taxCode.trim() || null, // For receipt data structure
-          receipt: { // Construct receipt object
+          receipt: {
+            // Construct receipt object
             transactionId: `TXN-${Date.now()}`,
-            items: invoiceData.items.map(item => ({
-              productId: cartItems.find(ci => ci.name === item.productName)?.id || Math.random(),
+            items: invoiceData.items.map((item) => ({
+              productId:
+                cartItems.find((ci) => ci.name === item.productName)?.id ||
+                Math.random(),
               productName: item.productName,
               price: item.unitPrice.toFixed(2),
               quantity: item.quantity,
               total: item.total,
-              sku: cartItems.find(ci => ci.name === item.productName)?.sku || `SKU-${Math.random()}`,
+              sku:
+                cartItems.find((ci) => ci.name === item.productName)?.sku ||
+                `SKU-${Math.random()}`,
               taxRate: item.taxRate,
             })),
             subtotal: calculatedSubtotal.toFixed(2),
@@ -980,7 +1059,7 @@ export function EInvoiceModal({
             invoiceNumber: null, // No invoice number yet
             customerName: customerName.trim(),
             customerTaxCode: taxCode.trim() || null,
-          }
+          },
         };
 
         toast({
@@ -994,14 +1073,16 @@ export function EInvoiceModal({
       console.error("❌ E-Invoice error:", error);
       toast({
         title: "Lỗi",
-        description: error instanceof Error ? error.message : "Có lỗi xảy ra khi xử lý hóa đơn",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Có lỗi xảy ra khi xử lý hóa đơn",
         variant: "destructive",
       });
     } finally {
       setIsProcessingPublish(false); // Ensure processing state is reset
     }
   };
-
 
   const handleCancel = () => {
     setIsPublishing(false); // Reset general publishing state
@@ -1010,8 +1091,6 @@ export function EInvoiceModal({
     setLastActionTime(0); // Reset debounce timer
     onClose();
   };
-
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -1155,7 +1234,9 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="phoneNumber">{t("einvoice.idCardNumber")}</Label>
+                <Label htmlFor="phoneNumber">
+                  {t("einvoice.idCardNumber")}
+                </Label>
                 <Input
                   id="phoneNumber"
                   ref={(el) => {
@@ -1210,7 +1291,9 @@ export function EInvoiceModal({
               className={`${showVirtualKeyboard ? "bg-blue-100 border-blue-300" : ""}`}
             >
               <Keyboard className="w-4 h-4 mr-2" />
-              {showVirtualKeyboard ? "Ẩn bàn phím" : t("einvoice.virtualKeyboard")}
+              {showVirtualKeyboard
+                ? "Ẩn bàn phím"
+                : t("einvoice.virtualKeyboard")}
             </Button>
           </div>
 
@@ -1249,9 +1332,11 @@ export function EInvoiceModal({
               type="button"
               onClick={handleConfirm} // Changed to call handleConfirm directly
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isProcessingPublish || isPublishing || isProcessingPublishLater} // Disable if ANY processing is happening
+              disabled={
+                isProcessingPublish || isPublishing || isProcessingPublishLater
+              } // Disable if ANY processing is happening
             >
-              {(isProcessingPublish || isPublishing) ? (
+              {isProcessingPublish || isPublishing ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
                   {t("einvoice.publishing")}
@@ -1267,9 +1352,11 @@ export function EInvoiceModal({
               type="button"
               onClick={(e) => handlePublishLater(e)}
               className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
-              disabled={isProcessingPublishLater || isPublishing || isProcessingPublish} // Disable if ANY processing is happening
+              disabled={
+                isProcessingPublishLater || isPublishing || isProcessingPublish
+              } // Disable if ANY processing is happening
             >
-              {(isProcessingPublishLater || isPublishing) ? (
+              {isProcessingPublishLater || isPublishing ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
                   {t("einvoice.publishing")}
@@ -1291,7 +1378,9 @@ export function EInvoiceModal({
                 handleCancel();
               }}
               className="flex-1"
-              disabled={isProcessingPublish || isProcessingPublishLater || isPublishing} // Disable if ANY processing is happening
+              disabled={
+                isProcessingPublish || isProcessingPublishLater || isPublishing
+              } // Disable if ANY processing is happening
             >
               <span className="mr-2">❌</span>
               {t("einvoice.cancel")}

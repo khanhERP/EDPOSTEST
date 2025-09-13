@@ -8,6 +8,7 @@ interface CustomerDisplayProps {
   subtotal: number;
   tax: number;
   total: number;
+  discount?: number;
   storeInfo?: {
     name: string;
     address?: string;
@@ -25,6 +26,7 @@ export function CustomerDisplay({
   subtotal,
   tax,
   total,
+  discount,
   storeInfo,
   qrPayment,
 }: CustomerDisplayProps) {
@@ -335,10 +337,21 @@ export function CustomerDisplay({
 
                     <div className="flex items-center justify-between py-4 border-t-2 border-green-200 gap-x-4">
                       <span className="text-xl font-bold text-gray-800">
+                        Giảm giá:
+                      </span>
+                      <span className="text-2xl font-bold text-green-600">
+                        {formatCurrency(discount || "0")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between py-4 border-t-2 border-green-200 gap-x-4">
+                      <span className="text-xl font-bold text-gray-800">
                         Tổng cộng:
                       </span>
                       <span className="text-2xl font-bold text-green-600">
-                        {formatCurrency(correctSubtotal + correctTax)}
+                        {formatCurrency(
+                          correctSubtotal + correctTax - (discount || 0),
+                        )}
                       </span>
                     </div>
 

@@ -350,6 +350,7 @@ export default function CustomerDisplayPage() {
       subtotal={subtotal}
       tax={tax}
       total={total}
+      discount= {0}
       storeInfo={storeInfo}
       qrPayment={qrPayment}
     />

@@ -51,7 +51,8 @@ export function ShoppingCart({
   const [discount, setDiscount] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTableSelection, setShowTableSelection] = useState(false);
-  const [currentOrderForPayment, setCurrentOrderForPayment] = useState<any>(null);
+  const [currentOrderForPayment, setCurrentOrderForPayment] =
+    useState<any>(null);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [selectedCardMethod, setSelectedCardMethod] = useState<string>("");
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
@@ -73,39 +74,60 @@ export function ShoppingCart({
   const [showPrintDialog, setShowPrintDialog] = useState(false);
 
   // State to manage discounts for each order
-  const [orderDiscounts, setOrderDiscounts] = useState<{ [orderId: string]: string }>({});
+  const [orderDiscounts, setOrderDiscounts] = useState<{
+    [orderId: string]: string;
+  }>({});
 
   // Calculate discount for the current active order
-  const currentOrderDiscount = activeOrderId ? orderDiscounts[activeOrderId] || "0" : "0";
-
+  const currentOrderDiscount = activeOrderId
+    ? orderDiscounts[activeOrderId] || "0"
+    : "0";
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
-      if (item.taxRate && parseFloat(item.taxRate) > 0) {
-        const basePrice = parseFloat(item.price);
+    if (item.taxRate && parseFloat(item.taxRate) > 0) {
+      const basePrice = parseFloat(item.price);
 
-        // Debug log to check afterTaxPrice
-        console.log("=== SHOPPING CART TAX CALCULATION DEBUG ===");
-        console.log("Product:", item.name);
-        console.log("Base Price:", basePrice);
-        console.log("Tax Rate:", item.taxRate + "%");
-        console.log("After Tax Price (from DB):", item.afterTaxPrice);
-        console.log("After Tax Price Type:", typeof item.afterTaxPrice);
+      // Debug log to check afterTaxPrice
+      console.log("=== SHOPPING CART TAX CALCULATION DEBUG ===");
+      console.log("Product:", item.name);
+      console.log("Base Price:", basePrice);
+      console.log("Tax Rate:", item.taxRate + "%");
+      console.log("After Tax Price (from DB):", item.afterTaxPrice);
+      console.log("After Tax Price Type:", typeof item.afterTaxPrice);
 
-        // Tax = (after_tax_price - price) * quantity
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          const totalItemTax = Math.floor((afterTaxPrice - basePrice) * item.quantity);
-          console.log("✅ Using tax formula: Math.floor((after_tax_price - price) * quantity)");
-          console.log("  After Tax Price:", afterTaxPrice, "₫");
-          console.log("  Base Price:", basePrice, "₫");
-          console.log("  Quantity:", item.quantity);
-          console.log("  Tax calculation: Math.floor((" + afterTaxPrice + " - " + basePrice + ") * " + item.quantity + ") = " + totalItemTax + "₫");
-          return sum + totalItemTax;
-        }
+      // Tax = (after_tax_price - price) * quantity
+      if (
+        item.afterTaxPrice &&
+        item.afterTaxPrice !== null &&
+        item.afterTaxPrice !== ""
+      ) {
+        const afterTaxPrice = parseFloat(item.afterTaxPrice);
+        const totalItemTax = Math.floor(
+          (afterTaxPrice - basePrice) * item.quantity,
+        );
+        console.log(
+          "✅ Using tax formula: Math.floor((after_tax_price - price) * quantity)",
+        );
+        console.log("  After Tax Price:", afterTaxPrice, "₫");
+        console.log("  Base Price:", basePrice, "₫");
+        console.log("  Quantity:", item.quantity);
+        console.log(
+          "  Tax calculation: Math.floor((" +
+            afterTaxPrice +
+            " - " +
+            basePrice +
+            ") * " +
+            item.quantity +
+            ") = " +
+            totalItemTax +
+            "₫",
+        );
+        return sum + totalItemTax;
       }
-      return sum;
-    }, 0);
+    }
+    return sum;
+  }, 0);
   const discountValue = parseFloat(discountAmount || "0");
   const total = Math.round(subtotal + tax);
   const finalTotal = Math.max(0, total - discountValue);
@@ -118,22 +140,30 @@ export function ShoppingCart({
   const calculateSubtotal = () =>
     cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const calculateTax = () =>
-      cart.reduce((sum, item) => {
-        if (item.taxRate && parseFloat(item.taxRate) > 0) {
-          const basePrice = parseFloat(item.price);
+    cart.reduce((sum, item) => {
+      if (item.taxRate && parseFloat(item.taxRate) > 0) {
+        const basePrice = parseFloat(item.price);
 
-          // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
-          if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-            const afterTaxPrice = parseFloat(item.afterTaxPrice);
-            // Tax = Math.floor((afterTaxPrice - basePrice) * quantity)
-            const taxPerItem = afterTaxPrice - basePrice;
-            return sum + Math.floor(taxPerItem * item.quantity);
-          }
+        // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
+        if (
+          item.afterTaxPrice &&
+          item.afterTaxPrice !== null &&
+          item.afterTaxPrice !== ""
+        ) {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          // Tax = Math.floor((afterTaxPrice - basePrice) * quantity)
+          const taxPerItem = afterTaxPrice - basePrice;
+          return sum + Math.floor(taxPerItem * item.quantity);
         }
-        return sum;
-      }, 0);
+      }
+      return sum;
+    }, 0);
   const calculateDiscount = () => parseFloat(discountAmount || "0");
-  const calculateTotal = () => Math.max(0, Math.round(calculateSubtotal() + calculateTax()) - calculateDiscount());
+  const calculateTotal = () =>
+    Math.max(
+      0,
+      Math.round(calculateSubtotal() + calculateTax()) - calculateDiscount(),
+    );
 
   // Fetch products to calculate tax correctly based on afterTaxPrice
   const { data: products } = useQuery<any[]>({
@@ -151,8 +181,8 @@ export function ShoppingCart({
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    console.log('📡 Shopping Cart: Initializing single WebSocket connection');
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    console.log("📡 Shopping Cart: Initializing single WebSocket connection");
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 
     let reconnectTimer: NodeJS.Timeout | null = null;
@@ -162,7 +192,9 @@ export function ShoppingCart({
 
     const connectWebSocket = () => {
       if (reconnectAttempts >= maxReconnectAttempts) {
-        console.log('📡 Shopping Cart: Max reconnection attempts reached, giving up');
+        console.log(
+          "📡 Shopping Cart: Max reconnection attempts reached, giving up",
+        );
         return;
       }
 
@@ -171,14 +203,16 @@ export function ShoppingCart({
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log('📡 Shopping Cart: WebSocket connected');
+          console.log("📡 Shopping Cart: WebSocket connected");
           reconnectAttempts = 0;
 
           // Register as shopping cart client
-          ws.send(JSON.stringify({
-            type: 'register_shopping_cart',
-            timestamp: new Date().toISOString()
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "register_shopping_cart",
+              timestamp: new Date().toISOString(),
+            }),
+          );
 
           // Send initial cart state if cart has items
           if (cart.length > 0) {
@@ -190,28 +224,46 @@ export function ShoppingCart({
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log('📩 Shopping Cart: Received WebSocket message:', data);
+            console.log("📩 Shopping Cart: Received WebSocket message:", data);
 
-            if (data.type === 'payment_success' || data.type === 'popup_close' || data.type === 'force_refresh' || data.type === 'einvoice_published') {
-              console.log('🔄 Shopping Cart: Refreshing data due to WebSocket signal');
+            if (
+              data.type === "payment_success" ||
+              data.type === "popup_close" ||
+              data.type === "force_refresh" ||
+              data.type === "einvoice_published"
+            ) {
+              console.log(
+                "🔄 Shopping Cart: Refreshing data due to WebSocket signal",
+              );
 
-              if ((data.type === 'popup_close' && data.success) || data.type === 'payment_success' || data.type === 'einvoice_published' || data.type === 'force_refresh') {
-                console.log('🧹 Shopping Cart: Clearing cart due to signal');
+              if (
+                (data.type === "popup_close" && data.success) ||
+                data.type === "payment_success" ||
+                data.type === "einvoice_published" ||
+                data.type === "force_refresh"
+              ) {
+                console.log("🧹 Shopping Cart: Clearing cart due to signal");
                 onClearCart();
 
                 // Clear any active orders
-                if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+                if (
+                  typeof window !== "undefined" &&
+                  (window as any).clearActiveOrder
+                ) {
                   (window as any).clearActiveOrder();
                 }
               }
             }
           } catch (error) {
-            console.error('❌ Shopping Cart: Error processing WebSocket message:', error);
+            console.error(
+              "❌ Shopping Cart: Error processing WebSocket message:",
+              error,
+            );
           }
         };
 
         ws.onclose = () => {
-          console.log('📡 Shopping Cart: WebSocket disconnected');
+          console.log("📡 Shopping Cart: WebSocket disconnected");
           wsRef.current = null;
           if (shouldReconnect && reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
@@ -221,11 +273,11 @@ export function ShoppingCart({
         };
 
         ws.onerror = (error) => {
-          console.error('❌ Shopping Cart: WebSocket error:', error);
+          console.error("❌ Shopping Cart: WebSocket error:", error);
           wsRef.current = null;
         };
       } catch (error) {
-        console.error('❌ Shopping Cart: Failed to connect WebSocket:', error);
+        console.error("❌ Shopping Cart: Failed to connect WebSocket:", error);
         if (shouldReconnect && reconnectAttempts < maxReconnectAttempts) {
           reconnectAttempts++;
           const delay = Math.min(2000 * reconnectAttempts, 10000);
@@ -237,7 +289,7 @@ export function ShoppingCart({
     connectWebSocket();
 
     return () => {
-      console.log('🔗 Shopping Cart: Cleaning up WebSocket connection');
+      console.log("🔗 Shopping Cart: Cleaning up WebSocket connection");
       shouldReconnect = false;
 
       if (reconnectTimer) {
@@ -255,36 +307,47 @@ export function ShoppingCart({
   const broadcastCartUpdate = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       // Ensure cart items have proper names before broadcasting
-      const validatedCart = cart.map(item => ({
+      const validatedCart = cart.map((item) => ({
         ...item,
-        name: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id}`,
-        productName: item.name || item.productName || item.product?.name || `Sản phẩm ${item.id}`,
-        price: item.price || '0',
+        name:
+          item.name ||
+          item.productName ||
+          item.product?.name ||
+          `Sản phẩm ${item.id}`,
+        productName:
+          item.name ||
+          item.productName ||
+          item.product?.name ||
+          `Sản phẩm ${item.id}`,
+        price: item.price || "0",
         quantity: item.quantity || 1,
-        total: item.total || '0'
+        total: item.total || "0",
       }));
 
       const cartUpdateMessage = {
-        type: 'cart_update',
+        type: "cart_update",
         cart: validatedCart,
         subtotal: subtotal,
         tax: tax,
         total: total,
         orderNumber: activeOrderId || `ORD-${Date.now()}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       console.log("📡 Shopping Cart: Broadcasting cart update:", {
         cartItems: validatedCart.length,
         subtotal: subtotal,
         tax: tax,
-        total: total
+        total: total,
       });
 
       try {
         wsRef.current.send(JSON.stringify(cartUpdateMessage));
       } catch (error) {
-        console.error("📡 Shopping Cart: Error broadcasting cart update:", error);
+        console.error(
+          "📡 Shopping Cart: Error broadcasting cart update:",
+          error,
+        );
       }
     }
   }, [cart, subtotal, tax, total, activeOrderId]);
@@ -297,10 +360,6 @@ export function ShoppingCart({
 
     return () => clearTimeout(timer);
   }, [cart, subtotal, tax, total, broadcastCartUpdate]);
-
-
-
-
 
   const getPaymentMethods = () => {
     // Only return cash and bank transfer payment methods
@@ -328,7 +387,9 @@ export function ShoppingCart({
 
   // Handler for when receipt preview is confirmed - move to payment method selection
   const handleReceiptPreviewConfirm = () => {
-    console.log("🎯 POS: Receipt preview confirmed, showing payment method modal");
+    console.log(
+      "🎯 POS: Receipt preview confirmed, showing payment method modal",
+    );
 
     // Update receipt preview with correct tax calculation before proceeding
     if (previewReceipt && orderForPayment) {
@@ -337,7 +398,7 @@ export function ShoppingCart({
         tax: tax.toString(),
         exactTax: tax,
         total: total.toString(),
-        exactTotal: total
+        exactTotal: total,
       };
 
       const updatedOrder = {
@@ -345,7 +406,7 @@ export function ShoppingCart({
         tax: tax,
         exactTax: tax,
         total: total,
-        exactTotal: total
+        exactTotal: total,
       };
 
       setPreviewReceipt(updatedReceipt);
@@ -376,7 +437,7 @@ export function ShoppingCart({
     console.log("🎯 POS: Payment method selected:", method, data);
 
     if (method === "paymentCompleted" && data?.success) {
-      console.log('✅ POS: Payment completed successfully', data);
+      console.log("✅ POS: Payment completed successfully", data);
 
       // Close payment modal
       setShowPaymentModal(false);
@@ -386,7 +447,7 @@ export function ShoppingCart({
       onClearCart();
 
       // Clear any active orders
-      if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+      if (typeof window !== "undefined" && (window as any).clearActiveOrder) {
         (window as any).clearActiveOrder();
       }
 
@@ -404,26 +465,28 @@ export function ShoppingCart({
 
       // Send WebSocket signal for refresh
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const wsUrl = `${protocol}//${window.location.host}/ws`;
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          ws.send(JSON.stringify({
-            type: 'payment_success',
-            success: true,
-            source: 'shopping-cart',
-            timestamp: new Date().toISOString()
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "payment_success",
+              success: true,
+              source: "shopping-cart",
+              timestamp: new Date().toISOString(),
+            }),
+          );
           setTimeout(() => ws.close(), 100);
         };
       } catch (error) {
         console.warn("⚠️ WebSocket signal failed (non-critical):", error);
       }
 
-      console.log('🎉 POS: Payment flow completed successfully');
+      console.log("🎉 POS: Payment flow completed successfully");
     } else if (method === "paymentError") {
-      console.error('❌ POS: Payment failed', data);
+      console.error("❌ POS: Payment failed", data);
 
       // Close payment modal but keep cart
       setShowPaymentModal(false);
@@ -449,11 +512,18 @@ export function ShoppingCart({
     }
 
     // CRITICAL FIX: Recalculate totals from cart to ensure they are correct
-    const recalculatedSubtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+    const recalculatedSubtotal = cart.reduce(
+      (sum, item) => sum + parseFloat(item.total),
+      0,
+    );
     const recalculatedTax = cart.reduce((sum, item) => {
       if (item.taxRate && parseFloat(item.taxRate) > 0) {
         const basePrice = parseFloat(item.price);
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+        if (
+          item.afterTaxPrice &&
+          item.afterTaxPrice !== null &&
+          item.afterTaxPrice !== ""
+        ) {
           const afterTaxPrice = parseFloat(item.afterTaxPrice);
           const taxPerItem = afterTaxPrice - basePrice;
           return sum + Math.floor(taxPerItem * item.quantity);
@@ -461,42 +531,58 @@ export function ShoppingCart({
       }
       return sum;
     }, 0);
-    const recalculatedTotal = Math.round(recalculatedSubtotal + recalculatedTax);
+    const recalculatedTotal = Math.round(
+      recalculatedSubtotal + recalculatedTax,
+    );
 
     console.log("🔍 CRITICAL DEBUG - Recalculated totals:");
     console.log("Original totals:", { subtotal, tax, total });
     console.log("Recalculated totals:", {
       subtotal: recalculatedSubtotal,
       tax: recalculatedTax,
-      total: recalculatedTotal
+      total: recalculatedTotal,
     });
 
     // Use recalculated values if they differ significantly
-    const finalSubtotal = Math.abs(recalculatedSubtotal - subtotal) > 1 ? recalculatedSubtotal : subtotal;
-    const finalTax = Math.abs(recalculatedTax - tax) > 1 ? recalculatedTax : tax;
+    const finalSubtotal =
+      Math.abs(recalculatedSubtotal - subtotal) > 1
+        ? recalculatedSubtotal
+        : subtotal;
+    const finalTax =
+      Math.abs(recalculatedTax - tax) > 1 ? recalculatedTax : tax;
     const finalDiscount = parseFloat(currentOrderDiscount || "0"); // Use current order discount
-    const finalTotal = Math.max(0, Math.abs(recalculatedTotal - total) > 1 ? recalculatedTotal : total) - finalDiscount;
+    const finalTotal =
+      Math.max(
+        0,
+        Math.abs(recalculatedTotal - total) > 1 ? recalculatedTotal : total,
+      ) - finalDiscount;
 
     console.log("Final totals to use:", {
       finalSubtotal,
       finalTax,
-      finalTotal
+      finalTotal,
     });
 
     if (finalSubtotal === 0 || finalTotal === 0) {
-      console.error("❌ CRITICAL ERROR: Final totals are still 0, cannot proceed with checkout");
+      console.error(
+        "❌ CRITICAL ERROR: Final totals are still 0, cannot proceed with checkout",
+      );
       alert("Lỗi: Tổng tiền không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
       return;
     }
 
     // Step 1: Use current cart items with proper structure for E-invoice
-    const cartItemsForEInvoice = cart.map(item => ({
+    const cartItemsForEInvoice = cart.map((item) => ({
       id: item.id,
       name: item.name,
-      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+      price:
+        typeof item.price === "string" ? parseFloat(item.price) : item.price,
       quantity: item.quantity,
-      sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-      taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 0),
+      sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+      taxRate:
+        typeof item.taxRate === "string"
+          ? parseFloat(item.taxRate)
+          : item.taxRate || 0,
       afterTaxPrice: item.afterTaxPrice,
       discount: item.discount || "0",
       discountAmount: item.discountAmount || "0",
@@ -504,13 +590,22 @@ export function ShoppingCart({
     }));
 
     console.log("✅ Cart items prepared for E-invoice:", cartItemsForEInvoice);
-    console.log("✅ Cart items count for E-invoice:", cartItemsForEInvoice.length);
+    console.log(
+      "✅ Cart items count for E-invoice:",
+      cartItemsForEInvoice.length,
+    );
 
     // Validate cart items have valid prices
-    const hasValidItems = cartItemsForEInvoice.every(item => item.price > 0 && item.quantity > 0);
+    const hasValidItems = cartItemsForEInvoice.every(
+      (item) => item.price > 0 && item.quantity > 0,
+    );
     if (!hasValidItems) {
-      console.error("❌ CRITICAL ERROR: Some cart items have invalid price or quantity");
-      alert("Lỗi: Có sản phẩm trong giỏ hàng có giá hoặc số lượng không hợp lệ.");
+      console.error(
+        "❌ CRITICAL ERROR: Some cart items have invalid price or quantity",
+      );
+      alert(
+        "Lỗi: Có sản phẩm trong giỏ hàng có giá hoặc số lượng không hợp lệ.",
+      );
       return;
     }
 
@@ -520,7 +615,7 @@ export function ShoppingCart({
       orderNumber: `POS-${Date.now()}`,
       customerName: "Khách hàng lẻ",
       tableId: null,
-      items: cartItemsForEInvoice.map(item => ({
+      items: cartItemsForEInvoice.map((item) => ({
         id: item.id,
         productId: item.id,
         productName: item.name,
@@ -534,7 +629,7 @@ export function ShoppingCart({
         afterTaxPrice: item.afterTaxPrice,
         discount: item.discount,
         discountAmount: item.discountAmount,
-        originalPrice: item.originalPrice
+        originalPrice: item.originalPrice,
       })),
       subtotal: finalSubtotal.toString(),
       tax: finalTax.toString(),
@@ -547,15 +642,18 @@ export function ShoppingCart({
       status: "pending",
       paymentStatus: "pending",
       orderedAt: new Date().toISOString(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     console.log("📋 POS: Receipt preview data prepared:", receiptPreview);
-    console.log("📋 POS: Receipt preview items count:", receiptPreview.items.length);
+    console.log(
+      "📋 POS: Receipt preview items count:",
+      receiptPreview.items.length,
+    );
     console.log("📋 POS: Receipt preview total verification:", {
       exactTotal: receiptPreview.exactTotal,
       stringTotal: receiptPreview.total,
-      calculatedTotal: finalTotal
+      calculatedTotal: finalTotal,
     });
 
     // Step 3: Prepare order data for payment with CORRECTED totals
@@ -566,7 +664,7 @@ export function ShoppingCart({
       customerName: "Khách hàng lẻ",
       status: "pending",
       paymentStatus: "pending",
-      items: cartItemsForEInvoice.map(item => ({
+      items: cartItemsForEInvoice.map((item) => ({
         id: item.id,
         productId: item.id,
         productName: item.name,
@@ -580,7 +678,7 @@ export function ShoppingCart({
         afterTaxPrice: item.afterTaxPrice,
         discount: item.discount,
         discountAmount: item.discountAmount,
-        originalPrice: item.originalPrice
+        originalPrice: item.originalPrice,
       })),
       subtotal: finalSubtotal,
       tax: finalTax,
@@ -590,15 +688,18 @@ export function ShoppingCart({
       exactTax: finalTax,
       exactDiscount: finalDiscount,
       exactTotal: finalTotal,
-      orderedAt: new Date().toISOString()
+      orderedAt: new Date().toISOString(),
     };
 
     console.log("📦 POS: Order for payment prepared:", orderForPaymentData);
-    console.log("📦 POS: Order for payment items count:", orderForPaymentData.items.length);
+    console.log(
+      "📦 POS: Order for payment items count:",
+      orderForPaymentData.items.length,
+    );
     console.log("📦 POS: Order for payment total verification:", {
       exactTotal: orderForPaymentData.exactTotal,
       total: orderForPaymentData.total,
-      calculatedTotal: finalTotal
+      calculatedTotal: finalTotal,
     });
 
     // Step 4: Set all data and show receipt preview modal
@@ -616,7 +717,7 @@ export function ShoppingCart({
       hasValidItems: orderForPaymentData.items.length > 0,
       items: orderForPaymentData.items,
       subtotal: orderForPaymentData.subtotal,
-      tax: orderForPaymentData.tax
+      tax: orderForPaymentData.tax,
     });
     console.log("📄 POS: previewReceipt FINAL verification:", {
       id: receiptPreview.id,
@@ -626,7 +727,7 @@ export function ShoppingCart({
       hasValidItems: receiptPreview.items.length > 0,
       items: receiptPreview.items,
       subtotal: receiptPreview.subtotal,
-      tax: receiptPreview.tax
+      tax: receiptPreview.tax,
     });
   };
 
@@ -644,10 +745,12 @@ export function ShoppingCart({
       customerName: invoiceData.customerName || "Khách hàng lẻ",
       customerTaxCode: invoiceData.taxCode,
       paymentMethod: "einvoice",
-      originalPaymentMethod: invoiceData.paymentMethod || selectedPaymentMethod || "cash",
+      originalPaymentMethod:
+        invoiceData.paymentMethod || selectedPaymentMethod || "cash",
       amountReceived: Math.floor(invoiceData.total || 0).toString(),
       change: "0", // E-invoice doesn't have change
-      items: lastCartItems.map((item: any) => ({ // Use lastCartItems for consistency
+      items: lastCartItems.map((item: any) => ({
+        // Use lastCartItems for consistency
         id: item.id,
         productId: item.id,
         productName: item.name,
@@ -664,7 +767,9 @@ export function ShoppingCart({
       einvoiceStatus: invoiceData.einvoiceStatus || 0,
     };
 
-    console.log("📄 POS: Showing receipt modal after E-invoice with complete financial data");
+    console.log(
+      "📄 POS: Showing receipt modal after E-invoice with complete financial data",
+    );
     console.log("💰 Receipt data with all details:", receiptData);
 
     // Clear preview states
@@ -693,7 +798,7 @@ export function ShoppingCart({
     setSelectedReceipt(null);
 
     // Clear any active orders
-    if (typeof window !== 'undefined' && (window as any).clearActiveOrder) {
+    if (typeof window !== "undefined" && (window as any).clearActiveOrder) {
       (window as any).clearActiveOrder();
     }
 
@@ -701,12 +806,14 @@ export function ShoppingCart({
     broadcastCartUpdate();
   }, [onClearCart, broadcastCartUpdate]);
 
-
   // Cleanup when component unmounts and handle global events
   useEffect(() => {
     // Handle global popup close events
     const handleCloseAllPopups = (event: CustomEvent) => {
-      console.log('🔄 Shopping Cart: Received closeAllPopups event:', event.detail);
+      console.log(
+        "🔄 Shopping Cart: Received closeAllPopups event:",
+        event.detail,
+      );
 
       // Close all modals
       setShowReceiptPreview(false);
@@ -722,8 +829,11 @@ export function ShoppingCart({
       setLastCartItems([]);
 
       // Clear cart after print completion
-      if (event.detail.source === 'print_dialog' || event.detail.action === 'print_completed') {
-        console.log('🧹 Shopping Cart: Clearing cart after print completion');
+      if (
+        event.detail.source === "print_dialog" ||
+        event.detail.action === "print_completed"
+      ) {
+        console.log("🧹 Shopping Cart: Clearing cart after print completion");
         clearCart();
       }
 
@@ -738,13 +848,16 @@ export function ShoppingCart({
 
     // Handle cart clear events
     const handleClearCart = (event: CustomEvent) => {
-      console.log('🗑️ Shopping Cart: Received clearCart event:', event.detail);
+      console.log("🗑️ Shopping Cart: Received clearCart event:", event.detail);
       clearCart(); // Use the memoized clearCart function
     };
 
     // Handle print completion events
     const handlePrintCompleted = (event: CustomEvent) => {
-      console.log('🖨️ Shopping Cart: Received print completed event:', event.detail);
+      console.log(
+        "🖨️ Shopping Cart: Received print completed event:",
+        event.detail,
+      );
 
       // Close all modals and clear states
       setShowReceiptPreview(false);
@@ -764,12 +877,14 @@ export function ShoppingCart({
 
       // Send WebSocket refresh signal to other components
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'force_refresh',
-          source: 'shopping_cart_print_completed',
-          success: true,
-          timestamp: new Date().toISOString()
-        }));
+        wsRef.current.send(
+          JSON.stringify({
+            type: "force_refresh",
+            source: "shopping_cart_print_completed",
+            success: true,
+            timestamp: new Date().toISOString(),
+          }),
+        );
       }
 
       toast({
@@ -779,18 +894,33 @@ export function ShoppingCart({
     };
 
     // Add event listeners
-    if (typeof window !== 'undefined') {
-      window.addEventListener('closeAllPopups', handleCloseAllPopups as EventListener);
-      window.addEventListener('clearCart', handleClearCart as EventListener);
-      window.addEventListener('printCompleted', handlePrintCompleted as EventListener);
+    if (typeof window !== "undefined") {
+      window.addEventListener(
+        "closeAllPopups",
+        handleCloseAllPopups as EventListener,
+      );
+      window.addEventListener("clearCart", handleClearCart as EventListener);
+      window.addEventListener(
+        "printCompleted",
+        handlePrintCompleted as EventListener,
+      );
     }
 
     return () => {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         delete (window as any).eInvoiceCartItems;
-        window.removeEventListener('closeAllPopups', handleCloseAllPopups as EventListener);
-        window.removeEventListener('clearCart', handleClearCart as EventListener);
-        window.removeEventListener('printCompleted', handlePrintCompleted as EventListener);
+        window.removeEventListener(
+          "closeAllPopups",
+          handleCloseAllPopups as EventListener,
+        );
+        window.removeEventListener(
+          "clearCart",
+          handleClearCart as EventListener,
+        );
+        window.removeEventListener(
+          "printCompleted",
+          handlePrintCompleted as EventListener,
+        );
       }
     };
   }, [clearCart, toast, wsRef]); // Depend on clearCart, toast, and wsRef
@@ -881,23 +1011,33 @@ export function ShoppingCart({
                   </h4>
                   <div className="space-y-1">
                     <p className="text-xs pos-text-secondary">
-                      {Math.round(parseFloat(item.price)).toLocaleString("vi-VN")} ₫ {t("pos.each")}
+                      {Math.round(parseFloat(item.price)).toLocaleString(
+                        "vi-VN",
+                      )}{" "}
+                      ₫ {t("pos.each")}
                     </p>
                     {item.taxRate && parseFloat(item.taxRate) > 0 && (
                       <p className="text-xs text-orange-600">
                         {t("pos.tax")}:{" "}
                         {(() => {
-                            const basePrice = parseFloat(item.price);
+                          const basePrice = parseFloat(item.price);
 
-                            // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
-                            if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-                              const afterTaxPrice = parseFloat(item.afterTaxPrice);
-                              // Tax = Math.floor((afterTaxPrice - basePrice) * quantity)
-                              const taxPerItem = afterTaxPrice - basePrice;
-                              return Math.floor(taxPerItem * item.quantity);
-                            }
-                            return 0;
-                          })().toLocaleString("vi-VN")} ₫ ({item.taxRate}%)
+                          // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
+                          if (
+                            item.afterTaxPrice &&
+                            item.afterTaxPrice !== null &&
+                            item.afterTaxPrice !== ""
+                          ) {
+                            const afterTaxPrice = parseFloat(
+                              item.afterTaxPrice,
+                            );
+                            // Tax = Math.floor((afterTaxPrice - basePrice) * quantity)
+                            const taxPerItem = afterTaxPrice - basePrice;
+                            return Math.floor(taxPerItem * item.quantity);
+                          }
+                          return 0;
+                        })().toLocaleString("vi-VN")}{" "}
+                        ₫ ({item.taxRate}%)
                       </p>
                     )}
                   </div>
@@ -933,7 +1073,9 @@ export function ShoppingCart({
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        console.log(`🗑️ Shopping Cart: Remove item ${item.id} (${item.name})`);
+                        console.log(
+                          `🗑️ Shopping Cart: Remove item ${item.id} (${item.name})`,
+                        );
                         onRemoveItem(parseInt(item.id));
                       }}
                       className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
@@ -979,23 +1121,27 @@ export function ShoppingCart({
                 Giảm giá (₫)
               </Label>
               <Input
-                  type="text"
-                  value={currentOrderDiscount && parseFloat(currentOrderDiscount) > 0 ? parseFloat(currentOrderDiscount).toLocaleString('vi-VN') : ''}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d]/g, ''); // Chỉ giữ lại số
-                    setDiscountAmount(value);
+                type="text"
+                value={
+                  currentOrderDiscount && parseFloat(currentOrderDiscount) > 0
+                    ? parseFloat(currentOrderDiscount).toLocaleString("vi-VN")
+                    : ""
+                }
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, ""); // Chỉ giữ lại số
+                  setDiscountAmount(value);
 
-                    // Save discount for current order
-                    if (activeOrderId) {
-                      setOrderDiscounts(prev => ({
-                        ...prev,
-                        [activeOrderId]: value
-                      }));
-                    }
-                  }}
-                  placeholder="0"
-                  className="text-right"
-                />
+                  // Save discount for current order
+                  if (activeOrderId) {
+                    setOrderDiscounts((prev) => ({
+                      ...prev,
+                      [activeOrderId]: value,
+                    }));
+                  }
+                }}
+                placeholder="0"
+                className="text-right"
+              />
             </div>
 
             <div className="border-t pt-2">
@@ -1004,7 +1150,13 @@ export function ShoppingCart({
                   {t("tables.total")}:
                 </span>
                 <span className="text-lg font-bold text-blue-600">
-                  {Math.round(Math.max(0, total - parseFloat(currentOrderDiscount || "0"))).toLocaleString("vi-VN")} ₫
+                  {Math.round(
+                    Math.max(
+                      0,
+                      total - parseFloat(currentOrderDiscount || "0"),
+                    ),
+                  ).toLocaleString("vi-VN")}{" "}
+                  ₫
                 </span>
               </div>
             </div>
@@ -1050,28 +1202,32 @@ export function ShoppingCart({
 
       {/* Receipt Preview Modal - Shows first like order management */}
       <ReceiptModal
-          isOpen={showReceiptPreview}
-          onClose={handleReceiptPreviewCancel}
-          receipt={previewReceipt}
-          cartItems={cart.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: parseFloat(item.price),
-            quantity: item.quantity,
-            sku: `ITEM${String(item.id).padStart(3, "0")}`,
-            taxRate: parseFloat(item.taxRate || "0"),
-            discount: item.discount || "0",
-            discountAmount: item.discountAmount || "0",
-            originalPrice: item.originalPrice || item.price,
-          }))}
-          total={orderForPayment ? {
-            amount: total,
-            discount: orderForPayment.discount || "0",
-            exactDiscount: parseFloat(orderForPayment.discount || "0")
-          } : total}
-          isPreview={true}
-          onConfirm={handleReceiptPreviewConfirm}
-        />
+        isOpen={showReceiptPreview}
+        onClose={handleReceiptPreviewCancel}
+        receipt={previewReceipt}
+        cartItems={cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: `ITEM${String(item.id).padStart(3, "0")}`,
+          taxRate: parseFloat(item.taxRate || "0"),
+          discount: item.discount || "0",
+          discountAmount: item.discountAmount || "0",
+          originalPrice: item.originalPrice || item.price,
+        }))}
+        total={
+          orderForPayment
+            ? {
+                amount: total,
+                discount: orderForPayment.discount || "0",
+                exactDiscount: parseFloat(orderForPayment.discount || "0"),
+              }
+            : total
+        }
+        isPreview={true}
+        onConfirm={handleReceiptPreviewConfirm}
+      />
 
       {/* Payment Method Modal - Shows after receipt preview confirmation */}
       {showPaymentModal && orderForPayment && previewReceipt && (
@@ -1085,26 +1241,34 @@ export function ShoppingCart({
           }}
           onSelectMethod={handlePaymentMethodSelect}
           total={(() => {
-            console.log("🔍 Shopping Cart: Payment Modal Total Debug (VALIDATED):", {
-              showPaymentModal: showPaymentModal,
-              orderForPayment: orderForPayment,
-              previewReceipt: previewReceipt,
-              orderExactTotal: orderForPayment?.exactTotal,
-              orderTotal: orderForPayment?.total,
-              previewTotal: previewReceipt?.exactTotal,
-              fallbackTotal: total,
-              cartItemsCount: cart.length,
-              hasValidOrderData: !!(orderForPayment && previewReceipt)
-            });
+            console.log(
+              "🔍 Shopping Cart: Payment Modal Total Debug (VALIDATED):",
+              {
+                showPaymentModal: showPaymentModal,
+                orderForPayment: orderForPayment,
+                previewReceipt: previewReceipt,
+                orderExactTotal: orderForPayment?.exactTotal,
+                orderTotal: orderForPayment?.total,
+                previewTotal: previewReceipt?.exactTotal,
+                fallbackTotal: total,
+                cartItemsCount: cart.length,
+                hasValidOrderData: !!(orderForPayment && previewReceipt),
+              },
+            );
 
             // If we have valid order data, use it, otherwise use current cart calculation
             if (orderForPayment && previewReceipt) {
-              const finalTotal = orderForPayment?.exactTotal ||
-                                orderForPayment?.total ||
-                                previewReceipt?.exactTotal ||
-                                previewReceipt?.total || 0;
+              const finalTotal =
+                orderForPayment?.exactTotal ||
+                orderForPayment?.total ||
+                previewReceipt?.exactTotal ||
+                previewReceipt?.total ||
+                0;
 
-              console.log("💰 Shopping Cart: Using order/receipt total:", finalTotal);
+              console.log(
+                "💰 Shopping Cart: Using order/receipt total:",
+                finalTotal,
+              );
               return finalTotal;
             } else {
               // Fallback: Calculate from current cart
@@ -1116,7 +1280,11 @@ export function ShoppingCart({
               const cartTax = cart.reduce((sum, item) => {
                 if (item.taxRate && parseFloat(item.taxRate) > 0) {
                   const basePrice = parseFloat(item.price);
-                  if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                  if (
+                    item.afterTaxPrice &&
+                    item.afterTaxPrice !== null &&
+                    item.afterTaxPrice !== ""
+                  ) {
                     const afterTaxPrice = parseFloat(item.afterTaxPrice);
                     const taxPerItem = afterTaxPrice - basePrice;
                     return sum + Math.floor(taxPerItem * item.quantity);
@@ -1126,7 +1294,10 @@ export function ShoppingCart({
               }, 0);
 
               const finalTotal = Math.round(cartTotal + cartTax);
-              console.log("💰 Shopping Cart: Using calculated cart total:", finalTotal);
+              console.log(
+                "💰 Shopping Cart: Using calculated cart total:",
+                finalTotal,
+              );
               return finalTotal;
             }
           })()}
@@ -1134,51 +1305,76 @@ export function ShoppingCart({
           products={products}
           receipt={previewReceipt}
           cartItems={(() => {
-            console.log("📦 Shopping Cart: Cart Items Debug for Payment Modal (VALIDATED):", {
-              orderForPaymentItems: orderForPayment?.items?.length || 0,
-              previewReceiptItems: previewReceipt?.items?.length || 0,
-              currentCartItems: cart?.length || 0,
-              lastCartItems: lastCartItems?.length || 0,
-              hasValidOrderData: !!(orderForPayment && previewReceipt)
-            });
+            console.log(
+              "📦 Shopping Cart: Cart Items Debug for Payment Modal (VALIDATED):",
+              {
+                orderForPaymentItems: orderForPayment?.items?.length || 0,
+                previewReceiptItems: previewReceipt?.items?.length || 0,
+                currentCartItems: cart?.length || 0,
+                lastCartItems: lastCartItems?.length || 0,
+                hasValidOrderData: !!(orderForPayment && previewReceipt),
+              },
+            );
 
             // If we have stored cart items from checkout process, use them first
             if (lastCartItems && lastCartItems.length > 0) {
-              console.log("📦 Shopping Cart: Using lastCartItems (most accurate):", lastCartItems);
+              console.log(
+                "📦 Shopping Cart: Using lastCartItems (most accurate):",
+                lastCartItems,
+              );
               return lastCartItems;
             }
 
             // If we have valid order data, use it
             if (orderForPayment?.items && orderForPayment.items.length > 0) {
-              const mappedItems = orderForPayment.items.map(item => ({
+              const mappedItems = orderForPayment.items.map((item) => ({
                 id: item.id || item.productId,
                 name: item.name || item.productName,
-                price: typeof (item.price || item.unitPrice) === 'string' ? parseFloat(item.price || item.unitPrice) : (item.price || item.unitPrice),
+                price:
+                  typeof (item.price || item.unitPrice) === "string"
+                    ? parseFloat(item.price || item.unitPrice)
+                    : item.price || item.unitPrice,
                 quantity: item.quantity,
-                sku: item.sku || `FOOD${String(item.id || item.productId).padStart(5, '0')}`,
+                sku:
+                  item.sku ||
+                  `FOOD${String(item.id || item.productId).padStart(5, "0")}`,
                 taxRate: item.taxRate || 0,
-                afterTaxPrice: item.afterTaxPrice
+                afterTaxPrice: item.afterTaxPrice,
               }));
-              console.log("📦 Shopping Cart: Using orderForPayment items:", mappedItems);
+              console.log(
+                "📦 Shopping Cart: Using orderForPayment items:",
+                mappedItems,
+              );
               return mappedItems;
             }
 
             // Fallback to current cart
             if (cart && cart.length > 0) {
-              const mappedItems = cart.map(item => ({
+              const mappedItems = cart.map((item) => ({
                 id: item.id,
                 name: item.name,
-                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                price:
+                  typeof item.price === "string"
+                    ? parseFloat(item.price)
+                    : item.price,
                 quantity: item.quantity,
-                sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
-                afterTaxPrice: item.afterTaxPrice
+                sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+                taxRate:
+                  typeof item.taxRate === "string"
+                    ? parseFloat(item.taxRate || "0")
+                    : item.taxRate || 0,
+                afterTaxPrice: item.afterTaxPrice,
               }));
-              console.log("📦 Shopping Cart: Using current cart as fallback:", mappedItems);
+              console.log(
+                "📦 Shopping Cart: Using current cart as fallback:",
+                mappedItems,
+              );
               return mappedItems;
             }
 
-            console.error("❌ CRITICAL ERROR: No valid items found for Payment Modal");
+            console.error(
+              "❌ CRITICAL ERROR: No valid items found for Payment Modal",
+            );
             return [];
           })()}
         />
@@ -1189,7 +1385,9 @@ export function ShoppingCart({
         <ReceiptModal
           isOpen={showReceiptModal}
           onClose={() => {
-            console.log('🔄 Shopping Cart: Receipt modal closing, clearing cart and sending comprehensive refresh signal');
+            console.log(
+              "🔄 Shopping Cart: Receipt modal closing, clearing cart and sending comprehensive refresh signal",
+            );
 
             // Close modal and clear states
             setShowReceiptModal(false);
@@ -1204,95 +1402,122 @@ export function ShoppingCart({
 
             // Send comprehensive refresh signals
             try {
-              if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+              if (
+                wsRef.current &&
+                wsRef.current.readyState === WebSocket.OPEN
+              ) {
                 // Send multiple signals to ensure all components refresh
-                wsRef.current.send(JSON.stringify({
-                  type: 'popup_close',
-                  success: true,
-                  source: 'shopping-cart-receipt',
-                  timestamp: new Date().toISOString()
-                }));
+                wsRef.current.send(
+                  JSON.stringify({
+                    type: "popup_close",
+                    success: true,
+                    source: "shopping-cart-receipt",
+                    timestamp: new Date().toISOString(),
+                  }),
+                );
 
-                wsRef.current.send(JSON.stringify({
-                  type: 'force_refresh',
-                  source: 'shopping-cart-receipt-close',
-                  success: true,
-                  timestamp: new Date().toISOString()
-                }));
+                wsRef.current.send(
+                  JSON.stringify({
+                    type: "force_refresh",
+                    source: "shopping-cart-receipt-close",
+                    success: true,
+                    timestamp: new Date().toISOString(),
+                  }),
+                );
 
-                wsRef.current.send(JSON.stringify({
-                  type: 'payment_success',
-                  source: 'shopping-cart-receipt-complete',
-                  success: true,
-                  timestamp: new Date().toISOString()
-                }));
+                wsRef.current.send(
+                  JSON.stringify({
+                    type: "payment_success",
+                    source: "shopping-cart-receipt-complete",
+                    success: true,
+                    timestamp: new Date().toISOString(),
+                  }),
+                );
               } else {
                 // Fallback WebSocket connection if main one is not available
-                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const protocol =
+                  window.location.protocol === "https:" ? "wss:" : "ws:";
                 const wsUrl = `${protocol}//${window.location.host}/ws`;
                 const fallbackWs = new WebSocket(wsUrl);
 
                 fallbackWs.onopen = () => {
-                  fallbackWs.send(JSON.stringify({
-                    type: 'popup_close',
-                    success: true,
-                    source: 'shopping-cart-receipt-fallback',
-                    timestamp: new Date().toISOString()
-                  }));
+                  fallbackWs.send(
+                    JSON.stringify({
+                      type: "popup_close",
+                      success: true,
+                      source: "shopping-cart-receipt-fallback",
+                      timestamp: new Date().toISOString(),
+                    }),
+                  );
 
-                  fallbackWs.send(JSON.stringify({
-                    type: 'force_refresh',
-                    source: 'shopping-cart-receipt-fallback',
-                    success: true,
-                    timestamp: new Date().toISOString()
-                  }));
+                  fallbackWs.send(
+                    JSON.stringify({
+                      type: "force_refresh",
+                      source: "shopping-cart-receipt-fallback",
+                      success: true,
+                      timestamp: new Date().toISOString(),
+                    }),
+                  );
 
                   setTimeout(() => fallbackWs.close(), 100);
                 };
               }
             } catch (error) {
-              console.error('❌ Shopping Cart: Failed to send refresh signal:', error);
+              console.error(
+                "❌ Shopping Cart: Failed to send refresh signal:",
+                error,
+              );
             }
 
             // Dispatch custom events for components that might not use WebSocket
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('closeAllPopups', {
-                detail: {
-                  source: 'shopping_cart_receipt_close',
-                  success: true,
-                  action: 'receipt_modal_closed',
-                  showSuccessNotification: true,
-                  message: 'Thanh toán hoàn tất. Dữ liệu đã được cập nhật.',
-                  timestamp: new Date().toISOString()
-                }
-              }));
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(
+                new CustomEvent("closeAllPopups", {
+                  detail: {
+                    source: "shopping_cart_receipt_close",
+                    success: true,
+                    action: "receipt_modal_closed",
+                    showSuccessNotification: true,
+                    message: "Thanh toán hoàn tất. Dữ liệu đã được cập nhật.",
+                    timestamp: new Date().toISOString(),
+                  },
+                }),
+              );
 
-              window.dispatchEvent(new CustomEvent('refreshAllData', {
-                detail: {
-                  source: 'shopping_cart_receipt_close',
-                  timestamp: new Date().toISOString()
-                }
-              }));
+              window.dispatchEvent(
+                new CustomEvent("refreshAllData", {
+                  detail: {
+                    source: "shopping_cart_receipt_close",
+                    timestamp: new Date().toISOString(),
+                  },
+                }),
+              );
             }
 
-            console.log('✅ Shopping Cart: Receipt modal closed with comprehensive refresh signals sent');
+            console.log(
+              "✅ Shopping Cart: Receipt modal closed with comprehensive refresh signals sent",
+            );
           }}
           receipt={selectedReceipt}
-          cartItems={selectedReceipt?.items || lastCartItems.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: parseFloat(item.price),
-            quantity: item.quantity,
-            sku: `ITEM${String(item.id).padStart(3, "0")}`,
-            taxRate: parseFloat(item.taxRate || "0"),
-          })) || cart.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: parseFloat(item.price),
-            quantity: item.quantity,
-            sku: `ITEM${String(item.id).padStart(3, "0")}`,
-            taxRate: parseFloat(item.taxRate || "0"),
-          }))}
+          cartItems={
+            selectedReceipt?.items ||
+            lastCartItems.map((item) => ({
+              id: item.id,
+              name: item.name,
+              price: parseFloat(item.price),
+              quantity: item.quantity,
+              sku: `ITEM${String(item.id).padStart(3, "0")}`,
+              taxRate: parseFloat(item.taxRate || "0"),
+            })) ||
+            cart.map((item) => ({
+              id: item.id,
+              name: item.name,
+              price: parseFloat(item.price),
+              quantity: item.quantity,
+              sku: `ITEM${String(item.id).padStart(3, "0")}`,
+              taxRate: parseFloat(item.taxRate || "0"),
+            }))
+          }
         />
       )}
 
@@ -1308,11 +1533,12 @@ export function ShoppingCart({
           onConfirm={handleEInvoiceComplete}
           total={(() => {
             // Use the most accurate total available
-            const totalToUse = orderForPayment?.exactTotal ||
-                              orderForPayment?.total ||
-                              previewReceipt?.exactTotal ||
-                              previewReceipt?.total ||
-                              total;
+            const totalToUse =
+              orderForPayment?.exactTotal ||
+              orderForPayment?.total ||
+              previewReceipt?.exactTotal ||
+              previewReceipt?.total ||
+              total;
 
             console.log("🔍 POS E-Invoice Modal - Total calculation debug:", {
               orderForPaymentExactTotal: orderForPayment?.exactTotal,
@@ -1320,7 +1546,7 @@ export function ShoppingCart({
               previewReceiptExactTotal: previewReceipt?.exactTotal,
               previewReceiptTotal: previewReceipt?.total,
               fallbackTotal: total,
-              finalTotalToUse: totalToUse
+              finalTotalToUse: totalToUse,
             });
 
             return Math.floor(totalToUse || 0);
@@ -1328,33 +1554,54 @@ export function ShoppingCart({
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={(() => {
             // Use the most accurate cart items available
-            const itemsToUse = lastCartItems.length > 0 ? lastCartItems :
-                              orderForPayment?.items?.length > 0 ? orderForPayment.items.map((item) => ({
-                                id: item.id || item.productId,
-                                name: item.name || item.productName,
-                                price: typeof (item.price || item.unitPrice) === 'string' ? parseFloat(item.price || item.unitPrice) : (item.price || item.unitPrice),
-                                quantity: item.quantity,
-                                sku: item.sku || `FOOD${String(item.id || item.productId).padStart(5, "0")}`,
-                                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
-                                afterTaxPrice: item.afterTaxPrice
-                              })) :
-                              cart.map((item) => ({
-                                id: item.id,
-                                name: item.name,
-                                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                                quantity: item.quantity,
-                                sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-                                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0),
-                                afterTaxPrice: item.afterTaxPrice
-                              }));
+            const itemsToUse =
+              lastCartItems.length > 0
+                ? lastCartItems
+                : orderForPayment?.items?.length > 0
+                  ? orderForPayment.items.map((item) => ({
+                      id: item.id || item.productId,
+                      name: item.name || item.productName,
+                      price:
+                        typeof (item.price || item.unitPrice) === "string"
+                          ? parseFloat(item.price || item.unitPrice)
+                          : item.price || item.unitPrice,
+                      quantity: item.quantity,
+                      sku:
+                        item.sku ||
+                        `FOOD${String(item.id || item.productId).padStart(5, "0")}`,
+                      taxRate:
+                        typeof item.taxRate === "string"
+                          ? parseFloat(item.taxRate || "0")
+                          : item.taxRate || 0,
+                      afterTaxPrice: item.afterTaxPrice,
+                    }))
+                  : cart.map((item) => ({
+                      id: item.id,
+                      name: item.name,
+                      price:
+                        typeof item.price === "string"
+                          ? parseFloat(item.price)
+                          : item.price,
+                      quantity: item.quantity,
+                      sku:
+                        item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+                      taxRate:
+                        typeof item.taxRate === "string"
+                          ? parseFloat(item.taxRate || "0")
+                          : item.taxRate || 0,
+                      afterTaxPrice: item.afterTaxPrice,
+                    }));
 
-            console.log("🔍 POS E-Invoice Modal - Cart items calculation debug:", {
-              lastCartItemsLength: lastCartItems.length,
-              orderForPaymentItemsLength: orderForPayment?.items?.length || 0,
-              currentCartLength: cart.length,
-              finalItemsToUseLength: itemsToUse.length,
-              finalItemsToUse: itemsToUse
-            });
+            console.log(
+              "🔍 POS E-Invoice Modal - Cart items calculation debug:",
+              {
+                lastCartItemsLength: lastCartItems.length,
+                orderForPaymentItemsLength: orderForPayment?.items?.length || 0,
+                currentCartLength: cart.length,
+                finalItemsToUseLength: itemsToUse.length,
+                finalItemsToUse: itemsToUse,
+              },
+            );
 
             return itemsToUse;
           })()}

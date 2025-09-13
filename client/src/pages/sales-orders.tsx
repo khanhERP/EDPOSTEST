@@ -33,7 +33,6 @@ import { EInvoiceModal } from "@/components/pos/einvoice-modal";
 import { PrintDialog } from "@/components/pos/print-dialog";
 import { toast } from "@/hooks/use-toast";
 
-
 interface Invoice {
   id: number;
   invoiceNumber: string;
@@ -127,7 +126,9 @@ export default function SalesOrders() {
   // Listen for print completion event
   useEffect(() => {
     const handlePrintCompleted = (event: CustomEvent) => {
-      console.log('📄 Sales Orders: Print completed, closing all modals and refreshing');
+      console.log(
+        "📄 Sales Orders: Print completed, closing all modals and refreshing",
+      );
 
       // Close all modals
       setSelectedInvoice(null);
@@ -143,10 +144,16 @@ export default function SalesOrders() {
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
     };
 
-    window.addEventListener('printCompleted', handlePrintCompleted as EventListener);
+    window.addEventListener(
+      "printCompleted",
+      handlePrintCompleted as EventListener,
+    );
 
     return () => {
-      window.removeEventListener('printCompleted', handlePrintCompleted as EventListener);
+      window.removeEventListener(
+        "printCompleted",
+        handlePrintCompleted as EventListener,
+      );
     };
   }, [queryClient]);
 
@@ -309,7 +316,7 @@ export default function SalesOrders() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Order items loaded:",data)
+        console.log("Order items loaded:", data);
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error("Error fetching order items:", error);
@@ -1570,13 +1577,24 @@ export default function SalesOrders() {
                                       <div className="text-sm font-medium">
                                         {(() => {
                                           // Calculate correct final total: subtotal + tax - discount
-                                          const subtotal = parseFloat(item.subtotal || "0");
-                                          const tax = parseFloat(item.tax || "0");
-                                          const discountAmount = parseFloat(item.discount || "0");
+                                          const subtotal = parseFloat(
+                                            item.subtotal || "0",
+                                          );
+                                          const tax = parseFloat(
+                                            item.tax || "0",
+                                          );
+                                          const discountAmount = parseFloat(
+                                            item.discount || "0",
+                                          );
 
                                           // Final total = subtotal + tax - discount
-                                          const finalTotal = Math.max(0, subtotal + tax - discountAmount);
-                                          return formatCurrency(Math.floor(finalTotal));
+                                          const finalTotal = Math.max(
+                                            0,
+                                            subtotal + tax - discountAmount,
+                                          );
+                                          return formatCurrency(
+                                            Math.floor(finalTotal),
+                                          );
                                         })()}
                                       </div>
                                     </td>
@@ -1997,25 +2015,70 @@ export default function SalesOrders() {
                                                             <div className="col-span-1">
                                                               {(() => {
                                                                 // Calculate tax using the same logic as other components
-                                                                const unitPrice = parseFloat(item.unitPrice || '0');
-                                                                const quantity = parseInt(item.quantity || '0');
+                                                                const unitPrice =
+                                                                  parseFloat(
+                                                                    item.unitPrice ||
+                                                                      "0",
+                                                                  );
+                                                                const quantity =
+                                                                  parseInt(
+                                                                    item.quantity ||
+                                                                      "0",
+                                                                  );
 
                                                                 // Find the product to get afterTaxPrice and taxRate
-                                                                const product = products.find((p: any) => p.id === item.productId);
+                                                                const product =
+                                                                  products.find(
+                                                                    (p: any) =>
+                                                                      p.id ===
+                                                                      item.productId,
+                                                                  );
                                                                 let taxAmount = 0;
 
-                                                                if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                                                                if (
+                                                                  product?.afterTaxPrice &&
+                                                                  product.afterTaxPrice !==
+                                                                    null &&
+                                                                  product.afterTaxPrice !==
+                                                                    ""
+                                                                ) {
                                                                   // Use afterTaxPrice method: tax = (afterTaxPrice - unitPrice) * quantity
-                                                                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                                                  const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-                                                                  taxAmount = taxPerUnit * quantity;
-                                                                } else if (product?.taxRate && parseFloat(product.taxRate) > 0) {
+                                                                  const afterTaxPrice =
+                                                                    parseFloat(
+                                                                      product.afterTaxPrice,
+                                                                    );
+                                                                  const taxPerUnit =
+                                                                    Math.max(
+                                                                      0,
+                                                                      afterTaxPrice -
+                                                                        unitPrice,
+                                                                    );
+                                                                  taxAmount =
+                                                                    taxPerUnit *
+                                                                    quantity;
+                                                                } else if (
+                                                                  product?.taxRate &&
+                                                                  parseFloat(
+                                                                    product.taxRate,
+                                                                  ) > 0
+                                                                ) {
                                                                   // Use taxRate method: tax = (unitPrice * taxRate/100) * quantity
-                                                                  const taxRate = parseFloat(product.taxRate);
-                                                                  taxAmount = (unitPrice * taxRate / 100) * quantity;
+                                                                  const taxRate =
+                                                                    parseFloat(
+                                                                      product.taxRate,
+                                                                    );
+                                                                  taxAmount =
+                                                                    ((unitPrice *
+                                                                      taxRate) /
+                                                                      100) *
+                                                                    quantity;
                                                                 }
 
-                                                                return formatCurrency(Math.floor(taxAmount));
+                                                                return formatCurrency(
+                                                                  Math.floor(
+                                                                    taxAmount,
+                                                                  ),
+                                                                );
                                                               })()}
                                                             </div>
                                                           </div>
@@ -2038,13 +2101,9 @@ export default function SalesOrders() {
                                                           selectedInvoice.tax ||
                                                             "0",
                                                         );
-                                                        const discount = parseFloat(
-                                                          selectedInvoice.discount || "0",
-                                                        );
+
                                                         const totalPayment =
-                                                          subtotal +
-                                                          tax -
-                                                          discount;
+                                                          subtotal + tax;
                                                         return (
                                                           <>
                                                             <div className="flex justify-between">
@@ -2074,10 +2133,13 @@ export default function SalesOrders() {
                                                               </span>
                                                             </div>
                                                             {(() => {
-                                                              const discountAmount = parseFloat(
-                                                                selectedInvoice.discount || "0"
-                                                              );
-                                                              return discountAmount > 0 ? (
+                                                              const discountAmount =
+                                                                parseFloat(
+                                                                  selectedInvoice.discount ||
+                                                                    "0",
+                                                                );
+                                                              return discountAmount >
+                                                                0 ? (
                                                                 <div className="flex justify-between text-red-600">
                                                                   <span>
                                                                     {t(
@@ -2086,7 +2148,10 @@ export default function SalesOrders() {
                                                                     :
                                                                   </span>
                                                                   <span className="font-bold">
-                                                                    -{formatCurrency(discountAmount)}
+                                                                    -
+                                                                    {formatCurrency(
+                                                                      discountAmount,
+                                                                    )}
                                                                   </span>
                                                                 </div>
                                                               ) : null;
@@ -2117,13 +2182,23 @@ export default function SalesOrders() {
                                                             "paid" ||
                                                           selectedInvoice.paymentStatus ===
                                                             "paid";
-                                                        const paidAmount =
-                                                          isPaid
-                                                            ? parseFloat(
-                                                                selectedInvoice.total ||
-                                                                  "0",
-                                                              )
-                                                            : 0;
+                                                        let paidAmount = isPaid
+                                                          ? parseFloat(
+                                                              selectedInvoice.total ||
+                                                                "0",
+                                                            )
+                                                          : 0;
+
+                                                        const discount =
+                                                          parseFloat(
+                                                            selectedInvoice.discount ||
+                                                              "0",
+                                                          );
+
+                                                        paidAmount = Math.max(
+                                                          0,
+                                                          paidAmount - discount,
+                                                        );
                                                         const paymentMethod =
                                                           selectedInvoice.paymentMethod;
 
@@ -2292,37 +2367,98 @@ export default function SalesOrders() {
                                                         variant="outline"
                                                         className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
                                                         onClick={() => {
-                                                          if (selectedInvoice && orderItems.length > 0) {
-                                                            const items = orderItems;
-                                                            const receiptData = {
-                                                              transactionId: selectedInvoice.displayNumber || `TXN-${selectedInvoice.id}`,
-                                                              orderId: selectedInvoice.id,
-                                                              items: items.map((item: any) => ({
-                                                                id: item.productId || item.id,
-                                                                productName: item.productName || item.name,
-                                                                price: item.unitPrice || item.price || "0",
-                                                                quantity: item.quantity || 1,
-                                                                total: item.total || "0",
-                                                                sku: item.sku || `SKU${item.productId || item.id}`,
-                                                                taxRate: parseFloat(item.taxRate || "0"),
-                                                              })),
-                                                              subtotal: selectedInvoice.subtotal || "0",
-                                                              tax: selectedInvoice.tax || "0",
-                                                              total: selectedInvoice.total || "0",
-                                                              discount: selectedInvoice.discount || "0",
-                                                              paymentMethod: getItemType(selectedInvoice) === "order" ? selectedInvoice.paymentMethod : "invoice",
-                                                              amountReceived: selectedInvoice.total || "0",
-                                                              change: "0",
-                                                              cashierName: "System User",
-                                                              createdAt: selectedInvoice.date || new Date().toISOString(),
-                                                              customerName: selectedInvoice.customerName || "Khách hàng lẻ",
-                                                              customerTaxCode: selectedInvoice.customerTaxCode || null,
-                                                              invoiceNumber: selectedInvoice.invoiceNumber || null,
-                                                            };
+                                                          if (
+                                                            selectedInvoice &&
+                                                            orderItems.length >
+                                                              0
+                                                          ) {
+                                                            const items =
+                                                              orderItems;
+                                                            const receiptData =
+                                                              {
+                                                                transactionId:
+                                                                  selectedInvoice.displayNumber ||
+                                                                  `TXN-${selectedInvoice.id}`,
+                                                                orderId:
+                                                                  selectedInvoice.id,
+                                                                items:
+                                                                  items.map(
+                                                                    (
+                                                                      item: any,
+                                                                    ) => ({
+                                                                      id:
+                                                                        item.productId ||
+                                                                        item.id,
+                                                                      productName:
+                                                                        item.productName ||
+                                                                        item.name,
+                                                                      price:
+                                                                        item.unitPrice ||
+                                                                        item.price ||
+                                                                        "0",
+                                                                      quantity:
+                                                                        item.quantity ||
+                                                                        1,
+                                                                      total:
+                                                                        item.total ||
+                                                                        "0",
+                                                                      sku:
+                                                                        item.sku ||
+                                                                        `SKU${item.productId || item.id}`,
+                                                                      taxRate:
+                                                                        parseFloat(
+                                                                          item.taxRate ||
+                                                                            "0",
+                                                                        ),
+                                                                    }),
+                                                                  ),
+                                                                subtotal:
+                                                                  selectedInvoice.subtotal ||
+                                                                  "0",
+                                                                tax:
+                                                                  selectedInvoice.tax ||
+                                                                  "0",
+                                                                total:
+                                                                  selectedInvoice.total ||
+                                                                  "0",
+                                                                discount:
+                                                                  selectedInvoice.discount ||
+                                                                  "0",
+                                                                paymentMethod:
+                                                                  getItemType(
+                                                                    selectedInvoice,
+                                                                  ) === "order"
+                                                                    ? selectedInvoice.paymentMethod
+                                                                    : "invoice",
+                                                                amountReceived:
+                                                                  selectedInvoice.total ||
+                                                                  "0",
+                                                                change: "0",
+                                                                cashierName:
+                                                                  "System User",
+                                                                createdAt:
+                                                                  selectedInvoice.date ||
+                                                                  new Date().toISOString(),
+                                                                customerName:
+                                                                  selectedInvoice.customerName ||
+                                                                  "Khách hàng lẻ",
+                                                                customerTaxCode:
+                                                                  selectedInvoice.customerTaxCode ||
+                                                                  null,
+                                                                invoiceNumber:
+                                                                  selectedInvoice.invoiceNumber ||
+                                                                  null,
+                                                              };
 
-                                                            console.log("📄 Sales Orders: Showing receipt modal for printing");
-                                                            setPrintReceiptData(receiptData);
-                                                            setShowPrintDialog(true);
+                                                            console.log(
+                                                              "📄 Sales Orders: Showing receipt modal for printing",
+                                                            );
+                                                            setPrintReceiptData(
+                                                              receiptData,
+                                                            );
+                                                            setShowPrintDialog(
+                                                              true,
+                                                            );
                                                           }
                                                         }}
                                                       >
@@ -2575,338 +2711,6 @@ export default function SalesOrders() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* EInvoiceModal is now used for publishing, the old AlertDialog is commented out */}
-      {/*
-      {false && selectedInvoice && (
-        <AlertDialog
-          open={showPublishDialog}
-          onOpenChange={setShowPublishDialog}
-        >
-          <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-blue-600">
-                {selectedInvoice?.einvoiceStatus === 0
-                  ? "Phát hành hóa đơn điện tử"
-                  : "Chỉnh sửa và phát hành lại hóa đơn điện tử"}
-              </AlertDialogTitle>
-              <div className="text-sm text-gray-600">
-                Đơn hàng: {selectedInvoice.displayNumber} -{" "}
-                {selectedInvoice.customerName}
-              </div>
-            </AlertDialogHeader>
-            <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-3">
-                  Thông tin nhà cung cấp hóa đơn điện tử
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Đơn vị HĐĐT
-                    </label>
-                    <div className="p-2 bg-white rounded border">
-                      EasyInvoice
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Mẫu số Hóa đơn GTGT
-                    </label>
-                    <div className="p-2 bg-white rounded border">1C25TYY</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-3">Thông tin khách hàng</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Mã số thuế
-                    </label>
-                    <div className="p-2 bg-white rounded border">
-                      {selectedInvoice.customerTaxCode || "0123456789"}
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-blue-600 border-blue-500"
-                    >
-                      Lấy thông tin
-                    </Button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Tên đơn vị
-                    </label>
-                    <div className="p-2 bg-white rounded border">
-                      {selectedInvoice.customerName || "Khách hàng lẻ"}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Số CMND/CCCD
-                    </label>
-                    <div className="p-2 bg-white rounded border">
-                      {selectedInvoice.customerPhone ||
-                        selectedInvoice.customerTaxCode ||
-                        "0123456789"}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="block text-sm font-medium mb-1">
-                    Địa chỉ
-                  </label>
-                  <div className="p-2 bg-white rounded border">
-                    {selectedInvoice.customerAddress || "Cầu Giấy, Hà Nội"}
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="block text-sm font-medium mb-1">
-                    Email
-                  </label>
-                  <div className="p-2 bg-white rounded border">
-                    {selectedInvoice.customerEmail || "ngocnv@gmail.com"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg border">
-                <h4 className="font-medium mb-3">Danh sách sản phẩm</h4>
-                <div className="max-h-40 overflow-y-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="text-left p-2">Tên sản phẩm</th>
-                        <th className="text-center p-2">SL</th>
-                        <th className="text-right p-2">Đơn giá</th>
-                        <th className="text-right p-2">Thành tiền</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(() => {
-                        const items = orderItems;
-                        if (!items || items.length === 0) {
-                          return (
-                            <tr>
-                              <td
-                                colSpan={4}
-                                className="text-center p-4 text-gray-500"
-                              >
-                                Không có sản phẩm nào
-                              </td>
-                            </tr>
-                          );
-                        }
-                        return items.map((item: any, index: number) => (
-                          <tr className="border-t">
-                            <td className="p-2">{item.productName}</td>
-                            <td className="p-2 text-center">{item.quantity}</td>
-                            <td className="p-2 text-right">
-                              {formatCurrency(item.unitPrice)}
-                            </td>
-                            <td className="p-2 text-right">
-                              {formatCurrency(item.total)}
-                            </td>
-                          </tr>
-                        ));
-                      })()}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="bg-green-50 p-4 rounded-lg">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Thành tiền:</span>
-                    <span className="font-medium">
-                      {formatCurrency(selectedInvoice.subtotal || 0)} ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Thuế GTGT:</span>
-                    <span className="font-medium">
-                      {formatCurrency(selectedInvoice.tax || 0)} ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2">
-                    <span className="font-medium">Tổng tiền hóa đơn:</span>
-                    <span className="text-xl font-bold text-blue-600">
-                      {formatCurrency(selectedInvoice.total || 0)} ₫
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" className="text-gray-600">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Hiện bản phím ảo
-                </Button>
-              </div>
-            </div>
-            <AlertDialogFooter>
-              <div className="flex gap-2 w-full">
-                <Button
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                  onClick={() => {
-                    if (selectedInvoice) {
-                      const generateGuid = () => {
-                        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-                          /[xy]/g,
-                          function (c) {
-                            const r = (Math.random() * 16) | 0;
-                            const v = c === "x" ? r : (r & 0x3) | 0x8;
-                            return v.toString(16);
-                          },
-                        );
-                      };
-
-                      const items = orderItems;
-
-                      if (!items || items.length === 0) {
-                        alert("Không có sản phẩm nào để phát hành hóa đơn");
-                        return;
-                      }
-
-                      const subtotal = parseFloat(
-                        selectedInvoice.subtotal || "0",
-                      );
-                      const tax = parseFloat(selectedInvoice.tax || "0");
-                      const discount = 0;
-                      const totalPayment = subtotal + tax - discount;
-
-                      console.log("Publishing invoice with data:", {
-                        invoiceId: selectedInvoice.id,
-                        type: selectedInvoice.type,
-                        subtotal,
-                        tax,
-                        total,
-                        itemsCount: items.length,
-                      });
-
-                      const publishRequest = {
-                        login: {
-                          providerId: 1,
-                          url: "https://infoerpvn.com:9440",
-                          ma_dvcs: "0316578736",
-                          username: "0316578736",
-                          password: "123456a@",
-                          tenantId: "",
-                        },
-                        transactionID: generateGuid(),
-                        invRef:
-                          selectedInvoice.displayNumber || `INV-${Date.now()}`,
-                        invSubTotal: Math.round(subtotal),
-                        invVatRate: 10,
-                        invVatAmount: Math.round(tax),
-                        invDiscAmount: 0,
-                        invTotalAmount: Math.round(totalPayment),
-                        paidTp: "TM",
-                        note: selectedInvoice.notes || "",
-                        hdNo: "",
-                        createdDate: new Date().toISOString(),
-                        clsfNo: "01GTKT0/001",
-                        spcfNo: "1C25TYY",
-                        templateCode: "1C25TYY",
-                        buyerNotGetInvoice: 0,
-                        exchCd: "VND",
-                        exchRt: 1,
-                        bankAccount: "",
-                        bankName: "",
-                        customer: {
-                          custCd: selectedInvoice.customerTaxCode || "",
-                          custNm:
-                            selectedInvoice.customerName || "Khách hàng lẻ",
-                          custCompany:
-                            selectedInvoice.customerName || "Khách hàng lẻ",
-                          taxCode: selectedInvoice.customerTaxCode || "",
-                          custCity: "",
-                          custDistrictName: "",
-                          custAddrs: selectedInvoice.customerAddress || "",
-                          custPhone: selectedInvoice.customerPhone || "",
-                          custBankAccount: "",
-                          custBankName: "",
-                          email: selectedInvoice.customerEmail || "",
-                          emailCC: "",
-                        },
-                        products: items.map((item: any) => {
-                          const basePrice = parseFloat(item.unitPrice);
-                          const quantity = item.quantity;
-                          const taxRate = parseFloat(item.taxRate || "10");
-                          const itemSubtotal = basePrice * quantity;
-
-                          let totalTax = 0;
-
-                          if (
-                            item?.afterTaxPrice &&
-                            item.afterTaxPrice !== null &&
-                            item.afterTaxPrice !== ""
-                          ) {
-                            const afterTaxPrice = parseFloat(
-                              item.afterTaxPrice,
-                            );
-                            const taxPerUnit = afterTaxPrice - basePrice;
-                            totalTax += taxPerUnit * quantity;
-                          } else if (
-                            item?.taxRate &&
-                            parseFloat(item.taxRate) > 0
-                          ) {
-                            const taxPerUnit = basePrice * (taxRate / 100);
-                            totalTax += taxPerUnit * quantity;
-                          }
-
-                          const itemTotal = itemSubtotal + totalTax;
-
-                          return {
-                            itmCd: `SP${String(item.productId).padStart(3, "0")}`,
-                            itmName: item.productName,
-                            itmKnd: 1,
-                            unitNm: "Cái",
-                            qty: quantity,
-                            unprc: basePrice,
-                            amt: Math.round(itemSubtotal),
-                            discRate: 0,
-                            discAmt: 0,
-                            vatRt: taxRate.toString(),
-                            vatAmt: Math.round(totalTax),
-                            totalAmt: Math.round(itemTotal),
-                          };
-                        }),
-                      };
-
-                      setShowPublishDialog(false);
-                      publishRequestMutation.mutate(publishRequest);
-                    }
-                  }}
-                  disabled={publishRequestMutation.isPending}
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  {publishRequestMutation.isPending
-                    ? "Đang phát hành..."
-                    : "Phát hành"}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 border-gray-500 text-gray-600"
-                  onClick={() => setShowPublishDialog(false)}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Hủy bỏ
-                </Button>
-              </div>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-      */}
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>

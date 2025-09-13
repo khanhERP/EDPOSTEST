@@ -347,7 +347,8 @@ export function PaymentMethodModal({
         const transactionUuid = `TXN-${Date.now()}`;
 
         // Use exact total with proper priority and discount consideration
-        const baseTotal = receipt?.exactTotal ??
+        const baseTotal =
+          receipt?.exactTotal ??
           orderInfo?.exactTotal ??
           orderInfo?.total ??
           total ??
@@ -355,7 +356,7 @@ export function PaymentMethodModal({
 
         // Get discount amount
         const discountAmount = Math.floor(
-          parseFloat(receipt?.discount || orderInfo?.discount || "0")
+          parseFloat(receipt?.discount || orderInfo?.discount || "0"),
         );
 
         // Calculate final total after discount
@@ -656,7 +657,8 @@ export function PaymentMethodModal({
       try {
         setQrLoading(true);
         // Use exact total with proper priority and discount consideration for VNPay QR payment
-        const baseTotal = receipt?.exactTotal ??
+        const baseTotal =
+          receipt?.exactTotal ??
           orderForPayment?.exactTotal ??
           orderForPayment?.total ??
           orderInfo?.exactTotal ??
@@ -668,11 +670,11 @@ export function PaymentMethodModal({
         const discountAmount = Math.floor(
           parseFloat(
             receipt?.discount ||
-            receipt?.exactDiscount ||
-            orderForPayment?.discount ||
-            orderInfo?.discount ||
-            "0"
-          )
+              receipt?.exactDiscount ||
+              orderForPayment?.discount ||
+              orderInfo?.discount ||
+              "0",
+          ),
         );
 
         // Calculate final total after discount
@@ -763,6 +765,18 @@ export function PaymentMethodModal({
           },
         );
 
+        // Get discount amount from multiple sources
+        const discountAmount = Math.floor(
+          parseFloat(
+            receipt?.discount ||
+              receipt?.exactDiscount ||
+              orderForPayment?.discount ||
+              orderInfo?.discount ||
+              "0",
+          ),
+        );
+        console.log("💰 Discount amount:", discountAmount);
+
         const orderData = {
           orderNumber: `ORD-${Date.now()}`,
           tableId: null, // POS orders don't have tables
@@ -777,6 +791,7 @@ export function PaymentMethodModal({
           total: receiptTotal.toString(),
           notes: `POS ${method} Payment`,
           paidAt: new Date().toISOString(),
+          discount: discountAmount.toString(),
         };
 
         // Prepare order items
@@ -1086,11 +1101,25 @@ export function PaymentMethodModal({
         `🔄 TEMPORARY ORDER DETECTED - using receipt preview data for cash payment ${orderInfo.id}`,
       );
 
+      // Get discount amount from multiple sources
+      const discountAmount = Math.floor(
+        parseFloat(
+          receipt?.discount ||
+            receipt?.exactDiscount ||
+            orderForPayment?.discount ||
+            orderInfo?.discount ||
+            "0",
+        ),
+      );
+      console.log("💰 Discount amount bán hàng trực tiếp:", discountAmount);
+
       // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
       const receiptSubtotal =
         receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
       const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
-      const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
+      const receiptTotal =
+        (receipt?.exactTotal || orderInfo?.exactTotal || 0) +
+        (discountAmount || 0);
 
       console.log("💰 Cash Complete: Using exact receipt preview data:", {
         receiptSubtotal,
@@ -1113,6 +1142,7 @@ export function PaymentMethodModal({
         total: receiptTotal.toString(),
         notes: `POS Cash Payment - Amount: ${cashAmountInput}, Change: ${finalChange}`,
         paidAt: new Date(),
+        discount: discountAmount.toString(),
       };
 
       // Prepare order items
@@ -1248,6 +1278,10 @@ export function PaymentMethodModal({
         invoiceData.receipt,
       );
 
+      invoiceData.receipt = {
+        ...invoiceData.receipt,
+        discount: receipt?.discount || orderInfo?.discount || 0,
+      };
       // Set receipt data for modal
       setReceiptDataForModal(invoiceData.receipt);
 
@@ -1276,7 +1310,6 @@ export function PaymentMethodModal({
       // Don't close payment modal, show receipt modal directly
       console.log("📄 SHOWING RECEIPT MODAL immediately");
       setShowReceiptModal(true);
-
     } else {
       // Even if no receipt data, still show success and close payment flow
       if (
@@ -1845,7 +1878,9 @@ export function PaymentMethodModal({
                       parseFloat(amountReceived || "0") > 0 && (
                         <div
                           className={`p-3 border rounded-lg ${(() => {
-                            const receivedAmount = parseFloat(cashAmountInput || "0");
+                            const receivedAmount = parseFloat(
+                              cashAmountInput || "0",
+                            );
                             const orderTotal = Math.floor(Number(total || 0));
                             const changeAmount = receivedAmount - orderTotal;
                             return changeAmount >= 0
@@ -1856,33 +1891,64 @@ export function PaymentMethodModal({
                           <div className="flex justify-between items-center">
                             <span
                               className={`text-sm font-medium ${(() => {
-                                const receivedAmount = parseFloat(cashAmountInput || "0");
-                                const orderTotal = Math.floor(Number(total || 0));
-                                const changeAmount = receivedAmount - orderTotal;
-                                return changeAmount >= 0 ? "text-green-800" : "text-red-800";
+                                const receivedAmount = parseFloat(
+                                  cashAmountInput || "0",
+                                );
+                                const orderTotal = Math.floor(
+                                  Number(total || 0),
+                                );
+                                const changeAmount =
+                                  receivedAmount - orderTotal;
+                                return changeAmount >= 0
+                                  ? "text-green-800"
+                                  : "text-red-800";
                               })()}`}
                             >
                               {(() => {
-                                const receivedAmount = parseFloat(cashAmountInput || "0");
-                                const orderTotal = Math.floor(Number(total || 0));
-                                const changeAmount = receivedAmount - orderTotal;
-                                return changeAmount >= 0 ? "Tiền thối:" : "Còn thiếu:";
+                                const receivedAmount = parseFloat(
+                                  cashAmountInput || "0",
+                                );
+                                const orderTotal = Math.floor(
+                                  Number(total || 0),
+                                );
+                                const changeAmount =
+                                  receivedAmount - orderTotal;
+                                return changeAmount >= 0
+                                  ? "Tiền thối:"
+                                  : "Còn thiếu:";
                               })()}
                             </span>
                             <span
                               className={`text-lg font-bold ${(() => {
-                                const receivedAmount = parseFloat(cashAmountInput || "0");
-                                const orderTotal = Math.floor(Number(total || 0));
-                                const changeAmount = receivedAmount - orderTotal;
-                                return changeAmount >= 0 ? "text-green-600" : "text-red-600";
+                                const receivedAmount = parseFloat(
+                                  cashAmountInput || "0",
+                                );
+                                const orderTotal = Math.floor(
+                                  Number(total || 0),
+                                );
+                                const changeAmount =
+                                  receivedAmount - orderTotal;
+                                return changeAmount >= 0
+                                  ? "text-green-600"
+                                  : "text-red-600";
                               })()}`}
                             >
                               {(() => {
-                                const receivedAmount = parseFloat(cashAmountInput || "0");
-                                const orderTotal = Math.floor(Number(total || 0));
-                                const changeAmount = receivedAmount - orderTotal;
-                                const displayAmount = changeAmount >= 0 ? changeAmount : Math.abs(changeAmount);
-                                return Math.floor(displayAmount).toLocaleString("vi-VN");
+                                const receivedAmount = parseFloat(
+                                  cashAmountInput || "0",
+                                );
+                                const orderTotal = Math.floor(
+                                  Number(total || 0),
+                                );
+                                const changeAmount =
+                                  receivedAmount - orderTotal;
+                                const displayAmount =
+                                  changeAmount >= 0
+                                    ? changeAmount
+                                    : Math.abs(changeAmount);
+                                return Math.floor(displayAmount).toLocaleString(
+                                  "vi-VN",
+                                );
                               })()}{" "}
                               ₫
                             </span>
@@ -1979,7 +2045,8 @@ export function PaymentMethodModal({
                     }}
                     disabled={
                       !cashAmountInput ||
-                      parseFloat(cashAmountInput) < Math.floor(Number(total || 0))
+                      parseFloat(cashAmountInput) <
+                        Math.floor(Number(total || 0))
                     }
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-400"
                   >
