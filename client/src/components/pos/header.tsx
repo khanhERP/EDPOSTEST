@@ -570,15 +570,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
           </nav>
           
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowPrinterConfig(true)}
-          >
-            <Printer className="mr-2 h-4 w-4" />
-            Cấu hình máy in
-          </Button>
-        </div>
+          </div>
 
         <div className="flex items-center space-x-4">
           <LanguageSwitcher />
