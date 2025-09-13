@@ -2351,7 +2351,9 @@ export default function SalesOrders() {
                                                         className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                         onClick={() => {
                                                           if (selectedInvoice) {
-                                                            setShowEInvoiceModal(true);
+                                                            setShowEInvoiceModal(
+                                                              true,
+                                                            );
                                                           }
                                                         }}
                                                       >
@@ -2378,39 +2380,128 @@ export default function SalesOrders() {
                                                             );
 
                                                             // Create receipt data for the modal
-                                                            const receiptData = {
-                                                              id: selectedInvoice.id,
-                                                              transactionId: selectedInvoice.displayNumber || `TXN-${selectedInvoice.id}`,
-                                                              createdAt: selectedInvoice.date || selectedInvoice.createdAt || new Date().toISOString(),
-                                                              cashierName: "System User",
-                                                              paymentMethod: getItemType(selectedInvoice) === "order" ? selectedInvoice.paymentMethod : "invoice",
-                                                              customerName: selectedInvoice.customerName || "Khách hàng lẻ",
-                                                              customerTaxCode: selectedInvoice.customerTaxCode || null,
-                                                              customerAddress: selectedInvoice.customerAddress || "",
-                                                              customerPhone: selectedInvoice.customerPhone || "",
-                                                              customerEmail: selectedInvoice.customerEmail || "",
-                                                              items: orderItems.map((item: any) => ({
-                                                                id: item.id || item.productId,
-                                                                productId: item.productId || item.id,
-                                                                productName: item.productName || item.name,
-                                                                quantity: item.quantity || 1,
-                                                                price: item.unitPrice || item.price || "0",
-                                                                total: item.total || "0",
-                                                                unitPrice: item.unitPrice || item.price || "0",
-                                                              })),
-                                                              subtotal: selectedInvoice.subtotal || "0",
-                                                              tax: selectedInvoice.tax || "0",
-                                                              total: selectedInvoice.total || "0",
-                                                              discount: selectedInvoice.discount || "0",
-                                                              exactDiscount: selectedInvoice.exactDiscount || parseFloat(selectedInvoice.discount || "0"),
-                                                              invoiceNumber: selectedInvoice.invoiceNumber || null,
-                                                              symbol: selectedInvoice.symbol || "",
-                                                              templateNumber: selectedInvoice.templateNumber || "",
-                                                            };
+                                                            const receiptData =
+                                                              {
+                                                                id: selectedInvoice.id,
+                                                                transactionId:
+                                                                  selectedInvoice.displayNumber ||
+                                                                  `TXN-${selectedInvoice.id}`,
+                                                                createdAt:
+                                                                  selectedInvoice.date ||
+                                                                  selectedInvoice.createdAt ||
+                                                                  new Date().toISOString(),
+                                                                cashierName:
+                                                                  "System User",
+                                                                paymentMethod:
+                                                                  getItemType(
+                                                                    selectedInvoice,
+                                                                  ) === "order"
+                                                                    ? selectedInvoice.paymentMethod
+                                                                    : "invoice",
+                                                                customerName:
+                                                                  selectedInvoice.customerName ||
+                                                                  "Khách hàng lẻ",
+                                                                customerTaxCode:
+                                                                  selectedInvoice.customerTaxCode ||
+                                                                  null,
+                                                                customerAddress:
+                                                                  selectedInvoice.customerAddress ||
+                                                                  "",
+                                                                customerPhone:
+                                                                  selectedInvoice.customerPhone ||
+                                                                  "",
+                                                                customerEmail:
+                                                                  selectedInvoice.customerEmail ||
+                                                                  "",
+                                                                items:
+                                                                  orderItems.map(
+                                                                    (
+                                                                      item: any,
+                                                                    ) => ({
+                                                                      id:
+                                                                        item.id ||
+                                                                        item.productId,
+                                                                      productId:
+                                                                        item.productId ||
+                                                                        item.id,
+                                                                      productName:
+                                                                        item.productName ||
+                                                                        item.name,
+                                                                      quantity:
+                                                                        item.quantity ||
+                                                                        1,
+                                                                      price:
+                                                                        item.unitPrice ||
+                                                                        item.price ||
+                                                                        "0",
+                                                                      total:
+                                                                        item.total ||
+                                                                        "0",
+                                                                      unitPrice:
+                                                                        item.unitPrice ||
+                                                                        item.price ||
+                                                                        "0",
+                                                                    }),
+                                                                  ),
+                                                                subtotal:
+                                                                  selectedInvoice.subtotal ||
+                                                                  "0",
+                                                                tax:
+                                                                  selectedInvoice.tax ||
+                                                                  "0",
+                                                                total:
+                                                                  selectedInvoice.total ||
+                                                                  "0",
+                                                                discount:
+                                                                  selectedInvoice.discount ||
+                                                                  "0",
+                                                                exactDiscount:
+                                                                  selectedInvoice.exactDiscount ||
+                                                                  parseFloat(
+                                                                    selectedInvoice.discount ||
+                                                                      "0",
+                                                                  ),
+                                                                invoiceNumber:
+                                                                  selectedInvoice.invoiceNumber ||
+                                                                  null,
+                                                                symbol:
+                                                                  selectedInvoice.symbol ||
+                                                                  "",
+                                                                templateNumber:
+                                                                  selectedInvoice.templateNumber ||
+                                                                  "",
+                                                              };
+
+                                                            const correctdiscount =
+                                                              parseFloat(
+                                                                selectedInvoice.discount ||
+                                                                  "0",
+                                                              );
+
+                                                            const correcttax =
+                                                              parseFloat(
+                                                                selectedInvoice.tax ||
+                                                                  "0",
+                                                              );
+
+                                                            const correctsubtotal =
+                                                              parseFloat(
+                                                                selectedInvoice.subtotal ||
+                                                                  "0",
+                                                              );
+
+                                                            receiptData.total =
+                                                              correctsubtotal +
+                                                              correcttax -
+                                                              correctdiscount;
 
                                                             // Show receipt modal directly
-                                                            setSelectedReceipt(receiptData);
-                                                            setShowReceiptModal(true);
+                                                            setSelectedReceipt(
+                                                              receiptData,
+                                                            );
+                                                            setShowReceiptModal(
+                                                              true,
+                                                            );
                                                           }
                                                         }}
                                                       >
@@ -2428,7 +2519,9 @@ export default function SalesOrders() {
                                                         className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                         onClick={() => {
                                                           if (selectedInvoice) {
-                                                            setShowEInvoiceModal(true);
+                                                            setShowEInvoiceModal(
+                                                              true,
+                                                            );
                                                           }
                                                         }}
                                                       >
@@ -2694,14 +2787,17 @@ export default function SalesOrders() {
           isOpen={showEInvoiceModal}
           onClose={() => setShowEInvoiceModal(false)}
           onConfirm={(eInvoiceData) => {
-            console.log("📧 E-Invoice confirmed from sales orders:", eInvoiceData);
+            console.log(
+              "📧 E-Invoice confirmed from sales orders:",
+              eInvoiceData,
+            );
             setShowEInvoiceModal(false);
-            
+
             // Handle the e-invoice result
             if (eInvoiceData.success) {
               // Refresh orders data
               queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-              
+
               // Show success message
               toast({
                 title: "Thành công",
