@@ -55,6 +55,162 @@ export function PrintDialog({
 }: PrintDialogProps) {
   const [isPrinting, setIsPrinting] = useState(false);
 
+  const generatePrintContent = () => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>In Hóa Đơn</title>
+        <style>
+          body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            margin: 0;
+            padding: 20px;
+            max-width: 300px;
+            margin: 0 auto;
+          }
+          .center { text-align: center; }
+          .right { text-align: right; }
+          .bold { font-weight: bold; }
+          .separator {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+          }
+          .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 2px 0;
+          }
+          .item-name {
+            flex: 1;
+            text-align: left;
+          }
+          .item-price {
+            width: 80px;
+            text-align: right;
+          }
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-weight: bold;
+          }
+          @media print {
+            body { margin: 0; padding: 10px; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="center bold">
+          ${storeInfo.storeName}
+        </div>
+        <div class="center">
+          ${storeInfo.address.replace(/\n/g, '<br>')}
+        </div>
+        <div class="center">
+          Điện thoại: ${storeInfo.phone}
+        </div>
+
+        <div class="separator"></div>
+
+        <div style="display: flex; justify-content: space-between;">
+          <span>Số giao dịch:</span>
+          <span>${receiptData.transactionId}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Ngày:</span>
+          <span>${new Date(receiptData.createdAt).toLocaleString('vi-VN')}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Thu ngân:</span>
+          <span>${receiptData.cashierName}</span>
+        </div>
+
+        ${receiptData.customerName ? `
+        <div style="display: flex; justify-content: space-between;">
+          <span>Khách hàng:</span>
+          <span>${receiptData.customerName}</span>
+        </div>
+        ` : ''}
+
+        ${receiptData.customerTaxCode ? `
+        <div style="display: flex; justify-content: space-between;">
+          <span>MST:</span>
+          <span>${receiptData.customerTaxCode}</span>
+        </div>
+        ` : ''}
+
+        ${receiptData.invoiceNumber ? `
+        <div style="display: flex; justify-content: space-between;">
+          <span>Số HĐ:</span>
+          <span>${receiptData.invoiceNumber}</span>
+        </div>
+        ` : ''}
+
+        <div class="separator"></div>
+
+        ${receiptData.items.map(item => `
+          <div class="item-row">
+            <div class="item-name">${item.productName}</div>
+            <div class="item-price">${parseFloat(item.total).toLocaleString('vi-VN')} đ</div>
+          </div>
+          <div style="font-size: 10px; color: #666;">
+            SKU: ${item.sku} | ${item.quantity} x ${parseFloat(item.price).toLocaleString('vi-VN')} đ
+          </div>
+        `).join('')}
+
+        <div class="separator"></div>
+
+        <div class="total-row">
+          <span>Tạm tính:</span>
+          <span>${parseFloat(receiptData.subtotal).toLocaleString('vi-VN')} đ</span>
+        </div>
+        <div class="total-row">
+          <span>Thuế:</span>
+          <span>${(() => {
+            const total = parseFloat(receiptData.total || "0");
+            const subtotal = parseFloat(receiptData.subtotal || "0");
+            const actualTax = total - subtotal;
+            return Math.round(actualTax).toLocaleString('vi-VN');
+          })()} đ</span>
+        </div>
+        <div class="total-row" style="font-size: 14px; border-top: 1px solid #000; padding-top: 5px;">
+          <span>Tổng cộng:</span>
+          <span>${(() => {
+            const subtotal = parseFloat(receiptData.subtotal || "0");
+            const total = parseFloat(receiptData.total || "0");
+            const actualTax = total - subtotal;
+            const calculatedTotal = subtotal + actualTax;
+            return Math.round(calculatedTotal).toLocaleString('vi-VN');
+          })()} đ</span>
+        </div>
+
+        <div class="separator"></div>
+
+        <div style="display: flex; justify-content: space-between;">
+          <span>Phương thức thanh toán:</span>
+          <span>${receiptData.paymentMethod === 'einvoice' ? 'Hóa đơn điện tử' : receiptData.paymentMethod}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Số tiền nhận:</span>
+          <span>${parseFloat(receiptData.amountReceived).toLocaleString('vi-VN')} đ</span>
+        </div>
+
+        <div class="separator"></div>
+
+        <div class="center">
+          Cảm ơn bạn đã mua hàng!
+        </div>
+        <div class="center">
+          Vui lòng giữ hóa đơn để làm bằng chứng
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
   const handlePrint = async () => {
     setIsPrinting(true);
 
@@ -92,6 +248,77 @@ export function PrintDialog({
         }
       }
 
+      // Check if running on mobile or POS system
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      
+      console.log('🔍 Print Dialog - Device detection:', { isMobile, isAndroid });
+
+      // For mobile devices and POS systems, try native printing first
+      if (isMobile || window.location.hostname === '0.0.0.0') {
+        console.log('📱 Using mobile/POS printing approach');
+        
+        try {
+          // Try to send to print API for POS systems
+          const printApiResponse = await fetch('/api/pos/print-receipt', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: generatePrintContent(),
+              type: 'receipt',
+              timestamp: new Date().toISOString(),
+              orderId: receiptData.orderId,
+              transactionId: receiptData.transactionId
+            })
+          });
+
+          if (printApiResponse.ok) {
+            console.log('✅ Receipt sent to POS printer successfully');
+            
+            // Close dialog and refresh data
+            onClose();
+            
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('printCompleted', { 
+                detail: { 
+                  closeAllModals: true,
+                  refreshData: true,
+                  orderId: receiptData.orderId 
+                } 
+              }));
+              window.dispatchEvent(new CustomEvent('refreshOrders', { detail: { immediate: true } }));
+              window.dispatchEvent(new CustomEvent('refreshTables', { detail: { immediate: true } }));
+            }
+            return;
+          }
+        } catch (apiError) {
+          console.log('⚠️ POS print API not available, trying alternative methods');
+        }
+
+        // For Android devices, create downloadable receipt
+        if (isAndroid) {
+          const blob = new Blob([generatePrintContent()], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `receipt-${receiptData.transactionId}.html`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          alert('Hóa đơn đã được tải xuống. Bạn có thể mở file và in từ trình duyệt hoặc chia sẻ với ứng dụng in.');
+          
+          onClose();
+          return;
+        }
+      }
+
+      // Fallback to desktop printing method
+      console.log('🖥️ Using desktop printing method');
+      
       // Create a new window for printing
       const printWindow = window.open('', '_blank', 'width=800,height=600');
 

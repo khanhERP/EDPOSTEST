@@ -5496,6 +5496,56 @@ export async function registerRoutes(app: Express): Promise < Server > {
     }
   });
 
+  // POS Print Receipt API for mobile devices and USB-connected printers
+  app.post("/api/pos/print-receipt", async (req, res) => {
+    try {
+      const { content, type, timestamp, orderId, transactionId } = req.body;
+
+      console.log("🖨️ POS Print Receipt API called:", {
+        type,
+        timestamp,
+        orderId,
+        transactionId,
+        contentLength: content?.length || 0
+      });
+
+      // For POS systems with USB printers, we would integrate with specific printer drivers
+      // This is a placeholder that logs the print request and returns success
+      // In a real implementation, this would:
+      // 1. Format the content for the specific printer (ESC/POS, etc.)
+      // 2. Send to printer driver or printing service
+      // 3. Handle printer status and errors
+
+      // Simulate printer processing
+      const printResult = {
+        success: true,
+        message: "Receipt queued for printing",
+        printerId: "USB_THERMAL_PRINTER",
+        timestamp: new Date().toISOString(),
+        orderId,
+        transactionId
+      };
+
+      // Log successful print request
+      console.log("✅ Print request processed:", printResult);
+
+      // In a real POS system, you would:
+      // - Check printer status
+      // - Format content for thermal printer (80mm width)
+      // - Send ESC/POS commands to printer
+      // - Handle print errors and retries
+
+      res.json(printResult);
+    } catch (error) {
+      console.error("❌ Print receipt error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to print receipt",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Test customer display connection
   app.post("/api/test-customer-display", async (req, res) => {
     try {

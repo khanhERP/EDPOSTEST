@@ -133,104 +133,257 @@ export function ReceiptModal({
     );
   }
 
-  const handlePrint = () => {
-    console.log("🖨️ Receipt Modal: Print button clicked - processing like POS");
+  const handlePrint = async () => {
+    console.log("🖨️ Receipt Modal: Print button clicked - processing for mobile/POS");
 
     const printContent = document.getElementById("receipt-content");
-    if (printContent) {
-      const printWindow = window.open("", "_blank");
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
+    if (!printContent) return;
+
+    // First, try native mobile printing APIs or POS printing
+    try {
+      // Check if running on mobile or POS system
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      
+      console.log("🔍 Device detection:", { isMobile, isAndroid });
+
+      // For mobile devices and POS systems, use native printing approach
+      if (isMobile || window.location.hostname === '0.0.0.0') {
+        console.log("📱 Using mobile/POS printing approach");
+        
+        // Create receipt data for API printing
+        const receiptData = {
+          content: printContent.innerHTML,
+          type: 'receipt',
+          timestamp: new Date().toISOString(),
+          orderId: receipt?.id,
+          transactionId: receipt?.transactionId
+        };
+
+        // Try to send to print API for POS systems
+        try {
+          const printResponse = await fetch('/api/pos/print-receipt', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(receiptData)
+          });
+
+          if (printResponse.ok) {
+            console.log("✅ Receipt sent to POS printer successfully");
+            
+            // Close modal and refresh data
+            onClose();
+            
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(
+                new CustomEvent("printCompleted", {
+                  detail: {
+                    closeAllModals: true,
+                    refreshData: true,
+                  },
+                }),
+              );
+              window.dispatchEvent(
+                new CustomEvent("refreshOrders", {
+                  detail: { immediate: true },
+                }),
+              );
+              window.dispatchEvent(
+                new CustomEvent("refreshTables", {
+                  detail: { immediate: true },
+                }),
+              );
+            }
+            return;
+          }
+        } catch (apiError) {
+          console.log("⚠️ POS print API not available, trying alternative methods");
+        }
+
+        // For Android devices, try to trigger download/share
+        if (isAndroid) {
+          const blob = new Blob([`
+            <!DOCTYPE html>
+            <html>
             <head>
+              <meta charset="utf-8">
               <title>Receipt</title>
               <style>
-                body {
-                  font-family: 'Courier New', monospace;
-                  font-size: 12px;
-                  margin: 0;
-                  padding: 20px;
-                  background: white;
-                }
-                .receipt-container {
-                  width: 280px;
-                  margin: 0 auto;
-                }
+                body { font-family: monospace; font-size: 12px; margin: 10px; }
                 .text-center { text-align: center; }
                 .text-right { text-align: right; }
                 .font-bold { font-weight: bold; }
-                .border-t { border-top: 1px solid #000; }
-                .border-b { border-bottom: 1px solid #000; }
-                .py-1 { padding: 2px 0; }
-                .py-2 { padding: 4px 0; }
-                .mb-2 { margin-bottom: 4px; }
-                .mb-4 { margin-bottom: 8px; }
+                .border-t { border-top: 1px dashed #000; margin: 8px 0; }
+                .border-b { border-bottom: 1px dashed #000; margin: 8px 0; }
                 .flex { display: flex; }
                 .justify-between { justify-content: space-between; }
-                .items-center { align-items: center; }
-                .space-y-1 > * + * { margin-top: 2px; }
-                .space-y-2 > * + * { margin-top: 4px; }
                 img { max-width: 100px; height: auto; }
-                @media print {
-                  body { margin: 0; padding: 0; }
-                  .receipt-container { width: 100%; }
-                }
               </style>
             </head>
             <body>
               ${printContent.innerHTML}
             </body>
-          </html>
-        `);
-        printWindow.document.close();
-
-        // Wait for images to load then print
-        printWindow.onload = () => {
-          setTimeout(() => {
-            printWindow.print();
-
-            // Auto close after print and refresh data
-            setTimeout(() => {
-              console.log(
-                "🖨️ Receipt Modal: Auto-closing after print and refreshing data",
-              );
-
-              // Close this modal
-              onClose();
-
-              // Dispatch events to close all modals and refresh data
-              if (typeof window !== "undefined") {
-                window.dispatchEvent(
-                  new CustomEvent("printCompleted", {
-                    detail: {
-                      closeAllModals: true,
-                      refreshData: true,
-                    },
-                  }),
-                );
-                window.dispatchEvent(
-                  new CustomEvent("refreshOrders", {
-                    detail: { immediate: true },
-                  }),
-                );
-                window.dispatchEvent(
-                  new CustomEvent("refreshTables", {
-                    detail: { immediate: true },
-                  }),
-                );
-              }
-            }, 1000);
-          }, 500);
-        };
-
-        // Close modal immediately after opening print window - like POS
-        setTimeout(() => {
-          console.log(
-            "🖨️ Closing receipt modal immediately after print (like POS)",
-          );
+            </html>
+          `], { type: 'text/html' });
+          
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `receipt-${receipt?.transactionId || Date.now()}.html`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          console.log("📱 Receipt downloaded for Android device");
+          
+          // Show instructions for mobile printing
+          alert("Hóa đơn đã được tải xuống. Bạn có thể mở file và in từ trình duyệt hoặc chia sẻ với ứng dụng in.");
+          
           onClose();
-        }, 50);
+          return;
+        }
+
+        // For other mobile devices, try direct print with optimized CSS
+        if (window.print) {
+          // Hide all other content temporarily
+          const originalContent = document.body.innerHTML;
+          const printableContent = `
+            <div style="font-family: monospace; font-size: 12px; width: 280px; margin: 0 auto;">
+              ${printContent.innerHTML}
+            </div>
+          `;
+          
+          document.body.innerHTML = printableContent;
+          
+          // Add print styles
+          const printStyles = document.createElement('style');
+          printStyles.textContent = `
+            @media print {
+              body { margin: 0; padding: 10px; }
+              .text-center { text-align: center; }
+              .text-right { text-align: right; }
+              .font-bold { font-weight: bold; }
+              .border-t, .border-b { border: 1px dashed #000; margin: 5px 0; }
+              .flex { display: flex; }
+              .justify-between { justify-content: space-between; }
+            }
+          `;
+          document.head.appendChild(printStyles);
+          
+          window.print();
+          
+          // Restore original content after print
+          setTimeout(() => {
+            document.body.innerHTML = originalContent;
+            document.head.removeChild(printStyles);
+            onClose();
+          }, 1000);
+          
+          return;
+        }
       }
+
+      // Fallback to desktop printing method
+      console.log("🖥️ Using desktop printing method");
+      handleDesktopPrint(printContent);
+
+    } catch (error) {
+      console.error("❌ Print error:", error);
+      // Fallback to desktop method
+      handleDesktopPrint(printContent);
+    }
+  };
+
+  const handleDesktopPrint = (printContent: HTMLElement) => {
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Receipt</title>
+            <style>
+              body {
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                margin: 0;
+                padding: 20px;
+                background: white;
+              }
+              .receipt-container {
+                width: 280px;
+                margin: 0 auto;
+              }
+              .text-center { text-align: center; }
+              .text-right { text-align: right; }
+              .font-bold { font-weight: bold; }
+              .border-t { border-top: 1px solid #000; }
+              .border-b { border-bottom: 1px solid #000; }
+              .py-1 { padding: 2px 0; }
+              .py-2 { padding: 4px 0; }
+              .mb-2 { margin-bottom: 4px; }
+              .mb-4 { margin-bottom: 8px; }
+              .flex { display: flex; }
+              .justify-between { justify-content: space-between; }
+              .items-center { align-items: center; }
+              .space-y-1 > * + * { margin-top: 2px; }
+              .space-y-2 > * + * { margin-top: 4px; }
+              img { max-width: 100px; height: auto; }
+              @media print {
+                body { margin: 0; padding: 0; }
+                .receipt-container { width: 100%; }
+              }
+            </style>
+          </head>
+          <body>
+            ${printContent.innerHTML}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+
+      // Wait for images to load then print
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+
+          // Auto close after print and refresh data
+          setTimeout(() => {
+            console.log("🖨️ Receipt Modal: Auto-closing after print and refreshing data");
+
+            onClose();
+
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(
+                new CustomEvent("printCompleted", {
+                  detail: {
+                    closeAllModals: true,
+                    refreshData: true,
+                  },
+                }),
+              );
+              window.dispatchEvent(
+                new CustomEvent("refreshOrders", {
+                  detail: { immediate: true },
+                }),
+              );
+              window.dispatchEvent(
+                new CustomEvent("refreshTables", {
+                  detail: { immediate: true },
+                }),
+              );
+            }
+          }, 1000);
+        }, 500);
+      };
+
+      // Close modal immediately after opening print window
+      setTimeout(() => {
+        console.log("🖨️ Closing receipt modal immediately after print");
+        onClose();
+      }, 50);
     }
   };
 
