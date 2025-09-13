@@ -1908,7 +1908,7 @@ export function SalesChartReport() {
                               {formatCurrency(order.tax)}
                             </TableCell>
                             <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">
-                              {formatCurrency(order.totalMoney)}
+                              {formatCurrency(order.revenue + order.tax)}
                             </TableCell>
                             <TableCell className="text-center min-w-[150px] px-2">
                               {order.notes || "-"}
@@ -2107,7 +2107,7 @@ export function SalesChartReport() {
                         {formatCurrency(totalTax)}
                       </TableCell>
                       <TableCell className="text-right border-r bg-purple-100 min-w-[120px] px-4">
-                        {formatCurrency(totalMoney)}
+                        {formatCurrency(totalRevenue + totalTax)}
                       </TableCell>
                       <TableCell className="text-center min-w-[150px] px-4">
                         -
