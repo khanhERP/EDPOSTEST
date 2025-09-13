@@ -250,6 +250,61 @@ export default function POS({ onLogout }: POSPageProps) {
       <RightSidebar />
 
       <div className="main-content flex h-screen pt-16">
+        {/* Debug button - remove in production */}
+        <div className="fixed top-20 right-4 z-50">
+          <button
+            onClick={() => {
+              console.log("🧪 Testing receipt modal display");
+              // Create mock receipt data
+              const mockReceipt = {
+                id: `test-${Date.now()}`,
+                transactionId: `TXN-${Date.now()}`,
+                createdAt: new Date().toISOString(),
+                cashierName: "Test User",
+                paymentMethod: "cash",
+                items: cart.length > 0 ? cart.map(item => ({
+                  id: item.id,
+                  productId: item.id,
+                  productName: item.name,
+                  quantity: item.quantity,
+                  price: item.price,
+                  total: (parseFloat(item.price) * item.quantity).toString(),
+                  unitPrice: item.price
+                })) : [{
+                  id: 1,
+                  productId: 1,
+                  productName: "Test Product",
+                  quantity: 1,
+                  price: "10000",
+                  total: "10000",
+                  unitPrice: "10000"
+                }],
+                subtotal: cart.length > 0 ? cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0).toString() : "10000",
+                tax: "1000",
+                total: cart.length > 0 ? (cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0) + 1000).toString() : "11000"
+              };
+              
+              setLastCartItems(cart.length > 0 ? cart : [{
+                id: 1,
+                name: "Test Product",
+                price: "10000",
+                quantity: 1,
+                sku: "TEST001",
+                taxRate: 10
+              }]);
+              
+              // Set the mock receipt as lastReceipt
+              (window as any).testReceipt = mockReceipt;
+              console.log("🧪 Mock receipt created:", mockReceipt);
+              
+              setShowReceiptModal(true);
+            }}
+            className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm"
+          >
+            Test Receipt
+          </button>
+        </div>
+
         {/* Category Sidebar */}
         <CategorySidebar
           selectedCategory={selectedCategory}
@@ -284,53 +339,55 @@ export default function POS({ onLogout }: POSPageProps) {
       </div>
 
       {/* Modals */}
-      <ReceiptModal
-        isOpen={showReceiptModal}
-        onClose={() => {
-          console.log("🔴 POS: Closing receipt modal and clearing cart");
-          setShowReceiptModal(false);
+      {showReceiptModal && (lastReceipt || lastCartItems?.length > 0) && (
+        <ReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => {
+            console.log("🔴 POS: Closing receipt modal and clearing cart");
+            setShowReceiptModal(false);
 
-          // Force clear cart immediately
-          console.log("🔄 POS: Force clearing cart when receipt modal closes");
-          clearCart();
-
-          // Also dispatch clear cart event for other components
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('clearCart', {
-              detail: { 
-                source: 'pos_receipt_close',
-                timestamp: new Date().toISOString()
-              }
-            }));
-          }
-
-          // Clear cart when receipt modal closes
-          setTimeout(() => {
+            // Force clear cart immediately
+            console.log("🔄 POS: Force clearing cart when receipt modal closes");
             clearCart();
 
-            // Send popup close signal via WebSocket to trigger other components to refresh
-            try {
-              const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-              const wsUrl = `${protocol}//${window.location.host}/ws`;
-              const ws = new WebSocket(wsUrl);
-
-              ws.onopen = () => {
-                ws.send(JSON.stringify({
-                  type: "popup_close",
-                  success: true,
-                  action: 'receipt_modal_closed',
+            // Also dispatch clear cart event for other components
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('clearCart', {
+                detail: { 
+                  source: 'pos_receipt_close',
                   timestamp: new Date().toISOString()
-                }));
-                ws.close();
-              };
-            } catch (error) {
-              console.error("Failed to send popup close signal:", error);
+                }
+              }));
             }
-          }, 100);
-        }}
-        receipt={lastReceipt}
-        cartItems={lastCartItems}
-      />
+
+            // Clear cart when receipt modal closes
+            setTimeout(() => {
+              clearCart();
+
+              // Send popup close signal via WebSocket to trigger other components to refresh
+              try {
+                const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                const ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                  ws.send(JSON.stringify({
+                    type: "popup_close",
+                    success: true,
+                    action: 'receipt_modal_closed',
+                    timestamp: new Date().toISOString()
+                  }));
+                  ws.close();
+                };
+              } catch (error) {
+                console.error("Failed to send popup close signal:", error);
+              }
+            }, 100);
+          }}
+          receipt={lastReceipt}
+          cartItems={lastCartItems}
+        />
+      )}
 
       <ProductManagerModal
         isOpen={showProductManagerModal}
