@@ -1992,7 +1992,7 @@ export function SalesChartReport() {
                                   {formatCurrency(item.totalAmount)}
                                 </TableCell>
                                 <TableCell className="text-right text-red-600 min-w-[100px] px-2">
-                                  {formatCurrency(item.discount)}
+                                  -
                                 </TableCell>
                                 <TableCell className="text-right text-green-600 font-medium min-w-[120px] px-2">
                                   {formatCurrency(item.revenue)}
