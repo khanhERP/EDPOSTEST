@@ -685,7 +685,7 @@ export function SalesChartReport() {
                       ),
                       Thuế: `${(() => {
                         const totalTaxAmount = Object.values(dailySales).reduce(
-                          (sum, data) => sum + (data.tax || 0),
+                          (sum, data) => sum + data.tax,
                           0,
                         );
                         const totalRevenueAmount = Object.values(
@@ -1050,7 +1050,8 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.total || 0),
+                                          Math.max(0, Number(transaction.subtotal || 0) - Number(transaction.discount || 0)) +
+                                          (Number(transaction.total || 0) - Number(transaction.subtotal || 0))
                                         )}
                                       </TableCell>
                                       {(() => {
