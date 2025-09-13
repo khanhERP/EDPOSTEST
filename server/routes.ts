@@ -2497,6 +2497,125 @@ export async function registerRoutes(app: Express): Promise < Server > {
         })
         .from(orderItemsTable)
         .leftJoin(products, eq(orderItemsTable.productId, products.id))
+
+
+  // API in qua máy in mạng
+  app.post("/api/print/network", async (req: TenantRequest, res) => {
+    try {
+      const { printerIP, printerPort = 9100, data, orderId } = req.body;
+
+      if (!printerIP || !data) {
+        return res.status(400).json({
+          success: false,
+          error: "Thiếu thông tin máy in hoặc dữ liệu in"
+        });
+      }
+
+      console.log(`🖨️ Attempting to print to network printer ${printerIP}:${printerPort}`);
+
+      // Sử dụng node.js net module để kết nối tới máy in
+      const net = require('net');
+      
+      const printPromise = new Promise((resolve, reject) => {
+        const client = new net.Socket();
+        
+        client.setTimeout(5000); // 5 giây timeout
+
+        client.connect(printerPort, printerIP, () => {
+          console.log(`🔗 Connected to printer ${printerIP}:${printerPort}`);
+          
+          // Gửi dữ liệu ESC/POS
+          client.write(data, (error) => {
+            if (error) {
+              console.error('❌ Print data send error:', error);
+              reject(new Error('Lỗi gửi dữ liệu in'));
+            } else {
+              console.log('✅ Print data sent successfully');
+              client.end();
+              resolve(true);
+            }
+          });
+        });
+
+        client.on('timeout', () => {
+          console.error('⏰ Printer connection timeout');
+          client.destroy();
+          reject(new Error('Máy in không phản hồi trong thời gian quy định'));
+        });
+
+        client.on('error', (error) => {
+          console.error('❌ Printer connection error:', error);
+          reject(new Error(`Không thể kết nối tới máy in: ${error.message}`));
+        });
+
+        client.on('close', () => {
+          console.log('🔌 Printer connection closed');
+        });
+      });
+
+      await printPromise;
+
+      // Log hoạt động in
+      console.log(`📝 Print job completed for order ${orderId} on printer ${printerIP}`);
+
+      res.json({
+        success: true,
+        message: 'In thành công',
+        printer: `${printerIP}:${printerPort}`,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('🖨️ Network print error:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Lỗi in không xác định'
+      });
+    }
+  });
+
+  // API kiểm tra trạng thái máy in
+  app.get("/api/print/status/:ip/:port?", async (req: TenantRequest, res) => {
+    try {
+      const { ip, port = 9100 } = req.params;
+      const net = require('net');
+
+      const checkPromise = new Promise((resolve, reject) => {
+        const client = new net.Socket();
+        client.setTimeout(3000);
+
+        client.connect(parseInt(port as string), ip, () => {
+          client.end();
+          resolve({
+            status: 'connected',
+            ip: ip,
+            port: port,
+            timestamp: new Date().toISOString()
+          });
+        });
+
+        client.on('timeout', () => {
+          client.destroy();
+          reject(new Error('timeout'));
+        });
+
+        client.on('error', (error) => {
+          reject(error);
+        });
+      });
+
+      const result = await checkPromise;
+      res.json({ success: true, printer: result });
+
+    } catch (error) {
+      res.json({
+        success: false,
+        status: 'disconnected',
+        error: error instanceof Error ? error.message : 'Connection failed'
+      });
+    }
+  });
+
         .orderBy(desc(orderItemsTable.id));
 
       console.log(`✅ Found ${items.length} total order items`);
