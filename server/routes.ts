@@ -46,9 +46,7 @@ import {
   ilike,
   ne,
 } from "drizzle-orm";
-import {
-  sql
-} from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   orders,
   orderItems as orderItemsTable,
@@ -59,7 +57,7 @@ import {
   tables,
 } from "@shared/schema";
 
-export async function registerRoutes(app: Express): Promise < Server > {
+export async function registerRoutes(app: Express): Promise<Server> {
   // Register tenant management routes
   registerTenantRoutes(app);
 
@@ -71,7 +69,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
   // Ensure inventory_transactions table exists
   try {
-    await db.execute(sql `
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS inventory_transactions (
         id SERIAL PRIMARY KEY,
         product_id INTEGER REFERENCES products(id) NOT NULL,
@@ -115,7 +113,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching categories:", error);
         res.status(500).json({
-          error: "Failed to fetch categories"
+          error: "Failed to fetch categories",
         });
       }
     },
@@ -123,15 +121,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
   app.post("/api/categories", async (req: TenantRequest, res) => {
     try {
-      const {
-        name,
-        icon
-      } = req.body;
+      const { name, icon } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
       if (!name || !name.trim()) {
         return res.status(400).json({
-          error: "Category name is required"
+          error: "Category name is required",
         });
       }
 
@@ -145,7 +140,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Error creating category:", error);
       res.status(500).json({
-        error: "Failed to create category"
+        error: "Failed to create category",
       });
     }
   });
@@ -153,15 +148,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.put("/api/categories/:id", async (req: TenantRequest, res) => {
     try {
       const categoryId = parseInt(req.params.id);
-      const {
-        name,
-        icon
-      } = req.body;
+      const { name, icon } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
       if (!name || !name.trim()) {
         return res.status(400).json({
-          error: "Category name is required"
+          error: "Category name is required",
         });
       }
 
@@ -179,7 +171,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Error updating category:", error);
       res.status(500).json({
-        error: "Failed to update category"
+        error: "Failed to update category",
       });
     }
   });
@@ -202,7 +194,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       await storage.deleteCategory(categoryId, tenantDb);
       res.json({
-        success: true
+        success: true,
       });
     } catch (error) {
       console.error("Error deleting category:", error);
@@ -219,7 +211,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
 
       res.status(500).json({
-        error: "Có lỗi xảy ra khi xóa danh mục"
+        error: "Có lỗi xảy ra khi xóa danh mục",
       });
     }
   });
@@ -249,7 +241,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching products:", error);
         res.status(500).json({
-          error: "Failed to fetch products"
+          error: "Failed to fetch products",
         });
       }
     },
@@ -263,7 +255,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(products);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch active products"
+        message: "Failed to fetch active products",
       });
     }
   });
@@ -274,7 +266,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const productId = parseInt(req.params.id);
       if (isNaN(productId)) {
         return res.status(400).json({
-          error: "Invalid product ID"
+          error: "Invalid product ID",
         });
       }
 
@@ -304,7 +296,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!product) {
         return res.status(404).json({
-          error: "Product not found"
+          error: "Product not found",
         });
       }
 
@@ -319,7 +311,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Error fetching single product:", error);
       res.status(500).json({
-        error: "Failed to fetch product"
+        error: "Failed to fetch product",
       });
     }
   });
@@ -355,9 +347,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
         imageUrl: req.body.imageUrl || null,
         taxRate: req.body.taxRate.toString(),
         afterTaxPrice:
-          req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== "" ?
-          req.body.afterTaxPrice.toString() :
-          null,
+          req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== ""
+            ? req.body.afterTaxPrice.toString()
+            : null,
       });
 
       console.log("Validated product data:", validatedData);
@@ -407,9 +399,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
         price: req.body.price ? req.body.price.toString() : undefined,
         taxRate: req.body.taxRate ? req.body.taxRate.toString() : undefined,
         afterTaxPrice:
-          req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== "" ?
-          req.body.afterTaxPrice.toString() :
-          null,
+          req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== ""
+            ? req.body.afterTaxPrice.toString()
+            : null,
         priceIncludesTax: req.body.priceIncludesTax || false,
         trackInventory: req.body.trackInventory !== false,
       };
@@ -431,7 +423,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!product) {
         return res.status(404).json({
-          message: "Product not found"
+          message: "Product not found",
         });
       }
 
@@ -440,12 +432,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Product update error:", error);
       if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid product data",
-            errors: error.errors
-          });
+        return res.status(400).json({
+          message: "Invalid product data",
+          errors: error.errors,
+        });
       }
       res.status(500).json({
         message: "Failed to update product",
@@ -462,12 +452,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!deleted) {
         return res.status(404).json({
-          message: "Product not found"
+          message: "Product not found",
         });
       }
 
       res.json({
-        message: "Product deleted successfully"
+        message: "Product deleted successfully",
       });
     } catch (error) {
       console.error("Delete product error:", error);
@@ -482,7 +472,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
 
       res.status(500).json({
-        message: "Failed to delete product"
+        message: "Failed to delete product",
       });
     }
   });
@@ -499,11 +489,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
           deletedCount,
         });
       } catch (error) {
-        res
-          .status(500)
-          .json({
-            message: "Failed to cleanup inactive products"
-          });
+        res.status(500).json({
+          message: "Failed to cleanup inactive products",
+        });
       }
     },
   );
@@ -516,14 +504,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!product) {
         return res.status(404).json({
-          message: "Product not found"
+          message: "Product not found",
         });
       }
 
       res.json(product);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch product by SKU"
+        message: "Failed to fetch product by SKU",
       });
     }
   });
@@ -531,18 +519,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Transactions - Now creates orders instead for unified data storage
   app.post("/api/transactions", async (req: TenantRequest, res) => {
     try {
-      const {
-        transaction,
-        items
-      } = req.body;
+      const { transaction, items } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
       console.log(
         "Received POS transaction data (will create order):",
-        JSON.stringify({
-          transaction,
-          items
-        }, null, 2),
+        JSON.stringify(
+          {
+            transaction,
+            items,
+          },
+          null,
+          2,
+        ),
       );
 
       // Transaction validation schema
@@ -574,11 +563,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       for (const item of validatedItems) {
         const product = products.find((p) => p.id === item.productId);
         if (!product) {
-          return res
-            .status(400)
-            .json({
-              message: `Product with ID ${item.productId} not found`
-            });
+          return res.status(400).json({
+            message: `Product with ID ${item.productId} not found`,
+          });
         }
 
         // Check stock availability
@@ -715,7 +702,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(transactions);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch transactions"
+        message: "Failed to fetch transactions",
       });
     }
   });
@@ -725,10 +712,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     "/api/transactions/:startDate/:endDate",
     async (req: TenantRequest, res) => {
       try {
-        const {
-          startDate,
-          endDate
-        } = req.params;
+        const { startDate, endDate } = req.params;
 
         const start = new Date(startDate);
         start.setUTCHours(0, 0, 0, 0);
@@ -832,7 +816,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       // Get total count for pagination
       const [totalCountResult] = await database
         .select({
-          count: count()
+          count: count(),
         })
         .from(orders)
         .where(
@@ -844,9 +828,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Get paginated orders
       const orderBy =
-        sortOrder === "asc" ?
-        asc(orders[sortBy as keyof typeof orders] || orders.orderedAt) :
-        desc(orders[sortBy as keyof typeof orders] || orders.orderedAt);
+        sortOrder === "asc"
+          ? asc(orders[sortBy as keyof typeof orders] || orders.orderedAt)
+          : desc(orders[sortBy as keyof typeof orders] || orders.orderedAt);
 
       const ordersResult = await database
         .select({
@@ -906,10 +890,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     "/api/orders/date-range/:startDate/:endDate",
     async (req: TenantRequest, res) => {
       try {
-        const {
-          startDate,
-          endDate
-        } = req.params;
+        const { startDate, endDate } = req.params;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 1000; // Increase limit to get all data
 
@@ -958,14 +939,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
           totalOrdersInDb: allOrdersInDb.length,
           filteredCount: filteredOrders.length,
           dateRange: `${startDate} to ${endDate}`,
-          sampleFilteredOrder: filteredOrders[0] ?
-            {
-              id: filteredOrders[0].id,
-              orderNumber: filteredOrders[0].orderNumber,
-              orderedAt: filteredOrders[0].orderedAt,
-              status: filteredOrders[0].status,
-            } :
-            null,
+          sampleFilteredOrder: filteredOrders[0]
+            ? {
+                id: filteredOrders[0].id,
+                orderNumber: filteredOrders[0].orderNumber,
+                orderedAt: filteredOrders[0].orderedAt,
+                status: filteredOrders[0].status,
+              }
+            : null,
         });
 
         // Return all filtered orders (no pagination for reports)
@@ -973,7 +954,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("Error fetching orders by date range:", error);
         res.status(500).json({
-          error: "Failed to fetch orders"
+          error: "Failed to fetch orders",
         });
       }
     },
@@ -984,10 +965,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     "/api/invoices/date-range/:startDate/:endDate",
     async (req: TenantRequest, res) => {
       try {
-        const {
-          startDate,
-          endDate
-        } = req.params;
+        const { startDate, endDate } = req.params;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
 
@@ -1026,20 +1004,20 @@ export async function registerRoutes(app: Express): Promise < Server > {
           limit,
           total: allInvoices.length,
           returned: paginatedInvoices.length,
-          newestInvoice: paginatedInvoices[0] ?
-            {
-              id: paginatedInvoices[0].id,
-              tradeNumber: paginatedInvoices[0].tradeNumber,
-              createdAt: paginatedInvoices[0].createdAt,
-            } :
-            null,
+          newestInvoice: paginatedInvoices[0]
+            ? {
+                id: paginatedInvoices[0].id,
+                tradeNumber: paginatedInvoices[0].tradeNumber,
+                createdAt: paginatedInvoices[0].createdAt,
+              }
+            : null,
         });
 
         res.json(paginatedInvoices);
       } catch (error) {
         console.error("Error fetching invoices by date range:", error);
         res.status(500).json({
-          error: "Failed to fetch invoices"
+          error: "Failed to fetch invoices",
         });
       }
     },
@@ -1058,14 +1036,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
         if (!receipt) {
           return res.status(404).json({
-            message: "Transaction not found"
+            message: "Transaction not found",
           });
         }
 
         res.json(receipt);
       } catch (error) {
         res.status(500).json({
-          message: "Failed to fetch transaction"
+          message: "Failed to fetch transaction",
         });
       }
     },
@@ -1077,11 +1055,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const tenantDb = await getTenantDatabase(req);
       const nextId = await storage.getNextEmployeeId(tenantDb);
       res.json({
-        nextId
+        nextId,
       });
     } catch (error) {
       res.status(500).json({
-        message: "Failed to generate employee ID"
+        message: "Failed to generate employee ID",
       });
     }
   });
@@ -1089,11 +1067,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // POS QR Payment API Routes - Proxy for external CreateQRPos API
   app.post("/api/pos/create-qr-proxy", async (req, res) => {
     try {
-      const {
-        bankCode,
-        clientID,
-        ...qrRequest
-      } = req.body;
+      const { bankCode, clientID, ...qrRequest } = req.body;
 
       console.log("🎯 Proxying CreateQRPos request:", {
         qrRequest,
@@ -1107,7 +1081,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Forward request to external API (using HTTP as requested)
       const response = await fetch(
-        `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
+        `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1159,10 +1134,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       try {
         result = JSON.parse(responseText);
       } catch (parseError) {
-        console.error(
-          "❌ Failed to parse JSON from external API:",
-          parseError,
-        );
+        console.error("❌ Failed to parse JSON from external API:", parseError);
         return res.status(502).json({
           error: "Invalid JSON response from external API",
           rawResponse: responseText.substring(0, 200),
@@ -1204,10 +1176,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Fallback route for CreateQRPos API
   app.post("/api/pos/create-qr", async (req, res) => {
     try {
-      const {
-        bankCode,
-        clientID
-      } = req.query;
+      const { bankCode, clientID } = req.query;
       const qrRequest = req.body;
 
       console.log("🎯 Fallback CreateQRPos request:", {
@@ -1218,7 +1187,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Forward to external API
       const response = await fetch(
-        `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
+        `http://1.55.212.135:9335/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1256,11 +1226,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       ) {
         console.error("❌ External API returned HTML instead of JSON");
         return res.status(502).json({
-          error:
-            "External API returned HTML page instead of JSON response",
+          error: "External API returned HTML page instead of JSON response",
           rawResponse: responseText.substring(0, 200),
-          suggestion:
-            "External API might be down or returning error page",
+          suggestion: "External API might be down or returning error page",
         });
       }
 
@@ -1315,7 +1283,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching employees:", error);
         res.status(500).json({
-          message: "Failed to fetch employees"
+          message: "Failed to fetch employees",
         });
       }
     },
@@ -1329,14 +1297,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!employee) {
         return res.status(404).json({
-          message: "Employee not found"
+          message: "Employee not found",
         });
       }
 
       res.json(employee);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch employee"
+        message: "Failed to fetch employee",
       });
     }
   });
@@ -1366,15 +1334,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.log("error: ", error);
       if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid employee data",
-            errors: error
-          });
+        return res.status(400).json({
+          message: "Invalid employee data",
+          errors: error,
+        });
       }
       res.status(500).json({
-        message: "Failed to create employee"
+        message: "Failed to create employee",
       });
     }
   });
@@ -1408,22 +1374,20 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!employee) {
         return res.status(404).json({
-          message: "Employee not found"
+          message: "Employee not found",
         });
       }
 
       res.json(employee);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid employee data",
-            errors: error.errors
-          });
+        return res.status(400).json({
+          message: "Invalid employee data",
+          errors: error.errors,
+        });
       }
       res.status(500).json({
-        message: "Failed to update employee"
+        message: "Failed to update employee",
       });
     }
   });
@@ -1436,16 +1400,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!deleted) {
         return res.status(404).json({
-          message: "Employee not found"
+          message: "Employee not found",
         });
       }
 
       res.json({
-        message: "Employee deleted successfully"
+        message: "Employee deleted successfully",
       });
     } catch (error) {
       res.status(500).json({
-        message: "Failed to delete employee"
+        message: "Failed to delete employee",
       });
     }
   });
@@ -1453,12 +1417,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Attendance routes
   app.get("/api/attendance", async (req: TenantRequest, res) => {
     try {
-      const {
-        date,
-        startDate,
-        endDate,
-        employeeId
-      } = req.query;
+      const { date, startDate, endDate, employeeId } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
       console.log(`📅 Attendance API called with params:`, {
@@ -1469,11 +1428,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       });
 
       if (!tenantDb) {
-        return res
-          .status(500)
-          .json({
-            message: "Database connection not available"
-          });
+        return res.status(500).json({
+          message: "Database connection not available",
+        });
       }
 
       let records;
@@ -1491,9 +1448,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } else if (date) {
         // Single date filter
         console.log(`📅 Fetching attendance records for single date: ${date}`);
-        const employeeIdNum = employeeId ?
-          parseInt(employeeId as string) :
-          undefined;
+        const employeeIdNum = employeeId
+          ? parseInt(employeeId as string)
+          : undefined;
         records = await storage.getAttendanceRecords(
           employeeIdNum,
           date as string,
@@ -1502,9 +1459,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } else {
         // All records
         console.log(`📅 Fetching all attendance records`);
-        const employeeIdNum = employeeId ?
-          parseInt(employeeId as string) :
-          undefined;
+        const employeeIdNum = employeeId
+          ? parseInt(employeeId as string)
+          : undefined;
         records = await storage.getAttendanceRecords(
           employeeIdNum,
           undefined,
@@ -1517,7 +1474,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Error fetching attendance records:", error);
       res.status(500).json({
-        message: "Failed to fetch attendance records"
+        message: "Failed to fetch attendance records",
       });
     }
   });
@@ -1532,7 +1489,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         res.json(record);
       } catch (error) {
         res.status(500).json({
-          message: "Failed to fetch today's attendance"
+          message: "Failed to fetch today's attendance",
         });
       }
     },
@@ -1540,14 +1497,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
   app.post("/api/attendance/clock-in", async (req: TenantRequest, res) => {
     try {
-      const {
-        employeeId,
-        notes
-      } = req.body;
+      const { employeeId, notes } = req.body;
 
       if (!employeeId) {
         return res.status(400).json({
-          message: "Employee ID is required"
+          message: "Employee ID is required",
         });
       }
 
@@ -1591,14 +1545,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!record) {
         return res.status(404).json({
-          message: "Attendance record not found"
+          message: "Attendance record not found",
         });
       }
 
       res.json(record);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to clock out"
+        message: "Failed to clock out",
       });
     }
   });
@@ -1612,17 +1566,15 @@ export async function registerRoutes(app: Express): Promise < Server > {
         const record = await storage.startBreak(id, tenantDb);
 
         if (!record) {
-          return res
-            .status(404)
-            .json({
-              message: "Attendance record not found"
-            });
+          return res.status(404).json({
+            message: "Attendance record not found",
+          });
         }
 
         res.json(record);
       } catch (error) {
         res.status(500).json({
-          message: "Failed to start break"
+          message: "Failed to start break",
         });
       }
     },
@@ -1636,14 +1588,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!record) {
         return res.status(404).json({
-          message: "Attendance record not found"
+          message: "Attendance record not found",
         });
       }
 
       res.json(record);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to end break"
+        message: "Failed to end break",
       });
     }
   });
@@ -1651,22 +1603,20 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.put("/api/attendance/:id/status", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const {
-        status
-      } = req.body;
+      const { status } = req.body;
       const tenantDb = await getTenantDatabase(req);
       const record = await storage.updateAttendanceStatus(id, status, tenantDb);
 
       if (!record) {
         return res.status(404).json({
-          message: "Attendance record not found"
+          message: "Attendance record not found",
         });
       }
 
       res.json(record);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to update attendance status"
+        message: "Failed to update attendance status",
       });
     }
   });
@@ -1690,7 +1640,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("❌ Error fetching tables:", error);
       res.status(500).json({
-        message: "Failed to fetch tables"
+        message: "Failed to fetch tables",
       });
     }
   });
@@ -1703,14 +1653,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!table) {
         return res.status(404).json({
-          message: "Table not found"
+          message: "Table not found",
         });
       }
 
       res.json(table);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch table"
+        message: "Failed to fetch table",
       });
     }
   });
@@ -1723,7 +1673,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.status(201).json(table);
     } catch (error) {
       res.status(400).json({
-        message: "Failed to create table"
+        message: "Failed to create table",
       });
     }
   });
@@ -1737,14 +1687,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!table) {
         return res.status(404).json({
-          message: "Table not found"
+          message: "Table not found",
         });
       }
 
       res.json(table);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to update table"
+        message: "Failed to update table",
       });
     }
   });
@@ -1752,22 +1702,20 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.put("/api/tables/:id/status", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const {
-        status
-      } = req.body;
+      const { status } = req.body;
       const tenantDb = await getTenantDatabase(req);
       const table = await storage.updateTableStatus(id, status, tenantDb);
 
       if (!table) {
         return res.status(404).json({
-          message: "Table not found"
+          message: "Table not found",
         });
       }
 
       res.json(table);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to update table status"
+        message: "Failed to update table status",
       });
     }
   });
@@ -1780,16 +1728,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!deleted) {
         return res.status(404).json({
-          message: "Table not found"
+          message: "Table not found",
         });
       }
 
       res.json({
-        message: "Table deleted successfully"
+        message: "Table deleted successfully",
       });
     } catch (error) {
       res.status(500).json({
-        message: "Failed to delete table"
+        message: "Failed to delete table",
       });
     }
   });
@@ -1798,9 +1746,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.get("/api/orders", tenantMiddleware, async (req: TenantRequest, res) => {
     try {
       console.log("🔍 GET /api/orders - Starting request processing");
-      const {
-        salesChannel
-      } = req.query;
+      const { salesChannel } = req.query;
 
       let tenantDb;
       try {
@@ -1825,7 +1771,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("❌ Error fetching orders:", error);
       res.status(500).json({
-        error: "Failed to fetch orders"
+        error: "Failed to fetch orders",
       });
     }
   });
@@ -1838,34 +1784,33 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!order) {
         return res.status(404).json({
-          message: "Order not found"
+          message: "Order not found",
         });
       }
 
       const items = await storage.getOrderItems(id, tenantDb);
-      res.json({ ...order,
-        items
-      });
+      res.json({ ...order, items });
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch order"
+        message: "Failed to fetch order",
       });
     }
   });
 
   app.post("/api/orders", async (req: TenantRequest, res) => {
     try {
-      const {
-        order,
-        items
-      } = req.body;
+      const { order, items } = req.body;
       const tenantDb = await getTenantDatabase(req);
       console.log(
         "Received order data:",
-        JSON.stringify({
-          order,
-          items
-        }, null, 2),
+        JSON.stringify(
+          {
+            order,
+            items,
+          },
+          null,
+          2,
+        ),
       );
 
       // If no order object is provided, create a default one for POS orders
@@ -1939,16 +1884,18 @@ export async function registerRoutes(app: Express): Promise < Server > {
         }
       }
 
-      const itemsData = items.map((item) =>
-        insertOrderItemSchema.parse(item)
-      );
+      const itemsData = items.map((item) => insertOrderItemSchema.parse(item));
 
       console.log(
         "Parsed order data:",
-        JSON.stringify({
-          orderData,
-          itemsData
-        }, null, 2),
+        JSON.stringify(
+          {
+            orderData,
+            itemsData,
+          },
+          null,
+          2,
+        ),
       );
 
       const newOrder = await storage.createOrder(
@@ -1983,9 +1930,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
   app.put("/api/orders/:id", async (req: TenantRequest, res) => {
     try {
-      const {
-        id: rawId
-      } = req.params;
+      const { id: rawId } = req.params;
       const orderData = req.body; // Use raw body to preserve all fields
       const tenantDb = await getTenantDatabase(req);
 
@@ -2026,7 +1971,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (isNaN(id)) {
         console.error(`❌ Invalid order ID: ${rawId}`);
         return res.status(400).json({
-          message: "Invalid order ID"
+          message: "Invalid order ID",
         });
       }
 
@@ -2039,7 +1984,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (!existingOrder) {
         console.error(`❌ Order not found: ${id}`);
         return res.status(404).json({
-          message: "Order not found"
+          message: "Order not found",
         });
       }
 
@@ -2111,7 +2056,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
           }
 
           // Calculate total with discount
-          const calculatedTotal = Math.max(0, calculatedSubtotal + calculatedTax - finalDiscount);
+          const calculatedTotal = Math.max(
+            0,
+            calculatedSubtotal + calculatedTax - finalDiscount,
+          );
 
           console.log(`💰 Recalculated financial data:`, {
             subtotal: calculatedSubtotal,
@@ -2128,20 +2076,29 @@ export async function registerRoutes(app: Express): Promise < Server > {
           orderData.discount = finalDiscount.toString();
           orderData.total = calculatedTotal.toString();
 
-          console.log(`✅ Updated order data with accurate financial calculations`);
+          console.log(
+            `✅ Updated order data with accurate financial calculations`,
+          );
         } else {
-          console.log(`⚠️ No items found for order ${id}, setting totals to zero`);
+          console.log(
+            `⚠️ No items found for order ${id}, setting totals to zero`,
+          );
           orderData.subtotal = "0";
           orderData.tax = "0";
-          orderData.discount = orderData.discount || existingOrder.discount || "0";
+          orderData.discount =
+            orderData.discount || existingOrder.discount || "0";
           orderData.total = "0";
         }
       } catch (calcError) {
-        console.error(`❌ Error calculating totals for order ${id}:`, calcError);
+        console.error(
+          `❌ Error calculating totals for order ${id}:`,
+          calcError,
+        );
         // Don't continue with potentially incorrect values - return error
         return res.status(500).json({
           message: "Failed to calculate order totals",
-          error: calcError instanceof Error ? calcError.message : String(calcError),
+          error:
+            calcError instanceof Error ? calcError.message : String(calcError),
         });
       }
 
@@ -2157,18 +2114,22 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Ensure total = subtotal + tax (discount stored separately)
       if (orderData.subtotal && orderData.tax) {
-        const expectedTotal = Number(orderData.subtotal) + Number(orderData.tax);
+        const expectedTotal =
+          Number(orderData.subtotal) + Number(orderData.tax);
 
         // If total is provided, validate it matches subtotal + tax
         if (orderData.total) {
           const actualTotal = Number(orderData.total);
           if (Math.abs(expectedTotal - actualTotal) > 0.01) {
-            console.warn(`⚠️ Storage: Total inconsistency detected, correcting:`, {
-              subtotal: orderData.subtotal,
-              tax: orderData.tax,
-              providedTotal: orderData.total,
-              correctedTotal: expectedTotal.toFixed(2)
-            });
+            console.warn(
+              `⚠️ Storage: Total inconsistency detected, correcting:`,
+              {
+                subtotal: orderData.subtotal,
+                tax: orderData.tax,
+                providedTotal: orderData.total,
+                correctedTotal: expectedTotal.toFixed(2),
+              },
+            );
             orderData.total = expectedTotal.toFixed(2);
           }
         } else {
@@ -2176,7 +2137,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
           orderData.total = expectedTotal.toFixed(2);
         }
 
-        console.log(`✅ Storage: Total calculation: ${orderData.subtotal} + ${orderData.tax} = ${orderData.total}`);
+        console.log(
+          `✅ Storage: Total calculation: ${orderData.subtotal} + ${orderData.tax} = ${orderData.total}`,
+        );
       }
 
       const order = await storage.updateOrder(id, orderData, tenantDb);
@@ -2184,7 +2147,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (!order) {
         console.error(`❌ Failed to update order ${id}`);
         return res.status(500).json({
-          message: "Failed to update order"
+          message: "Failed to update order",
         });
       }
 
@@ -2201,19 +2164,18 @@ export async function registerRoutes(app: Express): Promise < Server > {
         updatedTotal: order.total,
       });
 
-      res.json({ ...order,
+      res.json({
+        ...order,
         updated: true,
-        updateTimestamp: new Date().toISOString()
+        updateTimestamp: new Date().toISOString(),
       });
     } catch (error) {
       console.error("❌ PUT Order API error:", error);
       if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid order data",
-            errors: error.errors
-          });
+        return res.status(400).json({
+          message: "Invalid order data",
+          errors: error.errors,
+        });
       }
       res.status(500).json({
         message: "Failed to update order",
@@ -2224,12 +2186,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
   app.put("/api/orders/:id/status", async (req: TenantRequest, res) => {
     try {
-      const {
-        id
-      } = req.params;
-      const {
-        status
-      } = req.body;
+      const { id } = req.params;
+      const { status } = req.body;
 
       console.log(`🚀 ========================================`);
       console.log(`🚀 API ENDPOINT CALLED: PUT /api/orders/${id}/status`);
@@ -2250,7 +2208,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         if (isNaN(parsedId)) {
           console.error(`❌ Invalid order ID: ${id}`);
           return res.status(400).json({
-            message: "Invalid order ID"
+            message: "Invalid order ID",
           });
         }
         orderId = parsedId;
@@ -2272,7 +2230,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (!status) {
         console.error(`❌ Missing status in request body, received:`, req.body);
         return res.status(400).json({
-          message: "Status is required"
+          message: "Status is required",
         });
       }
 
@@ -2285,7 +2243,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (!foundOrder) {
         console.error(`❌ Order not found for ID: ${id}`);
         return res.status(404).json({
-          message: "Order not found"
+          message: "Order not found",
         });
       }
 
@@ -2389,7 +2347,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
 
       // Send comprehensive response data
-      res.json({ ...updatedOrder,
+      res.json({
+        ...updatedOrder,
         updated: true,
         previousStatus: foundOrder.status,
         updateTimestamp: new Date().toISOString(),
@@ -2408,11 +2367,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.post("/api/orders/:id/payment", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const {
-        paymentMethod,
-        amountReceived,
-        change
-      } = req.body;
+      const { paymentMethod, amountReceived, change } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
       console.log(
@@ -2441,17 +2396,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (!order) {
         console.error(`❌ Order not found for payment completion: ${id}`);
         return res.status(404).json({
-          message: "Order not found"
+          message: "Order not found",
         });
       }
 
       console.log(`✅ Payment completed successfully for order:`, order);
 
-      res.json({ ...order,
-        paymentMethod,
-        amountReceived,
-        change
-      });
+      res.json({ ...order, paymentMethod, amountReceived, change });
     } catch (error) {
       console.error("❌ Payment completion error:", error);
       res.status(500).json({
@@ -2526,69 +2477,72 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (!printerIP || !data) {
         return res.status(400).json({
           success: false,
-          error: "Thiếu thông tin máy in hoặc dữ liệu in"
+          error: "Thiếu thông tin máy in hoặc dữ liệu in",
         });
       }
 
-      console.log(`🖨️ Attempting to print to network printer ${printerIP}:${printerPort}`);
+      console.log(
+        `🖨️ Attempting to print to network printer ${printerIP}:${printerPort}`,
+      );
 
       // Sử dụng node.js net module để kết nối tới máy in
-      const net = require('net');
-      
+      const net = require("net");
+
       const printPromise = new Promise((resolve, reject) => {
         const client = new net.Socket();
-        
+
         client.setTimeout(5000); // 5 giây timeout
 
         client.connect(printerPort, printerIP, () => {
           console.log(`🔗 Connected to printer ${printerIP}:${printerPort}`);
-          
+
           // Gửi dữ liệu ESC/POS
           client.write(data, (error) => {
             if (error) {
-              console.error('❌ Print data send error:', error);
-              reject(new Error('Lỗi gửi dữ liệu in'));
+              console.error("❌ Print data send error:", error);
+              reject(new Error("Lỗi gửi dữ liệu in"));
             } else {
-              console.log('✅ Print data sent successfully');
+              console.log("✅ Print data sent successfully");
               client.end();
               resolve(true);
             }
           });
         });
 
-        client.on('timeout', () => {
-          console.error('⏰ Printer connection timeout');
+        client.on("timeout", () => {
+          console.error("⏰ Printer connection timeout");
           client.destroy();
-          reject(new Error('Máy in không phản hồi trong thời gian quy định'));
+          reject(new Error("Máy in không phản hồi trong thời gian quy định"));
         });
 
-        client.on('error', (error) => {
-          console.error('❌ Printer connection error:', error);
+        client.on("error", (error) => {
+          console.error("❌ Printer connection error:", error);
           reject(new Error(`Không thể kết nối tới máy in: ${error.message}`));
         });
 
-        client.on('close', () => {
-          console.log('🔌 Printer connection closed');
+        client.on("close", () => {
+          console.log("🔌 Printer connection closed");
         });
       });
 
       await printPromise;
 
       // Log hoạt động in
-      console.log(`📝 Print job completed for order ${orderId} on printer ${printerIP}`);
+      console.log(
+        `📝 Print job completed for order ${orderId} on printer ${printerIP}`,
+      );
 
       res.json({
         success: true,
-        message: 'In thành công',
+        message: "In thành công",
         printer: `${printerIP}:${printerPort}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('🖨️ Network print error:', error);
+      console.error("🖨️ Network print error:", error);
       res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Lỗi in không xác định'
+        error: error instanceof Error ? error.message : "Lỗi in không xác định",
       });
     }
   });
@@ -2597,7 +2551,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.get("/api/print/status/:ip/:port?", async (req: TenantRequest, res) => {
     try {
       const { ip, port = 9100 } = req.params;
-      const net = require('net');
+      const net = require("net");
 
       const checkPromise = new Promise((resolve, reject) => {
         const client = new net.Socket();
@@ -2606,31 +2560,30 @@ export async function registerRoutes(app: Express): Promise < Server > {
         client.connect(parseInt(port as string), ip, () => {
           client.end();
           resolve({
-            status: 'connected',
+            status: "connected",
             ip: ip,
             port: port,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
         });
 
-        client.on('timeout', () => {
+        client.on("timeout", () => {
           client.destroy();
-          reject(new Error('timeout'));
+          reject(new Error("timeout"));
         });
 
-        client.on('error', (error) => {
+        client.on("error", (error) => {
           reject(error);
         });
       });
 
       const result = await checkPromise;
       res.json({ success: true, printer: result });
-
     } catch (error) {
       res.json({
         success: false,
-        status: 'disconnected',
-        error: error instanceof Error ? error.message : 'Connection failed'
+        status: "disconnected",
+        error: error instanceof Error ? error.message : "Connection failed",
       });
     }
   });
@@ -2645,7 +2598,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (isNaN(orderId)) {
         console.error("Invalid order ID provided:", req.params.orderId);
         return res.status(400).json({
-          message: "Invalid order ID"
+          message: "Invalid order ID",
         });
       }
 
@@ -2693,7 +2646,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (isNaN(itemId)) {
         return res.status(400).json({
-          error: "Invalid item ID"
+          error: "Invalid item ID",
         });
       }
 
@@ -2704,12 +2657,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
         console.log("Order item deleted successfully");
         res.json({
           success: true,
-          message: "Order item deleted successfully"
+          message: "Order item deleted successfully",
         });
       } else {
         console.log("Order item not found");
         res.status(404).json({
-          error: "Order item not found"
+          error: "Order item not found",
         });
       }
     } catch (error) {
@@ -2746,7 +2699,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching POS orders:", error);
         res.status(500).json({
-          error: "Failed to fetch POS orders"
+          error: "Failed to fetch POS orders",
         });
       }
     },
@@ -2774,7 +2727,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching table orders:", error);
         res.status(500).json({
-          error: "Failed to fetch table orders"
+          error: "Failed to fetch table orders",
         });
       }
     },
@@ -2784,21 +2737,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.post("/api/orders/:orderId/items", async (req: TenantRequest, res) => {
     try {
       const orderId = parseInt(req.params.orderId);
-      const {
-        items
-      } = req.body;
+      const { items } = req.body;
 
       console.log(`📝 Adding ${items?.length || 0} items to order ${orderId}`);
 
       if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({
-          error: "Items array is required"
+          error: "Items array is required",
         });
       }
 
       if (isNaN(orderId)) {
         return res.status(400).json({
-          error: "Invalid order ID"
+          error: "Invalid order ID",
         });
       }
 
@@ -2815,7 +2766,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           dbError,
         );
         return res.status(500).json({
-          error: "Database connection failed"
+          error: "Database connection failed",
         });
       }
 
@@ -2831,7 +2782,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!existingOrder) {
         return res.status(404).json({
-          error: "Order not found"
+          error: "Order not found",
         });
       }
 
@@ -2848,9 +2799,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
           productId: parseInt(item.productId),
           quantity: parseInt(item.quantity),
           unitPrice: item.unitPrice.toString(),
-          total: item.total ?
-            item.total.toString() :
-            (parseFloat(item.unitPrice) * parseInt(item.quantity)).toString(),
+          total: item.total
+            ? item.total.toString()
+            : (parseFloat(item.unitPrice) * parseInt(item.quantity)).toString(),
           notes: item.notes || null,
         };
       });
@@ -2971,13 +2922,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Inventory Management
   app.post("/api/inventory/update-stock", async (req: TenantRequest, res) => {
     try {
-      const {
-        productId,
-        quantity,
-        type,
-        notes,
-        trackInventory
-      } = req.body;
+      const { productId, quantity, type, notes, trackInventory } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
       // Get current product
@@ -2988,7 +2933,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         .limit(1);
       if (!product) {
         return res.status(404).json({
-          error: "Product not found"
+          error: "Product not found",
         });
       }
 
@@ -3007,7 +2952,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Update product stock and trackInventory
       const updateData: any = {
-        stock: newStock
+        stock: newStock,
       };
       if (trackInventory !== undefined) {
         updateData.trackInventory = trackInventory;
@@ -3019,19 +2964,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
         .where(eq(products.id, productId));
 
       // Create inventory transaction record using raw SQL to match exact schema
-      await db.execute(sql `
+      await db.execute(sql`
         INSERT INTO inventory_transactions (product_id, type, quantity, previous_stock, new_stock, notes, created_at)
         VALUES (${productId}, ${type}, ${quantity}, ${product.stock}, ${newStock}, ${notes || null}, ${new Date().toISOString()})
       `);
 
       res.json({
         success: true,
-        newStock
+        newStock,
       });
     } catch (error) {
       console.error("Stock update error:", error);
       res.status(500).json({
-        error: "Failed to update stock"
+        error: "Failed to update stock",
       });
     }
   });
@@ -3044,7 +2989,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Error fetching store settings:", error);
       res.status(500).json({
-        error: "Failed to fetch store settings"
+        error: "Failed to fetch store settings",
       });
     }
   });
@@ -3079,7 +3024,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("❌ Error fetching current cart:", error);
       res.status(500).json({
-        error: "Failed to fetch current cart"
+        error: "Failed to fetch current cart",
       });
     }
   });
@@ -3101,7 +3046,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         });
       }
       res.status(500).json({
-        message: "Failed to update store settings"
+        message: "Failed to update store settings",
       });
     }
   });
@@ -3125,10 +3070,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           tenantDb = null;
         }
 
-        const {
-          status,
-          search
-        } = req.query;
+        const { status, search } = req.query;
         let suppliers;
 
         if (search) {
@@ -3146,7 +3088,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching suppliers:", error);
         res.status(500).json({
-          message: "Failed to fetch suppliers"
+          message: "Failed to fetch suppliers",
         });
       }
     },
@@ -3160,14 +3102,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!supplier) {
         return res.status(404).json({
-          message: "Supplier not found"
+          message: "Supplier not found",
         });
       }
 
       res.json(supplier);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch supplier"
+        message: "Failed to fetch supplier",
       });
     }
   });
@@ -3180,15 +3122,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.status(201).json(supplier);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid supplier data",
-            errors: error.errors
-          });
+        return res.status(400).json({
+          message: "Invalid supplier data",
+          errors: error.errors,
+        });
       }
       res.status(500).json({
-        message: "Failed to create supplier"
+        message: "Failed to create supplier",
       });
     }
   });
@@ -3206,22 +3146,20 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!supplier) {
         return res.status(404).json({
-          message: "Supplier not found"
+          message: "Supplier not found",
         });
       }
 
       res.json(supplier);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid supplier data",
-            errors: error.errors
-          });
+        return res.status(400).json({
+          message: "Invalid supplier data",
+          errors: error.errors,
+        });
       }
       res.status(500).json({
-        message: "Failed to update supplier"
+        message: "Failed to update supplier",
       });
     }
   });
@@ -3234,16 +3172,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!deleted) {
         return res.status(404).json({
-          message: "Supplier not found"
+          message: "Supplier not found",
         });
       }
 
       res.json({
-        message: "Supplier deleted successfully"
+        message: "Supplier deleted successfully",
       });
     } catch (error) {
       res.status(500).json({
-        message: "Failed to delete supplier"
+        message: "Failed to delete supplier",
       });
     }
   });
@@ -3254,11 +3192,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const tenantDb = await getTenantDatabase(req);
       const nextId = await storage.getNextCustomerId(tenantDb);
       res.json({
-        nextId
+        nextId,
       });
     } catch (error) {
       res.status(500).json({
-        message: "Failed to generate customer ID"
+        message: "Failed to generate customer ID",
       });
     }
   });
@@ -3288,7 +3226,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching customers:", error);
         res.status(500).json({
-          message: "Failed to fetch customers"
+          message: "Failed to fetch customers",
         });
       }
     },
@@ -3301,13 +3239,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const customer = await storage.getCustomer(id, tenantDb);
       if (!customer) {
         return res.status(404).json({
-          message: "Customer not found"
+          message: "Customer not found",
         });
       }
       res.json(customer);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch customer"
+        message: "Failed to fetch customer",
       });
     }
   });
@@ -3320,7 +3258,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       // Validate required fields
       if (!req.body.name) {
         return res.status(400).json({
-          message: "Customer name is required"
+          message: "Customer name is required",
         });
       }
 
@@ -3369,21 +3307,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const customer = await storage.updateCustomer(id, customerData, tenantDb);
       if (!customer) {
         return res.status(404).json({
-          message: "Customer not found"
+          message: "Customer not found",
         });
       }
       res.json(customer);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid customer data",
-            errors: error.errors
-          });
+        return res.status(400).json({
+          message: "Invalid customer data",
+          errors: error.errors,
+        });
       }
       res.status(500).json({
-        message: "Failed to update customer"
+        message: "Failed to update customer",
       });
     }
   });
@@ -3395,15 +3331,15 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const deleted = await storage.deleteCustomer(id, tenantDb);
       if (!deleted) {
         return res.status(404).json({
-          message: "Customer not found"
+          message: "Customer not found",
         });
       }
       res.json({
-        message: "Customer deleted successfully"
+        message: "Customer deleted successfully",
       });
     } catch (error) {
       res.status(500).json({
-        message: "Failed to delete customer"
+        message: "Failed to delete customer",
       });
     }
   });
@@ -3411,16 +3347,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.post("/api/customers/:id/visit", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const {
-        amount,
-        points
-      } = req.body;
+      const { amount, points } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
       const customer = await storage.getCustomer(id, tenantDb);
       if (!customer) {
         return res.status(404).json({
-          message: "Customer not found"
+          message: "Customer not found",
         });
       }
 
@@ -3433,7 +3366,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(updatedCustomer);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to update customer visit"
+        message: "Failed to update customer visit",
       });
     }
   });
@@ -3447,14 +3380,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!pointsData) {
         return res.status(404).json({
-          message: "Customer not found"
+          message: "Customer not found",
         });
       }
 
       res.json(pointsData);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch customer points"
+        message: "Failed to fetch customer points",
       });
     }
   });
@@ -3470,13 +3403,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
         orderId: z.number().optional(),
       });
 
-      const {
-        points,
-        description,
-        type,
-        employeeId,
-        orderId
-      } = pointUpdateSchema.parse(req.body);
+      const { points, description, type, employeeId, orderId } =
+        pointUpdateSchema.parse(req.body);
       const tenantDb = await getTenantDatabase(req);
 
       const pointTransaction = await storage.updateCustomerPoints(
@@ -3499,7 +3427,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
       if (error instanceof Error && error.message === "Customer not found") {
         return res.status(404).json({
-          message: "Customer not found"
+          message: "Customer not found",
         });
       }
       if (
@@ -3507,11 +3435,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
         error.message === "Insufficient points balance"
       ) {
         return res.status(400).json({
-          message: "Insufficient points balance"
+          message: "Insufficient points balance",
         });
       }
       res.status(500).json({
-        message: "Failed to update customer points"
+        message: "Failed to update customer points",
       });
     }
   });
@@ -3532,7 +3460,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         res.json(pointHistory);
       } catch (error) {
         res.status(500).json({
-          message: "Failed to fetch point history"
+          message: "Failed to fetch point history",
         });
       }
     },
@@ -3548,12 +3476,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
         description: z.string().min(1),
       });
 
-      const {
-        customerId,
-        points,
-        type,
-        description
-      } = pointUpdateSchema.parse(req.body);
+      const { customerId, points, type, description } = pointUpdateSchema.parse(
+        req.body,
+      );
       const tenantDb = await getTenantDatabase(req);
 
       const pointTransaction = await storage.updateCustomerPoints(
@@ -3576,7 +3501,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
       if (error instanceof Error && error.message === "Customer not found") {
         return res.status(404).json({
-          message: "Customer not found"
+          message: "Customer not found",
         });
       }
       if (
@@ -3584,11 +3509,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
         error.message === "Insufficient points balance"
       ) {
         return res.status(400).json({
-          message: "Insufficient points balance"
+          message: "Insufficient points balance",
         });
       }
       res.status(500).json({
-        message: "Failed to adjust customer points"
+        message: "Failed to adjust customer points",
       });
     }
   });
@@ -3600,10 +3525,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         points: z.number().int().min(1),
       });
 
-      const {
-        customerId,
-        points
-      } = redeemSchema.parse(req.body);
+      const { customerId, points } = redeemSchema.parse(req.body);
       const tenantDb = await getTenantDatabase(req);
 
       const pointTransaction = await storage.updateCustomerPoints(
@@ -3626,7 +3548,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
       if (error instanceof Error && error.message === "Customer not found") {
         return res.status(404).json({
-          message: "Customer not found"
+          message: "Customer not found",
         });
       }
       if (
@@ -3634,11 +3556,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
         error.message === "Insufficient points balance"
       ) {
         return res.status(400).json({
-          message: "Insufficient points balance"
+          message: "Insufficient points balance",
         });
       }
       res.status(500).json({
-        message: "Failed to redeem customer points"
+        message: "Failed to redeem customer points",
       });
     }
   });
@@ -3656,7 +3578,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(allTransactions);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch point transactions"
+        message: "Failed to fetch point transactions",
       });
     }
   });
@@ -3668,11 +3590,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const thresholds = await storage.getMembershipThresholds(tenantDb);
       res.json(thresholds);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Failed to fetch membership thresholds"
-        });
+      res.status(500).json({
+        message: "Failed to fetch membership thresholds",
+      });
     }
   });
 
@@ -3698,44 +3618,41 @@ export async function registerRoutes(app: Express): Promise < Server > {
           errors: error.errors,
         });
       }
-      res
-        .status(500)
-        .json({
-          message: "Failed to update membership thresholds"
-        });
+      res.status(500).json({
+        message: "Failed to update membership thresholds",
+      });
     }
   });
 
   // Supplier Reports APIs
   app.get("/api/supplier-debts", async (req: TenantRequest, res) => {
     try {
-      const {
-        startDate,
-        endDate,
-        supplierId
-      } = req.query;
+      const { startDate, endDate, supplierId } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
       // Mock data for supplier debts - replace with actual database queries
-      const supplierDebts = [{
-        id: 1,
-        supplierCode: "SUP001",
-        supplierName: "Nhà cung cấp A",
-        initialDebt: 500000,
-        newDebt: 300000,
-        payment: 200000,
-        finalDebt: 600000,
-        phone: "010-1234-5678",
-      }, {
-        id: 2,
-        supplierCode: "SUP002",
-        supplierName: "Nhà cung cấp B",
-        initialDebt: 800000,
-        newDebt: 400000,
-        payment: 300000,
-        finalDebt: 900000,
-        phone: "010-2345-6789",
-      }, ];
+      const supplierDebts = [
+        {
+          id: 1,
+          supplierCode: "SUP001",
+          supplierName: "Nhà cung cấp A",
+          initialDebt: 500000,
+          newDebt: 300000,
+          payment: 200000,
+          finalDebt: 600000,
+          phone: "010-1234-5678",
+        },
+        {
+          id: 2,
+          supplierCode: "SUP002",
+          supplierName: "Nhà cung cấp B",
+          initialDebt: 800000,
+          newDebt: 400000,
+          payment: 300000,
+          finalDebt: 900000,
+          phone: "010-2345-6789",
+        },
+      ];
 
       // Filter by supplier if specified
       let filteredDebts = supplierDebts;
@@ -3748,38 +3665,37 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(filteredDebts);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch supplier debts"
+        message: "Failed to fetch supplier debts",
       });
     }
   });
 
   app.get("/api/supplier-purchases", async (req: TenantRequest, res) => {
     try {
-      const {
-        startDate,
-        endDate,
-        supplierId
-      } = req.query;
+      const { startDate, endDate, supplierId } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
       // Mock data for supplier purchases - replace with actual database queries
-      const supplierPurchases = [{
-        id: 1,
-        supplierCode: "SUP001",
-        supplierName: "Nhà cung cấp A",
-        purchaseValue: 1500000,
-        paymentValue: 1200000,
-        netValue: 300000,
-        phone: "010-1234-5678",
-      }, {
-        id: 2,
-        supplierCode: "SUP002",
-        supplierName: "Nhà cung cấp B",
-        purchaseValue: 2000000,
-        paymentValue: 1700000,
-        netValue: 300000,
-        phone: "010-2345-6789",
-      }, ];
+      const supplierPurchases = [
+        {
+          id: 1,
+          supplierCode: "SUP001",
+          supplierName: "Nhà cung cấp A",
+          purchaseValue: 1500000,
+          paymentValue: 1200000,
+          netValue: 300000,
+          phone: "010-1234-5678",
+        },
+        {
+          id: 2,
+          supplierCode: "SUP002",
+          supplierName: "Nhà cung cấp B",
+          purchaseValue: 2000000,
+          paymentValue: 1700000,
+          netValue: 300000,
+          phone: "010-2345-6789",
+        },
+      ];
 
       // Filter by supplier if specified
       let filteredPurchases = supplierPurchases;
@@ -3792,7 +3708,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(filteredPurchases);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch supplier purchases"
+        message: "Failed to fetch supplier purchases",
       });
     }
   });
@@ -3828,7 +3744,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching invoice templates:", error);
         res.status(500).json({
-          error: "Failed to fetch invoice templates"
+          error: "Failed to fetch invoice templates",
         });
       }
     },
@@ -3841,11 +3757,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(activeTemplates);
     } catch (error) {
       console.error("Error fetching active invoice templates:", error);
-      res
-        .status(500)
-        .json({
-          error: "Failed to fetch active invoice templates"
-        });
+      res.status(500).json({
+        error: "Failed to fetch active invoice templates",
+      });
     }
   });
 
@@ -3861,7 +3775,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Invoice template creation error:", error);
       res.status(500).json({
-        message: "Failed to create invoice template"
+        message: "Failed to create invoice template",
       });
     }
   });
@@ -3879,7 +3793,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!template) {
         return res.status(404).json({
-          message: "Invoice template not found"
+          message: "Invoice template not found",
         });
       }
 
@@ -3887,7 +3801,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Invoice template update error:", error);
       res.status(500).json({
-        message: "Failed to update invoice template"
+        message: "Failed to update invoice template",
       });
     }
   });
@@ -3900,17 +3814,17 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!deleted) {
         return res.status(404).json({
-          message: "Invoice template not found"
+          message: "Invoice template not found",
         });
       }
 
       res.json({
-        message: "Invoice template deleted successfully"
+        message: "Invoice template deleted successfully",
       });
     } catch (error) {
       console.error("Invoice template deletion error:", error);
       res.status(500).json({
-        message: "Failed to delete invoice template"
+        message: "Failed to delete invoice template",
       });
     }
   });
@@ -3940,7 +3854,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching invoices:", error);
         res.status(500).json({
-          message: "Failed to fetch invoices"
+          message: "Failed to fetch invoices",
         });
       }
     },
@@ -3960,16 +3874,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
       // Validate required fields
       if (!invoiceData.customerName) {
         return res.status(400).json({
-          error: "Customer name is required"
+          error: "Customer name is required",
         });
       }
 
       if (!invoiceData.total || parseFloat(invoiceData.total) <= 0) {
-        return res
-          .status(400)
-          .json({
-            error: "Valid total amount is required"
-          });
+        return res.status(400).json({
+          error: "Valid total amount is required",
+        });
       }
 
       if (
@@ -3978,7 +3890,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         invoiceData.items.length === 0
       ) {
         return res.status(400).json({
-          error: "Invoice items are required"
+          error: "Invoice items are required",
         });
       }
 
@@ -4013,7 +3925,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (isNaN(id)) {
         return res.status(400).json({
-          error: "Invalid invoice ID"
+          error: "Invalid invoice ID",
         });
       }
 
@@ -4021,7 +3933,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!invoice) {
         return res.status(404).json({
-          error: "Invoice not found"
+          error: "Invoice not found",
         });
       }
 
@@ -4029,7 +3941,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("❌ Error fetching invoice:", error);
       res.status(500).json({
-        message: "Failed to fetch invoice"
+        message: "Failed to fetch invoice",
       });
     }
   });
@@ -4042,7 +3954,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (isNaN(id)) {
         return res.status(400).json({
-          error: "Invalid invoice ID"
+          error: "Invalid invoice ID",
         });
       }
 
@@ -4050,7 +3962,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!invoice) {
         return res.status(404).json({
-          error: "Invoice not found"
+          error: "Invoice not found",
         });
       }
 
@@ -4058,7 +3970,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("❌ Error updating invoice:", error);
       res.status(500).json({
-        message: "Failed to update invoice"
+        message: "Failed to update invoice",
       });
     }
   });
@@ -4070,7 +3982,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (isNaN(id)) {
         return res.status(400).json({
-          error: "Invalid invoice ID"
+          error: "Invalid invoice ID",
         });
       }
 
@@ -4078,17 +3990,17 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       if (!deleted) {
         return res.status(404).json({
-          error: "Invoice not found"
+          error: "Invoice not found",
         });
       }
 
       res.json({
-        message: "Invoice deleted successfully"
+        message: "Invoice deleted successfully",
       });
     } catch (error) {
       console.error("❌ Error deleting invoice:", error);
       res.status(500).json({
-        message: "Failed to delete invoice"
+        message: "Failed to delete invoice",
       });
     }
   });
@@ -4123,11 +4035,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
         res.json(connections);
       } catch (error) {
         console.error("❌ Error fetching e-invoice connections:", error);
-        res
-          .status(500)
-          .json({
-            message: "Failed to fetch e-invoice connections"
-          });
+        res.status(500).json({
+          message: "Failed to fetch e-invoice connections",
+        });
       }
     },
   );
@@ -4143,11 +4053,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.status(201).json(connection);
     } catch (error) {
       console.error("E-invoice connection creation error:", error);
-      res
-        .status(500)
-        .json({
-          message: "Failed to create e-invoice connection"
-        });
+      res.status(500).json({
+        message: "Failed to create e-invoice connection",
+      });
     }
   });
 
@@ -4163,21 +4071,17 @@ export async function registerRoutes(app: Express): Promise < Server > {
       );
 
       if (!connection) {
-        return res
-          .status(404)
-          .json({
-            message: "E-invoice connection not found"
-          });
+        return res.status(404).json({
+          message: "E-invoice connection not found",
+        });
       }
 
       res.json(connection);
     } catch (error) {
       console.error("E-invoice connection update error:", error);
-      res
-        .status(500)
-        .json({
-          message: "Failed to update e-invoice connection"
-        });
+      res.status(500).json({
+        message: "Failed to update e-invoice connection",
+      });
     }
   });
 
@@ -4190,23 +4094,19 @@ export async function registerRoutes(app: Express): Promise < Server > {
         const deleted = await storage.deleteEInvoiceConnection(id, tenantDb);
 
         if (!deleted) {
-          return res
-            .status(404)
-            .json({
-              message: "E-invoice connection not found"
-            });
+          return res.status(404).json({
+            message: "E-invoice connection not found",
+          });
         }
 
         res.json({
-          message: "E-invoice connection deleted successfully"
+          message: "E-invoice connection deleted successfully",
         });
       } catch (error) {
         console.error("E-invoice connection deletion error:", error);
-        res
-          .status(500)
-          .json({
-            message: "Failed to delete e-invoice connection"
-          });
+        res.status(500).json({
+          message: "Failed to delete e-invoice connection",
+        });
       }
     },
   );
@@ -4214,13 +4114,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Menu Analysis API
   app.get("/api/menu-analysis", async (req, res) => {
     try {
-      const {
-        startDate,
-        endDate,
-        categoryId,
-        productType,
-        productSearch
-      } = req.query;
+      const { startDate, endDate, categoryId, productType, productSearch } =
+        req.query;
       const tenantDb = await getTenantDatabase(req);
 
       console.log("Menu Analysis API called with params:", {
@@ -4268,8 +4163,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
             productName: products.name,
             categoryId: products.categoryId,
             categoryName: categories.name,
-            totalQuantity: sql < number > `SUM(${transactionItemsTable.quantity})`,
-            totalRevenue: sql < number > `SUM(CAST(${transactionItemsTable.unitPrice} AS NUMERIC) * ${transactionItemsTable.quantity})`,
+            totalQuantity: sql<number>`SUM(${transactionItemsTable.quantity})`,
+            totalRevenue: sql<number>`SUM(CAST(${transactionItemsTable.unitPrice} AS NUMERIC) * ${transactionItemsTable.quantity})`,
           })
           .from(transactionItemsTable)
           .innerJoin(
@@ -4316,8 +4211,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
             productName: products.name,
             categoryId: products.categoryId,
             categoryName: categories.name,
-            totalQuantity: sql < number > `SUM(${orderItemsTable.quantity})`,
-            totalRevenue: sql < number > `SUM(CAST(${orderItemsTable.unitPrice} AS NUMERIC) * ${orderItemsTable.quantity})`,
+            totalQuantity: sql<number>`SUM(${orderItemsTable.quantity})`,
+            totalRevenue: sql<number>`SUM(CAST(${orderItemsTable.unitPrice} AS NUMERIC) * ${orderItemsTable.quantity})`,
           })
           .from(orderItemsTable)
           .innerJoin(orders, eq(orderItemsTable.orderId, orders.id))
@@ -4457,11 +4352,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Customer Reports APIs
   app.get("/api/customer-debts", async (req: TenantRequest, res) => {
     try {
-      const {
-        startDate,
-        endDate,
-        customerId
-      } = req.query;
+      const { startDate, endDate, customerId } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
       // Get customer debts from database
@@ -4470,10 +4361,10 @@ export async function registerRoutes(app: Express): Promise < Server > {
           id: customers.id,
           customerCode: customers.customerId,
           customerName: customers.name,
-          initialDebt: sql < number > `0`, // Mock initial debt
-          newDebt: sql < number > `COALESCE(${customers.totalSpent}, 0) * 0.1`, // 10% of total spent as debt
-          payment: sql < number > `COALESCE(${customers.totalSpent}, 0) * 0.05`, // 5% as payment
-          finalDebt: sql < number > `COALESCE(${customers.totalSpent}, 0) * 0.05`, // Final debt
+          initialDebt: sql<number>`0`, // Mock initial debt
+          newDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.1`, // 10% of total spent as debt
+          payment: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // 5% as payment
+          finalDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // Final debt
           phone: customers.phone,
         })
         .from(customers)
@@ -4490,18 +4381,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(filteredDebts);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch customer debts"
+        message: "Failed to fetch customer debts",
       });
     }
   });
 
   app.get("/api/customer-sales", async (req: TenantRequest, res) => {
     try {
-      const {
-        startDate,
-        endDate,
-        customerId
-      } = req.query;
+      const { startDate, endDate, customerId } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
       // Get customer sales data from database
@@ -4512,7 +4399,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           customerName: customers.name,
           totalSales: customers.totalSpent,
           visitCount: customers.visitCount,
-          averageOrder: sql < number > `CASE WHEN ${customers.visitCount} > 0 THEN ${customers.totalSpent} / ${customers.visitCount} ELSE 0 END`,
+          averageOrder: sql<number>`CASE WHEN ${customers.visitCount} > 0 THEN ${customers.totalSpent} / ${customers.visitCount} ELSE 0 END`,
           phone: customers.phone,
         })
         .from(customers)
@@ -4529,7 +4416,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(filteredSales);
     } catch (error) {
       res.status(500).json({
-        message: "Failed to fetch customer sales"
+        message: "Failed to fetch customer sales",
       });
     }
   });
@@ -4537,14 +4424,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Bulk create products
   app.post("/api/products/bulk", async (req: TenantRequest, res) => {
     try {
-      const {
-        products: productList
-      } = req.body;
+      const { products: productList } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
       if (!productList || !Array.isArray(productList)) {
         return res.status(400).json({
-          error: "Invalid products data"
+          error: "Invalid products data",
         });
       }
 
@@ -4591,16 +4476,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
               stock: parseInt(productData.stock) || 0,
               categoryId: parseInt(productData.categoryId),
               imageUrl: productData.imageUrl || null,
-              taxRate: productData.taxRate ?
-                productData.taxRate.toString() :
-                "0.00",
+              taxRate: productData.taxRate
+                ? productData.taxRate.toString()
+                : "0.00",
             })
             .returning();
 
           console.log(`Successfully created product: ${product.name}`);
           results.push({
             success: true,
-            product
+            product,
           });
           successCount++;
         } catch (error) {
@@ -4630,7 +4515,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Bulk products creation error:", error);
       res.status(500).json({
-        error: "Failed to create products"
+        error: "Failed to create products",
       });
     }
   });
@@ -4660,7 +4545,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("❌ Error fetching employees:", error);
         res.status(500).json({
-          message: "Failed to fetch employees"
+          message: "Failed to fetch employees",
         });
       }
     },
@@ -4669,11 +4554,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Employee sales report data
   app.get("/api/employee-sales", async (req: TenantRequest, res) => {
     try {
-      const {
-        startDate,
-        endDate,
-        employeeId
-      } = req.query;
+      const { startDate, endDate, employeeId } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
       let query = db
@@ -4704,7 +4585,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     } catch (error) {
       console.error("Error fetching employee sales:", error);
       res.status(500).json({
-        message: "Failed to fetch employee sales data"
+        message: "Failed to fetch employee sales data",
       });
     }
   });
@@ -4728,7 +4609,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.json(serverTime);
     } catch (error) {
       res.status(500).json({
-        error: "Failed to get server time"
+        error: "Failed to get server time",
       });
     }
   });
@@ -4736,13 +4617,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Product Analysis API - using orders and order_items data
   app.get("/api/product-analysis", async (req: TenantRequest, res) => {
     try {
-      const {
-        startDate,
-        endDate,
-        categoryId,
-        productType,
-        productSearch
-      } = req.query;
+      const { startDate, endDate, categoryId, productType, productSearch } =
+        req.query;
       const tenantDb = await getTenantDatabase(req);
 
       console.log("Product Analysis API called with params:", {
@@ -4862,9 +4738,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const productStats = Array.from(productMap.values()).map((product) => ({
         ...product,
         averageOrderValue:
-          product.orderCount > 0 ?
-          product.totalRevenue / product.orderCount :
-          0,
+          product.orderCount > 0
+            ? product.totalRevenue / product.orderCount
+            : 0,
       }));
 
       // Calculate totals
@@ -4915,10 +4791,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     "/api/dashboard-data/:startDate/:endDate",
     async (req: TenantRequest, res) => {
       try {
-        const {
-          startDate,
-          endDate
-        } = req.params;
+        const { startDate, endDate } = req.params;
         const tenantDb = await getTenantDatabase(req);
 
         console.log("Dashboard data API called with params:", {
@@ -4940,48 +4813,45 @@ export async function registerRoutes(app: Express): Promise < Server > {
         ]);
 
         // Filter completed orders within date range - EXACT same logic as dashboard
-        const filteredCompletedOrders = Array.isArray(orders) ?
-          orders.filter((order) => {
-            try {
-              if (!order) return false;
+        const filteredCompletedOrders = Array.isArray(orders)
+          ? orders.filter((order) => {
+              try {
+                if (!order) return false;
 
-              // Try multiple date fields - prioritize orderedAt, then paidAt, then createdAt
-              const orderDate = new Date(
-                order.orderedAt ||
-                order.paidAt ||
-                order.createdAt ||
-                order.created_at,
-              );
+                // Try multiple date fields - prioritize orderedAt, then paidAt, then createdAt
+                const orderDate = new Date(
+                  order.orderedAt ||
+                    order.paidAt ||
+                    order.createdAt ||
+                    order.created_at,
+                );
 
-              if (isNaN(orderDate.getTime())) {
+                if (isNaN(orderDate.getTime())) {
+                  return false;
+                }
+
+                const dateMatch = orderDate >= start && orderDate <= end;
+
+                // Include more order statuses to show real data
+                const isCompleted =
+                  order.status === "paid" ||
+                  order.status === "completed" ||
+                  order.status === "served" ||
+                  order.status === "confirmed";
+
+                return dateMatch && isCompleted;
+              } catch (error) {
+                console.error("Error filtering order:", order, error);
                 return false;
               }
-
-              const dateMatch = orderDate >= start && orderDate <= end;
-
-              // Include more order statuses to show real data
-              const isCompleted =
-                order.status === "paid" ||
-                order.status === "completed" ||
-                order.status === "served" ||
-                order.status === "confirmed";
-
-              return dateMatch && isCompleted;
-            } catch (error) {
-              console.error("Error filtering order:", order, error);
-              return false;
-            }
-          }) :
-          [];
+            })
+          : [];
 
         // Calculate dashboard stats - EXACT same logic
-        const periodRevenue = filteredCompletedOrders.reduce(
-          (total, order) => {
-            const orderTotal = Number(order.total || 0);
-            return total + orderTotal;
-          },
-          0,
-        );
+        const periodRevenue = filteredCompletedOrders.reduce((total, order) => {
+          const orderTotal = Number(order.total || 0);
+          return total + orderTotal;
+        }, 0);
 
         const periodOrderCount = filteredCompletedOrders.length;
 
@@ -5000,14 +4870,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
         const daysDiff = Math.max(
           1,
           Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
-          1,
+            1,
         );
         const dailyAverageRevenue = periodRevenue / daysDiff;
 
         // Active orders (pending/in-progress orders)
         const activeOrders = orders.filter(
           (order) =>
-          order.status === "pending" || order.status === "in_progress",
+            order.status === "pending" || order.status === "in_progress",
         ).length;
 
         const occupiedTables = tables.filter(
@@ -5020,14 +4890,14 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
         // Peak hours analysis
         const hourlyOrders: {
-          [key: number]: number
+          [key: number]: number;
         } = {};
         filteredCompletedOrders.forEach((order) => {
           const orderDate = new Date(
             order.orderedAt ||
-            order.createdAt ||
-            order.created_at ||
-            order.paidAt,
+              order.createdAt ||
+              order.created_at ||
+              order.paidAt,
           );
           if (!isNaN(orderDate.getTime())) {
             const hour = orderDate.getHours();
@@ -5037,9 +4907,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
         const peakHour = Object.keys(hourlyOrders).reduce(
           (peak, hour) =>
-          hourlyOrders[parseInt(hour)] > hourlyOrders[parseInt(peak)] ?
-          hour :
-          peak,
+            hourlyOrders[parseInt(hour)] > hourlyOrders[parseInt(peak)]
+              ? hour
+              : peak,
           "12",
         );
 
@@ -5072,7 +4942,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("Error in dashboard data API:", error);
         res.status(500).json({
-          error: "Failed to fetch dashboard data"
+          error: "Failed to fetch dashboard data",
         });
       }
     },
@@ -5166,8 +5036,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
               transaction.cashierName === selectedEmployee ||
               (transaction.cashierName &&
                 transaction.cashierName
-                .toLowerCase()
-                .includes(selectedEmployee.toLowerCase()));
+                  .toLowerCase()
+                  .includes(selectedEmployee.toLowerCase()));
           }
 
           return (
@@ -5182,7 +5052,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("Error in transactions API:", error);
         res.status(500).json({
-          error: "Failed to fetch transactions data"
+          error: "Failed to fetch transactions data",
         });
       }
     },
@@ -5232,8 +5102,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
               order.employeeId?.toString() === selectedEmployee ||
               (order.employeeName &&
                 order.employeeName
-                .toLowerCase()
-                .includes(selectedEmployee.toLowerCase()));
+                  .toLowerCase()
+                  .includes(selectedEmployee.toLowerCase()));
           }
 
           // Enhanced sales channel filtering
@@ -5298,7 +5168,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("Error in orders API:", error);
         res.status(500).json({
-          error: "Failed to fetch orders data"
+          error: "Failed to fetch orders data",
         });
       }
     },
@@ -5308,11 +5178,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     "/api/products/:selectedCategory/:productType/:productSearch?",
     async (req: TenantRequest, res) => {
       try {
-        const {
-          selectedCategory,
-          productType,
-          productSearch
-        } = req.params;
+        const { selectedCategory, productType, productSearch } = req.params;
         const tenantDb = await getTenantDatabase(req);
 
         console.log("Products API called with params:", {
@@ -5376,9 +5242,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
           const searchTerm = productSearch.toLowerCase();
           products = products.filter(
             (product) =>
-            product.name?.toLowerCase().includes(searchTerm) ||
-            product.sku?.toLowerCase().includes(searchTerm) ||
-            product.description?.toLowerCase().includes(searchTerm),
+              product.name?.toLowerCase().includes(searchTerm) ||
+              product.sku?.toLowerCase().includes(searchTerm) ||
+              product.description?.toLowerCase().includes(searchTerm),
           );
         }
 
@@ -5387,7 +5253,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("Error in products API:", error);
         res.status(500).json({
-          error: "Failed to fetch products data"
+          error: "Failed to fetch products data",
         });
       }
     },
@@ -5397,10 +5263,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
     "/api/customers/:customerSearch?/:customerStatus?",
     async (req: TenantRequest, res) => {
       try {
-        const {
-          customerSearch,
-          customerStatus
-        } = req.params;
+        const { customerSearch, customerStatus } = req.params;
         const tenantDb = await getTenantDatabase(req);
 
         console.log(
@@ -5422,11 +5285,11 @@ export async function registerRoutes(app: Express): Promise < Server > {
           const searchTerm = customerSearch.toLowerCase();
           customers = customers.filter(
             (customer) =>
-            customer.name?.toLowerCase().includes(searchTerm) ||
-            customer.phone?.includes(customerSearch) ||
-            customer.email?.toLowerCase().includes(searchTerm) ||
-            customer.customerId?.toLowerCase().includes(searchTerm) ||
-            customer.address?.toLowerCase().includes(searchTerm),
+              customer.name?.toLowerCase().includes(searchTerm) ||
+              customer.phone?.includes(customerSearch) ||
+              customer.email?.toLowerCase().includes(searchTerm) ||
+              customer.customerId?.toLowerCase().includes(searchTerm) ||
+              customer.address?.toLowerCase().includes(searchTerm),
           );
         }
 
@@ -5442,9 +5305,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
           customers = customers.filter((customer) => {
             const totalSpent = Number(customer.totalSpent || 0);
-            const lastVisit = customer.lastVisit ?
-              new Date(customer.lastVisit) :
-              null;
+            const lastVisit = customer.lastVisit
+              ? new Date(customer.lastVisit)
+              : null;
 
             switch (customerStatus) {
               case "active":
@@ -5454,9 +5317,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
               case "vip":
                 return totalSpent >= 500000; // VIP customers with total spent >= 500k VND
               case "new":
-                const joinDate = customer.createdAt ?
-                  new Date(customer.createdAt) :
-                  null;
+                const joinDate = customer.createdAt
+                  ? new Date(customer.createdAt)
+                  : null;
                 return joinDate && joinDate >= thirtyDaysAgo;
               default:
                 return true;
@@ -5469,7 +5332,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       } catch (error) {
         console.error("Error in customers API:", error);
         res.status(500).json({
-          error: "Failed to fetch customers data"
+          error: "Failed to fetch customers data",
         });
       }
     },
@@ -5478,9 +5341,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // Tax code lookup proxy endpoint
   app.post("/api/tax-code-lookup", async (req: TenantRequest, res) => {
     try {
-      const {
-        taxCode
-      } = req.body;
+      const { taxCode } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
       if (!taxCode) {
@@ -5492,7 +5353,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Call the external tax code API
       const response = await fetch(
-        "https://infoerpvn.com:9440/api/CheckListTaxCode/v2", {
+        "https://infoerpvn.com:9440/api/CheckListTaxCode/v2",
+        {
           method: "POST",
           headers: {
             token: "EnURbbnPhUm4GjNgE4Ogrw==",
@@ -5538,7 +5400,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       // Call the real e-invoice API
       const response = await fetch(
-        "https://infoerpvn.com:9440/api/invoice/publish", {
+        "https://infoerpvn.com:9440/api/invoice/publish",
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -5548,7 +5411,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           body: JSON.stringify(publishRequest),
         },
       );
-
+      console.log("E-invoice API response status:", response);
       if (!response.ok) {
         console.error(
           "E-invoice API error:",
@@ -5614,25 +5477,33 @@ export async function registerRoutes(app: Express): Promise < Server > {
   });
 
   // Printer configuration management APIs
-  app.get("/api/printer-configs", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const tenantDb = await getTenantDatabase(req);
-      const configs = await storage.getPrinterConfigs(tenantDb);
-      res.json(configs);
-    } catch (error) {
-      console.error("Error fetching printer configs:", error);
-      res.status(500).json({ error: "Failed to fetch printer configurations" });
-    }
-  });
+  app.get(
+    "/api/printer-configs",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const tenantDb = await getTenantDatabase(req);
+        const configs = await storage.getPrinterConfigs(tenantDb);
+        res.json(configs);
+      } catch (error) {
+        console.error("Error fetching printer configs:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch printer configurations" });
+      }
+    },
+  );
 
   app.post("/api/printer-configs", async (req: TenantRequest, res) => {
     try {
       const tenantDb = await getTenantDatabase(req);
       const configData = req.body;
-      
+
       // Validate required fields
       if (!configData.name || !configData.connectionType) {
-        return res.status(400).json({ error: "Name and connection type are required" });
+        return res
+          .status(400)
+          .json({ error: "Name and connection type are required" });
       }
 
       const config = await storage.createPrinterConfig(configData, tenantDb);
@@ -5649,9 +5520,15 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const tenantDb = await getTenantDatabase(req);
       const configData = req.body;
 
-      const config = await storage.updatePrinterConfig(id, configData, tenantDb);
+      const config = await storage.updatePrinterConfig(
+        id,
+        configData,
+        tenantDb,
+      );
       if (!config) {
-        return res.status(404).json({ error: "Printer configuration not found" });
+        return res
+          .status(404)
+          .json({ error: "Printer configuration not found" });
       }
 
       res.json(config);
@@ -5665,10 +5542,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
     try {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
-      
+
       const deleted = await storage.deletePrinterConfig(id, tenantDb);
       if (!deleted) {
-        return res.status(404).json({ error: "Printer configuration not found" });
+        return res
+          .status(404)
+          .json({ error: "Printer configuration not found" });
       }
 
       res.json({ message: "Printer configuration deleted successfully" });
@@ -5683,10 +5562,15 @@ export async function registerRoutes(app: Express): Promise < Server > {
     try {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
-      
-      const [config] = await db.select().from(printerConfigs).where(eq(printerConfigs.id, id));
+
+      const [config] = await db
+        .select()
+        .from(printerConfigs)
+        .where(eq(printerConfigs.id, id));
       if (!config) {
-        return res.status(404).json({ error: "Printer configuration not found" });
+        return res
+          .status(404)
+          .json({ error: "Printer configuration not found" });
       }
 
       // Test connection based on printer type
@@ -5695,40 +5579,53 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (config.connectionType === "network" && config.ipAddress) {
         // Test network printer connection
         try {
-          const net = require('net');
+          const net = require("net");
           const socket = new net.Socket();
-          
+
           socket.setTimeout(3000);
-          
+
           await new Promise((resolve, reject) => {
             socket.connect(config.port || 9100, config.ipAddress, () => {
-              testResult = { success: true, message: "Network printer connection successful" };
+              testResult = {
+                success: true,
+                message: "Network printer connection successful",
+              };
               socket.destroy();
               resolve(true);
             });
-            
-            socket.on('error', (err) => {
-              testResult = { success: false, message: `Connection failed: ${err.message}` };
+
+            socket.on("error", (err) => {
+              testResult = {
+                success: false,
+                message: `Connection failed: ${err.message}`,
+              };
               reject(err);
             });
-            
-            socket.on('timeout', () => {
+
+            socket.on("timeout", () => {
               testResult = { success: false, message: "Connection timeout" };
               socket.destroy();
-              reject(new Error('timeout'));
+              reject(new Error("timeout"));
             });
           });
         } catch (error) {
-          testResult = { success: false, message: `Network test failed: ${error.message}` };
+          testResult = {
+            success: false,
+            message: `Network test failed: ${error.message}`,
+          };
         }
       } else if (config.connectionType === "usb") {
         // For USB printers, we can't directly test but we can check if the config is valid
-        testResult = { 
-          success: true, 
-          message: "USB printer configuration is valid. Actual connection will be tested during print." 
+        testResult = {
+          success: true,
+          message:
+            "USB printer configuration is valid. Actual connection will be tested during print.",
         };
       } else {
-        testResult = { success: false, message: "Invalid printer configuration" };
+        testResult = {
+          success: false,
+          message: "Invalid printer configuration",
+        };
       }
 
       res.json(testResult);
@@ -5741,7 +5638,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
   // POS Print Receipt API with real printer integration
   app.post("/api/pos/print-receipt", async (req, res) => {
     try {
-      const { content, type, timestamp, orderId, transactionId, printerId } = req.body;
+      const { content, type, timestamp, orderId, transactionId, printerId } =
+        req.body;
 
       console.log("🖨️ POS Print Receipt API called:", {
         type,
@@ -5750,7 +5648,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         transactionId,
         printerId,
         contentLength: content?.length || 0,
-        userAgent: req.headers['user-agent']?.substring(0, 100)
+        userAgent: req.headers["user-agent"]?.substring(0, 100),
       });
 
       // Validate input
@@ -5758,37 +5656,38 @@ export async function registerRoutes(app: Express): Promise < Server > {
         return res.status(400).json({
           error: "Missing required fields",
           message: "Content and transactionId are required",
-          success: false
+          success: false,
         });
       }
 
       const tenantDb = await getTenantDatabase(req);
-      
+
       // Get available printers
       const printers = await storage.getPrinterConfigs(tenantDb);
-      
+
       if (printers.length === 0) {
         console.log("⚠️ No printers configured");
         return res.status(404).json({
           success: false,
-          message: "No printers configured. Please add printer configuration first.",
-          error: "NO_PRINTERS_CONFIGURED"
+          message:
+            "No printers configured. Please add printer configuration first.",
+          error: "NO_PRINTERS_CONFIGURED",
         });
       }
 
       // Select printer (use specified printerId or primary printer)
       let selectedPrinter = null;
       if (printerId) {
-        selectedPrinter = printers.find(p => p.id === printerId);
+        selectedPrinter = printers.find((p) => p.id === printerId);
       } else {
-        selectedPrinter = printers.find(p => p.isPrimary) || printers[0];
+        selectedPrinter = printers.find((p) => p.isPrimary) || printers[0];
       }
 
       if (!selectedPrinter) {
         return res.status(404).json({
           success: false,
           message: "Selected printer not found",
-          error: "PRINTER_NOT_FOUND"
+          error: "PRINTER_NOT_FOUND",
         });
       }
 
@@ -5796,44 +5695,57 @@ export async function registerRoutes(app: Express): Promise < Server > {
         id: selectedPrinter.id,
         name: selectedPrinter.name,
         type: selectedPrinter.printerType,
-        connection: selectedPrinter.connectionType
+        connection: selectedPrinter.connectionType,
       });
 
       // Process print job based on connection type
-      let printResult = { success: false, message: "", printerId: selectedPrinter.id };
+      let printResult = {
+        success: false,
+        message: "",
+        printerId: selectedPrinter.id,
+      };
 
-      if (selectedPrinter.connectionType === "network" && selectedPrinter.ipAddress) {
+      if (
+        selectedPrinter.connectionType === "network" &&
+        selectedPrinter.ipAddress
+      ) {
         // Network printer
         try {
-          console.log(`🌐 Printing to network printer: ${selectedPrinter.ipAddress}:${selectedPrinter.port}`);
-          
+          console.log(
+            `🌐 Printing to network printer: ${selectedPrinter.ipAddress}:${selectedPrinter.port}`,
+          );
+
           // Convert HTML content to ESC/POS commands
           const escPosData = convertToEscPos(content, selectedPrinter);
-          
+
           // Send to network printer
-          const net = require('net');
+          const net = require("net");
           const socket = new net.Socket();
-          
+
           await new Promise((resolve, reject) => {
-            socket.connect(selectedPrinter.port || 9100, selectedPrinter.ipAddress, () => {
-              socket.write(escPosData);
-              socket.end();
-              
-              printResult = {
-                success: true,
-                message: `Printed successfully to ${selectedPrinter.name}`,
-                printerId: selectedPrinter.id
-              };
-              
-              console.log("✅ Network print successful");
-              resolve(true);
-            });
-            
-            socket.on('error', (err) => {
+            socket.connect(
+              selectedPrinter.port || 9100,
+              selectedPrinter.ipAddress,
+              () => {
+                socket.write(escPosData);
+                socket.end();
+
+                printResult = {
+                  success: true,
+                  message: `Printed successfully to ${selectedPrinter.name}`,
+                  printerId: selectedPrinter.id,
+                };
+
+                console.log("✅ Network print successful");
+                resolve(true);
+              },
+            );
+
+            socket.on("error", (err) => {
               printResult = {
                 success: false,
                 message: `Network printer error: ${err.message}`,
-                printerId: selectedPrinter.id
+                printerId: selectedPrinter.id,
               };
               reject(err);
             });
@@ -5842,33 +5754,31 @@ export async function registerRoutes(app: Express): Promise < Server > {
               printResult = {
                 success: false,
                 message: "Network printer timeout",
-                printerId: selectedPrinter.id
+                printerId: selectedPrinter.id,
               };
               socket.destroy();
-              reject(new Error('timeout'));
+              reject(new Error("timeout"));
             });
           });
-          
         } catch (error) {
           console.error("❌ Network printer error:", error);
           printResult = {
             success: false,
             message: `Network printer error: ${error.message}`,
-            printerId: selectedPrinter.id
+            printerId: selectedPrinter.id,
           };
         }
-        
       } else if (selectedPrinter.connectionType === "usb") {
         // USB printer
         try {
           console.log("🔌 Printing to USB printer...");
-          
+
           // For USB printing, we would typically use node modules like 'node-printer' or 'electron-pos-printer'
           // Since we're in a web environment, we'll simulate the process
-          
+
           // Convert HTML to ESC/POS
           const escPosData = convertToEscPos(content, selectedPrinter);
-          
+
           // In a real implementation, you would:
           // const printer = require('node-printer');
           // printer.printDirect({
@@ -5878,30 +5788,28 @@ export async function registerRoutes(app: Express): Promise < Server > {
           //   success: function(jobID) { console.log("Printed with job ID: " + jobID); },
           //   error: function(err) { console.log(err); }
           // });
-          
+
           // For now, simulate successful USB printing
           printResult = {
             success: true,
             message: `Print job sent to USB printer: ${selectedPrinter.name}`,
-            printerId: selectedPrinter.id
+            printerId: selectedPrinter.id,
           };
-          
+
           console.log("✅ USB print job queued");
-          
         } catch (error) {
           console.error("❌ USB printer error:", error);
           printResult = {
             success: false,
             message: `USB printer error: ${error.message}`,
-            printerId: selectedPrinter.id
+            printerId: selectedPrinter.id,
           };
         }
-        
       } else {
         printResult = {
           success: false,
           message: "Unsupported printer connection type",
-          printerId: selectedPrinter.id
+          printerId: selectedPrinter.id,
         };
       }
 
@@ -5914,17 +5822,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
         printerInfo: {
           name: selectedPrinter.name,
           type: selectedPrinter.printerType,
-          connection: selectedPrinter.connectionType
-        }
+          connection: selectedPrinter.connectionType,
+        },
       });
-
     } catch (error) {
       console.error("❌ Print receipt error:", error);
       res.status(500).json({
         success: false,
         message: "Failed to process print request",
         error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   });
@@ -5933,40 +5840,38 @@ export async function registerRoutes(app: Express): Promise < Server > {
   function convertToEscPos(htmlContent: string, printer: any): Buffer {
     // This is a simplified ESC/POS conversion
     // In a real implementation, you'd use libraries like 'escpos' or 'node-thermal-printer'
-    
+
     const escPos = [];
-    
+
     // Initialize printer
-    escPos.push(0x1B, 0x40); // ESC @
-    
+    escPos.push(0x1b, 0x40); // ESC @
+
     // Set character set to UTF-8
-    escPos.push(0x1B, 0x74, 0x06);
-    
+    escPos.push(0x1b, 0x74, 0x06);
+
     // Extract text content from HTML (simplified)
     const textContent = htmlContent
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-      .replace(/<[^>]*>/g, '\n')
-      .replace(/\n\s*\n/g, '\n')
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+      .replace(/<[^>]*>/g, "\n")
+      .replace(/\n\s*\n/g, "\n")
       .trim();
-    
+
     // Convert text to bytes
-    const textBytes = Buffer.from(textContent, 'utf8');
+    const textBytes = Buffer.from(textContent, "utf8");
     escPos.push(...textBytes);
-    
+
     // Add some line feeds and cut paper
-    escPos.push(0x0A, 0x0A, 0x0A); // Line feeds
-    escPos.push(0x1D, 0x56, 0x42, 0x00); // Cut paper
-    
+    escPos.push(0x0a, 0x0a, 0x0a); // Line feeds
+    escPos.push(0x1d, 0x56, 0x42, 0x00); // Cut paper
+
     return Buffer.from(escPos);
   }
 
   // Test customer display connection
   app.post("/api/test-customer-display", async (req, res) => {
     try {
-      const {
-        testCart
-      } = req.body;
+      const { testCart } = req.body;
 
       console.log(
         "🧪 Test customer display endpoint called with cart:",
@@ -5977,16 +5882,18 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (wss) {
         const testMessage = JSON.stringify({
           type: "cart_update",
-          cart: testCart || [{
-            id: "test-1",
-            product: {
-              name: "Test Product",
-              price: "50000"
+          cart: testCart || [
+            {
+              id: "test-1",
+              product: {
+                name: "Test Product",
+                price: "50000",
+              },
+              quantity: 2,
+              price: "50000",
+              total: "100000",
             },
-            quantity: 2,
-            price: "50000",
-            total: "100000",
-          }, ],
+          ],
           subtotal: 100000,
           tax: 10000,
           total: 110000,
@@ -6027,7 +5934,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.get("/api/health/db", async (req, res) => {
     try {
       // Test basic connection with simple query
-      const result = await db.execute(sql `
+      const result = await db.execute(sql`
         SELECT
           current_database() as database_name,
           current_user as user_name,
