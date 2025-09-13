@@ -335,14 +335,14 @@ export function CustomerDisplay({
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between py-4 border-t-2 border-green-200 gap-x-4">
-                      <span className="text-xl font-bold text-gray-800">
-                        Giảm giá:
-                      </span>
-                      <span className="text-2xl font-bold text-green-600">
-                        {formatCurrency(discount || "0")}
-                      </span>
-                    </div>
+                    {discount && discount > 0 && (
+                      <div className="flex items-center justify-between py-2 border-b border-gray-200 gap-x-4">
+                        <span className="text-gray-600">Giảm giá:</span>
+                        <span className="font-medium text-red-600">
+                          -{formatCurrency(discount)}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between py-4 border-t-2 border-green-200 gap-x-4">
                       <span className="text-xl font-bold text-gray-800">

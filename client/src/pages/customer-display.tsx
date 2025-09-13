@@ -6,6 +6,7 @@ import type { CartItem } from "@shared/schema";
 export default function CustomerDisplayPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [storeInfo, setStoreInfo] = useState<any>(null);
+  const [discount, setDiscount] = useState<number>(0);
   const [qrPayment, setQrPayment] = useState<{
     qrCodeUrl: string;
     amount: number;
@@ -159,11 +160,17 @@ export default function CustomerDisplayPage() {
                   items: data.cart?.length || 0,
                   isItemDeletion: data.isItemDeletion,
                   deletedItem: data.deletedItemId ? `${data.deletedItemId} (${data.deletedItemName})` : 'none',
+                  discount: data.discount || 0,
                   timestamp: data.timestamp
                 });
 
                 // Get the new cart from message
                 const newCart = Array.isArray(data.cart) ? [...data.cart] : [];
+                
+                // Update discount if provided
+                if (data.discount !== undefined) {
+                  setDiscount(parseFloat(data.discount.toString()) || 0);
+                }
                 
                 // SIMPLIFIED: Direct cart update without complex validation cycles
                 setCart(prevCart => {
@@ -178,7 +185,8 @@ export default function CustomerDisplayPage() {
                     from: prevCart.length,
                     to: newCart.length,
                     isItemDeletion: data.isItemDeletion,
-                    deletedItemId: data.deletedItemId
+                    deletedItemId: data.deletedItemId,
+                    discount: data.discount || 0
                   });
                   
                   // If this is an item deletion, ensure the deleted item is not in the new cart
@@ -200,6 +208,7 @@ export default function CustomerDisplayPage() {
                 if (newCart.length === 0 && !qrPayment) {
                   console.log("Customer Display: 🧹 Clearing QR payment due to empty cart");
                   setQrPayment(null);
+                  setDiscount(0); // Reset discount when cart is cleared
                 }
                 break;
               case 'store_info':
@@ -350,7 +359,7 @@ export default function CustomerDisplayPage() {
       subtotal={subtotal}
       tax={tax}
       total={total}
-      discount= {0}
+      discount={discount}
       storeInfo={storeInfo}
       qrPayment={qrPayment}
     />
