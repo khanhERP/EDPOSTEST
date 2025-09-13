@@ -2735,6 +2735,53 @@ export default function SalesOrders() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {showEInvoiceModal && selectedInvoice && (
+        <EInvoiceModal
+          isOpen={showEInvoiceModal}
+          onClose={() => setShowEInvoiceModal(false)}
+          onConfirm={(eInvoiceData) => {
+            console.log("📧 E-Invoice confirmed from sales orders:", eInvoiceData);
+            setShowEInvoiceModal(false);
+            
+            // Handle the e-invoice result
+            if (eInvoiceData.success) {
+              // Refresh orders data
+              queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+              
+              // Show success message
+              toast({
+                title: "Thành công",
+                description: "Hóa đơn điện tử đã được xử lý thành công",
+              });
+            }
+          }}
+          total={(() => {
+            if (!selectedInvoice) return 0;
+            const subtotal = parseFloat(selectedInvoice.subtotal || "0");
+            const tax = parseFloat(selectedInvoice.tax || "0");
+            const discount = parseFloat(selectedInvoice.discount || "0");
+            return Math.max(0, subtotal + tax - discount);
+          })()}
+          cartItems={orderItems.map((item) => ({
+            id: item.productId || item.id,
+            name: item.productName,
+            price: parseFloat(item.unitPrice || "0"),
+            quantity: item.quantity,
+            sku: item.sku || `SKU${item.productId || item.id}`,
+            taxRate: parseFloat(item.taxRate || "0"),
+          }))}
+          selectedPaymentMethod={(() => {
+            const paymentMethod = selectedInvoice.paymentMethod;
+            if (paymentMethod === 1) return "cash";
+            if (paymentMethod === 2) return "creditCard";
+            if (paymentMethod === 3) return "qrCode";
+            return "cash";
+          })()}
+          source="sales-orders"
+          orderId={selectedInvoice.id}
+        />
+      )}
+
       {showPrintDialog && printReceiptData && (
         <PrintDialog
           isOpen={showPrintDialog}
