@@ -1069,8 +1069,7 @@ export function SalesChartReport() {
                                           filteredTransactions.forEach(
                                             (transaction: any) => {
                                               const method =
-                                                transaction.paymentMethod ||
-                                                "cash";
+                                                transaction.paymentMethod || "cash";
                                               allPaymentMethods.add(method);
                                             },
                                           );
@@ -2172,7 +2171,9 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage(totalPages)
+                      setCurrentPage(
+                        totalPages
+                      )
                     }
                     disabled={
                       currentPage === totalPages
@@ -3252,7 +3253,7 @@ export function SalesChartReport() {
                     <TableHead className="text-center border-r min-w-[100px] font-bold">
                       {t("reports.orders")}
                     </TableHead>
-                    <TableHead className="text-center border-r min-w-[130px] font-bold">
+                    <TableHead className="text-center border-r min-w-[100px] font-bold">
                       {t("common.customerGroup")}
                     </TableHead>
                     <TableHead className="text-right border-r min-w-[140px] font-bold">
@@ -3644,7 +3645,7 @@ export function SalesChartReport() {
       sampleOrder: relevantOrders[0]
         ? {
             id: relevantOrders[0].id,
-            tableId: relevantOrders[0].tableId,
+            tableId: relevantRelevantOrders[0].tableId,
             total: relevantOrders[0].total,
             status: relevantOrders[0].status,
             salesChannel: relevantOrders[0].salesChannel,
