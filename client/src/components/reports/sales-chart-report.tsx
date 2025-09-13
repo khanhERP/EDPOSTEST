@@ -2620,7 +2620,7 @@ export function SalesChartReport() {
                                 {formatCurrency(item.tax)}
                               </TableCell>
                               <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
-                                {formatCurrency(item.total)}
+                                {formatCurrency(item.revenue + item.tax)}
                               </TableCell>
                               {(() => {
                                 // Get all unique payment methods from all employee data
@@ -2743,7 +2743,17 @@ export function SalesChartReport() {
                                       )}
                                     </TableCell>
                                     <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
-                                      {formatCurrency(Number(order.total || 0))}
+                                      {formatCurrency(
+                                        Math.max(
+                                          0,
+                                          Number(order.subtotal || 0) -
+                                            Number(order.discount || 0),
+                                        ) + Math.max(
+                                          0,
+                                          Number(order.total || 0) -
+                                            Number(order.subtotal || 0),
+                                        )
+                                      )}
                                     </TableCell>
                                     {(() => {
                                       // Get all unique payment methods from all employee data
@@ -2839,7 +2849,7 @@ export function SalesChartReport() {
                         </TableCell>
                         <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                           {formatCurrency(
-                            data.reduce((sum, item) => sum + item.total, 0),
+                            data.reduce((sum, item) => sum + item.revenue + item.tax, 0),
                           )}
                         </TableCell>
                         {(() => {
