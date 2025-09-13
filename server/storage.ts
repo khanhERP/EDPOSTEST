@@ -241,6 +241,396 @@ export interface IStorage {
   deletePrinterConfig(id: number, tenantDb?: any): Promise<boolean>;
 }
 
+// Define interfaces for the schemas
+interface Category {
+  id: number;
+  name: string;
+  isActive: boolean;
+}
+
+interface InsertCategory {
+  name: string;
+  isActive?: boolean;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  sku: string;
+  price: number;
+  stock: number;
+  categoryId: number;
+  productType: number;
+  trackInventory: boolean;
+  imageUrl: string | null;
+  isActive: boolean;
+  afterTaxPrice: number | null;
+}
+
+interface InsertProduct {
+  name: string;
+  sku: string;
+  price: number;
+  stock: number;
+  categoryId: number;
+  productType?: number;
+  trackInventory?: boolean;
+  imageUrl?: string | null;
+  isActive?: boolean;
+}
+
+interface Transaction {
+  id: number;
+  transactionId: string;
+  customerId: number | null;
+  employeeId: number | null;
+  tableId: number | null;
+  status: string;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  amountReceived: number | null;
+  change: number | null;
+  paymentMethod: string;
+  paymentStatus: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface InsertTransaction {
+  transactionId: string;
+  customerId?: number | null;
+  employeeId?: number | null;
+  tableId?: number | null;
+  status: string;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  amountReceived?: number | null;
+  change?: number | null;
+  paymentMethod: string;
+  paymentStatus: string;
+  createdAt?: Date;
+}
+
+interface TransactionItem {
+  id: number;
+  transactionId: number;
+  productId: number;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  productName: string;
+}
+
+interface InsertTransactionItem {
+  productId: number;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  productName: string;
+}
+
+interface Receipt extends Transaction {
+  items: TransactionItem[];
+}
+
+interface Employee {
+  id: number;
+  employeeId: string;
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
+  salary: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface InsertEmployee {
+  employeeId?: string;
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
+  salary: number;
+  isActive?: boolean;
+}
+
+interface AttendanceRecord {
+  id: number;
+  employeeId: number;
+  clockIn: Date;
+  clockOut: Date | null;
+  breakStart: Date | null;
+  breakEnd: Date | null;
+  status: string;
+  notes: string | null;
+  totalHours: string | null;
+  overtime: string | null;
+}
+
+interface Table {
+  id: number;
+  tableNumber: string;
+  status: string;
+  capacity: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface InsertTable {
+  tableNumber: string;
+  status?: string;
+  capacity?: number;
+}
+
+interface Order {
+  id: number;
+  orderNumber: string;
+  tableId: number | null;
+  employeeId: number | null;
+  status: string;
+  customerName: string | null;
+  customerCount: number | null;
+  subtotal: string;
+  tax: string;
+  discount: string;
+  total: string;
+  paymentMethod: string | null;
+  paymentStatus: string;
+  einvoiceStatus: number;
+  salesChannel: string;
+  notes: string | null;
+  paidAt: Date | null;
+  servedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  invoiceNumber?: string | null;
+  invoiceId?: number | null;
+  templateNumber?: string | null;
+  symbol?: string | null;
+}
+
+interface InsertOrder {
+  orderNumber?: string;
+  tableId?: number | null;
+  employeeId?: number | null;
+  status: string;
+  customerName?: string | null;
+  customerCount?: number | null;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  paymentMethod?: string | null;
+  paymentStatus?: string;
+  einvoiceStatus?: number;
+  salesChannel?: string;
+  notes?: string | null;
+  paidAt?: Date | null;
+  servedAt?: Date | null;
+  invoiceNumber?: string | null;
+  invoiceId?: number | null;
+  templateNumber?: string | null;
+  symbol?: string | null;
+}
+
+interface OrderItem {
+  id: number;
+  orderId: number;
+  productId: number;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  notes: string | null;
+  productName?: string;
+  productSku?: string;
+}
+
+interface InsertOrderItem {
+  productId: number;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  notes?: string | null;
+}
+
+interface StoreSettings {
+  id: number;
+  storeName: string;
+  storeCode: string;
+  businessType: string;
+  openTime: string;
+  closeTime: string;
+  logoUrl?: string | null;
+  currency?: string;
+  taxRate?: string;
+  goldThreshold?: string;
+  vipThreshold?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface InsertStoreSettings {
+  storeName?: string;
+  storeCode?: string;
+  businessType?: string;
+  openTime?: string;
+  closeTime?: string;
+  logoUrl?: string | null;
+  currency?: string;
+  taxRate?: string;
+  goldThreshold?: string;
+  vipThreshold?: string;
+}
+
+interface Supplier {
+  id: number;
+  name: string;
+  code: string;
+  contactPerson: string;
+  phone: string;
+  email: string;
+  address: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface InsertSupplier {
+  name: string;
+  code: string;
+  contactPerson?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  status?: string;
+}
+
+interface Customer {
+  id: number;
+  customerId: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  visitCount: number;
+  totalSpent: string;
+  points: number;
+  membershipLevel: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface InsertCustomer {
+  customerId?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  visitCount?: number;
+  totalSpent?: string;
+  points?: number;
+  membershipLevel?: string;
+}
+
+interface PointTransaction {
+  id: number;
+  customerId: number;
+  type: "earned" | "redeemed" | "adjusted";
+  points: number;
+  description: string;
+  orderId: number | null;
+  employeeId: number | null;
+  previousBalance: number;
+  newBalance: number;
+  createdAt: string;
+}
+
+interface Invoice {
+  id: number;
+  invoiceNumber: string | null;
+  templateNumber: string | null;
+  symbol: string | null;
+  customerName: string;
+  customerTaxCode: string | null;
+  customerAddress: string | null;
+  customerPhone: string | null;
+  customerEmail: string | null;
+  subtotal: number;
+  tax: number;
+  total: number;
+  paymentMethod: number;
+  invoiceDate: Date;
+  status: string;
+  einvoiceStatus: number;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface InvoiceItem {
+  id: number;
+  invoiceId: number;
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  taxRate: string;
+}
+
+interface InvoiceTemplate {
+  id: number;
+  name: string;
+  templateNumber: string;
+  templateCode: string | null;
+  symbol: string;
+  useCK: boolean;
+  notes: string | null;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface EInvoiceConnection {
+  id: number;
+  symbol: string;
+  taxCode: string;
+  loginId: string;
+  password: string;
+  softwareName: string;
+  loginUrl?: string;
+  signMethod: string;
+  cqtCode: string;
+  notes?: string;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PrinterConfig {
+  id: number;
+  name: string;
+  printerType: string;
+  connectionType: string;
+  ipAddress?: string;
+  port?: number;
+  macAddress?: string;
+  paperWidth: number;
+  printSpeed: number;
+  isPrimary: boolean;
+  isSecondary: boolean;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export class DatabaseStorage implements IStorage {
   // Store db connection for reuse
   private db: any;

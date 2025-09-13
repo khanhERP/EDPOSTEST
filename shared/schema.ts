@@ -435,12 +435,27 @@ export const eInvoiceConnections = pgTable("einvoice_connections", {
   password: text("password").notNull(),
   softwareName: varchar("software_name", { length: 50 }).notNull(),
   loginUrl: text("login_url"),
-  signMethod: varchar("sign_method", { length: 20 })
-    .notNull()
-    .default("Ký server"),
+  signMethod: varchar("sign_method", { length: 20 }).notNull().default("Ký server"),
   cqtCode: varchar("cqt_code", { length: 20 }).notNull().default("Cấp nhật"),
   notes: text("notes"),
   isDefault: boolean("is_default").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const printerConfigs = pgTable("printer_configs", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  printerType: varchar("printer_type", { length: 50 }).notNull().default("thermal"),
+  connectionType: varchar("connection_type", { length: 50 }).notNull().default("usb"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  port: integer("port").default(9100),
+  macAddress: varchar("mac_address", { length: 17 }),
+  paperWidth: integer("paper_width").notNull().default(80),
+  printSpeed: integer("print_speed").default(100),
+  isPrimary: boolean("is_primary").notNull().default(false),
+  isSecondary: boolean("is_secondary").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -561,28 +576,6 @@ export type Invoice = typeof invoices.$inferSelect;
 export type InvoiceItem = typeof invoiceItems.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
-
-
-
-// Printer configs table
-export const printerConfigs = pgTable("printer_configs", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  printerType: varchar("printer_type", { length: 50 }).notNull().default("thermal"),
-  connectionType: varchar("connection_type", { length: 50 }).notNull().default("usb"),
-  ipAddress: varchar("ip_address", { length: 45 }),
-  port: integer("port").default(9100),
-  macAddress: varchar("mac_address", { length: 17 }),
-  paperWidth: integer("paper_width").notNull().default(80),
-  printSpeed: integer("print_speed").default(100),
-  isPrimary: boolean("is_primary").notNull().default(false),
-  isSecondary: boolean("is_secondary").notNull().default(false),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-
 
 export const insertPrinterConfigSchema = createInsertSchema(printerConfigs).omit({
   id: true,
