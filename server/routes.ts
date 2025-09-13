@@ -2635,8 +2635,6 @@ export async function registerRoutes(app: Express): Promise < Server > {
     }
   });
 
-        .orderBy(desc(orderItemsTable.id));
-
       console.log(`✅ Found ${items.length} total order items`);
 
       // Ensure items is always an array, even if empty
