@@ -2095,23 +2095,7 @@ export default function Settings() {
                       </CardContent>
                     </Card>
 
-                    {/* Receipt Settings */}
-                    <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Receipt className="h-5 w-5 text-green-600" />
-                          {t("settings.receiptSettings")}
-                        </CardTitle>
-                        <CardDescription>
-                          Cài đặt định dạng và nội dung hóa đơn
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-500">
-                          Tùy chỉnh logo, thông tin và định dạng hóa đơn
-                        </p>
-                      </CardContent>
-                    </Card>
+                    
                   </div>
                 </TabsContent>
               </Tabs>
