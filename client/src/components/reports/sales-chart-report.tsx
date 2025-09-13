@@ -1078,6 +1078,13 @@ export function SalesChartReport() {
 
                                         const paymentMethodsArray =
                                           Array.from(allPaymentMethods).sort();
+                                        const totalCustomerPayment = Object.values(
+                                          paymentMethods,
+                                        ).reduce(
+                                          (sum: number, amount: number) =>
+                                            sum + amount,
+                                          0,
+                                        );
 
                                         return (
                                           <>
@@ -1210,12 +1217,23 @@ export function SalesChartReport() {
                             <>
                               {paymentMethodsArray.map((method: any) => {
                                 const total = totalPaymentMethods[method] || 0;
+                                // Calculate total customer payment = total revenue + total tax for this method
+                                const totalRevenue = Object.values(dailySales).reduce(
+                                  (sum, data) => sum + Math.max(0, data.revenue - data.discount),
+                                  0,
+                                );
+                                const totalTax = Object.values(dailySales).reduce(
+                                  (sum, data) => sum + (data.tax || 0),
+                                  0,
+                                );
+                                const totalCustomerPaymentForMethod = total > 0 ? totalRevenue + totalTax : 0;
+
                                 return (
                                   <TableCell
                                     key={method}
                                     className="text-right border-r font-bold text-green-600 min-w-[130px] px-4"
                                   >
-                                    {total > 0 ? formatCurrency(total) : "-"}
+                                    {total > 0 ? formatCurrency(totalCustomerPaymentForMethod) : "-"}
                                   </TableCell>
                                 );
                               })}
@@ -1503,7 +1521,7 @@ export function SalesChartReport() {
                   discount: orderDiscount, // Giảm giá từ order
                   revenue: orderRevenue, // Doanh thu từ order
                   tax: orderTax, // Thuế từ order
-                  vat: orderTax, // VAT từ order
+                  vat: orderTax, // VAT = thuế
                   totalMoney: orderTotal, // Tổng tiền từ order
                   productGroup: "-",
                   taxRate: 10, // Default tax rate for items
@@ -3646,7 +3664,7 @@ export function SalesChartReport() {
       sampleOrder: relevantOrders[0]
         ? {
             id: relevantOrders[0].id,
-            tableId: relevantRelevantOrders[0].tableId,
+            tableId: relevantOrders[0].tableId,
             total: relevantOrders[0].total,
             status: relevantOrders[0].status,
             salesChannel: relevantOrders[0].salesChannel,
@@ -4803,7 +4821,7 @@ export function SalesChartReport() {
                         ))}
                       </Pie>
                       <ChartTooltip
-                        content={({ active, payload }) => {
+                        content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
                             return (
