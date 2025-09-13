@@ -281,32 +281,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="paperWidth">Khổ giấy (mm)</Label>
-                    <Select value={formData.paperWidth.toString()} onValueChange={(value) => setFormData({ ...formData, paperWidth: parseInt(value) })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="58">58mm</SelectItem>
-                        <SelectItem value="80">80mm</SelectItem>
-                        <SelectItem value="110">110mm</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="printSpeed">Tốc độ in (%)</Label>
-                    <Input
-                      id="printSpeed"
-                      type="number"
-                      value={formData.printSpeed}
-                      onChange={(e) => setFormData({ ...formData, printSpeed: parseInt(e.target.value) || 100 })}
-                      min="50"
-                      max="200"
-                    />
-                  </div>
-                </div>
+                
 
                 <div className="flex items-center space-x-2">
                   <Switch
