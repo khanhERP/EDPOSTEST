@@ -2449,14 +2449,17 @@ export default function SalesOrders() {
                                                               };
 
                                                             console.log(
-                                                              "📄 Sales Orders: Showing receipt modal for printing",
+                                                              "📄 Sales Orders: Setting receipt data and showing print dialog",
                                                             );
-                                                            setPrintReceiptData(
-                                                              receiptData,
-                                                            );
-                                                            setShowPrintDialog(
-                                                              true,
-                                                            );
+                                                            console.log("📄 Receipt data:", receiptData);
+                                                            
+                                                            // Set the receipt data first, then show the dialog
+                                                            setPrintReceiptData(receiptData);
+                                                            
+                                                            // Use setTimeout to ensure state is updated
+                                                            setTimeout(() => {
+                                                              setShowPrintDialog(true);
+                                                            }, 10);
                                                           }
                                                         }}
                                                       >
