@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -67,6 +66,8 @@ import {
   UserCheck,
   Tag,
   ShoppingCart,
+  Printer,
+  Receipt,
 } from "lucide-react";
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 import { CustomerPointsModal } from "@/components/customers/customer-points-modal";
@@ -74,6 +75,7 @@ import { MembershipModal } from "@/components/membership/membership-modal";
 import { PointsManagementModal } from "@/components/customers/points-management-modal";
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PrinterConfigModal } from "@/components/pos/printer-config-modal";
 
 // E-invoice software providers mapping
 const EINVOICE_PROVIDERS = [
@@ -93,6 +95,9 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("store");
+
+  // Printer configuration state
+  const [showPrinterConfig, setShowPrinterConfig] = useState(false);
 
   // Customer management state
   const [showCustomerForm, setShowCustomerForm] = useState(false);
@@ -162,7 +167,7 @@ export default function Settings() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
-        
+
         // Handle specific error cases
         if (errorData.message && errorData.message.includes("attendance records")) {
           toast({
@@ -183,7 +188,7 @@ export default function Settings() {
             variant: "destructive",
           });
         }
-        
+
         setShowEmployeeDeleteDialog(false);
         setEmployeeToDelete(null);
         return;
@@ -3069,6 +3074,40 @@ export default function Settings() {
             </TabsContent>
           </Tabs>
         </div>
+        
+        {/* Printer Configuration Card */}
+        <Card className="bg-white/80 backdrop-blur-sm border-white/20 mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Printer className="h-5 w-5 text-green-600" />
+                Cấu hình máy in
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Quản lý các máy in kết nối với hệ thống POS
+                </p>
+                <Button 
+                  onClick={() => setShowPrinterConfig(true)}
+                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+                >
+                  <Printer className="mr-2 h-4 w-4" />
+                  Cấu hình máy in
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+        {/* Receipt Settings */}
+        <Card className="bg-white/80 backdrop-blur-sm border-white/20 mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-green-600" />
+              {t("settings.receiptSettings")}
+            </CardTitle>
+          </CardHeader>
+        </Card>
       </div>
 
       {/* Customer Form Modal */}
@@ -4248,6 +4287,14 @@ export default function Settings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Printer Configuration Modal */}
+      {showPrinterConfig && (
+        <PrinterConfigModal
+          isOpen={showPrinterConfig}
+          onClose={() => setShowPrinterConfig(false)}
+        />
+      )}
     </div>
   );
 }
