@@ -2007,65 +2007,112 @@ export default function Settings() {
                 </TabsContent>
 
                 <TabsContent value="operations">
-                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-green-600" />
-                        {t("settings.operationHours")}
-                      </CardTitle>
-                      <CardDescription>
-                        {t("settings.operationHoursDesc")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="openTime">
-                            {t("settings.openTime")}
-                          </Label>
-                          <Input
-                            id="openTime"
-                            type="time"
-                            value={storeSettings.openTime}
-                            onChange={(e) =>
-                              handleStoreSettingChange(
-                                "openTime",
-                                e.target.value,
-                              )
-                            }
-                          />
+                  <div className="space-y-6">
+                    <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Clock className="w-5 h-5 text-green-600" />
+                          {t("settings.operationHours")}
+                        </CardTitle>
+                        <CardDescription>
+                          {t("settings.operationHoursDesc")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="openTime">
+                              {t("settings.openTime")}
+                            </Label>
+                            <Input
+                              id="openTime"
+                              type="time"
+                              value={storeSettings.openTime}
+                              onChange={(e) =>
+                                handleStoreSettingChange(
+                                  "openTime",
+                                  e.target.value,
+                                )
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="closeTime">
+                              {t("settings.closeTime")}
+                            </Label>
+                            <Input
+                              id="closeTime"
+                              type="time"
+                              value={storeSettings.closeTime}
+                              onChange={(e) =>
+                                handleStoreSettingChange(
+                                  "closeTime",
+                                  e.target.value,
+                                )
+                              }
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="closeTime">
-                            {t("settings.closeTime")}
-                          </Label>
-                          <Input
-                            id="closeTime"
-                            type="time"
-                            value={storeSettings.closeTime}
-                            onChange={(e) =>
-                              handleStoreSettingChange(
-                                "closeTime",
-                                e.target.value,
-                              )
-                            }
-                          />
+                        <div className="flex justify-end mt-6">
+                          <Button
+                            onClick={saveStoreSettings}
+                            disabled={updateStoreSettingsMutation.isPending}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            {updateStoreSettingsMutation.isPending
+                              ? t("common.loading")
+                              : t("common.save")}
+                          </Button>
                         </div>
-                      </div>
-                      <div className="flex justify-end mt-6">
-                        <Button
-                          onClick={saveStoreSettings}
-                          disabled={updateStoreSettingsMutation.isPending}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          {updateStoreSettingsMutation.isPending
-                            ? t("common.loading")
-                            : t("common.save")}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+
+                    {/* Printer Configuration Card */}
+                    <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Printer className="h-5 w-5 text-green-600" />
+                          Cấu hình máy in
+                        </CardTitle>
+                        <CardDescription>
+                          Quản lý các máy in kết nối với hệ thống POS
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <p className="text-sm text-gray-600">
+                            Thiết lập và quản lý máy in cho hóa đơn, biên lai và báo cáo
+                          </p>
+                          <Button 
+                            onClick={() => setShowPrinterConfig(true)}
+                            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Printer className="mr-2 h-4 w-4" />
+                            Cấu hình máy in
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Receipt Settings */}
+                    <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Receipt className="h-5 w-5 text-green-600" />
+                          {t("settings.receiptSettings")}
+                        </CardTitle>
+                        <CardDescription>
+                          Cài đặt định dạng và nội dung hóa đơn
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-gray-500">
+                          Tùy chỉnh logo, thông tin và định dạng hóa đơn
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </TabsContent>
               </Tabs>
             </TabsContent>
@@ -3076,39 +3123,7 @@ export default function Settings() {
           </Tabs>
         </div>
         
-        {/* Printer Configuration Card */}
-        <Card className="bg-white/80 backdrop-blur-sm border-white/20 mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Printer className="h-5 w-5 text-green-600" />
-              Cấu hình máy in
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Quản lý các máy in kết nối với hệ thống POS
-              </p>
-              <Button 
-                onClick={() => setShowPrinterConfig(true)}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-              >
-                <Printer className="mr-2 h-4 w-4" />
-                Cấu hình máy in
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Receipt Settings */}
-        <Card className="bg-white/80 backdrop-blur-sm border-white/20 mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-green-600" />
-              {t("settings.receiptSettings")}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+        
       </div>
 
       {/* Customer Form Modal */}
