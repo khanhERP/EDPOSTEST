@@ -2348,9 +2348,7 @@ export default function SalesOrders() {
                                                         className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                         onClick={() => {
                                                           if (selectedInvoice) {
-                                                            setShowPublishDialog(
-                                                              true,
-                                                            );
+                                                            setShowEInvoiceModal(true);
                                                           }
                                                         }}
                                                       >
@@ -2476,9 +2474,7 @@ export default function SalesOrders() {
                                                         className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                         onClick={() => {
                                                           if (selectedInvoice) {
-                                                            setShowPublishDialog(
-                                                              true,
-                                                            );
+                                                            setShowEInvoiceModal(true);
                                                           }
                                                         }}
                                                       >
