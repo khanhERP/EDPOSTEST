@@ -912,7 +912,7 @@ export function SalesChartReport() {
                                   {formatCurrency(tax)}
                                 </TableCell>
                                 <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
-                                  {formatCurrency(data.subtotal + tax)}
+                                  {formatCurrency(Math.max(0, paymentAmount - discount) + tax)}
                                 </TableCell>
                                 {(() => {
                                   // Group orders by payment method for this date
@@ -1170,7 +1170,7 @@ export function SalesChartReport() {
                           {formatCurrency(
                             Object.values(dailySales).reduce(
                               (sum, data) =>
-                                sum + data.subtotal + (data.tax || 0),
+                                sum + Math.max(0, data.revenue - data.discount) + (data.tax || 0),
                               0,
                             ),
                           )}
