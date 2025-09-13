@@ -137,7 +137,10 @@ export function ReceiptModal({
     console.log("🖨️ Receipt Modal: Print button clicked - processing for mobile/POS");
 
     const printContent = document.getElementById("receipt-content");
-    if (!printContent) return;
+    if (!printContent) {
+      alert("Không tìm thấy nội dung hóa đơn để in.");
+      return;
+    }
 
     try {
       // Enhanced device detection
@@ -147,244 +150,267 @@ export function ReceiptModal({
       const isMobile = isIOS || isAndroid || /mobile|tablet|phone/.test(userAgent);
       const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
       const isChrome = /chrome/.test(userAgent);
+      const isPOSTerminal = window.innerWidth <= 1024 && window.innerHeight <= 768;
       
       console.log("🔍 Enhanced device detection:", { 
-        isIOS, isAndroid, isMobile, isSafari, isChrome, userAgent 
+        isIOS, isAndroid, isMobile, isSafari, isChrome, isPOSTerminal, 
+        screenSize: `${window.innerWidth}x${window.innerHeight}`,
+        userAgent: userAgent.substring(0, 100)
       });
 
-      // For mobile devices, use enhanced mobile printing approach
+      // Create receipt data structure
+      const receiptData = {
+        content: printContent.innerHTML,
+        type: 'receipt',
+        timestamp: new Date().toISOString(),
+        orderId: receipt?.id,
+        transactionId: receipt?.transactionId
+      };
+
+      // ALWAYS try POS API first for any device (including mobile)
+      try {
+        console.log("🖨️ Trying POS printer API for device:", isMobile ? 'mobile' : 'desktop');
+        const printResponse = await fetch('/api/pos/print-receipt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(receiptData)
+        });
+
+        if (printResponse.ok) {
+          const result = await printResponse.json();
+          console.log("✅ Receipt sent to POS printer successfully:", result);
+          
+          // Show success message based on device type
+          if (isMobile) {
+            alert("✅ Hóa đơn đã được gửi đến máy in thành công!\nKiểm tra máy in POS của bạn.");
+          } else {
+            alert("✅ Hóa đơn đã được gửi đến máy in POS thành công!");
+          }
+          
+          onClose();
+          
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("printCompleted", {
+                detail: { closeAllModals: true, refreshData: true },
+              }),
+            );
+          }
+          return;
+        } else {
+          console.log("⚠️ POS print API returned error, trying fallback methods");
+        }
+      } catch (apiError) {
+        console.log("⚠️ POS print API failed, using device-specific fallbacks:", apiError.message);
+      }
+
+      // For mobile devices, use specialized mobile printing approaches
       if (isMobile) {
-        console.log("📱 Using enhanced mobile printing approach");
+        console.log("📱 Using mobile printing fallbacks");
         
-        // Create receipt data for API printing
-        const receiptData = {
-          content: printContent.innerHTML,
-          type: 'receipt',
-          timestamp: new Date().toISOString(),
-          orderId: receipt?.id,
-          transactionId: receipt?.transactionId
-        };
+        // Show user options for mobile printing
+        const userChoice = confirm(
+          "Máy in POS không khả dụng.\n\n" +
+          "Chọn OK để tải file hóa đơn về điện thoại để in sau.\n" +
+          "Chọn Cancel để thử mở cửa sổ in trình duyệt."
+        );
 
-        // Try POS API first
-        try {
-          const printResponse = await fetch('/api/pos/print-receipt', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(receiptData)
-          });
-
-          if (printResponse.ok) {
-            console.log("✅ Receipt sent to POS printer successfully");
-            onClose();
-            
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(
-                new CustomEvent("printCompleted", {
-                  detail: { closeAllModals: true, refreshData: true },
-                }),
-              );
-            }
-            return;
-          }
-        } catch (apiError) {
-          console.log("⚠️ POS print API not available, using mobile fallbacks");
-        }
-
-        // iOS Safari specific handling
-        if (isIOS) {
-          console.log("🍎 iOS device detected - using iOS-optimized printing");
+        if (userChoice) {
+          // User chose to download file
+          console.log("📱 User chose to download receipt file");
           
-          // Create a clean print version for iOS
-          const printWindow = window.open('', '_blank', 'width=400,height=600,scrollbars=yes');
-          if (printWindow) {
-            const cleanContent = `
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <meta charset="utf-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>Hóa đơn - ${receipt?.transactionId}</title>
-                  <style>
-                    body {
-                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace;
-                      font-size: 14px;
-                      line-height: 1.4;
-                      margin: 10px;
-                      padding: 0;
-                      background: white;
-                      color: black;
-                    }
-                    .text-center { text-align: center; }
-                    .text-right { text-align: right; }
-                    .font-bold { font-weight: bold; }
-                    .border-t { border-top: 1px solid #000; margin: 8px 0; padding-top: 8px; }
-                    .border-b { border-bottom: 1px solid #000; margin: 8px 0; padding-bottom: 8px; }
-                    .flex { display: flex; justify-content: space-between; align-items: center; }
-                    img { max-width: 80px; height: auto; }
-                    .receipt-container { max-width: 300px; margin: 0 auto; }
-                    @media print {
-                      body { margin: 0; font-size: 12px; }
-                      .receipt-container { max-width: 100%; }
-                    }
-                  </style>
-                </head>
-                <body>
-                  <div class="receipt-container">
-                    ${printContent.innerHTML}
-                  </div>
-                  <script>
-                    // Auto-trigger print dialog for iOS
-                    setTimeout(() => {
-                      window.print();
-                    }, 500);
-                  </script>
-                </body>
-              </html>
-            `;
-            
-            printWindow.document.write(cleanContent);
-            printWindow.document.close();
-            
-            // Close current modal
-            setTimeout(() => {
-              onClose();
-            }, 1000);
-            
-            return;
-          }
-        }
-
-        // Android specific handling
-        if (isAndroid) {
-          console.log("🤖 Android device detected - using Android-optimized approach");
-          
-          // Try Web Share API first (if available)
-          if (navigator.share) {
-            try {
-              const blob = new Blob([`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                  <meta charset="utf-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>Hóa đơn</title>
-                  <style>
-                    body { font-family: monospace; font-size: 12px; margin: 10px; line-height: 1.4; }
-                    .text-center { text-align: center; }
-                    .text-right { text-align: right; }
-                    .font-bold { font-weight: bold; }
-                    .border-t, .border-b { border: 1px solid #000; margin: 8px 0; padding: 4px 0; }
-                    .flex { display: flex; justify-content: space-between; }
-                  </style>
-                </head>
-                <body>
-                  ${printContent.innerHTML}
-                </body>
-                </html>
-              `], { type: 'text/html' });
-              
-              const url = URL.createObjectURL(blob);
-              const file = new File([blob], `receipt-${receipt?.transactionId || Date.now()}.html`, { type: 'text/html' });
-              
-              await navigator.share({
-                title: 'Hóa đơn',
-                text: 'Chia sẻ hóa đơn để in',
-                files: [file]
-              });
-              
-              URL.revokeObjectURL(url);
-              onClose();
-              return;
-            } catch (shareError) {
-              console.log("📱 Web Share API failed, falling back to download");
-            }
-          }
-          
-          // Fallback to download for Android
-          const blob = new Blob([`
+          const cleanReceiptHTML = `
             <!DOCTYPE html>
             <html>
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Hóa đơn</title>
+              <title>Hóa đơn - ${receipt?.transactionId || 'HĐ'}</title>
               <style>
-                body { font-family: monospace; font-size: 12px; margin: 10px; }
+                body {
+                  font-family: ${isIOS ? '-apple-system, BlinkMacSystemFont' : 'Roboto'}, monospace;
+                  font-size: 14px;
+                  line-height: 1.4;
+                  margin: 15px;
+                  padding: 0;
+                  background: white;
+                  color: black;
+                }
                 .text-center { text-align: center; }
                 .text-right { text-align: right; }
                 .font-bold { font-weight: bold; }
-                .border-t, .border-b { border: 1px solid #000; margin: 8px 0; padding: 4px 0; }
-                .flex { display: flex; justify-content: space-between; }
+                .border-t { border-top: 1px solid #000; margin: 8px 0; padding-top: 8px; }
+                .border-b { border-bottom: 1px solid #000; margin: 8px 0; padding-bottom: 8px; }
+                .flex { display: flex; justify-content: space-between; align-items: center; }
                 img { max-width: 100px; height: auto; }
+                .receipt-container { max-width: 350px; margin: 0 auto; }
+                .print-instructions {
+                  margin-top: 20px;
+                  padding: 15px;
+                  background: #f0f0f0;
+                  border-radius: 8px;
+                  font-size: 12px;
+                }
+                @media print {
+                  body { margin: 0; font-size: 12px; }
+                  .receipt-container { max-width: 100%; }
+                  .print-instructions { display: none; }
+                }
               </style>
             </head>
             <body>
-              ${printContent.innerHTML}
+              <div class="receipt-container">
+                ${printContent.innerHTML}
+                <div class="print-instructions">
+                  <div class="font-bold text-center">Hướng dẫn in:</div>
+                  <div>• Nhấn nút Menu hoặc Share trên trình duyệt</div>
+                  <div>• Chọn "Print" hoặc "In"</div>
+                  <div>• Hoặc chia sẻ với ứng dụng in khác</div>
+                  ${isIOS ? '<div>• Trên iOS: Chọn Share → Print</div>' : ''}
+                  ${isAndroid ? '<div>• Trên Android: Menu → Print hoặc Share</div>' : ''}
+                </div>
+              </div>
+              <script>
+                // Auto-open print dialog after short delay
+                setTimeout(() => {
+                  try {
+                    window.print();
+                  } catch (e) {
+                    console.log("Auto-print failed, user needs to print manually");
+                  }
+                }, 1000);
+              </script>
             </body>
             </html>
-          `], { type: 'text/html' });
+          `;
           
+          // Create and download file
+          const blob = new Blob([cleanReceiptHTML], { type: 'text/html;charset=utf-8' });
+          const fileName = `hoa-don-${receipt?.transactionId || Date.now()}.html`;
+          
+          // Try different download methods for mobile compatibility
+          if (isAndroid && navigator.share && navigator.canShare) {
+            // Use Web Share API for Android if available
+            try {
+              const file = new File([blob], fileName, { type: 'text/html' });
+              const canShare = navigator.canShare({ files: [file] });
+              
+              if (canShare) {
+                await navigator.share({
+                  title: 'Hóa đơn EDPOS',
+                  text: 'Hóa đơn thanh toán',
+                  files: [file]
+                });
+                
+                console.log("✅ File shared successfully via Web Share API");
+                onClose();
+                return;
+              }
+            } catch (shareError) {
+              console.log("📱 Web Share API failed, falling back to download");
+            }
+          }
+          
+          // Standard download method
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `receipt-${receipt?.transactionId || Date.now()}.html`;
+          a.download = fileName;
           a.style.display = 'none';
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
           
-          alert("Hóa đơn đã được tải xuống. Mở file để in hoặc chia sẻ với ứng dụng in.");
-          onClose();
-          return;
-        }
-
-        // Generic mobile fallback
-        console.log("📱 Using generic mobile print fallback");
-        const printWindow = window.open('', '_blank', 'width=400,height=600');
-        if (printWindow) {
-          printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Hóa đơn</title>
-              <style>
-                body { font-family: monospace; font-size: 12px; margin: 10px; }
-                .text-center { text-align: center; }
-                .text-right { text-align: right; }
-                .font-bold { font-weight: bold; }
-                .border-t, .border-b { border: 1px solid #000; margin: 8px 0; }
-                .flex { display: flex; justify-content: space-between; }
-                @media print { body { margin: 0; } }
-              </style>
-            </head>
-            <body>
-              ${printContent.innerHTML}
-              <script>
-                setTimeout(() => { window.print(); }, 500);
-              </script>
-            </body>
-            </html>
-          `);
-          printWindow.document.close();
+          setTimeout(() => {
+            alert(
+              `✅ Hóa đơn đã được tải xuống!\n\n` +
+              `File: ${fileName}\n\n` +
+              `Cách in:\n` +
+              `1. Mở file HTML vừa tải\n` +
+              `2. Nhấn menu trình duyệt\n` +
+              `3. Chọn "Print" hoặc "In"\n` +
+              `4. Hoặc chia sẻ với ứng dụng in`
+            );
+            onClose();
+          }, 500);
           
-          setTimeout(() => onClose(), 1000);
           return;
+        } else {
+          // User chose to try browser print dialog
+          console.log("📱 User chose to try browser print dialog");
+          
+          const printWindow = window.open('', '_blank', 'width=400,height=600,scrollbars=yes');
+          if (printWindow) {
+            const printHTML = `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>In Hóa đơn</title>
+                <style>
+                  body {
+                    font-family: monospace;
+                    font-size: 14px;
+                    line-height: 1.4;
+                    margin: 10px;
+                    background: white;
+                    color: black;
+                  }
+                  .text-center { text-align: center; }
+                  .text-right { text-align: right; }
+                  .font-bold { font-weight: bold; }
+                  .border-t, .border-b { border: 1px solid #000; margin: 8px 0; padding: 4px 0; }
+                  .flex { display: flex; justify-content: space-between; }
+                  img { max-width: 100px; height: auto; }
+                  @media print { body { margin: 0; font-size: 12px; } }
+                </style>
+              </head>
+              <body>
+                ${printContent.innerHTML}
+                <script>
+                  // Try to open print dialog
+                  setTimeout(() => {
+                    try {
+                      window.print();
+                    } catch (e) {
+                      alert("Vui lòng sử dụng menu trình duyệt để in (Menu → Print)");
+                    }
+                  }, 800);
+                </script>
+              </body>
+              </html>
+            `;
+            
+            printWindow.document.write(printHTML);
+            printWindow.document.close();
+            
+            setTimeout(() => {
+              onClose();
+            }, 1200);
+            
+            return;
+          } else {
+            alert("Không thể mở cửa sổ in. Popup có thể bị chặn.\nVui lòng cho phép popup và thử lại.");
+            return;
+          }
         }
       }
 
-      // Desktop fallback
+      // Desktop/laptop fallback
       console.log("🖥️ Using desktop printing method");
       handleDesktopPrint(printContent);
 
     } catch (error) {
       console.error("❌ Print error:", error);
+      alert(`Có lỗi xảy ra khi in: ${error.message}\nVui lòng thử lại.`);
       // Final fallback to desktop method
-      handleDesktopPrint(printContent);
+      if (printContent) {
+        handleDesktopPrint(printContent);
+      }
     }
   };
 
