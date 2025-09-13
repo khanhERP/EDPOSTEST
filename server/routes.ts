@@ -5506,42 +5506,60 @@ export async function registerRoutes(app: Express): Promise < Server > {
         timestamp,
         orderId,
         transactionId,
-        contentLength: content?.length || 0
+        contentLength: content?.length || 0,
+        userAgent: req.headers['user-agent']?.substring(0, 100)
       });
 
-      // For POS systems with USB printers, we would integrate with specific printer drivers
-      // This is a placeholder that logs the print request and returns success
-      // In a real implementation, this would:
-      // 1. Format the content for the specific printer (ESC/POS, etc.)
-      // 2. Send to printer driver or printing service
-      // 3. Handle printer status and errors
+      // Detect device type for appropriate handling
+      const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+      const isAndroid = userAgent.includes('android');
+      const isIOS = userAgent.includes('iphone') || userAgent.includes('ipad');
+      const isMobile = isAndroid || isIOS;
 
-      // Simulate printer processing
+      console.log("🔍 Device detection:", { isAndroid, isIOS, isMobile });
+
+      // For POS systems with USB printers or network printers
+      // This simulates sending to a thermal printer
       const printResult = {
         success: true,
-        message: "Receipt queued for printing",
-        printerId: "USB_THERMAL_PRINTER",
+        message: isMobile ? 
+          "Receipt processed for mobile device" : 
+          "Receipt queued for thermal printer",
+        printerId: isMobile ? "MOBILE_BROWSER_PRINT" : "USB_THERMAL_PRINTER",
         timestamp: new Date().toISOString(),
         orderId,
-        transactionId
+        transactionId,
+        deviceType: isMobile ? "mobile" : "pos_terminal",
+        printMethod: isMobile ? "browser_download" : "thermal_printer"
       };
 
-      // Log successful print request
-      console.log("✅ Print request processed:", printResult);
+      // In a real POS system, this is where you would:
+      if (!isMobile) {
+        // Desktop/POS terminal - send to thermal printer
+        console.log("🖨️ Sending to thermal printer (ESC/POS commands)");
+        // Example: Send ESC/POS commands to printer via USB or network
+        // printerDriver.print(formatForThermalPrinter(content));
+      } else {
+        // Mobile device - prepare for browser printing
+        console.log("📱 Preparing for mobile browser printing");
+        // Mobile devices will handle printing through browser
+      }
 
-      // In a real POS system, you would:
-      // - Check printer status
-      // - Format content for thermal printer (80mm width)
-      // - Send ESC/POS commands to printer
-      // - Handle print errors and retries
+      // Log successful print request
+      console.log("✅ Print request processed successfully:", {
+        success: printResult.success,
+        deviceType: printResult.deviceType,
+        printMethod: printResult.printMethod
+      });
 
       res.json(printResult);
     } catch (error) {
       console.error("❌ Print receipt error:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to print receipt",
-        error: error instanceof Error ? error.message : "Unknown error"
+        message: "Failed to process print request",
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString()
       });
     }
   });

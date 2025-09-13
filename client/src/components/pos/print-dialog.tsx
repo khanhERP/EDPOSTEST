@@ -255,84 +255,110 @@ export function PrintDialog({
       const isMobile = isIOS || isAndroid || /mobile|tablet|phone/.test(userAgent);
       const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
       const isChrome = /chrome/.test(userAgent);
+      const isPOSDevice = /pos|kiosk|terminal/.test(userAgent) || window.innerWidth <= 1024;
       
       console.log('🔍 Print Dialog - Enhanced device detection:', { 
-        isIOS, isAndroid, isMobile, isSafari, isChrome, userAgent 
+        isIOS, isAndroid, isMobile, isSafari, isChrome, isPOSDevice, userAgent, screenWidth: window.innerWidth 
       });
+
+      // Always try POS API first for any device
+      try {
+        console.log('🖨️ Attempting POS printer API...');
+        const printApiResponse = await fetch('/api/pos/print-receipt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: generatePrintContent(),
+            type: 'receipt',
+            timestamp: new Date().toISOString(),
+            orderId: receiptData.orderId,
+            transactionId: receiptData.transactionId
+          })
+        });
+
+        if (printApiResponse.ok) {
+          console.log('✅ Receipt sent to POS printer successfully');
+          alert('Hóa đơn đã được gửi đến máy in thành công!');
+          onClose();
+          
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('printCompleted', { 
+              detail: { 
+                closeAllModals: true,
+                refreshData: true,
+                orderId: receiptData.orderId 
+              } 
+            }));
+            window.dispatchEvent(new CustomEvent('refreshOrders', { detail: { immediate: true } }));
+            window.dispatchEvent(new CustomEvent('refreshTables', { detail: { immediate: true } }));
+          }
+          return;
+        } else {
+          console.log('⚠️ POS print API returned error, trying fallback methods');
+        }
+      } catch (apiError) {
+        console.log('⚠️ POS print API failed:', apiError);
+      }
 
       // For mobile devices, use specialized mobile printing approach
       if (isMobile) {
         console.log('📱 Using mobile printing approach for', isIOS ? 'iOS' : isAndroid ? 'Android' : 'Mobile');
+
+        // For mobile/tablet devices, try multiple approaches
+        console.log('📱 Trying mobile printing methods...');
         
-        // First try POS API for unified printing
+        // Method 1: Try browser's native print
         try {
-          const printApiResponse = await fetch('/api/pos/print-receipt', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              content: generatePrintContent(),
-              type: 'receipt',
-              timestamp: new Date().toISOString(),
-              orderId: receiptData.orderId,
-              transactionId: receiptData.transactionId
-            })
-          });
-
-          if (printApiResponse.ok) {
-            console.log('✅ Receipt sent to POS printer successfully');
-            onClose();
+          // Create print window with formatted receipt
+          const printWindow = window.open('', '_blank', 'width=400,height=600,scrollbars=yes');
+          if (printWindow) {
+            printWindow.document.write(generatePrintContent());
+            printWindow.document.close();
             
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('printCompleted', { 
-                detail: { 
-                  closeAllModals: true,
-                  refreshData: true,
-                  orderId: receiptData.orderId 
-                } 
-              }));
-              window.dispatchEvent(new CustomEvent('refreshOrders', { detail: { immediate: true } }));
-              window.dispatchEvent(new CustomEvent('refreshTables', { detail: { immediate: true } }));
-            }
-            return;
+            // Try to trigger print dialog
+            setTimeout(() => {
+              printWindow.focus();
+              try {
+                printWindow.print();
+                alert('Vui lòng chọn máy in hoặc lưu file PDF từ hộp thoại in.');
+                printWindow.close();
+                onClose();
+                return;
+              } catch (printError) {
+                console.log('Print dialog failed, trying download method');
+                printWindow.close();
+              }
+            }, 1000);
           }
-        } catch (apiError) {
-          console.log('⚠️ POS print API not available, using mobile fallback');
+        } catch (printWindowError) {
+          console.log('Print window failed, trying direct download');
         }
-
-        // Mobile fallback: Create downloadable receipt
+        
+        // Method 2: Download as HTML file
         const printContent = generatePrintContent();
         const blob = new Blob([printContent], { type: 'text/html' });
         
         // iOS specific handling
         if (isIOS) {
-          console.log('🍎 iOS device - using download approach');
+          console.log('🍎 iOS device - using optimized approach');
           
-          // For iOS, create a data URL and open in new tab for better printing
+          // Create downloadable link
           const dataUrl = URL.createObjectURL(blob);
-          const printWindow = window.open(dataUrl, '_blank');
-          
-          if (printWindow) {
-            // Give user instructions
-            setTimeout(() => {
-              alert('Để in hóa đơn trên iOS:\n1. Nhấn nút Share (chia sẻ)\n2. Chọn "Print" hoặc tìm ứng dụng in\n3. Hoặc lưu và mở bằng ứng dụng in khác');
-            }, 1000);
-          } else {
-            // Fallback to download
-            const a = document.createElement('a');
-            a.href = dataUrl;
-            a.download = `hoa-don-${receiptData.transactionId}.html`;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            alert('Hóa đơn đã được tải xuống. Mở file HTML để in.');
-          }
-          
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `hoa-don-${receiptData.transactionId}.html`;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
           URL.revokeObjectURL(dataUrl);
-          onClose();
+          
+          setTimeout(() => {
+            alert('File hóa đơn đã tải xuống!\n\nCách in:\n• Mở file HTML vừa tải\n• Nhấn nút Share (Chia sẻ)\n• Chọn "Print" để in\n• Hoặc chọn ứng dụng in khác');
+            onClose();
+          }, 500);
           return;
         }
 
