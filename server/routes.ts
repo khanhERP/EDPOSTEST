@@ -2635,25 +2635,6 @@ export async function registerRoutes(app: Express): Promise < Server > {
     }
   });
 
-      console.log(`✅ Found ${items.length} total order items`);
-
-      // Ensure items is always an array, even if empty
-      const safeItems = Array.isArray(items) ? items : [];
-      res.json(safeItems);
-    } catch (error) {
-      console.error("=== GET ALL ORDER ITEMS ERROR ===");
-      console.error("Error type:", error?.constructor?.name || "Unknown");
-      console.error("Error message:", error?.message || "Unknown error");
-      console.error("Error stack:", error?.stack || "No stack trace");
-
-      res.status(500).json({
-        message: "Failed to fetch all order items",
-        details: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      });
-    }
-  });
-
   // Get order items for a specific order
   app.get("/api/order-items/:orderId", async (req: TenantRequest, res) => {
     try {
