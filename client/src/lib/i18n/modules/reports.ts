@@ -318,7 +318,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     detailedTablePerformanceDesc:
       "Xem các chỉ số hoạt động chi tiết của từng bàn",
     currentStatus: "Trạng thái hiện tại",
-    orderCount: "Số đơn hàng",
     peakTime: "Giờ cao điểm",
     timesPerDay: " lần/ngày",
     hourUnit: " giờ",
@@ -386,7 +385,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     resetFilters: "Đặt lại bộ lọc",
     uniqueProducts: "Sản phẩm độc đáo",
     categoryGroup: "Nhóm hàng",
-    totalSalesRevenue: "Tổng doanh thu bán hàng",
     salesRevenue: "Doanh thu bán hàng",
     revenueAmount: "Số tiền doanh thu",
     revenueTotal: "Doanh thu",
@@ -416,8 +414,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     quantityByCategory: "Số lượng",
     itemCount: "Số sản phẩm",
     menuItemAnalysis: "Phân tích sản phẩm theo đơn hàng",
-    topProductsByQuantity: "Top sản phẩm bán nhiều nhất",
-    topProductsByRevenue: "Top sản phẩm doanh thu cao nhất",
+    topProductsByQuantity: "Sản phẩm bán nhiều nhất theo số lượng",
+    topProductsByRevenue: "Sản phẩm doanh thu cao nhất",
+    averagePrice: "Giá trung bình",
+    contribution: "% Đóng góp",
 
     // Menu report specific translations
     menuItems: "Mặt hàng đã bán",
@@ -437,7 +437,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     topProductsByQuantity: "Sản phẩm bán nhiều nhất theo số lượng",
     topProductsByRevenue: "Sản phẩm doanh thu cao nhất",
     averagePrice: "Giá trung bình",
-    contribution: "% Đóng góp",
+    contribution: "% đóng góp",
 
     // Table analysis
     tablePerformance: "Hiệu suất bàn",
@@ -467,7 +467,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     summaryReportTitle: "Báo cáo tóm tắt",
 
     // Table detail headers
-    salesDetailsHeader: " Chi tiết bán h,ng",
+    salesDetailsHeader: " Chi tiết bán hàng",
     revenueExpenseDetailsHeader: "Chi tiết thu chi",
     inventoryDetailsHeader: "Chi tiết hàng hóa",
 
@@ -545,9 +545,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataAvailable: "Không có dữ liệu",
     loadingData: "Đang tải dữ liệu...",
     errorLoadingData: "Lỗi khi tải dữ liệu",
-    itemsSold: "đã bán",
     noRevenue: "Chưa có doanh thu",
     contribution: "% đóng góp",
+    itemsSold: "đã bán",
     items: "món",
     hour: "giờ",
     productDetails: "Chi tiết sản phẩm",
@@ -846,7 +846,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     detailedTablePerformance: "상세 테이블 성과",
     detailedTablePerformanceDesc: "각 테이블의 상세 운영 지표 확인",
     currentStatus: "현재 상태",
-    orderCount: "주문 수",
     peakTime: "피크 시간",
     timesPerDay: " 회/일",
     hourUnit: " 시간",

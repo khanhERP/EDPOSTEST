@@ -3077,27 +3077,27 @@ export default function Settings() {
         
         {/* Printer Configuration Card */}
         <Card className="bg-white/80 backdrop-blur-sm border-white/20 mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Printer className="h-5 w-5 text-green-600" />
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Printer className="h-5 w-5 text-green-600" />
+              Cấu hình máy in
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Quản lý các máy in kết nối với hệ thống POS
+              </p>
+              <Button 
+                onClick={() => setShowPrinterConfig(true)}
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+              >
+                <Printer className="mr-2 h-4 w-4" />
                 Cấu hình máy in
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  Quản lý các máy in kết nối với hệ thống POS
-                </p>
-                <Button 
-                  onClick={() => setShowPrinterConfig(true)}
-                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-                >
-                  <Printer className="mr-2 h-4 w-4" />
-                  Cấu hình máy in
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Receipt Settings */}
         <Card className="bg-white/80 backdrop-blur-sm border-white/20 mt-6">
