@@ -1089,10 +1089,8 @@ export function SalesChartReport() {
                                                 >
                                                   {transactionMethod === method
                                                     ? formatCurrency(
-                                                        Number(
-                                                          transaction.total ||
-                                                            0,
-                                                        ),
+                                                        Math.max(0, Number(transaction.subtotal || 0) - Number(transaction.discount || 0)) +
+                                                        (Number(transaction.total || 0) - Number(transaction.subtotal || 0))
                                                       )
                                                     : "-"}
                                                 </TableCell>
@@ -2163,7 +2161,9 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      setCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2171,8 +2171,12 @@ export function SalesChartReport() {
                     ›
                   </button>
                   <button
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                      setCurrentPage(totalPages)
+                    }
+                    disabled={
+                      currentPage === totalPages
+                    }
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     »
