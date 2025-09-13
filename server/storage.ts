@@ -19,6 +19,7 @@ import {
   inventoryTransactions,
   invoices,
   invoiceItems,
+  printerConfigs, // Import printerConfigs schema
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, and, gte, lte, or, sql, desc, not, like } from "drizzle-orm";
@@ -232,6 +233,12 @@ export interface IStorage {
   deleteEInvoiceConnection(id: number): Promise<boolean>;
 
   getEmployeeByEmail(email: string): Promise<Employee | undefined>;
+
+  // Printer configuration management
+  getPrinterConfigs(tenantDb?: any): Promise<PrinterConfig[]>;
+  createPrinterConfig(configData: any, tenantDb?: any): Promise<PrinterConfig>;
+  updatePrinterConfig(id: number, configData: any, tenantDb?: any): Promise<PrinterConfig | null>;
+  deletePrinterConfig(id: number, tenantDb?: any): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1554,7 +1561,7 @@ export class DatabaseStorage implements IStorage {
     // Ensure total = subtotal + tax (discount stored separately)
     if (updateData.subtotal && updateData.tax) {
       const expectedTotal = Number(updateData.subtotal) + Number(updateData.tax);
-      
+
       // If total is provided, validate it matches subtotal + tax
       if (updateData.total) {
         const actualTotal = Number(updateData.total);
@@ -1571,7 +1578,7 @@ export class DatabaseStorage implements IStorage {
         // Calculate total if not provided
         updateData.total = expectedTotal.toFixed(2);
       }
-      
+
       console.log(`✅ Storage: Total calculation: ${updateData.subtotal} + ${updateData.tax} = ${updateData.total}`);
     }
 
@@ -3096,6 +3103,36 @@ export class DatabaseStorage implements IStorage {
       // Re-throw the error to be handled by the caller
       throw error;
     }
+  }
+
+  // Printer configuration management
+  async getPrinterConfigs(tenantDb?: any): Promise<PrinterConfig[]> {
+    const database = tenantDb || db;
+    return await database.select().from(printerConfigs).where(eq(printerConfigs.isActive, true));
+  }
+
+  async createPrinterConfig(configData: any, tenantDb?: any): Promise<PrinterConfig> {
+    const database = tenantDb || db;
+    const [config] = await database.insert(printerConfigs).values(configData).returning();
+    return config;
+  }
+
+  async updatePrinterConfig(id: number, configData: any, tenantDb?: any): Promise<PrinterConfig | null> {
+    const database = tenantDb || db;
+    const [config] = await database
+      .update(printerConfigs)
+      .set({ ...configData, updatedAt: new Date() })
+      .where(eq(printerConfigs.id, id))
+      .returning();
+    return config || null;
+  }
+
+  async deletePrinterConfig(id: number, tenantDb?: any): Promise<boolean> {
+    const database = tenantDb || db;
+    const result = await database
+      .delete(printerConfigs)
+      .where(eq(printerConfigs.id, id));
+    return result.rowCount > 0;
   }
 }
 

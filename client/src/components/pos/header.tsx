@@ -38,8 +38,13 @@ import {
   Package2,
   UserCheck,
   Truck,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { ProductManagerModal } from "./product-manager-modal";
+import { PrinterConfigModal } from "./printer-config-modal";
+import { InvoiceManagementModal } from "./invoice-management-modal";
 
 interface POSHeaderProps {
   onLogout?: () => void;
@@ -53,6 +58,9 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
   const [location] = useLocation();
   const [submenuTimer, setSubmenuTimer] = useState<NodeJS.Timeout | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [showProductManager, setShowProductManager] = useState(false);
+  const [showInvoiceManagement, setShowInvoiceManagement] = useState(false);
+  const [showPrinterConfig, setShowPrinterConfig] = useState(false);
 
   // Fetch store settings
   const { data: storeSettings } = useQuery<StoreSettings>({
@@ -414,8 +422,6 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                             </span>
                           </button>
                         </Link>
-                        
-                        
                       </div>
                     )}
                   </div>
@@ -502,20 +508,20 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                     onClick={(e) => {
                       e.preventDefault();
                       setPosMenuOpen(false);
-                      
+
                       // Detect if multiple screens are available
                       if (screen.availWidth > window.screen.width || window.screen.availLeft !== 0) {
                         // Multiple screens detected - place on secondary screen
                         const secondaryScreenLeft = screen.availLeft !== 0 ? 0 : screen.width;
                         const width = Math.min(1024, screen.availWidth);
                         const height = Math.min(768, screen.availHeight);
-                        
+
                         const customerWindow = window.open(
                           '/customer-display',
                           'customerDisplay',
                           `width=${width},height=${height},left=${secondaryScreenLeft},top=0,resizable=yes,scrollbars=yes,status=no,toolbar=no,menubar=no,location=no`
                         );
-                        
+
                         // Try to maximize on secondary screen after opening
                         if (customerWindow) {
                           setTimeout(() => {
@@ -533,7 +539,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                         const height = 768;
                         const left = (screen.width - width) / 2;
                         const top = (screen.height - height) / 2;
-                        
+
                         window.open(
                           '/customer-display',
                           'customerDisplay',
@@ -562,10 +568,48 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
               )}
             </div>
           </nav>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowProductManager(true)}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Quản lý sản phẩm
+          </Button>
 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPrinterConfig(true)}
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            Cấu hình máy in
+          </Button>
+        </div>
+
+        <div className="flex items-center space-x-4">
           <LanguageSwitcher />
         </div>
       </div>
+      {showProductManager && (
+        <ProductManagerModal
+          isOpen={showProductManager}
+          onClose={() => setShowProductManager(false)}
+        />
+      )}
+      {showInvoiceManagement && (
+        <InvoiceManagementModal
+          isOpen={showInvoiceManagement}
+          onClose={() => setShowInvoiceManagement(false)}
+        />
+      )}
+
+      {showPrinterConfig && (
+        <PrinterConfigModal
+          isOpen={showPrinterConfig}
+          onClose={() => setShowPrinterConfig(false)}
+        />
+      )}
     </header>
   );
 }
