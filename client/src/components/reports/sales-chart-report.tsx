@@ -2646,15 +2646,25 @@ export function SalesChartReport() {
                                 return (
                                   <>
                                     {paymentMethodsArray.map((method: any) => {
-                                      const amount =
-                                        item.paymentMethods[method] || 0;
+                                      // Calculate customer payment = revenue + tax for this payment method
+                                      let customerPaymentForMethod = 0;
+                                      if (item.orders && Array.isArray(item.orders)) {
+                                        item.orders.forEach((order: any) => {
+                                          if ((order.paymentMethod || "cash") === method) {
+                                            const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
+                                            const orderTax = Math.max(0, Number(order.total || 0) - Number(order.subtotal || 0));
+                                            customerPaymentForMethod += orderRevenue + orderTax;
+                                          }
+                                        });
+                                      }
+                                      
                                       return (
                                         <TableCell
                                           key={method}
                                           className="text-right border-r font-medium min-w-[130px] px-4"
                                         >
-                                          {amount > 0
-                                            ? formatCurrency(amount)
+                                          {customerPaymentForMethod > 0
+                                            ? formatCurrency(customerPaymentForMethod)
                                             : "-"}
                                         </TableCell>
                                       );
@@ -2779,9 +2789,11 @@ export function SalesChartReport() {
                                         Array.from(allPaymentMethods).sort();
                                       const orderPaymentMethod =
                                         order.paymentMethod || "cash";
-                                      const orderTotal = Number(
-                                        order.total || 0,
-                                      );
+                                      
+                                      // Calculate customer payment = revenue + tax for this order
+                                      const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
+                                      const orderTax = Math.max(0, Number(order.total || 0) - Number(order.subtotal || 0));
+                                      const customerPayment = orderRevenue + orderTax;
 
                                       return (
                                         <>
@@ -2792,7 +2804,7 @@ export function SalesChartReport() {
                                                 className="text-right border-r text-sm min-w-[130px] px-4"
                                               >
                                                 {orderPaymentMethod === method
-                                                  ? formatCurrency(orderTotal)
+                                                  ? formatCurrency(customerPayment)
                                                   : "-"}
                                               </TableCell>
                                             ),
@@ -2892,13 +2904,26 @@ export function SalesChartReport() {
                           return (
                             <>
                               {paymentMethodsArray.map((method: any) => {
-                                const total = totalPaymentMethods[method] || 0;
+                                // Calculate total customer payment = total revenue + total tax for this method
+                                let totalCustomerPaymentForMethod = 0;
+                                data.forEach((employee: any) => {
+                                  if (employee.orders && Array.isArray(employee.orders)) {
+                                    employee.orders.forEach((order: any) => {
+                                      if ((order.paymentMethod || "cash") === method) {
+                                        const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
+                                        const orderTax = Math.max(0, Number(order.total || 0) - Number(order.subtotal || 0));
+                                        totalCustomerPaymentForMethod += orderRevenue + orderTax;
+                                      }
+                                    });
+                                  }
+                                });
+
                                 return (
                                   <TableCell
                                     key={method}
                                     className="text-right border-r font-bold text-green-600 min-w-[130px] px-4"
                                   >
-                                    {total > 0 ? formatCurrency(total) : "-"}
+                                    {totalCustomerPaymentForMethod > 0 ? formatCurrency(totalCustomerPaymentForMethod) : "-"}
                                   </TableCell>
                                 );
                               })}
