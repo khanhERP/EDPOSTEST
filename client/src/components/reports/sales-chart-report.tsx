@@ -923,9 +923,13 @@ export function SalesChartReport() {
                                     (transaction: any) => {
                                       const method =
                                         transaction.paymentMethod || "cash";
+                                      // Use revenue + tax formula for customer payment
+                                      const transactionRevenue = Math.max(0, Number(transaction.subtotal || 0) - Number(transaction.discount || 0));
+                                      const transactionTax = Number(transaction.total || 0) - Number(transaction.subtotal || 0);
+                                      const customerPayment = transactionRevenue + transactionTax;
+                                      
                                       paymentMethods[method] =
-                                        (paymentMethods[method] || 0) +
-                                        Number(transaction.total);
+                                        (paymentMethods[method] || 0) + customerPayment;
                                     },
                                   );
 
