@@ -254,17 +254,18 @@ export function PrintDialog({
       const isAndroid = /android/.test(userAgent);
       const isMobile = isIOS || isAndroid || /mobile|tablet|phone/.test(userAgent);
       const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+      const isChrome = /chrome/.test(userAgent);
       
       console.log('🔍 Print Dialog - Enhanced device detection:', { 
-        isIOS, isAndroid, isMobile, isSafari, userAgent 
+        isIOS, isAndroid, isMobile, isSafari, isChrome, userAgent 
       });
 
-      // For mobile devices and POS systems, use enhanced mobile printing
-      if (isMobile || window.location.hostname === '0.0.0.0') {
-        console.log('📱 Using enhanced mobile/POS printing approach');
+      // For mobile devices, use specialized mobile printing approach
+      if (isMobile) {
+        console.log('📱 Using mobile printing approach for', isIOS ? 'iOS' : isAndroid ? 'Android' : 'Mobile');
         
+        // First try POS API for unified printing
         try {
-          // Try to send to print API for POS systems
           const printApiResponse = await fetch('/api/pos/print-receipt', {
             method: 'POST',
             headers: {
@@ -281,8 +282,6 @@ export function PrintDialog({
 
           if (printApiResponse.ok) {
             console.log('✅ Receipt sent to POS printer successfully');
-            
-            // Close dialog and refresh data
             onClose();
             
             if (typeof window !== 'undefined') {
@@ -299,106 +298,103 @@ export function PrintDialog({
             return;
           }
         } catch (apiError) {
-          console.log('⚠️ POS print API not available, trying mobile alternatives');
+          console.log('⚠️ POS print API not available, using mobile fallback');
         }
 
+        // Mobile fallback: Create downloadable receipt
+        const printContent = generatePrintContent();
+        const blob = new Blob([printContent], { type: 'text/html' });
+        
         // iOS specific handling
         if (isIOS) {
-          console.log('🍎 iOS printing - using optimized approach');
+          console.log('🍎 iOS device - using download approach');
           
-          const printWindow = window.open('', '_blank', 'width=400,height=600,scrollbars=yes');
+          // For iOS, create a data URL and open in new tab for better printing
+          const dataUrl = URL.createObjectURL(blob);
+          const printWindow = window.open(dataUrl, '_blank');
+          
           if (printWindow) {
-            const optimizedContent = `
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <meta charset="utf-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>Hóa đơn - ${receiptData.transactionId}</title>
-                  <style>
-                    body {
-                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace;
-                      font-size: 14px;
-                      line-height: 1.4;
-                      margin: 10px;
-                      background: white;
-                      color: black;
-                    }
-                    .center { text-align: center; }
-                    .right { text-align: right; }
-                    .bold { font-weight: bold; }
-                    .separator { border-top: 1px solid #000; margin: 10px 0; padding-top: 5px; }
-                    .item-row { display: flex; justify-content: space-between; margin: 2px 0; }
-                    .total-row { display: flex; justify-content: space-between; margin: 5px 0; font-weight: bold; }
-                    @media print {
-                      body { margin: 0; font-size: 12px; }
-                    }
-                  </style>
-                </head>
-                <body>
-                  ${generatePrintContent().replace(/class="/g, 'class="').replace(/className="/g, 'class="')}
-                  <script>
-                    setTimeout(() => {
-                      window.print();
-                      setTimeout(() => {
-                        window.close();
-                      }, 1000);
-                    }, 500);
-                  </script>
-                </body>
-              </html>
-            `;
+            // Give user instructions
+            setTimeout(() => {
+              alert('Để in hóa đơn trên iOS:\n1. Nhấn nút Share (chia sẻ)\n2. Chọn "Print" hoặc tìm ứng dụng in\n3. Hoặc lưu và mở bằng ứng dụng in khác');
+            }, 1000);
+          } else {
+            // Fallback to download
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `hoa-don-${receiptData.transactionId}.html`;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
             
-            printWindow.document.write(optimizedContent);
-            printWindow.document.close();
-            
-            setTimeout(() => onClose(), 1000);
-            return;
+            alert('Hóa đơn đã được tải xuống. Mở file HTML để in.');
           }
+          
+          URL.revokeObjectURL(dataUrl);
+          onClose();
+          return;
         }
 
-        // Android specific handling with improved methods
+        // Android specific handling
         if (isAndroid) {
-          console.log('🤖 Android printing - trying Web Share API and download');
+          console.log('🤖 Android device - trying Web Share API first');
           
-          // Try Web Share API first
-          if (navigator.share) {
+          // Try Web Share API first (works on newer Android versions)
+          if (navigator.share && navigator.canShare) {
             try {
-              const printContent = generatePrintContent();
-              const blob = new Blob([printContent], { type: 'text/html' });
-              const file = new File([blob], `receipt-${receiptData.transactionId}.html`, { 
+              const file = new File([blob], `hoa-don-${receiptData.transactionId}.html`, { 
                 type: 'text/html' 
               });
               
-              await navigator.share({
-                title: 'Hóa đơn',
-                text: 'Chia sẻ hóa đơn để in',
-                files: [file]
-              });
-              
-              onClose();
-              return;
+              const canShare = navigator.canShare({ files: [file] });
+              if (canShare) {
+                await navigator.share({
+                  title: 'Hóa đơn IDMC',
+                  text: 'Hóa đơn thanh toán',
+                  files: [file]
+                });
+                
+                onClose();
+                return;
+              }
             } catch (shareError) {
-              console.log('📱 Web Share failed, using download method');
+              console.log('📱 Web Share API failed:', shareError);
             }
           }
           
-          // Fallback to download
-          const blob = new Blob([generatePrintContent()], { type: 'text/html' });
+          // Fallback: Download file
+          console.log('📱 Using download fallback for Android');
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `receipt-${receiptData.transactionId}.html`;
+          a.download = `hoa-don-${receiptData.transactionId}.html`;
           a.style.display = 'none';
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
           
-          alert('Hóa đơn đã được tải xuống. Mở file để in hoặc chia sẻ với ứng dụng in.');
+          alert('Hóa đơn đã được tải xuống.\n\nCách in:\n1. Mở file HTML vừa tải\n2. Nhấn menu trình duyệt\n3. Chọn "Print" hoặc "In"\n4. Hoặc chia sẻ với ứng dụng in khác');
           onClose();
           return;
         }
+
+        // Generic mobile fallback
+        console.log('📱 Generic mobile device - using simple download');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `hoa-don-${receiptData.transactionId}.html`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('Hóa đơn đã được tải xuống. Mở file để in.');
+        onClose();
+        return;
       }
 
       // Fallback to desktop printing method
