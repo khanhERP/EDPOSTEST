@@ -47,7 +47,7 @@ export function ShoppingCart({
 }: ShoppingCartProps) {
   const [paymentMethod, setPaymentMethod] = useState<string>("bankTransfer");
   const [amountReceived, setAmountReceived] = useState<string>("");
-  const [discountAmount, setDiscountAmount] = useState<string>("");
+  const [discountAmount, setDiscountAmount] = useState<string>(""); // This state is still used for the input value itself
   const [discount, setDiscount] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTableSelection, setShowTableSelection] = useState(false);
@@ -71,6 +71,12 @@ export function ShoppingCart({
 
   // State to manage the visibility of the print dialog
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+
+  // State to manage discounts for each order
+  const [orderDiscounts, setOrderDiscounts] = useState<{ [orderId: string]: string }>({});
+
+  // Calculate discount for the current active order
+  const currentOrderDiscount = activeOrderId ? orderDiscounts[activeOrderId] || "0" : "0";
 
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
@@ -468,7 +474,7 @@ export function ShoppingCart({
     // Use recalculated values if they differ significantly
     const finalSubtotal = Math.abs(recalculatedSubtotal - subtotal) > 1 ? recalculatedSubtotal : subtotal;
     const finalTax = Math.abs(recalculatedTax - tax) > 1 ? recalculatedTax : tax;
-    const finalDiscount = calculateDiscount();
+    const finalDiscount = parseFloat(currentOrderDiscount || "0"); // Use current order discount
     const finalTotal = Math.max(0, Math.abs(recalculatedTotal - total) > 1 ? recalculatedTotal : total) - finalDiscount;
 
     console.log("Final totals to use:", {
@@ -739,23 +745,23 @@ export function ShoppingCart({
     // Handle print completion events
     const handlePrintCompleted = (event: CustomEvent) => {
       console.log('🖨️ Shopping Cart: Received print completed event:', event.detail);
-      
+
       // Close all modals and clear states
       setShowReceiptPreview(false);
       setShowReceiptModal(false);
       setShowPaymentModal(false);
       setShowEInvoiceModal(false);
       setShowPrintDialog(false);
-      
+
       // Clear all states
       setPreviewReceipt(null);
       setOrderForPayment(null);
       setSelectedReceipt(null);
       setLastCartItems([]);
-      
+
       // Clear cart
       clearCart();
-      
+
       // Send WebSocket refresh signal to other components
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({
@@ -765,7 +771,7 @@ export function ShoppingCart({
           timestamp: new Date().toISOString()
         }));
       }
-      
+
       toast({
         title: "Thành công",
         description: "In hóa đơn hoàn tất. Dữ liệu đã được cập nhật.",
@@ -973,15 +979,23 @@ export function ShoppingCart({
                 Giảm giá (₫)
               </Label>
               <Input
-                type="text"
-                value={discountAmount && parseFloat(discountAmount) > 0 ? parseFloat(discountAmount).toLocaleString('vi-VN') : ''}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^\d]/g, ''); // Chỉ giữ lại số
-                  setDiscountAmount(value || "0");
-                }}
-                placeholder="0"
-                className="text-right"
-              />
+                  type="text"
+                  value={currentOrderDiscount && parseFloat(currentOrderDiscount) > 0 ? parseFloat(currentOrderDiscount).toLocaleString('vi-VN') : ''}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^\d]/g, ''); // Chỉ giữ lại số
+                    setDiscountAmount(value);
+
+                    // Save discount for current order
+                    if (activeOrderId) {
+                      setOrderDiscounts(prev => ({
+                        ...prev,
+                        [activeOrderId]: value
+                      }));
+                    }
+                  }}
+                  placeholder="0"
+                  className="text-right"
+                />
             </div>
 
             <div className="border-t pt-2">
@@ -990,7 +1004,7 @@ export function ShoppingCart({
                   {t("tables.total")}:
                 </span>
                 <span className="text-lg font-bold text-blue-600">
-                  {Math.round(Math.max(0, total - discountValue)).toLocaleString("vi-VN")} ₫
+                  {Math.round(Math.max(0, total - parseFloat(currentOrderDiscount || "0"))).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
             </div>
@@ -1198,14 +1212,14 @@ export function ShoppingCart({
                   source: 'shopping-cart-receipt',
                   timestamp: new Date().toISOString()
                 }));
-                
+
                 wsRef.current.send(JSON.stringify({
                   type: 'force_refresh',
                   source: 'shopping-cart-receipt-close',
                   success: true,
                   timestamp: new Date().toISOString()
                 }));
-                
+
                 wsRef.current.send(JSON.stringify({
                   type: 'payment_success',
                   source: 'shopping-cart-receipt-complete',
@@ -1225,14 +1239,14 @@ export function ShoppingCart({
                     source: 'shopping-cart-receipt-fallback',
                     timestamp: new Date().toISOString()
                   }));
-                  
+
                   fallbackWs.send(JSON.stringify({
                     type: 'force_refresh',
                     source: 'shopping-cart-receipt-fallback',
                     success: true,
                     timestamp: new Date().toISOString()
                   }));
-                  
+
                   setTimeout(() => fallbackWs.close(), 100);
                 };
               }
@@ -1243,20 +1257,20 @@ export function ShoppingCart({
             // Dispatch custom events for components that might not use WebSocket
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('closeAllPopups', {
-                detail: { 
+                detail: {
                   source: 'shopping_cart_receipt_close',
                   success: true,
                   action: 'receipt_modal_closed',
                   showSuccessNotification: true,
                   message: 'Thanh toán hoàn tất. Dữ liệu đã được cập nhật.',
-                  timestamp: new Date().toISOString() 
+                  timestamp: new Date().toISOString()
                 }
               }));
-              
+
               window.dispatchEvent(new CustomEvent('refreshAllData', {
-                detail: { 
+                detail: {
                   source: 'shopping_cart_receipt_close',
-                  timestamp: new Date().toISOString() 
+                  timestamp: new Date().toISOString()
                 }
               }));
             }
