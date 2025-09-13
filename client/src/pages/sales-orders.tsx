@@ -31,6 +31,7 @@ import { useTranslation } from "@/lib/i18n";
 import * as XLSX from "xlsx";
 import { EInvoiceModal } from "@/components/pos/einvoice-modal";
 import { PrintDialog } from "@/components/pos/print-dialog";
+import { ReceiptModal } from "@/components/pos/receipt-modal";
 import { toast } from "@/hooks/use-toast";
 
 interface Invoice {
@@ -226,6 +227,8 @@ export default function SalesOrders() {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [printReceiptData, setPrintReceiptData] = useState<any>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
 
   // Query orders by date range - load all orders regardless of salesChannel
   const {
@@ -2370,93 +2373,44 @@ export default function SalesOrders() {
                                                             orderItems.length >
                                                               0
                                                           ) {
-                                                            const items =
-                                                              orderItems;
-                                                            const receiptData =
-                                                              {
-                                                                transactionId:
-                                                                  selectedInvoice.displayNumber ||
-                                                                  `TXN-${selectedInvoice.id}`,
-                                                                orderId:
-                                                                  selectedInvoice.id,
-                                                                items:
-                                                                  items.map(
-                                                                    (
-                                                                      item: any,
-                                                                    ) => ({
-                                                                      id:
-                                                                        item.productId ||
-                                                                        item.id,
-                                                                      productName:
-                                                                        item.productName ||
-                                                                        item.name,
-                                                                      price:
-                                                                        item.unitPrice ||
-                                                                        item.price ||
-                                                                        "0",
-                                                                      quantity:
-                                                                        item.quantity ||
-                                                                        1,
-                                                                      total:
-                                                                        item.total ||
-                                                                        "0",
-                                                                      sku:
-                                                                        item.sku ||
-                                                                        `SKU${item.productId || item.id}`,
-                                                                      taxRate:
-                                                                        parseFloat(
-                                                                          item.taxRate ||
-                                                                            "0",
-                                                                        ),
-                                                                    }),
-                                                                  ),
-                                                                subtotal:
-                                                                  selectedInvoice.subtotal ||
-                                                                  "0",
-                                                                tax:
-                                                                  selectedInvoice.tax ||
-                                                                  "0",
-                                                                total:
-                                                                  selectedInvoice.total ||
-                                                                  "0",
-                                                                discount:
-                                                                  selectedInvoice.discount ||
-                                                                  "0",
-                                                                paymentMethod:
-                                                                  getItemType(
-                                                                    selectedInvoice,
-                                                                  ) === "order"
-                                                                    ? selectedInvoice.paymentMethod
-                                                                    : "invoice",
-                                                                amountReceived:
-                                                                  selectedInvoice.total ||
-                                                                  "0",
-                                                                change: "0",
-                                                                cashierName:
-                                                                  "System User",
-                                                                createdAt:
-                                                                  selectedInvoice.date ||
-                                                                  new Date().toISOString(),
-                                                                customerName:
-                                                                  selectedInvoice.customerName ||
-                                                                  "Khách hàng lẻ",
-                                                                customerTaxCode:
-                                                                  selectedInvoice.customerTaxCode ||
-                                                                  null,
-                                                                invoiceNumber:
-                                                                  selectedInvoice.invoiceNumber ||
-                                                                  null,
-                                                              };
-
                                                             console.log(
-                                                              "📄 Sales Orders: Showing receipt modal for printing",
+                                                              "📄 Sales Orders: Showing receipt modal for invoice printing",
                                                             );
-                                                            setPrintReceiptData(
-                                                              receiptData,
-                                                            );
-                                                            setShowPrintDialog(
-                                                              true,
-                                                            );
+
+                                                            // Create receipt data for the modal
+                                                            const receiptData = {
+                                                              id: selectedInvoice.id,
+                                                              transactionId: selectedInvoice.displayNumber || `TXN-${selectedInvoice.id}`,
+                                                              createdAt: selectedInvoice.date || selectedInvoice.createdAt || new Date().toISOString(),
+                                                              cashierName: "System User",
+                                                              paymentMethod: getItemType(selectedInvoice) === "order" ? selectedInvoice.paymentMethod : "invoice",
+                                                              customerName: selectedInvoice.customerName || "Khách hàng lẻ",
+                                                              customerTaxCode: selectedInvoice.customerTaxCode || null,
+                                                              customerAddress: selectedInvoice.customerAddress || "",
+                                                              customerPhone: selectedInvoice.customerPhone || "",
+                                                              customerEmail: selectedInvoice.customerEmail || "",
+                                                              items: orderItems.map((item: any) => ({
+                                                                id: item.id || item.productId,
+                                                                productId: item.productId || item.id,
+                                                                productName: item.productName || item.name,
+                                                                quantity: item.quantity || 1,
+                                                                price: item.unitPrice || item.price || "0",
+                                                                total: item.total || "0",
+                                                                unitPrice: item.unitPrice || item.price || "0",
+                                                              })),
+                                                              subtotal: selectedInvoice.subtotal || "0",
+                                                              tax: selectedInvoice.tax || "0",
+                                                              total: selectedInvoice.total || "0",
+                                                              discount: selectedInvoice.discount || "0",
+                                                              exactDiscount: selectedInvoice.exactDiscount || parseFloat(selectedInvoice.discount || "0"),
+                                                              invoiceNumber: selectedInvoice.invoiceNumber || null,
+                                                              symbol: selectedInvoice.symbol || "",
+                                                              templateNumber: selectedInvoice.templateNumber || "",
+                                                            };
+
+                                                            // Show receipt modal directly
+                                                            setSelectedReceipt(receiptData);
+                                                            setShowReceiptModal(true);
                                                           }
                                                         }}
                                                       >
@@ -2790,6 +2744,26 @@ export default function SalesOrders() {
             setPrintReceiptData(null);
           }}
           receiptData={printReceiptData}
+        />
+      )}
+
+      {showReceiptModal && selectedReceipt && (
+        <ReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => {
+            console.log("🔴 Sales Orders: Closing receipt modal");
+            setShowReceiptModal(false);
+            setSelectedReceipt(null);
+          }}
+          receipt={selectedReceipt}
+          cartItems={orderItems.map((item: any) => ({
+            id: item.productId || item.id,
+            name: item.productName || item.name,
+            price: item.unitPrice || item.price || "0",
+            quantity: item.quantity || 1,
+            sku: item.sku || `SKU${item.productId || item.id}`,
+            taxRate: parseFloat(item.taxRate || "0"),
+          }))}
         />
       )}
     </div>
