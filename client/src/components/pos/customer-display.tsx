@@ -70,6 +70,17 @@ export function CustomerDisplay({
   // Get the correct pre-tax subtotal and tax
   const correctSubtotal = calculateCorrectSubtotal();
   const correctTax = calculateCorrectTax();
+  
+  // Calculate final total with discount
+  const finalTotal = Math.max(0, correctSubtotal + correctTax - (discount || 0));
+  
+  console.log("Customer Display: Calculation breakdown", {
+    correctSubtotal,
+    correctTax,
+    discount: discount || 0,
+    beforeDiscount: correctSubtotal + correctTax,
+    finalTotal
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -350,7 +361,7 @@ export function CustomerDisplay({
                       </span>
                       <span className="text-2xl font-bold text-green-600">
                         {formatCurrency(
-                          correctSubtotal + correctTax - (discount || 0),
+                          Math.max(0, correctSubtotal + correctTax - (discount || 0))
                         )}
                       </span>
                     </div>

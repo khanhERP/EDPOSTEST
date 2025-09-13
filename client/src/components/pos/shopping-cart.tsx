@@ -201,6 +201,10 @@ export function ShoppingCart({
       try {
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
+        // Make wsRef available globally for external access if needed (e.g., in discount onChange)
+        if (typeof window !== "undefined") {
+          (window as any).wsRef = wsRef.current;
+        }
 
         ws.onopen = () => {
           console.log("📡 Shopping Cart: WebSocket connected");
@@ -265,6 +269,9 @@ export function ShoppingCart({
         ws.onclose = () => {
           console.log("📡 Shopping Cart: WebSocket disconnected");
           wsRef.current = null;
+          if (typeof window !== "undefined") {
+            (window as any).wsRef = null;
+          }
           if (shouldReconnect && reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
             const delay = Math.min(2000 * reconnectAttempts, 10000);
@@ -275,6 +282,9 @@ export function ShoppingCart({
         ws.onerror = (error) => {
           console.error("❌ Shopping Cart: WebSocket error:", error);
           wsRef.current = null;
+          if (typeof window !== "undefined") {
+            (window as any).wsRef = null;
+          }
         };
       } catch (error) {
         console.error("❌ Shopping Cart: Failed to connect WebSocket:", error);
@@ -300,6 +310,9 @@ export function ShoppingCart({
         wsRef.current.close();
       }
       wsRef.current = null;
+      if (typeof window !== "undefined") {
+        (window as any).wsRef = null;
+      }
     };
   }, []);
 
@@ -1128,15 +1141,30 @@ export function ShoppingCart({
                     : ""
                 }
                 onChange={(e) => {
-                  const value = e.target.value.replace(/[^\d]/g, ""); // Chỉ giữ lại số
-                  setDiscountAmount(value);
-
-                  // Save discount for current order
+                  const value = Math.max(0, parseFloat(e.target.value.replace(/[^\d]/g, "")) || 0);
+                  setDiscountAmount(value.toString()); // Update local state for input display
                   if (activeOrderId) {
                     setOrderDiscounts((prev) => ({
                       ...prev,
-                      [activeOrderId]: value,
+                      [activeOrderId]: value.toString(),
                     }));
+
+                    // Send discount update via WebSocket
+                    // Access wsRef from the global scope or pass it down
+                    const ws = (window as any).wsRef;
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                      ws.send(JSON.stringify({
+                        type: 'cart_update',
+                        cart: cart, // Send current cart items
+                        subtotal: Math.floor(subtotal),
+                        tax: Math.floor(tax),
+                        total: Math.floor(total), // Total before discount
+                        discount: value, // The new discount value
+                        orderNumber: activeOrderId,
+                        timestamp: new Date().toISOString(),
+                        updateType: 'discount_update' // Indicate this is a discount update
+                      }));
+                    }
                   }
                 }}
                 placeholder="0"

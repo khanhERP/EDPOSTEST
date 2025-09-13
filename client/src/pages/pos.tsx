@@ -34,7 +34,8 @@ export default function POS({ onLogout }: POSPageProps) {
     removeOrder,
     lastReceipt,
     isProcessingCheckout,
-    processCheckout
+    processCheckout,
+    orderDiscounts // Assuming orderDiscounts is available from usePOS hook
   } = usePOS();
 
   // Add WebSocket listener for refresh signals
