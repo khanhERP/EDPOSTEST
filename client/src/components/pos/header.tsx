@@ -568,14 +568,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
               )}
             </div>
           </nav>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowProductManager(true)}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Quản lý sản phẩm
-          </Button>
+          
 
           <Button
             variant="outline"
