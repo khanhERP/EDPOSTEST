@@ -60,6 +60,8 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       return response.json();
     },
     enabled: isOpen,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always refetch fresh data
   });
 
   // Create printer config mutation
@@ -69,7 +71,9 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       return response.json();
     },
     onSuccess: () => {
+      // Force refetch data
       queryClient.invalidateQueries({ queryKey: ["/api/printer-configs"] });
+      queryClient.refetchQueries({ queryKey: ["/api/printer-configs"] });
       toast({ title: "Thành công", description: "Đã thêm cấu hình máy in" });
       resetForm();
     },
@@ -85,7 +89,9 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       return response.json();
     },
     onSuccess: () => {
+      // Force refetch data
       queryClient.invalidateQueries({ queryKey: ["/api/printer-configs"] });
+      queryClient.refetchQueries({ queryKey: ["/api/printer-configs"] });
       toast({ title: "Thành công", description: "Đã cập nhật cấu hình máy in" });
       resetForm();
     },
@@ -100,7 +106,9 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       await apiRequest("DELETE", `/api/printer-configs/${id}`);
     },
     onSuccess: () => {
+      // Force refetch data
       queryClient.invalidateQueries({ queryKey: ["/api/printer-configs"] });
+      queryClient.refetchQueries({ queryKey: ["/api/printer-configs"] });
       toast({ title: "Thành công", description: "Đã xóa cấu hình máy in" });
     },
     onError: () => {
