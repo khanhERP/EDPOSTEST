@@ -192,10 +192,12 @@ export function DashboardOverview() {
       }, 0);
 
       // Calculate subtotal revenue from completed orders (excludes tax, after discount)
-      const subtotalRevenue = completedOrders.reduce((sum: number, order: any) => {
+      const subtotalRevenue = completedOrders.reduce((total: number, order: any) => {
         const subtotal = Number(order.subtotal || 0);
-        const discount = Number(order.discount || 0); //
-        return sum + subtotal - discount;
+        const tax = Number(order.tax || 0);
+        const discount = Number(order.discount || 0);
+        const revenue = subtotal - tax - discount; // Same formula as dashboard
+        return total + revenue;
       }, 0);
 
 

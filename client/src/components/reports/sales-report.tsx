@@ -272,39 +272,39 @@ export function SalesReport() {
         }
       });
 
-      // Calculate total revenue using same formula as dashboard: subtotal - tax - discount
-      const totalRevenue = paidOrders.reduce((total: number, order: any) => {
+      // Calculate totals based on unique combined data
+      const totalRevenue = uniqueCombinedData.reduce(
+        (total: number, item: any) => {
+          const itemPrice = Number(item.price || item.total || 0);
+          const itemQuantity = Number(item.quantity || 1);
+
+          // Get discount from database, default to 0 if no data
+          const discountAmount =
+            item.discount !== undefined && item.discount !== null
+              ? Number(item.discount)
+              : 0;
+
+          return total + itemPrice * itemQuantity;
+        },
+        0,
+      );
+
+      // Calculate subtotal revenue (excluding tax)
+      const subtotalRevenue = paidOrders.reduce((total: number, order: any) => {
         const subtotal = Number(order.subtotal || 0);
-        const tax = Number(order.tax || 0); 
+        const tax = Number(order.tax || 0);
         const discount = Number(order.discount || 0);
         const revenue = subtotal - tax - discount; // Same formula as dashboard
         return total + revenue;
       }, 0);
 
-      // Calculate subtotal revenue (excluding tax)
-      const subtotalRevenue = uniqueCombinedData.reduce(
-        (total: number, item: any) => {
-          // For orders, use subtotal if available, otherwise calculate from price
-          if (item.subtotal !== undefined && item.subtotal !== null) {
-            return total + Number(item.subtotal);
-          }
-
-          const itemPrice = Number(item.price || 0);
-          const itemQuantity = Number(item.quantity || 1);
-          const itemDiscount = Number(item.discount || 0);
-          return total + itemPrice * itemQuantity - itemDiscount;
-        },
-        0,
-      );
-
       // Total orders should be based on unique orders, not items
       const totalOrders = paidOrders.length;
-      const totalCustomers = new Set(
-        paidOrders.map(
-          (item: any) =>
-            item.customerId || item.customerName || `order_${item.id}`,
-        ),
-      ).size;
+      const totalCustomers = paidOrders.reduce((total: number, order: any) => {
+        const customerCount = Number(order.customerCount || 1); // Default to 1 if not specified
+        console.log(`Processing order ${order.orderNumber}: customerCount=${customerCount}`);
+        return total + customerCount;
+      }, 0);
       const averageOrderValue =
         totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
