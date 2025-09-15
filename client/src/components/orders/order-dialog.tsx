@@ -86,13 +86,11 @@ export function OrderDialog({
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: { order: any; items: any[] }) => {
-      console.log('=== ORDER MUTATION STARTED ===');
-      console.log('Mode:', mode);
-      console.log('Existing order:', existingOrder);
+      console.log("=== ORDER MUTATION STARTED ===");
+      console.log("Mode:", mode);
+      console.log("Existing order:", existingOrder);
       console.log(
-        mode === "edit"
-          ? "Updating existing order:"
-          : "Creating new order:",
+        mode === "edit" ? "Updating existing order:" : "Creating new order:",
         JSON.stringify(orderData, null, 2),
       );
 
@@ -102,20 +100,30 @@ export function OrderDialog({
 
           // Step 1: Add new items if any exist
           if (orderData.items.length > 0) {
-            console.log(`📝 Adding ${orderData.items.length} new items to existing order ${existingOrder.id}`);
-            const addItemsResponse = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
-              items: orderData.items,
-            });
+            console.log(
+              `📝 Adding ${orderData.items.length} new items to existing order ${existingOrder.id}`,
+            );
+            const addItemsResponse = await apiRequest(
+              "POST",
+              `/api/orders/${existingOrder.id}/items`,
+              {
+                items: orderData.items,
+              },
+            );
 
             const addItemsResult = await addItemsResponse.json();
-            console.log('✅ Items added successfully:', addItemsResult);
+            console.log("✅ Items added successfully:", addItemsResult);
             finalResult = addItemsResult.updatedOrder || addItemsResult;
           } else {
-            console.log(`📝 No new items to add to order ${existingOrder.id}, proceeding with order update only`);
+            console.log(
+              `📝 No new items to add to order ${existingOrder.id}, proceeding with order update only`,
+            );
           }
 
           // Step 2: Calculate correct totals including existing items and new items
-          console.log(`📝 Calculating complete order totals for order ${existingOrder.id}`);
+          console.log(
+            `📝 Calculating complete order totals for order ${existingOrder.id}`,
+          );
 
           // Calculate totals for ALL items (existing + new)
           let totalSubtotal = 0;
@@ -131,8 +139,14 @@ export function OrderDialog({
               totalSubtotal += unitPrice * quantity;
 
               // Tax calculation for existing items
-              const product = products?.find((p: Product) => p.id === item.productId);
-              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+              const product = products?.find(
+                (p: Product) => p.id === item.productId,
+              );
+              if (
+                product?.afterTaxPrice &&
+                product.afterTaxPrice !== null &&
+                product.afterTaxPrice !== ""
+              ) {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                 const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
                 totalTax += taxPerUnit * quantity;
@@ -150,8 +164,14 @@ export function OrderDialog({
               totalSubtotal += unitPrice * quantity;
 
               // Tax calculation for new items
-              const product = products?.find((p: Product) => p.id === item.product.id);
-              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+              const product = products?.find(
+                (p: Product) => p.id === item.product.id,
+              );
+              if (
+                product?.afterTaxPrice &&
+                product.afterTaxPrice !== null &&
+                product.afterTaxPrice !== ""
+              ) {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                 const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
                 totalTax += taxPerUnit * quantity;
@@ -160,36 +180,47 @@ export function OrderDialog({
           }
 
           // Calculate totals - total = subtotal + tax (discount stored separately)
-        const totalAmount = totalSubtotal + totalTax;
+          const totalAmount = totalSubtotal + totalTax;
 
-        console.log('💰 Complete order totals calculated:', {
-          existingItemsCount: existingItems.length,
-          newItemsCount: cart.length,
-          subtotal: totalSubtotal,
-          tax: totalTax,
-          discount: discount,
-          total: totalAmount
-        });
+          console.log("💰 Complete order totals calculated:", {
+            existingItemsCount: existingItems.length,
+            newItemsCount: cart.length,
+            subtotal: totalSubtotal,
+            tax: totalTax,
+            discount: discount,
+            total: totalAmount,
+          });
 
-        // Step 3: Update order with complete calculated totals (total = subtotal + tax)
-        console.log(`📝 Updating order with complete calculated totals for order ${existingOrder.id}`);
-        console.log(`💰 Saving totals: subtotal=${totalSubtotal}, tax=${totalTax}, discount=${discount}, total=${totalAmount}`);
-        const updateResponse = await apiRequest("PUT", `/api/orders/${existingOrder.id}`, {
-          customerName: orderData.order.customerName,
-          customerCount: orderData.order.customerCount,
-          subtotal: totalSubtotal.toString(),
-          tax: totalTax.toString(),
-          discount: discount.toString(),
-          total: totalAmount.toString(), // total = subtotal + tax
-        });
+          // Step 3: Update order with complete calculated totals (total = subtotal + tax)
+          console.log(
+            `📝 Updating order with complete calculated totals for order ${existingOrder.id}`,
+          );
+          console.log(
+            `💰 Saving totals: subtotal=${totalSubtotal}, tax=${totalTax}, discount=${discount}, total=${totalAmount}`,
+          );
+          const updateResponse = await apiRequest(
+            "PUT",
+            `/api/orders/${existingOrder.id}`,
+            {
+              customerName: orderData.order.customerName,
+              customerCount: orderData.order.customerCount,
+              subtotal: totalSubtotal.toString(),
+              tax: totalTax.toString(),
+              discount: discount.toString(),
+              total: totalAmount.toString(), // total = subtotal + tax
+            },
+          );
 
           const updateResult = await updateResponse.json();
-          console.log('✅ Order updated successfully with current totals:', updateResult);
+          console.log(
+            "✅ Order updated successfully with current totals:",
+            updateResult,
+          );
 
           // Return the final result (prioritize the order update result)
           return updateResult;
         } else {
-          console.log('📝 Creating new order...');
+          console.log("📝 Creating new order...");
           const response = await apiRequest("POST", "/api/orders", orderData);
 
           if (!response.ok) {
@@ -198,17 +229,17 @@ export function OrderDialog({
           }
 
           const result = await response.json();
-          console.log('✅ Order created successfully:', result);
+          console.log("✅ Order created successfully:", result);
           return result;
         }
       } catch (error) {
-        console.error('=== ORDER MUTATION ERROR ===');
-        console.error('Error details:', error);
+        console.error("=== ORDER MUTATION ERROR ===");
+        console.error("Error details:", error);
         throw error;
       }
     },
     onSuccess: (response) => {
-      console.log('=== ORDER MUTATION SUCCESS (SINGLE CALL) ===');
+      console.log("=== ORDER MUTATION SUCCESS (SINGLE CALL) ===");
       console.log(
         mode === "edit"
           ? "Order updated successfully (no duplicates):"
@@ -217,7 +248,7 @@ export function OrderDialog({
       );
 
       // Only invalidate - let React Query handle refetch naturally (no forced refetch)
-      console.log('🔄 Invalidating queries (natural refresh only)...');
+      console.log("🔄 Invalidating queries (natural refresh only)...");
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
@@ -231,14 +262,17 @@ export function OrderDialog({
       onOpenChange(false);
 
       toast({
-        title: t('orders.orderUpdateSuccess'),
-        description: mode === "edit" ? "Đã cập nhật đơn hàng thành công" : t('orders.orderUpdateSuccessDesc'),
+        title: t("orders.orderUpdateSuccess"),
+        description:
+          mode === "edit"
+            ? "Đã cập nhật đơn hàng thành công"
+            : t("orders.orderUpdateSuccessDesc"),
       });
 
-      console.log('✅ Order mutation completed - proper update flow executed');
+      console.log("✅ Order mutation completed - proper update flow executed");
     },
     onError: (error: any) => {
-      console.error('=== ORDER MUTATION ERROR ===');
+      console.error("=== ORDER MUTATION ERROR ===");
       console.error("Full error object:", error);
       console.error("Error message:", error.message);
       console.error("Error response:", error.response);
@@ -258,7 +292,10 @@ export function OrderDialog({
 
       toast({
         title: t("common.error"),
-        description: mode === "edit" ? `Lỗi cập nhật đơn hàng: ${errorMessage}` : `Lỗi tạo đơn hàng: ${errorMessage}`,
+        description:
+          mode === "edit"
+            ? `Lỗi cập nhật đơn hàng: ${errorMessage}`
+            : `Lỗi tạo đơn hàng: ${errorMessage}`,
         variant: "destructive",
       });
     },
@@ -331,8 +368,12 @@ export function OrderDialog({
     let totalTax = 0;
 
     // Add existing order items if in edit mode
-    if (mode === "edit" && existingOrderItems && Array.isArray(existingOrderItems)) {
-      existingOrderItems.forEach(item => {
+    if (
+      mode === "edit" &&
+      existingOrderItems &&
+      Array.isArray(existingOrderItems)
+    ) {
+      existingOrderItems.forEach((item) => {
         const unitPrice = parseFloat(item.unitPrice);
         const quantity = parseInt(item.quantity);
 
@@ -341,7 +382,11 @@ export function OrderDialog({
 
         // Calculate tax for existing items
         const product = products?.find((p: Product) => p.id === item.productId);
-        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
           totalTax += taxPerUnit * quantity;
@@ -359,7 +404,11 @@ export function OrderDialog({
 
       // Calculate tax for new items
       const product = products?.find((p: Product) => p.id === item.product.id);
-      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+      if (
+        product?.afterTaxPrice &&
+        product.afterTaxPrice !== null &&
+        product.afterTaxPrice !== ""
+      ) {
         const afterTaxPrice = parseFloat(product.afterTaxPrice);
         const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
         totalTax += taxPerUnit * quantity;
@@ -379,9 +428,13 @@ export function OrderDialog({
       let itemTax = 0;
 
       // Thuế = (after_tax_price - price) * quantity
-      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+      if (
+        product?.afterTaxPrice &&
+        product.afterTaxPrice !== null &&
+        product.afterTaxPrice !== ""
+      ) {
         const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
-        const preTaxPrice = parseFloat(product.price);           // Giá trước thuế
+        const preTaxPrice = parseFloat(product.price); // Giá trước thuế
         const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
         itemTax = taxPerUnit * item.quantity;
       }
@@ -397,7 +450,11 @@ export function OrderDialog({
         let itemTax = 0;
 
         // Thuế = (after_tax_price - unitPrice) * quantity
-        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const preTaxPrice = Number(item.unitPrice || 0); // Sử dụng unitPrice từ order item
           const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice);
@@ -411,14 +468,13 @@ export function OrderDialog({
     return totalTax;
   };
 
-
   const calculateGrandTotal = () => {
     const beforeDiscount = calculateTotal(); // calculateTotal now includes tax (subtotal + tax)
     const finalTotal = Math.max(0, beforeDiscount - discount);
-    console.log('💰 Order Dialog - Grand Total Calculation:', {
+    console.log("💰 Order Dialog - Grand Total Calculation:", {
       subtotalPlusTax: beforeDiscount,
       discount: discount,
-      finalTotal: finalTotal
+      finalTotal: finalTotal,
     });
     return finalTotal;
   };
@@ -431,57 +487,71 @@ export function OrderDialog({
     if (mode === "edit" && existingOrder) {
       // Check for various types of changes
       const hasNewItems = cart.length > 0;
-      const hasRemovedItems = existingItems.some(item => item.quantity === 0);
-      const hasCustomerNameChange = (customerName || "") !== (existingOrder.customerName || "");
-      const hasCustomerCountChange = customerCount !== (existingOrder.customerCount || 1);
+      const hasRemovedItems = existingItems.some((item) => item.quantity === 0);
+      const hasCustomerNameChange =
+        (customerName || "") !== (existingOrder.customerName || "");
+      const hasCustomerCountChange =
+        customerCount !== (existingOrder.customerCount || 1);
 
-      const hasAnyChanges = hasNewItems || hasRemovedItems || hasCustomerNameChange || hasCustomerCountChange;
+      const hasAnyChanges =
+        hasNewItems ||
+        hasRemovedItems ||
+        hasCustomerNameChange ||
+        hasCustomerCountChange;
 
-      console.log('📝 Order Dialog: Update attempt - Changes detected:', {
+      console.log("📝 Order Dialog: Update attempt - Changes detected:", {
         hasNewItems,
         hasRemovedItems,
         hasCustomerNameChange,
         hasCustomerCountChange,
         hasAnyChanges,
-        cartLength: cart.length
+        cartLength: cart.length,
       });
 
       // Always allow update to proceed - user wants to refresh/update order data
-      console.log('📝 Order Dialog: Processing order update:', {
+      console.log("📝 Order Dialog: Processing order update:", {
         hasNewItems,
         hasRemovedItems,
         hasCustomerNameChange,
         hasCustomerCountChange,
         hasAnyChanges,
         allowUpdate: true,
-        cartItemsCount: cart.length
+        cartItemsCount: cart.length,
       });
-
 
       // For edit mode, handle both new items and order updates
       const items = cart.map((item) => {
-        const product = products?.find((p: Product) => p.id === item.product.id);
+        const product = products?.find(
+          (p: Product) => p.id === item.product.id,
+        );
         const basePrice = parseFloat(item.product.price.toString());
         const quantity = item.quantity;
         const itemSubtotal = basePrice * quantity;
 
         let itemTax = 0;
         // Tax = (after_tax_price - price) * quantity
-        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const taxPerUnit = afterTaxPrice - basePrice;
-          itemTax = (taxPerUnit * quantity);
+          itemTax = taxPerUnit * quantity;
         }
 
         const itemTotal = itemSubtotal + itemTax;
 
-        console.log(`📝 Order Dialog: Processing cart item ${item.product.name}:`, {
-          productId: item.product.id,
-          quantity: item.quantity,
-          basePrice,
-          itemTax,
-          itemTotal
-        });
+        console.log(
+          `📝 Order Dialog: Processing cart item ${item.product.name}:`,
+          {
+            productId: item.product.id,
+            quantity: item.quantity,
+            basePrice,
+            itemTax,
+            itemTotal,
+          },
+        );
 
         return {
           productId: item.product.id,
@@ -507,10 +577,10 @@ export function OrderDialog({
         hasCustomerChanges: hasCustomerNameChange || hasCustomerCountChange,
         customerUpdates: {
           name: customerName,
-          count: customerCount
+          count: customerCount,
         },
         totalItems: items.length,
-        proceedWithUpdate: true
+        proceedWithUpdate: true,
       });
 
       // Always proceed with mutation - either adding items or updating customer info
@@ -548,14 +618,20 @@ export function OrderDialog({
       };
 
       const items = cart.map((item) => {
-        const product = products?.find((p: Product) => p.id === item.product.id);
+        const product = products?.find(
+          (p: Product) => p.id === item.product.id,
+        );
         const basePrice = item.product.price;
         const quantity = item.quantity;
         const itemSubtotal = basePrice * quantity;
 
         let itemTax = 0;
         // Tax = (after_tax_price - price) * quantity
-        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const price = parseFloat(product.price);
           itemTax = (afterTaxPrice - price) * quantity;
@@ -575,7 +651,9 @@ export function OrderDialog({
       });
 
       console.log("Placing order:", { order, items });
-      console.log(`💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, fullTotal=${fullOrderTotal}`);
+      console.log(
+        `💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, fullTotal=${fullOrderTotal}`,
+      );
       createOrderMutation.mutate({ order, items });
     }
   };
@@ -634,7 +712,10 @@ export function OrderDialog({
           </DialogTitle>
           <DialogDescription>
             {mode === "edit"
-              ? t("orders.editOrderDesc").replace("{orderNumber}", existingOrder?.orderNumber || "")
+              ? t("orders.editOrderDesc").replace(
+                  "{orderNumber}",
+                  existingOrder?.orderNumber || "",
+                )
               : `${t("tables.tableCapacity")}: ${table.capacity}${t("orders.people")} | ${t("tables.selectMenuToOrder")}`}
           </DialogDescription>
         </DialogHeader>
@@ -674,14 +755,16 @@ export function OrderDialog({
                   </div>
                   <div>
                     <Label htmlFor="discount">
-                      Giảm giá (₫)
+                      {t("reports.discount")} (₫)
                     </Label>
                     <Input
                       id="discount"
                       type="text"
-                      value={discount > 0 ? discount.toLocaleString('vi-VN') : ''}
+                      value={
+                        discount > 0 ? discount.toLocaleString("vi-VN") : ""
+                      }
                       onChange={(e) => {
-                        const value = e.target.value.replace(/[^\d]/g, ''); // Chỉ giữ lại số
+                        const value = e.target.value.replace(/[^\d]/g, ""); // Chỉ giữ lại số
                         setDiscount(parseFloat(value) || 0);
                       }}
                       placeholder="0"
@@ -805,52 +888,90 @@ export function OrderDialog({
                                 <h4 className="font-medium text-sm">
                                   {item.productName}
                                 </h4>
-                                <p className="text-xs text-gray-500">{t("orders.alreadyOrdered")}</p>
+                                <p className="text-xs text-gray-500">
+                                  {t("orders.alreadyOrdered")}
+                                </p>
                                 {/* Individual item discount for existing items */}
-                                {discount > 0 && (() => {
-                                  // Get all items (existing + new)
-                                  const allItems = [...existingItems, ...cart.map(cartItem => ({
-                                    unitPrice: cartItem.product.price,
-                                    quantity: cartItem.quantity
-                                  }))];
-                                  
-                                  const currentIndex = existingItems.findIndex((existingItem, idx) => idx === index);
-                                  const isLastItem = currentIndex === allItems.length - 1;
-                                  
-                                  let itemDiscountAmount = 0;
-                                  
-                                  if (isLastItem) {
-                                    // Last item: total discount - sum of all previous discounts
-                                    let previousDiscounts = 0;
-                                    const totalBeforeDiscount = calculateTotal() - calculateTax();
-                                    
-                                    for (let i = 0; i < allItems.length - 1; i++) {
-                                      const prevItemSubtotal = Number(allItems[i].unitPrice || 0) * Number(allItems[i].quantity || 0);
-                                      const prevItemDiscount = totalBeforeDiscount > 0 ? 
-                                        Math.floor((discount * prevItemSubtotal) / totalBeforeDiscount) : 0;
-                                      previousDiscounts += prevItemDiscount;
+                                {discount > 0 &&
+                                  (() => {
+                                    // Get all items (existing + new)
+                                    const allItems = [
+                                      ...existingItems,
+                                      ...cart.map((cartItem) => ({
+                                        unitPrice: cartItem.product.price,
+                                        quantity: cartItem.quantity,
+                                      })),
+                                    ];
+
+                                    const currentIndex =
+                                      existingItems.findIndex(
+                                        (existingItem, idx) => idx === index,
+                                      );
+                                    const isLastItem =
+                                      currentIndex === allItems.length - 1;
+
+                                    let itemDiscountAmount = 0;
+
+                                    if (isLastItem) {
+                                      // Last item: total discount - sum of all previous discounts
+                                      let previousDiscounts = 0;
+                                      const totalBeforeDiscount =
+                                        calculateTotal() - calculateTax();
+
+                                      for (
+                                        let i = 0;
+                                        i < allItems.length - 1;
+                                        i++
+                                      ) {
+                                        const prevItemSubtotal =
+                                          Number(allItems[i].unitPrice || 0) *
+                                          Number(allItems[i].quantity || 0);
+                                        const prevItemDiscount =
+                                          totalBeforeDiscount > 0
+                                            ? Math.floor(
+                                                (discount * prevItemSubtotal) /
+                                                  totalBeforeDiscount,
+                                              )
+                                            : 0;
+                                        previousDiscounts += prevItemDiscount;
+                                      }
+
+                                      itemDiscountAmount =
+                                        discount - previousDiscounts;
+                                    } else {
+                                      // Regular calculation for non-last items
+                                      const itemSubtotal =
+                                        Number(item.unitPrice || 0) *
+                                        Number(item.quantity || 0);
+                                      const totalBeforeDiscount =
+                                        calculateTotal() - calculateTax();
+                                      itemDiscountAmount =
+                                        totalBeforeDiscount > 0
+                                          ? Math.floor(
+                                              (discount * itemSubtotal) /
+                                                totalBeforeDiscount,
+                                            )
+                                          : 0;
                                     }
-                                    
-                                    itemDiscountAmount = discount - previousDiscounts;
-                                  } else {
-                                    // Regular calculation for non-last items
-                                    const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-                                    const totalBeforeDiscount = calculateTotal() - calculateTax();
-                                    itemDiscountAmount = totalBeforeDiscount > 0 ? 
-                                      Math.floor((discount * itemSubtotal) / totalBeforeDiscount) : 0;
-                                  }
-                                  
-                                  return itemDiscountAmount > 0 ? (
-                                    <div className="text-xs text-red-600 mt-1">
-                                      Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString()} ₫
-                                    </div>
-                                  ) : null;
-                                })()}
+
+                                    return itemDiscountAmount > 0 ? (
+                                      <div className="text-xs text-red-600 mt-1">
+                                        {t("common.discount")} -
+                                        {Math.floor(
+                                          itemDiscountAmount,
+                                        ).toLocaleString()}{" "}
+                                        ₫
+                                      </div>
+                                    ) : null;
+                                  })()}
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="text-right">
                                   <span className="text-sm font-bold">
-                                    {Math.floor(Number(item.total)).toLocaleString()} ₫
+                                    {Math.floor(
+                                      Number(item.total),
+                                    ).toLocaleString()}{" "}
+                                    ₫
                                   </span>
                                   <p className="text-xs text-gray-500">
                                     x{item.quantity}
@@ -860,14 +981,26 @@ export function OrderDialog({
                                   size="sm"
                                   variant="destructive"
                                   onClick={() => {
-                                    if (window.confirm(`Bạn có chắc chắn muốn xóa "${item.productName}" khỏi đơn hàng?`)) {
+                                    if (
+                                      window.confirm(
+                                        `Bạn có chắc chắn muốn xóa "${item.productName}" khỏi đơn hàng?`,
+                                      )
+                                    ) {
                                       // Remove item from existing items list
-                                      setExistingItems(prev => prev.filter((_, i) => i !== index));
+                                      setExistingItems((prev) =>
+                                        prev.filter((_, i) => i !== index),
+                                      );
 
                                       // Call API to delete the order item
-                                      apiRequest('DELETE', `/api/order-items/${item.id}`)
+                                      apiRequest(
+                                        "DELETE",
+                                        `/api/order-items/${item.id}`,
+                                      )
                                         .then(async () => {
-                                          console.log('🗑️ Order Dialog: Successfully deleted item:', item.productName);
+                                          console.log(
+                                            "🗑️ Order Dialog: Successfully deleted item:",
+                                            item.productName,
+                                          );
 
                                           toast({
                                             title: "Xóa món thành công",
@@ -877,101 +1010,193 @@ export function OrderDialog({
                                           // Recalculate order total if this is an existing order
                                           if (existingOrder?.id) {
                                             try {
-                                              console.log('🧮 Order Dialog: Starting order total recalculation for order:', existingOrder.id);
+                                              console.log(
+                                                "🧮 Order Dialog: Starting order total recalculation for order:",
+                                                existingOrder.id,
+                                              );
 
                                               // Fetch current order items after deletion
-                                              const response = await apiRequest('GET', `/api/order-items/${existingOrder.id}`);
-                                              const remainingItems = await response.json();
+                                              const response = await apiRequest(
+                                                "GET",
+                                                `/api/order-items/${existingOrder.id}`,
+                                              );
+                                              const remainingItems =
+                                                await response.json();
 
-                                              console.log('📦 Order Dialog: Remaining items after deletion:', remainingItems?.length || 0);
+                                              console.log(
+                                                "📦 Order Dialog: Remaining items after deletion:",
+                                                remainingItems?.length || 0,
+                                              );
 
                                               // Calculate new total based on remaining items
                                               let newSubtotal = 0;
                                               let newTax = 0;
 
-                                              if (Array.isArray(remainingItems) && remainingItems.length > 0) {
-                                                remainingItems.forEach((remainingItem: any) => {
-                                                  const basePrice = Number(remainingItem.unitPrice || 0);
-                                                  const quantity = Number(remainingItem.quantity || 0);
-                                                  const product = products?.find((p: any) => p.id === remainingItem.productId);
+                                              if (
+                                                Array.isArray(remainingItems) &&
+                                                remainingItems.length > 0
+                                              ) {
+                                                remainingItems.forEach(
+                                                  (remainingItem: any) => {
+                                                    const basePrice = Number(
+                                                      remainingItem.unitPrice ||
+                                                        0,
+                                                    );
+                                                    const quantity = Number(
+                                                      remainingItem.quantity ||
+                                                        0,
+                                                    );
+                                                    const product =
+                                                      products?.find(
+                                                        (p: any) =>
+                                                          p.id ===
+                                                          remainingItem.productId,
+                                                      );
 
-                                                  // Calculate subtotal
-                                                  newSubtotal += basePrice * quantity;
+                                                    // Calculate subtotal
+                                                    newSubtotal +=
+                                                      basePrice * quantity;
 
-                                                  // Calculate tax using Math.floor((after_tax_price - price) * quantity)
-                                                  if (
-                                                    product?.afterTaxPrice &&
-                                                    product.afterTaxPrice !== null &&
-                                                    product.afterTaxPrice !== ""
-                                                  ) {
-                                                    const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                                    const taxPerUnit = afterTaxPrice - basePrice;
-                                                    newTax += Math.floor(taxPerUnit * quantity);
-                                                  }
-                                                });
+                                                    // Calculate tax using Math.floor((after_tax_price - price) * quantity)
+                                                    if (
+                                                      product?.afterTaxPrice &&
+                                                      product.afterTaxPrice !==
+                                                        null &&
+                                                      product.afterTaxPrice !==
+                                                        ""
+                                                    ) {
+                                                      const afterTaxPrice =
+                                                        parseFloat(
+                                                          product.afterTaxPrice,
+                                                        );
+                                                      const taxPerUnit =
+                                                        afterTaxPrice -
+                                                        basePrice;
+                                                      newTax += Math.floor(
+                                                        taxPerUnit * quantity,
+                                                      );
+                                                    }
+                                                  },
+                                                );
                                               }
                                               // If no items left, totals should be 0
                                               else {
-                                                console.log('📝 Order Dialog: No items left, setting totals to zero');
+                                                console.log(
+                                                  "📝 Order Dialog: No items left, setting totals to zero",
+                                                );
                                                 newSubtotal = 0;
                                                 newTax = 0;
                                               }
 
-                                              const newTotal = newSubtotal + newTax;
+                                              const newTotal =
+                                                newSubtotal + newTax;
 
-                                              console.log('💰 Order Dialog: Calculated new totals:', {
-                                                newSubtotal,
-                                                newTax,
-                                                newTotal,
-                                                itemsCount: remainingItems?.length || 0
-                                              });
+                                              console.log(
+                                                "💰 Order Dialog: Calculated new totals:",
+                                                {
+                                                  newSubtotal,
+                                                  newTax,
+                                                  newTotal,
+                                                  itemsCount:
+                                                    remainingItems?.length || 0,
+                                                },
+                                              );
 
                                               // Update order with new totals
-                                              apiRequest('PUT', `/api/orders/${existingOrder.id}`, {
-                                                subtotal: newSubtotal.toString(),
-                                                tax: newTax.toString(),
-                                                total: newTotal.toString()
-                                              }).then(() => {
-                                                console.log('✅ Order Dialog: Order totals updated successfully');
+                                              apiRequest(
+                                                "PUT",
+                                                `/api/orders/${existingOrder.id}`,
+                                                {
+                                                  subtotal:
+                                                    newSubtotal.toString(),
+                                                  tax: newTax.toString(),
+                                                  total: newTotal.toString(),
+                                                },
+                                              ).then(() => {
+                                                console.log(
+                                                  "✅ Order Dialog: Order totals updated successfully",
+                                                );
 
                                                 // Force refresh of all related data to ensure UI updates immediately
                                                 Promise.all([
-                                                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
-                                                  queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
-                                                  queryClient.invalidateQueries({ queryKey: ["/api/order-items"] }),
-                                                  queryClient.invalidateQueries({ queryKey: ["/api/order-items", existingOrder.id] })
+                                                  queryClient.invalidateQueries(
+                                                    {
+                                                      queryKey: ["/api/orders"],
+                                                    },
+                                                  ),
+                                                  queryClient.invalidateQueries(
+                                                    {
+                                                      queryKey: ["/api/tables"],
+                                                    },
+                                                  ),
+                                                  queryClient.invalidateQueries(
+                                                    {
+                                                      queryKey: [
+                                                        "/api/order-items",
+                                                      ],
+                                                    },
+                                                  ),
+                                                  queryClient.invalidateQueries(
+                                                    {
+                                                      queryKey: [
+                                                        "/api/order-items",
+                                                        existingOrder.id,
+                                                      ],
+                                                    },
+                                                  ),
                                                 ]).then(() => {
                                                   // Force immediate refetch to update table grid display
                                                   return Promise.all([
-                                                    queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
-                                                    queryClient.refetchQueries({ queryKey: ["/api/tables"] })
+                                                    queryClient.refetchQueries({
+                                                      queryKey: ["/api/orders"],
+                                                    }),
+                                                    queryClient.refetchQueries({
+                                                      queryKey: ["/api/tables"],
+                                                    }),
                                                   ]);
                                                 });
                                               });
 
-                                              console.log('🔄 Order Dialog: All queries refreshed successfully');
-
+                                              console.log(
+                                                "🔄 Order Dialog: All queries refreshed successfully",
+                                              );
                                             } catch (error) {
-                                              console.error('❌ Order Dialog: Error recalculating order total:', error);
+                                              console.error(
+                                                "❌ Order Dialog: Error recalculating order total:",
+                                                error,
+                                              );
                                               toast({
                                                 title: "Cảnh báo",
-                                                description: "Món đã được xóa nhưng có lỗi khi cập nhật tổng tiền",
+                                                description:
+                                                  "Món đã được xóa nhưng có lỗi khi cập nhật tổng tiền",
                                                 variant: "destructive",
                                               });
                                             }
                                           }
 
                                           // Invalidate queries to refresh data
-                                          queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
-                                          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                                          queryClient.invalidateQueries({
+                                            queryKey: ["/api/order-items"],
+                                          });
+                                          queryClient.invalidateQueries({
+                                            queryKey: ["/api/orders"],
+                                          });
                                         })
                                         .catch((error) => {
-                                          console.error('Error deleting order item:', error);
+                                          console.error(
+                                            "Error deleting order item:",
+                                            error,
+                                          );
                                           // Restore the item if deletion failed
-                                          setExistingItems(prev => [...prev.slice(0, index), item, ...prev.slice(index)]);
+                                          setExistingItems((prev) => [
+                                            ...prev.slice(0, index),
+                                            item,
+                                            ...prev.slice(index),
+                                          ]);
                                           toast({
                                             title: "Lỗi xóa món",
-                                            description: "Không thể xóa món khỏi đơn hàng",
+                                            description:
+                                              "Không thể xóa món khỏi đơn hàng",
                                             variant: "destructive",
                                           });
                                         });
@@ -1016,7 +1241,7 @@ export function OrderDialog({
                             </h4>
                             <span className="text-sm font-bold">
                               {Math.floor(
-                                Number(item.product.price) * item.quantity
+                                Number(item.product.price) * item.quantity,
                               ).toLocaleString()}{" "}
                               ₫
                             </span>
@@ -1046,52 +1271,88 @@ export function OrderDialog({
                               </Button>
                             </div>
                             <span className="text-xs text-gray-500">
-                              {t("tables.unitPrice")}: {Number(item.product.price).toLocaleString()} ₫
+                              {t("tables.unitPrice")}:{" "}
+                              {Number(item.product.price).toLocaleString()} ₫
                             </span>
                           </div>
 
                           {/* Individual item discount display */}
-                          {discount > 0 && (() => {
-                            // Get all items (existing + new)
-                            const allItems = [...existingItems, ...cart.map(cartItem => ({
-                              unitPrice: cartItem.product.price,
-                              quantity: cartItem.quantity
-                            }))];
-                            
-                            const currentCartIndex = cart.findIndex(cartItem => cartItem.product.id === item.product.id);
-                            const currentOverallIndex = existingItems.length + currentCartIndex;
-                            const isLastItem = currentOverallIndex === allItems.length - 1;
-                            
-                            let itemDiscountAmount = 0;
-                            
-                            if (isLastItem) {
-                              // Last item: total discount - sum of all previous discounts
-                              let previousDiscounts = 0;
-                              const totalBeforeDiscount = calculateTotal() - calculateTax();
-                              
-                              for (let i = 0; i < allItems.length - 1; i++) {
-                                const prevItemSubtotal = Number(allItems[i].unitPrice || 0) * Number(allItems[i].quantity || 0);
-                                const prevItemDiscount = totalBeforeDiscount > 0 ? 
-                                  Math.floor((discount * prevItemSubtotal) / totalBeforeDiscount) : 0;
-                                previousDiscounts += prevItemDiscount;
+                          {discount > 0 &&
+                            (() => {
+                              // Get all items (existing + new)
+                              const allItems = [
+                                ...existingItems,
+                                ...cart.map((cartItem) => ({
+                                  unitPrice: cartItem.product.price,
+                                  quantity: cartItem.quantity,
+                                })),
+                              ];
+
+                              const currentCartIndex = cart.findIndex(
+                                (cartItem) =>
+                                  cartItem.product.id === item.product.id,
+                              );
+                              const currentOverallIndex =
+                                existingItems.length + currentCartIndex;
+                              const isLastItem =
+                                currentOverallIndex === allItems.length - 1;
+
+                              let itemDiscountAmount = 0;
+
+                              if (isLastItem) {
+                                // Last item: total discount - sum of all previous discounts
+                                let previousDiscounts = 0;
+                                const totalBeforeDiscount =
+                                  calculateTotal() - calculateTax();
+
+                                for (
+                                  let i = 0;
+                                  i < allItems.length - 1;
+                                  i++
+                                ) {
+                                  const prevItemSubtotal =
+                                    Number(allItems[i].unitPrice || 0) *
+                                    Number(allItems[i].quantity || 0);
+                                  const prevItemDiscount =
+                                    totalBeforeDiscount > 0
+                                      ? Math.floor(
+                                          (discount * prevItemSubtotal) /
+                                            totalBeforeDiscount,
+                                        )
+                                      : 0;
+                                  previousDiscounts += prevItemDiscount;
+                                }
+
+                                itemDiscountAmount =
+                                  discount - previousDiscounts;
+                              } else {
+                                // Regular calculation for non-last items
+                                const itemSubtotal =
+                                  Number(item.product.price) * item.quantity;
+                                const totalBeforeDiscount =
+                                  calculateTotal() - calculateTax();
+                                itemDiscountAmount =
+                                  totalBeforeDiscount > 0
+                                    ? Math.floor(
+                                        (discount * itemSubtotal) /
+                                          totalBeforeDiscount,
+                                      )
+                                    : 0;
                               }
-                              
-                              itemDiscountAmount = discount - previousDiscounts;
-                            } else {
-                              // Regular calculation for non-last items
-                              const itemSubtotal = Number(item.product.price) * item.quantity;
-                              const totalBeforeDiscount = calculateTotal() - calculateTax();
-                              itemDiscountAmount = totalBeforeDiscount > 0 ? 
-                                Math.floor((discount * itemSubtotal) / totalBeforeDiscount) : 0;
-                            }
-                            
-                            return itemDiscountAmount > 0 ? (
-                              <div className="text-xs text-red-600 mt-1 flex justify-between">
-                                <span>Giảm giá:</span>
-                                <span>-{Math.floor(itemDiscountAmount).toLocaleString()} ₫</span>
-                              </div>
-                            ) : null;
-                          })()}
+
+                              return itemDiscountAmount > 0 ? (
+                                <div className="text-xs text-red-600 mt-1 text-end">
+                                  <span>{t("common.discount")}</span>
+                                  <span>
+                                    -
+                                    {Math.floor(
+                                      itemDiscountAmount,
+                                    ).toLocaleString()}{" "}
+                                    ₫
+                                  </span>
+                                </div>
+                              ) : null;
+                            })()}
 
                           <Textarea
                             placeholder={t("tables.specialRequests")}
@@ -1112,7 +1373,9 @@ export function OrderDialog({
         </div>
 
         {/* DialogFooter with Summary and Order Button */}
-        {(cart.length > 0 || (mode === "edit" && existingItems.length > 0) || (mode === "edit")) && (
+        {(cart.length > 0 ||
+          (mode === "edit" && existingItems.length > 0) ||
+          mode === "edit") && (
           <DialogFooter className="pt-4 pb-2 flex-shrink-0 border-t bg-white">
             <div className="flex items-center justify-between w-full">
               {/* Summary items in horizontal layout */}
@@ -1120,15 +1383,18 @@ export function OrderDialog({
                 {mode === "edit" && existingItems.length > 0 && (
                   <>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">{t("orders.previousItems")}</span>
+                      <span className="text-gray-600">
+                        {t("orders.previousItems")}
+                      </span>
                       <span className="font-medium">
                         {Math.floor(
-                          existingItems
-                            .reduce((total, item) => {
-                              // Use unitPrice * quantity for existing items (pre-tax amount)
-                              const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-                              return total + itemSubtotal;
-                            }, 0)
+                          existingItems.reduce((total, item) => {
+                            // Use unitPrice * quantity for existing items (pre-tax amount)
+                            const itemSubtotal =
+                              Number(item.unitPrice || 0) *
+                              Number(item.quantity || 0);
+                            return total + itemSubtotal;
+                          }, 0),
                         ).toLocaleString()}{" "}
                         ₫
                       </span>
@@ -1141,16 +1407,17 @@ export function OrderDialog({
                 {cart.length > 0 && mode === "edit" && (
                   <>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">{t("orders.newItems")}</span>
+                      <span className="text-gray-600">
+                        {t("orders.newItems")}
+                      </span>
                       <span className="font-medium">
                         {Math.floor(
-                          cart
-                            .reduce(
-                              (total, item) =>
-                                total +
-                                Number(item.product.price) * item.quantity,
-                              0,
-                            )
+                          cart.reduce(
+                            (total, item) =>
+                              total +
+                              Number(item.product.price) * item.quantity,
+                            0,
+                          ),
                         ).toLocaleString()}{" "}
                         ₫
                       </span>
@@ -1159,14 +1426,14 @@ export function OrderDialog({
                   </>
                 )}
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-600">{t('orders.subtotal')}</span>
+                  <span className="text-gray-600">{t("orders.subtotal")}</span>
                   <span className="font-medium">
                     {Math.floor(calculateTotal()).toLocaleString()} ₫
                   </span>
                 </div>
                 <div className="w-px h-4 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-600">{t('orders.tax')}</span>
+                  <span className="text-gray-600">{t("orders.tax")}</span>
                   <span className="font-medium">
                     {Math.floor(calculateTax()).toLocaleString()} ₫
                   </span>
@@ -1175,7 +1442,9 @@ export function OrderDialog({
                   <>
                     <div className="w-px h-4 bg-gray-300"></div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">Giảm giá</span>
+                      <span className="text-gray-600">
+                        {t("reports.discount")}
+                      </span>
                       <span className="font-medium text-red-600">
                         -{Math.floor(discount).toLocaleString()} ₫
                       </span>
@@ -1185,7 +1454,7 @@ export function OrderDialog({
                 <div className="w-px h-4 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600 font-bold">
-                    {t('orders.totalAmount')}
+                    {t("orders.totalAmount")}
                   </span>
                   <span className="font-bold text-lg text-blue-600">
                     {Math.floor(calculateGrandTotal()).toLocaleString()} ₫

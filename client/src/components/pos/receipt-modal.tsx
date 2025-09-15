@@ -850,7 +850,7 @@ export function ReceiptModal({
                         </div>
                         {itemDiscountAmount > 0 && (
                           <div className="text-xs text-red-600">
-                            Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
+                            {t("common.discount")} -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
                           </div>
                         )}
                       </div>
@@ -915,7 +915,7 @@ export function ReceiptModal({
 
                 return (
                   <div className="flex justify-between text-sm text-red-600">
-                    <span>Giảm giá:</span>
+                    <span>{t("common.discount")}</span>
                     <span className="font-medium">
                       -
                       {Math.floor(displayDiscount || "0").toLocaleString(
@@ -1098,7 +1098,7 @@ export function ReceiptModal({
                         </div>
                         {itemDiscountAmount > 0 && (
                           <div className="text-xs text-red-600">
-                            Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
+                            {t("common.discount")} -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
                           </div>
                         )}
                       </div>
@@ -1375,7 +1375,7 @@ export function ReceiptModal({
                       </div>
                       {finalDiscount > 0 && (
                         <div className="flex justify-between text-sm text-red-600">
-                          <span>Giảm giá:</span>
+                          <span>{t("common.discount")}</span>
                           <span className="font-medium">
                             -{Math.floor(finalDiscount).toLocaleString("vi-VN")}{" "}
                             ₫
@@ -1486,7 +1486,7 @@ export function ReceiptModal({
 
                         return (
                           <div className="flex justify-between text-sm text-red-600">
-                            <span>Giảm giá:</span>
+                            <span>{t("common.discount")}</span>
                             <span className="font-medium">
                               -
                               {Math.floor(displayDiscount).toLocaleString(
