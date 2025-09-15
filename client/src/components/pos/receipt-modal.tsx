@@ -791,13 +791,46 @@ export function ReceiptModal({
             </div>
 
             <div className="space-y-2 mb-3">
-              {(receipt.items || []).map((item) => {
+              {(receipt.items || []).map((item, index, items) => {
                 // For receipt display, use the actual unit price from database (not calculated)
                 const actualUnitPrice = parseFloat(
                   item.unitPrice || item.price || "0",
                 );
                 const quantity = item.quantity || 1;
                 const actualTotal = parseFloat(item.total || "0");
+
+                // Calculate individual item discount if order has discount
+                let itemDiscountAmount = 0;
+                const orderDiscount = parseFloat(receipt.exactDiscount || receipt.discount || "0");
+                
+                if (orderDiscount > 0) {
+                  const isLastItem = index === items.length - 1;
+                  
+                  if (isLastItem) {
+                    // Last item: total discount - sum of all previous discounts
+                    let previousDiscounts = 0;
+                    const totalBeforeDiscount = items.reduce((sum, itm) => {
+                      return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
+                    }, 0);
+                    
+                    for (let i = 0; i < items.length - 1; i++) {
+                      const prevItemSubtotal = parseFloat(items[i].unitPrice || items[i].price || "0") * (items[i].quantity || 1);
+                      const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                        Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                      previousDiscounts += prevItemDiscount;
+                    }
+                    
+                    itemDiscountAmount = orderDiscount - previousDiscounts;
+                  } else {
+                    // Regular calculation for non-last items
+                    const itemSubtotal = actualUnitPrice * quantity;
+                    const totalBeforeDiscount = items.reduce((sum, itm) => {
+                      return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
+                    }, 0);
+                    itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                      Math.floor((orderDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
+                  }
+                }
 
                 return (
                   <div key={item.id || Math.random()}>
@@ -815,6 +848,11 @@ export function ReceiptModal({
                           {Math.floor(actualUnitPrice).toLocaleString("vi-VN")}{" "}
                           ₫
                         </div>
+                        {itemDiscountAmount > 0 && (
+                          <div className="text-xs text-red-600">
+                            Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
+                          </div>
+                        )}
                       </div>
                       <div>
                         {Math.floor(actualTotal).toLocaleString("vi-VN")} ₫
@@ -951,36 +989,131 @@ export function ReceiptModal({
             </div>
 
             <div className="space-y-2 mb-3">
-              {cartItems.map((item) => (
-                <div key={item.id}>
-                  <div className="flex justify-between text-sm">
-                    <div className="flex-1">
-                      <div>{item.name}</div>
-                      <div className="text-xs text-gray-600">
-                        SKU:{" "}
-                        {item.sku || `FOOD${String(item.id).padStart(5, "0")}`}
+              {cartItems.map((item, index) => {
+                // Calculate individual item discount for preview mode
+                let itemDiscountAmount = 0;
+                const finalDiscount = (() => {
+                  // Check for discount from multiple sources with priority order
+                  let orderDiscount = 0;
+
+                  // Check if this is from order-management specifically
+                  const isFromOrderManagement =
+                    typeof window !== "undefined" &&
+                    (window as any).orderForPayment;
+
+                  if (isFromOrderManagement) {
+                    // For order-management: prioritize orderForPayment data
+                    const orderForPayment = (window as any).orderForPayment;
+
+                    // Priority 1: exactDiscount (most accurate)
+                    if (
+                      orderForPayment.exactDiscount !== undefined &&
+                      orderForPayment.exactDiscount !== null
+                    ) {
+                      orderDiscount = Math.floor(
+                        Number(orderForPayment.exactDiscount),
+                      );
+                    }
+                    // Priority 2: discount property
+                    else if (
+                      orderForPayment.discount !== undefined &&
+                      orderForPayment.discount !== null
+                    ) {
+                      orderDiscount = Math.floor(
+                        Number(orderForPayment.discount),
+                      );
+                    }
+                  } else {
+                    // For other screens: check receipt discount
+                    if (
+                      receipt &&
+                      receipt.exactDiscount !== undefined &&
+                      receipt.exactDiscount !== null &&
+                      parseFloat(receipt.exactDiscount.toString()) > 0
+                    ) {
+                      orderDiscount = parseFloat(receipt.exactDiscount.toString());
+                    } else if (
+                      receipt &&
+                      parseFloat(receipt.discount || "0") > 0
+                    ) {
+                      orderDiscount = parseFloat(receipt.discount || "0");
+                    }
+                  }
+
+                  return orderDiscount;
+                })();
+
+                if (finalDiscount > 0) {
+                  const isLastItem = index === cartItems.length - 1;
+                  
+                  if (isLastItem) {
+                    // Last item: total discount - sum of all previous discounts
+                    let previousDiscounts = 0;
+                    const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
+                      const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
+                      return sum + (price * itm.quantity);
+                    }, 0);
+                    
+                    for (let i = 0; i < cartItems.length - 1; i++) {
+                      const prevItemPrice = typeof cartItems[i].price === "string" 
+                        ? parseFloat(cartItems[i].price) 
+                        : cartItems[i].price;
+                      const prevItemSubtotal = prevItemPrice * cartItems[i].quantity;
+                      const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                        Math.floor((finalDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                      previousDiscounts += prevItemDiscount;
+                    }
+                    
+                    itemDiscountAmount = finalDiscount - previousDiscounts;
+                  } else {
+                    // Regular calculation for non-last items
+                    const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                    const itemSubtotal = itemPrice * item.quantity;
+                    const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
+                      const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
+                      return sum + (price * itm.quantity);
+                    }, 0);
+                    itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                      Math.floor((finalDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
+                  }
+                }
+
+                return (
+                  <div key={item.id}>
+                    <div className="flex justify-between text-sm">
+                      <div className="flex-1">
+                        <div>{item.name}</div>
+                        <div className="text-xs text-gray-600">
+                          SKU:{" "}
+                          {item.sku || `FOOD${String(item.id).padStart(5, "0")}`}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {item.quantity} x{" "}
+                          {Math.floor(
+                            typeof item.price === "string"
+                              ? parseFloat(item.price)
+                              : item.price,
+                          ).toLocaleString("vi-VN")}{" "}
+                          ₫
+                        </div>
+                        {itemDiscountAmount > 0 && (
+                          <div className="text-xs text-red-600">
+                            Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
+                          </div>
+                        )}
                       </div>
-                      <div className="text-xs text-gray-600">
-                        {item.quantity} x{" "}
+                      <div>
                         {Math.floor(
-                          typeof item.price === "string"
+                          (typeof item.price === "string"
                             ? parseFloat(item.price)
-                            : item.price,
+                            : item.price) * item.quantity,
                         ).toLocaleString("vi-VN")}{" "}
                         ₫
                       </div>
                     </div>
-                    <div>
-                      {Math.floor(
-                        (typeof item.price === "string"
-                          ? parseFloat(item.price)
-                          : item.price) * item.quantity,
-                      ).toLocaleString("vi-VN")}{" "}
-                      ₫
-                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
