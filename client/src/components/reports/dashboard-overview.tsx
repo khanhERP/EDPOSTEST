@@ -181,13 +181,13 @@ export function DashboardOverview() {
         } : null
       });
 
-      // Calculate total revenue from completed orders (total after discount)
+      // Calculate total revenue from completed orders (subtotal + tax = revenue after discount)
       const totalSalesRevenue = completedOrders.reduce((sum: number, order: any) => {
-        // Use subtotal + tax as the actual revenue (after discount deduction)
-        const subtotal = Number(order.subtotal || 0);
-        const tax = Number(order.tax || 0);
-        const revenue = subtotal + tax;
-        console.log(`Processing order ${order.orderNumber}: subtotal=${subtotal}, tax=${tax}, revenue=${revenue}`);
+        // Revenue = Subtotal (đã trừ giảm giá) + Tax
+        const subtotal = Number(order.subtotal || 0); // Thành tiền sau khi trừ giảm giá
+        const tax = Number(order.tax || 0); // Thuế
+        const revenue = subtotal + tax; // Doanh thu thực tế
+        console.log(`Processing order ${order.orderNumber}: subtotal=${subtotal}, tax=${tax}, revenue=${revenue}, originalTotal=${order.total}`);
         return sum + revenue;
       }, 0);
 
