@@ -460,10 +460,7 @@ export function DashboardOverview() {
                   {formatCurrency(stats.subtotalRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {startDate === endDate 
-                    ? formatDate(startDate)
-                    : `${formatDate(startDate)} - ${formatDate(endDate)}`
-                  }
+                  {startDate} ~ {endDate}
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />
