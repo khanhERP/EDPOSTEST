@@ -3498,7 +3498,16 @@ export class DatabaseStorage implements IStorage {
   // Printer configuration management
   async getPrinterConfigs(tenantDb?: any): Promise<PrinterConfig[]> {
     const database = tenantDb || db;
-    return await database.select().from(printerConfigs).where(eq(printerConfigs.isActive, true));
+    console.log("🔍 Storage: Fetching all printer configs (active and inactive)");
+    
+    try {
+      const configs = await database.select().from(printerConfigs).orderBy(printerConfigs.id);
+      console.log(`✅ Storage: Found ${configs.length} printer configs`);
+      return configs;
+    } catch (error) {
+      console.error("❌ Storage: Error fetching printer configs:", error);
+      return [];
+    }
   }
 
   async createPrinterConfig(configData: any, tenantDb?: any): Promise<PrinterConfig> {

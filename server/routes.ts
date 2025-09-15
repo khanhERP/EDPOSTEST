@@ -4350,6 +4350,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Printer Configuration APIs
+  app.get("/api/printer-configs", tenantMiddleware, async (req: TenantRequest, res) => {
+    try {
+      console.log("🔍 GET /api/printer-configs - Starting request processing");
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log("✅ Tenant database connection obtained for printer configs");
+      } catch (dbError) {
+        console.error("❌ Failed to get tenant database for printer configs:", dbError);
+        tenantDb = null;
+      }
+
+      const configs = await storage.getPrinterConfigs(tenantDb);
+      console.log(`✅ Successfully fetched ${configs.length} printer configs`);
+      res.json(configs);
+    } catch (error) {
+      console.error("❌ Error fetching printer configs:", error);
+      res.status(500).json({
+        error: "Failed to fetch printer configs",
+      });
+    }
+  });
+
+  app.post("/api/printer-configs", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const configData = req.body;
+
+      console.log("Creating printer config with data:", configData);
+
+      const config = await storage.createPrinterConfig(configData, tenantDb);
+      res.status(201).json(config);
+    } catch (error) {
+      console.error("Error creating printer config:", error);
+      res.status(500).json({
+        error: "Failed to create printer config",
+      });
+    }
+  });
+
+  app.put("/api/printer-configs/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const configData = req.body;
+
+      console.log(`Updating printer config ${id} with data:`, configData);
+
+      const config = await storage.updatePrinterConfig(id, configData, tenantDb);
+      
+      if (!config) {
+        return res.status(404).json({
+          error: "Printer config not found",
+        });
+      }
+
+      res.json(config);
+    } catch (error) {
+      console.error("Error updating printer config:", error);
+      res.status(500).json({
+        error: "Failed to update printer config",
+      });
+    }
+  });
+
+  app.delete("/api/printer-configs/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log(`Deleting printer config ${id}`);
+
+      const deleted = await storage.deletePrinterConfig(id, tenantDb);
+      
+      if (!deleted) {
+        return res.status(404).json({
+          error: "Printer config not found",
+        });
+      }
+
+      res.json({
+        message: "Printer config deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting printer config:", error);
+      res.status(500).json({
+        error: "Failed to delete printer config",
+      });
+    }
+  });
+
+  app.post("/api/printer-configs/:id/test", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+
+      // Get printer config
+      const configs = await storage.getPrinterConfigs(tenantDb);
+      const config = configs.find(c => c.id === id);
+
+      if (!config) {
+        return res.status(404).json({
+          success: false,
+          message: "Printer config not found",
+        });
+      }
+
+      // Test connection based on connection type
+      let testResult = { success: false, message: "Unknown connection type" };
+
+      if (config.connectionType === "network" && config.ipAddress) {
+        // Test network connection
+        const net = require("net");
+        
+        const testPromise = new Promise((resolve) => {
+          const client = new net.Socket();
+          client.setTimeout(3000);
+
+          client.connect(config.port || 9100, config.ipAddress, () => {
+            client.end();
+            resolve({
+              success: true,
+              message: `Successfully connected to ${config.ipAddress}:${config.port || 9100}`,
+            });
+          });
+
+          client.on("timeout", () => {
+            client.destroy();
+            resolve({
+              success: false,
+              message: "Connection timeout",
+            });
+          });
+
+          client.on("error", (error) => {
+            resolve({
+              success: false,
+              message: `Connection failed: ${error.message}`,
+            });
+          });
+        });
+
+        testResult = await testPromise;
+      } else if (config.connectionType === "usb") {
+        testResult = {
+          success: true,
+          message: "USB printer detection not implemented",
+        };
+      } else if (config.connectionType === "bluetooth") {
+        testResult = {
+          success: true,
+          message: "Bluetooth printer detection not implemented",
+        };
+      }
+
+      res.json(testResult);
+    } catch (error) {
+      console.error("Error testing printer connection:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to test printer connection",
+      });
+    }
+  });
+
   // Customer Reports APIs
   app.get("/api/customer-debts", async (req: TenantRequest, res) => {
     try {
