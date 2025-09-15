@@ -300,9 +300,10 @@ export function SalesReport() {
 
       // Total orders should be based on unique orders, not items
       const totalOrders = paidOrders.length;
+      // Calculate total customers by summing customer_count from paid orders (same as dashboard)
       const totalCustomers = paidOrders.reduce((total: number, order: any) => {
         const customerCount = Number(order.customerCount || 1); // Default to 1 if not specified
-        console.log(`Processing order ${order.orderNumber}: customerCount=${customerCount}`);
+        console.log(`Sales Report - Processing order ${order.orderNumber}: customerCount=${customerCount}`);
         return total + customerCount;
       }, 0);
       const averageOrderValue =
