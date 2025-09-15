@@ -223,17 +223,45 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
         });
         
         // Turn off the conflicting printer first
+        const conflictingUpdateData = {
+          name: conflictingPrinter.name,
+          printerType: conflictingPrinter.printerType,
+          connectionType: conflictingPrinter.connectionType,
+          ipAddress: conflictingPrinter.ipAddress,
+          port: conflictingPrinter.port,
+          macAddress: conflictingPrinter.macAddress,
+          paperWidth: conflictingPrinter.paperWidth,
+          printSpeed: conflictingPrinter.printSpeed,
+          isEmployee: conflictingPrinter.isEmployee,
+          isKitchen: conflictingPrinter.isKitchen,
+          isActive: false
+        };
+        
         updateConfigMutation.mutate({ 
           id: conflictingPrinter.id, 
-          data: { ...conflictingPrinter, isActive: false } 
+          data: conflictingUpdateData
         });
       }
     }
 
-    // Update the current printer status
+    // Update the current printer status - only send necessary fields
+    const updateData = {
+      name: config.name,
+      printerType: config.printerType,
+      connectionType: config.connectionType,
+      ipAddress: config.ipAddress,
+      port: config.port,
+      macAddress: config.macAddress,
+      paperWidth: config.paperWidth,
+      printSpeed: config.printSpeed,
+      isEmployee: config.isEmployee,
+      isKitchen: config.isKitchen,
+      isActive: newStatus
+    };
+
     updateConfigMutation.mutate({ 
       id: config.id, 
-      data: { ...config, isActive: newStatus } 
+      data: updateData
     });
   };
 
