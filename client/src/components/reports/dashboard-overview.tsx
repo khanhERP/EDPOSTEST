@@ -168,14 +168,14 @@ export function DashboardOverview() {
         } : null
       });
 
-      // Calculate total revenue: Subtotal - Discount (excludes tax)
+      // Calculate total revenue from completed orders using actual order totals (includes tax)
       const totalSalesRevenue = completedOrders.reduce((sum: number, order: any) => {
-        const subtotal = Number(order.subtotal || 0);
-        const discount = Number(order.discount || 0);
-        return sum + (subtotal - discount);
+        // Use storedTotal if available (includes tax), otherwise fall back to total
+        const totalWithTax = Number(order.storedTotal || order.total || 0);
+        return sum + totalWithTax;
       }, 0);
 
-      // Calculate subtotal revenue from completed orders (excludes tax and discount)
+      // Calculate subtotal revenue from completed orders (excludes tax)
       const subtotalRevenue = completedOrders.reduce((sum: number, order: any) => {
         const subtotal = Number(order.subtotal || 0);
         return sum + subtotal;
@@ -259,12 +259,11 @@ export function DashboardOverview() {
       };
 
       console.log("Dashboard Debug - Final Stats:", {
-        totalSalesRevenue: `${totalSalesRevenue} (subtotal - discount)`,
-        subtotalRevenue: `${subtotalRevenue} (before discount)`,
+        totalSalesRevenue,
+        subtotalRevenue,
         periodOrderCount,
         periodCustomerCount,
-        dateRange: `${startDate} to ${endDate}`,
-        calculation: "Total Revenue = Subtotal - Discount (excludes tax)"
+        dateRange: `${startDate} to ${endDate}`
       });
 
       return finalStats;
