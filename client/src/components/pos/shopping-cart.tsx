@@ -1053,6 +1053,50 @@ export function ShoppingCart({
                         ₫ ({item.taxRate}%)
                       </p>
                     )}
+                    
+                    {/* Individual item discount display */}
+                    {(() => {
+                      // Calculate individual item discount if order has discount
+                      const orderDiscount = parseFloat(currentOrderDiscount || "0");
+                      if (orderDiscount > 0) {
+                        const currentIndex = cart.findIndex(cartItem => cartItem.id === item.id);
+                        const isLastItem = currentIndex === cart.length - 1;
+                        
+                        let itemDiscountAmount = 0;
+                        
+                        if (isLastItem) {
+                          // Last item: total discount - sum of all previous discounts
+                          let previousDiscounts = 0;
+                          const totalBeforeDiscount = cart.reduce((sum, itm) => {
+                            return sum + (parseFloat(itm.price) * itm.quantity);
+                          }, 0);
+                          
+                          for (let i = 0; i < cart.length - 1; i++) {
+                            const prevItemSubtotal = parseFloat(cart[i].price) * cart[i].quantity;
+                            const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                              Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                            previousDiscounts += prevItemDiscount;
+                          }
+                          
+                          itemDiscountAmount = orderDiscount - previousDiscounts;
+                        } else {
+                          // Regular calculation for non-last items
+                          const itemSubtotal = parseFloat(item.price) * item.quantity;
+                          const totalBeforeDiscount = cart.reduce((sum, itm) => {
+                            return sum + (parseFloat(itm.price) * itm.quantity);
+                          }, 0);
+                          itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                            Math.floor((orderDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
+                        }
+                        
+                        return itemDiscountAmount > 0 ? (
+                          <p className="text-xs text-red-600">
+                            Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
+                          </p>
+                        ) : null;
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
                 <div className="flex flex-col items-end space-y-2">
