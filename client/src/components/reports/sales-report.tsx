@@ -180,9 +180,10 @@ export function SalesReport() {
           }
 
           const orderSubtotal = Number(order.subtotal || 0);
+          const orderTax = Number(order.tax || 0);
           const orderDiscount = Number(order.discount || 0);
 
-          dailySales[dateStr].revenue += orderSubtotal;
+          dailySales[dateStr].revenue += orderSubtotal + orderTax;
           dailySales[dateStr].orders += 1;
           dailySales[dateStr].customers += Number(order.customerCount || 1); // Use actual customerCount from order
           dailySales[dateStr].discount += orderDiscount;
@@ -285,34 +286,36 @@ export function SalesReport() {
         const subtotal = Number(order.subtotal || 0);
         const tax = Number(order.tax || 0);
         const discount = Number(order.discount || 0);
-        const revenue = subtotal - tax - discount; // Same formula as dashboard
+        const revenue = subtotal - discount; // Same formula as dashboard
         return total + revenue;
       }, 0);
 
       // Total orders should be based on unique orders, not items
       const totalOrders = paidOrders.length;
-      
+
       // Calculate total customers by summing customer_count from paid orders (same as dashboard)
       const totalCustomers = paidOrders.reduce((total: number, order: any) => {
         const customerCount = Number(order.customerCount || 1); // Default to 1 if not specified
-        console.log(`Sales Report - Processing order ${order.orderNumber}: customerCount=${customerCount}, running total=${total + customerCount}`);
+        console.log(
+          `Sales Report - Processing order ${order.orderNumber}: customerCount=${customerCount}, running total=${total + customerCount}`,
+        );
         return total + customerCount;
       }, 0);
-      
+
       console.log(`Sales Report - Final customer count calculation:`, {
         totalPaidOrders: paidOrders.length,
         totalCustomers: totalCustomers,
-        paidOrdersSample: paidOrders.slice(0, 2).map(o => ({ 
-          orderNumber: o.orderNumber, 
-          customerCount: o.customerCount 
-        }))
+        paidOrdersSample: paidOrders.slice(0, 2).map((o) => ({
+          orderNumber: o.orderNumber,
+          customerCount: o.customerCount,
+        })),
       });
 
       console.log(`Sales Report - Returning final data:`, {
         totalCustomers,
         totalOrders,
         totalRevenue,
-        verification: `${totalCustomers} customers from ${totalOrders} orders`
+        verification: `${totalCustomers} customers from ${totalOrders} orders`,
       });
       const averageOrderValue =
         totalOrders > 0 ? totalRevenue / totalOrders : 0;
@@ -699,12 +702,6 @@ export function SalesReport() {
                   <p className="text-xs text-gray-500 mt-1">
                     {t("reports.peakHour")}: {peakHour}
                     {t("reports.hour")}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Debug: {JSON.stringify({
-                      totalCustomers: salesData?.totalCustomers,
-                      totalOrders: salesData?.totalOrders
-                    })}
                   </p>
                 </div>
               </CardContent>

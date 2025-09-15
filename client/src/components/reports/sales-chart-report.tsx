@@ -652,9 +652,7 @@ export function SalesChartReport() {
           <CardHeader>
             <CardTitle>{t("reports.dailySales")}</CardTitle>
             <CardDescription className="flex items-center justify-between">
-              <span>
-                {t("reports.salesChartDescription")}
-              </span>
+              <span>{t("reports.salesChartDescription")}</span>
               <Button
                 onClick={() => {
                   const dataWithSummary = [
@@ -906,13 +904,17 @@ export function SalesChartReport() {
                                   </TableCell>
                                 )}
                                 <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
-                                  {formatCurrency(Math.max(0, paymentAmount - discount))}
+                                  {formatCurrency(
+                                    Math.max(0, paymentAmount - discount),
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-right border-r min-w-[120px] px-4">
                                   {formatCurrency(tax)}
                                 </TableCell>
                                 <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
-                                  {formatCurrency(Math.max(0, paymentAmount - discount) + tax)}
+                                  {formatCurrency(
+                                    Math.max(0, paymentAmount - discount) + tax,
+                                  )}
                                 </TableCell>
                                 {(() => {
                                   // Group orders by payment method for this date
@@ -924,12 +926,20 @@ export function SalesChartReport() {
                                       const method =
                                         transaction.paymentMethod || "cash";
                                       // Use revenue + tax formula for customer payment
-                                      const transactionRevenue = Math.max(0, Number(transaction.subtotal || 0) - Number(transaction.discount || 0));
-                                      const transactionTax = Number(transaction.total || 0) - Number(transaction.subtotal || 0);
-                                      const customerPayment = transactionRevenue + transactionTax;
-                                      
+                                      const transactionRevenue = Math.max(
+                                        0,
+                                        Number(transaction.subtotal || 0) -
+                                          Number(transaction.discount || 0),
+                                      );
+                                      const transactionTax =
+                                        Number(transaction.total || 0) -
+                                        Number(transaction.subtotal || 0);
+                                      const customerPayment =
+                                        transactionRevenue + transactionTax;
+
                                       paymentMethods[method] =
-                                        (paymentMethods[method] || 0) + customerPayment;
+                                        (paymentMethods[method] || 0) +
+                                        customerPayment;
                                     },
                                   );
 
@@ -1043,7 +1053,11 @@ export function SalesChartReport() {
                                       )}
                                       <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                         {formatCurrency(
-                                          Math.max(0, Number(transaction.subtotal || 0) - Number(transaction.discount || 0)),
+                                          Math.max(
+                                            0,
+                                            Number(transaction.subtotal || 0) -
+                                              Number(transaction.discount || 0),
+                                          ),
                                         )}
                                       </TableCell>
                                       <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
@@ -1054,8 +1068,15 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                         {formatCurrency(
-                                          Math.max(0, Number(transaction.subtotal || 0) - Number(transaction.discount || 0)) +
-                                          (Number(transaction.total || 0) - Number(transaction.subtotal || 0))
+                                          Math.max(
+                                            0,
+                                            Number(transaction.subtotal || 0) -
+                                              Number(transaction.discount || 0),
+                                          ) +
+                                            (Number(transaction.total || 0) -
+                                              Number(
+                                                transaction.subtotal || 0,
+                                              )),
                                         )}
                                       </TableCell>
                                       {(() => {
@@ -1074,7 +1095,8 @@ export function SalesChartReport() {
                                           filteredTransactions.forEach(
                                             (transaction: any) => {
                                               const method =
-                                                transaction.paymentMethod || "cash";
+                                                transaction.paymentMethod ||
+                                                "cash";
                                               allPaymentMethods.add(method);
                                             },
                                           );
@@ -1082,13 +1104,12 @@ export function SalesChartReport() {
 
                                         const paymentMethodsArray =
                                           Array.from(allPaymentMethods).sort();
-                                        const totalCustomerPayment = Object.values(
-                                          paymentMethods,
-                                        ).reduce(
-                                          (sum: number, amount: number) =>
-                                            sum + amount,
-                                          0,
-                                        );
+                                        const totalCustomerPayment =
+                                          Object.values(paymentMethods).reduce(
+                                            (sum: number, amount: number) =>
+                                              sum + amount,
+                                            0,
+                                          );
 
                                         return (
                                           <>
@@ -1100,8 +1121,25 @@ export function SalesChartReport() {
                                                 >
                                                   {transactionMethod === method
                                                     ? formatCurrency(
-                                                        Math.max(0, Number(transaction.subtotal || 0) - Number(transaction.discount || 0)) +
-                                                        (Number(transaction.total || 0) - Number(transaction.subtotal || 0))
+                                                        Math.max(
+                                                          0,
+                                                          Number(
+                                                            transaction.subtotal ||
+                                                              0,
+                                                          ) -
+                                                            Number(
+                                                              transaction.discount ||
+                                                                0,
+                                                            ),
+                                                        ) +
+                                                          (Number(
+                                                            transaction.total ||
+                                                              0,
+                                                          ) -
+                                                            Number(
+                                                              transaction.subtotal ||
+                                                                0,
+                                                            )),
                                                       )
                                                     : "-"}
                                                 </TableCell>
@@ -1162,7 +1200,8 @@ export function SalesChartReport() {
                         <TableCell className="text-right border-r min-w-[140px] px-4">
                           {formatCurrency(
                             Object.values(dailySales).reduce(
-                              (sum, data) => Math.max(0, data.revenue - data.discount),
+                              (sum, data) =>
+                                Math.max(0, data.revenue - data.discount),
                               0,
                             ),
                           )}
@@ -1179,7 +1218,9 @@ export function SalesChartReport() {
                           {formatCurrency(
                             Object.values(dailySales).reduce(
                               (sum, data) =>
-                                sum + Math.max(0, data.revenue - data.discount) + (data.tax || 0),
+                                sum +
+                                Math.max(0, data.revenue - data.discount) +
+                                (data.tax || 0),
                               0,
                             ),
                           )}
@@ -1222,22 +1263,33 @@ export function SalesChartReport() {
                               {paymentMethodsArray.map((method: any) => {
                                 const total = totalPaymentMethods[method] || 0;
                                 // Calculate total customer payment = total revenue + total tax for this method
-                                const totalRevenue = Object.values(dailySales).reduce(
-                                  (sum, data) => sum + Math.max(0, data.revenue - data.discount),
+                                const totalRevenue = Object.values(
+                                  dailySales,
+                                ).reduce(
+                                  (sum, data) =>
+                                    sum +
+                                    Math.max(0, data.revenue - data.discount),
                                   0,
                                 );
-                                const totalTax = Object.values(dailySales).reduce(
+                                const totalTax = Object.values(
+                                  dailySales,
+                                ).reduce(
                                   (sum, data) => sum + (data.tax || 0),
                                   0,
                                 );
-                                const totalCustomerPaymentForMethod = total > 0 ? totalRevenue + totalTax : 0;
+                                const totalCustomerPaymentForMethod =
+                                  total > 0 ? totalRevenue + totalTax : 0;
 
                                 return (
                                   <TableCell
                                     key={method}
                                     className="text-right border-r font-bold text-green-600 min-w-[130px] px-4"
                                   >
-                                    {total > 0 ? formatCurrency(totalCustomerPaymentForMethod) : "-"}
+                                    {total > 0
+                                      ? formatCurrency(
+                                          totalCustomerPaymentForMethod,
+                                        )
+                                      : "-"}
                                   </TableCell>
                                 );
                               })}
@@ -1992,7 +2044,7 @@ export function SalesChartReport() {
                                   {formatCurrency(item.totalAmount)}
                                 </TableCell>
                                 <TableCell className="text-right text-red-600 min-w-[100px] px-2">
-                                  -
+                                  {formatCurrency(item.discount)}
                                 </TableCell>
                                 <TableCell className="text-right text-green-600 font-medium min-w-[120px] px-2">
                                   {formatCurrency(item.revenue)}
@@ -2183,9 +2235,7 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(prev + 1, totalPages),
-                      )
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2193,14 +2243,8 @@ export function SalesChartReport() {
                     ›
                   </button>
                   <button
-                    onClick={() =>
-                      setCurrentPage(
-                        totalPages
-                      )
-                    }
-                    disabled={
-                      currentPage === totalPages
-                    }
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     »
@@ -2648,23 +2692,40 @@ export function SalesChartReport() {
                                     {paymentMethodsArray.map((method: any) => {
                                       // Calculate customer payment = revenue + tax for this payment method
                                       let customerPaymentForMethod = 0;
-                                      if (item.orders && Array.isArray(item.orders)) {
+                                      if (
+                                        item.orders &&
+                                        Array.isArray(item.orders)
+                                      ) {
                                         item.orders.forEach((order: any) => {
-                                          if ((order.paymentMethod || "cash") === method) {
-                                            const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
-                                            const orderTax = Math.max(0, Number(order.total || 0) - Number(order.subtotal || 0));
-                                            customerPaymentForMethod += orderRevenue + orderTax;
+                                          if (
+                                            (order.paymentMethod || "cash") ===
+                                            method
+                                          ) {
+                                            const orderRevenue = Math.max(
+                                              0,
+                                              Number(order.subtotal || 0) -
+                                                Number(order.discount || 0),
+                                            );
+                                            const orderTax = Math.max(
+                                              0,
+                                              Number(order.total || 0) -
+                                                Number(order.subtotal || 0),
+                                            );
+                                            customerPaymentForMethod +=
+                                              orderRevenue + orderTax;
                                           }
                                         });
                                       }
-                                      
+
                                       return (
                                         <TableCell
                                           key={method}
                                           className="text-right border-r font-medium min-w-[130px] px-4"
                                         >
                                           {customerPaymentForMethod > 0
-                                            ? formatCurrency(customerPaymentForMethod)
+                                            ? formatCurrency(
+                                                customerPaymentForMethod,
+                                              )
                                             : "-"}
                                         </TableCell>
                                       );
@@ -2758,11 +2819,12 @@ export function SalesChartReport() {
                                           0,
                                           Number(order.subtotal || 0) -
                                             Number(order.discount || 0),
-                                        ) + Math.max(
-                                          0,
-                                          Number(order.total || 0) -
-                                            Number(order.subtotal || 0),
-                                        )
+                                        ) +
+                                          Math.max(
+                                            0,
+                                            Number(order.total || 0) -
+                                              Number(order.subtotal || 0),
+                                          ),
                                       )}
                                     </TableCell>
                                     {(() => {
@@ -2789,11 +2851,20 @@ export function SalesChartReport() {
                                         Array.from(allPaymentMethods).sort();
                                       const orderPaymentMethod =
                                         order.paymentMethod || "cash";
-                                      
+
                                       // Calculate customer payment = revenue + tax for this order
-                                      const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
-                                      const orderTax = Math.max(0, Number(order.total || 0) - Number(order.subtotal || 0));
-                                      const customerPayment = orderRevenue + orderTax;
+                                      const orderRevenue = Math.max(
+                                        0,
+                                        Number(order.subtotal || 0) -
+                                          Number(order.discount || 0),
+                                      );
+                                      const orderTax = Math.max(
+                                        0,
+                                        Number(order.total || 0) -
+                                          Number(order.subtotal || 0),
+                                      );
+                                      const customerPayment =
+                                        orderRevenue + orderTax;
 
                                       return (
                                         <>
@@ -2804,7 +2875,9 @@ export function SalesChartReport() {
                                                 className="text-right border-r text-sm min-w-[130px] px-4"
                                               >
                                                 {orderPaymentMethod === method
-                                                  ? formatCurrency(customerPayment)
+                                                  ? formatCurrency(
+                                                      customerPayment,
+                                                    )
                                                   : "-"}
                                               </TableCell>
                                             ),
@@ -2861,7 +2934,10 @@ export function SalesChartReport() {
                         </TableCell>
                         <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                           {formatCurrency(
-                            data.reduce((sum, item) => sum + item.revenue + item.tax, 0),
+                            data.reduce(
+                              (sum, item) => sum + item.revenue + item.tax,
+                              0,
+                            ),
                           )}
                         </TableCell>
                         {(() => {
@@ -2907,12 +2983,27 @@ export function SalesChartReport() {
                                 // Calculate total customer payment = total revenue + total tax for this method
                                 let totalCustomerPaymentForMethod = 0;
                                 data.forEach((employee: any) => {
-                                  if (employee.orders && Array.isArray(employee.orders)) {
+                                  if (
+                                    employee.orders &&
+                                    Array.isArray(employee.orders)
+                                  ) {
                                     employee.orders.forEach((order: any) => {
-                                      if ((order.paymentMethod || "cash") === method) {
-                                        const orderRevenue = Math.max(0, Number(order.subtotal || 0) - Number(order.discount || 0));
-                                        const orderTax = Math.max(0, Number(order.total || 0) - Number(order.subtotal || 0));
-                                        totalCustomerPaymentForMethod += orderRevenue + orderTax;
+                                      if (
+                                        (order.paymentMethod || "cash") ===
+                                        method
+                                      ) {
+                                        const orderRevenue = Math.max(
+                                          0,
+                                          Number(order.subtotal || 0) -
+                                            Number(order.discount || 0),
+                                        );
+                                        const orderTax = Math.max(
+                                          0,
+                                          Number(order.total || 0) -
+                                            Number(order.subtotal || 0),
+                                        );
+                                        totalCustomerPaymentForMethod +=
+                                          orderRevenue + orderTax;
                                       }
                                     });
                                   }
@@ -2923,7 +3014,11 @@ export function SalesChartReport() {
                                     key={method}
                                     className="text-right border-r font-bold text-green-600 min-w-[130px] px-4"
                                   >
-                                    {totalCustomerPaymentForMethod > 0 ? formatCurrency(totalCustomerPaymentForMethod) : "-"}
+                                    {totalCustomerPaymentForMethod > 0
+                                      ? formatCurrency(
+                                          totalCustomerPaymentForMethod,
+                                        )
+                                      : "-"}
                                   </TableCell>
                                 );
                               })}
@@ -4500,12 +4595,18 @@ export function SalesChartReport() {
       );
     }
 
-    const { productStats, totalRevenue, totalQuantity, totalProducts } =
-      productAnalysisData;
+    const {
+      productStats,
+      totalRevenue,
+      totalQuantity,
+      totalDiscount,
+      totalProducts,
+    } = productAnalysisData;
 
     const getSalesData = () => {
       return productStats || [];
     };
+    console.log("Product Analysis Data:", productAnalysisData);
 
     const data = getSalesData();
     const totalPages = Math.ceil(data.length / productPageSize);
@@ -4534,7 +4635,7 @@ export function SalesChartReport() {
                     "Đơn vị tính": t("common.perUnit"),
                     "Số lượng bán": product.totalQuantity,
                     "Thành tiền": formatCurrency(product.totalRevenue),
-                    "Giảm giá": formatCurrency(0),
+                    "Giảm giá": formatCurrency(product.discount),
                     "Doanh thu": formatCurrency(product.totalRevenue),
                     "Nhóm hàng": product.categoryName,
                   })),
@@ -4545,8 +4646,10 @@ export function SalesChartReport() {
                     "Đơn vị tính": "-",
                     "Số lượng bán": totalQuantity,
                     "Thành tiền": formatCurrency(totalRevenue),
-                    "Giảm giá": formatCurrency(0),
-                    "Doanh thu": formatCurrency(totalRevenue),
+                    "Giảm giá": formatCurrency(totalDiscount),
+                    "Doanh thu": formatCurrency(
+                      (totalRevenue || 0) - (totalDiscount || 0),
+                    ),
                     "Nhóm hàng": "-",
                   },
                 ];
@@ -4641,12 +4744,15 @@ export function SalesChartReport() {
                           {formatCurrency(product.totalRevenue)}
                         </TableCell>
                         {analysisType !== "employee" && (
-                          <TableCell className="text-right">
-                            {formatCurrency(0)}
+                          <TableCell className="text-right text-red-600">
+                            {formatCurrency(product.discount)}
                           </TableCell>
                         )}
                         <TableCell className="text-right font-semibold text-green-600">
-                          {formatCurrency(product.totalRevenue)}
+                          {formatCurrency(
+                            (product.totalRevenue || 0) -
+                              (product.discount || 0),
+                          )}
                         </TableCell>
                         <TableCell className="text-center">
                           {product.categoryName}
@@ -4686,11 +4792,13 @@ export function SalesChartReport() {
                       </TableCell>
                       {analysisType !== "employee" && (
                         <TableCell className="text-right font-bold text-red-600">
-                          {formatCurrency(0)}
+                          {formatCurrency(totalDiscount)}
                         </TableCell>
                       )}
                       <TableCell className="text-right font-bold text-green-600">
-                        {formatCurrency(totalRevenue)}
+                        {formatCurrency(
+                          (totalRevenue || 0) - (totalDiscount || 0),
+                        )}
                       </TableCell>
                       <TableCell className="text-center font-bold">-</TableCell>
                     </TableRow>

@@ -19,7 +19,7 @@ import {
   Clock,
   Target,
   Search,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
 import type { Order, Table as TableType } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
@@ -60,19 +60,25 @@ export function DashboardOverview() {
   const { t, currentLanguage } = useTranslation();
 
   const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const queryClient = useQueryClient();
 
   // Query orders by date range - using proper order data
-  const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
+  const {
+    data: orders = [],
+    isLoading: ordersLoading,
+    error: ordersError,
+  } = useQuery({
     queryKey: ["/api/orders/date-range", startDate, endDate],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/orders/date-range/${startDate}/${endDate}`);
+        const response = await fetch(
+          `/api/orders/date-range/${startDate}/${endDate}`,
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -80,7 +86,7 @@ export function DashboardOverview() {
         console.log("Dashboard - Orders loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Dashboard - Error fetching orders:', error);
+        console.error("Dashboard - Error fetching orders:", error);
         return [];
       }
     },
@@ -102,7 +108,7 @@ export function DashboardOverview() {
         console.log("Dashboard - Order items loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Dashboard - Error fetching order items:', error);
+        console.error("Dashboard - Error fetching order items:", error);
         return [];
       }
     },
@@ -153,18 +159,18 @@ export function DashboardOverview() {
         totalOrders: validOrders.length,
         startDate,
         endDate,
-        sampleOrders: validOrders.slice(0, 3).map(o => ({
+        sampleOrders: validOrders.slice(0, 3).map((o) => ({
           id: o.id,
           orderNumber: o.orderNumber,
           status: o.status,
           total: o.total,
-          orderedAt: o.orderedAt
-        }))
+          orderedAt: o.orderedAt,
+        })),
       });
 
       // Filter completed/paid orders only - data is already filtered by date range from API
-      const completedOrders = validOrders.filter((order: any) => 
-        order.status === 'paid' || order.status === 'completed'
+      const completedOrders = validOrders.filter(
+        (order: any) => order.status === "paid" || order.status === "completed",
       );
 
       console.log("Dashboard Debug - Raw Data:", {
@@ -172,59 +178,81 @@ export function DashboardOverview() {
         completedOrders: completedOrders.length,
         totalOrderItems: validOrderItems.length,
         dateRange: `${startDate} to ${endDate}`,
-        sampleCompletedOrder: completedOrders[0] ? {
-          id: completedOrders[0].id,
-          total: completedOrders[0].total,
-          subtotal: completedOrders[0].subtotal,
-          status: completedOrders[0].status,
-          date: completedOrders[0].orderedAt || completedOrders[0].createdAt
-        } : null
+        sampleCompletedOrder: completedOrders[0]
+          ? {
+              id: completedOrders[0].id,
+              total: completedOrders[0].total,
+              subtotal: completedOrders[0].subtotal,
+              status: completedOrders[0].status,
+              date:
+                completedOrders[0].orderedAt || completedOrders[0].createdAt,
+            }
+          : null,
       });
 
       // Calculate total revenue from completed orders (subtotal + tax = revenue after discount)
-      const totalSalesRevenue = completedOrders.reduce((sum: number, order: any) => {
-        // Revenue = Subtotal (đã trừ giảm giá) + Tax
-        const subtotal = Number(order.subtotal || 0); // Thành tiền sau khi trừ giảm giá
-        const tax = Number(order.tax || 0); // Thuế
-        const revenue = subtotal + tax; // Doanh thu thực tế
-        console.log(`Processing order ${order.orderNumber}: subtotal=${subtotal}, tax=${tax}, revenue=${revenue}, originalTotal=${order.total}`);
-        return sum + revenue;
-      }, 0);
+      const totalSalesRevenue = completedOrders.reduce(
+        (sum: number, order: any) => {
+          // Revenue = Subtotal (đã trừ giảm giá) + Tax
+          const subtotal = Number(order.subtotal || 0); // Thành tiền sau khi trừ giảm giá
+          const tax = Number(order.tax || 0); // Thuế
+          const revenue = subtotal + tax; // Doanh thu thực tế
+          console.log(
+            `Processing order ${order.orderNumber}: subtotal=${subtotal}, tax=${tax}, revenue=${revenue}, originalTotal=${order.total}`,
+          );
+          return sum + revenue;
+        },
+        0,
+      );
 
       // Calculate subtotal revenue from completed orders (excludes tax, after discount)
-      const subtotalRevenue = completedOrders.reduce((total: number, order: any) => {
-        const subtotal = Number(order.subtotal || 0);
-        const tax = Number(order.tax || 0);
-        const discount = Number(order.discount || 0);
-        const revenue = subtotal - tax - discount; // Same formula as dashboard
-        return total + revenue;
-      }, 0);
-
+      const subtotalRevenue = completedOrders.reduce(
+        (total: number, order: any) => {
+          const subtotal = Number(order.subtotal || 0);
+          const tax = Number(order.tax || 0);
+          const discount = Number(order.discount || 0);
+          const revenue = subtotal - discount; // Same formula as dashboard
+          return total + revenue;
+        },
+        0,
+      );
 
       // Total count from completed orders only
       const periodOrderCount = completedOrders.length;
 
       // Calculate total customer count by summing customer_count from completed orders
-      const periodCustomerCount = completedOrders.reduce((total: number, order: any) => {
-        const customerCount = Number(order.customerCount || 1); // Default to 1 if not specified
-        console.log(`Processing order ${order.orderNumber}: customerCount=${customerCount}`);
-        return total + customerCount;
-      }, 0);
+      const periodCustomerCount = completedOrders.reduce(
+        (total: number, order: any) => {
+          const customerCount = Number(order.customerCount || 1); // Default to 1 if not specified
+          console.log(
+            `Processing order ${order.orderNumber}: customerCount=${customerCount}`,
+          );
+          return total + customerCount;
+        },
+        0,
+      );
 
       // Calculate days difference for average
       const start = new Date(startDate);
       const end = new Date(endDate);
       const daysDiff = Math.max(
         1,
-        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+          1,
       );
       const dailyAverageRevenue = totalSalesRevenue / daysDiff;
 
       // Active orders (pending/in-progress orders only from all current orders, not date-filtered)
-      const activeOrders = Array.isArray(allCurrentOrders) ? allCurrentOrders.filter((order: any) => 
-        order.status === 'pending' || order.status === 'confirmed' || 
-        order.status === 'preparing' || order.status === 'ready' || order.status === 'served'
-      ).length : 0;
+      const activeOrders = Array.isArray(allCurrentOrders)
+        ? allCurrentOrders.filter(
+            (order: any) =>
+              order.status === "pending" ||
+              order.status === "confirmed" ||
+              order.status === "preparing" ||
+              order.status === "ready" ||
+              order.status === "served",
+          ).length
+        : 0;
 
       const occupiedTables = validTables.filter(
         (table: TableType) => table.status === "occupied",
@@ -234,7 +262,8 @@ export function DashboardOverview() {
       const monthRevenue = totalSalesRevenue;
 
       // Average order value
-      const averageOrderValue = periodOrderCount > 0 ? totalSalesRevenue / periodOrderCount : 0;
+      const averageOrderValue =
+        periodOrderCount > 0 ? totalSalesRevenue / periodOrderCount : 0;
 
       // Peak hours analysis from completed orders only
       const hourlyOrders: { [key: number]: number } = {};
@@ -278,7 +307,7 @@ export function DashboardOverview() {
         activeOrders,
         dateRange: `${startDate} to ${endDate}`,
         completedOrdersCount: completedOrders.length,
-        totalOrdersInRange: validOrders.length
+        totalOrdersInRange: validOrders.length,
       });
 
       return finalStats;
@@ -306,7 +335,8 @@ export function DashboardOverview() {
     queryFn: async () => {
       try {
         const response = await fetch("/api/orders");
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
         return await response.json();
       } catch (error) {
         return [];
@@ -330,8 +360,8 @@ export function DashboardOverview() {
       // Map translation language codes to locale codes
       const localeMap = {
         ko: "ko-KR",
-        en: "en-US", 
-        vi: "vi-VN"
+        en: "en-US",
+        vi: "vi-VN",
       };
 
       const locale = localeMap[currentLanguage] || "ko-KR";
@@ -362,10 +392,10 @@ export function DashboardOverview() {
       <div className="flex justify-center py-8">
         <div className="text-red-500">
           Lỗi tải dữ liệu báo cáo: {ordersError?.message || "Unknown error"}
-          <Button 
-            onClick={handleRefresh} 
-            variant="outline" 
-            size="sm" 
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
             className="ml-4"
           >
             Thử lại
@@ -391,7 +421,7 @@ export function DashboardOverview() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-lg font-semibold text-gray-900">
-                {t('reports.dashboardTab')}
+                {t("reports.dashboardTab")}
               </CardTitle>
               <CardDescription>
                 {t("reports.dashboardDescription")}
@@ -416,7 +446,6 @@ export function DashboardOverview() {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="w-auto"
               />
-
             </div>
           </div>
         </CardHeader>
@@ -454,10 +483,9 @@ export function DashboardOverview() {
                   {formatCurrency(stats.subtotalRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {startDate === endDate 
+                  {startDate === endDate
                     ? formatDate(startDate)
-                    : `${formatDate(startDate)} - ${formatDate(endDate)}`
-                  }
+                    : `${formatDate(startDate)} - ${formatDate(endDate)}`}
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />
@@ -514,7 +542,6 @@ export function DashboardOverview() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-
             <div className="flex justify-between items-center">
               <span className="text-gray-600">
                 {t("reports.occupiedTables")}
@@ -530,7 +557,10 @@ export function DashboardOverview() {
                 {t("reports.tableUtilization")}
               </span>
               <Badge variant="secondary">
-                {stats.totalTables > 0 ? Math.round((stats.occupiedTables / stats.totalTables) * 100) : 0} %
+                {stats.totalTables > 0
+                  ? Math.round((stats.occupiedTables / stats.totalTables) * 100)
+                  : 0}{" "}
+                %
               </Badge>
             </div>
           </CardContent>

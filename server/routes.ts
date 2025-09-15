@@ -52,18 +52,18 @@ import { sql } from "drizzle-orm";
 // Function to calculate discount distribution among order items
 function calculateDiscountDistribution(items: any[], totalDiscount: number) {
   if (!items || items.length === 0 || totalDiscount <= 0) {
-    return items.map(item => ({ ...item, discount: 0 }));
+    return items.map((item) => ({ ...item, discount: 0 }));
   }
 
   // Calculate total amount (subtotal before discount)
   const totalAmount = items.reduce((sum, item) => {
     const unitPrice = Number(item.unitPrice || 0);
     const quantity = Number(item.quantity || 0);
-    return sum + (unitPrice * quantity);
+    return sum + unitPrice * quantity;
   }, 0);
 
   if (totalAmount <= 0) {
-    return items.map(item => ({ ...item, discount: 0 }));
+    return items.map((item) => ({ ...item, discount: 0 }));
   }
 
   let allocatedDiscount = 0;
@@ -86,11 +86,13 @@ function calculateDiscountDistribution(items: any[], totalDiscount: number) {
 
     return {
       ...item,
-      discount: itemDiscount.toFixed(2)
+      discount: itemDiscount.toFixed(2),
     };
   });
 
-  console.log(`💰 Discount Distribution: Total=${totalDiscount}, Allocated=${allocatedDiscount + Number(result[result.length - 1].discount)}`);
+  console.log(
+    `💰 Discount Distribution: Total=${totalDiscount}, Allocated=${allocatedDiscount + Number(result[result.length - 1].discount)}`,
+  );
   return result;
 }
 import {
@@ -1932,12 +1934,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Parse and prepare items with discount distribution
       let itemsData = items.map((item) => insertOrderItemSchema.parse(item));
-      
+
       // Calculate discount distribution if order has discount
       const orderDiscount = Number(orderData.discount || 0);
       if (orderDiscount > 0) {
         itemsData = calculateDiscountDistribution(itemsData, orderDiscount);
-        console.log(`💰 Order Creation: Distributed discount ${orderDiscount} among ${itemsData.length} items`);
+        console.log(
+          `💰 Order Creation: Distributed discount ${orderDiscount} among ${itemsData.length} items`,
+        );
       }
 
       console.log(
@@ -2876,8 +2880,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Recalculate discount distribution for all items in the order
       const orderDiscount = Number(existingOrder.discount || 0);
       if (orderDiscount > 0) {
-        console.log(`🔄 Recalculating discount distribution for order ${orderId} with total discount ${orderDiscount}`);
-        
+        console.log(
+          `🔄 Recalculating discount distribution for order ${orderId} with total discount ${orderDiscount}`,
+        );
+
         // Get all order items after insertion
         const updatedOrderItems = await database
           .select()
@@ -2885,8 +2891,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(eq(orderItemsTable.orderId, orderId));
 
         // Calculate new discount distribution
-        const itemsWithNewDiscount = calculateDiscountDistribution(updatedOrderItems, orderDiscount);
-        
+        const itemsWithNewDiscount = calculateDiscountDistribution(
+          updatedOrderItems,
+          orderDiscount,
+        );
+
         // Update each item's discount
         for (const item of itemsWithNewDiscount) {
           await database
@@ -2894,8 +2903,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .set({ discount: item.discount })
             .where(eq(orderItemsTable.id, item.id));
         }
-        
-        console.log(`✅ Updated discount distribution for ${itemsWithNewDiscount.length} items`);
+
+        console.log(
+          `✅ Updated discount distribution for ${itemsWithNewDiscount.length} items`,
+        );
       }
 
       // Fetch ALL order items to recalculate totals using order-dialog logic
@@ -4292,7 +4303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             categoryId: products.categoryId,
             categoryName: categories.name,
             totalQuantity: sql<number>`SUM(${orderItemsTable.quantity})`,
-            totalRevenue: sql<number>`SUM(CAST(${orderItemsTable.unitPrice} AS NUMERIC) * ${orderItemsTable.quantity})`,
+            totalRevenue: sql<number>`SUM(CAST(${orderItemsTable.unitPrice} AS NUMERIC) * ${orderItemsTable.quantity} - ${orderItemsTable.discount})`,
           })
           .from(orderItemsTable)
           .innerJoin(orders, eq(orderItemsTable.orderId, orders.id))
@@ -4430,28 +4441,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Printer Configuration APIs
-  app.get("/api/printer-configs", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      console.log("🔍 GET /api/printer-configs - Starting request processing");
-      let tenantDb;
+  app.get(
+    "/api/printer-configs",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
       try {
-        tenantDb = await getTenantDatabase(req);
-        console.log("✅ Tenant database connection obtained for printer configs");
-      } catch (dbError) {
-        console.error("❌ Failed to get tenant database for printer configs:", dbError);
-        tenantDb = null;
-      }
+        console.log(
+          "🔍 GET /api/printer-configs - Starting request processing",
+        );
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log(
+            "✅ Tenant database connection obtained for printer configs",
+          );
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for printer configs:",
+            dbError,
+          );
+          tenantDb = null;
+        }
 
-      const configs = await storage.getPrinterConfigs(tenantDb);
-      console.log(`✅ Successfully fetched ${configs.length} printer configs`);
-      res.json(configs);
-    } catch (error) {
-      console.error("❌ Error fetching printer configs:", error);
-      res.status(500).json({
-        error: "Failed to fetch printer configs",
-      });
-    }
-  });
+        const configs = await storage.getPrinterConfigs(tenantDb);
+        console.log(
+          `✅ Successfully fetched ${configs.length} printer configs`,
+        );
+        res.json(configs);
+      } catch (error) {
+        console.error("❌ Error fetching printer configs:", error);
+        res.status(500).json({
+          error: "Failed to fetch printer configs",
+        });
+      }
+    },
+  );
 
   app.post("/api/printer-configs", async (req: TenantRequest, res) => {
     try {
@@ -4478,8 +4502,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Updating printer config ${id} with data:`, configData);
 
-      const config = await storage.updatePrinterConfig(id, configData, tenantDb);
-      
+      const config = await storage.updatePrinterConfig(
+        id,
+        configData,
+        tenantDb,
+      );
+
       if (!config) {
         return res.status(404).json({
           error: "Printer config not found",
@@ -4503,7 +4531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Deleting printer config ${id}`);
 
       const deleted = await storage.deletePrinterConfig(id, tenantDb);
-      
+
       if (!deleted) {
         return res.status(404).json({
           error: "Printer config not found",
@@ -4528,7 +4556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get printer config
       const configs = await storage.getPrinterConfigs(tenantDb);
-      const config = configs.find(c => c.id === id);
+      const config = configs.find((c) => c.id === id);
 
       if (!config) {
         return res.status(404).json({
@@ -4543,7 +4571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (config.connectionType === "network" && config.ipAddress) {
         // Test network connection
         const net = require("net");
-        
+
         const testPromise = new Promise((resolve) => {
           const client = new net.Socket();
           client.setTimeout(3000);
@@ -4931,6 +4959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total: orderItemsTable.total, // This should also be pre-tax total
           orderId: orderItemsTable.orderId,
           orderDate: orders.orderedAt,
+          discount: orderItemsTable.discount,
           orderStatus: orders.status,
         })
         .from(orderItemsTable)
@@ -4957,11 +4986,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const productId = item.productId;
         const quantity = Number(item.quantity || 0);
         const revenue = Number(item.total || 0);
+        const discount = Number(item.discount || 0);
 
         if (productMap.has(productId)) {
           const existing = productMap.get(productId);
           existing.totalQuantity += quantity;
           existing.totalRevenue += revenue;
+          existing.discount += discount;
           existing.orderCount += 1;
         } else {
           productMap.set(productId, {
@@ -4972,8 +5003,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             categoryName: item.categoryName,
             categoryName: item.categoryName,
             productType: item.productType,
+            discount: item.discount,
             totalQuantity: quantity,
             totalRevenue: revenue,
+            totalDiscount: discount,
             averagePrice: Number(item.unitPrice || 0),
             orderCount: 1,
           });
@@ -4998,6 +5031,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (sum, p) => sum + p.totalQuantity,
         0,
       );
+      const totalDiscount = productStats.reduce(
+        (sum, p) => sum + p.totalDiscount,
+        0,
+      );
       const totalProducts = productStats.length;
 
       // Sort by revenue (descending)
@@ -5007,6 +5044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         productStats,
         totalRevenue,
         totalQuantity,
+        totalDiscount,
         totalProducts,
         summary: {
           topSellingProduct: productStats[0] || null,
@@ -5018,6 +5056,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Product Analysis Results:", {
         totalRevenue,
         totalQuantity,
+        totalDiscount,
         totalProducts,
         topProduct: result.summary.topSellingProduct?.productName,
       });
