@@ -409,24 +409,24 @@ export function DashboardOverview() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalRevenue")}
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(stats.totalSalesRevenue)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {startDate} ~ {endDate}
-                </p>
-              </div>
-              <DollarSign className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
+        <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">
+                      Tổng doanh thu
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {formatCurrency(stats.subtotalRevenue)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {startDate} ~ {endDate}
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
 
         <Card>
           <CardContent className="p-6">
