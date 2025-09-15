@@ -53,6 +53,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Payment methods
     paymentMethodBreakdown: "Phân tích phương thức thanh toán",
+    discount: "Giảm giá",
     paymentMethodDetails:
       "Chi tiết phương thức thanh toán và phân tích doanh số hàng ngày",
 
@@ -345,7 +346,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     disposalReport: "Báo cáo hủy hàng",
     employeeSalesReport: "Báo cáo bán hàng nhân viên",
     customerSalesReport: "Báo cáo bán hàng khách hàng",
-  topCustomersByRevenue: "Top 10 khách hàng doanh thu cao nhất",
+    topCustomersByRevenue: "Top 10 khách hàng doanh thu cao nhất",
     supplierReportByProduct: "Báo cáo nhà cung cấp theo sản phẩm",
     salePrice: "Giá bán",
     saleValue: "Giá trị bán",
@@ -501,7 +502,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     takeaway: "Mang về",
     cancelled: "Đã hủy",
     salesMethodReport: "Báo cáo theo hình thức bán hàng",
-    salesMethodReportDesc: "Phân tích chi tiết theo hình thức bán hàng (Ăn tại chỗ / Mang về)",
+    salesMethodReportDesc:
+      "Phân tích chi tiết theo hình thức bán hàng (Ăn tại chỗ / Mang về)",
 
     // Financial reports
     financialReport: "Báo cáo tài chính",
@@ -630,6 +632,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerAnalysis: "고객",
     channelAnalysis: "판매 채널",
     salesMethod: "판매 방법",
+    discount: "할인",
 
     // Chart and visual
     chartView: "차트 보기",
@@ -1123,6 +1126,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Filter options
     filterByDate: "Filter by Date",
     dateRange: "Date Range",
+    discount: "Discount",
 
     // Chart titles
     dailySalesChart: "Daily Sales Chart",
@@ -1555,7 +1559,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     takeaway: "Takeaway",
     cancelled: "Cancelled",
     salesMethodReport: "Sales Method Report",
-    salesMethodReportDesc: "Detailed analysis by sales method (Dine In / Takeaway)",
+    salesMethodReportDesc:
+      "Detailed analysis by sales method (Dine In / Takeaway)",
 
     // Financial reports
     financialReport: "Financial Report",

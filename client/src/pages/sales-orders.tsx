@@ -734,7 +734,7 @@ export default function SalesOrders() {
               : order.status === "cancelled"
                 ? 3
                 : 2,
-        customerName: order.customerName || "Khách hàng lẻ",
+        customerName: order.customerName || "Khách hàng l ��",
         invoiceStatus:
           order.status === "paid"
             ? 1
@@ -1938,7 +1938,7 @@ export default function SalesOrders() {
                                                       <div className="col-span-1">
                                                         STT
                                                       </div>
-                                                      <div className="col-span-3">
+                                                      <div className="col-span-2">
                                                         {t("common.itemCode")}
                                                       </div>
                                                       <div className="col-span-3">
@@ -1954,8 +1954,11 @@ export default function SalesOrders() {
                                                         {t("common.unitPrice")}
                                                       </div>
                                                       <div className="col-span-1">
+                                                        {t("reports.discount")}
+                                                      </div>
+                                                      <div className="col-span-1">
                                                         {t(
-                                                          "common.totalAmount",
+                                                          "common.subtotalAmount",
                                                         )}
                                                       </div>
                                                       <div className="col-span-1">
@@ -1987,7 +1990,7 @@ export default function SalesOrders() {
                                                             <div className="col-span-1">
                                                               {index + 1}
                                                             </div>
-                                                            <div className="col-span-3">
+                                                            <div className="col-span-2">
                                                               SP
                                                               {String(
                                                                 item.productId,
@@ -2010,10 +2013,37 @@ export default function SalesOrders() {
                                                                 item.unitPrice,
                                                               )}
                                                             </div>
-                                                            <div className="col-span-1">
+                                                            <div className="col-span-1 text-red-600">
+                                                              -
                                                               {formatCurrency(
-                                                                item.total,
+                                                                item.discount,
                                                               )}
+                                                            </div>
+                                                            <div className="col-span-1">
+                                                              {(() => {
+                                                                const unitPrice =
+                                                                  parseFloat(
+                                                                    item.unitPrice ||
+                                                                      "0",
+                                                                  );
+                                                                const quantity =
+                                                                  parseInt(
+                                                                    item.quantity ||
+                                                                      "0",
+                                                                  );
+                                                                const discount =
+                                                                  parseFloat(
+                                                                    item.discount ||
+                                                                      "0",
+                                                                  );
+                                                                const total =
+                                                                  unitPrice *
+                                                                    quantity -
+                                                                  discount;
+                                                                return formatCurrency(
+                                                                  total.toString(),
+                                                                );
+                                                              })()}
                                                             </div>
                                                             <div className="col-span-1">
                                                               {(() => {
