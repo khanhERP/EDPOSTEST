@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Printer, Plus, Trash2, TestTube, Wifi, Usb, Bluetooth } from "lucide-react";
+import { Printer, Plus, Trash2, TestTube, Wifi, Usb, Bluetooth, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -37,6 +37,8 @@ interface PrinterConfig {
 export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps) {
   const [selectedConfig, setSelectedConfig] = useState<PrinterConfig | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
   const [formData, setFormData] = useState({
     name: "",
     printerType: "thermal",
@@ -212,6 +214,20 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
     }
   };
 
+  // Calculate pagination
+  const totalItems = printerConfigs.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedConfigs = printerConfigs.slice(startIndex, endIndex);
+
+  // Reset page when configs change
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalItems, totalPages, currentPage]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -358,7 +374,14 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
           {/* Printer List */}
           <Card>
             <CardHeader>
-              <CardTitle>Danh sách máy in</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>Danh sách máy in</span>
+                {totalItems > 0 && (
+                  <span className="text-sm text-gray-500">
+                    ({totalItems} máy in)
+                  </span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -369,69 +392,113 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                   <p>Chưa có cấu hình máy in nào</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {printerConfigs.map((config: PrinterConfig) => (
-                    <div key={config.id} className={`border rounded-lg p-3 ${!config.isActive ? 'opacity-60 bg-gray-50' : ''}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {getConnectionIcon(config.connectionType)}
-                          <div>
-                            <div className="font-medium flex items-center gap-2">
-                              {config.name}
-                              {!config.isActive && (
-                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Tắt</span>
-                              )}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {config.printerType} - {config.connectionType}
-                              {config.connectionType === "network" && config.ipAddress && (
-                                <span> ({config.ipAddress}:{config.port || 'auto'})</span>
-                              )}
+                <>
+                  <div className="space-y-3">
+                    {paginatedConfigs.map((config: PrinterConfig) => (
+                      <div key={config.id} className={`border rounded-lg p-3 ${!config.isActive ? 'opacity-60 bg-gray-50' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {getConnectionIcon(config.connectionType)}
+                            <div>
+                              <div className="font-medium flex items-center gap-2">
+                                {config.name}
+                                {!config.isActive && (
+                                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Tắt</span>
+                                )}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {config.printerType} - {config.connectionType}
+                                {config.connectionType === "network" && config.ipAddress && (
+                                  <span> ({config.ipAddress}:{config.port || 'auto'})</span>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          <div className="flex items-center gap-1">
+                            {config.isEmployee && config.isActive && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Nhân viên</span>
+                            )}
+                            {config.isKitchen && config.isActive && (
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Bếp</span>
+                            )}
+                            {config.isActive && (
+                              <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Đang dùng</span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {config.isEmployee && config.isActive && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Nhân viên</span>
-                          )}
-                          {config.isKitchen && config.isActive && (
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Bếp</span>
-                          )}
-                          {config.isActive && (
-                            <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Đang dùng</span>
-                          )}
+
+                        <div className="flex gap-1 mt-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => testConnectionMutation.mutate(config.id)}
+                            disabled={testConnectionMutation.isPending}
+                          >
+                            <TestTube className="h-3 w-3 mr-1" />
+                            Test
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEdit(config)}
+                          >
+                            Sửa
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => deleteConfigMutation.mutate(config.id)}
+                            disabled={deleteConfigMutation.isPending}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
+                    ))}
+                  </div>
 
-                      <div className="flex gap-1 mt-2">
-                        <Button 
-                          size="sm" 
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="text-sm text-gray-500">
+                        Hiển thị {startIndex + 1}-{Math.min(endIndex, totalItems)} của {totalItems} máy in
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
                           variant="outline"
-                          onClick={() => testConnectionMutation.mutate(config.id)}
-                          disabled={testConnectionMutation.isPending}
+                          size="sm"
+                          onClick={() => setCurrentPage(currentPage - 1)}
+                          disabled={currentPage === 1}
                         >
-                          <TestTube className="h-3 w-3 mr-1" />
-                          Test
+                          <ChevronLeft className="h-4 w-4" />
+                          Trước
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <Button
+                              key={i + 1}
+                              variant={currentPage === i + 1 ? "default" : "outline"}
+                              size="sm"
+                              className="min-w-[40px]"
+                              onClick={() => setCurrentPage(i + 1)}
+                            >
+                              {i + 1}
+                            </Button>
+                          ))}
+                        </div>
+                        <Button
                           variant="outline"
-                          onClick={() => handleEdit(config)}
+                          size="sm"
+                          onClick={() => setCurrentPage(currentPage + 1)}
+                          disabled={currentPage === totalPages}
                         >
-                          Sửa
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={() => deleteConfigMutation.mutate(config.id)}
-                          disabled={deleteConfigMutation.isPending}
-                        >
-                          <Trash2 className="h-3 w-3" />
+                          Sau
+                          <ChevronRight className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
