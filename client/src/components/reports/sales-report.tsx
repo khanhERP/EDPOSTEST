@@ -272,22 +272,14 @@ export function SalesReport() {
         }
       });
 
-      // Calculate totals based on unique combined data
-      const totalRevenue = uniqueCombinedData.reduce(
-        (total: number, item: any) => {
-          const itemPrice = Number(item.price || item.total || 0);
-          const itemQuantity = Number(item.quantity || 1);
-
-          // Get discount from database, default to 0 if no data
-          const discountAmount =
-            item.discount !== undefined && item.discount !== null
-              ? Number(item.discount)
-              : 0;
-
-          return total + itemPrice * itemQuantity;
-        },
-        0,
-      );
+      // Calculate total revenue using same formula as dashboard: subtotal - tax - discount
+      const totalRevenue = paidOrders.reduce((total: number, order: any) => {
+        const subtotal = Number(order.subtotal || 0);
+        const tax = Number(order.tax || 0); 
+        const discount = Number(order.discount || 0);
+        const revenue = subtotal - tax - discount; // Same formula as dashboard
+        return total + revenue;
+      }, 0);
 
       // Calculate subtotal revenue (excluding tax)
       const subtotalRevenue = uniqueCombinedData.reduce(
