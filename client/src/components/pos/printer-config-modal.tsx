@@ -206,6 +206,37 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
     setIsEditing(true);
   };
 
+  const handleToggleStatus = (config: PrinterConfig, newStatus: boolean) => {
+    // If turning on this printer, check if we need to turn off others
+    if (newStatus && (config.isEmployee || config.isKitchen)) {
+      const conflictingPrinter = printerConfigs.find(p => 
+        p.id !== config.id && 
+        p.isActive && 
+        ((config.isEmployee && p.isEmployee) || (config.isKitchen && p.isKitchen))
+      );
+
+      if (conflictingPrinter) {
+        const printerType = config.isEmployee ? "nhân viên" : "bếp";
+        toast({ 
+          title: "Thông báo", 
+          description: `Sẽ tự động tắt máy in ${printerType} khác: ${conflictingPrinter.name}`, 
+        });
+        
+        // Turn off the conflicting printer first
+        updateConfigMutation.mutate({ 
+          id: conflictingPrinter.id, 
+          data: { ...conflictingPrinter, isActive: false } 
+        });
+      }
+    }
+
+    // Update the current printer status
+    updateConfigMutation.mutate({ 
+      id: config.id, 
+      data: { ...config, isActive: newStatus } 
+    });
+  };
+
   const getConnectionIcon = (type: string) => {
     switch (type) {
       case "network": return <Wifi className="h-4 w-4" />;
@@ -427,31 +458,44 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                           </div>
                         </div>
 
-                        <div className="flex gap-1 mt-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => testConnectionMutation.mutate(config.id)}
-                            disabled={testConnectionMutation.isPending}
-                          >
-                            <TestTube className="h-3 w-3 mr-1" />
-                            Test
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleEdit(config)}
-                          >
-                            Sửa
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => deleteConfigMutation.mutate(config.id)}
-                            disabled={deleteConfigMutation.isPending}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                        <div className="flex justify-between items-center mt-2">
+                          <div className="flex gap-1">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => testConnectionMutation.mutate(config.id)}
+                              disabled={testConnectionMutation.isPending}
+                            >
+                              <TestTube className="h-3 w-3 mr-1" />
+                              Test
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleEdit(config)}
+                            >
+                              Sửa
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => deleteConfigMutation.mutate(config.id)}
+                              disabled={deleteConfigMutation.isPending}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={config.isActive}
+                              onCheckedChange={(checked) => handleToggleStatus(config, checked)}
+                              disabled={updateConfigMutation.isPending}
+                            />
+                            <span className="text-sm text-gray-600">
+                              {config.isActive ? "Bật" : "Tắt"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
