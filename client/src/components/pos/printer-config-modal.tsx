@@ -514,16 +514,11 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                             </Button>
                           </div>
                           
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={config.isActive}
-                              onCheckedChange={(checked) => handleToggleStatus(config, checked)}
-                              disabled={updateConfigMutation.isPending}
-                            />
-                            <span className="text-sm text-gray-600">
-                              {config.isActive ? "Bật" : "Tắt"}
-                            </span>
-                          </div>
+                          <Switch
+                            checked={config.isActive}
+                            onCheckedChange={(checked) => handleToggleStatus(config, checked)}
+                            disabled={updateConfigMutation.isPending}
+                          />
                         </div>
                       </div>
                     ))}
