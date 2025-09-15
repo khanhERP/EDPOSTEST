@@ -414,13 +414,13 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng doanh thu (sau giảm giá)
+                  {t("reports.totalRevenue")}
                 </p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(stats.totalSalesRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Thành tiền - Giảm giá
+                  {startDate} ~ {endDate}
                 </p>
               </div>
               <DollarSign className="w-8 h-8 text-green-500" />
@@ -433,13 +433,16 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng thu từ bán hàng
+                  {t("reports.salesReportTotalRevenue")}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {formatCurrency(stats.subtotalRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Thành tiền (trước giảm giá)
+                  {startDate === endDate 
+                    ? formatDate(startDate)
+                    : `${formatDate(startDate)} - ${formatDate(endDate)}`
+                  }
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />
