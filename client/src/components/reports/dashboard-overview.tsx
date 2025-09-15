@@ -181,15 +181,17 @@ export function DashboardOverview() {
         } : null
       });
 
-      // Calculate total revenue from completed orders using actual order totals (includes tax)
+      // Calculate total revenue from completed orders (total after discount)
       const totalSalesRevenue = completedOrders.reduce((sum: number, order: any) => {
-        // Use total field which should include tax and discount
-        const orderTotal = Number(order.total || 0);
-        console.log(`Processing order ${order.orderNumber}: total=${orderTotal}`);
-        return sum + orderTotal;
+        // Use subtotal + tax as the actual revenue (after discount deduction)
+        const subtotal = Number(order.subtotal || 0);
+        const tax = Number(order.tax || 0);
+        const revenue = subtotal + tax;
+        console.log(`Processing order ${order.orderNumber}: subtotal=${subtotal}, tax=${tax}, revenue=${revenue}`);
+        return sum + revenue;
       }, 0);
 
-      // Calculate subtotal revenue from completed orders (excludes tax)
+      // Calculate subtotal revenue from completed orders (excludes tax, after discount)
       const subtotalRevenue = completedOrders.reduce((sum: number, order: any) => {
         const subtotal = Number(order.subtotal || 0);
         return sum + subtotal;
