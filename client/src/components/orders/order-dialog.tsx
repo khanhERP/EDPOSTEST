@@ -806,6 +806,20 @@ export function OrderDialog({
                                   {item.productName}
                                 </h4>
                                 <p className="text-xs text-gray-500">{t("orders.alreadyOrdered")}</p>
+                                {/* Individual item discount for existing items */}
+                                {discount > 0 && (() => {
+                                  const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+                                  const totalBeforeDiscount = calculateTotal(); // includes tax
+                                  const subtotalBeforeDiscount = totalBeforeDiscount - calculateTax();
+                                  const itemDiscountAmount = subtotalBeforeDiscount > 0 ? 
+                                    Math.floor((discount * itemSubtotal) / subtotalBeforeDiscount) : 0;
+                                  
+                                  return itemDiscountAmount > 0 ? (
+                                    <div className="text-xs text-red-600 mt-1">
+                                      Giảm giá: -{itemDiscountAmount.toLocaleString()} ₫
+                                    </div>
+                                  ) : null;
+                                })()}
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="text-right">
@@ -1009,6 +1023,22 @@ export function OrderDialog({
                               {t("tables.unitPrice")}: {Number(item.product.price).toLocaleString()} ₫
                             </span>
                           </div>
+
+                          {/* Individual item discount display */}
+                          {discount > 0 && (() => {
+                            // Calculate item discount based on proportional share
+                            const itemSubtotal = Number(item.product.price) * item.quantity;
+                            const totalBeforeDiscount = calculateTotal(); // includes tax
+                            const itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                              Math.floor((discount * itemSubtotal) / (calculateTotal() - calculateTax())) : 0;
+                            
+                            return itemDiscountAmount > 0 ? (
+                              <div className="text-xs text-red-600 mt-1 flex justify-between">
+                                <span>Giảm giá:</span>
+                                <span>-{itemDiscountAmount.toLocaleString()} ₫</span>
+                              </div>
+                            ) : null;
+                          })()}
 
                           <Textarea
                             placeholder={t("tables.specialRequests")}
