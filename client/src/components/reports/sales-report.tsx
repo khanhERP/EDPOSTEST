@@ -316,6 +316,13 @@ export function SalesReport() {
           customerCount: o.customerCount 
         }))
       });
+
+      console.log(`Sales Report - Returning final data:`, {
+        totalCustomers,
+        totalOrders,
+        totalRevenue,
+        verification: `${totalCustomers} customers from ${totalOrders} orders`
+      });
       const averageOrderValue =
         totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
@@ -701,6 +708,12 @@ export function SalesReport() {
                   <p className="text-xs text-gray-500 mt-1">
                     {t("reports.peakHour")}: {peakHour}
                     {t("reports.hour")}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Debug: {JSON.stringify({
+                      totalCustomers: salesData?.totalCustomers,
+                      totalOrders: salesData?.totalOrders
+                    })}
                   </p>
                 </div>
               </CardContent>
