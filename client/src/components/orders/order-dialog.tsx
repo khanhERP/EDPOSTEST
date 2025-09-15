@@ -842,7 +842,7 @@ export function OrderDialog({
                                   
                                   return itemDiscountAmount > 0 ? (
                                     <div className="text-xs text-red-600 mt-1">
-                                      Giảm giá: -{itemDiscountAmount.toLocaleString()} ₫
+                                      Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString()} ₫
                                     </div>
                                   ) : null;
                                 })()}
@@ -1088,7 +1088,7 @@ export function OrderDialog({
                             return itemDiscountAmount > 0 ? (
                               <div className="text-xs text-red-600 mt-1 flex justify-between">
                                 <span>Giảm giá:</span>
-                                <span>-{itemDiscountAmount.toLocaleString()} ₫</span>
+                                <span>-{Math.floor(itemDiscountAmount).toLocaleString()} ₫</span>
                               </div>
                             ) : null;
                           })()}
