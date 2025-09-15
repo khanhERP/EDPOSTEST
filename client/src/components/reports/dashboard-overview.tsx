@@ -181,14 +181,13 @@ export function DashboardOverview() {
         } : null
       });
 
-      // Calculate total revenue from completed orders using formula: subtotal - tax - discount
+      // Calculate total revenue from completed orders (subtotal + tax = revenue after discount)
       const totalSalesRevenue = completedOrders.reduce((sum: number, order: any) => {
-        // Doanh thu = Subtotal - Tax - Discount
-        const subtotal = Number(order.subtotal || 0); // Thành tiền
+        // Revenue = Subtotal (đã trừ giảm giá) + Tax
+        const subtotal = Number(order.subtotal || 0); // Thành tiền sau khi trừ giảm giá
         const tax = Number(order.tax || 0); // Thuế
-        const discount = Number(order.discount || 0); // Giảm giá
-        const revenue = subtotal - tax - discount; // Doanh thu thực tế theo công thức mới
-        console.log(`Processing order ${order.orderNumber}: subtotal=${subtotal}, tax=${tax}, discount=${discount}, revenue=${revenue}`);
+        const revenue = subtotal + tax; // Doanh thu thực tế
+        console.log(`Processing order ${order.orderNumber}: subtotal=${subtotal}, tax=${tax}, revenue=${revenue}, originalTotal=${order.total}`);
         return sum + revenue;
       }, 0);
 
@@ -460,7 +459,10 @@ export function DashboardOverview() {
                   {formatCurrency(stats.subtotalRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {startDate} ~ {endDate}
+                  {startDate === endDate 
+                    ? formatDate(startDate)
+                    : `${formatDate(startDate)} - ${formatDate(endDate)}`
+                  }
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />
