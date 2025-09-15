@@ -586,9 +586,7 @@ export const insertPrinterConfigSchema = createInsertSchema(printerConfigs).omit
   connectionType: z.enum(["usb", "network", "bluetooth"]).optional(),
 });
 
-export type PrintTemplate = typeof printTemplates.$inferSelect;
 export type PrinterConfig = typeof printerConfigs.$inferSelect;
-export type InsertPrintTemplate = z.infer<typeof insertPrintTemplateSchema>;
 export type InsertPrinterConfig = z.infer<typeof insertPrinterConfigSchema>;
 
 // Cart item type for frontend use

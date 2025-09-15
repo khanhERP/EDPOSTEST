@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -151,7 +150,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (selectedConfig) {
       updateConfigMutation.mutate({ id: selectedConfig.id, data: formData });
     } else {
@@ -281,7 +280,31 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                   </div>
                 )}
 
-                
+                <div>
+                  <Label htmlFor="paperWidth">Khổ giấy (mm)</Label>
+                  <Select value={formData.paperWidth.toString()} onValueChange={(value) => setFormData({ ...formData, paperWidth: parseInt(value) })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="58">58mm</SelectItem>
+                      <SelectItem value="80">80mm</SelectItem>
+                      <SelectItem value="112">112mm</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="printSpeed">Tốc độ in (%)</Label>
+                  <Input
+                    id="printSpeed"
+                    type="number"
+                    value={formData.printSpeed}
+                    onChange={(e) => setFormData({ ...formData, printSpeed: parseInt(e.target.value) || 100 })}
+                    min="50"
+                    max="200"
+                  />
+                </div>
 
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -358,7 +381,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="flex gap-1 mt-2">
                         <Button 
                           size="sm" 
