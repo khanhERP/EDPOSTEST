@@ -347,6 +347,29 @@ export async function initializeSampleData() {
       console.log("Discount column migration failed or already applied:", error);
     }
 
+    // Add discount column to order_items table
+    try {
+      await db.execute(sql`
+        ALTER TABLE order_items ADD COLUMN IF NOT EXISTS discount DECIMAL(10,2) NOT NULL DEFAULT 0.00
+      `);
+
+      // Create index for discount
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_order_items_discount ON order_items(discount)
+      `);
+
+      // Update existing order items to set discount to 0 if null
+      await db.execute(sql`
+        UPDATE order_items SET discount = 0.00 WHERE discount IS NULL
+      `);
+
+      console.log(
+        "Migration for discount column in order_items table completed successfully.",
+      );
+    } catch (error) {
+      console.log("Order items discount column migration failed or already applied:", error);
+    }
+
     // Run migration for email constraint in employees table
     try {
       await db.execute(sql`

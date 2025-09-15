@@ -48,6 +48,51 @@ import {
   ne,
 } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+
+// Function to calculate discount distribution among order items
+function calculateDiscountDistribution(items: any[], totalDiscount: number) {
+  if (!items || items.length === 0 || totalDiscount <= 0) {
+    return items.map(item => ({ ...item, discount: 0 }));
+  }
+
+  // Calculate total amount (subtotal before discount)
+  const totalAmount = items.reduce((sum, item) => {
+    const unitPrice = Number(item.unitPrice || 0);
+    const quantity = Number(item.quantity || 0);
+    return sum + (unitPrice * quantity);
+  }, 0);
+
+  if (totalAmount <= 0) {
+    return items.map(item => ({ ...item, discount: 0 }));
+  }
+
+  let allocatedDiscount = 0;
+  const result = items.map((item, index) => {
+    const unitPrice = Number(item.unitPrice || 0);
+    const quantity = Number(item.quantity || 0);
+    const itemTotal = unitPrice * quantity;
+
+    let itemDiscount = 0;
+
+    if (index === items.length - 1) {
+      // Last item gets remaining discount to ensure total matches exactly
+      itemDiscount = Math.max(0, totalDiscount - allocatedDiscount);
+    } else {
+      // Calculate proportional discount: Total discount * item amount / total amount
+      const proportionalDiscount = (totalDiscount * itemTotal) / totalAmount;
+      itemDiscount = Math.round(proportionalDiscount); // Round to nearest dong
+      allocatedDiscount += itemDiscount;
+    }
+
+    return {
+      ...item,
+      discount: itemDiscount.toFixed(2)
+    };
+  });
+
+  console.log(`💰 Discount Distribution: Total=${totalDiscount}, Allocated=${allocatedDiscount + Number(result[result.length - 1].discount)}`);
+  return result;
+}
 import {
   orders,
   orderItems as orderItemsTable,
@@ -1885,10 +1930,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const itemsData = items.map((item) => insertOrderItemSchema.parse(item));
+      // Parse and prepare items with discount distribution
+      let itemsData = items.map((item) => insertOrderItemSchema.parse(item));
+      
+      // Calculate discount distribution if order has discount
+      const orderDiscount = Number(orderData.discount || 0);
+      if (orderDiscount > 0) {
+        itemsData = calculateDiscountDistribution(itemsData, orderDiscount);
+        console.log(`💰 Order Creation: Distributed discount ${orderDiscount} among ${itemsData.length} items`);
+      }
 
       console.log(
-        "Parsed order data:",
+        "Parsed order data with discount distribution:",
         JSON.stringify(
           {
             orderData,
@@ -2803,6 +2856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total: item.total
             ? item.total.toString()
             : (parseFloat(item.unitPrice) * parseInt(item.quantity)).toString(),
+          discount: "0.00", // Default discount, will be recalculated below
           notes: item.notes || null,
         };
       });
@@ -2818,6 +2872,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(
         `✅ Successfully added ${insertedItems.length} items to order ${orderId}`,
       );
+
+      // Recalculate discount distribution for all items in the order
+      const orderDiscount = Number(existingOrder.discount || 0);
+      if (orderDiscount > 0) {
+        console.log(`🔄 Recalculating discount distribution for order ${orderId} with total discount ${orderDiscount}`);
+        
+        // Get all order items after insertion
+        const updatedOrderItems = await database
+          .select()
+          .from(orderItemsTable)
+          .where(eq(orderItemsTable.orderId, orderId));
+
+        // Calculate new discount distribution
+        const itemsWithNewDiscount = calculateDiscountDistribution(updatedOrderItems, orderDiscount);
+        
+        // Update each item's discount
+        for (const item of itemsWithNewDiscount) {
+          await database
+            .update(orderItemsTable)
+            .set({ discount: item.discount })
+            .where(eq(orderItemsTable.id, item.id));
+        }
+        
+        console.log(`✅ Updated discount distribution for ${itemsWithNewDiscount.length} items`);
+      }
 
       // Fetch ALL order items to recalculate totals using order-dialog logic
       const allOrderItems = await database

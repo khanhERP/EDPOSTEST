@@ -178,6 +178,7 @@ export const orderItems = pgTable("order_items", {
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  discount: decimal("discount", { precision: 10, scale: 2 }).notNull().default("0.00"),
   notes: text("notes"), // special requests
 });
 
@@ -300,6 +301,8 @@ export const insertOrderSchema = createInsertSchema(orders)
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   id: true,
   orderId: true,
+}).extend({
+  discount: z.string().optional().default("0.00"),
 });
 
 export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit(

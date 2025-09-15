@@ -488,6 +488,7 @@ export function OrderDialog({
           quantity: item.quantity,
           unitPrice: basePrice.toString(),
           total: itemTotal.toString(),
+          discount: "0.00", // Will be calculated on server side
           notes: item.notes || null,
         };
       });
@@ -568,6 +569,7 @@ export function OrderDialog({
           quantity: item.quantity,
           unitPrice: item.product.price.toString(),
           total: itemTotal.toString(),
+          discount: "0.00", // Will be calculated on server side
           notes: item.notes || null,
         };
       });

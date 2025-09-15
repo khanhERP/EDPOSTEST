@@ -446,6 +446,7 @@ interface OrderItem {
   quantity: number;
   unitPrice: number;
   total: number;
+  discount?: string; // Added discount field
   notes: string | null;
   productName?: string;
   productSku?: string;
@@ -456,6 +457,7 @@ interface InsertOrderItem {
   quantity: number;
   unitPrice: number;
   total: number;
+  discount?: string; // Added discount field
   notes?: string | null;
 }
 
@@ -1832,7 +1834,8 @@ export class DatabaseStorage implements IStorage {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           total: item.total,
-          notes: item.notes,
+          discount: item.discount || "0.00", // Map discount here
+          notes: item.notes || null
         }));
 
         console.log(`Storage: Inserting ${itemsToInsert.length} order items`);
@@ -2493,6 +2496,7 @@ export class DatabaseStorage implements IStorage {
           quantity: orderItemsTable.quantity,
           unitPrice: orderItemsTable.unitPrice,
           total: orderItemsTable.total,
+          discount: orderItemsTable.discount, // Include discount
           notes: orderItemsTable.notes,
           productName: products.name,
           productSku: products.sku,
@@ -3499,7 +3503,7 @@ export class DatabaseStorage implements IStorage {
   async getPrinterConfigs(tenantDb?: any): Promise<PrinterConfig[]> {
     const database = tenantDb || db;
     console.log("🔍 Storage: Fetching all printer configs (active and inactive)");
-    
+
     try {
       const configs = await database.select().from(printerConfigs).orderBy(printerConfigs.id);
       console.log(`✅ Storage: Found ${configs.length} printer configs`);

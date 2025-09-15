@@ -677,7 +677,7 @@ export function OrderManagement() {
     console.log(`💰 Order Details: Final calculation (table-grid logic):`, {
       subtotal: subtotal,
       tax: taxAmount,
-      finalTotal: finalTotal,
+      total: finalTotal,
       itemsProcessed: orderItems.length
     });
 
@@ -2326,9 +2326,17 @@ export function OrderManagement() {
                               )}
                             </div>
                             <div className="text-right">
-                              <div className="font-bold text-green-600">
-                                {formatCurrency(Number(item.total || 0))}
+                              <div className="font-medium">
+                                {Math.floor(Number(item.total)).toLocaleString()} ₫
                               </div>
+                              <div className="text-sm text-gray-500">
+                                {item.quantity} x {Math.floor(Number(item.unitPrice)).toLocaleString()} ₫
+                              </div>
+                              {item.discount && Number(item.discount) > 0 && (
+                                <div className="text-xs text-red-600">
+                                  Giảm giá: -{Math.floor(Number(item.discount)).toLocaleString()} ₫
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
@@ -3108,10 +3116,7 @@ export function OrderManagement() {
           quantity: parseInt(item.quantity || '1'),
           sku: item.sku || `SP${item.productId}`,
           taxRate: parseFloat(item.taxRate || '0'),
-          afterTaxPrice: item.afterTaxPrice || null,
-          discount: item.discount || '0',
-          discountAmount: item.discountAmount || '0',
-          originalPrice: item.originalPrice || item.unitPrice || item.price
+          afterTaxPrice: item.afterTaxPrice || null
         })) || []}
         total={previewReceipt ? parseFloat(previewReceipt.exactTotal || previewReceipt.total || '0') : 0}
       />
