@@ -808,11 +808,37 @@ export function OrderDialog({
                                 <p className="text-xs text-gray-500">{t("orders.alreadyOrdered")}</p>
                                 {/* Individual item discount for existing items */}
                                 {discount > 0 && (() => {
-                                  const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-                                  const totalBeforeDiscount = calculateTotal(); // includes tax
-                                  const subtotalBeforeDiscount = totalBeforeDiscount - calculateTax();
-                                  const itemDiscountAmount = subtotalBeforeDiscount > 0 ? 
-                                    Math.floor((discount * itemSubtotal) / subtotalBeforeDiscount) : 0;
+                                  // Get all items (existing + new)
+                                  const allItems = [...existingItems, ...cart.map(cartItem => ({
+                                    unitPrice: cartItem.product.price,
+                                    quantity: cartItem.quantity
+                                  }))];
+                                  
+                                  const currentIndex = existingItems.findIndex((existingItem, idx) => idx === index);
+                                  const isLastItem = currentIndex === allItems.length - 1;
+                                  
+                                  let itemDiscountAmount = 0;
+                                  
+                                  if (isLastItem) {
+                                    // Last item: total discount - sum of all previous discounts
+                                    let previousDiscounts = 0;
+                                    const totalBeforeDiscount = calculateTotal() - calculateTax();
+                                    
+                                    for (let i = 0; i < allItems.length - 1; i++) {
+                                      const prevItemSubtotal = Number(allItems[i].unitPrice || 0) * Number(allItems[i].quantity || 0);
+                                      const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                                        Math.floor((discount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                                      previousDiscounts += prevItemDiscount;
+                                    }
+                                    
+                                    itemDiscountAmount = discount - previousDiscounts;
+                                  } else {
+                                    // Regular calculation for non-last items
+                                    const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+                                    const totalBeforeDiscount = calculateTotal() - calculateTax();
+                                    itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                                      Math.floor((discount * itemSubtotal) / totalBeforeDiscount) : 0;
+                                  }
                                   
                                   return itemDiscountAmount > 0 ? (
                                     <div className="text-xs text-red-600 mt-1">
@@ -1026,11 +1052,38 @@ export function OrderDialog({
 
                           {/* Individual item discount display */}
                           {discount > 0 && (() => {
-                            // Calculate item discount based on proportional share
-                            const itemSubtotal = Number(item.product.price) * item.quantity;
-                            const totalBeforeDiscount = calculateTotal(); // includes tax
-                            const itemDiscountAmount = totalBeforeDiscount > 0 ? 
-                              Math.floor((discount * itemSubtotal) / (calculateTotal() - calculateTax())) : 0;
+                            // Get all items (existing + new)
+                            const allItems = [...existingItems, ...cart.map(cartItem => ({
+                              unitPrice: cartItem.product.price,
+                              quantity: cartItem.quantity
+                            }))];
+                            
+                            const currentCartIndex = cart.findIndex(cartItem => cartItem.product.id === item.product.id);
+                            const currentOverallIndex = existingItems.length + currentCartIndex;
+                            const isLastItem = currentOverallIndex === allItems.length - 1;
+                            
+                            let itemDiscountAmount = 0;
+                            
+                            if (isLastItem) {
+                              // Last item: total discount - sum of all previous discounts
+                              let previousDiscounts = 0;
+                              const totalBeforeDiscount = calculateTotal() - calculateTax();
+                              
+                              for (let i = 0; i < allItems.length - 1; i++) {
+                                const prevItemSubtotal = Number(allItems[i].unitPrice || 0) * Number(allItems[i].quantity || 0);
+                                const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                                  Math.floor((discount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                                previousDiscounts += prevItemDiscount;
+                              }
+                              
+                              itemDiscountAmount = discount - previousDiscounts;
+                            } else {
+                              // Regular calculation for non-last items
+                              const itemSubtotal = Number(item.product.price) * item.quantity;
+                              const totalBeforeDiscount = calculateTotal() - calculateTax();
+                              itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                                Math.floor((discount * itemSubtotal) / totalBeforeDiscount) : 0;
+                            }
                             
                             return itemDiscountAmount > 0 ? (
                               <div className="text-xs text-red-600 mt-1 flex justify-between">
