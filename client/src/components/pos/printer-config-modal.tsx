@@ -27,7 +27,7 @@ interface PrinterConfig {
   printerType: string;
   connectionType: string;
   ipAddress?: string;
-  port?: number;
+  port?: number | null;
   macAddress?: string;
   isEmployee: boolean;
   isKitchen: boolean;
@@ -42,7 +42,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
     printerType: "thermal",
     connectionType: "usb",
     ipAddress: "",
-    port: 9100,
+    port: null,
     macAddress: "",
     isEmployee: false,
     isKitchen: false,
@@ -132,7 +132,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       printerType: "thermal",
       connectionType: "usb",
       ipAddress: "",
-      port: 9100,
+      port: null,
       macAddress: "",
       isEmployee: false,
       isKitchen: false,
@@ -159,7 +159,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       printerType: config.printerType,
       connectionType: config.connectionType,
       ipAddress: config.ipAddress || "",
-      port: config.port || 9100,
+      port: config.port || null,
       macAddress: config.macAddress || "",
       isEmployee: config.isEmployee,
       isKitchen: config.isKitchen,
@@ -253,8 +253,8 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                       <Input
                         id="port"
                         type="number"
-                        value={formData.port}
-                        onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) || 9100 })}
+                        value={formData.port || ''}
+                        onChange={(e) => setFormData({ ...formData, port: e.target.value ? parseInt(e.target.value) : null })}
                       />
                     </div>
                   </>
@@ -335,7 +335,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                             <div className="text-sm text-gray-500">
                               {config.printerType} - {config.connectionType}
                               {config.connectionType === "network" && config.ipAddress && (
-                                <span> ({config.ipAddress}:{config.port})</span>
+                                <span> ({config.ipAddress}:{config.port || 'auto'})</span>
                               )}
                             </div>
                           </div>
