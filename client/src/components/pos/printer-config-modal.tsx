@@ -145,6 +145,34 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate that only one printer can be active for each type
+    if (formData.isActive && (formData.isEmployee || formData.isKitchen)) {
+      const activeEmployeePrinter = printerConfigs.find(p => 
+        p.isEmployee && p.isActive && (!selectedConfig || p.id !== selectedConfig.id)
+      );
+      const activeKitchenPrinter = printerConfigs.find(p => 
+        p.isKitchen && p.isActive && (!selectedConfig || p.id !== selectedConfig.id)
+      );
+
+      if (formData.isEmployee && activeEmployeePrinter) {
+        toast({ 
+          title: "Lỗi", 
+          description: `Đã có máy in nhân viên đang hoạt động: ${activeEmployeePrinter.name}. Vui lòng tắt máy in đó trước.`, 
+          variant: "destructive" 
+        });
+        return;
+      }
+
+      if (formData.isKitchen && activeKitchenPrinter) {
+        toast({ 
+          title: "Lỗi", 
+          description: `Đã có máy in bếp đang hoạt động: ${activeKitchenPrinter.name}. Vui lòng tắt máy in đó trước.`, 
+          variant: "destructive" 
+        });
+        return;
+      }
+    }
+
     if (selectedConfig) {
       updateConfigMutation.mutate({ id: selectedConfig.id, data: formData });
     } else {
@@ -292,6 +320,15 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                   <Label htmlFor="isKitchen">Máy in bếp</Label>
                 </div>
 
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isActive"
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                  />
+                  <Label htmlFor="isActive">Đang sử dụng</Label>
+                </div>
+
                 <div className="flex gap-2">
                   <Button 
                     type="submit" 
@@ -326,12 +363,17 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
               ) : (
                 <div className="space-y-3">
                   {printerConfigs.map((config: PrinterConfig) => (
-                    <div key={config.id} className="border rounded-lg p-3">
+                    <div key={config.id} className={`border rounded-lg p-3 ${!config.isActive ? 'opacity-60 bg-gray-50' : ''}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {getConnectionIcon(config.connectionType)}
                           <div>
-                            <div className="font-medium">{config.name}</div>
+                            <div className="font-medium flex items-center gap-2">
+                              {config.name}
+                              {!config.isActive && (
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Tắt</span>
+                              )}
+                            </div>
                             <div className="text-sm text-gray-500">
                               {config.printerType} - {config.connectionType}
                               {config.connectionType === "network" && config.ipAddress && (
@@ -341,11 +383,14 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
-                          {config.isEmployee && (
+                          {config.isEmployee && config.isActive && (
                             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Nhân viên</span>
                           )}
-                          {config.isKitchen && (
+                          {config.isKitchen && config.isActive && (
                             <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Bếp</span>
+                          )}
+                          {config.isActive && (
+                            <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Đang dùng</span>
                           )}
                         </div>
                       </div>
