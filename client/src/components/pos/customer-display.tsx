@@ -310,6 +310,45 @@ export function CustomerDisplay({
                             <p className="text-sm text-gray-600">
                               {formatCurrency(item.price)} × {item.quantity}
                             </p>
+                            
+                            {/* Individual item discount display */}
+                            {discount && discount > 0 && (() => {
+                              const currentIndex = cartItems.findIndex(cartItem => cartItem.id === item.id);
+                              const isLastItem = currentIndex === cartItems.length - 1;
+                              
+                              let itemDiscountAmount = 0;
+                              
+                              if (isLastItem) {
+                                // Last item: total discount - sum of all previous discounts
+                                let previousDiscounts = 0;
+                                const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
+                                  return sum + (parseFloat(itm.price || "0") * (itm.quantity || 0));
+                                }, 0);
+                                
+                                for (let i = 0; i < cartItems.length - 1; i++) {
+                                  const prevItemSubtotal = parseFloat(cartItems[i].price || "0") * (cartItems[i].quantity || 0);
+                                  const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                                    Math.floor((discount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                                  previousDiscounts += prevItemDiscount;
+                                }
+                                
+                                itemDiscountAmount = discount - previousDiscounts;
+                              } else {
+                                // Regular calculation for non-last items
+                                const itemSubtotal = parseFloat(item.price || "0") * (item.quantity || 0);
+                                const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
+                                  return sum + (parseFloat(itm.price || "0") * (itm.quantity || 0));
+                                }, 0);
+                                itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                                  Math.floor((discount * itemSubtotal) / totalBeforeDiscount) : 0;
+                              }
+                              
+                              return itemDiscountAmount > 0 ? (
+                                <p className="text-sm text-red-600">
+                                  Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
+                                </p>
+                              ) : null;
+                            })()}
                           </div>
                         </div>
                         <div className="text-right">
