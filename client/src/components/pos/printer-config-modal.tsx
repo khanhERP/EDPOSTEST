@@ -29,8 +29,6 @@ interface PrinterConfig {
   ipAddress?: string;
   port?: number;
   macAddress?: string;
-  paperWidth: number;
-  printSpeed: number;
   isEmployee: boolean;
   isKitchen: boolean;
   isActive: boolean;
@@ -46,8 +44,6 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
     ipAddress: "",
     port: 9100,
     macAddress: "",
-    paperWidth: 80,
-    printSpeed: 100,
     isEmployee: false,
     isKitchen: false,
     isActive: true,
@@ -138,8 +134,6 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       ipAddress: "",
       port: 9100,
       macAddress: "",
-      paperWidth: 80,
-      printSpeed: 100,
       isEmployee: false,
       isKitchen: false,
       isActive: true,
@@ -167,8 +161,6 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       ipAddress: config.ipAddress || "",
       port: config.port || 9100,
       macAddress: config.macAddress || "",
-      paperWidth: config.paperWidth,
-      printSpeed: config.printSpeed,
       isEmployee: config.isEmployee,
       isKitchen: config.isKitchen,
       isActive: config.isActive,
@@ -280,31 +272,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                   </div>
                 )}
 
-                <div>
-                  <Label htmlFor="paperWidth">Khổ giấy (mm)</Label>
-                  <Select value={formData.paperWidth.toString()} onValueChange={(value) => setFormData({ ...formData, paperWidth: parseInt(value) })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="58">58mm</SelectItem>
-                      <SelectItem value="80">80mm</SelectItem>
-                      <SelectItem value="112">112mm</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="printSpeed">Tốc độ in (%)</Label>
-                  <Input
-                    id="printSpeed"
-                    type="number"
-                    value={formData.printSpeed}
-                    onChange={(e) => setFormData({ ...formData, printSpeed: parseInt(e.target.value) || 100 })}
-                    min="50"
-                    max="200"
-                  />
-                </div>
+                
 
                 <div className="flex items-center space-x-2">
                   <Switch
