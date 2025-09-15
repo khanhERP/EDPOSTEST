@@ -2844,6 +2844,47 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                         Ghi chú: {item.notes}
                                       </p>
                                     )}
+                                    
+                                    {/* Individual item discount display */}
+                                    {selectedOrder && Number(selectedOrder.discount || 0) > 0 && (() => {
+                                      // Get all items for discount calculation
+                                      const allItems = itemsToRender || [];
+                                      const currentIndex = allItems.findIndex((itm: any) => itm.id === item.id);
+                                      const isLastItem = currentIndex === allItems.length - 1;
+                                      
+                                      let itemDiscountAmount = 0;
+                                      
+                                      if (isLastItem) {
+                                        // Last item: total discount - sum of all previous discounts
+                                        let previousDiscounts = 0;
+                                        const totalBeforeDiscount = allItems.reduce((sum: number, itm: any) => {
+                                          return sum + (Number(itm.unitPrice || 0) * Number(itm.quantity || 0));
+                                        }, 0);
+                                        
+                                        for (let i = 0; i < allItems.length - 1; i++) {
+                                          const prevItemSubtotal = Number(allItems[i].unitPrice || 0) * Number(allItems[i].quantity || 0);
+                                          const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                                            Math.floor((Number(selectedOrder.discount || 0) * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                                          previousDiscounts += prevItemDiscount;
+                                        }
+                                        
+                                        itemDiscountAmount = Number(selectedOrder.discount || 0) - previousDiscounts;
+                                      } else {
+                                        // Regular calculation for non-last items
+                                        const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+                                        const totalBeforeDiscount = allItems.reduce((sum: number, itm: any) => {
+                                          return sum + (Number(itm.unitPrice || 0) * Number(itm.quantity || 0));
+                                        }, 0);
+                                        itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                                          Math.floor((Number(selectedOrder.discount || 0) * itemSubtotal) / totalBeforeDiscount) : 0;
+                                      }
+                                      
+                                      return itemDiscountAmount > 0 ? (
+                                        <p className="text-xs text-red-600 mt-1">
+                                          Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
+                                        </p>
+                                      ) : null;
+                                    })()}
                                   </div>
                                   <div className="text-right ml-4">
                                     <p className="font-bold text-lg text-green-600">
