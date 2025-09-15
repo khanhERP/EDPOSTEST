@@ -411,56 +411,81 @@ export function ReceiptModal({
     `;
   };
 
-  // Enhanced download receipt file function
+  // Enhanced download receipt file function - generates PDF
   const downloadReceiptFile = async (printContent: HTMLElement, isIOS: boolean, isAndroid: boolean) => {
-    const cleanReceiptHTML = generatePrintHTML(printContent, true);
-    const blob = new Blob([cleanReceiptHTML], { type: 'text/html;charset=utf-8' });
-    const fileName = `hoa-don-${receipt?.transactionId || Date.now()}.html`;
-    
-    // Try different download methods for mobile compatibility
-    if (isAndroid && navigator.share && navigator.canShare) {
-      // Use Web Share API for Android if available
-      try {
-        const file = new File([blob], fileName, { type: 'text/html' });
-        const canShare = navigator.canShare({ files: [file] });
-        
-        if (canShare) {
-          await navigator.share({
-            title: 'Hóa đơn EDPOS',
-            text: 'Hóa đơn thanh toán',
-            files: [file]
-          });
-          
-          console.log("✅ File shared successfully via Web Share API");
-          onClose();
-          return;
-        }
-      } catch (shareError) {
-        console.log("📱 Web Share API failed, falling back to download");
-      }
-    }
-    
-    // Standard download method
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    setTimeout(() => {
-      const instructions = isIOS 
-        ? `✅ Hóa đơn đã được tải xuống!\n\nFile: ${fileName}\n\nCách in trên iOS:\n1. Mở file HTML vừa tải\n2. Nhấn nút Share (chia sẻ)\n3. Chọn "Print" để in\n4. Hoặc AirPrint đến máy in`
-        : isAndroid 
-        ? `✅ Hóa đơn đã được tải xuống!\n\nFile: ${fileName}\n\nCách in trên Android:\n1. Mở file HTML vừa tải\n2. Nhấn menu Chrome (⋮)\n3. Chọn "Print" hoặc "In"\n4. Hoặc chia sẻ với ứng dụng in khác`
-        : `✅ Hóa đơn đã được tải xuống!\n\nFile: ${fileName}\n\nCách in:\n1. Mở file HTML vừa tải\n2. Nhấn Ctrl+P hoặc menu → Print\n3. Chọn máy in và in`;
+    try {
+      console.log("📄 Generating PDF for receipt download");
       
-      alert(instructions);
-      onClose();
-    }, 500);
+      // Create a new window for PDF generation
+      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      if (!printWindow) {
+        throw new Error("Popup blocked - cannot generate PDF");
+      }
+
+      const cleanReceiptHTML = generatePrintHTML(printContent, true);
+      printWindow.document.write(cleanReceiptHTML);
+      printWindow.document.close();
+
+      // Wait for content to load then trigger print to PDF
+      await new Promise(resolve => {
+        printWindow.onload = () => {
+          setTimeout(() => {
+            try {
+              // Trigger print dialog which allows saving as PDF
+              printWindow.print();
+              
+              // Instructions for saving as PDF
+              const pdfInstructions = isIOS 
+                ? "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn destination\n2. Chọn 'Save as PDF' hoặc 'Lưu thành PDF'\n3. Nhấn Save để tải file PDF"
+                : isAndroid 
+                ? "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn máy in\n2. Chọn 'Save as PDF' hoặc 'Lưu thành PDF'\n3. Nhấn Print để tải file PDF"
+                : "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn destination/máy in\n2. Chọn 'Save as PDF' hoặc 'Microsoft Print to PDF'\n3. Nhấn Save/Print để tải file PDF";
+              
+              alert(pdfInstructions);
+              
+              // Auto close after delay
+              setTimeout(() => {
+                if (!printWindow.closed) {
+                  printWindow.close();
+                }
+                onClose();
+              }, 3000);
+              
+              resolve(true);
+            } catch (printError) {
+              console.error("PDF generation error:", printError);
+              printWindow.close();
+              throw printError;
+            }
+          }, 1000);
+        };
+      });
+
+    } catch (error) {
+      console.error("❌ PDF generation failed:", error);
+      
+      // Fallback to HTML download if PDF generation fails
+      console.log("🔄 Falling back to HTML download");
+      const cleanReceiptHTML = generatePrintHTML(printContent, true);
+      const blob = new Blob([cleanReceiptHTML], { type: 'text/html;charset=utf-8' });
+      const fileName = `hoa-don-${receipt?.transactionId || Date.now()}.html`;
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setTimeout(() => {
+        const fallbackInstructions = "⚠️ Không thể tạo PDF, đã tải file HTML thay thế.\n\nĐể chuyển thành PDF:\n1. Mở file HTML vừa tải\n2. Nhấn Ctrl+P (hoặc Cmd+P trên Mac)\n3. Chọn 'Save as PDF' trong hộp thoại in\n4. Nhấn Save để lưu file PDF";
+        alert(fallbackInstructions);
+        onClose();
+      }, 500);
+    }
   };
 
   // Enhanced browser print dialog function
