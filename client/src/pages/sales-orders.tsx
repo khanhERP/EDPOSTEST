@@ -1934,11 +1934,11 @@ export default function SalesOrders() {
                                                     {t("common.itemList")}
                                                   </h4>
                                                   <div className="border rounded-lg overflow-hidden">
-                                                    <div className="grid grid-cols-13 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2">
+                                                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2">
                                                       <div className="col-span-1">
                                                         STT
                                                       </div>
-                                                      <div className="col-span-2">
+                                                      <div className="col-span-3">
                                                         {t("common.itemCode")}
                                                       </div>
                                                       <div className="col-span-3">
@@ -1952,9 +1952,6 @@ export default function SalesOrders() {
                                                       </div>
                                                       <div className="col-span-1">
                                                         {t("common.unitPrice")}
-                                                      </div>
-                                                      <div className="col-span-1">
-                                                        {t("common.discount")}
                                                       </div>
                                                       <div className="col-span-1">
                                                         {t(
@@ -1985,12 +1982,12 @@ export default function SalesOrders() {
                                                         ) => (
                                                           <div
                                                             key={item.id}
-                                                            className="grid grid-cols-13 gap-2 text-xs p-2 border-t"
+                                                            className="grid grid-cols-12 gap-2 text-xs p-2 border-t"
                                                           >
                                                             <div className="col-span-1">
                                                               {index + 1}
                                                             </div>
-                                                            <div className="col-span-2">
+                                                            <div className="col-span-3">
                                                               SP
                                                               {String(
                                                                 item.productId,
@@ -2011,11 +2008,6 @@ export default function SalesOrders() {
                                                             <div className="col-span-1">
                                                               {formatCurrency(
                                                                 item.unitPrice,
-                                                              )}
-                                                            </div>
-                                                            <div className="col-span-1 text-red-600">
-                                                              {formatCurrency(
-                                                                item.discount || "0",
                                                               )}
                                                             </div>
                                                             <div className="col-span-1">
