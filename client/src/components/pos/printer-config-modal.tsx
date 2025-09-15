@@ -32,8 +32,8 @@ interface PrinterConfig {
   macAddress?: string;
   paperWidth: number;
   printSpeed: number;
-  isPrimary: boolean;
-  isSecondary: boolean;
+  isEmployee: boolean;
+  isKitchen: boolean;
   isActive: boolean;
 }
 
@@ -49,8 +49,8 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
     macAddress: "",
     paperWidth: 80,
     printSpeed: 100,
-    isPrimary: false,
-    isSecondary: false,
+    isEmployee: false,
+    isKitchen: false,
     isActive: true,
   });
 
@@ -141,8 +141,8 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       macAddress: "",
       paperWidth: 80,
       printSpeed: 100,
-      isPrimary: false,
-      isSecondary: false,
+      isEmployee: false,
+      isKitchen: false,
       isActive: true,
     });
     setSelectedConfig(null);
@@ -170,8 +170,8 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
       macAddress: config.macAddress || "",
       paperWidth: config.paperWidth,
       printSpeed: config.printSpeed,
-      isPrimary: config.isPrimary,
-      isSecondary: config.isSecondary,
+      isEmployee: config.isEmployee,
+      isKitchen: config.isKitchen,
       isActive: config.isActive,
     });
     setIsEditing(true);
@@ -285,20 +285,20 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
 
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="isPrimary"
-                    checked={formData.isPrimary}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isPrimary: checked })}
+                    id="isEmployee"
+                    checked={formData.isEmployee}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isEmployee: checked })}
                   />
-                  <Label htmlFor="isPrimary">Máy in chính</Label>
+                  <Label htmlFor="isEmployee">Máy in nhân viên</Label>
                 </div>
 
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="isSecondary"
-                    checked={formData.isSecondary}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isSecondary: checked })}
+                    id="isKitchen"
+                    checked={formData.isKitchen}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isKitchen: checked })}
                   />
-                  <Label htmlFor="isSecondary">Máy in phụ (Bếp)</Label>
+                  <Label htmlFor="isKitchen">Máy in bếp</Label>
                 </div>
 
                 <div className="flex gap-2">
@@ -350,11 +350,11 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
-                          {config.isPrimary && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Chính</span>
+                          {config.isEmployee && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Nhân viên</span>
                           )}
-                          {config.isSecondary && (
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Phụ</span>
+                          {config.isKitchen && (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Bếp</span>
                           )}
                         </div>
                       </div>
