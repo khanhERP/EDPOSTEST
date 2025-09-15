@@ -152,7 +152,7 @@ export function SalesReport() {
         return defaultData;
       }
 
-      // Daily sales breakdown
+      // Daily sales breakdown - process orders directly for accurate customer count
       const dailySales: {
         [date: string]: {
           revenue: number;
@@ -162,14 +162,13 @@ export function SalesReport() {
         };
       } = {};
 
-      uniqueCombinedData.forEach((item: any) => {
+      // Process paid orders for daily sales
+      paidOrders.forEach((order: any) => {
         try {
-          // Use orderedAt for orders, or createdAt/invoiceDate for other items if applicable,
-          // but the focus is on orders and order_items here.
-          const itemDate = new Date(item.orderedAt || item.createdAt);
-          if (isNaN(itemDate.getTime())) return;
+          const orderDate = new Date(order.orderedAt || order.createdAt);
+          if (isNaN(orderDate.getTime())) return;
 
-          const dateStr = itemDate.toISOString().split("T")[0];
+          const dateStr = orderDate.toISOString().split("T")[0];
 
           if (!dailySales[dateStr]) {
             dailySales[dateStr] = {
@@ -180,23 +179,15 @@ export function SalesReport() {
             };
           }
 
-          // Assuming 'item.total' is the price for an order or order_item
-          const itemPrice = Number(item.price || item.total || 0);
-          const itemQuantity = Number(item.quantity || 1);
-          const revenue = itemPrice * itemQuantity;
+          const orderSubtotal = Number(order.subtotal || 0);
+          const orderDiscount = Number(order.discount || 0);
 
-          // Get discount from database, default to 0 if no data
-          const discountAmount =
-            item.discount !== undefined && item.discount !== null
-              ? Number(item.discount)
-              : 0;
-
-          dailySales[dateStr].revenue += revenue;
-          dailySales[dateStr].orders += 1; // Each item processed contributes to an order count for that day
-          dailySales[dateStr].customers += 1; // Assuming each item is from a distinct customer interaction for simplicity here
-          dailySales[dateStr].discount += discountAmount;
+          dailySales[dateStr].revenue += orderSubtotal;
+          dailySales[dateStr].orders += 1;
+          dailySales[dateStr].customers += Number(order.customerCount || 1); // Use actual customerCount from order
+          dailySales[dateStr].discount += orderDiscount;
         } catch (error) {
-          console.warn("Error processing item for daily sales:", error);
+          console.warn("Error processing order for daily sales:", error);
         }
       });
 
