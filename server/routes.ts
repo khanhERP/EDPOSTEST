@@ -5389,101 +5389,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // E-invoice publish proxy endpoint
-  // E-invoice publish proxy endpoint
   app.post("/api/einvoice/publish", async (req: TenantRequest, res) => {
     try {
-      const { customerName, taxCode, address, email, total, items, templateNumber, symbol } = req.body;
+      const publishRequest = req.body;
       const tenantDb = await getTenantDatabase(req);
+      console.log(
+        "Publishing invoice with data:",
+        JSON.stringify(publishRequest, null, 2),
+      );
 
-      console.log("Publishing invoice with data:", JSON.stringify(req.body, null, 2));
-
-      // Get E-invoice connection settings for login information
-      const { eInvoiceConnections } = await import("@shared/schema");
-      const [connection] = await db
-        .select()
-        .from(eInvoiceConnections)
-        .where(eq(eInvoiceConnections.isActive, true))
-        .limit(1);
-
-      if (!connection) {
-        return res.status(400).json({
-          error: "No active E-invoice connection found",
-          message: "Please configure E-invoice connection in settings first"
-        });
-      }
-
-      // Prepare login information
-      const loginData = {
-        taxCode: connection.taxCode,
-        loginId: connection.loginId,
-        password: connection.password,
-        softwareName: connection.softwareName,
-        loginUrl: connection.loginUrl,
-        signMethod: connection.signMethod,
-        cqtCode: connection.cqtCode
-      };
-
-      // Prepare invoice data for external API with login information
-      const invoiceData = {
-        Login: loginData, // Add Login object as required by API
-        customerName,
-        taxCode: taxCode || connection.taxCode,
-        address: address || "",
-        email: email || "",
-        total,
-        items: items.map(item => ({
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.total,
-          taxRate: item.taxRate || 0
-        })),
-        templateNumber: templateNumber || "01GTKT0/001",
-        symbol: symbol || connection.symbol || "AA/25E"
-      };
-
-      console.log("Sending invoice data with login:", JSON.stringify({
-        ...invoiceData,
-        Login: { ...loginData, password: "***" } // Hide password in logs
-      }, null, 2));
-
-      // Call external e-invoice API
-      const response = await fetch("https://infoerpvn.com:9440/api/invoice/publish", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+      // Call the real e-invoice API
+      const response = await fetch(
+        "https://infoerpvn.com:9440/api/invoice/publish",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            token: "EnURbbnPhUm4GjNgE4Ogrw==",
+          },
+          body: JSON.stringify(publishRequest),
         },
-        body: JSON.stringify(invoiceData)
-      });
-
-      console.log("E-invoice API response status:", response);
+      );
 
       if (!response.ok) {
+        console.error(
+          "E-invoice API error:",
+          response.status,
+          response.statusText,
+        );
         const errorText = await response.text();
-        console.log("E-invoice API error:", response.status, response.statusText);
-        console.log("Error response:", errorText);
-        return res.status(400).json({
+        console.error("Error response:", errorText);
+
+        return res.status(response.status).json({
           error: "Failed to publish invoice",
-          details: errorText,
-          statusCode: response.status
+          details: `API returned ${response.status}: ${response.statusText}`,
+          apiResponse: errorText,
         });
       }
 
       const result = await response.json();
-      console.log("E-invoice published successfully:", result);
+      console.log("E-invoice API response:", result);
 
-      res.json({
-        success: true,
-        data: result,
-        message: "Invoice published successfully"
-      });
+      // Check if the API returned success
+      if (result.status === true) {
+        console.log("Invoice published successfully:", result);
 
+        // Return standardized response format
+        res.json({
+          success: true,
+          message:
+            result.message || "Hóa đơn điện tử đã được phát hành thành công",
+          data: {
+            invoiceNo: result.data?.invoiceNo,
+            invDate: result.data?.invDate,
+            transactionID: result.data?.transactionID,
+            macqt: result.data?.macqt,
+            originalRequest: {
+              transactionID: publishRequest.transactionID,
+              invRef: publishRequest.invRef,
+              totalAmount: publishRequest.invTotalAmount,
+              customer: publishRequest.Customer,
+            },
+          },
+        });
+      } else {
+        // API returned failure
+        console.error("E-invoice API returned failure:", result);
+        res.status(400).json({
+          error: "E-invoice publication failed",
+          message: result.message || "Unknown error from e-invoice service",
+          details: result,
+        });
+      }
     } catch (error) {
-      console.error("E-invoice publish error:", error);
+      console.error("E-invoice publish proxy error details:");
+      console.error("- Error type:", error?.constructor.name);
+      console.error("- Error message:", error?.message);
+      console.error("- Full error:", error);
+
       res.status(500).json({
-        error: "Internal server error while publishing invoice",
-        details: error instanceof Error ? error.message : String(error)
+        error: "Failed to publish invoice",
+        details: error?.message,
+        errorType: error?.constructor.name,
       });
     }
   });
