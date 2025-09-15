@@ -149,6 +149,19 @@ export function DashboardOverview() {
       const validOrderItems = Array.isArray(orderItems) ? orderItems : [];
       const validTables = Array.isArray(tables) ? tables : [];
 
+      console.log("Dashboard Debug - Raw Orders Data:", {
+        totalOrders: validOrders.length,
+        startDate,
+        endDate,
+        sampleOrders: validOrders.slice(0, 3).map(o => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          total: o.total,
+          orderedAt: o.orderedAt
+        }))
+      });
+
       // Filter completed/paid orders only - data is already filtered by date range from API
       const completedOrders = validOrders.filter((order: any) => 
         order.status === 'paid' || order.status === 'completed'
@@ -170,9 +183,10 @@ export function DashboardOverview() {
 
       // Calculate total revenue from completed orders using actual order totals (includes tax)
       const totalSalesRevenue = completedOrders.reduce((sum: number, order: any) => {
-        // Use storedTotal if available (includes tax), otherwise fall back to total
-        const totalWithTax = Number(order.storedTotal || order.total || 0);
-        return sum + totalWithTax;
+        // Use total field which should include tax and discount
+        const orderTotal = Number(order.total || 0);
+        console.log(`Processing order ${order.orderNumber}: total=${orderTotal}`);
+        return sum + orderTotal;
       }, 0);
 
       // Calculate subtotal revenue from completed orders (excludes tax)
@@ -211,7 +225,7 @@ export function DashboardOverview() {
 
       // Active orders (pending/in-progress orders only from all current orders, not date-filtered)
       const activeOrders = Array.isArray(allCurrentOrders) ? allCurrentOrders.filter((order: any) => 
-        order.status === 'pending' || order.status === 'in_progress' || order.status === 'confirmed' || 
+        order.status === 'pending' || order.status === 'confirmed' || 
         order.status === 'preparing' || order.status === 'ready' || order.status === 'served'
       ).length : 0;
 
@@ -263,7 +277,11 @@ export function DashboardOverview() {
         subtotalRevenue,
         periodOrderCount,
         periodCustomerCount,
-        dateRange: `${startDate} to ${endDate}`
+        dailyAverageRevenue,
+        activeOrders,
+        dateRange: `${startDate} to ${endDate}`,
+        completedOrdersCount: completedOrders.length,
+        totalOrdersInRange: validOrders.length
       });
 
       return finalStats;
