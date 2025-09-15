@@ -2527,7 +2527,202 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API in qua máy in mạng
+  // Enhanced POS print-receipt endpoint with printer configuration support
+  app.post("/api/pos/print-receipt", async (req: TenantRequest, res) => {
+    try {
+      const { content, type, orderId, transactionId, printerConfigs, preferredConfig, deviceInfo } = req.body;
+
+      console.log(`🖨️ Enhanced POS print request:`, {
+        type,
+        orderId,
+        transactionId,
+        devicePlatform: deviceInfo?.platform,
+        deviceBrowser: deviceInfo?.browser,
+        configuredPrinters: printerConfigs?.length || 0,
+        preferredPrinter: preferredConfig?.name
+      });
+
+      if (!content) {
+        return res.status(400).json({
+          success: false,
+          error: "Thiếu nội dung in",
+        });
+      }
+
+      let printResults = [];
+      let hasSuccessfulPrint = false;
+
+      // Try to print to configured printers if available
+      if (printerConfigs && printerConfigs.length > 0) {
+        const net = require("net");
+        
+        for (const config of printerConfigs) {
+          if (!config.isActive) continue;
+          
+          try {
+            console.log(`🖨️ Attempting to print to ${config.name} (${config.connectionType})`);
+            
+            if (config.connectionType === 'network' && config.ipAddress) {
+              // Network printer
+              const printPromise = new Promise((resolve, reject) => {
+                const client = new net.Socket();
+                client.setTimeout(5000);
+
+                client.connect(config.port || 9100, config.ipAddress, () => {
+                  console.log(`🔗 Connected to printer ${config.name} at ${config.ipAddress}:${config.port}`);
+
+                  // Convert HTML content to ESC/POS commands (simplified)
+                  const escPosData = convertHtmlToEscPos(content, config);
+                  
+                  client.write(escPosData, (error) => {
+                    if (error) {
+                      console.error(`❌ Print data send error for ${config.name}:`, error);
+                      reject(new Error(`Lỗi gửi dữ liệu in đến ${config.name}`));
+                    } else {
+                      console.log(`✅ Print data sent successfully to ${config.name}`);
+                      client.end();
+                      resolve({
+                        printer: config.name,
+                        success: true,
+                        message: `In thành công trên ${config.name}`
+                      });
+                    }
+                  });
+                });
+
+                client.on("timeout", () => {
+                  console.error(`⏰ Printer ${config.name} connection timeout`);
+                  client.destroy();
+                  reject(new Error(`${config.name} không phản hồi`));
+                });
+
+                client.on("error", (error) => {
+                  console.error(`❌ Printer ${config.name} connection error:`, error);
+                  reject(new Error(`Không thể kết nối tới ${config.name}: ${error.message}`));
+                });
+              });
+
+              try {
+                const result = await printPromise;
+                printResults.push(result);
+                hasSuccessfulPrint = true;
+                
+                // If this is the preferred printer and it succeeded, we can return early
+                if (config.id === preferredConfig?.id) {
+                  break;
+                }
+              } catch (printError) {
+                console.log(`⚠️ Failed to print to ${config.name}:`, printError.message);
+                printResults.push({
+                  printer: config.name,
+                  success: false,
+                  error: printError.message
+                });
+              }
+            } else if (config.connectionType === 'usb') {
+              // USB printer - would need additional USB printing library
+              console.log(`📝 USB printer ${config.name} detected - would require USB printing library`);
+              printResults.push({
+                printer: config.name,
+                success: false,
+                error: "USB printing not yet implemented"
+              });
+            } else if (config.connectionType === 'bluetooth') {
+              // Bluetooth printer - would need additional Bluetooth printing library
+              console.log(`📱 Bluetooth printer ${config.name} detected - would require Bluetooth printing library`);
+              printResults.push({
+                printer: config.name,
+                success: false,
+                error: "Bluetooth printing not yet implemented"
+              });
+            }
+          } catch (configError) {
+            console.error(`❌ Error processing printer config ${config.name}:`, configError);
+            printResults.push({
+              printer: config.name,
+              success: false,
+              error: configError.message
+            });
+          }
+        }
+      }
+
+      // Log print job completion
+      if (hasSuccessfulPrint) {
+        console.log(`📝 Print job completed for ${type} ${orderId || transactionId}`);
+        
+        res.json({
+          success: true,
+          message: "In thành công",
+          results: printResults,
+          deviceInfo,
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        console.log(`⚠️ No successful prints for ${type} ${orderId || transactionId}`);
+        
+        // Return error but with specific guidance based on device
+        const fallbackMessage = deviceInfo?.isMobile 
+          ? "Không có máy in POS khả dụng. Vui lòng sử dụng chức năng tải file để in."
+          : "Không có máy in POS khả dụng. Vui lòng kiểm tra cấu hình máy in.";
+          
+        res.status(503).json({
+          success: false,
+          error: fallbackMessage,
+          results: printResults,
+          deviceInfo,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error("🖨️ Enhanced POS print error:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Lỗi in không xác định",
+      });
+    }
+  });
+
+  // Helper function to convert HTML content to ESC/POS commands
+  function convertHtmlToEscPos(htmlContent: string, printerConfig: any): Buffer {
+    // This is a simplified conversion - in production you'd want a proper HTML to ESC/POS library
+    const text = htmlContent
+      .replace(/<[^>]*>/g, '') // Strip HTML tags
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"');
+
+    // ESC/POS commands
+    const ESC = '\x1B';
+    const INIT = ESC + '@'; // Initialize printer
+    const ALIGN_CENTER = ESC + 'a' + '\x01';
+    const ALIGN_LEFT = ESC + 'a' + '\x00';
+    const BOLD_ON = ESC + 'E' + '\x01';
+    const BOLD_OFF = ESC + 'E' + '\x00';
+    const CUT_PAPER = '\x1D' + 'V' + 'A' + '\x00'; // Cut paper
+    const FEED_LINES = '\n\n\n';
+
+    // Build ESC/POS command sequence
+    let escPosData = INIT;
+    escPosData += ALIGN_CENTER;
+    escPosData += BOLD_ON;
+    escPosData += 'HOA DON THANH TOAN\n';
+    escPosData += BOLD_OFF;
+    escPosData += ALIGN_LEFT;
+    escPosData += '================================\n';
+    escPosData += text;
+    escPosData += '\n================================\n';
+    escPosData += ALIGN_CENTER;
+    escPosData += 'Cam on quy khach!\n';
+    escPosData += FEED_LINES;
+    escPosData += CUT_PAPER;
+
+    return Buffer.from(escPosData, 'utf8');
+  }
+
+  // API in qua máy in mạng (legacy endpoint, kept for compatibility)
   app.post("/api/print/network", async (req: TenantRequest, res) => {
     try {
       const { printerIP, printerPort = 9100, data, orderId } = req.body;
@@ -2605,7 +2800,209 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API kiểm tra trạng thái máy in
+  // Printer Configurations API
+  app.get("/api/printer-configs", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const configs = await db.select().from(printerConfigs).orderBy(printerConfigs.name);
+      console.log(`✅ Fetched ${configs.length} printer configurations`);
+      res.json(configs);
+    } catch (error) {
+      console.error("❌ Error fetching printer configurations:", error);
+      res.status(500).json({
+        error: "Failed to fetch printer configurations",
+      });
+    }
+  });
+
+  app.post("/api/printer-configs", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const configData = req.body;
+      
+      // Validate that only one printer can be active for each type
+      if (configData.isActive && (configData.isEmployee || configData.isKitchen)) {
+        const existingConfigs = await db.select().from(printerConfigs);
+        
+        const conflictingConfig = existingConfigs.find(config => 
+          config.isActive && 
+          ((configData.isEmployee && config.isEmployee) || (configData.isKitchen && config.isKitchen))
+        );
+        
+        if (conflictingConfig) {
+          const printerType = configData.isEmployee ? "nhân viên" : "bếp";
+          return res.status(400).json({
+            error: `Đã có máy in ${printerType} đang hoạt động: ${conflictingConfig.name}. Vui lòng tắt máy in đó trước.`,
+          });
+        }
+      }
+
+      const [newConfig] = await db.insert(printerConfigs).values(configData).returning();
+      console.log(`✅ Created printer configuration: ${newConfig.name}`);
+      res.status(201).json(newConfig);
+    } catch (error) {
+      console.error("❌ Error creating printer configuration:", error);
+      res.status(500).json({
+        error: "Failed to create printer configuration",
+      });
+    }
+  });
+
+  app.put("/api/printer-configs/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const updateData = req.body;
+      
+      // Validate that only one printer can be active for each type
+      if (updateData.isActive && (updateData.isEmployee || updateData.isKitchen)) {
+        const existingConfigs = await db.select().from(printerConfigs);
+        
+        const conflictingConfig = existingConfigs.find(config => 
+          config.id !== id &&
+          config.isActive && 
+          ((updateData.isEmployee && config.isEmployee) || (updateData.isKitchen && config.isKitchen))
+        );
+        
+        if (conflictingConfig) {
+          // Auto-disable the conflicting printer
+          await db.update(printerConfigs)
+            .set({ isActive: false })
+            .where(eq(printerConfigs.id, conflictingConfig.id));
+          
+          console.log(`🔄 Auto-disabled conflicting printer: ${conflictingConfig.name}`);
+        }
+      }
+
+      const [updatedConfig] = await db
+        .update(printerConfigs)
+        .set({ ...updateData, updatedAt: new Date() })
+        .where(eq(printerConfigs.id, id))
+        .returning();
+
+      if (!updatedConfig) {
+        return res.status(404).json({
+          error: "Printer configuration not found",
+        });
+      }
+
+      console.log(`✅ Updated printer configuration: ${updatedConfig.name}`);
+      res.json(updatedConfig);
+    } catch (error) {
+      console.error("❌ Error updating printer configuration:", error);
+      res.status(500).json({
+        error: "Failed to update printer configuration",
+      });
+    }
+  });
+
+  app.delete("/api/printer-configs/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      
+      const [deletedConfig] = await db
+        .delete(printerConfigs)
+        .where(eq(printerConfigs.id, id))
+        .returning();
+
+      if (!deletedConfig) {
+        return res.status(404).json({
+          error: "Printer configuration not found",
+        });
+      }
+
+      console.log(`✅ Deleted printer configuration: ${deletedConfig.name}`);
+      res.json({
+        message: "Printer configuration deleted successfully",
+      });
+    } catch (error) {
+      console.error("❌ Error deleting printer configuration:", error);
+      res.status(500).json({
+        error: "Failed to delete printer configuration",
+      });
+    }
+  });
+
+  app.post("/api/printer-configs/:id/test", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      
+      const [config] = await db
+        .select()
+        .from(printerConfigs)
+        .where(eq(printerConfigs.id, id))
+        .limit(1);
+
+      if (!config) {
+        return res.status(404).json({
+          success: false,
+          message: "Printer configuration not found",
+        });
+      }
+
+      if (config.connectionType === 'network' && config.ipAddress) {
+        const net = require("net");
+        
+        const testPromise = new Promise((resolve, reject) => {
+          const client = new net.Socket();
+          client.setTimeout(5000);
+
+          client.connect(config.port || 9100, config.ipAddress, () => {
+            // Send test print command
+            const testData = Buffer.from('\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00', 'utf8');
+            
+            client.write(testData, (error) => {
+              if (error) {
+                reject(new Error("Failed to send test data"));
+              } else {
+                client.end();
+                resolve({
+                  success: true,
+                  message: `Kết nối thành công đến ${config.name}`,
+                });
+              }
+            });
+          });
+
+          client.on("timeout", () => {
+            client.destroy();
+            reject(new Error("Connection timeout"));
+          });
+
+          client.on("error", (error) => {
+            reject(error);
+          });
+        });
+
+        try {
+          const result = await testPromise;
+          console.log(`✅ Test print successful for ${config.name}`);
+          res.json(result);
+        } catch (error) {
+          console.log(`❌ Test print failed for ${config.name}:`, error);
+          res.json({
+            success: false,
+            message: `Kết nối thất bại: ${error.message}`,
+          });
+        }
+      } else {
+        res.json({
+          success: false,
+          message: "Chỉ hỗ trợ test máy in mạng",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error testing printer:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to test printer connection",
+      });
+    }
+  });
+
+  // API kiểm tra trạng thái máy in (legacy endpoint)
   app.get("/api/print/status/:ip/:port?", async (req: TenantRequest, res) => {
     try {
       const { ip, port = 9100 } = req.params;
