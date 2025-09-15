@@ -202,20 +202,12 @@ export function DashboardOverview() {
       // Total count from completed orders only
       const periodOrderCount = completedOrders.length;
 
-      // Count unique customers from completed orders
-      const uniqueCustomers = new Set();
-
-      completedOrders.forEach((order: any) => {
-        if (order.customerId) {
-          uniqueCustomers.add(order.customerId);
-        } else if (order.customerName && order.customerName !== 'Khách hàng lẻ') {
-          uniqueCustomers.add(order.customerName);
-        } else {
-          uniqueCustomers.add(`order_${order.id}`);
-        }
-      });
-
-      const periodCustomerCount = uniqueCustomers.size;
+      // Calculate total customer count by summing customer_count from completed orders
+      const periodCustomerCount = completedOrders.reduce((total: number, order: any) => {
+        const customerCount = Number(order.customerCount || 1); // Default to 1 if not specified
+        console.log(`Processing order ${order.orderNumber}: customerCount=${customerCount}`);
+        return total + customerCount;
+      }, 0);
 
       // Calculate days difference for average
       const start = new Date(startDate);
