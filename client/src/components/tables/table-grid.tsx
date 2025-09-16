@@ -2566,18 +2566,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <CardContent className="p-4">
                   <div className="flex flex-col items-center text-center space-y-3">
                     {/* Table Number */}
-                    <div className="relative flex flex-col items-center">
+                    <div className="relative">
                       <div
-                        className={`w-12 h-12 rounded-full ${statusConfig.color} flex items-center justify-center text-white font-bold text-sm`}
+                        className={`min-w-12 min-h-12 max-w-20 rounded-full ${statusConfig.color} flex items-center justify-center text-white font-bold p-2`}
+                        style={{
+                          fontSize: table.tableNumber.length > 8 ? '0.6rem' : 
+                                   table.tableNumber.length > 5 ? '0.75rem' : '0.875rem'
+                        }}
                       >
-                        {table.tableNumber.split(' ')[0]}
+                        <span className="text-center leading-tight break-all">
+                          {table.tableNumber}
+                        </span>
                       </div>
                       {activeOrder && (
                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full animate-pulse"></div>
                       )}
-                      <div className="text-xs text-gray-600 text-center mt-1 break-words max-w-full px-1">
-                        {table.tableNumber}
-                      </div>
                     </div>
 
                     {/* Table Info */}
