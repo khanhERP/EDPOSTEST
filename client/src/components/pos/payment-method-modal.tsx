@@ -745,8 +745,7 @@ export function PaymentMethodModal({
       const isTemporaryOrder = orderInfo.id.toString().startsWith("temp-");
 
       if (isTemporaryOrder) {
-        console.log("📝 Creating POS ${method} order:", orderData);
-        console.log("📦 Order items:", orderItems);
+        console.log(`📝 Creating POS ${method} order`);
 
         // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
         const receiptSubtotal =
@@ -755,7 +754,7 @@ export function PaymentMethodModal({
         const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
         console.log(
-          "💰 Other Payment Complete: Using exact receipt preview data:",
+          `💰 ${method} Payment Complete: Using exact receipt preview data:`,
           {
             receiptSubtotal,
             receiptTax,
@@ -775,7 +774,7 @@ export function PaymentMethodModal({
               "0",
           ),
         );
-        console.log("💰 Discount amount:", discountAmount);
+        console.log(`💰 ${method} Discount amount:`, discountAmount);
 
         const orderData = {
           orderNumber: `ORD-${Date.now()}`,
@@ -809,6 +808,9 @@ export function PaymentMethodModal({
           }),
         );
 
+        console.log(`📝 Creating POS ${method} order:`, orderData);
+        console.log(`📦 Order items:`, orderItems);
+
         // Create order via API
         const createResponse = await fetch("/api/orders", {
           method: "POST",
@@ -840,46 +842,72 @@ export function PaymentMethodModal({
         } else {
           const errorText = await createResponse.text();
           console.error(`❌ Failed to create POS ${method} order:`, errorText);
-          alert("Lỗi: Không thể tạo đơn hàng trong hệ thống");
+          toast({
+            title: "Lỗi",
+            description: `Không thể tạo đơn hàng với phương thức ${method}`,
+            variant: "destructive",
+          });
         }
       } else {
-        // For other payment methods (card, digital wallets) on real orders, update order status first
+        // For other payment methods (card, digital wallets) on real orders, update order AND payment method
         console.log(
-          `🚀 REAL ORDER OTHER PAYMENT METHOD (${method}) - updating order status to 'paid' for order ${orderInfo.id}`,
+          `🚀 REAL ORDER ${method.toUpperCase()} PAYMENT - updating order for order ${orderInfo.id}`,
         );
 
         try {
-          const statusResponse = await fetch(
-            `/api/orders/${orderInfo.id}/status`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                status: "paid",
-              }),
+          // First update the payment method and status
+          const updateResponse = await fetch(`/api/orders/${orderInfo.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
             },
-          );
+            body: JSON.stringify({
+              status: "paid",
+              paymentMethod: method,
+              paymentStatus: "paid",
+              paidAt: new Date().toISOString(),
+            }),
+          });
 
-          if (statusResponse.ok) {
-            const data = await statusResponse.json();
-            console.log(`✅ Order status updated to paid successfully:`, data);
+          if (updateResponse.ok) {
+            const updatedOrder = await updateResponse.json();
+            console.log(`✅ Order updated with ${method} payment successfully:`, {
+              orderId: updatedOrder.id,
+              orderNumber: updatedOrder.orderNumber,
+              status: updatedOrder.status,
+              paymentMethod: updatedOrder.paymentMethod,
+              paymentStatus: updatedOrder.paymentStatus,
+              paidAt: updatedOrder.paidAt,
+            });
 
-            // Lưu phương thức thanh toán và hiển thị E-Invoice modal
+            // Show success toast
+            toast({
+              title: "Thanh toán thành công",
+              description: `Đã thanh toán bằng ${getPaymentMethodName(method)}`,
+            });
+
+            // Set payment method and show E-Invoice modal
             setSelectedPaymentMethod(method);
             setShowEInvoice(true);
             console.log(
               `🔥 SHOWING E-INVOICE MODAL after successful ${method} payment`,
             );
           } else {
-            const errorText = await statusResponse.text();
-            console.error(`❌ Failed to update order status:`, errorText);
-            alert("Lỗi: Không thể cập nhật trạng thái đơn hàng");
+            const errorText = await updateResponse.text();
+            console.error(`❌ Failed to update order with ${method} payment:`, errorText);
+            toast({
+              title: "Lỗi",
+              description: `Không thể cập nhật phương thức thanh toán ${method}`,
+              variant: "destructive",
+            });
           }
         } catch (error) {
-          console.error(`❌ Error updating order status:`, error);
-          alert("Lỗi: Không thể cập nhật trạng thái đơn hàng");
+          console.error(`❌ Error updating order with ${method} payment:`, error);
+          toast({
+            title: "Lỗi",
+            description: `Lỗi khi xử lý thanh toán ${method}`,
+            variant: "destructive",
+          });
         }
       }
     }
