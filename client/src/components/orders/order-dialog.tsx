@@ -1088,30 +1088,15 @@ export function OrderDialog({
                                               const newTotal =
                                                 newSubtotal + newTax;
 
-                                              console.log(
-                                                "💰 Order Dialog: Calculated new totals:",
-                                                {
-                                                  newSubtotal,
-                                                  newTax,
-                                                  newTotal,
-                                                  itemsCount:
-                                                    remainingItems?.length || 0,
-                                                },
-                                              );
-
-                                              const finalSubtotal = calculateSubtotal();
-                                              const finalTax = calculateTax();  
-                                              const finalTotal = calculateTotal();
-
                                               // Update order with new totals
                                               apiRequest(
                                                 "PUT",
                                                 `/api/orders/${existingOrder.id}`,
                                                 {
                                                   subtotal:
-                                                    finalSubtotal.toString(),
-                                                  tax: finalTax.toString(),
-                                                  total: finalTotal.toString(),
+                                                    newSubtotal.toString(),
+                                                  tax: newTax.toString(),
+                                                  total: newTotal.toString(),
                                                 },
                                               ).then(() => {
                                                 console.log(
