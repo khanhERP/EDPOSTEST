@@ -1951,29 +1951,13 @@ export class DatabaseStorage implements IStorage {
       console.log(`💰 Storage: Updated total: ${updateData.total}`);
     }
 
-    // Ensure total = subtotal + tax (discount stored separately)
-    if (updateData.subtotal && updateData.tax) {
-      const expectedTotal = Number(updateData.subtotal) + Number(updateData.tax);
-
-      // If total is provided, validate it matches subtotal + tax
-      if (updateData.total) {
-        const actualTotal = Number(updateData.total);
-        if (Math.abs(expectedTotal - actualTotal) > 0.01) {
-          console.warn(`⚠️ Storage: Total inconsistency detected, correcting:`, {
-            subtotal: updateData.subtotal,
-            tax: updateData.tax,
-            providedTotal: updateData.total,
-            correctedTotal: expectedTotal.toFixed(2)
-          });
-          updateData.total = expectedTotal.toFixed(2);
-        }
-      } else {
-        // Calculate total if not provided
-        updateData.total = expectedTotal.toFixed(2);
-      }
-
-      console.log(`✅ Storage: Total calculation: ${updateData.subtotal} + ${updateData.tax} = ${updateData.total}`);
-    }
+    // Accept the total exactly as provided by frontend - no validation or recalculation
+      console.log(`💰 Storage: Using exact frontend values without modification:`, {
+        subtotal: updateData.subtotal,
+        tax: updateData.tax,
+        discount: updateData.discount,
+        total: updateData.total
+      });
 
     console.log(`💾 Storage: Final update data for order ${id}:`, updateData);
 
