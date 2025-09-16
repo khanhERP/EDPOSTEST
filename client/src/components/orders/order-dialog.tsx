@@ -391,7 +391,8 @@ export function OrderDialog({
   };
 
   const calculateTax = () => {
-    let totalTax = 0;
+    // Array to store individual tax amounts for precise calculation
+    const individualTaxAmounts = [];
 
     // Get total subtotal before discount for proportional calculation
     let totalSubtotalBeforeDiscount = 0;
@@ -438,7 +439,8 @@ export function OrderDialog({
           itemTax = taxableAmount * taxRate;
         }
 
-        totalTax += itemTax;
+        // Round individual tax amount and add to array
+        individualTaxAmounts.push(Math.round(itemTax));
       });
     }
 
@@ -463,8 +465,12 @@ export function OrderDialog({
         itemTax = taxableAmount * taxRate;
       }
 
-      totalTax += itemTax;
+      // Round individual tax amount and add to array
+      individualTaxAmounts.push(Math.round(itemTax));
     });
+
+    // Sum all individual rounded tax amounts
+    const totalTax = individualTaxAmounts.reduce((sum, taxAmount) => sum + taxAmount, 0);
 
     return totalTax;
   };
