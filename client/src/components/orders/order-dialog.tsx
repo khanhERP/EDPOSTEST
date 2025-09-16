@@ -120,32 +120,115 @@ export function OrderDialog({
             );
           }
 
-          // Step 2: Use existing order data instead of recalculating
+          // Step 2: Check if we need to recalculate totals
+          const hasNewItems = cart.length > 0;
+          const hasCustomerChanges = 
+            (customerName || "") !== (existingOrder.customerName || "") ||
+            customerCount !== (existingOrder.customerCount || 1) ||
+            discount !== parseFloat(existingOrder.discount || "0");
+
+          let finalSubtotal, finalTax, finalTotal;
+
+          if (hasNewItems || hasCustomerChanges) {
+            // Recalculate totals when there are changes
+            console.log(
+              `📝 Recalculating totals for order ${existingOrder.id} due to changes`,
+            );
+
+            // Calculate totals for ALL items (existing + new)
+            let totalSubtotal = 0;
+            let totalTax = 0;
+
+            // Add existing items to calculation
+            if (existingItems.length > 0) {
+              existingItems.forEach((item) => {
+                const unitPrice = Number(item.unitPrice || 0);
+                const quantity = Number(item.quantity || 0);
+
+                // Subtotal (tiền tạm tính)
+                totalSubtotal += unitPrice * quantity;
+
+                // Tax calculation for existing items
+                const product = products?.find(
+                  (p: Product) => p.id === item.productId,
+                );
+                if (
+                  product?.afterTaxPrice &&
+                  product.afterTaxPrice !== null &&
+                  product.afterTaxPrice !== ""
+                ) {
+                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                  const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+                  totalTax += taxPerUnit * quantity;
+                }
+              });
+            }
+
+            // Add new cart items to calculation
+            if (cart.length > 0) {
+              cart.forEach((item) => {
+                const unitPrice = parseFloat(item.product.price);
+                const quantity = item.quantity;
+
+                // Subtotal (tiền tạm tính)
+                totalSubtotal += unitPrice * quantity;
+
+                // Tax calculation for new items
+                const product = products?.find(
+                  (p: Product) => p.id === item.product.id,
+                );
+                if (
+                  product?.afterTaxPrice &&
+                  product.afterTaxPrice !== null &&
+                  product.afterTaxPrice !== ""
+                ) {
+                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                  const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
+                  totalTax += taxPerUnit * quantity;
+                }
+              });
+            }
+
+            // Calculate final totals
+            finalSubtotal = totalSubtotal;
+            finalTax = totalTax;
+            finalTotal = totalSubtotal + totalTax;
+
+            console.log("💰 Recalculated totals:", {
+              existingItemsCount: existingItems.length,
+              newItemsCount: cart.length,
+              subtotal: finalSubtotal,
+              tax: finalTax,
+              discount: discount,
+              total: finalTotal,
+            });
+          } else {
+            // Use existing order totals when no changes
+            console.log(
+              `📝 Using existing order data for order ${existingOrder.id} - no changes detected`,
+            );
+
+            finalSubtotal = parseFloat(existingOrder.subtotal || "0");
+            finalTax = parseFloat(existingOrder.tax || "0");
+            finalTotal = parseFloat(existingOrder.total || "0");
+
+            console.log("💰 Using existing totals:", {
+              existingItemsCount: existingItems.length,
+              newItemsCount: cart.length,
+              subtotal: finalSubtotal,
+              tax: finalTax,
+              discount: discount,
+              total: finalTotal,
+            });
+          }
+
+          // Step 3: Update order with calculated totals
           console.log(
-            `📝 Using existing order data for order ${existingOrder.id} - no recalculation needed`,
+            `📝 Updating order with ${hasNewItems || hasCustomerChanges ? 'recalculated' : 'existing'} totals for order ${existingOrder.id}`,
           );
 
-          // Use existing order totals from database
-          const existingSubtotal = parseFloat(existingOrder.subtotal || "0");
-          const existingTax = parseFloat(existingOrder.tax || "0");
-          const existingTotal = parseFloat(existingOrder.total || "0");
-
-          console.log("💰 Using existing order totals:", {
-            existingItemsCount: existingItems.length,
-            newItemsCount: cart.length,
-            subtotal: existingSubtotal,
-            tax: existingTax,
-            discount: discount,
-            total: existingTotal,
-          });
-
-          // Step 3: Update order with existing data (no recalculation)
           console.log(
-            `📝 Updating order with existing totals for order ${existingOrder.id}`,
-          );
-
-          console.log(
-            `💰 Saving existing totals: subtotal=${existingSubtotal}, tax=${existingTax}, discount=${discount}, total=${existingTotal}`,
+            `💰 Saving totals: subtotal=${finalSubtotal}, tax=${finalTax}, discount=${discount}, total=${finalTotal}`,
           );
           const updateResponse = await apiRequest(
             "PUT",
@@ -153,10 +236,10 @@ export function OrderDialog({
             {
               customerName: orderData.order.customerName,
               customerCount: orderData.order.customerCount,
-              subtotal: existingSubtotal.toString(),
-              tax: existingTax.toString(),
+              subtotal: finalSubtotal.toString(),
+              tax: finalTax.toString(),
               discount: discount.toString(),
-              total: existingTotal.toString(), // use existing total
+              total: finalTotal.toString(),
             },
           );
 
