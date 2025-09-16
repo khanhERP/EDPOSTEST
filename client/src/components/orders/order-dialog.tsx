@@ -121,6 +121,7 @@ export function OrderDialog({
           }
 
           // Step 1.5: If we have existing item changes, call recalculate API first
+          const hasExistingItemChanges = existingItems.length !== (existingOrderItems?.length || 0);
           const shouldRecalculate = hasExistingItemChanges || (parseFloat(existingOrder.discount || "0") !== discount);
           if (shouldRecalculate) {
             console.log(`🧮 Calling recalculate API for order ${existingOrder.id}`);
