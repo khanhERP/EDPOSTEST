@@ -1308,7 +1308,7 @@ export function ShoppingCart({
                   {t("tables.total")}:
                 </span>
                 <span className="text-lg font-bold text-blue-600">
-                  {Math.ceil(
+                  {Math.round(
                     Math.max(
                       0,
                       total - parseFloat(currentOrderDiscount || "0"),
