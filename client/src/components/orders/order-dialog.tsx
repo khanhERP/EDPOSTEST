@@ -35,6 +35,50 @@ interface CartItem {
   notes?: string;
 }
 
+// Function to calculate discount distribution among order items
+function calculateDiscountDistribution(items: any[], totalDiscount: number) {
+  if (!items || items.length === 0 || totalDiscount <= 0) {
+    return items.map((item) => ({ ...item, discount: 0 }));
+  }
+
+  // Calculate total amount (subtotal before discount)
+  const totalAmount = items.reduce((sum, item) => {
+    const unitPrice = Number(item.unitPrice || 0);
+    const quantity = Number(item.quantity || 0);
+    return sum + unitPrice * quantity;
+  }, 0);
+
+  if (totalAmount <= 0) {
+    return items.map((item) => ({ ...item, discount: 0 }));
+  }
+
+  let allocatedDiscount = 0;
+  const result = items.map((item, index) => {
+    const unitPrice = Number(item.unitPrice || 0);
+    const quantity = Number(item.quantity || 0);
+    const itemTotal = unitPrice * quantity;
+
+    let itemDiscount = 0;
+
+    if (index === items.length - 1) {
+      // Last item gets remaining discount to ensure total matches exactly
+      itemDiscount = Math.max(0, totalDiscount - allocatedDiscount);
+    } else {
+      // Calculate proportional discount: Total discount * item amount / total amount
+      const proportionalDiscount = (totalDiscount * itemTotal) / totalAmount;
+      itemDiscount = Math.round(proportionalDiscount); // Round to nearest dong
+      allocatedDiscount += itemDiscount;
+    }
+
+    return {
+      ...item,
+      discount: itemDiscount.toFixed(2),
+    };
+  });
+
+  return result;
+}
+
 export function OrderDialog({
   open,
   onOpenChange,
