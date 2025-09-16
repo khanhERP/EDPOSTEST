@@ -551,8 +551,8 @@ export function OrderDialog({
         cartItemsCount: cart.length,
       });
 
-      // For edit mode, handle both new items and order updates
-      const items = cart.map((item) => {
+      // For edit mode, handle ONLY new items from cart (don't duplicate existing items)
+      const newItemsOnly = cart.map((item) => {
         const product = products?.find(
           (p: Product) => p.id === item.product.id,
         );
@@ -575,7 +575,7 @@ export function OrderDialog({
         const itemTotal = itemSubtotal + itemTax;
 
         console.log(
-          `📝 Order Dialog: Processing cart item ${item.product.name}:`,
+          `📝 Order Dialog: Processing NEW cart item ${item.product.name}:`,
           {
             productId: item.product.id,
             quantity: item.quantity,
@@ -615,8 +615,9 @@ export function OrderDialog({
         proceedWithUpdate: true,
       });
 
-      // Always proceed with mutation - either adding items or updating customer info
-      createOrderMutation.mutate({ order: updatedOrder, items });
+      // Always proceed with mutation - either adding new items or updating customer info
+      console.log(`📝 Order Dialog: Sending mutation with ${newItemsOnly.length} NEW items only`);
+      createOrderMutation.mutate({ order: updatedOrder, items: newItemsOnly });
     } else {
       // Create mode - calculate with correct mapping
       // Subtotal = tiền tạm tính (giá trước thuế * số lượng)
