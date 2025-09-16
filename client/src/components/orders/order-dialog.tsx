@@ -195,10 +195,10 @@ export function OrderDialog({
           console.log(
             `📝 Updating order with complete calculated totals for order ${existingOrder.id}`,
           );
-          
+
           // Use the same tax calculation function to ensure consistency
           const calculatedTax = calculateTax();
-          
+
           console.log(
             `💰 Saving totals: subtotal=${totalSubtotal}, tax=${calculatedTax}, discount=${discount}, total=${totalAmount}`,
           );
@@ -433,9 +433,10 @@ export function OrderDialog({
           const itemSubtotal = basePrice * quantity;
 
           // Calculate proportional discount for this item
-          const itemDiscountAmount = totalSubtotalBeforeDiscount > 0
-            ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
-            : 0;
+          const itemDiscountAmount =
+            totalSubtotalBeforeDiscount > 0
+              ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
+              : 0;
 
           // Tax = (price * quantity - discount) * taxRate
           const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
@@ -459,9 +460,10 @@ export function OrderDialog({
         const itemSubtotal = basePrice * quantity;
 
         // Calculate proportional discount for this item
-        const itemDiscountAmount = totalSubtotalBeforeDiscount > 0
-          ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
-          : 0;
+        const itemDiscountAmount =
+          totalSubtotalBeforeDiscount > 0
+            ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
+            : 0;
 
         // Tax = (price * quantity - discount) * taxRate
         const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
@@ -474,7 +476,10 @@ export function OrderDialog({
     });
 
     // Sum all individual rounded tax amounts
-    const totalTax = individualTaxAmounts.reduce((sum, taxAmount) => sum + taxAmount, 0);
+    const totalTax = individualTaxAmounts.reduce(
+      (sum, taxAmount) => sum + taxAmount,
+      0,
+    );
 
     return totalTax;
   };
@@ -651,9 +656,9 @@ export function OrderDialog({
         customerName: customerName || null,
         customerCount: parseInt(customerCount) || 1,
         subtotal: subtotalAmount.toString(),
-        tax: taxAmount.toString(),
+        tax: calculateTax().toString(),
         discount: discount.toString(),
-        total: fullOrderTotal.toString(), // Save total BEFORE discount subtraction
+        total: totalAmount.toString(), // Save total BEFORE discount subtraction
         status: "served",
         paymentStatus: "pending",
         orderedAt: new Date().toISOString(),
@@ -1345,28 +1350,44 @@ export function OrderDialog({
                                     existingOrderItems &&
                                     Array.isArray(existingOrderItems)
                                   ) {
-                                    existingOrderItems.forEach((existingItem) => {
-                                      const unitPrice = parseFloat(existingItem.unitPrice);
-                                      const qty = parseInt(existingItem.quantity);
-                                      totalSubtotalBeforeDiscount += unitPrice * qty;
-                                    });
+                                    existingOrderItems.forEach(
+                                      (existingItem) => {
+                                        const unitPrice = parseFloat(
+                                          existingItem.unitPrice,
+                                        );
+                                        const qty = parseInt(
+                                          existingItem.quantity,
+                                        );
+                                        totalSubtotalBeforeDiscount +=
+                                          unitPrice * qty;
+                                      },
+                                    );
                                   }
 
                                   // Add new cart items
                                   cart.forEach((cartItem) => {
-                                    const unitPrice = parseFloat(cartItem.product.price);
+                                    const unitPrice = parseFloat(
+                                      cartItem.product.price,
+                                    );
                                     const qty = cartItem.quantity;
-                                    totalSubtotalBeforeDiscount += unitPrice * qty;
+                                    totalSubtotalBeforeDiscount +=
+                                      unitPrice * qty;
                                   });
 
                                   // Calculate proportional discount for this item
-                                  const itemDiscountAmount = totalSubtotalBeforeDiscount > 0
-                                    ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
-                                    : 0;
+                                  const itemDiscountAmount =
+                                    totalSubtotalBeforeDiscount > 0
+                                      ? (discount * itemSubtotal) /
+                                        totalSubtotalBeforeDiscount
+                                      : 0;
 
                                   // Tax = (price * quantity - discount) * taxRate
-                                  const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
-                                  const taxRate = parseFloat(item.product.taxRate) / 100;
+                                  const taxableAmount = Math.max(
+                                    0,
+                                    itemSubtotal - itemDiscountAmount,
+                                  );
+                                  const taxRate =
+                                    parseFloat(item.product.taxRate) / 100;
                                   taxAmount = taxableAmount * taxRate;
                                 }
 
@@ -1468,8 +1489,7 @@ export function OrderDialog({
 
                                 return (
                                   <div className="font-medium text-blue-600">
-                                    Tổng:{" "}
-                                    {finalTotal.toLocaleString()} ₫
+                                    Tổng: {finalTotal.toLocaleString()} ₫
                                   </div>
                                 );
                               })()}
@@ -1538,7 +1558,7 @@ export function OrderDialog({
 
                               return itemDiscountAmount > 0 ? (
                                 <div className="text-xs text-red-600 mt-1 text-end">
-                                  <span>{t("common.discount")}: {" "}</span>
+                                  <span>{t("common.discount")}: </span>
                                   <span>
                                     -
                                     {Math.floor(
