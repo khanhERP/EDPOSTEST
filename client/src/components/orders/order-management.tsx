@@ -2336,12 +2336,12 @@ export function OrderManagement() {
                   <h4 className="font-medium mb-2">{t('orders.totalAmount')}</h4>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span>{t('common.subtotalLabel')}</span>
-                      <span>{formatCurrency(orderDetailsCalculation.subtotal)}</span>
+                      <span>Tổng phụ</span>
+                      <span>{formatCurrency(Math.floor(Number(selectedOrder?.subtotal || 0)))}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>{t('orders.tax')}</span>
-                      <span>{formatCurrency(orderDetailsCalculation.tax)}</span>
+                      <span>Thuế</span>
+                      <span>{formatCurrency(Math.floor(Number(selectedOrder?.tax || 0)))}</span>
                     </div>
                     {selectedOrder?.discount && Number(selectedOrder.discount) > 0 && (
                       <div className="flex justify-between text-red-600">
@@ -2351,12 +2351,8 @@ export function OrderManagement() {
                     )}
                     <Separator />
                     <div className="flex justify-between font-medium">
-                      <span>{t('orders.totalAmount')}:</span>
-                      <span>{formatCurrency((() => {
-                        const total = orderDetailsCalculation.total;
-                        const discount = Math.floor(Number(selectedOrder?.discount || 0));
-                        return Math.max(0, total - discount);
-                      })())}</span>
+                      <span>Tổng tiền:</span>
+                      <span>{formatCurrency(Math.floor(Number(selectedOrder?.total || 0)))}</span>
                     </div>
                   </div>
                 </div>
