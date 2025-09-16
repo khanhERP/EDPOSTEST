@@ -930,35 +930,7 @@ export function ReceiptModal({
                 let itemDiscountAmount = 0;
                 const orderDiscount = parseFloat(receipt.exactDiscount || receipt.discount || "0");
 
-                if (orderDiscount > 0) {
-                  const isLastItem = index === items.length - 1;
-
-                  if (isLastItem) {
-                    // Last item: total discount - sum of all previous discounts
-                    let previousDiscounts = 0;
-                    const totalBeforeDiscount = items.reduce((sum, itm) => {
-                      return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
-                    }, 0);
-
-                    for (let i = 0; i < items.length - 1; i++) {
-                      const prevItemSubtotal = parseFloat(items[i].unitPrice || items[i].price || "0") * (items[i].quantity || 1);
-                      const prevItemDiscount = totalBeforeDiscount > 0 ? 
-                        Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
-                      previousDiscounts += prevItemDiscount;
-                    }
-
-                    itemDiscountAmount = orderDiscount - previousDiscounts;
-                  } else {
-                    // Regular calculation for non-last items
-                    const itemSubtotal = actualUnitPrice * quantity;
-                    const totalBeforeDiscount = items.reduce((sum, itm) => {
-                      return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
-                    }, 0);
-                    itemDiscountAmount = totalBeforeDiscount > 0 ? 
-                      Math.floor((orderDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
-                  }
-                }
-
+                // Don't show individual item discounts in receipt - only show total discount at bottom
                 return (
                   <div key={item.id || Math.random()}>
                     <div className="flex justify-between text-sm">
@@ -1120,7 +1092,7 @@ export function ReceiptModal({
                 // Calculate individual item discount for preview mode
                 let itemDiscountAmount = 0;
                 const finalDiscount = (() => {
-                  // Check for discount from multiple sources with priority order
+                  // Check for discount from multiple sources with priority
                   let orderDiscount = 0;
 
                   // Check if this is from order-management specifically
@@ -1170,41 +1142,7 @@ export function ReceiptModal({
                   return orderDiscount;
                 })();
 
-                if (finalDiscount > 0) {
-                  const isLastItem = index === cartItems.length - 1;
-
-                  if (isLastItem) {
-                    // Last item: total discount - sum of all previous discounts
-                    let previousDiscounts = 0;
-                    const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                      const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
-                      return sum + (price * itm.quantity);
-                    }, 0);
-
-                    for (let i = 0; i < cartItems.length - 1; i++) {
-                      const prevItemPrice = typeof cartItems[i].price === "string" 
-                        ? parseFloat(cartItems[i].price) 
-                        : cartItems[i].price;
-                      const prevItemSubtotal = prevItemPrice * cartItems[i].quantity;
-                      const prevItemDiscount = totalBeforeDiscount > 0 ? 
-                        Math.floor((finalDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
-                      previousDiscounts += prevItemDiscount;
-                    }
-
-                    itemDiscountAmount = finalDiscount - previousDiscounts;
-                  } else {
-                    // Regular calculation for non-last items
-                    const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                    const itemSubtotal = itemPrice * item.quantity;
-                    const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                      const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
-                      return sum + (price * itm.quantity);
-                    }, 0);
-                    itemDiscountAmount = totalBeforeDiscount > 0 ? 
-                      Math.floor((finalDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
-                  }
-                }
-
+                // Don't show individual item discounts in receipt - only show total discount at bottom
                 return (
                   <div key={item.id}>
                     <div className="flex justify-between text-sm">
@@ -1249,9 +1187,7 @@ export function ReceiptModal({
                 if (isPreview && cartItems && cartItems.length > 0) {
                   const subtotal = cartItems.reduce((sum, item) => {
                     const price =
-                      typeof item.price === "string"
-                        ? parseFloat(item.price)
-                        : item.price;
+                      typeof item.price === "string" ? parseFloat(item.price) : item.price;
                     return sum + price * item.quantity;
                   }, 0);
 
