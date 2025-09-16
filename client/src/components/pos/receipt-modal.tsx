@@ -975,11 +975,15 @@ export function ReceiptModal({
                           {Math.floor(actualUnitPrice).toLocaleString("vi-VN")}{" "}
                           ₫
                         </div>
-                        {itemDiscountAmount > 0 && (
-                          <div className="text-xs text-red-600">
-                            {t("common.discount")} -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
-                          </div>
-                        )}
+                        {/* Display individual item discount from database */}
+                        {(() => {
+                          const itemDiscount = Math.floor(parseFloat(item.discount || "0"));
+                          return itemDiscount > 0 ? (
+                            <div className="text-xs text-red-600">
+                              {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                       <div>
                         {Math.floor(actualTotal).toLocaleString("vi-VN")} ₫
@@ -1120,7 +1124,7 @@ export function ReceiptModal({
                 // Calculate individual item discount for preview mode
                 let itemDiscountAmount = 0;
                 const finalDiscount = (() => {
-                  // Check for discount from multiple sources with priority order
+                  // Check for discount from multiple sources with priority
                   let orderDiscount = 0;
 
                   // Check if this is from order-management specifically
@@ -1150,6 +1154,22 @@ export function ReceiptModal({
                         Number(orderForPayment.discount),
                       );
                     }
+                    // Priority 3: receipt discount as fallback
+                    else if (receipt) {
+                      if (
+                        receipt.exactDiscount !== undefined &&
+                        receipt.exactDiscount !== null
+                      ) {
+                        orderDiscount = Math.floor(
+                          Number(receipt.exactDiscount),
+                        );
+                      } else if (
+                        receipt.discount !== undefined &&
+                        receipt.discount !== null
+                      ) {
+                        orderDiscount = Math.floor(Number(receipt.discount));
+                      }
+                    }
                   } else {
                     // For other screens: check receipt discount
                     if (
@@ -1164,6 +1184,10 @@ export function ReceiptModal({
                       parseFloat(receipt.discount || "0") > 0
                     ) {
                       orderDiscount = parseFloat(receipt.discount || "0");
+                    }
+                    // Check if total prop contains discount info
+                    else if (typeof total === "object" && total.discount) {
+                      orderDiscount = parseFloat(total.discount) || 0;
                     }
                   }
 
@@ -1223,11 +1247,15 @@ export function ReceiptModal({
                           ).toLocaleString("vi-VN")}{" "}
                           ₫
                         </div>
-                        {itemDiscountAmount > 0 && (
-                          <div className="text-xs text-red-600">
-                            {t("common.discount")} -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
-                          </div>
-                        )}
+                        {/* Display individual item discount from database for preview */}
+                        {(() => {
+                          const itemDiscount = Math.floor(parseFloat(item.discount || "0"));
+                          return itemDiscount > 0 ? (
+                            <div className="text-xs text-red-600">
+                              {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                       <div>
                         {Math.floor(
