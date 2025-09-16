@@ -120,124 +120,62 @@ export function OrderDialog({
             );
           }
 
-          // Step 2: Only update order info if there are actual changes
-          const hasCustomerNameChange = (customerName || "") !== (existingOrder.customerName || "");
-          const hasCustomerCountChange = customerCount !== (existingOrder.customerCount || 1);
-          const hasNewItems = cart.length > 0;
-
-          if (hasCustomerNameChange || hasCustomerCountChange || hasNewItems) {
-            console.log(`📝 Updating order info for order ${existingOrder.id}`);
-
-            // Use EXACT values displayed on screen - no recalculation
-            const displayedSubtotal = calculateSubtotal();
-            const displayedTax = calculateTax();
-            const displayedTotal = calculateTotal();
-            
-            // Ensure we're using exactly what the user sees on screen
-            console.log("💰 Using EXACT displayed values from screen:", {
-              existingItemsCount: existingItems.length,
-              newItemsCount: cart.length,
-              displayedSubtotal: displayedSubtotal,
-              displayedTax: displayedTax,
-              displayedDiscount: discount,
-              displayedTotal: displayedTotal,
-              source: "exact_screen_display"
-            });
-
-            // Send the exact displayed values to API without any modification
-            const updateResponse = await apiRequest(
-              "PUT",
-              `/api/orders/${existingOrder.id}`,
-              {
-                customerName: orderData.order.customerName,
-                customerCount: orderData.order.customerCount,
-                subtotal: Math.floor(displayedSubtotal).toString(), // Ensure no decimal precision issues
-                tax: Math.floor(displayedTax).toString(),
-                discount: Math.floor(discount).toString(),
-                total: Math.floor(displayedTotal).toString(),
-              },
-            );
-
-            const updateResult = await updateResponse.json();
-            console.log(
-              "✅ Order updated successfully with current totals:",
-              updateResult,
-            );
-
-            // Return the final result
-            return updateResult;
-          } else {
-            console.log(`📝 No changes detected for order ${existingOrder.id}, returning existing order`);
-            return finalResult || existingOrder;
-          }
-        } else {
-          // Create mode - use EXACT displayed values from screen
-          const displayedSubtotal = calculateSubtotal();
-          const displayedTax = calculateTax();
-          const displayedTotal = calculateTotal();
-
-          console.log("💰 Create mode - Using EXACT displayed values:", {
-            displayedSubtotal: displayedSubtotal,
-            displayedTax: displayedTax,
-            displayedDiscount: discount,
-            displayedTotal: displayedTotal,
-            cartItemsCount: cart.length,
-            source: "exact_screen_display_create_mode"
-          });
-
-          const order = {
-            orderNumber: `ORD-${Date.now()}`,
-            tableId: table.id,
-            employeeId: null, // Set to null since no employees exist
-            customerName: customerName || null,
-            customerCount: parseInt(customerCount) || 1,
-            subtotal: Math.floor(displayedSubtotal).toString(), // Use exact displayed values
-            tax: Math.floor(displayedTax).toString(),
-            discount: Math.floor(discount).toString(),
-            total: Math.floor(displayedTotal).toString(),
-            status: "served",
-            paymentStatus: "pending",
-            orderedAt: new Date().toISOString(),
-          };
-
-          const items = cart.map((item) => {
-            const product = products?.find(
-              (p: Product) => p.id === item.product.id,
-            );
-            const basePrice = item.product.price;
-            const quantity = item.quantity;
-            const itemSubtotal = basePrice * quantity;
-
-            let itemTax = 0;
-            // Tax = (after_tax_price - price) * quantity
-            if (
-              product?.afterTaxPrice &&
-              product.afterTaxPrice !== null &&
-              product.afterTaxPrice !== ""
-            ) {
-              const afterTaxPrice = parseFloat(product.afterTaxPrice);
-              const price = parseFloat(product.price);
-              itemTax = (afterTaxPrice - price) * quantity;
-            }
-            // No tax if no afterTaxPrice in database
-
-            const itemTotal = itemSubtotal + itemTax;
-
-            return {
-              productId: item.product.id,
-              quantity: item.quantity,
-              unitPrice: item.product.price.toString(),
-              total: itemTotal.toString(),
-              discount: "0.00", // Will be calculated on server side
-              notes: item.notes || null,
-            };
-          });
-
-          console.log("Placing order:", { order, items });
+          // Step 2: Use currently displayed values instead of recalculating
           console.log(
-            `💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, fullTotal=${fullOrderTotal}`,
+            `📝 Using currently displayed values for order ${existingOrder.id}`,
           );
-          return createOrderMutation.mutate({ order, items });
+
+          // Get values from display functions (what user sees on screen)
+          const finalSubtotal = calculateSubtotal();
+          const finalTax = calculateTax();  
+          const finalTotal = calculateTotal();
+
+          console.log("💰 Using displayed totals:", {
+            existingItemsCount: existingItems.length,
+            newItemsCount: cart.length,
+            subtotal: finalSubtotal,
+            tax: finalTax,
+            discount: discount,
+            total: finalTotal,
+            source: "displayed_values"
+          });
+
+          console.log(
+            `💰 Saving totals: subtotal=${finalSubtotal}, tax=${finalTax}, discount=${discount}, total=${finalTotal}`,
+          );
+          const updateResponse = await apiRequest(
+            "PUT",
+            `/api/orders/${existingOrder.id}`,
+            {
+              customerName: orderData.order.customerName,
+              customerCount: orderData.order.customerCount,
+              subtotal: finalSubtotal.toString(),
+              tax: finalTax.toString(),
+              discount: discount.toString(),
+              total: finalTotal.toString(),
+            },
+          );
+
+          const updateResult = await updateResponse.json();
+          console.log(
+            "✅ Order updated successfully with current totals:",
+            updateResult,
+          );
+
+          // Return the final result (prioritize the order update result)
+          return updateResult;
+        } else {
+          console.log("📝 Creating new order...");
+          const response = await apiRequest("POST", "/api/orders", orderData);
+
+          if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`Failed to create order: ${errorData}`);
+          }
+
+          const result = await response.json();
+          console.log("✅ Order created successfully:", result);
+          return result;
         }
       } catch (error) {
         console.error("=== ORDER MUTATION ERROR ===");
@@ -393,8 +331,8 @@ export function OrderDialog({
       totalSubtotal += unitPrice * quantity;
     });
 
-    // Return subtotal BEFORE discount (discount is stored separately)
-    return totalSubtotal;
+    // Apply formula: subtotal = price * quantity - discount
+    return Math.max(0, totalSubtotal - discount);
   };
 
   const calculateTax = () => {
@@ -441,7 +379,7 @@ export function OrderDialog({
               ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
               : 0;
 
-          // Apply correct formula: tax = (price * quantity - discount) * taxRate
+          // Apply new formula: tax = (price * quantity - discount) * taxRate
           const subtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
           const taxRate = parseFloat(product.taxRate) / 100;
           itemTax = subtotalAfterDiscount * taxRate;
@@ -468,7 +406,7 @@ export function OrderDialog({
             ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
             : 0;
 
-        // Apply correct formula: tax = (price * quantity - discount) * taxRate
+        // Apply new formula: tax = (price * quantity - discount) * taxRate
         const subtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
         const taxRate = parseFloat(product.taxRate) / 100;
         itemTax = subtotalAfterDiscount * taxRate;
@@ -490,8 +428,7 @@ export function OrderDialog({
   const calculateTotal = () => {
     const subtotal = calculateSubtotal();
     const tax = calculateTax();
-    // total = subtotal + tax - discount (discount applied at the end)
-    return Math.max(0, subtotal + tax - discount);
+    return subtotal + tax;
   };
 
   const calculateGrandTotal = () => {
@@ -705,7 +642,7 @@ export function OrderDialog({
 
       console.log("Placing order:", { order, items });
       console.log(
-        `💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, total=${totalAmount}`,
+        `💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, fullTotal=${fullOrderTotal}`,
       );
       createOrderMutation.mutate({ order, items });
     }
@@ -1151,15 +1088,30 @@ export function OrderDialog({
                                               const newTotal =
                                                 newSubtotal + newTax;
 
+                                              console.log(
+                                                "💰 Order Dialog: Calculated new totals:",
+                                                {
+                                                  newSubtotal,
+                                                  newTax,
+                                                  newTotal,
+                                                  itemsCount:
+                                                    remainingItems?.length || 0,
+                                                },
+                                              );
+
+                                              const finalSubtotal = calculateSubtotal();
+                                              const finalTax = calculateTax();  
+                                              const finalTotal = calculateTotal();
+
                                               // Update order with new totals
                                               apiRequest(
                                                 "PUT",
                                                 `/api/orders/${existingOrder.id}`,
                                                 {
                                                   subtotal:
-                                                    newSubtotal.toString(),
-                                                  tax: newTax.toString(),
-                                                  total: newTotal.toString(),
+                                                    finalSubtotal.toString(),
+                                                  tax: finalTax.toString(),
+                                                  total: finalTotal.toString(),
                                                 },
                                               ).then(() => {
                                                 console.log(
