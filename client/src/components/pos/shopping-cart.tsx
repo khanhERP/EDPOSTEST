@@ -379,12 +379,18 @@ export function ShoppingCart({
         total: item.total || "0",
       }));
 
+      // Get current discount for active order
+      const currentDiscount = activeOrderId 
+        ? parseFloat(orderDiscounts[activeOrderId] || "0")
+        : parseFloat(discountAmount || "0");
+
       const cartUpdateMessage = {
         type: "cart_update",
         cart: validatedCart,
         subtotal: subtotal,
         tax: tax,
         total: total,
+        discount: currentDiscount, // Add discount to broadcast message
         orderNumber: activeOrderId || `ORD-${Date.now()}`,
         timestamp: new Date().toISOString(),
       };
@@ -394,6 +400,7 @@ export function ShoppingCart({
         subtotal: subtotal,
         tax: tax,
         total: total,
+        discount: currentDiscount,
       });
 
       try {
@@ -405,7 +412,7 @@ export function ShoppingCart({
         );
       }
     }
-  }, [cart, subtotal, tax, total, activeOrderId]);
+  }, [cart, subtotal, tax, total, activeOrderId, orderDiscounts, discountAmount]);
 
   // Broadcast cart updates when cart changes
   useEffect(() => {
@@ -711,6 +718,36 @@ export function ShoppingCart({
       orderedAt: new Date().toISOString(),
       timestamp: new Date().toISOString(),
     };
+
+    // Broadcast updated cart with discount to customer display before showing receipt preview
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const validatedCart = cartItemsForEInvoice.map((item) => ({
+        ...item,
+        name: item.name,
+        productName: item.name,
+        price: item.price.toString(),
+        quantity: item.quantity,
+        total: (item.price * item.quantity).toString(),
+      }));
+
+      wsRef.current.send(JSON.stringify({
+        type: 'cart_update',
+        cart: validatedCart,
+        subtotal: Math.floor(calculatedSubtotal),
+        tax: Math.floor(calculatedTax),
+        total: Math.floor(baseTotal),
+        discount: finalDiscount, // Include discount in checkout broadcast
+        orderNumber: `POS-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        updateType: 'checkout_preview'
+      }));
+
+      console.log("📡 Shopping Cart: Checkout preview broadcasted with discount:", {
+        discount: finalDiscount,
+        cartItems: validatedCart.length,
+        finalTotal: finalTotal
+      });
+    }
 
     console.log("📋 POS: Receipt preview data prepared:", receiptPreview);
     console.log(
@@ -1278,23 +1315,48 @@ export function ShoppingCart({
                       ...prev,
                       [activeOrderId]: value.toString(),
                     }));
+                  } else {
+                    // If no active order, update discount amount directly
+                    setDiscountAmount(value.toString());
+                  }
 
-                    // Send discount update via WebSocket
-                    // Access wsRef from the global scope or pass it down
-                    const ws = (window as any).wsRef;
-                    if (ws && ws.readyState === WebSocket.OPEN) {
-                      ws.send(JSON.stringify({
-                        type: 'cart_update',
-                        cart: cart, // Send current cart items
-                        subtotal: Math.floor(subtotal),
-                        tax: Math.floor(tax),
-                        total: Math.floor(total), // Total before discount
-                        discount: value, // The new discount value
-                        orderNumber: activeOrderId,
-                        timestamp: new Date().toISOString(),
-                        updateType: 'discount_update' // Indicate this is a discount update
-                      }));
-                    }
+                  // Send discount update via WebSocket with proper cart items
+                  if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                    // Ensure cart items have proper structure
+                    const validatedCart = cart.map((item) => ({
+                      ...item,
+                      name:
+                        item.name ||
+                        item.productName ||
+                        item.product?.name ||
+                        `Sản phẩm ${item.id}`,
+                      productName:
+                        item.name ||
+                        item.productName ||
+                        item.product?.name ||
+                        `Sản phẩm ${item.id}`,
+                      price: item.price || "0",
+                      quantity: item.quantity || 1,
+                      total: item.total || "0",
+                    }));
+
+                    wsRef.current.send(JSON.stringify({
+                      type: 'cart_update',
+                      cart: validatedCart, // Send validated cart items
+                      subtotal: Math.floor(subtotal),
+                      tax: Math.floor(tax),
+                      total: Math.floor(total), // Total before discount
+                      discount: value, // The new discount value
+                      orderNumber: activeOrderId || `ORD-${Date.now()}`,
+                      timestamp: new Date().toISOString(),
+                      updateType: 'discount_update' // Indicate this is a discount update
+                    }));
+
+                    console.log("📡 Shopping Cart: Discount update broadcasted:", {
+                      discount: value,
+                      cartItems: validatedCart.length,
+                      total: Math.floor(total)
+                    });
                   }
                 }}
                 placeholder="0"
