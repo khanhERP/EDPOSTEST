@@ -644,11 +644,57 @@ export function OrderDialog({
         proceedWithUpdate: true,
       });
 
+      // Calculate updated discount for existing items
+      const updatedExistingItems = existingItems.map((item, index) => {
+        // Get all items (existing + new)
+        const allItems = [
+          ...existingItems,
+          ...cart.map((cartItem) => ({
+            unitPrice: cartItem.product.price,
+            quantity: cartItem.quantity,
+          })),
+        ];
+
+        const currentIndex = existingItems.findIndex(
+          (existingItem, idx) => idx === index,
+        );
+        const isLastItem = currentIndex === allItems.length - 1;
+
+        let itemDiscountAmount = 0;
+
+        if (discount > 0) {
+          if (isLastItem) {
+            // Last item: total discount - sum of all previous discounts
+            let previousDiscounts = 0;
+            const totalBeforeDiscount = calculateTotal() - calculateTax();
+
+            for (let i = 0; i < allItems.length - 1; i++) {
+              const prevItemSubtotal = Number(allItems[i].unitPrice || 0) * Number(allItems[i].quantity || 0);
+              const prevItemDiscount = totalBeforeDiscount > 0 ? Math.floor((discount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+              previousDiscounts += prevItemDiscount;
+            }
+
+            itemDiscountAmount = discount - previousDiscounts;
+          } else {
+            // Regular calculation for non-last items
+            const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+            const totalBeforeDiscount = calculateTotal() - calculateTax();
+            itemDiscountAmount = totalBeforeDiscount > 0 ? Math.floor((discount * itemSubtotal) / totalBeforeDiscount) : 0;
+          }
+        }
+
+        return {
+          ...item,
+          discount: itemDiscountAmount.toString(),
+        };
+      });
+
       // Always proceed with mutation - adding new items and updating order totals/info
       console.log(`📝 Order Dialog: Sending mutation with ${newItemsOnly.length} NEW items and updated order info`);
       createOrderMutation.mutate({ 
         order: updatedOrder, 
-        items: newItemsOnly
+        items: newItemsOnly,
+        existingItems: updatedExistingItems // Include updated existing items with new discount values
       });
     } else {
       // Create mode - calculate with correct mapping

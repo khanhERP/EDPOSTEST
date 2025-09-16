@@ -1998,6 +1998,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle temporary IDs - allow flow to continue
       const isTemporaryId = rawId.startsWith("temp-");
+      let finalResult; // Declare finalResult here
+
       if (isTemporaryId) {
         console.log(
           `🟡 Temporary order ID detected: ${rawId} - returning success for flow continuation`,
@@ -2086,16 +2088,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         source: "pure_frontend_no_calculation"
       });
 
-      // Log the final data being updated
-      console.log(`💰 Final update data:`, {
-        subtotal: orderData.subtotal,
-        tax: orderData.tax,
-        discount: orderData.discount,
-        total: orderData.total,
-        status: orderData.status,
-        paymentMethod: orderData.paymentMethod,
-      });
-
       // Ensure total = subtotal + tax (discount stored separately)
       if (orderData.subtotal && orderData.tax) {
         const expectedTotal =
@@ -2124,6 +2116,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(
           `✅ Storage: Total calculation: ${orderData.subtotal} + ${orderData.tax} = ${orderData.total}`,
         );
+      }
+
+      // Step 1: Add new items if any exist
+      if (orderData.items && orderData.items.length > 0) {
+        console.log(
+          `📝 Adding ${orderData.items.length} new items to existing order ${existingOrder.id}`,
+        );
+        const addItemsResponse = await apiRequest(
+          "POST",
+          `/api/orders/${existingOrder.id}/items`,
+          {
+            items: orderData.items,
+          },
+        );
+
+        const addItemsResult = await addItemsResponse.json();
+        console.log("✅ Items added successfully:", addItemsResult);
+        finalResult = addItemsResult.updatedOrder || addItemsResult;
+      } else {
+        console.log(
+          `📝 No new items to add to order ${existingOrder.id}, proceeding with order update only`,
+        );
+      }
+
+      // Step 1.1: Update existing items with new discount values if provided
+      if (orderData.existingItems && orderData.existingItems.length > 0) {
+        console.log(`📝 Updating ${orderData.existingItems.length} existing items with new discount values`);
+
+        for (const item of orderData.existingItems) {
+          if (item.id) {
+            try {
+              const updateResponse = await apiRequest(
+                "PUT",
+                `/api/order-items/${item.id}`,
+                {
+                  discount: item.discount,
+                },
+              );
+              console.log(`✅ Updated discount for item ${item.id}: ${item.discount}`);
+            } catch (error) {
+              console.error(`❌ Failed to update discount for item ${item.id}:`, error);
+            }
+          }
+        }
       }
 
       const order = await storage.updateOrder(id, orderData, tenantDb);
@@ -2481,13 +2517,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Try to print to configured printers if available
       if (printerConfigs && printerConfigs.length > 0) {
         const net = require("net");
-        
+
         for (const config of printerConfigs) {
           if (!config.isActive) continue;
-          
+
           try {
             console.log(`🖨️ Attempting to print to ${config.name} (${config.connectionType})`);
-            
+
             if (config.connectionType === 'network' && config.ipAddress) {
               // Network printer
               const printPromise = new Promise((resolve, reject) => {
@@ -2499,7 +2535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
                   // Convert HTML content to ESC/POS commands (simplified)
                   const escPosData = convertHtmlToEscPos(content, config);
-                  
+
                   client.write(escPosData, (error) => {
                     if (error) {
                       console.error(`❌ Print data send error for ${config.name}:`, error);
@@ -2532,7 +2568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const result = await printPromise;
                 printResults.push(result);
                 hasSuccessfulPrint = true;
-                
+
                 // If this is the preferred printer and it succeeded, we can return early
                 if (config.id === preferredConfig?.id) {
                   break;
@@ -2576,7 +2612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log print job completion
       if (hasSuccessfulPrint) {
         console.log(`📝 Print job completed for ${type} ${orderId || transactionId}`);
-        
+
         res.json({
           success: true,
           message: "In thành công",
@@ -2586,12 +2622,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } else {
         console.log(`⚠️ No successful prints for ${type} ${orderId || transactionId}`);
-        
+
         // Return error but with specific guidance based on device
         const fallbackMessage = deviceInfo?.isMobile 
           ? "Không có máy in POS khả dụng. Vui lòng sử dụng chức năng tải file để in."
           : "Không có máy in POS khả dụng. Vui lòng kiểm tra cấu hình máy in.";
-          
+
         res.status(503).json({
           success: false,
           error: fallbackMessage,
@@ -2745,16 +2781,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const tenantDb = await getTenantDatabase(req);
       const configData = req.body;
-      
+
       // Validate that only one printer can be active for each type
       if (configData.isActive && (configData.isEmployee || configData.isKitchen)) {
         const existingConfigs = await db.select().from(printerConfigs);
-        
+
         const conflictingConfig = existingConfigs.find(config => 
           config.isActive && 
           ((configData.isEmployee && config.isEmployee) || (configData.isKitchen && config.isKitchen))
         );
-        
+
         if (conflictingConfig) {
           const printerType = configData.isEmployee ? "nhân viên" : "bếp";
           return res.status(400).json({
@@ -2779,23 +2815,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
       const updateData = req.body;
-      
+
       // Validate that only one printer can be active for each type
       if (updateData.isActive && (updateData.isEmployee || updateData.isKitchen)) {
         const existingConfigs = await db.select().from(printerConfigs);
-        
+
         const conflictingConfig = existingConfigs.find(config => 
           config.id !== id &&
           config.isActive && 
           ((updateData.isEmployee && config.isEmployee) || (updateData.isKitchen && config.isKitchen))
         );
-        
+
         if (conflictingConfig) {
           // Auto-disable the conflicting printer
           await db.update(printerConfigs)
             .set({ isActive: false })
             .where(eq(printerConfigs.id, conflictingConfig.id));
-          
+
           console.log(`🔄 Auto-disabled conflicting printer: ${conflictingConfig.name}`);
         }
       }
@@ -2826,7 +2862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
-      
+
       const [deletedConfig] = await db
         .delete(printerConfigs)
         .where(eq(printerConfigs.id, id))
@@ -2854,7 +2890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
-      
+
       const [config] = await db
         .select()
         .from(printerConfigs)
@@ -2870,7 +2906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (config.connectionType === 'network' && config.ipAddress) {
         const net = require("net");
-        
+
         const testPromise = new Promise((resolve, reject) => {
           const client = new net.Socket();
           client.setTimeout(5000);
@@ -2878,7 +2914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           client.connect(config.port || 9100, config.ipAddress, () => {
             // Send test print command
             const testData = Buffer.from('\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00', 'utf8');
-            
+
             client.write(testData, (error) => {
               if (error) {
                 reject(new Error("Failed to send test data"));
@@ -4749,7 +4785,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Menu Analysis Results:", {
         totalRevenue,
         totalQuantity,
-        productCount: productStats.length,
         categoryCount: categoryStats.length,
       });
 
@@ -4900,39 +4935,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           client.setTimeout(3000);
 
           client.connect(config.port || 9100, config.ipAddress, () => {
-            client.end();
+            // Send test print command
+            const testData = Buffer.from('\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00', 'utf8');
+
+            client.write(testData, (error) => {
+              if (error) {
+                resolve({
+                  success: false,
+                  message: `Failed to send test data: ${error.message}`,
+                });
+              } else {
+                client.end();
+                resolve({
+                  success: true,
+                  message: `Successfully connected to ${config.name}`,
+                });
+              }
+            });
+          });
+
+          client.on("error", (err) => {
             resolve({
-              success: true,
-              message: `Successfully connected to ${config.ipAddress}:${config.port || 9100}`,
+              success: false,
+              message: `Connection failed: ${err.message}`,
             });
           });
 
           client.on("timeout", () => {
             client.destroy();
-            resolve({
-              success: false,
-              message: "Connection timeout",
-            });
-          });
-
-          client.on("error", (error) => {
-            resolve({
-              success: false,
-              message: `Connection failed: ${error.message}`,
-            });
+            resolve({ success: false, message: "Connection timeout" });
           });
         });
 
         testResult = await testPromise;
       } else if (config.connectionType === "usb") {
+        // For USB printers, we can't directly test but we can check if the config is valid
         testResult = {
           success: true,
           message: "USB printer detection not implemented",
         };
-      } else if (config.connectionType === "bluetooth") {
+      } else {
         testResult = {
-          success: true,
-          message: "Bluetooth printer detection not implemented",
+          success: false,
+          message: "Invalid printer configuration",
         };
       }
 
@@ -5323,7 +5368,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             productName: item.productName,
             productSku: item.productSku,
             categoryId: item.categoryId,
-            categoryName: item.categoryName,
             categoryName: item.categoryName,
             productType: item.productType,
             discount: item.discount,
@@ -6225,8 +6269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // For USB printers, we can't directly test but we can check if the config is valid
         testResult = {
           success: true,
-          message:
-            "USB printer configuration is valid. Actual connection will be tested during print.",
+          message: "USB printer detection not implemented",
         };
       } else {
         testResult = {
