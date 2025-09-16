@@ -66,6 +66,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
+  const [orderForPayment, setOrderForPayment] = useState<any>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
