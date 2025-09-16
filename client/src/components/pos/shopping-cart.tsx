@@ -87,44 +87,58 @@ export function ShoppingCart({
   const tax = cart.reduce((sum, item) => {
     if (item.taxRate && parseFloat(item.taxRate) > 0) {
       const basePrice = parseFloat(item.price);
+      const quantity = item.quantity;
+      const subtotal = basePrice * quantity;
 
-      // Debug log to check afterTaxPrice
+      // Calculate discount for this item
+      const orderDiscount = parseFloat(currentOrderDiscount || "0");
+      let itemDiscountAmount = 0;
+
+      if (orderDiscount > 0) {
+        const currentIndex = cart.findIndex(cartItem => cartItem.id === item.id);
+        const isLastItem = currentIndex === cart.length - 1;
+
+        if (isLastItem) {
+          // Last item: total discount - sum of all previous discounts
+          let previousDiscounts = 0;
+          const totalBeforeDiscount = cart.reduce((sum, itm) => {
+            return sum + (parseFloat(itm.price) * itm.quantity);
+          }, 0);
+
+          for (let i = 0; i < cart.length - 1; i++) {
+            const prevItemSubtotal = parseFloat(cart[i].price) * cart[i].quantity;
+            const prevItemDiscount = totalBeforeDiscount > 0 ?
+              Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+            previousDiscounts += prevItemDiscount;
+          }
+
+          itemDiscountAmount = orderDiscount - previousDiscounts;
+        } else {
+          // Regular calculation for non-last items
+          const totalBeforeDiscount = cart.reduce((sum, itm) => {
+            return sum + (parseFloat(itm.price) * itm.quantity);
+          }, 0);
+          itemDiscountAmount = totalBeforeDiscount > 0 ?
+            Math.floor((orderDiscount * subtotal) / totalBeforeDiscount) : 0;
+        }
+      }
+
+      // Tax = (price * quantity - discount) * taxRate
+      const taxableAmount = Math.max(0, subtotal - itemDiscountAmount);
+      const taxRate = parseFloat(item.taxRate) / 100;
+      const calculatedTax = Math.floor(taxableAmount * taxRate);
+
       console.log("=== SHOPPING CART TAX CALCULATION DEBUG ===");
       console.log("Product:", item.name);
       console.log("Base Price:", basePrice);
+      console.log("Quantity:", quantity);
+      console.log("Subtotal:", subtotal);
+      console.log("Item Discount:", itemDiscountAmount);
+      console.log("Taxable Amount:", taxableAmount);
       console.log("Tax Rate:", item.taxRate + "%");
-      console.log("After Tax Price (from DB):", item.afterTaxPrice);
-      console.log("After Tax Price Type:", typeof item.afterTaxPrice);
+      console.log("Calculated Tax:", calculatedTax + "₫");
 
-      // Tax = (after_tax_price - price) * quantity
-      if (
-        item.afterTaxPrice &&
-        item.afterTaxPrice !== null &&
-        item.afterTaxPrice !== ""
-      ) {
-        const afterTaxPrice = parseFloat(item.afterTaxPrice);
-        const totalItemTax = Math.floor(
-          (afterTaxPrice - basePrice) * item.quantity,
-        );
-        console.log(
-          "✅ Using tax formula: Math.floor((after_tax_price - price) * quantity)",
-        );
-        console.log("  After Tax Price:", afterTaxPrice, "₫");
-        console.log("  Base Price:", basePrice, "₫");
-        console.log("  Quantity:", item.quantity);
-        console.log(
-          "  Tax calculation: Math.floor((" +
-            afterTaxPrice +
-            " - " +
-            basePrice +
-            ") * " +
-            item.quantity +
-            ") = " +
-            totalItemTax +
-            "₫",
-        );
-        return sum + totalItemTax;
-      }
+      return sum + calculatedTax;
     }
     return sum;
   }, 0);
@@ -143,18 +157,46 @@ export function ShoppingCart({
     cart.reduce((sum, item) => {
       if (item.taxRate && parseFloat(item.taxRate) > 0) {
         const basePrice = parseFloat(item.price);
+        const quantity = item.quantity;
+        const subtotal = basePrice * quantity;
 
-        // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
-        if (
-          item.afterTaxPrice &&
-          item.afterTaxPrice !== null &&
-          item.afterTaxPrice !== ""
-        ) {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          // Tax = Math.floor((afterTaxPrice - basePrice) * quantity)
-          const taxPerItem = afterTaxPrice - basePrice;
-          return sum + Math.floor(taxPerItem * item.quantity);
+        // Calculate discount for this item
+        const orderDiscount = parseFloat(discountAmount || "0");
+        let itemDiscountAmount = 0;
+
+        if (orderDiscount > 0) {
+          const currentIndex = cart.findIndex(cartItem => cartItem.id === item.id);
+          const isLastItem = currentIndex === cart.length - 1;
+
+          if (isLastItem) {
+            // Last item: total discount - sum of all previous discounts
+            let previousDiscounts = 0;
+            const totalBeforeDiscount = cart.reduce((sum, itm) => {
+              return sum + (parseFloat(itm.price) * itm.quantity);
+            }, 0);
+
+            for (let i = 0; i < cart.length - 1; i++) {
+              const prevItemSubtotal = parseFloat(cart[i].price) * cart[i].quantity;
+              const prevItemDiscount = totalBeforeDiscount > 0 ?
+                Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+              previousDiscounts += prevItemDiscount;
+            }
+
+            itemDiscountAmount = orderDiscount - previousDiscounts;
+          } else {
+            // Regular calculation for non-last items
+            const totalBeforeDiscount = cart.reduce((sum, itm) => {
+              return sum + (parseFloat(itm.price) * itm.quantity);
+            }, 0);
+            itemDiscountAmount = totalBeforeDiscount > 0 ?
+              Math.floor((orderDiscount * subtotal) / totalBeforeDiscount) : 0;
+          }
         }
+
+        // Tax = (price * quantity - discount) * taxRate
+        const taxableAmount = Math.max(0, subtotal - itemDiscountAmount);
+        const taxRate = parseFloat(item.taxRate) / 100;
+        return sum + Math.floor(taxableAmount * taxRate);
       }
       return sum;
     }, 0);
