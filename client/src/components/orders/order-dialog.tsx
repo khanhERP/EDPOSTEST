@@ -611,7 +611,7 @@ export function OrderDialog({
           name: customerName,
           count: customerCount,
         },
-        totalItems: items.length,
+        totalItems: newItemsOnly.length,
         proceedWithUpdate: true,
       });
 
