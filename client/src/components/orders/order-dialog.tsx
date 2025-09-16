@@ -1233,8 +1233,8 @@ export function OrderDialog({
                {item.product.name}
               </h4>
               <span className="text-sm font-bold">
-               {Math.floor(
-                Number(item.product.price) * item.quantity,
+               {(
+                Number(item.product.price) * item.quantity
                ).toLocaleString()}{" "}
                ₫
               </span>
@@ -1278,11 +1278,11 @@ export function OrderDialog({
                  // Calculate tax using the same logic as calculateTax
                  const itemSubtotal = basePrice * quantity;
                  const subtotal = calculateSubtotal();
-                 
+
                  // Calculate proportional discount for this item
                  const itemDiscountAmount = subtotal > 0 ? (discount * itemSubtotal) / subtotal : 0;
                  const itemDiscountPerUnit = itemDiscountAmount / quantity;
-                 
+
                  // Tax = (price - discount per unit) * taxRate * quantity
                  const taxableAmountPerUnit = Math.max(0, basePrice - itemDiscountPerUnit);
                  const taxRate = parseFloat(item.product.taxRate) / 100;
@@ -1300,7 +1300,7 @@ export function OrderDialog({
                 const basePrice = Number(item.product.price);
                 const quantity = item.quantity;
                 const itemSubtotal = basePrice * quantity;
-                
+
                 // Calculate tax
                 let taxAmount = 0;
                 if (item.product.taxRate && parseFloat(item.product.taxRate) > 0) {
@@ -1350,7 +1350,7 @@ export function OrderDialog({
                 }
 
                 const finalTotal = itemSubtotal + taxAmount - itemDiscountAmount;
-                
+
                 return (
                  <div className="font-medium text-blue-600">
                   Tổng: {Math.floor(finalTotal).toLocaleString()} ₫
