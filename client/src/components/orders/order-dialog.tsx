@@ -418,7 +418,7 @@ export function OrderDialog({
       totalSubtotal += unitPrice * quantity;
     });
 
-    // Subtract discount from subtotal: price * quantity - discount
+    // Apply formula: subtotal = price * quantity - discount
     return Math.max(0, totalSubtotal - discount);
   };
 
@@ -466,14 +466,14 @@ export function OrderDialog({
               ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
               : 0;
 
-          // Tax = (price * quantity - discount) * taxRate
-          const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
+          // Apply new formula: tax = (price * quantity - discount) * taxRate
+          const subtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
           const taxRate = parseFloat(product.taxRate) / 100;
-          itemTax = taxableAmount * taxRate;
+          itemTax = subtotalAfterDiscount * taxRate;
         }
 
         // Round individual tax amount and add to array
-        individualTaxAmounts.push(Math.trunc(itemTax));
+        individualTaxAmounts.push(Math.floor(itemTax));
       });
     }
 
@@ -493,14 +493,14 @@ export function OrderDialog({
             ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
             : 0;
 
-        // Tax = (price * quantity - discount) * taxRate
-        const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
+        // Apply new formula: tax = (price * quantity - discount) * taxRate
+        const subtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
         const taxRate = parseFloat(product.taxRate) / 100;
-        itemTax = taxableAmount * taxRate;
+        itemTax = subtotalAfterDiscount * taxRate;
       }
 
       // Round individual tax amount and add to array
-      individualTaxAmounts.push(Math.trunc(itemTax));
+      individualTaxAmounts.push(Math.floor(itemTax));
     });
 
     // Sum all individual rounded tax amounts
@@ -513,7 +513,9 @@ export function OrderDialog({
   };
 
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax();
+    const subtotal = calculateSubtotal();
+    const tax = calculateTax();
+    return subtotal + tax;
   };
 
   const calculateGrandTotal = () => {
