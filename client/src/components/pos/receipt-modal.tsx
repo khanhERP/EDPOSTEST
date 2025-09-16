@@ -998,25 +998,25 @@ export function ReceiptModal({
               <div className="flex justify-between text-sm">
                 <span>Tạm tính:</span>
                 <span>
-                  {parseFloat(receipt.subtotal || "0").toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Thuế:</span>
                 <span>
-                  {parseFloat(receipt.tax || "0").toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm text-red-600">
                 <span>Giảm giá</span>
                 <span className="font-medium">
-                  -{parseFloat(receipt.discount || "0").toLocaleString("vi-VN")} ₫
+                  -{Math.floor(parseFloat(receipt.discount || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between font-bold">
                 <span>Tổng cộng:</span>
                 <span>
-                  {parseFloat(receipt.total || "0").toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
             </div>
@@ -1216,25 +1216,25 @@ export function ReceiptModal({
               <div className="flex justify-between text-sm">
                 <span>Tạm tính:</span>
                 <span>
-                  {parseFloat(receipt?.subtotal || "0").toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt?.subtotal || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Thuế:</span>
                 <span>
-                  {parseFloat(receipt?.tax || "0").toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt?.tax || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm text-red-600">
                 <span>Giảm giá</span>
                 <span className="font-medium">
-                  -{parseFloat(receipt?.discount || "0").toLocaleString("vi-VN")} ₫
+                  -{Math.floor(parseFloat(receipt?.discount || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between font-bold">
                 <span>Tổng cộng:</span>
                 <span>
-                  {parseFloat(receipt?.total || "0").toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt?.total || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
             </div>
