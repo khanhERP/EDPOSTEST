@@ -183,7 +183,7 @@ export function OrderDialog({
         throw error;
       }
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       console.log("=== ORDER MUTATION SUCCESS (SINGLE CALL) ===");
       console.log(
         mode === "edit"
@@ -192,11 +192,38 @@ export function OrderDialog({
         response,
       );
 
-      // Only invalidate - let React Query handle refetch naturally (no forced refetch)
-      console.log("🔄 Invalidating queries (natural refresh only)...");
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+      // IMMEDIATE: Clear cache and force fresh data fetch
+      console.log("🔄 Clearing cache and forcing fresh data fetch...");
+      queryClient.clear();
+      queryClient.removeQueries();
+
+      // Force immediate refetch of order items if in edit mode
+      if (mode === "edit" && existingOrder?.id) {
+        console.log("🔄 Force refetching order items for order:", existingOrder.id);
+        try {
+          // Force fresh fetch of order items
+          await queryClient.fetchQuery({
+            queryKey: ["/api/order-items", existingOrder.id],
+            queryFn: async () => {
+              const response = await apiRequest("GET", `/api/order-items/${existingOrder.id}`);
+              return response.json();
+            },
+            staleTime: 0, // Force fresh data
+          });
+          console.log("✅ Order items refetched successfully");
+        } catch (error) {
+          console.error("❌ Error refetching order items:", error);
+        }
+      }
+
+      // Invalidate and refetch all related queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/order-items"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/tables"] }),
+      ]);
 
       // Reset form state
       setCart([]);
