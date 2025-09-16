@@ -2061,11 +2061,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Use EXACT values from frontend - NO CALCULATION AT ALL
-      console.log(`💰 Using EXACT values from frontend for order ${id} - NO recalculation, NO validation`);
+      console.log(
+        `💰 Using EXACT values from frontend for order ${id} - NO recalculation, NO validation`,
+      );
 
       // Simply use whatever frontend sends, no fallback to existing values
       if (orderData.subtotal !== undefined && orderData.subtotal !== null) {
-        console.log(`💰 Frontend subtotal: ${orderData.subtotal} (saving as-is)`);
+        console.log(
+          `💰 Frontend subtotal: ${orderData.subtotal} (saving as-is)`,
+        );
       }
 
       if (orderData.tax !== undefined && orderData.tax !== null) {
@@ -2077,7 +2081,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (orderData.discount !== undefined && orderData.discount !== null) {
-        console.log(`💰 Frontend discount: ${orderData.discount} (saving as-is)`);
+        console.log(
+          `💰 Frontend discount: ${orderData.discount} (saving as-is)`,
+        );
       }
 
       console.log(`💰 Final data (pure frontend values):`, {
@@ -2085,7 +2091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tax: orderData.tax,
         discount: orderData.discount,
         total: orderData.total,
-        source: "pure_frontend_no_calculation"
+        source: "pure_frontend_no_calculation",
       });
 
       // Ensure total = subtotal + tax (discount stored separately)
@@ -2170,19 +2176,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Step 1.6: Update discount for existing order items
-      if (discount > 0 && existingOrderItems && existingOrderItems.length > 0) {
+      if (
+        discount > 0 &&
+        orderData?.existingItems &&
+        orderData?.existingItems?.length > 0
+      ) {
         console.log(
-          `💰 Updating discount for ${existingOrderItems.length} existing order items`,
-        );
-
-        // Calculate discount distribution among existing items
-        const updatedExistingItems = calculateDiscountDistribution(
-          existingOrderItems,
-          discount,
+          `💰 Updating discount for ${orderData?.existingItems?.length} existing order items`,
         );
 
         // Update each order item with its calculated discount
-        for (const item of updatedExistingItems) {
+        for (const item of orderData?.existingItems) {
           try {
             await db
               .update(orderItemsTable)
@@ -2191,9 +2195,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               })
               .where(eq(orderItemsTable.id, item.id));
 
-            console.log(`✅ Updated order item ${item.id} with discount: ${item.discount}`);
+            console.log(
+              `✅ Updated order item ${item.id} with discount: ${item.discount}`,
+            );
           } catch (itemError) {
-            console.error(`❌ Error updating order item ${item.id} discount:`, itemError);
+            console.error(
+              `❌ Error updating order item ${item.id} discount:`,
+              itemError,
+            );
           }
         }
       }
@@ -2529,7 +2538,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced POS print-receipt endpoint with printer configuration support
   app.post("/api/pos/print-receipt", async (req: TenantRequest, res) => {
     try {
-      const { content, type, orderId, transactionId, printerConfigs, preferredConfig, deviceInfo } = req.body;
+      const {
+        content,
+        type,
+        orderId,
+        transactionId,
+        printerConfigs,
+        preferredConfig,
+        deviceInfo,
+      } = req.body;
 
       console.log(`🖨️ Enhanced POS print request:`, {
         type,
@@ -2538,7 +2555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         devicePlatform: deviceInfo?.platform,
         deviceBrowser: deviceInfo?.browser,
         configuredPrinters: printerConfigs?.length || 0,
-        preferredPrinter: preferredConfig?.name
+        preferredPrinter: preferredConfig?.name,
       });
 
       if (!content) {
@@ -2559,31 +2576,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!config.isActive) continue;
 
           try {
-            console.log(`🖨️ Attempting to print to ${config.name} (${config.connectionType})`);
+            console.log(
+              `🖨️ Attempting to print to ${config.name} (${config.connectionType})`,
+            );
 
-            if (config.connectionType === 'network' && config.ipAddress) {
+            if (config.connectionType === "network" && config.ipAddress) {
               // Network printer
               const printPromise = new Promise((resolve, reject) => {
                 const client = new net.Socket();
                 client.setTimeout(5000);
 
                 client.connect(config.port || 9100, config.ipAddress, () => {
-                  console.log(`🔗 Connected to printer ${config.name} at ${config.ipAddress}:${config.port}`);
+                  console.log(
+                    `🔗 Connected to printer ${config.name} at ${config.ipAddress}:${config.port}`,
+                  );
 
                   // Convert HTML content to ESC/POS commands (simplified)
                   const escPosData = convertHtmlToEscPos(content, config);
 
                   client.write(escPosData, (error) => {
                     if (error) {
-                      console.error(`❌ Print data send error for ${config.name}:`, error);
-                      reject(new Error(`Lỗi gửi dữ liệu in đến ${config.name}`));
+                      console.error(
+                        `❌ Print data send error for ${config.name}:`,
+                        error,
+                      );
+                      reject(
+                        new Error(`Lỗi gửi dữ liệu in đến ${config.name}`),
+                      );
                     } else {
-                      console.log(`✅ Print data sent successfully to ${config.name}`);
+                      console.log(
+                        `✅ Print data sent successfully to ${config.name}`,
+                      );
                       client.end();
                       resolve({
                         printer: config.name,
                         success: true,
-                        message: `In thành công trên ${config.name}`
+                        message: `In thành công trên ${config.name}`,
                       });
                     }
                   });
@@ -2596,8 +2624,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 });
 
                 client.on("error", (error) => {
-                  console.error(`❌ Printer ${config.name} connection error:`, error);
-                  reject(new Error(`Không thể kết nối tới ${config.name}: ${error.message}`));
+                  console.error(
+                    `❌ Printer ${config.name} connection error:`,
+                    error,
+                  );
+                  reject(
+                    new Error(
+                      `Không thể kết nối tới ${config.name}: ${error.message}`,
+                    ),
+                  );
                 });
               });
 
@@ -2611,36 +2646,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   break;
                 }
               } catch (printError) {
-                console.log(`⚠️ Failed to print to ${config.name}:`, printError.message);
+                console.log(
+                  `⚠️ Failed to print to ${config.name}:`,
+                  printError.message,
+                );
                 printResults.push({
                   printer: config.name,
                   success: false,
-                  error: printError.message
+                  error: printError.message,
                 });
               }
-            } else if (config.connectionType === 'usb') {
+            } else if (config.connectionType === "usb") {
               // USB printer - would need additional USB printing library
-              console.log(`📝 USB printer ${config.name} detected - would require USB printing library`);
+              console.log(
+                `📝 USB printer ${config.name} detected - would require USB printing library`,
+              );
               printResults.push({
                 printer: config.name,
                 success: false,
-                error: "USB printing not yet implemented"
+                error: "USB printing not yet implemented",
               });
-            } else if (config.connectionType === 'bluetooth') {
+            } else if (config.connectionType === "bluetooth") {
               // Bluetooth printer - would need additional Bluetooth printing library
-              console.log(`📱 Bluetooth printer ${config.name} detected - would require Bluetooth printing library`);
+              console.log(
+                `📱 Bluetooth printer ${config.name} detected - would require Bluetooth printing library`,
+              );
               printResults.push({
                 printer: config.name,
                 success: false,
-                error: "Bluetooth printing not yet implemented"
+                error: "Bluetooth printing not yet implemented",
               });
             }
           } catch (configError) {
-            console.error(`❌ Error processing printer config ${config.name}:`, configError);
+            console.error(
+              `❌ Error processing printer config ${config.name}:`,
+              configError,
+            );
             printResults.push({
               printer: config.name,
               success: false,
-              error: configError.message
+              error: configError.message,
             });
           }
         }
@@ -2648,7 +2693,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Log print job completion
       if (hasSuccessfulPrint) {
-        console.log(`📝 Print job completed for ${type} ${orderId || transactionId}`);
+        console.log(
+          `📝 Print job completed for ${type} ${orderId || transactionId}`,
+        );
 
         res.json({
           success: true,
@@ -2658,7 +2705,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date().toISOString(),
         });
       } else {
-        console.log(`⚠️ No successful prints for ${type} ${orderId || transactionId}`);
+        console.log(
+          `⚠️ No successful prints for ${type} ${orderId || transactionId}`,
+        );
 
         // Return error but with specific guidance based on device
         const fallbackMessage = deviceInfo?.isMobile
@@ -2683,42 +2732,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Helper function to convert HTML content to ESC/POS commands
-  function convertHtmlToEscPos(htmlContent: string, printerConfig: any): Buffer {
+  function convertHtmlToEscPos(
+    htmlContent: string,
+    printerConfig: any,
+  ): Buffer {
     // This is a simplified conversion - in production you'd want a proper HTML to ESC/POS library
     const text = htmlContent
-      .replace(/<[^>]*>/g, '') // Strip HTML tags
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
+      .replace(/<[^>]*>/g, "") // Strip HTML tags
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
       .replace(/&quot;/g, '"');
 
     // ESC/POS commands
-    const ESC = '\x1B';
-    const INIT = ESC + '@'; // Initialize printer
-    const ALIGN_CENTER = ESC + 'a' + '\x01';
-    const ALIGN_LEFT = ESC + 'a' + '\x00';
-    const BOLD_ON = ESC + 'E' + '\x01';
-    const BOLD_OFF = ESC + 'E' + '\x00';
-    const CUT_PAPER = '\x1D' + 'V' + 'A' + '\x00'; // Cut paper
-    const FEED_LINES = '\n\n\n';
+    const ESC = "\x1B";
+    const INIT = ESC + "@"; // Initialize printer
+    const ALIGN_CENTER = ESC + "a" + "\x01";
+    const ALIGN_LEFT = ESC + "a" + "\x00";
+    const BOLD_ON = ESC + "E" + "\x01";
+    const BOLD_OFF = ESC + "E" + "\x00";
+    const CUT_PAPER = "\x1D" + "V" + "A" + "\x00"; // Cut paper
+    const FEED_LINES = "\n\n\n";
 
     // Build ESC/POS command sequence
     let escPosData = INIT;
     escPosData += ALIGN_CENTER;
     escPosData += BOLD_ON;
-    escPosData += 'HOA DON THANH TOAN\n';
+    escPosData += "HOA DON THANH TOAN\n";
     escPosData += BOLD_OFF;
     escPosData += ALIGN_LEFT;
-    escPosData += '================================\n';
+    escPosData += "================================\n";
     escPosData += text;
-    escPosData += '\n================================\n';
+    escPosData += "\n================================\n";
     escPosData += ALIGN_CENTER;
-    escPosData += 'Cam on quy khach!\n';
+    escPosData += "Cam on quy khach!\n";
     escPosData += FEED_LINES;
     escPosData += CUT_PAPER;
 
-    return Buffer.from(escPosData, 'utf8');
+    return Buffer.from(escPosData, "utf8");
   }
 
   // API in qua máy in mạng (legacy endpoint, kept for compatibility)
@@ -2803,7 +2855,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/printer-configs", async (req: TenantRequest, res) => {
     try {
       const tenantDb = await getTenantDatabase(req);
-      const configs = await db.select().from(printerConfigs).orderBy(printerConfigs.name);
+      const configs = await db
+        .select()
+        .from(printerConfigs)
+        .orderBy(printerConfigs.name);
       console.log(`✅ Fetched ${configs.length} printer configurations`);
       res.json(configs);
     } catch (error) {
@@ -2820,12 +2875,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const configData = req.body;
 
       // Validate that only one printer can be active for each type
-      if (configData.isActive && (configData.isEmployee || configData.isKitchen)) {
+      if (
+        configData.isActive &&
+        (configData.isEmployee || configData.isKitchen)
+      ) {
         const existingConfigs = await db.select().from(printerConfigs);
 
-        const conflictingConfig = existingConfigs.find(config =>
-          config.isActive &&
-          ((configData.isEmployee && config.isEmployee) || (configData.isKitchen && config.isKitchen))
+        const conflictingConfig = existingConfigs.find(
+          (config) =>
+            config.isActive &&
+            ((configData.isEmployee && config.isEmployee) ||
+              (configData.isKitchen && config.isKitchen)),
         );
 
         if (conflictingConfig) {
@@ -2836,7 +2896,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const [newConfig] = await db.insert(printerConfigs).values(configData).returning();
+      const [newConfig] = await db
+        .insert(printerConfigs)
+        .values(configData)
+        .returning();
       console.log(`✅ Created printer configuration: ${newConfig.name}`);
       res.status(201).json(newConfig);
     } catch (error) {
@@ -2854,22 +2917,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = req.body;
 
       // Validate that only one printer can be active for each type
-      if (updateData.isActive && (updateData.isEmployee || updateData.isKitchen)) {
+      if (
+        updateData.isActive &&
+        (updateData.isEmployee || updateData.isKitchen)
+      ) {
         const existingConfigs = await db.select().from(printerConfigs);
 
-        const conflictingConfig = existingConfigs.find(config =>
-          config.id !== id &&
-          config.isActive &&
-          ((updateData.isEmployee && config.isEmployee) || (updateData.isKitchen && config.isKitchen))
+        const conflictingConfig = existingConfigs.find(
+          (config) =>
+            config.id !== id &&
+            config.isActive &&
+            ((updateData.isEmployee && config.isEmployee) ||
+              (updateData.isKitchen && config.isKitchen)),
         );
 
         if (conflictingConfig) {
           // Auto-disable the conflicting printer
-          await db.update(printerConfigs)
+          await db
+            .update(printerConfigs)
             .set({ isActive: false })
             .where(eq(printerConfigs.id, conflictingConfig.id));
 
-          console.log(`🔄 Auto-disabled conflicting printer: ${conflictingConfig.name}`);
+          console.log(
+            `🔄 Auto-disabled conflicting printer: ${conflictingConfig.name}`,
+          );
         }
       }
 
@@ -2941,7 +3012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      if (config.connectionType === 'network' && config.ipAddress) {
+      if (config.connectionType === "network" && config.ipAddress) {
         const net = require("net");
 
         const testPromise = new Promise((resolve, reject) => {
@@ -2950,7 +3021,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           client.connect(config.port || 9100, config.ipAddress, () => {
             // Send test print command
-            const testData = Buffer.from('\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00', 'utf8');
+            const testData = Buffer.from(
+              "\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00",
+              "utf8",
+            );
 
             client.write(testData, (error) => {
               if (error) {
@@ -3097,7 +3171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const itemId = parseInt(req.params.itemId);
       const updateData = req.body;
       const tenantDb = await getTenantDatabase(req);
-      
+
       console.log("Item ID to update:", itemId);
       console.log("Update data:", updateData);
 
@@ -3124,23 +3198,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Prepare update data
       const updateFields: any = {};
-      
+
       if (updateData.quantity !== undefined) {
         updateFields.quantity = parseInt(updateData.quantity);
       }
-      
+
       if (updateData.unitPrice !== undefined) {
         updateFields.unitPrice = updateData.unitPrice.toString();
       }
-      
+
       if (updateData.total !== undefined) {
         updateFields.total = updateData.total.toString();
       }
-      
+
       if (updateData.discount !== undefined) {
-        updateFields.discount = parseFloat(updateData.discount || "0").toFixed(2);
+        updateFields.discount = parseFloat(updateData.discount || "0").toFixed(
+          2,
+        );
       }
-      
+
       if (updateData.notes !== undefined) {
         updateFields.notes = updateData.notes;
       }
@@ -3153,7 +3229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       console.log("Order item updated successfully:", updatedItem);
-      
+
       res.json({
         success: true,
         orderItem: updatedItem,
@@ -3166,7 +3242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error stack:", error?.stack || "No stack trace");
       console.error("Item ID:", req.params.itemId);
       console.error("Update data:", req.body);
-      
+
       res.status(500).json({
         error: "Failed to update order item",
         details: error instanceof Error ? error.message : "Unknown error",
@@ -5058,7 +5134,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           client.connect(config.port || 9100, config.ipAddress, () => {
             // Send test print command
-            const testData = Buffer.from('\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00', 'utf8');
+            const testData = Buffer.from(
+              "\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00",
+              "utf8",
+            );
 
             client.write(testData, (error) => {
               if (error) {
@@ -6360,7 +6439,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await new Promise((resolve) => {
             socket.connect(config.port || 9100, config.ipAddress, () => {
               // Send test print command
-              const testData = Buffer.from('\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00', 'utf8');
+              const testData = Buffer.from(
+                "\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00",
+                "utf8",
+              );
 
               socket.write(testData, (error) => {
                 if (error) {
@@ -6590,7 +6672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         }
       } else {
-        printResult= {
+        printResult = {
           success: false,
           message: "Unsupported printer connection type",
           printerId: selectedPrinter.id,
