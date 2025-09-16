@@ -2058,48 +2058,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currentDiscount: existingOrder.discount,
       });
 
-      // Use EXACT values from frontend like in create mode - DO NOT recalculate
-      console.log(`💰 Using EXACT values from frontend for order ${id} - no recalculation`);
+      // Use EXACT values from frontend - NO CALCULATION AT ALL
+      console.log(`💰 Using EXACT values from frontend for order ${id} - NO recalculation, NO validation`);
 
-      // Validate and use incoming financial data from frontend
+      // Simply use whatever frontend sends, no fallback to existing values
       if (orderData.subtotal !== undefined && orderData.subtotal !== null) {
-        console.log(`💰 Using frontend subtotal: ${orderData.subtotal}`);
-      } else {
-        console.log(`💰 No subtotal provided, keeping existing: ${existingOrder.subtotal}`);
-        orderData.subtotal = existingOrder.subtotal;
+        console.log(`💰 Frontend subtotal: ${orderData.subtotal} (saving as-is)`);
       }
 
       if (orderData.tax !== undefined && orderData.tax !== null) {
-        console.log(`💰 Using frontend tax: ${orderData.tax}`);
-      } else {
-        console.log(`💰 No tax provided, keeping existing: ${existingOrder.tax}`);
-        orderData.tax = existingOrder.tax;
+        console.log(`💰 Frontend tax: ${orderData.tax} (saving as-is)`);
       }
 
       if (orderData.total !== undefined && orderData.total !== null) {
-        console.log(`💰 Using frontend total: ${orderData.total}`);
-      } else {
-        console.log(`💰 No total provided, keeping existing: ${existingOrder.total}`);
-        orderData.total = existingOrder.total;
+        console.log(`💰 Frontend total: ${orderData.total} (saving as-is)`);
       }
 
-      // Handle discount from frontend or existing
       if (orderData.discount !== undefined && orderData.discount !== null) {
-        console.log(`💰 Using frontend discount: ${orderData.discount}`);
-      } else if (existingOrder.discount) {
-        console.log(`💰 Using existing discount: ${existingOrder.discount}`);
-        orderData.discount = existingOrder.discount;
-      } else {
-        console.log(`💰 No discount provided, defaulting to 0`);
-        orderData.discount = "0";
+        console.log(`💰 Frontend discount: ${orderData.discount} (saving as-is)`);
       }
 
-      console.log(`💰 Final financial data (exact from frontend):`, {
+      console.log(`💰 Final data (pure frontend values):`, {
         subtotal: orderData.subtotal,
         tax: orderData.tax,
         discount: orderData.discount,
         total: orderData.total,
-        source: "frontend_exact_values"
+        source: "pure_frontend_no_calculation"
       });
 
       // Log the final data being updated

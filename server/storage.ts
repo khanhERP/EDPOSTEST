@@ -1914,66 +1914,28 @@ export class DatabaseStorage implements IStorage {
     if (orderData.paidAt !== undefined) updateData.paidAt = orderData.paidAt;
     if (orderData.servedAt !== undefined) updateData.servedAt = orderData.servedAt;
 
-    // Handle financial fields with strict validation and formatting
+    // Save exact values from frontend without any calculation or validation
     if (orderData.subtotal !== undefined) {
-      const subtotal = Number(orderData.subtotal);
-      if (isNaN(subtotal)) {
-        throw new Error(`Invalid subtotal value: ${orderData.subtotal}`);
-      }
-      updateData.subtotal = subtotal.toFixed(2);
-      console.log(`💰 Storage: Updated subtotal: ${updateData.subtotal}`);
+      updateData.subtotal = orderData.subtotal.toString();
+      console.log(`💰 Storage: Direct subtotal save: ${updateData.subtotal}`);
     }
 
     if (orderData.tax !== undefined) {
-      const tax = Number(orderData.tax);
-      if (isNaN(tax)) {
-        throw new Error(`Invalid tax value: ${orderData.tax}`);
-      }
-      updateData.tax = tax.toFixed(2);
-      console.log(`💰 Storage: Updated tax: ${updateData.tax}`);
+      updateData.tax = orderData.tax.toString();
+      console.log(`💰 Storage: Direct tax save: ${updateData.tax}`);
     }
 
     if (orderData.discount !== undefined) {
-      const discount = Number(orderData.discount);
-      if (isNaN(discount)) {
-        throw new Error(`Invalid discount value: ${orderData.discount}`);
-      }
-      updateData.discount = discount.toFixed(2);
-      console.log(`💰 Storage: Updated discount: ${updateData.discount}`);
+      updateData.discount = orderData.discount.toString();
+      console.log(`💰 Storage: Direct discount save: ${updateData.discount}`);
     }
 
     if (orderData.total !== undefined) {
-      const total = Number(orderData.total);
-      if (isNaN(total)) {
-        throw new Error(`Invalid total value: ${orderData.total}`);
-      }
-      updateData.total = total.toFixed(2);
-      console.log(`💰 Storage: Updated total: ${updateData.total}`);
+      updateData.total = orderData.total.toString();
+      console.log(`💰 Storage: Direct total save: ${updateData.total}`);
     }
 
-    // Ensure total = subtotal + tax (discount stored separately)
-    if (updateData.subtotal && updateData.tax) {
-      const expectedTotal = Number(updateData.subtotal) + Number(updateData.tax);
-
-      // If total is provided, validate it matches subtotal + tax
-      if (updateData.total) {
-        const actualTotal = Number(updateData.total);
-        if (Math.abs(expectedTotal - actualTotal) > 0.01) {
-          console.warn(`⚠️ Storage: Total inconsistency detected, correcting:`, {
-            subtotal: updateData.subtotal,
-            tax: updateData.tax,
-            providedTotal: updateData.total,
-            correctedTotal: expectedTotal.toFixed(2)
-          });
-          updateData.total = expectedTotal.toFixed(2);
-        }
-      } else {
-        // Calculate total if not provided
-        updateData.total = expectedTotal.toFixed(2);
-      }
-
-      console.log(`✅ Storage: Total calculation: ${updateData.subtotal} + ${updateData.tax} = ${updateData.total}`);
-    }
+    console.log(`✅ Storage: No calculation performed - saved exact frontend values`);
 
     console.log(`💾 Storage: Final update data for order ${id}:`, updateData);
 
