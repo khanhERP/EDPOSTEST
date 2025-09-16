@@ -140,11 +140,6 @@ export function OrderDialog({
             source: "displayed_values"
           });
 
-          // Step 3: Update order with calculated totals
-          console.log(
-            `📝 Updating order with ${hasNewItems || hasCustomerChanges ? 'recalculated' : 'existing'} totals for order ${existingOrder.id}`,
-          );
-
           console.log(
             `💰 Saving totals: subtotal=${finalSubtotal}, tax=${finalTax}, discount=${discount}, total=${finalTotal}`,
           );
@@ -1104,15 +1099,19 @@ export function OrderDialog({
                                                 },
                                               );
 
+                                              const finalSubtotal = calculateSubtotal();
+                                              const finalTax = calculateTax();  
+                                              const finalTotal = calculateTotal();
+
                                               // Update order with new totals
                                               apiRequest(
                                                 "PUT",
                                                 `/api/orders/${existingOrder.id}`,
                                                 {
                                                   subtotal:
-                                                    newSubtotal.toString(),
-                                                  tax: newTax.toString(),
-                                                  total: newTotal.toString(),
+                                                    finalSubtotal.toString(),
+                                                  tax: finalTax.toString(),
+                                                  total: finalTotal.toString(),
                                                 },
                                               ).then(() => {
                                                 console.log(
