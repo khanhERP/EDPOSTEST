@@ -456,13 +456,40 @@ export function OrderDialog({
  };
 
  const calculateGrandTotal = () => {
-  const beforeDiscount = calculateTotal(); // calculateTotal now includes tax (subtotal + tax)
-  const finalTotal = Math.max(0, beforeDiscount - discount);
+  // Calculate subtotal (price * quantity) without discount subtraction
+  let totalSubtotal = 0;
+  
+  // Add existing order items if in edit mode
+  if (
+   mode === "edit" &&
+   existingOrderItems &&
+   Array.isArray(existingOrderItems)
+  ) {
+   existingOrderItems.forEach((item) => {
+    const unitPrice = parseFloat(item.unitPrice);
+    const quantity = parseInt(item.quantity);
+    totalSubtotal += unitPrice * quantity;
+   });
+  }
+
+  // Add new cart items
+  cart.forEach((item) => {
+   const unitPrice = parseFloat(item.product.price);
+   const quantity = item.quantity;
+   totalSubtotal += unitPrice * quantity;
+  });
+
+  const tax = calculateTax();
+  // Formula: price * quantity + tax - discount
+  const finalTotal = Math.max(0, totalSubtotal + tax - discount);
+  
   console.log("💰 Order Dialog - Grand Total Calculation:", {
-   subtotalPlusTax: beforeDiscount,
+   subtotal: totalSubtotal,
+   tax: tax,
    discount: discount,
    finalTotal: finalTotal,
   });
+  
   return finalTotal;
  };
 
