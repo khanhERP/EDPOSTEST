@@ -363,9 +363,8 @@ export function OrderDialog({
   );
  };
 
- const calculateTotal = () => {
+ const calculateSubtotal = () => {
   let totalSubtotal = 0;
-  let totalTax = 0;
 
   // Add existing order items if in edit mode
   if (
@@ -376,21 +375,7 @@ export function OrderDialog({
    existingOrderItems.forEach((item) => {
     const unitPrice = parseFloat(item.unitPrice);
     const quantity = parseInt(item.quantity);
-
-    // Add to subtotal
     totalSubtotal += unitPrice * quantity;
-
-    // Calculate tax for existing items
-    const product = products?.find((p: Product) => p.id === item.productId);
-    if (
-     product?.afterTaxPrice &&
-     product.afterTaxPrice !== null &&
-     product.afterTaxPrice !== ""
-    ) {
-     const afterTaxPrice = parseFloat(product.afterTaxPrice);
-     const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-     totalTax += taxPerUnit * quantity;
-    }
    });
   }
 
@@ -398,29 +383,15 @@ export function OrderDialog({
   cart.forEach((item) => {
    const unitPrice = parseFloat(item.product.price);
    const quantity = item.quantity;
-
-   // Add to subtotal
    totalSubtotal += unitPrice * quantity;
-
-   // Calculate tax for new items
-   const product = products?.find((p: Product) => p.id === item.product.id);
-   if (
-    product?.afterTaxPrice &&
-    product.afterTaxPrice !== null &&
-    product.afterTaxPrice !== ""
-   ) {
-    const afterTaxPrice = parseFloat(product.afterTaxPrice);
-    const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-    totalTax += taxPerUnit * quantity;
-   }
   });
 
-  // Return total INCLUDING tax but NOT subtracting discount (show full order value)
-  return totalSubtotal + totalTax;
+  return totalSubtotal;
  };
 
  const calculateTax = () => {
-  let totalTax = 0; // Tổng thuế
+  let totalTax = 0;
+  const subtotal = calculateSubtotal();
 
   // Calculate tax for items in the current cart
   cart.forEach((item) => {
@@ -434,9 +405,8 @@ export function OrderDialog({
     const itemSubtotal = basePrice * quantity;
     
     // Calculate discount for this item proportionally
-    const totalBeforeDiscount = calculateTotal() - calculateTax(); // Get current subtotal
-    const itemDiscountAmount = totalBeforeDiscount > 0 
-      ? (discount * itemSubtotal) / totalBeforeDiscount 
+    const itemDiscountAmount = subtotal > 0 
+      ? (discount * itemSubtotal) / subtotal 
       : 0;
     const itemDiscountPerUnit = itemDiscountAmount / quantity;
     
@@ -462,9 +432,8 @@ export function OrderDialog({
      const itemSubtotal = basePrice * quantity;
      
      // Calculate discount for this item proportionally
-     const totalBeforeDiscount = calculateTotal() - calculateTax(); // Get current subtotal
-     const itemDiscountAmount = totalBeforeDiscount > 0 
-       ? (discount * itemSubtotal) / totalBeforeDiscount 
+     const itemDiscountAmount = subtotal > 0 
+       ? (discount * itemSubtotal) / subtotal 
        : 0;
      const itemDiscountPerUnit = itemDiscountAmount / quantity;
      
@@ -479,6 +448,10 @@ export function OrderDialog({
   }
 
   return totalTax;
+ };
+
+ const calculateTotal = () => {
+  return calculateSubtotal() + calculateTax();
  };
 
  const calculateGrandTotal = () => {
