@@ -439,8 +439,8 @@ export function OrderDialog({
           itemTax = taxableAmount * taxRate;
         }
 
-        // Floor individual tax amount and add to array
-        individualTaxAmounts.push(Math.floor(itemTax));
+        // Truncate individual tax amount and add to array
+        individualTaxAmounts.push(Math.trunc(itemTax));
       });
     }
 
@@ -465,8 +465,8 @@ export function OrderDialog({
         itemTax = taxableAmount * taxRate;
       }
 
-      // Floor individual tax amount and add to array
-      individualTaxAmounts.push(Math.floor(itemTax));
+      // Truncate individual tax amount and add to array
+      individualTaxAmounts.push(Math.trunc(itemTax));
     });
 
     // Sum all individual rounded tax amounts
