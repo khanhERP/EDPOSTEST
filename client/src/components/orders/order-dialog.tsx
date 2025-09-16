@@ -451,60 +451,16 @@ export function OrderDialog({
  };
 
  const calculateTotal = () => {
-  let total = 0;
-
-  // Calculate total for current cart items using (price - discount per item) * (1 + taxRate)
-  cart.forEach((item) => {
-   const product = products?.find((p: Product) => p.id === item.product.id);
-   const basePrice = parseFloat(item.product.price);
-   const quantity = item.quantity;
-   const itemSubtotal = basePrice * quantity;
-   
-   // Calculate discount for this item proportionally
-   const totalBeforeDiscount = calculateSubtotal();
-   const itemDiscountAmount = totalBeforeDiscount > 0 
-     ? (discount * itemSubtotal) / totalBeforeDiscount 
-     : 0;
-   
-   // Apply tax rate to the discounted amount
-   const taxRate = product?.taxRate ? parseFloat(product.taxRate) / 100 : 0;
-   const itemAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
-   const itemTotal = itemAfterDiscount * (1 + taxRate);
-   
-   total += itemTotal;
-  });
-
-  // Calculate total for existing items in edit mode using same formula
-  if (mode === "edit" && existingItems.length > 0) {
-   existingItems.forEach((item) => {
-    const product = products?.find((p: Product) => p.id === item.productId);
-    const basePrice = Number(item.unitPrice || 0);
-    const quantity = Number(item.quantity || 0);
-    const itemSubtotal = basePrice * quantity;
-    
-    // Calculate discount for this item proportionally
-    const totalBeforeDiscount = calculateSubtotal();
-    const itemDiscountAmount = totalBeforeDiscount > 0 
-      ? (discount * itemSubtotal) / totalBeforeDiscount 
-      : 0;
-    
-    // Apply tax rate to the discounted amount
-    const taxRate = product?.taxRate ? parseFloat(product.taxRate) / 100 : 0;
-    const itemAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
-    const itemTotal = itemAfterDiscount * (1 + taxRate);
-    
-    total += itemTotal;
-   });
-  }
-
-  return total;
+  return calculateSubtotal() + calculateTax();
  };
 
  const calculateGrandTotal = () => {
-  const finalTotal = calculateTotal(); // calculateTotal now uses (price - discount) * (1 + taxRate)
+  const beforeDiscount = calculateTotal(); // calculateTotal now includes tax (subtotal + tax)
+  const finalTotal = Math.max(0, beforeDiscount - discount);
   console.log("💰 Order Dialog - Grand Total Calculation:", {
-   finalTotal: finalTotal,
+   subtotalPlusTax: beforeDiscount,
    discount: discount,
+   finalTotal: finalTotal,
   });
   return finalTotal;
  };
