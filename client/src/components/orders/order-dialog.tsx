@@ -128,31 +128,33 @@ export function OrderDialog({
           if (hasCustomerNameChange || hasCustomerCountChange || hasNewItems) {
             console.log(`📝 Updating order info for order ${existingOrder.id}`);
 
-            // Get values from display functions (what user sees on screen)
-            const finalSubtotal = calculateSubtotal();
-            const finalTax = calculateTax();
-            const finalTotal = calculateTotal();
-
-            console.log("💰 Using displayed totals:", {
+            // Use EXACT values displayed on screen - no recalculation
+            const displayedSubtotal = calculateSubtotal();
+            const displayedTax = calculateTax();
+            const displayedTotal = calculateTotal();
+            
+            // Ensure we're using exactly what the user sees on screen
+            console.log("💰 Using EXACT displayed values from screen:", {
               existingItemsCount: existingItems.length,
               newItemsCount: cart.length,
-              subtotal: finalSubtotal,
-              tax: finalTax,
-              discount: discount,
-              total: finalTotal,
-              source: "displayed_values"
+              displayedSubtotal: displayedSubtotal,
+              displayedTax: displayedTax,
+              displayedDiscount: discount,
+              displayedTotal: displayedTotal,
+              source: "exact_screen_display"
             });
 
+            // Send the exact displayed values to API without any modification
             const updateResponse = await apiRequest(
               "PUT",
               `/api/orders/${existingOrder.id}`,
               {
                 customerName: orderData.order.customerName,
                 customerCount: orderData.order.customerCount,
-                subtotal: finalSubtotal.toString(),
-                tax: finalTax.toString(),
-                discount: discount.toString(),
-                total: finalTotal.toString(),
+                subtotal: Math.floor(displayedSubtotal).toString(), // Ensure no decimal precision issues
+                tax: Math.floor(displayedTax).toString(),
+                discount: Math.floor(discount).toString(),
+                total: Math.floor(displayedTotal).toString(),
               },
             );
 
@@ -169,21 +171,19 @@ export function OrderDialog({
             return finalResult || existingOrder;
           }
         } else {
-          // Create mode - calculate with correct mapping
-          // Subtotal = tiền tạm tính (giá trước thuế * số lượng)
-          const subtotalAmount = cart.reduce(
-            (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
-            0,
-          );
+          // Create mode - use EXACT displayed values from screen
+          const displayedSubtotal = calculateSubtotal();
+          const displayedTax = calculateTax();
+          const displayedTotal = calculateTotal();
 
-          // Tax = thuế (sử dụng calculateTax function)
-          const taxAmount = calculateTax();
-
-          // Total = tổng tiền (subtotal + tax)
-          const totalAmount = subtotalAmount + taxAmount;
-
-          // Store total BEFORE discount subtraction (full order value)
-          const fullOrderTotal = totalAmount;
+          console.log("💰 Create mode - Using EXACT displayed values:", {
+            displayedSubtotal: displayedSubtotal,
+            displayedTax: displayedTax,
+            displayedDiscount: discount,
+            displayedTotal: displayedTotal,
+            cartItemsCount: cart.length,
+            source: "exact_screen_display_create_mode"
+          });
 
           const order = {
             orderNumber: `ORD-${Date.now()}`,
@@ -191,10 +191,10 @@ export function OrderDialog({
             employeeId: null, // Set to null since no employees exist
             customerName: customerName || null,
             customerCount: parseInt(customerCount) || 1,
-            subtotal: subtotalAmount.toString(),
-            tax: calculateTax().toString(),
-            discount: discount.toString(),
-            total: totalAmount.toString(), // Save total BEFORE discount subtraction
+            subtotal: Math.floor(displayedSubtotal).toString(), // Use exact displayed values
+            tax: Math.floor(displayedTax).toString(),
+            discount: Math.floor(discount).toString(),
+            total: Math.floor(displayedTotal).toString(),
             status: "served",
             paymentStatus: "pending",
             orderedAt: new Date().toISOString(),
@@ -702,9 +702,9 @@ export function OrderDialog({
         };
       });
 
-      console.log("Placing order:", { order, items });
+      console.log("Placing order with EXACT displayed values:", { order, items });
       console.log(
-        `💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, fullTotal=${fullOrderTotal}`,
+        `💰 Creating order with EXACT displayed totals: subtotal=${displayedSubtotal}, tax=${displayedTax}, discount=${discount}, total=${displayedTotal}`,
       );
       createOrderMutation.mutate({ order, items });
     }
