@@ -455,12 +455,10 @@ export function OrderDialog({
  };
 
  const calculateGrandTotal = () => {
-  const subtotal = calculateSubtotal();
-  const tax = calculateTax();
-  const finalTotal = Math.max(0, subtotal - discount - tax); // Subtract both discount and tax
+  const beforeDiscount = calculateTotal(); // calculateTotal now includes tax (subtotal + tax)
+  const finalTotal = Math.max(0, beforeDiscount - discount);
   console.log("💰 Order Dialog - Grand Total Calculation:", {
-   subtotal: subtotal,
-   tax: tax,
+   subtotalPlusTax: beforeDiscount,
    discount: discount,
    finalTotal: finalTotal,
   });
