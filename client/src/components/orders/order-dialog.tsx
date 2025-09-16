@@ -392,34 +392,28 @@ export function OrderDialog({
 
   const calculateTax = () => {
     let totalTax = 0;
-    const subtotal = calculateSubtotal();
 
-    // Calculate tax for items in the current cart
+    // Get total subtotal before discount for proportional calculation
+    let totalSubtotalBeforeDiscount = 0;
+    
+    // Add existing order items if in edit mode
+    if (
+      mode === "edit" &&
+      existingOrderItems &&
+      Array.isArray(existingOrderItems)
+    ) {
+      existingOrderItems.forEach((item) => {
+        const unitPrice = parseFloat(item.unitPrice);
+        const quantity = parseInt(item.quantity);
+        totalSubtotalBeforeDiscount += unitPrice * quantity;
+      });
+    }
+
+    // Add new cart items
     cart.forEach((item) => {
-      const product = products?.find((p: Product) => p.id === item.product.id);
-      let itemTax = 0;
-
-      // Thuế = (price - discount per item) * taxRate * quantity
-      if (product?.taxRate && parseFloat(product.taxRate) > 0) {
-        const basePrice = parseFloat(product.price);
-        const quantity = item.quantity;
-        const itemSubtotal = basePrice * quantity;
-
-        // Calculate discount for this item proportionally
-        const itemDiscountAmount =
-          subtotal > 0 ? (discount * itemSubtotal) / subtotal : 0;
-        const itemDiscountPerUnit = itemDiscountAmount / quantity;
-
-        // Tax = (price - discount per unit) * taxRate * quantity
-        const taxableAmountPerUnit = Math.max(
-          0,
-          basePrice - itemDiscountPerUnit,
-        );
-        const taxRate = parseFloat(product.taxRate) / 100;
-        itemTax = taxableAmountPerUnit * taxRate * quantity;
-      }
-
-      totalTax += itemTax;
+      const unitPrice = parseFloat(item.product.price);
+      const quantity = item.quantity;
+      totalSubtotalBeforeDiscount += unitPrice * quantity;
     });
 
     // Calculate tax for existing items in edit mode
@@ -428,29 +422,49 @@ export function OrderDialog({
         const product = products?.find((p: Product) => p.id === item.productId);
         let itemTax = 0;
 
-        // Thuế = (unitPrice - discount per item) * taxRate * quantity
         if (product?.taxRate && parseFloat(product.taxRate) > 0) {
           const basePrice = Number(item.unitPrice || 0);
           const quantity = Number(item.quantity || 0);
           const itemSubtotal = basePrice * quantity;
 
-          // Calculate discount for this item proportionally
-          const itemDiscountAmount =
-            subtotal > 0 ? (discount * itemSubtotal) / subtotal : 0;
-          const itemDiscountPerUnit = itemDiscountAmount / quantity;
+          // Calculate proportional discount for this item
+          const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
+            ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
+            : 0;
 
-          // Tax = (price - discount per unit) * taxRate * quantity
-          const taxableAmountPerUnit = Math.max(
-            0,
-            basePrice - itemDiscountPerUnit,
-          );
+          // Tax = (price * quantity - discount) * taxRate
+          const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
           const taxRate = parseFloat(product.taxRate) / 100;
-          itemTax = taxableAmountPerUnit * taxRate * quantity;
+          itemTax = taxableAmount * taxRate;
         }
 
         totalTax += itemTax;
       });
     }
+
+    // Calculate tax for items in the current cart
+    cart.forEach((item) => {
+      const product = products?.find((p: Product) => p.id === item.product.id);
+      let itemTax = 0;
+
+      if (product?.taxRate && parseFloat(product.taxRate) > 0) {
+        const basePrice = parseFloat(product.price);
+        const quantity = item.quantity;
+        const itemSubtotal = basePrice * quantity;
+
+        // Calculate proportional discount for this item
+        const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
+          ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
+          : 0;
+
+        // Tax = (price * quantity - discount) * taxRate
+        const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
+        const taxRate = parseFloat(product.taxRate) / 100;
+        itemTax = taxableAmount * taxRate;
+      }
+
+      totalTax += itemTax;
+    });
 
     return totalTax;
   };
@@ -1310,27 +1324,40 @@ export function OrderDialog({
                                   item.product.taxRate &&
                                   parseFloat(item.product.taxRate) > 0
                                 ) {
-                                  // Calculate tax using the same logic as calculateTax
                                   const itemSubtotal = basePrice * quantity;
-                                  const subtotal = calculateSubtotal();
+                                  
+                                  // Get total subtotal before discount for proportional calculation
+                                  let totalSubtotalBeforeDiscount = 0;
+                                  
+                                  // Add existing order items if in edit mode
+                                  if (
+                                    mode === "edit" &&
+                                    existingOrderItems &&
+                                    Array.isArray(existingOrderItems)
+                                  ) {
+                                    existingOrderItems.forEach((existingItem) => {
+                                      const unitPrice = parseFloat(existingItem.unitPrice);
+                                      const qty = parseInt(existingItem.quantity);
+                                      totalSubtotalBeforeDiscount += unitPrice * qty;
+                                    });
+                                  }
+
+                                  // Add new cart items
+                                  cart.forEach((cartItem) => {
+                                    const unitPrice = parseFloat(cartItem.product.price);
+                                    const qty = cartItem.quantity;
+                                    totalSubtotalBeforeDiscount += unitPrice * qty;
+                                  });
 
                                   // Calculate proportional discount for this item
-                                  const itemDiscountAmount =
-                                    subtotal > 0
-                                      ? (discount * itemSubtotal) / subtotal
-                                      : 0;
-                                  const itemDiscountPerUnit =
-                                    itemDiscountAmount / quantity;
+                                  const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
+                                    ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
+                                    : 0;
 
-                                  // Tax = (price - discount per unit) * taxRate * quantity
-                                  const taxableAmountPerUnit = Math.max(
-                                    0,
-                                    basePrice - itemDiscountPerUnit,
-                                  );
-                                  const taxRate =
-                                    parseFloat(item.product.taxRate) / 100;
-                                  taxAmount =
-                                    taxableAmountPerUnit * taxRate * quantity;
+                                  // Tax = (price * quantity - discount) * taxRate
+                                  const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
+                                  const taxRate = parseFloat(item.product.taxRate) / 100;
+                                  taxAmount = taxableAmount * taxRate;
                                 }
 
                                 return taxAmount > 0 ? (
