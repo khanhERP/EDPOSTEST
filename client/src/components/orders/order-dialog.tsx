@@ -427,18 +427,24 @@ export function OrderDialog({
    const product = products?.find((p: Product) => p.id === item.product.id);
    let itemTax = 0;
 
-   // Thuế = (after_tax_price - price) * quantity
-   if (
-    product?.afterTaxPrice &&
-    product.afterTaxPrice !== null &&
-    product.afterTaxPrice !== ""
-   ) {
-    const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
-    const preTaxPrice = parseFloat(product.price); // Giá trước thuế
-    const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
-    itemTax = taxPerUnit * item.quantity;
+   // Thuế = (price - discount per item) * taxRate * quantity
+   if (product?.taxRate && parseFloat(product.taxRate) > 0) {
+    const basePrice = parseFloat(product.price);
+    const quantity = item.quantity;
+    const itemSubtotal = basePrice * quantity;
+    
+    // Calculate discount for this item proportionally
+    const totalBeforeDiscount = calculateTotal() - calculateTax(); // Get current subtotal
+    const itemDiscountAmount = totalBeforeDiscount > 0 
+      ? (discount * itemSubtotal) / totalBeforeDiscount 
+      : 0;
+    const itemDiscountPerUnit = itemDiscountAmount / quantity;
+    
+    // Tax = (price - discount per unit) * taxRate * quantity
+    const taxableAmountPerUnit = Math.max(0, basePrice - itemDiscountPerUnit);
+    const taxRate = parseFloat(product.taxRate) / 100;
+    itemTax = taxableAmountPerUnit * taxRate * quantity;
    }
-   // Không có thuế nếu không có afterTaxPrice
 
    totalTax += itemTax;
   });
@@ -449,16 +455,23 @@ export function OrderDialog({
     const product = products?.find((p: Product) => p.id === item.productId);
     let itemTax = 0;
 
-    // Thuế = (after_tax_price - unitPrice) * quantity
-    if (
-     product?.afterTaxPrice &&
-     product.afterTaxPrice !== null &&
-     product.afterTaxPrice !== ""
-    ) {
-     const afterTaxPrice = parseFloat(product.afterTaxPrice);
-     const preTaxPrice = Number(item.unitPrice || 0); // Sử dụng unitPrice từ order item
-     const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice);
-     itemTax = taxPerUnit * item.quantity;
+    // Thuế = (unitPrice - discount per item) * taxRate * quantity
+    if (product?.taxRate && parseFloat(product.taxRate) > 0) {
+     const basePrice = Number(item.unitPrice || 0);
+     const quantity = Number(item.quantity || 0);
+     const itemSubtotal = basePrice * quantity;
+     
+     // Calculate discount for this item proportionally
+     const totalBeforeDiscount = calculateTotal() - calculateTax(); // Get current subtotal
+     const itemDiscountAmount = totalBeforeDiscount > 0 
+       ? (discount * itemSubtotal) / totalBeforeDiscount 
+       : 0;
+     const itemDiscountPerUnit = itemDiscountAmount / quantity;
+     
+     // Tax = (price - discount per unit) * taxRate * quantity
+     const taxableAmountPerUnit = Math.max(0, basePrice - itemDiscountPerUnit);
+     const taxRate = parseFloat(product.taxRate) / 100;
+     itemTax = taxableAmountPerUnit * taxRate * quantity;
     }
 
     totalTax += itemTax;
