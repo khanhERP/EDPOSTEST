@@ -805,7 +805,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       console.log("🎯 Table completePaymentMutation.onSuccess called");
 
       // Find the order to get its table ID for status update
-      const completedOrder = Array.isArray(orders) 
+      const completedOrder = Array.isArray(orders)
         ? orders.find((o: any) => o.id === variables.orderId)
         : null;
 
@@ -819,11 +819,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       if (completedOrder?.tableId) {
         try {
           // Check if there are any other unpaid orders on this table
-          const otherActiveOrders = Array.isArray(orders) 
-            ? orders.filter((o: any) => 
-                o.tableId === completedOrder.tableId && 
-                o.id !== variables.orderId && 
-                !["paid", "cancelled"].includes(o.status)
+          const otherActiveOrders = Array.isArray(orders)
+            ? orders.filter((o: any) =>
+                o.tableId === completedOrder.tableId &&
+                o.id !== variables.orderId &&
+                !["paid", "cancelled"].includes(o.status),
               )
             : [];
 
@@ -840,7 +840,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           // If no other unpaid orders, update table to available
           if (otherActiveOrders.length === 0) {
             console.log(`🔄 Updating table ${completedOrder.tableId} to available status`);
-            
+
             try {
               await apiRequest("PUT", `/api/tables/${completedOrder.tableId}/status`, {
                 status: "available"
@@ -1068,7 +1068,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     },
     onSuccess: async (data, variables) => {
       // Find the order to get its table ID for status update
-      const completedOrder = Array.isArray(orders) 
+      const completedOrder = Array.isArray(orders)
         ? orders.find((o: any) => o.id === variables.orderId)
         : null;
 
@@ -1082,11 +1082,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       if (completedOrder?.tableId) {
         try {
           // Check if there are any other unpaid orders on this table
-          const otherActiveOrders = Array.isArray(orders) 
-            ? orders.filter((o: any) => 
-                o.tableId === completedOrder.tableId && 
-                o.id !== variables.orderId && 
-                !["paid", "cancelled"].includes(o.status)
+          const otherActiveOrders = Array.isArray(orders)
+            ? orders.filter((o: any) =>
+                o.tableId === completedOrder.tableId &&
+                o.id !== variables.orderId &&
+                !["paid", "cancelled"].includes(o.status),
               )
             : [];
 
@@ -1098,7 +1098,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           // If no other unpaid orders, update table to available
           if (otherActiveOrders.length === 0) {
             console.log(`🔄 Updating table ${completedOrder.tableId} to available after points payment`);
-            
+
             try {
               await apiRequest("PUT", `/api/tables/${completedOrder.tableId}/status`, {
                 status: "available"
@@ -1323,7 +1323,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     },
     onSuccess: async (data, variables) => {
       // Find the order to get its table ID for status update
-      const completedOrder = Array.isArray(orders) 
+      const completedOrder = Array.isArray(orders)
         ? orders.find((o: any) => o.id === variables.orderId)
         : null;
 
@@ -1337,11 +1337,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       if (completedOrder?.tableId) {
         try {
           // Check if there are any other unpaid orders on this table
-          const otherActiveOrders = Array.isArray(orders) 
-            ? orders.filter((o: any) => 
-                o.tableId === completedOrder.tableId && 
-                o.id !== variables.orderId && 
-                !["paid", "cancelled"].includes(o.status)
+          const otherActiveOrders = Array.isArray(orders)
+            ? orders.filter((o: any) =>
+                o.tableId === completedOrder.tableId &&
+                o.id !== variables.orderId &&
+                !["paid", "cancelled"].includes(o.status),
               )
             : [];
 
@@ -1353,7 +1353,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           // If no other unpaid orders, update table to available
           if (otherActiveOrders.length === 0) {
             console.log(`🔄 Updating table ${completedOrder.tableId} to available after mixed payment`);
-            
+
             try {
               await apiRequest("PUT", `/api/tables/${completedOrder.tableId}/status`, {
                 status: "available"
@@ -2209,7 +2209,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         calculatedSubtotal += basePrice * quantity;
 
         // Calculate tax using same logic as Order Details
-        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
           calculatedTax += Math.floor(taxPerUnit * quantity);
@@ -2255,9 +2259,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         tax: Math.floor(calculatedTax).toString(),
         total: finalTotal.toString(),
         discount: orderDiscount.toString(),
+        exactTotal: Math.floor(finalTotal),
         exactSubtotal: Math.floor(calculatedSubtotal),
         exactTax: Math.floor(calculatedTax),
-        exactTotal: finalTotal,
         exactDiscount: orderDiscount,
       };
 
@@ -3189,8 +3193,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         }
 
                         return {
-                          id: item.productId,
-                          name:
+                          id: item.id,
+                          productId: item.productId,
+                          productName:
                             item.productName || getProductName(item.productId),
                           price: parseFloat(item.price || item.unitPrice),
                           quantity: item.quantity,
