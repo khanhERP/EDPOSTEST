@@ -393,6 +393,25 @@ export function OrderDialog({
   const calculateTax = () => {
     let totalTax = 0;
 
+    // Calculate total subtotal before discount for proportional calculation
+    let totalSubtotalBeforeDiscount = 0;
+    
+    // Add existing order items if in edit mode
+    if (mode === "edit" && existingItems.length > 0) {
+      existingItems.forEach((item) => {
+        const unitPrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        totalSubtotalBeforeDiscount += unitPrice * quantity;
+      });
+    }
+
+    // Add new cart items
+    cart.forEach((item) => {
+      const unitPrice = parseFloat(item.product.price);
+      const quantity = item.quantity;
+      totalSubtotalBeforeDiscount += unitPrice * quantity;
+    });
+
     // Calculate tax for existing items in edit mode
     if (mode === "edit" && existingItems.length > 0) {
       existingItems.forEach((item) => {
@@ -405,16 +424,8 @@ export function OrderDialog({
           const itemSubtotal = basePrice * quantity;
 
           // Calculate proportional discount for this item
-          const allItems = [...existingItems, ...cart.map(cartItem => ({
-            unitPrice: cartItem.product.price,
-            quantity: cartItem.quantity
-          }))];
-          
-          const totalBeforeDiscount = allItems.reduce((sum, allItem) => 
-            sum + (Number(allItem.unitPrice) * Number(allItem.quantity)), 0);
-          
-          const itemDiscountAmount = totalBeforeDiscount > 0 
-            ? (discount * itemSubtotal) / totalBeforeDiscount 
+          const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
+            ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
             : 0;
 
           // Tax = (price * quantity - discount) * taxRate
@@ -438,16 +449,8 @@ export function OrderDialog({
         const itemSubtotal = basePrice * quantity;
 
         // Calculate proportional discount for this item
-        const allItems = [...existingItems, ...cart.map(cartItem => ({
-          unitPrice: cartItem.product.price,
-          quantity: cartItem.quantity
-        }))];
-        
-        const totalBeforeDiscount = allItems.reduce((sum, allItem) => 
-          sum + (Number(allItem.unitPrice) * Number(allItem.quantity)), 0);
-        
-        const itemDiscountAmount = totalBeforeDiscount > 0 
-          ? (discount * itemSubtotal) / totalBeforeDiscount 
+        const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
+          ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
           : 0;
 
         // Tax = (price * quantity - discount) * taxRate
