@@ -1522,6 +1522,19 @@ export function OrderDialog({
           {Math.floor(calculateTax()).toLocaleString()} ₫
          </span>
         </div>
+        {discount > 0 && (
+         <>
+          <div className="w-px h-4 bg-gray-300"></div>
+          <div className="flex items-center gap-2">
+           <span className="text-gray-600">
+            {t("reports.discount")}
+           </span>
+           <span className="font-medium text-red-600">
+            -{Math.floor(discount).toLocaleString()} ₫
+           </span>
+          </div>
+         </>
+        )}
         <div className="w-px h-4 bg-gray-300"></div>
         <div className="flex items-center gap-2">
          <span className="text-gray-600 font-bold">
@@ -1530,30 +1543,7 @@ export function OrderDialog({
          <span className="font-bold text-lg text-blue-600">
           {Math.floor(calculateGrandTotal()).toLocaleString()} ₫
          </span>
-        </div></div>
-
-       {/* Action button */}
-       <Button
-        onClick={handlePlaceOrder}
-        disabled={createOrderMutation.isPending}
-        className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex-shrink-0"
-        size="lg"
-       >
-        {createOrderMutation.isPending
-         ? mode === "edit"
-          ? t("orders.updating")
-          : t("tables.placing")
-         : mode === "edit"
-          ? t("orders.updateOrder")
-          : t("tables.placeOrder")}
-       </Button>
-      </div>
-     </DialogFooter>
-    )}
-   </DialogContent>
-  </Dialog>
- );
-}
+        </div>
        </div>
 
        {/* Action button */}
