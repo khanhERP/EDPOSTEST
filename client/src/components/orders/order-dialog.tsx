@@ -201,15 +201,30 @@ export function OrderDialog({
       if (mode === "edit" && existingOrder?.id) {
         console.log("🔄 Force refetching order items for order:", existingOrder.id);
         try {
+          // Clear existing cache for this specific order items
+          queryClient.removeQueries({ 
+            queryKey: ["/api/order-items", existingOrder.id] 
+          });
+          
           // Force fresh fetch of order items
-          await queryClient.fetchQuery({
+          const freshOrderItems = await queryClient.fetchQuery({
             queryKey: ["/api/order-items", existingOrder.id],
             queryFn: async () => {
               const response = await apiRequest("GET", `/api/order-items/${existingOrder.id}`);
-              return response.json();
+              const data = await response.json();
+              console.log("🔄 Fresh order items fetched:", data);
+              return data;
             },
             staleTime: 0, // Force fresh data
+            gcTime: 0, // Don't cache
           });
+          
+          // Update existing items state immediately
+          if (freshOrderItems && Array.isArray(freshOrderItems)) {
+            setExistingItems(freshOrderItems);
+            console.log("✅ Existing items state updated with fresh data");
+          }
+          
           console.log("✅ Order items refetched successfully");
         } catch (error) {
           console.error("❌ Error refetching order items:", error);
