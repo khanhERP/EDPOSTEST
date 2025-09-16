@@ -688,40 +688,11 @@ export function OrderManagement() {
     };
   }, [selectedOrder, orderItems, products]);
 
-  // Function to get order total - use correct final total with discount applied
+  // Function to get order total - simply return stored total from database
   const getOrderTotal = React.useCallback((order: Order) => {
-    // For completed orders (paid/cancelled), always use stored total as-is
-    if (order.status === 'paid' || order.status === 'cancelled') {
-      const storedTotal = Math.floor(Number(order.total || 0));
-      console.log(`💰 Final total for completed order ${order.orderNumber}: ${storedTotal}`);
-      return storedTotal;
-    }
-
-    // For active orders, calculate from base total and apply discount
-    let baseTotal = 0;
-
-    // Priority 1: API calculated total (most accurate)
-    const apiCalculatedTotal = (order as any).calculatedTotal;
-    if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
-      baseTotal = Math.floor(Number(apiCalculatedTotal));
-    }
-    // Priority 2: Cached calculated total (for active orders)
-    else if (calculatedTotals.has(order.id)) {
-      baseTotal = calculatedTotals.get(order.id)!;
-    }
-    // Priority 3: Stored total as fallback
-    else {
-      baseTotal = Math.floor(Number(order.total || 0));
-    }
-
-    // Apply discount to get final total
-    const discount = Math.floor(Number(order.discount || 0));
-    const finalTotal = Math.max(0, baseTotal - discount);
-
-    console.log(`💰 Order ${order.orderNumber} (${order.status}) - base: ${baseTotal}, discount: ${discount}, final: ${finalTotal}`);
-
-    return finalTotal;
-  }, [calculatedTotals]);
+    const storedTotal = Math.floor(Number(order.total || 0));
+    return storedTotal;
+  }, []);
 
   const formatTime = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
