@@ -403,13 +403,13 @@ export function OrderDialog({
     const basePrice = parseFloat(product.price);
     const quantity = item.quantity;
     const itemSubtotal = basePrice * quantity;
-    
+
     // Calculate discount for this item proportionally
-    const itemDiscountAmount = subtotal > 0 
-      ? (discount * itemSubtotal) / subtotal 
-      : 0;
+    const itemDiscountAmount = subtotal > 0
+     ? (discount * itemSubtotal) / subtotal
+     : 0;
     const itemDiscountPerUnit = itemDiscountAmount / quantity;
-    
+
     // Tax = (price - discount per unit) * taxRate * quantity
     const taxableAmountPerUnit = Math.max(0, basePrice - itemDiscountPerUnit);
     const taxRate = parseFloat(product.taxRate) / 100;
@@ -430,13 +430,13 @@ export function OrderDialog({
      const basePrice = Number(item.unitPrice || 0);
      const quantity = Number(item.quantity || 0);
      const itemSubtotal = basePrice * quantity;
-     
+
      // Calculate discount for this item proportionally
-     const itemDiscountAmount = subtotal > 0 
-       ? (discount * itemSubtotal) / subtotal 
-       : 0;
+     const itemDiscountAmount = subtotal > 0
+      ? (discount * itemSubtotal) / subtotal
+      : 0;
      const itemDiscountPerUnit = itemDiscountAmount / quantity;
-     
+
      // Tax = (price - discount per unit) * taxRate * quantity
      const taxableAmountPerUnit = Math.max(0, basePrice - itemDiscountPerUnit);
      const taxRate = parseFloat(product.taxRate) / 100;
@@ -699,8 +699,8 @@ export function OrderDialog({
      <DialogDescription>
       {mode === "edit"
        ? t("orders.editOrderDesc").replace(
-         "{orderNumber}",
-         existingOrder?.orderNumber || "",
+        "{orderNumber}",
+        existingOrder?.orderNumber || "",
         )
        : `${t("tables.tableCapacity")}: ${table.capacity}${t("orders.people")} | ${t("tables.selectMenuToOrder")}`}
      </DialogDescription>
@@ -1433,7 +1433,7 @@ export function OrderDialog({
         </div>
         <div className="w-px h-4 bg-gray-300"></div>
         <div className="flex items-center gap-2">
-         <span className="text-gray-600">{t("orders.tax")}</span>
+         <span className="text-gray-600">Thuế</span>
          <span className="font-medium">
           {Math.floor(calculateTax()).toLocaleString()} ₫
          </span>
