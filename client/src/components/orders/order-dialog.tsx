@@ -120,28 +120,28 @@ export function OrderDialog({
             );
           }
 
-          // Step 2: Use currently displayed values instead of recalculating
+          // Step 2: Use EXACT displayed values from screen (like create mode)
           console.log(
-            `📝 Using currently displayed values for order ${existingOrder.id}`,
+            `📝 Using EXACT displayed values for order ${existingOrder.id}`,
           );
 
-          // Get values from display functions (what user sees on screen)
-          const finalSubtotal = calculateSubtotal();
-          const finalTax = calculateTax();  
-          const finalTotal = calculateTotal();
+          // Get EXACT values that user sees on screen from footer calculations
+          const displayedSubtotal = Math.floor(calculateSubtotal());
+          const displayedTax = Math.floor(calculateTax());  
+          const displayedTotal = Math.floor(calculateTotal());
 
-          console.log("💰 Using displayed totals:", {
+          console.log("💰 Edit mode - Using EXACT displayed values from screen:", {
             existingItemsCount: existingItems.length,
             newItemsCount: cart.length,
-            subtotal: finalSubtotal,
-            tax: finalTax,
-            discount: discount,
-            total: finalTotal,
-            source: "displayed_values"
+            displayedSubtotal: displayedSubtotal,
+            displayedTax: displayedTax,
+            displayedDiscount: Math.floor(discount),
+            displayedTotal: displayedTotal,
+            source: "exact_screen_display_edit_mode"
           });
 
           console.log(
-            `💰 Saving totals: subtotal=${finalSubtotal}, tax=${finalTax}, discount=${discount}, total=${finalTotal}`,
+            `💰 Edit mode - Saving EXACT displayed totals: subtotal=${displayedSubtotal}, tax=${displayedTax}, discount=${Math.floor(discount)}, total=${displayedTotal}`,
           );
           const updateResponse = await apiRequest(
             "PUT",
@@ -149,10 +149,10 @@ export function OrderDialog({
             {
               customerName: orderData.order.customerName,
               customerCount: orderData.order.customerCount,
-              subtotal: finalSubtotal.toString(),
-              tax: finalTax.toString(),
-              discount: discount.toString(),
-              total: finalTotal.toString(),
+              subtotal: displayedSubtotal.toString(), // Use exact displayed values
+              tax: displayedTax.toString(),
+              discount: Math.floor(discount).toString(),
+              total: displayedTotal.toString(),
             },
           );
 
