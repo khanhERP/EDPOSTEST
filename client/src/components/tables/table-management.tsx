@@ -66,6 +66,28 @@ export function TableManagement() {
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [orderForPayment, setOrderForPayment] = useState<any | null>(null);
+  const [orderForEInvoice, setOrderForEInvoice] = useState<any>(null);
+  const [paymentMethodsOpen, setPaymentMethodsOpen] = useState(false);
+  const [showQRPayment, setShowQRPayment] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
+  const [pointsPaymentOpen, setPointsPaymentOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [pointsAmount, setPointsAmount] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
+  const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
 
   const { data: tables, isLoading } = useQuery({
     queryKey: ["/api/tables"],
