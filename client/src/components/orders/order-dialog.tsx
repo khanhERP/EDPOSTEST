@@ -1263,16 +1263,100 @@ export function OrderDialog({
                 <Plus className="w-3 h-3" />
                </Button>
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 space-y-1">
                <div>
                 {t("tables.unitPrice")}:{" "}
                 {Number(item.product.price).toLocaleString()} ₫
                </div>
-               {item.product.taxRate && (
-                <div>
-                 Thuế: {item.product.taxRate}%
-                </div>
-               )}
+               {(() => {
+                // Calculate tax amount for this item
+                const basePrice = Number(item.product.price);
+                const quantity = item.quantity;
+                let taxAmount = 0;
+
+                if (item.product.taxRate && parseFloat(item.product.taxRate) > 0) {
+                 // Calculate tax using the same logic as calculateTax
+                 const itemSubtotal = basePrice * quantity;
+                 const subtotal = calculateSubtotal();
+                 
+                 // Calculate proportional discount for this item
+                 const itemDiscountAmount = subtotal > 0 ? (discount * itemSubtotal) / subtotal : 0;
+                 const itemDiscountPerUnit = itemDiscountAmount / quantity;
+                 
+                 // Tax = (price - discount per unit) * taxRate * quantity
+                 const taxableAmountPerUnit = Math.max(0, basePrice - itemDiscountPerUnit);
+                 const taxRate = parseFloat(item.product.taxRate) / 100;
+                 taxAmount = taxableAmountPerUnit * taxRate * quantity;
+                }
+
+                return taxAmount > 0 ? (
+                 <div>
+                  Thuế: {Math.floor(taxAmount).toLocaleString()} ₫
+                 </div>
+                ) : null;
+               })()}
+               {(() => {
+                // Calculate total after discount for this item
+                const basePrice = Number(item.product.price);
+                const quantity = item.quantity;
+                const itemSubtotal = basePrice * quantity;
+                
+                // Calculate tax
+                let taxAmount = 0;
+                if (item.product.taxRate && parseFloat(item.product.taxRate) > 0) {
+                 const subtotal = calculateSubtotal();
+                 const itemDiscountAmount = subtotal > 0 ? (discount * itemSubtotal) / subtotal : 0;
+                 const itemDiscountPerUnit = itemDiscountAmount / quantity;
+                 const taxableAmountPerUnit = Math.max(0, basePrice - itemDiscountPerUnit);
+                 const taxRate = parseFloat(item.product.taxRate) / 100;
+                 taxAmount = taxableAmountPerUnit * taxRate * quantity;
+                }
+
+                // Calculate discount for this item
+                let itemDiscountAmount = 0;
+                if (discount > 0) {
+                 const allItems = [
+                  ...existingItems,
+                  ...cart.map((cartItem) => ({
+                   unitPrice: cartItem.product.price,
+                   quantity: cartItem.quantity,
+                  })),
+                 ];
+
+                 const currentCartIndex = cart.findIndex(
+                  (cartItem) => cartItem.product.id === item.product.id,
+                 );
+                 const currentOverallIndex = existingItems.length + currentCartIndex;
+                 const isLastItem = currentOverallIndex === allItems.length - 1;
+
+                 if (isLastItem) {
+                  let previousDiscounts = 0;
+                  const totalBeforeDiscount = calculateTotal() - calculateTax();
+
+                  for (let i = 0; i < allItems.length - 1; i++) {
+                   const prevItemSubtotal = Number(allItems[i].unitPrice || 0) * Number(allItems[i].quantity || 0);
+                   const prevItemDiscount = totalBeforeDiscount > 0
+                    ? Math.floor((discount * prevItemSubtotal) / totalBeforeDiscount)
+                    : 0;
+                   previousDiscounts += prevItemDiscount;
+                  }
+                  itemDiscountAmount = discount - previousDiscounts;
+                 } else {
+                  const totalBeforeDiscount = calculateTotal() - calculateTax();
+                  itemDiscountAmount = totalBeforeDiscount > 0
+                   ? Math.floor((discount * itemSubtotal) / totalBeforeDiscount)
+                   : 0;
+                 }
+                }
+
+                const finalTotal = itemSubtotal + taxAmount - itemDiscountAmount;
+                
+                return (
+                 <div className="font-medium text-blue-600">
+                  Tổng: {Math.floor(finalTotal).toLocaleString()} ₫
+                 </div>
+                );
+               })()}
               </div>
              </div>
 
