@@ -120,87 +120,32 @@ export function OrderDialog({
             );
           }
 
-          // Step 2: Calculate correct totals including existing items and new items
+          // Step 2: Use existing order data instead of recalculating
           console.log(
-            `📝 Calculating complete order totals for order ${existingOrder.id}`,
+            `📝 Using existing order data for order ${existingOrder.id} - no recalculation needed`,
           );
 
-          // Calculate totals for ALL items (existing + new)
-          let totalSubtotal = 0;
-          let totalTax = 0;
+          // Use existing order totals from database
+          const existingSubtotal = parseFloat(existingOrder.subtotal || "0");
+          const existingTax = parseFloat(existingOrder.tax || "0");
+          const existingTotal = parseFloat(existingOrder.total || "0");
 
-          // Add existing items to calculation
-          if (existingItems.length > 0) {
-            existingItems.forEach((item) => {
-              const unitPrice = Number(item.unitPrice || 0);
-              const quantity = Number(item.quantity || 0);
-
-              // Subtotal (tiền tạm tính)
-              totalSubtotal += unitPrice * quantity;
-
-              // Tax calculation for existing items
-              const product = products?.find(
-                (p: Product) => p.id === item.productId,
-              );
-              if (
-                product?.afterTaxPrice &&
-                product.afterTaxPrice !== null &&
-                product.afterTaxPrice !== ""
-              ) {
-                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-                totalTax += taxPerUnit * quantity;
-              }
-            });
-          }
-
-          // Add new cart items to calculation
-          if (cart.length > 0) {
-            cart.forEach((item) => {
-              const unitPrice = parseFloat(item.product.price);
-              const quantity = item.quantity;
-
-              // Subtotal (tiền tạm tính)
-              totalSubtotal += unitPrice * quantity;
-
-              // Tax calculation for new items
-              const product = products?.find(
-                (p: Product) => p.id === item.product.id,
-              );
-              if (
-                product?.afterTaxPrice &&
-                product.afterTaxPrice !== null &&
-                product.afterTaxPrice !== ""
-              ) {
-                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-                totalTax += taxPerUnit * quantity;
-              }
-            });
-          }
-
-          // Calculate totals - total = subtotal + tax (discount stored separately)
-          const totalAmount = totalSubtotal + totalTax;
-
-          console.log("💰 Complete order totals calculated:", {
+          console.log("💰 Using existing order totals:", {
             existingItemsCount: existingItems.length,
             newItemsCount: cart.length,
-            subtotal: totalSubtotal,
-            tax: totalTax,
+            subtotal: existingSubtotal,
+            tax: existingTax,
             discount: discount,
-            total: totalAmount,
+            total: existingTotal,
           });
 
-          // Step 3: Update order with complete calculated totals (total = subtotal + tax)
+          // Step 3: Update order with existing data (no recalculation)
           console.log(
-            `📝 Updating order with complete calculated totals for order ${existingOrder.id}`,
+            `📝 Updating order with existing totals for order ${existingOrder.id}`,
           );
 
-          // Use the same tax calculation function to ensure consistency
-          const calculatedTax = calculateTax();
-
           console.log(
-            `💰 Saving totals: subtotal=${totalSubtotal}, tax=${calculatedTax}, discount=${discount}, total=${totalAmount}`,
+            `💰 Saving existing totals: subtotal=${existingSubtotal}, tax=${existingTax}, discount=${discount}, total=${existingTotal}`,
           );
           const updateResponse = await apiRequest(
             "PUT",
@@ -208,10 +153,10 @@ export function OrderDialog({
             {
               customerName: orderData.order.customerName,
               customerCount: orderData.order.customerCount,
-              subtotal: totalSubtotal.toString(),
-              tax: calculatedTax.toString(),
+              subtotal: existingSubtotal.toString(),
+              tax: existingTax.toString(),
               discount: discount.toString(),
-              total: (totalSubtotal + calculatedTax).toString(), // total = subtotal + tax
+              total: existingTotal.toString(), // use existing total
             },
           );
 
