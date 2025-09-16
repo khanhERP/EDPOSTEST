@@ -2625,16 +2625,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             const total = Math.floor(
                               Number(activeOrder.total || 0),
                             );
-                            const discount = Math.floor(
-                              Number(activeOrder.discount || 0),
-                            );
-
-                            // Always show final total after discount for all orders
-                            const finalTotal = Math.max(0, total - discount);
+                            
+                            // Show original total without applying discount
                             console.log(
-                              `💰 Table order ${activeOrder.orderNumber} - final total after discount: ${finalTotal} (original: ${total}, discount: ${discount})`,
+                              `💰 Table order ${activeOrder.orderNumber} - showing original total: ${total}`
                             );
-                            return finalTotal.toLocaleString("vi-VN");
+                            return total.toLocaleString("vi-VN");
                           })()}{" "}
                           ₫
                         </div>
