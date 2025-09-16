@@ -976,14 +976,11 @@ export function ReceiptModal({
                           ₫
                         </div>
                         {/* Display individual item discount from database */}
-                        {(() => {
-                          const itemDiscount = Math.floor(parseFloat(item.discount || "0"));
-                          return itemDiscount > 0 ? (
-                            <div className="text-xs text-red-600">
-                              {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
-                            </div>
-                          ) : null;
-                        })()}
+                        {item.discount && Math.floor(parseFloat(item.discount)) > 0 && (
+                          <div className="text-xs text-red-600">
+                            Giảm giá -{Math.floor(parseFloat(item.discount)).toLocaleString("vi-VN")} ₫
+                          </div>
+                        )}
                       </div>
                       <div>
                         {Math.floor(actualTotal).toLocaleString("vi-VN")} ₫
@@ -996,86 +993,27 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               <div className="flex justify-between text-sm">
-                <span>{t("pos.subtotal")}</span>
+                <span>Tạm tính:</span>
                 <span>
-                  {Math.round(
-                    parseFloat(receipt.subtotal || "0"),
-                  ).toLocaleString("vi-VN")}{" "}
-                  ₫
+                  {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>{t("pos.tax")}</span>
+                <span>Thuế:</span>
                 <span>
-                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString(
-                    "vi-VN",
-                  )}{" "}
-                  ₫
+                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
-              {(() => {
-                // Check for discount from multiple sources with priority
-                let displayDiscount = 0;
-                console.log("receipt_trường", receipt);
-                // Priority 1: exactDiscount (most accurate)
-                if (
-                  receipt.exactDiscount !== undefined &&
-                  receipt.exactDiscount !== null &&
-                  parseFloat(receipt.exactDiscount.toString()) > 0
-                ) {
-                  displayDiscount = parseFloat(
-                    receipt.exactDiscount.toString(),
-                  );
-                  console.log(
-                    "📄 Receipt Modal: Using exactDiscount:",
-                    displayDiscount,
-                  );
-                }
-                // Priority 2: discount property
-                else if (
-                  receipt.discount !== undefined &&
-                  receipt.discount !== null &&
-                  parseFloat(receipt.discount.toString()) > 0
-                ) {
-                  displayDiscount = parseFloat(receipt.discount.toString());
-                  console.log(
-                    "📄 Receipt Modal: Using discount:",
-                    displayDiscount,
-                  );
-                }
-
-                return (
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>{t("common.discount")}</span>
-                    <span className="font-medium">
-                      -
-                      {Math.floor(displayDiscount || "0").toLocaleString(
-                        "vi-VN",
-                      )}{" "}
-                      ₫
-                    </span>
-                  </div>
-                );
-              })()}
+              {parseFloat(receipt.discount || "0") > 0 && (
+                <div className="flex justify-between text-sm text-red-600">
+                  <span>Giảm giá</span>
+                  <span>-{Math.floor(parseFloat(receipt.discount || "0")).toLocaleString("vi-VN")} ₫</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold">
-                <span>{t("pos.total")}</span>
+                <span>Tổng cộng:</span>
                 <span>
-                  {(() => {
-                    // Use EXACT database total directly without calculation
-                    // This ensures exact match with what's stored in database
-                    const dbTotal = parseFloat(receipt.total || "0");
-                    console.log(
-                      "📄 Receipt Modal: Using EXACT database total:",
-                      {
-                        rawTotal: receipt.total,
-                        parsedTotal: dbTotal,
-                        receiptId: receipt.id,
-                        source: "database_exact",
-                      },
-                    );
-                    return Math.round(dbTotal).toLocaleString("vi-VN");
-                  })()}{" "}
-                  ₫
+                  {Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
             </div>
@@ -1248,14 +1186,11 @@ export function ReceiptModal({
                           ₫
                         </div>
                         {/* Display individual item discount from database for preview */}
-                        {(() => {
-                          const itemDiscount = Math.floor(parseFloat(item.discount || "0"));
-                          return itemDiscount > 0 ? (
-                            <div className="text-xs text-red-600">
-                              {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
-                            </div>
-                          ) : null;
-                        })()}
+                        {item.discount && Math.floor(parseFloat(item.discount)) > 0 && (
+                          <div className="text-xs text-red-600">
+                            Giảm giá -{Math.floor(parseFloat(item.discount)).toLocaleString("vi-VN")} ₫
+                          </div>
+                        )}
                       </div>
                       <div>
                         {Math.floor(
@@ -1519,26 +1454,23 @@ export function ReceiptModal({
                   return (
                     <>
                       <div className="flex justify-between text-sm">
-                        <span>{t("pos.subtotal")}</span>
+                        <span>Tạm tính:</span>
                         <span>
-                          {Math.round(subtotal).toLocaleString("vi-VN")} ₫
+                          {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span>{t("pos.tax")}</span>
+                        <span>Thuế:</span>
                         <span>{Math.floor(tax).toLocaleString("vi-VN")} ₫</span>
                       </div>
                       {finalDiscount > 0 && (
                         <div className="flex justify-between text-sm text-red-600">
-                          <span>{t("common.discount")}</span>
-                          <span className="font-medium">
-                            -{Math.floor(finalDiscount).toLocaleString("vi-VN")}{" "}
-                            ₫
-                          </span>
+                          <span>Giảm giá</span>
+                          <span>-{Math.floor(finalDiscount).toLocaleString("vi-VN")} ₫</span>
                         </div>
                       )}
                       <div className="flex justify-between font-bold">
-                        <span>{t("pos.total")}</span>
+                        <span>Tổng cộng:</span>
                         <span>
                           {(() => {
                             // For order-management preview: use exact total from orderForPayment
@@ -1553,13 +1485,13 @@ export function ReceiptModal({
                               const exactTotal =
                                 orderForPayment.exactTotal ||
                                 orderForPayment.total;
-                              return Math.round(
+                              return Math.floor(
                                 parseFloat(exactTotal || "0"),
                               ).toLocaleString("vi-VN");
                             }
 
                             // For other screens: use calculated finalTotal
-                            return Math.round(finalTotal).toLocaleString(
+                            return Math.floor(finalTotal).toLocaleString(
                               "vi-VN",
                             );
                           })()}{" "}
@@ -1595,81 +1527,27 @@ export function ReceiptModal({
                   return (
                     <>
                       <div className="flex justify-between text-sm">
-                        <span>{t("pos.subtotal")}</span>
+                        <span>Tạm tính:</span>
                         <span>
-                          {Math.round(dbSubtotal).toLocaleString("vi-VN")} ₫
+                          {Math.floor(dbSubtotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span>{t("pos.tax")}</span>
+                        <span>Thuế:</span>
                         <span>
                           {Math.floor(dbTax).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
-                      {(() => {
-                        // Check for discount from multiple sources with priority
-                        let displayDiscount = 0;
-                        console.log("receipt_trường 2", receipt);
-                        // Priority 1: exactDiscount (most accurate)
-                        if (
-                          receipt.exactDiscount !== undefined &&
-                          receipt.exactDiscount !== null &&
-                          parseFloat(receipt.exactDiscount.toString()) > 0
-                        ) {
-                          displayDiscount = parseFloat(
-                            receipt.exactDiscount.toString(),
-                          );
-                          console.log(
-                            "📄 Receipt Modal: Using exactDiscount Print Invoice:",
-                            displayDiscount,
-                          );
-                        }
-                        // Priority 2: discount property
-                        else if (
-                          receipt.discount !== undefined &&
-                          receipt.discount !== null &&
-                          parseFloat(receipt.discount.toString()) > 0
-                        ) {
-                          displayDiscount = parseFloat(
-                            receipt.discount.toString(),
-                          );
-                          console.log(
-                            "📄 Receipt Modal: Using discount:",
-                            displayDiscount,
-                          );
-                        }
-
-                        return (
-                          <div className="flex justify-between text-sm text-red-600">
-                            <span>{t("common.discount")}</span>
-                            <span className="font-medium">
-                              -
-                              {Math.floor(displayDiscount).toLocaleString(
-                                "vi-VN",
-                              )}{" "}
-                              ₫
-                            </span>
-                          </div>
-                        );
-                      })()}
+                      {dbDiscount > 0 && (
+                        <div className="flex justify-between text-sm text-red-600">
+                          <span>Giảm giá</span>
+                          <span>-{Math.floor(dbDiscount).toLocaleString("vi-VN")} ₫</span>
+                        </div>
+                      )}
                       <div className="flex justify-between font-bold">
-                        <span>{t("pos.total")}</span>
+                        <span>Tổng cộng:</span>
                         <span>
-                          {(() => {
-                            // Use EXACT database total directly - no calculation
-                            const dbTotal = parseFloat(receipt.total || "0");
-                            console.log(
-                              "📄 Receipt Modal (Final): Using EXACT database total:",
-                              {
-                                rawTotal: receipt.total,
-                                parsedTotal: dbTotal,
-                                receiptId: receipt.id,
-                                mode: "final_receipt",
-                              },
-                            );
-                            return Math.round(dbTotal).toLocaleString("vi-VN");
-                          })()}{" "}
-                          ₫
+                          {Math.floor(dbTotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     </>
