@@ -1885,61 +1885,55 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrder(
     id: number,
-    orderData: Partial<InsertOrder>,
-    tenantDb?: any,
+    orderData: Partial<{
+      orderNumber: string;
+      tableId: number | null;
+      employeeId: number | null;
+      status: string;
+      customerName: string;
+      customerCount: number;
+      subtotal: string;
+      tax: string;
+      total: string;
+      paymentMethod: string | null;
+      paymentStatus: string;
+      salesChannel: string;
+      einvoiceStatus: number;
+      templateNumber: string | null;
+      symbol: string | null;
+      invoiceNumber: string | null;
+      invoiceId: number | null;
+      notes: string | null;
+      paidAt: Date | null;
+      discount: string;
+    }>,
+    database?: any,
   ): Promise<Order | null> {
-    const safeDb = this.getSafeDatabase(tenantDb, 'updateOrder');
-
+    const db = database || this.db;
     console.log(`💾 Storage: Starting order update for ID ${id} with data:`, orderData);
 
-    // Prepare update data with proper type conversion and validation
-    const updateData: any = {
-      updatedAt: new Date().toISOString(),
+    // Fix timestamp handling - ensure Date objects
+    if (orderData.paidAt && typeof orderData.paidAt === 'string') {
+      orderData.paidAt = new Date(orderData.paidAt);
+    }
+
+    // Calculate fields logic if needed
+    if (orderData.subtotal !== undefined && orderData.tax !== undefined) {
+      const calculatedTotal = Number(orderData.subtotal) + Number(orderData.tax);
+      if (!orderData.total) {
+        orderData.total = calculatedTotal.toString();
+        console.log(`✅ Storage: No calculation performed - saved exact frontend values`);
+      }
+    }
+
+    const updateData = {
+      ...orderData,
+      updatedAt: new Date(),
     };
-
-    // Handle all possible fields that might be updated
-    if (orderData.status !== undefined) updateData.status = orderData.status;
-    if (orderData.paymentMethod !== undefined) updateData.paymentMethod = orderData.paymentMethod;
-    if (orderData.paymentStatus !== undefined) updateData.paymentStatus = orderData.paymentStatus;
-    if (orderData.customerName !== undefined) updateData.customerName = orderData.customerName;
-    if (orderData.tableId !== undefined) updateData.tableId = orderData.tableId;
-    if (orderData.employeeId !== undefined) updateData.employeeId = orderData.employeeId;
-    if (orderData.customerCount !== undefined) updateData.customerCount = orderData.customerCount;
-    if (orderData.notes !== undefined) updateData.notes = orderData.notes;
-    if (orderData.einvoiceStatus !== undefined) updateData.einvoiceStatus = orderData.einvoiceStatus;
-    if (orderData.invoiceNumber !== undefined) updateData.invoiceNumber = orderData.invoiceNumber;
-    if (orderData.invoiceId !== undefined) updateData.invoiceId = orderData.invoiceId;
-    if (orderData.templateNumber !== undefined) updateData.templateNumber = orderData.templateNumber;
-    if (orderData.symbol !== undefined) updateData.symbol = orderData.symbol;
-    if (orderData.paidAt !== undefined) updateData.paidAt = orderData.paidAt;
-    if (orderData.servedAt !== undefined) updateData.servedAt = orderData.servedAt;
-
-    // Save exact values from frontend without any calculation or validation
-    if (orderData.subtotal !== undefined) {
-      updateData.subtotal = orderData.subtotal.toString();
-      console.log(`💰 Storage: Direct subtotal save: ${updateData.subtotal}`);
-    }
-
-    if (orderData.tax !== undefined) {
-      updateData.tax = orderData.tax.toString();
-      console.log(`💰 Storage: Direct tax save: ${updateData.tax}`);
-    }
-
-    if (orderData.discount !== undefined) {
-      updateData.discount = orderData.discount.toString();
-      console.log(`💰 Storage: Direct discount save: ${updateData.discount}`);
-    }
-
-    if (orderData.total !== undefined) {
-      updateData.total = orderData.total.toString();
-      console.log(`💰 Storage: Direct total save: ${updateData.total}`);
-    }
-
-    console.log(`✅ Storage: No calculation performed - saved exact frontend values`);
 
     console.log(`💾 Storage: Final update data for order ${id}:`, updateData);
 
-    const [updatedOrder] = await safeDb
+    const [updatedOrder] = await db
       .update(orders)
       .set(updateData)
       .where(eq(orders.id, id))

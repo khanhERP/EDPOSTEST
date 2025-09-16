@@ -2135,44 +2135,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(
           `📝 Adding ${orderData.items.length} new items to existing order ${existingOrder.id}`,
         );
-        const addItemsResponse = await apiRequest(
-          "POST",
-          `/api/orders/${existingOrder.id}/items`,
-          {
-            items: orderData.items,
-          },
-        );
+        // Add items directly through storage instead of undefined apiRequest
+        try {
+          const validatedItems = orderData.items.map((item) => ({
+            orderId: existingOrder.id,
+            productId: parseInt(item.productId),
+            quantity: parseInt(item.quantity),
+            unitPrice: item.unitPrice.toString(),
+            total: item.total
+              ? item.total.toString()
+              : (parseFloat(item.unitPrice) * parseInt(item.quantity)).toString(),
+            discount: "0.00",
+            notes: item.notes || null,
+          }));
 
-        const addItemsResult = await addItemsResponse.json();
-        console.log("✅ Items added successfully:", addItemsResult);
-        finalResult = addItemsResult.updatedOrder || addItemsResult;
+          await db
+            .insert(orderItemsTable)
+            .values(validatedItems);
+
+          console.log("✅ Items added successfully via direct storage");
+        } catch (addError) {
+          console.error("❌ Error adding items:", addError);
+        }
       } else {
         console.log(
           `📝 No new items to add to order ${existingOrder.id}, proceeding with order update only`,
         );
-      }
-
-      // Step 1.5: If we have existing item changes, call recalculate API first
-      const hasExistingItemChanges =
-        orderData.items && orderData.items.length > 0; // Check if new items were added
-      const discount = Number(orderData.discount || 0);
-      const shouldRecalculate =
-        hasExistingItemChanges ||
-        parseFloat(existingOrder.discount || "0") !== discount;
-      if (shouldRecalculate) {
-        console.log(`🧮 Calling recalculate API for order ${existingOrder.id}`);
-        try {
-          // We need to ensure the recalculate API is available and correctly computes totals based on items
-          // For now, we assume it exists and performs the necessary calculations
-          const recalcResponse = await apiRequest(
-            "POST",
-            `/api/orders/${existingOrder.id}/recalculate`,
-          );
-          const recalcResult = await recalcResponse.json();
-          console.log("✅ Order totals recalculated:", recalcResult);
-        } catch (error) {
-          console.error("❌ Error recalculating order:", error);
-        }
       }
 
       // Step 1.6: Update discount for existing order items
@@ -2205,6 +2193,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
           }
         }
+      }
+
+      // Step 2: Fix timestamp handling before updating order
+      if (orderData.paidAt && typeof orderData.paidAt === 'string') {
+        orderData.paidAt = new Date(orderData.paidAt);
+      }
+      if (orderData.orderedAt && typeof orderData.orderedAt === 'string') {
+        orderData.orderedAt = new Date(orderData.orderedAt);
       }
 
       // Step 2: Update the order itself
