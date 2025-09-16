@@ -1263,10 +1263,17 @@ export function OrderDialog({
                 <Plus className="w-3 h-3" />
                </Button>
               </div>
-              <span className="text-xs text-gray-500">
-               {t("tables.unitPrice")}:{" "}
-               {Number(item.product.price).toLocaleString()} ₫
-              </span>
+              <div className="text-xs text-gray-500">
+               <div>
+                {t("tables.unitPrice")}:{" "}
+                {Number(item.product.price).toLocaleString()} ₫
+               </div>
+               {item.product.taxRate && (
+                <div>
+                 Thuế: {item.product.taxRate}%
+                </div>
+               )}
+              </div>
              </div>
 
              {/* Individual item discount display */}
