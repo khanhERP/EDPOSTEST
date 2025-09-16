@@ -75,7 +75,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   // Listen for print completion event
   useEffect(() => {
     const handlePrintCompleted = (event: CustomEvent) => {
-      console.log('🍽️ Table Grid: Print completed, closing all modals and refreshing');
+      console.log(
+        "🍽️ Table Grid: Print completed, closing all modals and refreshing",
+      );
 
       // Close all table-related modals
       setSelectedTable(null);
@@ -95,10 +97,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
     };
 
-    window.addEventListener('printCompleted', handlePrintCompleted as EventListener);
+    window.addEventListener(
+      "printCompleted",
+      handlePrintCompleted as EventListener,
+    );
 
     return () => {
-      window.removeEventListener('printCompleted', handlePrintCompleted as EventListener);
+      window.removeEventListener(
+        "printCompleted",
+        handlePrintCompleted as EventListener,
+      );
     };
   }, [queryClient]);
 
@@ -2814,13 +2822,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ {t("orders.displaying")} {itemsToRender.length}{" "}
-                                {t("orders.items")} - {t("orders.quantity")}{" "}
+                                ✅ {t("orders.displaying")}{" "}
+                                {itemsToRender.length} {t("orders.items")} -{" "}
+                                {t("orders.quantity")}{" "}
                                 {itemsToRender.reduce(
                                   (sum, item) => sum + (item.quantity || 0),
                                   0,
                                 )}{" "}
-                                - {t("orders.orderNumber")} {selectedOrder?.orderNumber}
+                                - {t("orders.orderNumber")}{" "}
+                                {selectedOrder?.orderNumber}
                               </p>
                               {itemsToRender.map((item: any, index: number) => (
                                 <div
@@ -2844,47 +2854,103 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                         Ghi chú: {item.notes}
                                       </p>
                                     )}
-                                    
+
                                     {/* Individual item discount display */}
-                                    {selectedOrder && Number(selectedOrder.discount || 0) > 0 && (() => {
-                                      // Get all items for discount calculation
-                                      const allItems = itemsToRender || [];
-                                      const currentIndex = allItems.findIndex((itm: any) => itm.id === item.id);
-                                      const isLastItem = currentIndex === allItems.length - 1;
-                                      
-                                      let itemDiscountAmount = 0;
-                                      
-                                      if (isLastItem) {
-                                        // Last item: total discount - sum of all previous discounts
-                                        let previousDiscounts = 0;
-                                        const totalBeforeDiscount = allItems.reduce((sum: number, itm: any) => {
-                                          return sum + (Number(itm.unitPrice || 0) * Number(itm.quantity || 0));
-                                        }, 0);
-                                        
-                                        for (let i = 0; i < allItems.length - 1; i++) {
-                                          const prevItemSubtotal = Number(allItems[i].unitPrice || 0) * Number(allItems[i].quantity || 0);
-                                          const prevItemDiscount = totalBeforeDiscount > 0 ? 
-                                            Math.floor((Number(selectedOrder.discount || 0) * prevItemSubtotal) / totalBeforeDiscount) : 0;
-                                          previousDiscounts += prevItemDiscount;
+                                    {selectedOrder &&
+                                      Number(selectedOrder.discount || 0) > 0 &&
+                                      (() => {
+                                        // Get all items for discount calculation
+                                        const allItems = itemsToRender || [];
+                                        const currentIndex = allItems.findIndex(
+                                          (itm: any) => itm.id === item.id,
+                                        );
+                                        const isLastItem =
+                                          currentIndex === allItems.length - 1;
+
+                                        let itemDiscountAmount = 0;
+
+                                        if (isLastItem) {
+                                          // Last item: total discount - sum of all previous discounts
+                                          let previousDiscounts = 0;
+                                          const totalBeforeDiscount =
+                                            allItems.reduce(
+                                              (sum: number, itm: any) => {
+                                                return (
+                                                  sum +
+                                                  Number(itm.unitPrice || 0) *
+                                                    Number(itm.quantity || 0)
+                                                );
+                                              },
+                                              0,
+                                            );
+
+                                          for (
+                                            let i = 0;
+                                            i < allItems.length - 1;
+                                            i++
+                                          ) {
+                                            const prevItemSubtotal =
+                                              Number(
+                                                allItems[i].unitPrice || 0,
+                                              ) *
+                                              Number(allItems[i].quantity || 0);
+                                            const prevItemDiscount =
+                                              totalBeforeDiscount > 0
+                                                ? Math.floor(
+                                                    (Number(
+                                                      selectedOrder.discount ||
+                                                        0,
+                                                    ) *
+                                                      prevItemSubtotal) /
+                                                      totalBeforeDiscount,
+                                                  )
+                                                : 0;
+                                            previousDiscounts +=
+                                              prevItemDiscount;
+                                          }
+
+                                          itemDiscountAmount =
+                                            Number(
+                                              selectedOrder.discount || 0,
+                                            ) - previousDiscounts;
+                                        } else {
+                                          // Regular calculation for non-last items
+                                          const itemSubtotal =
+                                            Number(item.unitPrice || 0) *
+                                            Number(item.quantity || 0);
+                                          const totalBeforeDiscount =
+                                            allItems.reduce(
+                                              (sum: number, itm: any) => {
+                                                return (
+                                                  sum +
+                                                  Number(itm.unitPrice || 0) *
+                                                    Number(itm.quantity || 0)
+                                                );
+                                              },
+                                              0,
+                                            );
+                                          itemDiscountAmount =
+                                            totalBeforeDiscount > 0
+                                              ? Math.floor(
+                                                  (Number(
+                                                    selectedOrder.discount || 0,
+                                                  ) *
+                                                    itemSubtotal) /
+                                                    totalBeforeDiscount,
+                                                )
+                                              : 0;
                                         }
-                                        
-                                        itemDiscountAmount = Number(selectedOrder.discount || 0) - previousDiscounts;
-                                      } else {
-                                        // Regular calculation for non-last items
-                                        const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-                                        const totalBeforeDiscount = allItems.reduce((sum: number, itm: any) => {
-                                          return sum + (Number(itm.unitPrice || 0) * Number(itm.quantity || 0));
-                                        }, 0);
-                                        itemDiscountAmount = totalBeforeDiscount > 0 ? 
-                                          Math.floor((Number(selectedOrder.discount || 0) * itemSubtotal) / totalBeforeDiscount) : 0;
-                                      }
-                                      
-                                      return itemDiscountAmount > 0 ? (
-                                        <p className="text-xs text-red-600 mt-1">
-                                          Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
-                                        </p>
-                                      ) : null;
-                                    })()}
+
+                                        return itemDiscountAmount > 0 ? (
+                                          <p className="text-xs text-red-600 mt-1">
+                                            Giảm giá: -
+                                            {Math.floor(
+                                              itemDiscountAmount,
+                                            ).toLocaleString("vi-VN")}{" "}
+                                            ₫
+                                          </p>
+                                        ) : null;
+                                      })()}
                                   </div>
                                   <div className="text-right ml-4">
                                     <p className="font-bold text-lg text-green-600">
@@ -3250,12 +3316,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         }
 
                         const grandTotal = subtotal + totalTax;
-                        
+
                         // Get discount amount from selected order
                         const discountAmount = selectedOrder
                           ? Number(selectedOrder.discount || 0)
                           : 0;
-                        const finalTotal = Math.max(0, grandTotal - discountAmount);
+                        const finalTotal = Math.max(
+                          0,
+                          grandTotal - discountAmount,
+                        );
 
                         // Create receipt data using EXACT same values as Order Details
                         const processedItems = orderItems.map((item: any) => ({
@@ -3336,7 +3405,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           customerTaxCode: null,
                           invoiceNumber: null,
                           tableNumber:
-                            getTableInfo(selectedOrder.tableId)?.tableNumber || "N/A",
+                            getTableInfo(selectedOrder.tableId)?.tableNumber ||
+                            "N/A",
                         };
 
                         console.log(
@@ -4437,12 +4507,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               "🔄 Edit dialog closed, triggering recalculation for order:",
               editingOrder.id,
             );
-
-            // Add a small delay to ensure any pending API calls complete
-            setTimeout(() => {
-              // Recalculate order total first - this will also handle the data refresh
-              recalculateOrderMutation.mutate(editingOrder.id);
-            }, 100);
 
             // Clear editing states
             setEditingOrder(null);

@@ -88,7 +88,7 @@ const EINVOICE_PROVIDERS = [
   { name: "BkavInvoice", value: "6" },
   { name: "MInvoice", value: "7" },
   { name: "SInvoice", value: "8" },
-  { name: "WinInvoice", value: "9" }
+  { name: "WinInvoice", value: "9" },
 ];
 
 export default function Settings() {
@@ -167,19 +167,26 @@ export default function Settings() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
 
         // Handle specific error cases
-        if (errorData.message && errorData.message.includes("attendance records")) {
+        if (
+          errorData.message &&
+          errorData.message.includes("attendance records")
+        ) {
           toast({
             title: "Không thể xóa nhân viên",
-            description: "Nhân viên này đã có dữ liệu chấm công trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
+            description:
+              "Nhân viên này đã có dữ liệu chấm công trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
             variant: "destructive",
           });
         } else if (errorData.message && errorData.message.includes("orders")) {
           toast({
             title: "Không thể xóa nhân viên",
-            description: "Nhân viên này đã có đơn hàng trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
+            description:
+              "Nhân viên này đã có đơn hàng trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
             variant: "destructive",
           });
         } else {
@@ -498,8 +505,12 @@ export default function Settings() {
 
     const updatedMethods = paymentMethods.map((method) =>
       method.id === editingPaymentMethod.id
-        ? { ...method, name: paymentMethodForm.name.trim(), icon: paymentMethodForm.icon }
-        : method
+        ? {
+            ...method,
+            name: paymentMethodForm.name.trim(),
+            icon: paymentMethodForm.icon,
+          }
+        : method,
     );
 
     setPaymentMethods(updatedMethods);
@@ -793,7 +804,9 @@ export default function Settings() {
         categoryId: parseInt(productForm.categoryId),
         isActive: productForm.isActive === "true",
         trackInventory: productForm.trackInventory,
-        taxRate: productForm.taxRate ? parseFloat(productForm.taxRate).toString() : "0",
+        taxRate: productForm.taxRate
+          ? parseFloat(productForm.taxRate).toString()
+          : "0",
         afterTaxPrice: productForm.afterTaxPrice || null,
       };
 
@@ -801,7 +814,7 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
         title: t("common.success"),
-        description: t("productManagement.productCreateSuccess"),
+        description: t("common.productCreateSuccess"),
       });
       setShowProductForm(false);
       resetProductForm();
@@ -831,7 +844,9 @@ export default function Settings() {
         categoryId: parseInt(productForm.categoryId),
         isActive: productForm.isActive === "true",
         trackInventory: productForm.trackInventory,
-        taxRate: productForm.taxRate ? parseFloat(productForm.taxRate).toString() : "0",
+        taxRate: productForm.taxRate
+          ? parseFloat(productForm.taxRate).toString()
+          : "0",
         afterTaxPrice: productForm.afterTaxPrice || null,
       };
 
@@ -843,7 +858,7 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
         title: t("common.success"),
-        description: t("productManagement.productUpdateSuccess"),
+        description: t("common.productUpdateSuccess"),
       });
       setShowProductForm(false);
       resetProductForm();
@@ -907,9 +922,12 @@ export default function Settings() {
       categoryId: product.categoryId.toString(),
       description: product.description || "",
       isActive: product.isActive ? "true" : "false",
-      trackInventory: product.trackInventory !== undefined ? product.trackInventory : true,
+      trackInventory:
+        product.trackInventory !== undefined ? product.trackInventory : true,
       taxRate: product.taxRate ? parseFloat(product.taxRate).toString() : "",
-      afterTaxPrice: product.afterTaxPrice ? product.afterTaxPrice.toString() : "",
+      afterTaxPrice: product.afterTaxPrice
+        ? product.afterTaxPrice.toString()
+        : "",
     });
     setEditingProduct(product);
     setShowProductForm(true);
@@ -1120,7 +1138,7 @@ export default function Settings() {
       loginUrl: eInvoice.loginUrl || "",
       signMethod: eInvoice.signMethod || "Ký server",
       cqtCode: eInvoice.cqtCode || "Cấp nhật",
-      notes: eInvoice.notes === "-" ? "" : (eInvoice.notes || ""),
+      notes: eInvoice.notes === "-" ? "" : eInvoice.notes || "",
       isActive: eInvoice.isActive !== undefined ? eInvoice.isActive : true,
     });
     setEInvoiceFormErrors({
@@ -1156,7 +1174,8 @@ export default function Settings() {
   // Invoice template management state
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
-  const [showTemplateDeleteDialog, setShowTemplateDeleteDialog] = useState(false);
+  const [showTemplateDeleteDialog, setShowTemplateDeleteDialog] =
+    useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<any>(null);
   const [templateForm, setTemplateForm] = useState({
     name: "",
@@ -1182,7 +1201,9 @@ export default function Settings() {
   };
 
   // Fetch invoice templates
-  const { data: invoiceTemplates = [], isLoading: templatesLoading } = useQuery<any[]>({
+  const { data: invoiceTemplates = [], isLoading: templatesLoading } = useQuery<
+    any[]
+  >({
     queryKey: ["/api/invoice-templates"],
   });
 
@@ -1203,7 +1224,7 @@ export default function Settings() {
     },
     onError: () => {
       toast({
-        title: "Lỗi", 
+        title: "Lỗi",
         description: "Có lỗi xảy ra khi tạo mẫu số HĐĐT",
         variant: "destructive",
       });
@@ -1212,7 +1233,11 @@ export default function Settings() {
 
   const updateTemplateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const response = await apiRequest("PUT", `/api/invoice-templates/${id}`, data);
+      const response = await apiRequest(
+        "PUT",
+        `/api/invoice-templates/${id}`,
+        data,
+      );
       return response.json();
     },
     onSuccess: () => {
@@ -1235,7 +1260,10 @@ export default function Settings() {
 
   const deleteTemplateMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest("DELETE", `/api/invoice-templates/${id}`);
+      const response = await apiRequest(
+        "DELETE",
+        `/api/invoice-templates/${id}`,
+      );
       return response.json();
     },
     onSuccess: () => {
@@ -1257,7 +1285,11 @@ export default function Settings() {
   });
 
   const handleCreateTemplate = () => {
-    if (!templateForm.name.trim() || !templateForm.templateNumber.trim() || !templateForm.symbol.trim()) {
+    if (
+      !templateForm.name.trim() ||
+      !templateForm.templateNumber.trim() ||
+      !templateForm.symbol.trim()
+    ) {
       toast({
         title: "Lỗi",
         description: "Vui lòng điền đầy đủ thông tin bắt buộc",
@@ -1280,7 +1312,11 @@ export default function Settings() {
   };
 
   const handleUpdateTemplate = () => {
-    if (!templateForm.name.trim() || !templateForm.templateNumber.trim() || !templateForm.symbol.trim()) {
+    if (
+      !templateForm.name.trim() ||
+      !templateForm.templateNumber.trim() ||
+      !templateForm.symbol.trim()
+    ) {
       toast({
         title: "Lỗi",
         description: "Vui lòng điền đầy đủ thông tin bắt buộc",
@@ -1374,9 +1410,7 @@ export default function Settings() {
             className="space-y-6"
           >
             <div className="w-full overflow-hidden">
-              <TabsList
-                className="w-full flex flex-wrap items-center justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-4 min-h-[70px]"
-              >
+              <TabsList className="w-full flex flex-wrap items-center justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-4 min-h-[70px]">
                 <TabsTrigger
                   value="store"
                   className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium text-center flex-shrink-0"
@@ -1433,9 +1467,7 @@ export default function Settings() {
             {/* Store Information Tab */}
             <TabsContent value="store">
               <Tabs defaultValue="basic" className="space-y-6">
-                <TabsList
-                  className="flex justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 py-4"
-                >
+                <TabsList className="flex justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 py-4">
                   <TabsTrigger
                     value="basic"
                     className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
@@ -1560,18 +1592,19 @@ export default function Settings() {
                             type="password"
                             value={storeSettings.pinCode}
                             onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, ''); // Chỉ cho phép số
+                              const value = e.target.value.replace(/\D/g, ""); // Chỉ cho phép số
                               handleStoreSettingChange("pinCode", value);
                             }}
                             placeholder={t("settings.pinCodePlaceholder")}
                             maxLength={6}
                             pattern="[0-9]*"
                           />
-                          {storeSettings.pinCode && storeSettings.pinCode.length < 4 && (
-                            <p className="text-sm text-orange-500">
-                              Mã PIN nên có ít nhất 4 chữ số
-                            </p>
-                          )}
+                          {storeSettings.pinCode &&
+                            storeSettings.pinCode.length < 4 && (
+                              <p className="text-sm text-orange-500">
+                                Mã PIN nên có ít nhất 4 chữ số
+                              </p>
+                            )}
                         </div>
                       </CardContent>
                     </Card>
@@ -1660,9 +1693,7 @@ export default function Settings() {
                       <div className="space-y-6">
                         {/* Sub tabs for E-invoice */}
                         <Tabs defaultValue="connections" className="w-full">
-                          <TabsList
-                            className="grid grid-cols-2 h-10 items-center justify-center gap-1 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1"
-                          >
+                          <TabsList className="grid grid-cols-2 h-10 items-center justify-center gap-1 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1">
                             <TabsTrigger
                               value="connections"
                               className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-md font-medium"
@@ -1711,44 +1742,69 @@ export default function Settings() {
                                 <thead>
                                   <tr className="bg-gray-50 border-b">
                                     <th className="w-[60px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("settings.symbolLabel")}</div>
+                                      <div className="leading-tight">
+                                        {t("settings.symbolLabel")}
+                                      </div>
                                     </th>
                                     <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("settings.taxIdLabel")}</div>
+                                      <div className="leading-tight">
+                                        {t("settings.taxIdLabel")}
+                                      </div>
                                     </th>
                                     <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("settings.loginIdLabel")}</div>
+                                      <div className="leading-tight">
+                                        {t("settings.loginIdLabel")}
+                                      </div>
                                     </th>
                                     <th className="w-[80px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("settings.passwordLabel")}</div>
+                                      <div className="leading-tight">
+                                        {t("settings.passwordLabel")}
+                                      </div>
                                     </th>
                                     <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("settings.softwareLabel")}</div>
+                                      <div className="leading-tight">
+                                        {t("settings.softwareLabel")}
+                                      </div>
                                     </th>
                                     <th className="w-[180px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("settings.loginUrlLabel")}</div>
+                                      <div className="leading-tight">
+                                        {t("settings.loginUrlLabel")}
+                                      </div>
                                     </th>
                                     <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("settings.signMethodLabel")}</div>
+                                      <div className="leading-tight">
+                                        {t("settings.signMethodLabel")}
+                                      </div>
                                     </th>
                                     <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("settings.cqtCodeLabel")}</div>
+                                      <div className="leading-tight">
+                                        {t("settings.cqtCodeLabel")}
+                                      </div>
                                     </th>
                                     <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("common.notes")}</div>
+                                      <div className="leading-tight">
+                                        {t("common.notes")}
+                                      </div>
                                     </th>
                                     <th className="w-[80px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("settings.defaultConnection")}</div>
+                                      <div className="leading-tight">
+                                        {t("settings.defaultConnection")}
+                                      </div>
                                     </th>
                                     <th className="w-[100px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">{t("common.actions")}</div>
+                                      <div className="leading-tight">
+                                        {t("common.actions")}
+                                      </div>
                                     </th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y">
                                   {eInvoiceConnections.length === 0 ? (
                                     <tr>
-                                      <td colSpan={11} className="p-8 text-center text-sm text-gray-500">
+                                      <td
+                                        colSpan={11}
+                                        className="p-8 text-center text-sm text-gray-500"
+                                      >
                                         <div className="flex flex-col items-center gap-2">
                                           <SettingsIcon className="w-8 h-8 text-gray-400" />
                                           <p>Chưa có kết nối HĐĐT nào</p>
@@ -1760,17 +1816,28 @@ export default function Settings() {
                                     </tr>
                                   ) : (
                                     eInvoiceConnections.map((connection) => (
-                                      <tr key={connection.id} className="hover:bg-gray-50">
+                                      <tr
+                                        key={connection.id}
+                                        className="hover:bg-gray-50"
+                                      >
                                         <td className="px-3 py-3 text-center">
-                                          <div className="text-sm">{connection.symbol}</div>
+                                          <div className="text-sm">
+                                            {connection.symbol}
+                                          </div>
                                         </td>
                                         <td className="px-3 py-3">
-                                          <div className="text-sm font-mono truncate" title={connection.taxCode}>
+                                          <div
+                                            className="text-sm font-mono truncate"
+                                            title={connection.taxCode}
+                                          >
                                             {connection.taxCode}
                                           </div>
                                         </td>
                                         <td className="px-3 py-3">
-                                          <div className="text-sm truncate" title={connection.loginId}>
+                                          <div
+                                            className="text-sm truncate"
+                                            title={connection.loginId}
+                                          >
                                             {connection.loginId}
                                           </div>
                                         </td>
@@ -1780,30 +1847,42 @@ export default function Settings() {
                                           </div>
                                         </td>
                                         <td className="px-3 py-3">
-                                          <Badge variant="outline" className="text-xs">
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs"
+                                          >
                                             {connection.softwareName}
                                           </Badge>
                                         </td>
                                         <td className="px-3 py-3">
-                                          <div 
-                                            className="text-sm text-blue-600 hover:underline cursor-pointer truncate" 
+                                          <div
+                                            className="text-sm text-blue-600 hover:underline cursor-pointer truncate"
                                             title={connection.loginUrl}
                                           >
                                             {connection.loginUrl}
                                           </div>
                                         </td>
                                         <td className="px-3 py-3">
-                                          <div className="text-sm truncate" title={connection.signMethod}>
+                                          <div
+                                            className="text-sm truncate"
+                                            title={connection.signMethod}
+                                          >
                                             {connection.signMethod}
                                           </div>
                                         </td>
                                         <td className="px-3 py-3">
-                                          <div className="text-sm truncate" title={connection.cqtCode}>
+                                          <div
+                                            className="text-sm truncate"
+                                            title={connection.cqtCode}
+                                          >
                                             {connection.cqtCode}
                                           </div>
                                         </td>
                                         <td className="px-3 py-3">
-                                          <div className="text-sm truncate" title={connection.notes || "-"}>
+                                          <div
+                                            className="text-sm truncate"
+                                            title={connection.notes || "-"}
+                                          >
                                             {connection.notes || "-"}
                                           </div>
                                         </td>
@@ -1821,7 +1900,10 @@ export default function Settings() {
                                               variant="ghost"
                                               size="sm"
                                               onClick={() => {
-                                                console.log("Edit button clicked for connection:", connection);
+                                                console.log(
+                                                  "Edit button clicked for connection:",
+                                                  connection,
+                                                );
                                                 handleEditEInvoice(connection);
                                               }}
                                             >
@@ -1861,7 +1943,7 @@ export default function Settings() {
                                     {t("settings.templatesDesc")}
                                   </p>
                                 </div>
-                                <Button 
+                                <Button
                                   className="bg-blue-600 hover:bg-blue-700"
                                   onClick={() => {
                                     resetTemplateForm();
@@ -1879,44 +1961,68 @@ export default function Settings() {
                                   <thead>
                                     <tr className="bg-gray-50 border-b">
                                       <th className="w-[60px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">{t("settings.templateIndex")}</div>
+                                        <div className="leading-tight">
+                                          {t("settings.templateIndex")}
+                                        </div>
                                       </th>
                                       <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">{t("settings.templateName")}</div>
+                                        <div className="leading-tight">
+                                          {t("settings.templateName")}
+                                        </div>
                                       </th>
                                       <th className="w-[130px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">{t("settings.templateNumber")}</div>
+                                        <div className="leading-tight">
+                                          {t("settings.templateNumber")}
+                                        </div>
                                       </th>
                                       <th className="w-[160px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">{t("settings.templateCode")}</div>
+                                        <div className="leading-tight">
+                                          {t("settings.templateCode")}
+                                        </div>
                                       </th>
                                       <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">{t("settings.templateSymbol")}</div>
+                                        <div className="leading-tight">
+                                          {t("settings.templateSymbol")}
+                                        </div>
                                       </th>
                                       <th className="w-[120px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">{t("common.templateUsage")}</div>
+                                        <div className="leading-tight">
+                                          {t("common.templateUsage")}
+                                        </div>
                                       </th>
                                       <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">{t("common.notes")}</div>
+                                        <div className="leading-tight">
+                                          {t("common.notes")}
+                                        </div>
                                       </th>
                                       <th className="w-[80px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">{t("settings.templateDefault")}</div>
+                                        <div className="leading-tight">
+                                          {t("settings.templateDefault")}
+                                        </div>
                                       </th>
                                       <th className="w-[110px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">{t("common.actions")}</div>
+                                        <div className="leading-tight">
+                                          {t("common.actions")}
+                                        </div>
                                       </th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y">
                                     {templatesLoading ? (
                                       <tr>
-                                        <td colSpan={9} className="p-8 text-center text-sm text-gray-500">
+                                        <td
+                                          colSpan={9}
+                                          className="p-8 text-center text-sm text-gray-500"
+                                        >
                                           Đang tải dữ liệu...
                                         </td>
                                       </tr>
                                     ) : invoiceTemplates.length === 0 ? (
                                       <tr>
-                                        <td colSpan={9} className="p-8 text-center text-sm text-gray-500">
+                                        <td
+                                          colSpan={9}
+                                          className="p-8 text-center text-sm text-gray-500"
+                                        >
                                           <div className="flex flex-col items-center gap-2">
                                             <SettingsIcon className="w-8 h-8 text-gray-400" />
                                             <p>Chưa có mẫu số HĐĐT nào</p>
@@ -1927,73 +2033,104 @@ export default function Settings() {
                                         </td>
                                       </tr>
                                     ) : (
-                                      invoiceTemplates.map((template, index) => (
-                                        <tr key={template.id} className="hover:bg-gray-50">
-                                          <td className="px-3 py-3 text-center">
-                                            <div className="text-sm">{index + 1}</div>
-                                          </td>
-                                          <td className="px-3 py-3">
-                                            <div className="text-sm font-medium truncate" title={template.name}>
-                                              {template.name}
-                                            </div>
-                                          </td>
-                                          <td className="px-3 py-3">
-                                            <div className="text-sm truncate" title={template.templateNumber}>
-                                              {template.templateNumber}
-                                            </div>
-                                          </td>
-                                          <td className="px-3 py-3">
-                                            <div className="text-sm truncate" title={template.templateCode}>
-                                              {template.templateCode || "-"}
-                                            </div>
-                                          </td>
-                                          <td className="px-3 py-3">
-                                            <div className="text-sm truncate" title={template.symbol}>
-                                              {template.symbol}
-                                            </div>
-                                          </td>
-                                          <td className="px-3 py-3 text-center">
-                                            <Badge
-                                              variant="default"
-                                              className={`text-xs ${template.useCK ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
-                                            >
-                                              {template.useCK ? "Sử dụng" : "Không sử dụng"}
-                                            </Badge>
-                                          </td>
-                                          <td className="px-3 py-3">
-                                            <div className="text-sm truncate" title={template.notes || "-"}>
-                                              {template.notes || "-"}
-                                            </div>
-                                          </td>
-                                          <td className="px-3 py-3 text-center">
-                                            <input
-                                              type="checkbox"
-                                              className="rounded"
-                                              checked={template.isDefault}
-                                              readOnly
-                                            />
-                                          </td>
-                                          <td className="px-3 py-3">
-                                            <div className="flex items-center justify-center gap-1">
-                                              <Button 
-                                                variant="ghost" 
-                                                size="sm"
-                                                onClick={() => handleEditTemplate(template)}
+                                      invoiceTemplates.map(
+                                        (template, index) => (
+                                          <tr
+                                            key={template.id}
+                                            className="hover:bg-gray-50"
+                                          >
+                                            <td className="px-3 py-3 text-center">
+                                              <div className="text-sm">
+                                                {index + 1}
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                              <div
+                                                className="text-sm font-medium truncate"
+                                                title={template.name}
                                               >
-                                                <Edit className="w-3 h-3" />
-                                              </Button>
-                                              <Button 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                className="text-red-500 hover:text-red-700"
-                                                onClick={() => handleDeleteTemplate(template.id, template.name)}
+                                                {template.name}
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                              <div
+                                                className="text-sm truncate"
+                                                title={template.templateNumber}
                                               >
-                                                <Trash2 className="w-3 h-3" />
-                                              </Button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      ))
+                                                {template.templateNumber}
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                              <div
+                                                className="text-sm truncate"
+                                                title={template.templateCode}
+                                              >
+                                                {template.templateCode || "-"}
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                              <div
+                                                className="text-sm truncate"
+                                                title={template.symbol}
+                                              >
+                                                {template.symbol}
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-3 text-center">
+                                              <Badge
+                                                variant="default"
+                                                className={`text-xs ${template.useCK ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+                                              >
+                                                {template.useCK
+                                                  ? "Sử dụng"
+                                                  : "Không sử dụng"}
+                                              </Badge>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                              <div
+                                                className="text-sm truncate"
+                                                title={template.notes || "-"}
+                                              >
+                                                {template.notes || "-"}
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-3 text-center">
+                                              <input
+                                                type="checkbox"
+                                                className="rounded"
+                                                checked={template.isDefault}
+                                                readOnly
+                                              />
+                                            </td>
+                                            <td className="px-3 py-3">
+                                              <div className="flex items-center justify-center gap-1">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() =>
+                                                    handleEditTemplate(template)
+                                                  }
+                                                >
+                                                  <Edit className="w-3 h-3" />
+                                                </Button>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="text-red-500 hover:text-red-700"
+                                                  onClick={() =>
+                                                    handleDeleteTemplate(
+                                                      template.id,
+                                                      template.name,
+                                                    )
+                                                  }
+                                                >
+                                                  <Trash2 className="w-3 h-3" />
+                                                </Button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ),
+                                      )
                                     )}
                                   </tbody>
                                 </table>
@@ -2082,9 +2219,10 @@ export default function Settings() {
                       <CardContent>
                         <div className="space-y-4">
                           <p className="text-sm text-gray-600">
-                            Thiết lập và quản lý máy in cho hóa đơn, biên lai và báo cáo
+                            Thiết lập và quản lý máy in cho hóa đơn, biên lai và
+                            báo cáo
                           </p>
-                          <Button 
+                          <Button
                             onClick={() => setShowPrinterConfig(true)}
                             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
                           >
@@ -2094,8 +2232,6 @@ export default function Settings() {
                         </div>
                       </CardContent>
                     </Card>
-
-                    
                   </div>
                 </TabsContent>
               </Tabs>
@@ -2289,7 +2425,7 @@ export default function Settings() {
                               </div>
                               <div>
                                 <Badge
-                                                                 variant="default"
+                                  variant="default"
                                   className={`${
                                     customer.membershipLevel === "VIP"
                                       ? "bg-purple-500"
@@ -3061,9 +3197,7 @@ export default function Settings() {
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <span className="text-2xl">{method.icon}</span>
-                              <span className="font-medium">
-                                {method.name}
-                              </span>
+                              <span className="font-medium">{method.name}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Switch
@@ -3106,8 +3240,6 @@ export default function Settings() {
             </TabsContent>
           </Tabs>
         </div>
-        
-        
       </div>
 
       {/* Customer Form Modal */}
@@ -3336,8 +3468,12 @@ export default function Settings() {
                     const basePriceNum = parseFloat(basePrice);
                     const taxRateNum = parseFloat(productForm.taxRate);
                     if (!isNaN(basePriceNum) && !isNaN(taxRateNum)) {
-                      const afterTaxPrice = basePriceNum * (1 + taxRateNum / 100);
-                      setProductForm((prev) => ({ ...prev, afterTaxPrice: Math.floor(afterTaxPrice).toString() }));
+                      const afterTaxPrice =
+                        basePriceNum * (1 + taxRateNum / 100);
+                      setProductForm((prev) => ({
+                        ...prev,
+                        afterTaxPrice: Math.floor(afterTaxPrice).toString(),
+                      }));
                     }
                   }
                 }}
@@ -3365,12 +3501,19 @@ export default function Settings() {
                     const basePriceNum = parseFloat(productForm.price);
                     const taxRateNum = parseFloat(taxRate);
                     if (!isNaN(basePriceNum) && !isNaN(taxRateNum)) {
-                      const afterTaxPrice = basePriceNum * (1 + taxRateNum / 100);
-                      setProductForm((prev) => ({ ...prev, afterTaxPrice: Math.floor(afterTaxPrice).toString() }));
+                      const afterTaxPrice =
+                        basePriceNum * (1 + taxRateNum / 100);
+                      setProductForm((prev) => ({
+                        ...prev,
+                        afterTaxPrice: Math.floor(afterTaxPrice).toString(),
+                      }));
                     }
                   } else if (!taxRate || parseFloat(taxRate) === 0) {
                     // If tax rate is 0 or empty, after tax price equals base price
-                    setProductForm((prev) => ({ ...prev, afterTaxPrice: productForm.price }));
+                    setProductForm((prev) => ({
+                      ...prev,
+                      afterTaxPrice: productForm.price,
+                    }));
                   }
                 }}
                 className="col-span-3"
@@ -3394,8 +3537,12 @@ export default function Settings() {
                     const afterTaxPriceNum = parseFloat(afterTaxPrice);
                     const taxRateNum = parseFloat(productForm.taxRate);
                     if (!isNaN(afterTaxPriceNum) && !isNaN(taxRateNum)) {
-                      const basePrice = afterTaxPriceNum / (1 + taxRateNum / 100);
-                      setProductForm((prev) => ({ ...prev, price: Math.round(basePrice).toString() }));
+                      const basePrice =
+                        afterTaxPriceNum / (1 + taxRateNum / 100);
+                      setProductForm((prev) => ({
+                        ...prev,
+                        price: Math.round(basePrice).toString(),
+                      }));
                     }
                   }
                 }}
@@ -3450,8 +3597,12 @@ export default function Settings() {
                   <SelectValue placeholder={t("settings.selectUsageStatus")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="true">{t("settings.usageStatusActive")}</SelectItem>
-                  <SelectItem value="false">{t("settings.usageStatusInactive")}</SelectItem>
+                  <SelectItem value="true">
+                    {t("settings.usageStatusActive")}
+                  </SelectItem>
+                  <SelectItem value="false">
+                    {t("settings.usageStatusInactive")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -3759,7 +3910,9 @@ export default function Settings() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              {editingEInvoice ? t("settings.editConnectionTitle") : t("settings.addConnectionTitle")}
+              {editingEInvoice
+                ? t("settings.editConnectionTitle")
+                : t("settings.addConnectionTitle")}
             </DialogTitle>
             <DialogDescription>
               {editingEInvoice
@@ -3770,7 +3923,8 @@ export default function Settings() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="taxCode" className="text-right mt-2">
-                {t("settings.taxIdRequired")} <span className="text-red-500">*</span>
+                {t("settings.taxIdRequired")}{" "}
+                <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Input
@@ -3800,7 +3954,8 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="loginId" className="text-right mt-2">
-                {t("settings.loginIdLabel")} <span className="text-red-500">*</span>
+                {t("settings.loginIdLabel")}{" "}
+                <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Input
@@ -3830,7 +3985,8 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="password" className="text-right mt-2">
-                {t("settings.passwordLabel")} <span className="text-red-500">*</span>
+                {t("settings.passwordLabel")}{" "}
+                <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Input
@@ -3861,7 +4017,8 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="softwareName" className="text-right mt-2">
-                {t("settings.softwareLabel")} <span className="text-red-500">*</span>
+                {t("settings.softwareLabel")}{" "}
+                <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Select
@@ -3882,7 +4039,9 @@ export default function Settings() {
                   <SelectTrigger
                     className={`${eInvoiceFormErrors.softwareName ? "border-red-500" : ""}`}
                   >
-                    <SelectValue placeholder={t("settings.selectSoftwarePlaceholder")} />
+                    <SelectValue
+                      placeholder={t("settings.selectSoftwarePlaceholder")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {EINVOICE_PROVIDERS.map((provider) => (
@@ -3901,7 +4060,8 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="loginUrl" className="text-right mt-2">
-                {t("settings.loginUrlLabel")} <span className="text-red-500">*</span>
+                {t("settings.loginUrlLabel")}{" "}
+                <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Input
@@ -3943,9 +4103,15 @@ export default function Settings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Ký server">{t("settings.signMethodServer")}</SelectItem>
-                  <SelectItem value="Ký USB Token">{t("settings.signMethodUsbToken")}</SelectItem>
-                  <SelectItem value="Ký HSM">{t("settings.signMethodHsm")}</SelectItem>
+                  <SelectItem value="Ký server">
+                    {t("settings.signMethodServer")}
+                  </SelectItem>
+                  <SelectItem value="Ký USB Token">
+                    {t("settings.signMethodUsbToken")}
+                  </SelectItem>
+                  <SelectItem value="Ký HSM">
+                    {t("settings.signMethodHsm")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -3963,8 +4129,12 @@ export default function Settings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cấp nhật">{t("settings.cqtCodeLevel1")}</SelectItem>
-                  <SelectItem value="Cấp hai">{t("settings.cqtCodeLevel2")}</SelectItem>
+                  <SelectItem value="Cấp nhật">
+                    {t("settings.cqtCodeLevel1")}
+                  </SelectItem>
+                  <SelectItem value="Cấp hai">
+                    {t("settings.cqtCodeLevel2")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -4020,7 +4190,9 @@ export default function Settings() {
               }
               className="bg-green-600 hover:bg-green-700"
             >
-              {editingEInvoice ? t("common.update") : t("settings.addConnection")}
+              {editingEInvoice
+                ? t("common.update")
+                : t("settings.addConnection")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -4030,13 +4202,14 @@ export default function Settings() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {editingTemplate ? t("settings.editTemplateTitle") : t("settings.addTemplateTitle")}
+              {editingTemplate
+                ? t("settings.editTemplateTitle")
+                : t("settings.addTemplateTitle")}
             </DialogTitle>
             <DialogDescription>
-              {editingTemplate 
+              {editingTemplate
                 ? t("settings.editTemplateDesc")
-                : t("settings.addTemplateDesc")
-              }
+                : t("settings.addTemplateDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -4096,7 +4269,10 @@ export default function Settings() {
                 id="symbol"
                 value={templateForm.symbol}
                 onChange={(e) =>
-                  setTemplateForm((prev) => ({ ...prev, symbol: e.target.value }))
+                  setTemplateForm((prev) => ({
+                    ...prev,
+                    symbol: e.target.value,
+                  }))
                 }
                 className="col-span-3"
                 placeholder="Ví dụ: AA/19E"
@@ -4122,7 +4298,10 @@ export default function Settings() {
                 id="notes"
                 value={templateForm.notes}
                 onChange={(e) =>
-                  setTemplateForm((prev) => ({ ...prev, notes: e.target.value }))
+                  setTemplateForm((prev) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
                 }
                 className="col-span-3"
                 placeholder={t("common.notesPlaceholder")}
@@ -4158,14 +4337,23 @@ export default function Settings() {
               {t("common.cancel")}
             </Button>
             <Button
-              onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
-              disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
+              onClick={
+                editingTemplate ? handleUpdateTemplate : handleCreateTemplate
+              }
+              disabled={
+                createTemplateMutation.isPending ||
+                updateTemplateMutation.isPending
+              }
               className="bg-green-600 hover:bg-green-700"
             >
-              {(createTemplateMutation.isPending || updateTemplateMutation.isPending) 
-                ? (editingTemplate ? t("common.updating") : t("common.creating"))
-                : (editingTemplate ? t("common.update") : t("settings.addTemplate"))
-              }
+              {createTemplateMutation.isPending ||
+              updateTemplateMutation.isPending
+                ? editingTemplate
+                  ? t("common.updating")
+                  : t("common.creating")
+                : editingTemplate
+                  ? t("common.update")
+                  : t("settings.addTemplate")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -4228,12 +4416,13 @@ export default function Settings() {
       </AlertDialog>
 
       {/* Payment Method Form Modal */}
-      <Dialog open={showPaymentMethodForm} onOpenChange={setShowPaymentMethodForm}>
+      <Dialog
+        open={showPaymentMethodForm}
+        onOpenChange={setShowPaymentMethodForm}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>
-              Chỉnh sửa phương thức thanh toán
-            </DialogTitle>
+            <DialogTitle>Chỉnh sửa phương thức thanh toán</DialogTitle>
             <DialogDescription>
               Cập nhật thông tin của phương thức thanh toán
             </DialogDescription>
@@ -4247,7 +4436,10 @@ export default function Settings() {
                 id="paymentMethodName"
                 value={paymentMethodForm.name}
                 onChange={(e) =>
-                  setPaymentMethodForm((prev) => ({ ...prev, name: e.target.value }))
+                  setPaymentMethodForm((prev) => ({
+                    ...prev,
+                    name: e.target.value,
+                  }))
                 }
                 className="col-span-3"
                 placeholder="Nhập tên phương thức thanh toán"
@@ -4261,7 +4453,10 @@ export default function Settings() {
                 id="paymentMethodIcon"
                 value={paymentMethodForm.icon}
                 onChange={(e) =>
-                  setPaymentMethodForm((prev) => ({ ...prev, icon: e.target.value }))
+                  setPaymentMethodForm((prev) => ({
+                    ...prev,
+                    icon: e.target.value,
+                  }))
                 }
                 className="col-span-3"
                 placeholder="Nhập emoji biểu tượng"

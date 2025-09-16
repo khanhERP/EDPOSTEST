@@ -6,6 +6,8 @@ export interface CommonTranslations {
   save: string;
   cancel: string;
   delete: string;
+  productCreateSuccess: string;
+  productUpdateSuccess: string;
   edit: string;
   export: string;
   download: string;
