@@ -2570,7 +2570,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       <div
                         className={`min-w-12 min-h-12 max-w-20 rounded-full ${statusConfig.color} flex items-center justify-center text-white font-bold p-2`}
                         style={{
-                          fontSize: table.tableNumber.length > 8 ? '0.6rem' : 
+                          fontSize: table.tableNumber.length > 8 ? '0.6rem' :
                                    table.tableNumber.length > 5 ? '0.75rem' : '0.875rem'
                         }}
                       >
@@ -2948,7 +2948,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           id: item.productId,
                           name:
                             item.productName || getProductName(item.productId),
-                          price: parseFloat(item.unitPrice),
+                          price: parseFloat(item.price || item.unitPrice),
                           quantity: item.quantity,
                           sku:
                             item.productSku ||
@@ -3214,7 +3214,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             exactSubtotal: previewReceipt.exactSubtotal,
             exactTax: previewReceipt.exactTax,
             exactTotal: previewReceipt.exactTotal,
-            exactDiscount: previewReceipt.exactDiscount || 0,
+            exactDiscount: previewReceipt.exactDiscount,
             discount: previewReceipt.discount || selectedOrder?.discount || 0,
           };
 
@@ -3238,12 +3238,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             quantity: item.quantity,
             sku:
               item.sku ||
-              `FOOD${String(item.productId || item.id).padStart(5, "0")}`,
+              `SP${item.productId}`,
             taxRate: parseFloat(item.taxRate || "0"),
-            afterTaxPrice: item.afterTaxPrice || null,
+            afterTaxPrice: item.afterTaxPrice,
             discount: item.discount || "0",
-            discountAmount: item.discountAmount || "0",
-            originalPrice: item.originalPrice || item.price,
+            total: item.total,
           })) || []
         }
         total={
@@ -3254,82 +3253,98 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       />
 
       {/* Payment Method Modal - Step 2: Chọn phương thức thanh toán */}
-      <PaymentMethodModal
-        isOpen={showPaymentMethodModal}
-        onClose={() => {
-          console.log("🔴 Table: Closing payment method modal");
-          setShowPaymentMethodModal(false);
-          setOrderForPayment(null);
-        }}
-        onSelectMethod={async (method: string, data?: any) => {
-          console.log("🎯 Table: Payment method selected:", method, data);
+      {showPaymentMethodModal && orderForPayment && (
+        <PaymentMethodModal
+          isOpen={showPaymentMethodModal}
+          onClose={() => {
+            setShowPaymentMethodModal(false);
+            setOrderForPayment(null);
+          }}
+          onSelectMethod={handlePaymentMethodSelect}
+          total={(() => {
+            // Use exact total with proper priority and discount consideration
+            const baseTotal = orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null
+              ? Number(orderForPayment.exactTotal)
+              : Number(orderForPayment?.total || 0);
 
-          if (method === "paymentCompleted" && data?.success) {
-            console.log("✅ Table: Payment completed successfully", data);
+            const discountAmount = Number(orderForPayment?.exactDiscount || orderForPayment?.discount || 0);
+            const finalTotal = Math.max(0, baseTotal - discountAmount);
 
-            try {
-              // Refresh data
-              await Promise.all([refetchTables(), refetchOrders()]);
+            console.log("💰 Payment Modal Total Calculation:", {
+              baseTotal,
+              discountAmount,
+              finalTotal,
+              source: "table_grid_payment"
+            });
 
-              console.log("✅ Table: Data refreshed after payment");
+            return Math.floor(finalTotal);
+          })()}
+          cartItems={(() => {
+            // Map order items to cart format for payment modal with full product details
+            const itemsToMap = orderForPayment?.items || orderForPayment?.orderItems || [];
+            console.log("🛒 Mapping items for payment modal:", {
+              itemCount: itemsToMap.length,
+              hasProducts: Array.isArray(products),
+              productCount: products?.length || 0
+            });
 
-              toast({
-                title: "Thành công",
-                description: data.publishLater
-                  ? "Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau"
-                  : "Đơn hàng đã được thanh toán thành công",
+            return itemsToMap.map((item: any) => {
+              const product = Array.isArray(products)
+                ? products.find((p: any) => p.id === item.productId)
+                : null;
+
+              const mappedItem = {
+                id: item.productId || item.id,
+                productId: item.productId,
+                name: item.productName || item.name || getProductName(item.productId),
+                productName: item.productName || item.name || getProductName(item.productId),
+                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price || parseFloat(item.unitPrice || "0"),
+                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity || 1,
+                unitPrice: item.unitPrice,
+                total: item.total,
+                sku: item.sku || `SP${item.productId}`,
+                taxRate: parseFloat(item.taxRate || product?.taxRate || "0"),
+                afterTaxPrice: item.afterTaxPrice || product?.afterTaxPrice,
+                discount: item.discount || "0",
+                notes: item.notes,
+                product: product ? {
+                  id: product.id,
+                  name: product.name,
+                  price: product.price,
+                  afterTaxPrice: product.afterTaxPrice,
+                  taxRate: product.taxRate
+                } : null
+              };
+
+              console.log(`📦 Mapped item ${item.productId}:`, {
+                name: mappedItem.name,
+                price: mappedItem.price,
+                quantity: mappedItem.quantity,
+                taxRate: mappedItem.taxRate,
+                hasProduct: !!product
               });
 
-              // Always show receipt modal after successful payment - prioritize receipt display
-              if (data.receipt) {
-                console.log(
-                  "📄 Table: Showing receipt modal after successful payment",
-                );
-                setSelectedReceipt(data.receipt);
-                setShowReceiptModal(true);
-              } else {
-                console.warn(
-                  "⚠️ Table: No receipt data found after payment completion",
-                );
-              }
-            } catch (error) {
-              console.error("❌ Error refreshing data after payment:", error);
-            }
-
-            // Close order details if open
-            setOrderDetailsOpen(false);
-            setSelectedOrder(null);
-          }
-
-          if (method === "paymentError" && data) {
-            console.error("❌ Table: Payment failed", data);
-
-            toast({
-              title: "Lỗi",
-              description:
-                data.error ||
-                "Không thể hoàn tất thanh toán. Vui lòng thử lại.",
-              variant: "destructive",
+              return mappedItem;
             });
-          }
-
-          // Always close payment modal
-          setShowPaymentMethodModal(false);
-          setOrderForPayment(null);
-        }}
-        total={(() => {
-          const orderTotal =
-            orderForPayment?.exactTotal ??
-            orderForPayment?.total ??
-            selectedOrder?.total ??
-            0;
-          return Math.floor(parseFloat(orderTotal.toString()) || 0);
-        })()}
-        orderForPayment={orderForPayment}
-        products={products}
-        getProductName={getProductName}
-        receipt={previewReceipt}
-      />
+          })()}
+          orderForPayment={orderForPayment}
+          products={products}
+          getProductName={getProductName}
+          receipt={{
+            ...orderForPayment,
+            exactTotal: orderForPayment?.exactTotal,
+            exactSubtotal: orderForPayment?.exactSubtotal,
+            exactTax: orderForPayment?.exactTax,
+            exactDiscount: orderForPayment?.exactDiscount,
+            discount: orderForPayment?.discount || orderForPayment?.exactDiscount?.toString() || "0",
+            orderItems: orderForPayment?.items || orderForPayment?.orderItems || []
+          }}
+          onShowEInvoice={() => {
+            setShowPaymentMethodModal(false);
+            setShowEInvoiceModal(true);
+          }}
+        />
+      )}
 
       {/* E-Invoice Modal */}
       {showEInvoiceModal && orderForEInvoice && (
