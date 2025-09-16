@@ -996,86 +996,27 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               <div className="flex justify-between text-sm">
-                <span>{t("pos.subtotal")}</span>
+                <span>Tạm tính:</span>
                 <span>
-                  {Math.round(
-                    parseFloat(receipt.subtotal || "0"),
-                  ).toLocaleString("vi-VN")}{" "}
-                  ₫
+                  {parseFloat(receipt.subtotal || "0").toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>{t("pos.tax")}</span>
+                <span>Thuế:</span>
                 <span>
-                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString(
-                    "vi-VN",
-                  )}{" "}
-                  ₫
+                  {parseFloat(receipt.tax || "0").toLocaleString("vi-VN")} ₫
                 </span>
               </div>
-              {(() => {
-                // Check for discount from multiple sources with priority
-                let displayDiscount = 0;
-                console.log("receipt_trường", receipt);
-                // Priority 1: exactDiscount (most accurate)
-                if (
-                  receipt.exactDiscount !== undefined &&
-                  receipt.exactDiscount !== null &&
-                  parseFloat(receipt.exactDiscount.toString()) > 0
-                ) {
-                  displayDiscount = parseFloat(
-                    receipt.exactDiscount.toString(),
-                  );
-                  console.log(
-                    "📄 Receipt Modal: Using exactDiscount:",
-                    displayDiscount,
-                  );
-                }
-                // Priority 2: discount property
-                else if (
-                  receipt.discount !== undefined &&
-                  receipt.discount !== null &&
-                  parseFloat(receipt.discount.toString()) > 0
-                ) {
-                  displayDiscount = parseFloat(receipt.discount.toString());
-                  console.log(
-                    "📄 Receipt Modal: Using discount:",
-                    displayDiscount,
-                  );
-                }
-
-                return (
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>{t("common.discount")}</span>
-                    <span className="font-medium">
-                      -
-                      {Math.floor(displayDiscount || "0").toLocaleString(
-                        "vi-VN",
-                      )}{" "}
-                      ₫
-                    </span>
-                  </div>
-                );
-              })()}
+              <div className="flex justify-between text-sm text-red-600">
+                <span>Giảm giá</span>
+                <span className="font-medium">
+                  -{parseFloat(receipt.discount || "0").toLocaleString("vi-VN")} ₫
+                </span>
+              </div>
               <div className="flex justify-between font-bold">
-                <span>{t("pos.total")}</span>
+                <span>Tổng cộng:</span>
                 <span>
-                  {(() => {
-                    // Use EXACT database total directly without calculation
-                    // This ensures exact match with what's stored in database
-                    const dbTotal = parseFloat(receipt.total || "0");
-                    console.log(
-                      "📄 Receipt Modal: Using EXACT database total:",
-                      {
-                        rawTotal: receipt.total,
-                        parsedTotal: dbTotal,
-                        receiptId: receipt.id,
-                        source: "database_exact",
-                      },
-                    );
-                    return Math.round(dbTotal).toLocaleString("vi-VN");
-                  })()}{" "}
-                  ₫
+                  {parseFloat(receipt.total || "0").toLocaleString("vi-VN")} ₫
                 </span>
               </div>
             </div>
@@ -1275,33 +1216,25 @@ export function ReceiptModal({
               <div className="flex justify-between text-sm">
                 <span>Tạm tính:</span>
                 <span>
-                  {receipt?.subtotal 
-                    ? Math.floor(parseFloat(receipt.subtotal)).toLocaleString("vi-VN")
-                    : "0"} ₫
+                  {parseFloat(receipt?.subtotal || "0").toLocaleString("vi-VN")} ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Thuế:</span>
                 <span>
-                  {receipt?.tax 
-                    ? Math.floor(parseFloat(receipt.tax)).toLocaleString("vi-VN")
-                    : "0"} ₫
+                  {parseFloat(receipt?.tax || "0").toLocaleString("vi-VN")} ₫
                 </span>
               </div>
-              {receipt?.discount && parseFloat(receipt.discount) > 0 && (
-                <div className="flex justify-between text-sm text-red-600">
-                  <span>Giảm giá</span>
-                  <span className="font-medium">
-                    -{Math.floor(parseFloat(receipt.discount)).toLocaleString("vi-VN")} ₫
-                  </span>
-                </div>
-              )}
+              <div className="flex justify-between text-sm text-red-600">
+                <span>Giảm giá</span>
+                <span className="font-medium">
+                  -{parseFloat(receipt?.discount || "0").toLocaleString("vi-VN")} ₫
+                </span>
+              </div>
               <div className="flex justify-between font-bold">
                 <span>Tổng cộng:</span>
                 <span>
-                  {receipt?.total 
-                    ? Math.floor(parseFloat(receipt.total)).toLocaleString("vi-VN")
-                    : "0"} ₫
+                  {parseFloat(receipt?.total || "0").toLocaleString("vi-VN")} ₫
                 </span>
               </div>
             </div>
