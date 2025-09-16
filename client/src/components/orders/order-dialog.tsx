@@ -605,7 +605,7 @@ export function OrderDialog({
 
       console.log("📝 Processing order update:", {
         orderId: existingOrder.id,
-        hasNewItems: items.length > 0,
+        hasNewItems: newItemsOnly.length > 0,
         hasCustomerChanges: hasCustomerNameChange || hasCustomerCountChange,
         customerUpdates: {
           name: customerName,
