@@ -444,7 +444,7 @@ export function OrderDialog({
         }
 
         // Round individual tax amount and add to array
-        individualTaxAmounts.push(Math.round(itemTax));
+        individualTaxAmounts.push(Math.trunc(itemTax));
       });
     }
 
@@ -470,7 +470,7 @@ export function OrderDialog({
       }
 
       // Round individual tax amount and add to array
-      individualTaxAmounts.push(Math.round(itemTax));
+      individualTaxAmounts.push(Math.trunc(itemTax));
     });
 
     // Sum all individual rounded tax amounts
