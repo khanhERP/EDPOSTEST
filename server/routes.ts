@@ -2058,107 +2058,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currentDiscount: existingOrder.discount,
       });
 
-      // Always recalculate financial fields to ensure accuracy
-      console.log(`💰 Recalculating ALL financial fields for order ${id}`);
+      // Use EXACT values from frontend like in create mode - DO NOT recalculate
+      console.log(`💰 Using EXACT values from frontend for order ${id} - no recalculation`);
 
-      try {
-        // Fetch current order items
-        const orderItemsResponse = await db
-          .select()
-          .from(orderItemsTable)
-          .where(eq(orderItemsTable.orderId, id));
-
-        if (orderItemsResponse && orderItemsResponse.length > 0) {
-          console.log(
-            `📦 Found ${orderItemsResponse.length} items for recalculation`,
-          );
-
-          // Get products for tax calculation
-          const allProducts = await db.select().from(products);
-          const productMap = new Map(allProducts.map((p) => [p.id, p]));
-
-          // Calculate subtotal (base price * quantity)
-          let calculatedSubtotal = 0;
-          orderItemsResponse.forEach((item) => {
-            const unitPrice = Number(item.unitPrice || 0);
-            const quantity = Number(item.quantity || 0);
-            calculatedSubtotal += unitPrice * quantity;
-          });
-
-          // Calculate tax using afterTaxPrice method
-          let calculatedTax = 0;
-          orderItemsResponse.forEach((item) => {
-            const unitPrice = Number(item.unitPrice || 0);
-            const quantity = Number(item.quantity || 0);
-            const product = productMap.get(item.productId);
-
-            if (
-              product?.afterTaxPrice &&
-              product.afterTaxPrice !== null &&
-              product.afterTaxPrice !== ""
-            ) {
-              const afterTaxPrice = parseFloat(product.afterTaxPrice);
-              const taxPerUnit = Math.max(0, afterTaxPrice - unitPrice);
-              calculatedTax += Math.floor(taxPerUnit * quantity);
-            }
-          });
-
-          // Handle discount - prioritize incoming data, then existing data
-          let finalDiscount = 0;
-          if (orderData.discount !== undefined && orderData.discount !== null) {
-            finalDiscount = Math.floor(Number(orderData.discount));
-            console.log(`💰 Using incoming discount: ${finalDiscount}`);
-          } else if (existingOrder.discount) {
-            finalDiscount = Math.floor(Number(existingOrder.discount));
-            console.log(`💰 Using existing discount: ${finalDiscount}`);
-          }
-
-          // Calculate total with discount
-          const calculatedTotal = Math.max(
-            0,
-            calculatedSubtotal + calculatedTax - finalDiscount,
-          );
-
-          console.log(`💰 Recalculated financial data:`, {
-            subtotal: calculatedSubtotal,
-            tax: calculatedTax,
-            discount: finalDiscount,
-            total: calculatedTotal,
-            itemsCount: orderItemsResponse.length,
-            calculationMethod: "server-side-accurate",
-          });
-
-          // Update orderData with accurate calculated values
-          orderData.subtotal = calculatedSubtotal.toString();
-          orderData.tax = calculatedTax.toString();
-          orderData.discount = finalDiscount.toString();
-          orderData.total = calculatedTotal.toString();
-
-          console.log(
-            `✅ Updated order data with accurate financial calculations`,
-          );
-        } else {
-          console.log(
-            `⚠️ No items found for order ${id}, setting totals to zero`,
-          );
-          orderData.subtotal = "0";
-          orderData.tax = "0";
-          orderData.discount =
-            orderData.discount || existingOrder.discount || "0";
-          orderData.total = "0";
-        }
-      } catch (calcError) {
-        console.error(
-          `❌ Error calculating totals for order ${id}:`,
-          calcError,
-        );
-        // Don't continue with potentially incorrect values - return error
-        return res.status(500).json({
-          message: "Failed to calculate order totals",
-          error:
-            calcError instanceof Error ? calcError.message : String(calcError),
-        });
+      // Validate and use incoming financial data from frontend
+      if (orderData.subtotal !== undefined && orderData.subtotal !== null) {
+        console.log(`💰 Using frontend subtotal: ${orderData.subtotal}`);
+      } else {
+        console.log(`💰 No subtotal provided, keeping existing: ${existingOrder.subtotal}`);
+        orderData.subtotal = existingOrder.subtotal;
       }
+
+      if (orderData.tax !== undefined && orderData.tax !== null) {
+        console.log(`💰 Using frontend tax: ${orderData.tax}`);
+      } else {
+        console.log(`💰 No tax provided, keeping existing: ${existingOrder.tax}`);
+        orderData.tax = existingOrder.tax;
+      }
+
+      if (orderData.total !== undefined && orderData.total !== null) {
+        console.log(`💰 Using frontend total: ${orderData.total}`);
+      } else {
+        console.log(`💰 No total provided, keeping existing: ${existingOrder.total}`);
+        orderData.total = existingOrder.total;
+      }
+
+      // Handle discount from frontend or existing
+      if (orderData.discount !== undefined && orderData.discount !== null) {
+        console.log(`💰 Using frontend discount: ${orderData.discount}`);
+      } else if (existingOrder.discount) {
+        console.log(`💰 Using existing discount: ${existingOrder.discount}`);
+        orderData.discount = existingOrder.discount;
+      } else {
+        console.log(`💰 No discount provided, defaulting to 0`);
+        orderData.discount = "0";
+      }
+
+      console.log(`💰 Final financial data (exact from frontend):`, {
+        subtotal: orderData.subtotal,
+        tax: orderData.tax,
+        discount: orderData.discount,
+        total: orderData.total,
+        source: "frontend_exact_values"
+      });
 
       // Log the final data being updated
       console.log(`💰 Final update data:`, {
