@@ -393,25 +393,49 @@ export function OrderDialog({
   const calculateTax = () => {
     let totalTax = 0;
 
+    // Get total subtotal before discount for proportional calculation
+    let totalSubtotalBeforeDiscount = 0;
+    
+    // Add existing order items if in edit mode
+    if (
+      mode === "edit" &&
+      existingOrderItems &&
+      Array.isArray(existingOrderItems)
+    ) {
+      existingOrderItems.forEach((item) => {
+        const unitPrice = parseFloat(item.unitPrice);
+        const quantity = parseInt(item.quantity);
+        totalSubtotalBeforeDiscount += unitPrice * quantity;
+      });
+    }
+
+    // Add new cart items
+    cart.forEach((item) => {
+      const unitPrice = parseFloat(item.product.price);
+      const quantity = item.quantity;
+      totalSubtotalBeforeDiscount += unitPrice * quantity;
+    });
+
     // Calculate tax for existing items in edit mode
     if (mode === "edit" && existingItems.length > 0) {
       existingItems.forEach((item) => {
         const product = products?.find((p: Product) => p.id === item.productId);
         let itemTax = 0;
 
-        // Use afterTaxPrice method if available (preferred method)
-        if (
-          product?.afterTaxPrice &&
-          product.afterTaxPrice !== null &&
-          product.afterTaxPrice !== ""
-        ) {
+        if (product?.taxRate && parseFloat(product.taxRate) > 0) {
           const basePrice = Number(item.unitPrice || 0);
           const quantity = Number(item.quantity || 0);
-          const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          
-          // Tax = (afterTaxPrice - basePrice) * quantity
-          const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-          itemTax = taxPerUnit * quantity;
+          const itemSubtotal = basePrice * quantity;
+
+          // Calculate proportional discount for this item
+          const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
+            ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
+            : 0;
+
+          // Tax = (price * quantity - discount) * taxRate
+          const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
+          const taxRate = parseFloat(product.taxRate) / 100;
+          itemTax = taxableAmount * taxRate;
         }
 
         totalTax += itemTax;
@@ -423,19 +447,20 @@ export function OrderDialog({
       const product = products?.find((p: Product) => p.id === item.product.id);
       let itemTax = 0;
 
-      // Use afterTaxPrice method if available (preferred method)
-      if (
-        product?.afterTaxPrice &&
-        product.afterTaxPrice !== null &&
-        product.afterTaxPrice !== ""
-      ) {
+      if (product?.taxRate && parseFloat(product.taxRate) > 0) {
         const basePrice = parseFloat(product.price);
         const quantity = item.quantity;
-        const afterTaxPrice = parseFloat(product.afterTaxPrice);
-        
-        // Tax = (afterTaxPrice - basePrice) * quantity
-        const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
-        itemTax = taxPerUnit * quantity;
+        const itemSubtotal = basePrice * quantity;
+
+        // Calculate proportional discount for this item
+        const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
+          ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
+          : 0;
+
+        // Tax = (price * quantity - discount) * taxRate
+        const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
+        const taxRate = parseFloat(product.taxRate) / 100;
+        itemTax = taxableAmount * taxRate;
       }
 
       totalTax += itemTax;
