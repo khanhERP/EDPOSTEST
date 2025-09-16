@@ -804,6 +804,59 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     onSuccess: async (data, variables) => {
       console.log("🎯 Table completePaymentMutation.onSuccess called");
 
+      // Find the order to get its table ID for status update
+      const completedOrder = Array.isArray(orders) 
+        ? orders.find((o: any) => o.id === variables.orderId)
+        : null;
+
+      console.log("🔍 Completed order details:", {
+        orderId: variables.orderId,
+        tableId: completedOrder?.tableId,
+        orderNumber: completedOrder?.orderNumber
+      });
+
+      // If order has a table, check if we need to update table status
+      if (completedOrder?.tableId) {
+        try {
+          // Check if there are any other unpaid orders on this table
+          const otherActiveOrders = Array.isArray(orders) 
+            ? orders.filter((o: any) => 
+                o.tableId === completedOrder.tableId && 
+                o.id !== variables.orderId && 
+                !["paid", "cancelled"].includes(o.status)
+              )
+            : [];
+
+          console.log("🔍 Other active orders on table:", {
+            tableId: completedOrder.tableId,
+            otherOrdersCount: otherActiveOrders.length,
+            otherOrders: otherActiveOrders.map(o => ({
+              id: o.id,
+              orderNumber: o.orderNumber,
+              status: o.status
+            }))
+          });
+
+          // If no other unpaid orders, update table to available
+          if (otherActiveOrders.length === 0) {
+            console.log(`🔄 Updating table ${completedOrder.tableId} to available status`);
+            
+            try {
+              await apiRequest("PUT", `/api/tables/${completedOrder.tableId}/status`, {
+                status: "available"
+              });
+              console.log(`✅ Table ${completedOrder.tableId} updated to available`);
+            } catch (tableError) {
+              console.error(`❌ Error updating table ${completedOrder.tableId}:`, tableError);
+            }
+          } else {
+            console.log(`⏳ Table ${completedOrder.tableId} still has ${otherActiveOrders.length} active orders, keeping occupied status`);
+          }
+        } catch (error) {
+          console.error("❌ Error checking table status update:", error);
+        }
+      }
+
       // IMMEDIATE: Clear all cache before any other operation
       queryClient.clear();
       queryClient.removeQueries();
@@ -1013,7 +1066,53 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         customerId,
       });
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
+      // Find the order to get its table ID for status update
+      const completedOrder = Array.isArray(orders) 
+        ? orders.find((o: any) => o.id === variables.orderId)
+        : null;
+
+      console.log("🔍 Points payment completed for order:", {
+        orderId: variables.orderId,
+        tableId: completedOrder?.tableId,
+        orderNumber: completedOrder?.orderNumber
+      });
+
+      // If order has a table, check if we need to update table status
+      if (completedOrder?.tableId) {
+        try {
+          // Check if there are any other unpaid orders on this table
+          const otherActiveOrders = Array.isArray(orders) 
+            ? orders.filter((o: any) => 
+                o.tableId === completedOrder.tableId && 
+                o.id !== variables.orderId && 
+                !["paid", "cancelled"].includes(o.status)
+              )
+            : [];
+
+          console.log("🔍 Other active orders on table after points payment:", {
+            tableId: completedOrder.tableId,
+            otherOrdersCount: otherActiveOrders.length
+          });
+
+          // If no other unpaid orders, update table to available
+          if (otherActiveOrders.length === 0) {
+            console.log(`🔄 Updating table ${completedOrder.tableId} to available after points payment`);
+            
+            try {
+              await apiRequest("PUT", `/api/tables/${completedOrder.tableId}/status`, {
+                status: "available"
+              });
+              console.log(`✅ Table ${completedOrder.tableId} updated to available after points payment`);
+            } catch (tableError) {
+              console.error(`❌ Error updating table ${completedOrder.tableId} after points payment:`, tableError);
+            }
+          }
+        } catch (error) {
+          console.error("❌ Error checking table status update after points payment:", error);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
@@ -1222,7 +1321,53 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         customerId,
       });
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
+      // Find the order to get its table ID for status update
+      const completedOrder = Array.isArray(orders) 
+        ? orders.find((o: any) => o.id === variables.orderId)
+        : null;
+
+      console.log("🔍 Mixed payment completed for order:", {
+        orderId: variables.orderId,
+        tableId: completedOrder?.tableId,
+        orderNumber: completedOrder?.orderNumber
+      });
+
+      // If order has a table, check if we need to update table status
+      if (completedOrder?.tableId) {
+        try {
+          // Check if there are any other unpaid orders on this table
+          const otherActiveOrders = Array.isArray(orders) 
+            ? orders.filter((o: any) => 
+                o.tableId === completedOrder.tableId && 
+                o.id !== variables.orderId && 
+                !["paid", "cancelled"].includes(o.status)
+              )
+            : [];
+
+          console.log("🔍 Other active orders on table after mixed payment:", {
+            tableId: completedOrder.tableId,
+            otherOrdersCount: otherActiveOrders.length
+          });
+
+          // If no other unpaid orders, update table to available
+          if (otherActiveOrders.length === 0) {
+            console.log(`🔄 Updating table ${completedOrder.tableId} to available after mixed payment`);
+            
+            try {
+              await apiRequest("PUT", `/api/tables/${completedOrder.tableId}/status`, {
+                status: "available"
+              });
+              console.log(`✅ Table ${completedOrder.tableId} updated to available after mixed payment`);
+            } catch (tableError) {
+              console.error(`❌ Error updating table ${completedOrder.tableId} after mixed payment:`, tableError);
+            }
+          }
+        } catch (error) {
+          console.error("❌ Error checking table status update after mixed payment:", error);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
