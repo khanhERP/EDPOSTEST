@@ -120,6 +120,21 @@ export function OrderDialog({
             );
           }
 
+          // Step 1.5: If we have existing item changes, call recalculate API first
+          if (forceRecalculation) {
+            console.log(`🧮 Calling recalculate API for order ${existingOrder.id}`);
+            try {
+              const recalcResponse = await apiRequest(
+                "POST",
+                `/api/orders/${existingOrder.id}/recalculate`
+              );
+              const recalcResult = await recalcResponse.json();
+              console.log("✅ Order totals recalculated:", recalcResult);
+            } catch (error) {
+              console.error("❌ Error recalculating order:", error);
+            }
+          }
+
           // Step 2: Use EXACT displayed values from screen (like create mode)
           console.log(
             `📝 Using EXACT displayed values for order ${existingOrder.id}`,
@@ -595,6 +610,16 @@ export function OrderDialog({
         };
       });
 
+      // Track any modifications to existing items (quantity changes, removals, etc.)
+      const hasExistingItemChanges = existingItems.length !== (existingOrderItems?.length || 0);
+      
+      console.log(`📝 Order Dialog: Checking for existing item changes:`, {
+        currentExistingItemsCount: existingItems.length,
+        originalExistingItemsCount: existingOrderItems?.length || 0,
+        hasExistingItemChanges,
+        hasDiscountChange: (parseFloat(existingOrder.discount || "0") !== discount),
+      });
+
       // Include updated order information
       const updatedOrder = {
         ...existingOrder,
@@ -606,18 +631,24 @@ export function OrderDialog({
       console.log("📝 Processing order update:", {
         orderId: existingOrder.id,
         hasNewItems: newItemsOnly.length > 0,
+        hasExistingItemChanges,
         hasCustomerChanges: hasCustomerNameChange || hasCustomerCountChange,
+        hasDiscountChange: (parseFloat(existingOrder.discount || "0") !== discount),
         customerUpdates: {
           name: customerName,
           count: customerCount,
         },
-        totalItems: newItemsOnly.length,
+        newItemsCount: newItemsOnly.length,
         proceedWithUpdate: true,
       });
 
-      // Always proceed with mutation - either adding new items or updating customer info
-      console.log(`📝 Order Dialog: Sending mutation with ${newItemsOnly.length} NEW items only`);
-      createOrderMutation.mutate({ order: updatedOrder, items: newItemsOnly });
+      // Always proceed with mutation - adding new items and updating order totals/info
+      console.log(`📝 Order Dialog: Sending mutation with ${newItemsOnly.length} NEW items and updated order info`);
+      createOrderMutation.mutate({ 
+        order: updatedOrder, 
+        items: newItemsOnly,
+        forceRecalculation: hasExistingItemChanges || (parseFloat(existingOrder.discount || "0") !== discount)
+      });
     } else {
       // Create mode - calculate with correct mapping
       // Subtotal = tiền tạm tính (giá trước thuế * số lượng)
