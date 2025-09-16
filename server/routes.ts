@@ -2163,6 +2163,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
+      // Get discount value from order data
+      const discount = Number(orderData.discount || 0);
+
       // Step 1.6: Update discount for existing order items
       if (
         discount > 0 &&
