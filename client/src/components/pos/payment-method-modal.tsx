@@ -880,6 +880,59 @@ export function PaymentMethodModal({
               paidAt: updatedOrder.paidAt,
             });
 
+            // Update table status if order has a table
+            if (updatedOrder.tableId) {
+              try {
+                console.log(`🔄 Checking table status update for table ${updatedOrder.tableId} after ${method} payment`);
+                
+                // Check if there are any other unpaid orders on this table
+                const ordersResponse = await fetch('/api/orders');
+                const allOrders = await ordersResponse.json();
+                
+                const otherActiveOrders = Array.isArray(allOrders) 
+                  ? allOrders.filter((o: any) => 
+                      o.tableId === updatedOrder.tableId && 
+                      o.id !== updatedOrder.id && 
+                      !["paid", "cancelled"].includes(o.status)
+                    )
+                  : [];
+
+                console.log(`🔍 Other active orders on table ${updatedOrder.tableId}:`, {
+                  otherOrdersCount: otherActiveOrders.length,
+                  otherOrders: otherActiveOrders.map(o => ({
+                    id: o.id,
+                    orderNumber: o.orderNumber,
+                    status: o.status
+                  }))
+                });
+
+                // If no other unpaid orders, update table to available
+                if (otherActiveOrders.length === 0) {
+                  console.log(`🔄 Updating table ${updatedOrder.tableId} to available after ${method} payment`);
+                  
+                  const tableUpdateResponse = await fetch(`/api/tables/${updatedOrder.tableId}/status`, {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      status: "available"
+                    }),
+                  });
+
+                  if (tableUpdateResponse.ok) {
+                    console.log(`✅ Table ${updatedOrder.tableId} updated to available after ${method} payment`);
+                  } else {
+                    console.error(`❌ Failed to update table ${updatedOrder.tableId} status after ${method} payment`);
+                  }
+                } else {
+                  console.log(`⏳ Table ${updatedOrder.tableId} still has ${otherActiveOrders.length} active orders, keeping occupied status`);
+                }
+              } catch (tableError) {
+                console.error(`❌ Error updating table status after ${method} payment:`, tableError);
+              }
+            }
+
             // Show success toast
             toast({
               title: "Thanh toán thành công",
