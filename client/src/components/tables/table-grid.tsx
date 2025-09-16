@@ -1816,7 +1816,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   };
 
-  // Define handlePaymentMethodSelect here - ENHANCED for immediate data refresh
+  // Define handlePaymentMethodSelect here - ENHANCED for immediate data refresh with proper discount handling
   const handlePaymentMethodSelect = async (
     method: string,
     paymentData?: any,
@@ -1985,42 +1985,91 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       // Close payment method modal and show receipt preview
       setShowPaymentMethodModal(false);
 
-      // Create receipt preview data
+      // Calculate proper totals from order items with exact discount handling
+      let calculatedSubtotal = 0;
+      let calculatedTax = 0;
+      let orderDiscount = 0;
+
+      console.log("💰 Table Grid: Calculating receipt data from order items", {
+        orderForPayment: orderForPayment,
+        orderItems: orderItems?.length || 0,
+      });
+
+      // Get discount from orderForPayment first, then from selectedOrder
+      if (orderForPayment.exactDiscount !== undefined && orderForPayment.exactDiscount !== null) {
+        orderDiscount = Math.floor(Number(orderForPayment.exactDiscount));
+      } else if (orderForPayment.discount !== undefined && orderForPayment.discount !== null) {
+        orderDiscount = Math.floor(Number(orderForPayment.discount));
+      } else if (selectedOrder?.discount) {
+        orderDiscount = Math.floor(Number(selectedOrder.discount));
+      }
+
+      // Process order items to calculate subtotal and tax
+      const processedItems = Array.isArray(orderItems) && orderItems.length > 0 ? orderItems.map((item: any) => {
+        const basePrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+
+        // Calculate subtotal (base price without tax)
+        calculatedSubtotal += basePrice * quantity;
+
+        // Calculate tax using same logic as Order Details
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
+          calculatedTax += Math.floor(taxPerUnit * quantity);
+        }
+
+        return {
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName || getProductName(item.productId),
+          quantity: quantity,
+          price: item.unitPrice,
+          unitPrice: item.unitPrice,
+          total: item.total,
+          sku: item.productSku || `FOOD${String(item.productId).padStart(6, "0")}`,
+          taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10,
+        };
+      }) : [];
+
+      // Final total calculation: subtotal + tax (discount applied during payment)
+      const finalTotal = Math.floor(calculatedSubtotal + calculatedTax);
+
+      console.log("💰 Table Grid: Calculated receipt totals", {
+        calculatedSubtotal: calculatedSubtotal,
+        calculatedTax: calculatedTax,
+        orderDiscount: orderDiscount,
+        finalTotal: finalTotal,
+        itemsProcessed: processedItems.length,
+      });
+
+      // Create receipt preview data with proper format
       const receiptPreview = {
-        transactionId: `TXN-${Date.now()}`,
+        id: selectedOrder?.id,
+        transactionId: selectedOrder?.orderNumber || `TXN-${Date.now()}`,
         createdAt: new Date().toISOString(),
         cashierName: "Table Service",
         paymentMethod: method,
-        amountReceived: paymentData?.amountReceived?.toString(),
-        change: paymentData?.change?.toString(),
-        items:
-          orderItems?.map((item: any) => ({
-            id: item.id,
-            productId: item.productId,
-            productName: item.productName,
-            quantity: item.quantity,
-            price: item.unitPrice,
-            total: item.total,
-          })) || [],
-        subtotal: (
-          orderForPayment.exactSubtotal ||
-          parseFloat(orderForPayment.subtotal || "0")
-        ).toString(),
-        tax: (
-          orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0")
-        ).toString(),
-        total: (
-          orderForPayment.exactTotal || parseFloat(orderForPayment.total || "0")
-        ).toString(),
-        exactTotal:
-          orderForPayment.exactTotal ||
-          parseFloat(orderForPayment.total || "0"),
-        exactSubtotal:
-          orderForPayment.exactSubtotal ||
-          parseFloat(orderForPayment.subtotal || "0"),
-        exactTax:
-          orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0"),
+        amountReceived: paymentData?.amountReceived?.toString() || finalTotal.toString(),
+        change: paymentData?.change?.toString() || "0.00",
+        customerName: selectedOrder?.customerName,
+        tableNumber: getTableInfo(selectedOrder?.tableId)?.tableNumber || "N/A",
+        items: processedItems,
+        subtotal: Math.floor(calculatedSubtotal).toString(),
+        tax: Math.floor(calculatedTax).toString(),
+        total: finalTotal.toString(),
+        discount: orderDiscount.toString(),
+        exactSubtotal: Math.floor(calculatedSubtotal),
+        exactTax: Math.floor(calculatedTax), 
+        exactTotal: finalTotal,
+        exactDiscount: orderDiscount,
       };
+
+      console.log("📄 Table Grid: Receipt preview created with proper format", {
+        receiptPreview: receiptPreview,
+        hasItems: receiptPreview.items?.length > 0,
+      });
 
       setSelectedReceipt(receiptPreview);
       setShowReceiptModal(true);
