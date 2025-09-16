@@ -396,7 +396,7 @@ export function OrderDialog({
 
     // Get total subtotal before discount for proportional calculation
     let totalSubtotalBeforeDiscount = 0;
-    
+
     // Add existing order items if in edit mode
     if (
       mode === "edit" &&
@@ -429,8 +429,8 @@ export function OrderDialog({
           const itemSubtotal = basePrice * quantity;
 
           // Calculate proportional discount for this item
-          const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
-            ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
+          const itemDiscountAmount = totalSubtotalBeforeDiscount > 0
+            ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
             : 0;
 
           // Tax = (price * quantity - discount) * taxRate
@@ -439,8 +439,8 @@ export function OrderDialog({
           itemTax = taxableAmount * taxRate;
         }
 
-        // Round individual tax amount and add to array
-        individualTaxAmounts.push(Math.round(itemTax));
+        // Floor individual tax amount and add to array
+        individualTaxAmounts.push(Math.floor(itemTax));
       });
     }
 
@@ -455,8 +455,8 @@ export function OrderDialog({
         const itemSubtotal = basePrice * quantity;
 
         // Calculate proportional discount for this item
-        const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
-          ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
+        const itemDiscountAmount = totalSubtotalBeforeDiscount > 0
+          ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
           : 0;
 
         // Tax = (price * quantity - discount) * taxRate
@@ -465,8 +465,8 @@ export function OrderDialog({
         itemTax = taxableAmount * taxRate;
       }
 
-      // Round individual tax amount and add to array
-      individualTaxAmounts.push(Math.round(itemTax));
+      // Floor individual tax amount and add to array
+      individualTaxAmounts.push(Math.floor(itemTax));
     });
 
     // Sum all individual rounded tax amounts
@@ -1331,10 +1331,10 @@ export function OrderDialog({
                                   parseFloat(item.product.taxRate) > 0
                                 ) {
                                   const itemSubtotal = basePrice * quantity;
-                                  
+
                                   // Get total subtotal before discount for proportional calculation
                                   let totalSubtotalBeforeDiscount = 0;
-                                  
+
                                   // Add existing order items if in edit mode
                                   if (
                                     mode === "edit" &&
@@ -1356,8 +1356,8 @@ export function OrderDialog({
                                   });
 
                                   // Calculate proportional discount for this item
-                                  const itemDiscountAmount = totalSubtotalBeforeDiscount > 0 
-                                    ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount 
+                                  const itemDiscountAmount = totalSubtotalBeforeDiscount > 0
+                                    ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
                                     : 0;
 
                                   // Tax = (price * quantity - discount) * taxRate
