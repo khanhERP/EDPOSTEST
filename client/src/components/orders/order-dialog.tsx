@@ -393,8 +393,8 @@ export function OrderDialog({
       totalSubtotal += unitPrice * quantity;
     });
 
-    // Apply formula: subtotal = price * quantity - discount
-    return Math.max(0, totalSubtotal - discount);
+    // Return subtotal BEFORE discount (discount is stored separately)
+    return totalSubtotal;
   };
 
   const calculateTax = () => {
@@ -441,7 +441,7 @@ export function OrderDialog({
               ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
               : 0;
 
-          // Apply new formula: tax = (price * quantity - discount) * taxRate
+          // Apply correct formula: tax = (price * quantity - discount) * taxRate
           const subtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
           const taxRate = parseFloat(product.taxRate) / 100;
           itemTax = subtotalAfterDiscount * taxRate;
@@ -468,7 +468,7 @@ export function OrderDialog({
             ? (discount * itemSubtotal) / totalSubtotalBeforeDiscount
             : 0;
 
-        // Apply new formula: tax = (price * quantity - discount) * taxRate
+        // Apply correct formula: tax = (price * quantity - discount) * taxRate
         const subtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
         const taxRate = parseFloat(product.taxRate) / 100;
         itemTax = subtotalAfterDiscount * taxRate;
@@ -490,7 +490,8 @@ export function OrderDialog({
   const calculateTotal = () => {
     const subtotal = calculateSubtotal();
     const tax = calculateTax();
-    return subtotal + tax;
+    // total = subtotal + tax - discount (discount applied at the end)
+    return Math.max(0, subtotal + tax - discount);
   };
 
   const calculateGrandTotal = () => {
