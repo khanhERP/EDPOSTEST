@@ -35,50 +35,6 @@ interface CartItem {
   notes?: string;
 }
 
-// Function to calculate discount distribution among order items
-function calculateDiscountDistribution(items: any[], totalDiscount: number) {
-  if (!items || items.length === 0 || totalDiscount <= 0) {
-    return items.map((item) => ({ ...item, discount: 0 }));
-  }
-
-  // Calculate total amount (subtotal before discount)
-  const totalAmount = items.reduce((sum, item) => {
-    const unitPrice = Number(item.unitPrice || 0);
-    const quantity = Number(item.quantity || 0);
-    return sum + unitPrice * quantity;
-  }, 0);
-
-  if (totalAmount <= 0) {
-    return items.map((item) => ({ ...item, discount: 0 }));
-  }
-
-  let allocatedDiscount = 0;
-  const result = items.map((item, index) => {
-    const unitPrice = Number(item.unitPrice || 0);
-    const quantity = Number(item.quantity || 0);
-    const itemTotal = unitPrice * quantity;
-
-    let itemDiscount = 0;
-
-    if (index === items.length - 1) {
-      // Last item gets remaining discount to ensure total matches exactly
-      itemDiscount = Math.max(0, totalDiscount - allocatedDiscount);
-    } else {
-      // Calculate proportional discount: Total discount * item amount / total amount
-      const proportionalDiscount = (totalDiscount * itemTotal) / totalAmount;
-      itemDiscount = Math.round(proportionalDiscount); // Round to nearest dong
-      allocatedDiscount += itemDiscount;
-    }
-
-    return {
-      ...item,
-      discount: itemDiscount.toFixed(2),
-    };
-  });
-
-  return result;
-}
-
 export function OrderDialog({
   open,
   onOpenChange,
@@ -129,7 +85,11 @@ export function OrderDialog({
   }, [mode, open, existingOrder?.id, refetchExistingItems]);
 
   const createOrderMutation = useMutation({
-    mutationFn: async (orderData: { order: any; items: any[]; existingItems?: any[] }) => {
+    mutationFn: async (orderData: {
+      order: any;
+      items: any[];
+      existingItems?: any[];
+    }) => {
       console.log("=== ORDER MUTATION STARTED ===");
       console.log("Mode:", mode);
       console.log("Existing order:", existingOrder);
@@ -165,14 +125,19 @@ export function OrderDialog({
           }
 
           // Step 1.5: If we have existing item changes, call recalculate API first
-          const hasExistingItemChanges = existingItems.length !== (existingOrderItems?.length || 0);
-          const shouldRecalculate = hasExistingItemChanges || (parseFloat(existingOrder.discount || "0") !== discount);
+          const hasExistingItemChanges =
+            existingItems.length !== (existingOrderItems?.length || 0);
+          const shouldRecalculate =
+            hasExistingItemChanges ||
+            parseFloat(existingOrder.discount || "0") !== discount;
           if (shouldRecalculate) {
-            console.log(`🧮 Calling recalculate API for order ${existingOrder.id}`);
+            console.log(
+              `🧮 Calling recalculate API for order ${existingOrder.id}`,
+            );
             try {
               const recalcResponse = await apiRequest(
                 "POST",
-                `/api/orders/${existingOrder.id}/recalculate`
+                `/api/orders/${existingOrder.id}/recalculate`,
               );
               const recalcResult = await recalcResponse.json();
               console.log("✅ Order totals recalculated:", recalcResult);
@@ -182,35 +147,40 @@ export function OrderDialog({
           }
 
           // Step 1.6: Update discount for existing order items via API
-          if (discount > 0 && existingOrderItems && existingOrderItems.length > 0) {
+          if (
+            discount > 0 &&
+            orderData?.existingItems &&
+            orderData.existingItems?.length > 0
+          ) {
             console.log(
-              `💰 Updating discount for ${existingOrderItems.length} existing order items`,
-            );
-
-            // Calculate discount distribution among existing items
-            const updatedExistingItems = calculateDiscountDistribution(
-              existingOrderItems,
-              discount,
+              `💰 Updating discount for ${orderData.existingItems?.length} existing order items`,
             );
 
             // Update each order item with its calculated discount via API
-            for (const item of updatedExistingItems) {
+            for (const item of orderData.existingItems) {
               try {
                 const updateResponse = await apiRequest(
                   "PUT",
                   `/api/order-items/${item.id}`,
                   {
                     discount: parseFloat(item.discount || "0").toFixed(2),
-                  }
+                  },
                 );
 
                 if (updateResponse.ok) {
-                  console.log(`✅ Updated order item ${item.id} with discount: ${item.discount}`);
+                  console.log(
+                    `✅ Updated order item ${item.id} with discount: ${item.discount}`,
+                  );
                 } else {
-                  console.error(`❌ Failed to update order item ${item.id} discount`);
+                  console.error(
+                    `❌ Failed to update order item ${item.id} discount`,
+                  );
                 }
               } catch (itemError) {
-                console.error(`❌ Error updating order item ${item.id} discount:`, itemError);
+                console.error(
+                  `❌ Error updating order item ${item.id} discount:`,
+                  itemError,
+                );
               }
             }
           }
@@ -222,18 +192,21 @@ export function OrderDialog({
 
           // Get EXACT values that user sees on screen from footer calculations
           const displayedSubtotal = Math.floor(calculateSubtotal());
-          const displayedTax = Math.floor(calculateTax());  
+          const displayedTax = Math.floor(calculateTax());
           const displayedTotal = Math.floor(calculateTotal());
 
-          console.log("💰 Edit mode - Using EXACT displayed values from screen:", {
-            existingItemsCount: existingItems.length,
-            newItemsCount: cart.length,
-            displayedSubtotal: displayedSubtotal,
-            displayedTax: displayedTax,
-            displayedDiscount: Math.floor(discount),
-            displayedTotal: displayedTotal,
-            source: "exact_screen_display_edit_mode"
-          });
+          console.log(
+            "💰 Edit mode - Using EXACT displayed values from screen:",
+            {
+              existingItemsCount: existingItems.length,
+              newItemsCount: cart.length,
+              displayedSubtotal: displayedSubtotal,
+              displayedTax: displayedTax,
+              displayedDiscount: Math.floor(discount),
+              displayedTotal: displayedTotal,
+              source: "exact_screen_display_edit_mode",
+            },
+          );
 
           console.log(
             `💰 Edit mode - Saving EXACT displayed totals: subtotal=${displayedSubtotal}, tax=${displayedTax}, discount=${Math.floor(discount)}, total=${displayedTotal}`,
@@ -294,18 +267,24 @@ export function OrderDialog({
 
       // Force immediate refetch of order items if in edit mode
       if (mode === "edit" && existingOrder?.id) {
-        console.log("🔄 Force refetching order items for order:", existingOrder.id);
+        console.log(
+          "🔄 Force refetching order items for order:",
+          existingOrder.id,
+        );
         try {
           // Clear existing cache for this specific order items
-          queryClient.removeQueries({ 
-            queryKey: ["/api/order-items", existingOrder.id] 
+          queryClient.removeQueries({
+            queryKey: ["/api/order-items", existingOrder.id],
           });
 
           // Force fresh fetch of order items
           const freshOrderItems = await queryClient.fetchQuery({
             queryKey: ["/api/order-items", existingOrder.id],
             queryFn: async () => {
-              const response = await apiRequest("GET", `/api/order-items/${existingOrder.id}`);
+              const response = await apiRequest(
+                "GET",
+                `/api/order-items/${existingOrder.id}`,
+              );
               const data = await response.json();
               console.log("🔄 Fresh order items fetched:", data);
               return data;
@@ -449,11 +428,7 @@ export function OrderDialog({
     let totalSubtotal = 0;
 
     // Add existing order items if in edit mode
-    if (
-      mode === "edit" &&
-      existingItems &&
-      Array.isArray(existingItems)
-    ) {
+    if (mode === "edit" && existingItems && Array.isArray(existingItems)) {
       existingItems.forEach((item) => {
         const unitPrice = parseFloat(item.unitPrice);
         const quantity = parseInt(item.quantity);
@@ -480,11 +455,7 @@ export function OrderDialog({
     let totalSubtotalBeforeDiscount = 0;
 
     // Add existing order items if in edit mode
-    if (
-      mode === "edit" &&
-      existingItems &&
-      Array.isArray(existingItems)
-    ) {
+    if (mode === "edit" && existingItems && Array.isArray(existingItems)) {
       existingItems.forEach((item) => {
         const unitPrice = parseFloat(item.unitPrice);
         const quantity = parseInt(item.quantity);
@@ -517,7 +488,10 @@ export function OrderDialog({
               : 0;
 
           // Apply new formula: tax = (price * quantity - discount) * taxRate
-          const subtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
+          const subtotalAfterDiscount = Math.max(
+            0,
+            itemSubtotal - itemDiscountAmount,
+          );
           const taxRate = parseFloat(product.taxRate) / 100;
           itemTax = subtotalAfterDiscount * taxRate;
         }
@@ -544,7 +518,10 @@ export function OrderDialog({
             : 0;
 
         // Apply new formula: tax = (price * quantity - discount) * taxRate
-        const subtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscountAmount);
+        const subtotalAfterDiscount = Math.max(
+          0,
+          itemSubtotal - itemDiscountAmount,
+        );
         const taxRate = parseFloat(product.taxRate) / 100;
         itemTax = subtotalAfterDiscount * taxRate;
       }
@@ -573,11 +550,7 @@ export function OrderDialog({
     let totalSubtotal = 0;
 
     // Add existing order items if in edit mode
-    if (
-      mode === "edit" &&
-      existingItems &&
-      Array.isArray(existingItems)
-    ) {
+    if (mode === "edit" && existingItems && Array.isArray(existingItems)) {
       existingItems.forEach((item) => {
         const unitPrice = parseFloat(item.unitPrice);
         const quantity = parseInt(item.quantity);
@@ -691,13 +664,15 @@ export function OrderDialog({
       });
 
       // Track any modifications to existing items (quantity changes, removals, etc.)
-      const hasExistingItemChanges = existingItems.length !== (existingOrderItems?.length || 0);
+      const hasExistingItemChanges =
+        existingItems.length !== (existingOrderItems?.length || 0);
 
       console.log(`📝 Order Dialog: Checking for existing item changes:`, {
         currentExistingItemsCount: existingItems.length,
         originalExistingItemsCount: existingOrderItems?.length || 0,
         hasExistingItemChanges,
-        hasDiscountChange: (parseFloat(existingOrder.discount || "0") !== discount),
+        hasDiscountChange:
+          parseFloat(existingOrder.discount || "0") !== discount,
       });
 
       // Include updated order information
@@ -713,7 +688,8 @@ export function OrderDialog({
         hasNewItems: newItemsOnly.length > 0,
         hasExistingItemChanges,
         hasCustomerChanges: hasCustomerNameChange || hasCustomerCountChange,
-        hasDiscountChange: (parseFloat(existingOrder.discount || "0") !== discount),
+        hasDiscountChange:
+          parseFloat(existingOrder.discount || "0") !== discount,
         customerUpdates: {
           name: customerName,
           count: customerCount,
@@ -736,8 +712,7 @@ export function OrderDialog({
         const currentIndex = existingItems.findIndex(
           (existingItem, idx) => idx === index,
         );
-        const isLastItem =
-          currentIndex === allItems.length - 1;
+        const isLastItem = currentIndex === allItems.length - 1;
 
         let itemDiscountAmount = 0;
 
@@ -748,17 +723,28 @@ export function OrderDialog({
             const totalBeforeDiscount = calculateTotal() - calculateTax();
 
             for (let i = 0; i < allItems.length - 1; i++) {
-              const prevItemSubtotal = Number(allItems[i].unitPrice || 0) * Number(allItems[i].quantity || 0);
-              const prevItemDiscount = totalBeforeDiscount > 0 ? Math.floor((discount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+              const prevItemSubtotal =
+                Number(allItems[i].unitPrice || 0) *
+                Number(allItems[i].quantity || 0);
+              const prevItemDiscount =
+                totalBeforeDiscount > 0
+                  ? Math.floor(
+                      (discount * prevItemSubtotal) / totalBeforeDiscount,
+                    )
+                  : 0;
               previousDiscounts += prevItemDiscount;
             }
 
             itemDiscountAmount = discount - previousDiscounts;
           } else {
             // Regular calculation for non-last items
-            const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+            const itemSubtotal =
+              Number(item.unitPrice || 0) * Number(item.quantity || 0);
             const totalBeforeDiscount = calculateTotal() - calculateTax();
-            itemDiscountAmount = totalBeforeDiscount > 0 ? Math.floor((discount * itemSubtotal) / totalBeforeDiscount) : 0;
+            itemDiscountAmount =
+              totalBeforeDiscount > 0
+                ? Math.floor((discount * itemSubtotal) / totalBeforeDiscount)
+                : 0;
           }
         }
 
@@ -769,11 +755,13 @@ export function OrderDialog({
       });
 
       // Always proceed with mutation - adding new items and updating order totals/info
-      console.log(`📝 Order Dialog: Sending mutation with ${newItemsOnly.length} NEW items and updated order info`);
+      console.log(
+        `📝 Order Dialog: Sending mutation with ${newItemsOnly.length} NEW items and updated order info`,
+      );
       createOrderMutation.mutate({
         order: updatedOrder,
         items: newItemsOnly,
-        existingItems: updatedExistingItems // Include updated existing items with new discount values
+        existingItems: updatedExistingItems, // Include updated existing items with new discount values
       });
     } else {
       // Create mode - calculate with correct mapping
@@ -1493,18 +1481,16 @@ export function OrderDialog({
                                     existingItems &&
                                     Array.isArray(existingItems)
                                   ) {
-                                    existingItems.forEach(
-                                      (existingItem) => {
-                                        const unitPrice = parseFloat(
-                                          existingItem.unitPrice,
-                                        );
-                                        const qty = parseInt(
-                                          existingItem.quantity,
-                                        );
-                                        totalSubtotalBeforeDiscount +=
-                                          unitPrice * qty;
-                                      },
-                                    );
+                                    existingItems.forEach((existingItem) => {
+                                      const unitPrice = parseFloat(
+                                        existingItem.unitPrice,
+                                      );
+                                      const qty = parseInt(
+                                        existingItem.quantity,
+                                      );
+                                      totalSubtotalBeforeDiscount +=
+                                        unitPrice * qty;
+                                    });
                                   }
 
                                   // Add new cart items
