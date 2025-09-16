@@ -151,7 +151,7 @@ export function ReceiptModal({
       const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
       const isChrome = /chrome/.test(userAgent);
       const isPOSTerminal = window.innerWidth <= 1024 && window.innerHeight <= 768;
-
+      
       console.log("🔍 Enhanced device detection:", { 
         isIOS, isAndroid, isMobile, isSafari, isChrome, isPOSTerminal, 
         screenSize: `${window.innerWidth}x${window.innerHeight}`,
@@ -190,7 +190,7 @@ export function ReceiptModal({
       // Step 3: Try configured printers first (POS API with active configs)
       if (activePrinterConfigs.length > 0) {
         console.log("🖨️ Trying configured POS printers for all platforms...");
-
+        
         try {
           const printResponse = await fetch('/api/pos/print-receipt', {
             method: 'POST',
@@ -207,15 +207,15 @@ export function ReceiptModal({
           if (printResponse.ok) {
             const result = await printResponse.json();
             console.log("✅ Receipt sent to configured printer successfully:", result);
-
+            
             // Show success message based on device type
             const successMessage = isMobile 
               ? "✅ Hóa đơn đã được gửi đến máy in thành công!\nKiểm tra máy in POS của bạn."
               : "✅ Hóa đơn đã được gửi đến máy in POS thành công!";
-
+            
             alert(successMessage);
             onClose();
-
+            
             if (typeof window !== "undefined") {
               window.dispatchEvent(
                 new CustomEvent("printCompleted", {
@@ -252,7 +252,7 @@ export function ReceiptModal({
   // Enhanced mobile printing handler
   const handleMobilePrinting = async (printContent: HTMLElement, isIOS: boolean, isAndroid: boolean, isSafari: boolean, isChrome: boolean) => {
     console.log("📱 Using enhanced mobile printing for", isIOS ? 'iOS' : isAndroid ? 'Android' : 'Mobile');
-
+    
     // Show user options for mobile printing with platform-specific messaging
     const platformMessage = isIOS 
       ? "Máy in POS không khả dụng.\n\nChọn OK để tải file hóa đơn (Safari có thể mở trực tiếp).\nChọn Cancel để thử in trực tiếp từ trình duyệt."
@@ -276,7 +276,7 @@ export function ReceiptModal({
   // Enhanced desktop printing handler
   const handleDesktopPrinting = async (printContent: HTMLElement) => {
     console.log("🖥️ Using enhanced desktop printing method");
-
+    
     // Try direct browser print first
     try {
       const printWindow = window.open("", "_blank", "width=800,height=600,scrollbars=yes");
@@ -291,11 +291,11 @@ export function ReceiptModal({
             try {
               printWindow.print();
               printWindow.close();
-
+              
               setTimeout(() => {
                 console.log("🖨️ Desktop print completed, closing modal");
                 onClose();
-
+                
                 if (typeof window !== "undefined") {
                   window.dispatchEvent(
                     new CustomEvent("printCompleted", {
@@ -334,7 +334,7 @@ export function ReceiptModal({
   const generatePrintHTML = (printContent: HTMLElement, isMobile: boolean) => {
     const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
     const isAndroid = /android/.test(navigator.userAgent.toLowerCase());
-
+    
     return `
       <!DOCTYPE html>
       <html>
@@ -415,7 +415,7 @@ export function ReceiptModal({
   const downloadReceiptFile = async (printContent: HTMLElement, isIOS: boolean, isAndroid: boolean) => {
     try {
       console.log("📄 Generating PDF for receipt download");
-
+      
       // Create a new window for PDF generation
       const printWindow = window.open('', '_blank', 'width=400,height=600');
       if (!printWindow) {
@@ -433,16 +433,16 @@ export function ReceiptModal({
             try {
               // Trigger print dialog which allows saving as PDF
               printWindow.print();
-
+              
               // Instructions for saving as PDF
               const pdfInstructions = isIOS 
                 ? "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn destination\n2. Chọn 'Save as PDF' hoặc 'Lưu thành PDF'\n3. Nhấn Save để tải file PDF"
                 : isAndroid 
                 ? "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn máy in\n2. Chọn 'Save as PDF' hoặc 'Lưu thành PDF'\n3. Nhấn Print để tải file PDF"
                 : "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn destination/máy in\n2. Chọn 'Save as PDF' hoặc 'Microsoft Print to PDF'\n3. Nhấn Save/Print để tải file PDF";
-
+              
               alert(pdfInstructions);
-
+              
               // Auto close after delay
               setTimeout(() => {
                 if (!printWindow.closed) {
@@ -450,7 +450,7 @@ export function ReceiptModal({
                 }
                 onClose();
               }, 3000);
-
+              
               resolve(true);
             } catch (printError) {
               console.error("PDF generation error:", printError);
@@ -463,13 +463,13 @@ export function ReceiptModal({
 
     } catch (error) {
       console.error("❌ PDF generation failed:", error);
-
+      
       // Fallback to HTML download if PDF generation fails
       console.log("🔄 Falling back to HTML download");
       const cleanReceiptHTML = generatePrintHTML(printContent, true);
       const blob = new Blob([cleanReceiptHTML], { type: 'text/html;charset=utf-8' });
       const fileName = `hoa-don-${receipt?.transactionId || Date.now()}.html`;
-
+      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -479,7 +479,7 @@ export function ReceiptModal({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
+      
       setTimeout(() => {
         const fallbackInstructions = "⚠️ Không thể tạo PDF, đã tải file HTML thay thế.\n\nĐể chuyển thành PDF:\n1. Mở file HTML vừa tải\n2. Nhấn Ctrl+P (hoặc Cmd+P trên Mac)\n3. Chọn 'Save as PDF' trong hộp thoại in\n4. Nhấn Save để lưu file PDF";
         alert(fallbackInstructions);
@@ -495,21 +495,21 @@ export function ReceiptModal({
       : isIOS 
       ? 'width=375,height=667,scrollbars=yes,resizable=yes'
       : 'width=400,height=600,scrollbars=yes';
-
+      
     const printWindow = window.open('', '_blank', windowFeatures);
-
+    
     if (printWindow) {
       const printHTML = generatePrintHTML(printContent, true);
       printWindow.document.write(printHTML);
       printWindow.document.close();
-
+      
       // Platform-specific print handling
       const printDelay = isIOS ? 2000 : isAndroid ? 1500 : 1000;
-
+      
       setTimeout(() => {
         try {
           printWindow.print();
-
+          
           // Auto close handling
           setTimeout(() => {
             if (!printWindow.closed) {
@@ -517,14 +517,14 @@ export function ReceiptModal({
             }
             onClose();
           }, printDelay);
-
+          
         } catch (e) {
           const browserTip = isSafari 
             ? "Vui lòng sử dụng menu Safari → Share → Print"
             : isChrome 
             ? "Vui lòng sử dụng menu Chrome (⋮) → Print"
             : "Vui lòng sử dụng menu trình duyệt để in";
-
+            
           alert(browserTip);
           setTimeout(() => {
             if (!printWindow.closed) {
@@ -534,7 +534,7 @@ export function ReceiptModal({
           }, 500);
         }
       }, printDelay);
-
+      
     } else {
       alert("Không thể mở cửa sổ in. Popup có thể bị chặn.\nSẽ tải file để bạn có thể in.");
       downloadReceiptFile(printContent, isIOS, isAndroid);
@@ -929,24 +929,24 @@ export function ReceiptModal({
                 // Calculate individual item discount if order has discount
                 let itemDiscountAmount = 0;
                 const orderDiscount = parseFloat(receipt.exactDiscount || receipt.discount || "0");
-
+                
                 if (orderDiscount > 0) {
                   const isLastItem = index === items.length - 1;
-
+                  
                   if (isLastItem) {
                     // Last item: total discount - sum of all previous discounts
                     let previousDiscounts = 0;
                     const totalBeforeDiscount = items.reduce((sum, itm) => {
                       return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
                     }, 0);
-
+                    
                     for (let i = 0; i < items.length - 1; i++) {
                       const prevItemSubtotal = parseFloat(items[i].unitPrice || items[i].price || "0") * (items[i].quantity || 1);
                       const prevItemDiscount = totalBeforeDiscount > 0 ? 
                         Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
                       previousDiscounts += prevItemDiscount;
                     }
-
+                    
                     itemDiscountAmount = orderDiscount - previousDiscounts;
                   } else {
                     // Regular calculation for non-last items
@@ -1120,7 +1120,7 @@ export function ReceiptModal({
                 // Calculate individual item discount for preview mode
                 let itemDiscountAmount = 0;
                 const finalDiscount = (() => {
-                  // Check for discount from multiple sources with priority
+                  // Check for discount from multiple sources with priority order
                   let orderDiscount = 0;
 
                   // Check if this is from order-management specifically
@@ -1172,7 +1172,7 @@ export function ReceiptModal({
 
                 if (finalDiscount > 0) {
                   const isLastItem = index === cartItems.length - 1;
-
+                  
                   if (isLastItem) {
                     // Last item: total discount - sum of all previous discounts
                     let previousDiscounts = 0;
@@ -1180,7 +1180,7 @@ export function ReceiptModal({
                       const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
                       return sum + (price * itm.quantity);
                     }, 0);
-
+                    
                     for (let i = 0; i < cartItems.length - 1; i++) {
                       const prevItemPrice = typeof cartItems[i].price === "string" 
                         ? parseFloat(cartItems[i].price) 
@@ -1190,7 +1190,7 @@ export function ReceiptModal({
                         Math.floor((finalDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
                       previousDiscounts += prevItemDiscount;
                     }
-
+                    
                     itemDiscountAmount = finalDiscount - previousDiscounts;
                   } else {
                     // Regular calculation for non-last items
