@@ -2019,16 +2019,30 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          // Use getOrderTotal function for consistent calculation
-                          const finalTotal = getOrderTotal(order);
+                          // Get base total without applying discount (matching table-grid behavior)
+                          let baseTotal = 0;
 
-                          console.log(`💰 Order ${order.orderNumber} (${order.status}) - final total: ${finalTotal}`);
+                          // Priority 1: API calculated total (most accurate)
+                          const apiCalculatedTotal = (order as any).calculatedTotal;
+                          if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
+                            baseTotal = Math.floor(Number(apiCalculatedTotal));
+                          }
+                          // Priority 2: Cached calculated total (for active orders)
+                          else if (calculatedTotals.has(order.id) && order.status !== 'paid' && order.status !== 'cancelled') {
+                            baseTotal = calculatedTotals.get(order.id)!;
+                          }
+                          // Priority 3: Stored total as fallback
+                          else {
+                            baseTotal = Math.floor(Number(order.total || 0));
+                          }
 
-                          if (finalTotal === 0) {
+                          console.log(`💰 Order Management: Order ${order.orderNumber} (${order.status}) - showing base total without discount: ${baseTotal}`);
+
+                          if (baseTotal === 0) {
                             return <span className="text-gray-400">Đang tính...</span>;
                           }
 
-                          return formatCurrency(finalTotal);
+                          return formatCurrency(baseTotal);
                         })()}
                       </span>
                     </div>
