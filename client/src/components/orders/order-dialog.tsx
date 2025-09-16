@@ -822,15 +822,22 @@ export function OrderDialog({
             {product.sku}
            </p>
            <div className="flex justify-between items-center">
-            <span
-             className={`font-bold ${
-              Number(product.stock) > 0
-               ? "text-blue-600"
-               : "text-gray-400"
-             }`}
-            >
-             {Number(product.price).toLocaleString()} ₫
-            </span>
+            <div className="flex flex-col">
+             <span
+              className={`font-bold ${
+               Number(product.stock) > 0
+                ? "text-blue-600"
+                : "text-gray-400"
+              }`}
+             >
+              {Number(product.price).toLocaleString()} ₫
+             </span>
+             {product.taxRate && (
+              <span className="text-xs text-gray-500">
+               Thuế: {product.taxRate}%
+              </span>
+             )}
+            </div>
             <Badge
              variant={
               Number(product.stock) > 0
