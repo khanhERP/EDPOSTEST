@@ -688,29 +688,33 @@ export function OrderManagement() {
     };
   }, [selectedOrder, orderItems, products]);
 
-  // Function to get order total - use consistent calculation logic with proper discount handling
+  // Function to get order total - use correct final total with discount applied
   const getOrderTotal = React.useCallback((order: Order) => {
-    // Get base total using priority system
+    // For completed orders (paid/cancelled), always use stored total as-is
+    if (order.status === 'paid' || order.status === 'cancelled') {
+      const storedTotal = Math.floor(Number(order.total || 0));
+      console.log(`💰 Final total for completed order ${order.orderNumber}: ${storedTotal}`);
+      return storedTotal;
+    }
+
+    // For active orders, calculate from base total and apply discount
     let baseTotal = 0;
 
     // Priority 1: API calculated total (most accurate)
     const apiCalculatedTotal = (order as any).calculatedTotal;
     if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
       baseTotal = Math.floor(Number(apiCalculatedTotal));
-      console.log(`💰 Priority 1 - API calculated total for ${order.orderNumber}: ${baseTotal}`);
     }
     // Priority 2: Cached calculated total (for active orders)
-    else if (calculatedTotals.has(order.id) && order.status !== 'paid' && order.status !== 'cancelled') {
+    else if (calculatedTotals.has(order.id)) {
       baseTotal = calculatedTotals.get(order.id)!;
-      console.log(`💰 Priority 2 - Cached calculated total for ${order.orderNumber}: ${baseTotal}`);
     }
     // Priority 3: Stored total as fallback
     else {
       baseTotal = Math.floor(Number(order.total || 0));
-      console.log(`💰 Priority 3 - Stored total for ${order.orderNumber}: ${baseTotal}`);
     }
 
-    // Apply discount calculation consistently
+    // Apply discount to get final total
     const discount = Math.floor(Number(order.discount || 0));
     const finalTotal = Math.max(0, baseTotal - discount);
 
@@ -2019,33 +2023,24 @@ export function OrderManagement() {
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
-                          // Get base total without applying discount (matching table-grid behavior)
-                          let baseTotal = 0;
-
-                          // Priority 1: API calculated total (most accurate)
-                          const apiCalculatedTotal = (order as any).calculatedTotal;
-                          if (apiCalculatedTotal && Number(apiCalculatedTotal) > 0) {
-                            baseTotal = Math.floor(Number(apiCalculatedTotal));
-                          }
-                          // Priority 2: Cached calculated total (for active orders)
-                          else if (calculatedTotals.has(order.id) && order.status !== 'paid' && order.status !== 'cancelled') {
-                            baseTotal = calculatedTotals.get(order.id)!;
-                          }
-                          // Priority 3: Stored total as fallback
-                          else {
-                            baseTotal = Math.floor(Number(order.total || 0));
-                          }
-
-                          console.log(`💰 Order Management: Order ${order.orderNumber} (${order.status}) - showing base total without discount: ${baseTotal}`);
-
-                          if (baseTotal === 0) {
+                          const finalTotal = getOrderTotal(order);
+                          
+                          if (finalTotal === 0) {
                             return <span className="text-gray-400">Đang tính...</span>;
                           }
 
-                          return formatCurrency(baseTotal);
+                          return formatCurrency(finalTotal);
                         })()}
                       </span>
                     </div>
+
+                    {/* Show discount info if applicable */}
+                    {order.discount && Number(order.discount) > 0 && (
+                      <div className="flex items-center justify-between text-xs text-red-600">
+                        <span>Giảm giá:</span>
+                        <span>-{formatCurrency(Math.floor(Number(order.discount)))}</span>
+                      </div>
+                    )}
 
                     {/* Customer Info */}
                     {order.customerName && (
