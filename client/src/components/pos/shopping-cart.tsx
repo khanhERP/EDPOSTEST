@@ -566,61 +566,73 @@ export function ShoppingCart({
       return;
     }
 
-    // CRITICAL FIX: Recalculate totals from cart to ensure they are correct
-    const recalculatedSubtotal = cart.reduce(
-      (sum, item) => sum + parseFloat(item.total),
-      0,
-    );
-    const recalculatedTax = cart.reduce((sum, item) => {
+    // Calculate accurate totals using the SAME logic as shopping cart display
+    const calculatedSubtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+    
+    // Use the EXACT same tax calculation logic as in the cart display
+    const calculatedTax = cart.reduce((sum, item) => {
       if (item.taxRate && parseFloat(item.taxRate) > 0) {
         const basePrice = parseFloat(item.price);
-        if (
-          item.afterTaxPrice &&
-          item.afterTaxPrice !== null &&
-          item.afterTaxPrice !== ""
-        ) {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          const taxPerItem = afterTaxPrice - basePrice;
-          return sum + Math.floor(taxPerItem * item.quantity);
+        const quantity = item.quantity;
+        const subtotal = basePrice * quantity;
+
+        // Calculate discount for this item using SAME logic as cart display
+        const orderDiscount = parseFloat(currentOrderDiscount || "0");
+        let itemDiscountAmount = 0;
+
+        if (orderDiscount > 0) {
+          const currentIndex = cart.findIndex(cartItem => cartItem.id === item.id);
+          const isLastItem = currentIndex === cart.length - 1;
+
+          if (isLastItem) {
+            // Last item: total discount - sum of all previous discounts
+            let previousDiscounts = 0;
+            const totalBeforeDiscount = cart.reduce((sum, itm) => {
+              return sum + (parseFloat(itm.price) * itm.quantity);
+            }, 0);
+
+            for (let i = 0; i < cart.length - 1; i++) {
+              const prevItemSubtotal = parseFloat(cart[i].price) * cart[i].quantity;
+              const prevItemDiscount = totalBeforeDiscount > 0 ?
+                Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+              previousDiscounts += prevItemDiscount;
+            }
+
+            itemDiscountAmount = orderDiscount - previousDiscounts;
+          } else {
+            // Regular calculation for non-last items
+            const totalBeforeDiscount = cart.reduce((sum, itm) => {
+              return sum + (parseFloat(itm.price) * itm.quantity);
+            }, 0);
+            itemDiscountAmount = totalBeforeDiscount > 0 ?
+              Math.floor((orderDiscount * subtotal) / totalBeforeDiscount) : 0;
+          }
         }
+
+        // Tax = (price * quantity - discount) * taxRate
+        const taxableAmount = Math.max(0, subtotal - itemDiscountAmount);
+        const taxRate = parseFloat(item.taxRate) / 100;
+        const calculatedTax = Math.floor(taxableAmount * taxRate);
+
+        return sum + calculatedTax;
       }
       return sum;
     }, 0);
-    const recalculatedTotal = Math.round(
-      recalculatedSubtotal + recalculatedTax,
-    );
 
-    console.log("🔍 CRITICAL DEBUG - Recalculated totals:");
-    console.log("Original totals:", { subtotal, tax, total });
-    console.log("Recalculated totals:", {
-      subtotal: recalculatedSubtotal,
-      tax: recalculatedTax,
-      total: recalculatedTotal,
-    });
+    const baseTotal = Math.round(calculatedSubtotal + calculatedTax);
+    const finalDiscount = parseFloat(currentOrderDiscount || "0");
+    const finalTotal = Math.max(0, baseTotal - finalDiscount);
 
-    // Use recalculated values if they differ significantly
-    const finalSubtotal =
-      Math.abs(recalculatedSubtotal - subtotal) > 1
-        ? recalculatedSubtotal
-        : subtotal;
-    const finalTax =
-      Math.abs(recalculatedTax - tax) > 1 ? recalculatedTax : tax;
-    const finalDiscount = parseFloat(currentOrderDiscount || "0"); // Use current order discount
-    const finalTotal =
-      Math.max(
-        0,
-        Math.abs(recalculatedTotal - total) > 1 ? recalculatedTotal : total,
-      ) - finalDiscount;
+    console.log("🔍 CHECKOUT CALCULATION DEBUG - Using exact cart logic:");
+    console.log("Calculated subtotal:", calculatedSubtotal);
+    console.log("Calculated tax (with discount consideration):", calculatedTax);
+    console.log("Base total (subtotal + tax):", baseTotal);
+    console.log("Discount amount:", finalDiscount);
+    console.log("Final total (after discount):", finalTotal);
 
-    console.log("Final totals to use:", {
-      finalSubtotal,
-      finalTax,
-      finalTotal,
-    });
-
-    if (finalSubtotal === 0 || finalTotal === 0) {
+    if (calculatedSubtotal === 0 || finalTotal < 0) {
       console.error(
-        "❌ CRITICAL ERROR: Final totals are still 0, cannot proceed with checkout",
+        "❌ CRITICAL ERROR: Invalid totals calculated, cannot proceed with checkout",
       );
       alert("Lỗi: Tổng tiền không hợp lệ. Vui lòng kiểm tra lại giỏ hàng.");
       return;
@@ -664,7 +676,7 @@ export function ShoppingCart({
       return;
     }
 
-    // Step 2: Create receipt preview data with CORRECTED calculated totals
+    // Step 2: Create receipt preview data with EXACT calculated totals
     const receiptPreview = {
       id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
@@ -686,12 +698,12 @@ export function ShoppingCart({
         discountAmount: item.discountAmount,
         originalPrice: item.originalPrice,
       })),
-      subtotal: finalSubtotal.toString(),
-      tax: finalTax.toString(),
+      subtotal: calculatedSubtotal.toString(),
+      tax: calculatedTax.toString(),
       discount: finalDiscount.toString(),
       total: finalTotal.toString(),
-      exactSubtotal: finalSubtotal,
-      exactTax: finalTax,
+      exactSubtotal: calculatedSubtotal,
+      exactTax: calculatedTax,
       exactDiscount: finalDiscount,
       exactTotal: finalTotal,
       status: "pending",
@@ -711,7 +723,7 @@ export function ShoppingCart({
       calculatedTotal: finalTotal,
     });
 
-    // Step 3: Prepare order data for payment with CORRECTED totals
+    // Step 3: Prepare order data for payment with EXACT calculated totals
     const orderForPaymentData = {
       id: `temp-${Date.now()}`,
       orderNumber: `POS-${Date.now()}`,
@@ -735,12 +747,12 @@ export function ShoppingCart({
         discountAmount: item.discountAmount,
         originalPrice: item.originalPrice,
       })),
-      subtotal: finalSubtotal,
-      tax: finalTax,
+      subtotal: calculatedSubtotal,
+      tax: calculatedTax,
       discount: finalDiscount.toString(),
       total: finalTotal,
-      exactSubtotal: finalSubtotal,
-      exactTax: finalTax,
+      exactSubtotal: calculatedSubtotal,
+      exactTax: calculatedTax,
       exactDiscount: finalDiscount,
       exactTotal: finalTotal,
       orderedAt: new Date().toISOString(),
