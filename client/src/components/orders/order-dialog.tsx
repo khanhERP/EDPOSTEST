@@ -1674,7 +1674,7 @@ export function OrderDialog({
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600">{t("orders.subtotal")}</span>
                   <span className="font-medium">
-                    {Math.floor(calculateTotal()).toLocaleString()} ₫
+                    {Math.floor(calculateSubtotal()).toLocaleString()} ₫
                   </span>
                 </div>
                 <div className="w-px h-4 bg-gray-300"></div>
@@ -1704,7 +1704,7 @@ export function OrderDialog({
                     {t("orders.totalAmount")}
                   </span>
                   <span className="font-bold text-lg text-blue-600">
-                    {Math.floor(calculateGrandTotal()).toLocaleString()} ₫
+                    {Math.floor(calculateTotal()).toLocaleString()} ₫
                   </span>
                 </div>
               </div>
