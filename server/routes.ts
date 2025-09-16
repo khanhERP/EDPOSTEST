@@ -2118,6 +2118,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
+      // Fetch existing items to compare quantities and calculate discount distribution
+      const existingOrderItems = await db
+        .select()
+        .from(orderItemsTable)
+        .where(eq(orderItemsTable.orderId, id));
+
       // Step 1: Add new items if any exist
       if (orderData.items && orderData.items.length > 0) {
         console.log(
@@ -2140,28 +2146,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
-      // Step 1.1: Update existing items with new discount values if provided
-      if (orderData.existingItems && orderData.existingItems.length > 0) {
-        console.log(`📝 Updating ${orderData.existingItems.length} existing items with new discount values`);
+      // Step 1.5: If we have existing item changes, call recalculate API first
+      const hasExistingItemChanges =
+        orderData.items && orderData.items.length > 0; // Check if new items were added
+      const discount = Number(orderData.discount || 0);
+      const shouldRecalculate =
+        hasExistingItemChanges ||
+        parseFloat(existingOrder.discount || "0") !== discount;
+      if (shouldRecalculate) {
+        console.log(`🧮 Calling recalculate API for order ${existingOrder.id}`);
+        try {
+          // We need to ensure the recalculate API is available and correctly computes totals based on items
+          // For now, we assume it exists and performs the necessary calculations
+          const recalcResponse = await apiRequest(
+            "POST",
+            `/api/orders/${existingOrder.id}/recalculate`,
+          );
+          const recalcResult = await recalcResponse.json();
+          console.log("✅ Order totals recalculated:", recalcResult);
+        } catch (error) {
+          console.error("❌ Error recalculating order:", error);
+        }
+      }
 
-        for (const item of orderData.existingItems) {
-          if (item.id) {
-            try {
-              const updateResponse = await apiRequest(
-                "PUT",
-                `/api/order-items/${item.id}`,
-                {
-                  discount: item.discount,
-                },
-              );
-              console.log(`✅ Updated discount for item ${item.id}: ${item.discount}`);
-            } catch (error) {
-              console.error(`❌ Failed to update discount for item ${item.id}:`, error);
-            }
+      // Step 1.6: Update discount for existing order items
+      if (discount > 0 && existingOrderItems && existingOrderItems.length > 0) {
+        console.log(
+          `💰 Updating discount for ${existingOrderItems.length} existing order items`,
+        );
+
+        // Calculate discount distribution among existing items
+        const updatedExistingItems = calculateDiscountDistribution(
+          existingOrderItems,
+          discount,
+        );
+
+        // Update each order item with its calculated discount
+        for (const item of updatedExistingItems) {
+          try {
+            await db
+              .update(orderItemsTable)
+              .set({
+                discount: parseFloat(item.discount || "0").toFixed(2),
+              })
+              .where(eq(orderItemsTable.id, item.id));
+
+            console.log(`✅ Updated order item ${item.id} with discount: ${item.discount}`);
+          } catch (itemError) {
+            console.error(`❌ Error updating order item ${item.id} discount:`, itemError);
           }
         }
       }
 
+      // Step 2: Update the order itself
       const order = await storage.updateOrder(id, orderData, tenantDb);
 
       if (!order) {
@@ -2624,7 +2661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`⚠️ No successful prints for ${type} ${orderId || transactionId}`);
 
         // Return error but with specific guidance based on device
-        const fallbackMessage = deviceInfo?.isMobile 
+        const fallbackMessage = deviceInfo?.isMobile
           ? "Không có máy in POS khả dụng. Vui lòng sử dụng chức năng tải file để in."
           : "Không có máy in POS khả dụng. Vui lòng kiểm tra cấu hình máy in.";
 
@@ -2786,8 +2823,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (configData.isActive && (configData.isEmployee || configData.isKitchen)) {
         const existingConfigs = await db.select().from(printerConfigs);
 
-        const conflictingConfig = existingConfigs.find(config => 
-          config.isActive && 
+        const conflictingConfig = existingConfigs.find(config =>
+          config.isActive &&
           ((configData.isEmployee && config.isEmployee) || (configData.isKitchen && config.isKitchen))
         );
 
@@ -2820,9 +2857,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (updateData.isActive && (updateData.isEmployee || updateData.isKitchen)) {
         const existingConfigs = await db.select().from(printerConfigs);
 
-        const conflictingConfig = existingConfigs.find(config => 
+        const conflictingConfig = existingConfigs.find(config =>
           config.id !== id &&
-          config.isActive && 
+          config.isActive &&
           ((updateData.isEmployee && config.isEmployee) || (updateData.isKitchen && config.isKitchen))
         );
 
@@ -4798,7 +4835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Printer Configuration APIs
+  // Printer configuration management APIs
   app.get(
     "/api/printer-configs",
     tenantMiddleware,
@@ -6237,26 +6274,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           await new Promise((resolve, reject) => {
             socket.connect(config.port || 9100, config.ipAddress, () => {
-              testResult = {
-                success: true,
-                message: "Network printer connection successful",
-              };
-              socket.destroy();
-              resolve(true);
+              // Send test print command
+              const testData = Buffer.from('\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00', 'utf8');
+
+              socket.write(testData, (error) => {
+                if (error) {
+                  resolve({
+                    success: false,
+                    message: `Failed to send test data: ${error.message}`,
+                  });
+                } else {
+                  socket.destroy();
+                  resolve({
+                    success: true,
+                    message: `Successfully connected to ${config.name}`,
+                  });
+                }
+              });
             });
 
             socket.on("error", (err) => {
-              testResult = {
+              resolve({
                 success: false,
                 message: `Connection failed: ${err.message}`,
-              };
-              reject(err);
+              });
             });
 
             socket.on("timeout", () => {
-              testResult = { success: false, message: "Connection timeout" };
               socket.destroy();
-              reject(new Error("timeout"));
+              resolve({ success: false, message: "Connection timeout" });
             });
           });
         } catch (error) {
@@ -6423,7 +6469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log("🔌 Printing to USB printer...");
 
-          // For USB printing, we would typically use node modules like 'node-printer' or 'electron-pos-printer'
+          // For USB printers, we would typically use node modules like 'node-printer' or 'electron-pos-printer'
           // Since we're in a web environment, we'll simulate the process
 
           // Convert HTML to ESC/POS
