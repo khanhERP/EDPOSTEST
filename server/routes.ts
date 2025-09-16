@@ -3090,6 +3090,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update a specific order item
+  app.put("/api/order-items/:itemId", async (req: TenantRequest, res) => {
+    try {
+      console.log("=== UPDATE ORDER ITEM API CALLED ===");
+      const itemId = parseInt(req.params.itemId);
+      const updateData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+      
+      console.log("Item ID to update:", itemId);
+      console.log("Update data:", updateData);
+
+      if (isNaN(itemId)) {
+        return res.status(400).json({
+          error: "Invalid item ID",
+        });
+      }
+
+      const database = tenantDb || db;
+
+      // Check if order item exists
+      const [existingItem] = await database
+        .select()
+        .from(orderItemsTable)
+        .where(eq(orderItemsTable.id, itemId))
+        .limit(1);
+
+      if (!existingItem) {
+        return res.status(404).json({
+          error: "Order item not found",
+        });
+      }
+
+      // Prepare update data
+      const updateFields: any = {};
+      
+      if (updateData.quantity !== undefined) {
+        updateFields.quantity = parseInt(updateData.quantity);
+      }
+      
+      if (updateData.unitPrice !== undefined) {
+        updateFields.unitPrice = updateData.unitPrice.toString();
+      }
+      
+      if (updateData.total !== undefined) {
+        updateFields.total = updateData.total.toString();
+      }
+      
+      if (updateData.discount !== undefined) {
+        updateFields.discount = parseFloat(updateData.discount || "0").toFixed(2);
+      }
+      
+      if (updateData.notes !== undefined) {
+        updateFields.notes = updateData.notes;
+      }
+
+      // Update the order item
+      const [updatedItem] = await database
+        .update(orderItemsTable)
+        .set(updateFields)
+        .where(eq(orderItemsTable.id, itemId))
+        .returning();
+
+      console.log("Order item updated successfully:", updatedItem);
+      
+      res.json({
+        success: true,
+        orderItem: updatedItem,
+        message: "Order item updated successfully",
+      });
+    } catch (error) {
+      console.error("=== UPDATE ORDER ITEM ERROR ===");
+      console.error("Error type:", error?.constructor?.name || "Unknown");
+      console.error("Error message:", error?.message || "Unknown error");
+      console.error("Error stack:", error?.stack || "No stack trace");
+      console.error("Item ID:", req.params.itemId);
+      console.error("Update data:", req.body);
+      
+      res.status(500).json({
+        error: "Failed to update order item",
+        details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // Delete a specific order item
   app.delete("/api/order-items/:itemId", async (req: TenantRequest, res) => {
     try {
