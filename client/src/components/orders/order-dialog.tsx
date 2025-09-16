@@ -703,9 +703,9 @@ export function OrderDialog({
         };
       });
 
-      console.log("Placing order with EXACT displayed values:", { order, items });
+      console.log("Placing order:", { order, items });
       console.log(
-        `💰 Creating order with EXACT displayed totals: subtotal=${displayedSubtotal}, tax=${displayedTax}, discount=${discount}, total=${displayedTotal}`,
+        `💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, total=${totalAmount}`,
       );
       createOrderMutation.mutate({ order, items });
     }
