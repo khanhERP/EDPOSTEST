@@ -120,62 +120,124 @@ export function OrderDialog({
             );
           }
 
-          // Step 2: Use currently displayed values instead of recalculating
-          console.log(
-            `📝 Using currently displayed values for order ${existingOrder.id}`,
+          // Step 2: Only update order info if there are actual changes
+          const hasCustomerNameChange = (customerName || "") !== (existingOrder.customerName || "");
+          const hasCustomerCountChange = customerCount !== (existingOrder.customerCount || 1);
+          const hasNewItems = cart.length > 0;
+
+          if (hasCustomerNameChange || hasCustomerCountChange || hasNewItems) {
+            console.log(`📝 Updating order info for order ${existingOrder.id}`);
+
+            // Get values from display functions (what user sees on screen)
+            const finalSubtotal = calculateSubtotal();
+            const finalTax = calculateTax();
+            const finalTotal = calculateTotal();
+
+            console.log("💰 Using displayed totals:", {
+              existingItemsCount: existingItems.length,
+              newItemsCount: cart.length,
+              subtotal: finalSubtotal,
+              tax: finalTax,
+              discount: discount,
+              total: finalTotal,
+              source: "displayed_values"
+            });
+
+            const updateResponse = await apiRequest(
+              "PUT",
+              `/api/orders/${existingOrder.id}`,
+              {
+                customerName: orderData.order.customerName,
+                customerCount: orderData.order.customerCount,
+                subtotal: finalSubtotal.toString(),
+                tax: finalTax.toString(),
+                discount: discount.toString(),
+                total: finalTotal.toString(),
+              },
+            );
+
+            const updateResult = await updateResponse.json();
+            console.log(
+              "✅ Order updated successfully with current totals:",
+              updateResult,
+            );
+
+            // Return the final result
+            return updateResult;
+          } else {
+            console.log(`📝 No changes detected for order ${existingOrder.id}, returning existing order`);
+            return finalResult || existingOrder;
+          }
+        } else {
+          // Create mode - calculate with correct mapping
+          // Subtotal = tiền tạm tính (giá trước thuế * số lượng)
+          const subtotalAmount = cart.reduce(
+            (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
+            0,
           );
 
-          // Get values from display functions (what user sees on screen)
-          const finalSubtotal = calculateSubtotal();
-          const finalTax = calculateTax();  
-          const finalTotal = calculateTotal();
+          // Tax = thuế (sử dụng calculateTax function)
+          const taxAmount = calculateTax();
 
-          console.log("💰 Using displayed totals:", {
-            existingItemsCount: existingItems.length,
-            newItemsCount: cart.length,
-            subtotal: finalSubtotal,
-            tax: finalTax,
-            discount: discount,
-            total: finalTotal,
-            source: "displayed_values"
+          // Total = tổng tiền (subtotal + tax)
+          const totalAmount = subtotalAmount + taxAmount;
+
+          // Store total BEFORE discount subtraction (full order value)
+          const fullOrderTotal = totalAmount;
+
+          const order = {
+            orderNumber: `ORD-${Date.now()}`,
+            tableId: table.id,
+            employeeId: null, // Set to null since no employees exist
+            customerName: customerName || null,
+            customerCount: parseInt(customerCount) || 1,
+            subtotal: subtotalAmount.toString(),
+            tax: calculateTax().toString(),
+            discount: discount.toString(),
+            total: totalAmount.toString(), // Save total BEFORE discount subtraction
+            status: "served",
+            paymentStatus: "pending",
+            orderedAt: new Date().toISOString(),
+          };
+
+          const items = cart.map((item) => {
+            const product = products?.find(
+              (p: Product) => p.id === item.product.id,
+            );
+            const basePrice = item.product.price;
+            const quantity = item.quantity;
+            const itemSubtotal = basePrice * quantity;
+
+            let itemTax = 0;
+            // Tax = (after_tax_price - price) * quantity
+            if (
+              product?.afterTaxPrice &&
+              product.afterTaxPrice !== null &&
+              product.afterTaxPrice !== ""
+            ) {
+              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+              const price = parseFloat(product.price);
+              itemTax = (afterTaxPrice - price) * quantity;
+            }
+            // No tax if no afterTaxPrice in database
+
+            const itemTotal = itemSubtotal + itemTax;
+
+            return {
+              productId: item.product.id,
+              quantity: item.quantity,
+              unitPrice: item.product.price.toString(),
+              total: itemTotal.toString(),
+              discount: "0.00", // Will be calculated on server side
+              notes: item.notes || null,
+            };
           });
 
+          console.log("Placing order:", { order, items });
           console.log(
-            `💰 Saving totals: subtotal=${finalSubtotal}, tax=${finalTax}, discount=${discount}, total=${finalTotal}`,
+            `💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, fullTotal=${fullOrderTotal}`,
           );
-          const updateResponse = await apiRequest(
-            "PUT",
-            `/api/orders/${existingOrder.id}`,
-            {
-              customerName: orderData.order.customerName,
-              customerCount: orderData.order.customerCount,
-              subtotal: finalSubtotal.toString(),
-              tax: finalTax.toString(),
-              discount: discount.toString(),
-              total: finalTotal.toString(),
-            },
-          );
-
-          const updateResult = await updateResponse.json();
-          console.log(
-            "✅ Order updated successfully with current totals:",
-            updateResult,
-          );
-
-          // Return the final result (prioritize the order update result)
-          return updateResult;
-        } else {
-          console.log("📝 Creating new order...");
-          const response = await apiRequest("POST", "/api/orders", orderData);
-
-          if (!response.ok) {
-            const errorData = await response.text();
-            throw new Error(`Failed to create order: ${errorData}`);
-          }
-
-          const result = await response.json();
-          console.log("✅ Order created successfully:", result);
-          return result;
+          return createOrderMutation.mutate({ order, items });
         }
       } catch (error) {
         console.error("=== ORDER MUTATION ERROR ===");
