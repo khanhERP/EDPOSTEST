@@ -1459,7 +1459,7 @@ export function OrderDialog({
                                 return (
                                   <div className="font-medium text-blue-600">
                                     Tổng:{" "}
-                                    {Math.floor(finalTotal).toLocaleString()} ₫
+                                    {finalTotal.toLocaleString()} ₫
                                   </div>
                                 );
                               })()}
