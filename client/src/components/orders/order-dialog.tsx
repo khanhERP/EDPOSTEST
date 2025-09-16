@@ -121,7 +121,8 @@ export function OrderDialog({
           }
 
           // Step 1.5: If we have existing item changes, call recalculate API first
-          if (forceRecalculation) {
+          const shouldRecalculate = hasExistingItemChanges || (parseFloat(existingOrder.discount || "0") !== discount);
+          if (shouldRecalculate) {
             console.log(`🧮 Calling recalculate API for order ${existingOrder.id}`);
             try {
               const recalcResponse = await apiRequest(
@@ -646,8 +647,7 @@ export function OrderDialog({
       console.log(`📝 Order Dialog: Sending mutation with ${newItemsOnly.length} NEW items and updated order info`);
       createOrderMutation.mutate({ 
         order: updatedOrder, 
-        items: newItemsOnly,
-        forceRecalculation: hasExistingItemChanges || (parseFloat(existingOrder.discount || "0") !== discount)
+        items: newItemsOnly
       });
     } else {
       // Create mode - calculate with correct mapping
