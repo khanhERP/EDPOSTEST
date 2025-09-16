@@ -3031,21 +3031,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         selectedOrder?.orderNumber,
                       );
 
-                      if (
-                        !selectedOrder ||
-                        !orderItems ||
-                        !Array.isArray(orderItems)
-                      ) {
-                        console.error("❌ Missing order data for print bill");
-                        toast({
-                          title: "Lỗi",
-                          description:
-                            "Không thể tạo hóa đơn. Vui lòng thử lại.",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-
                       try {
                         // Use exact same calculation logic as Order Details
                         let subtotal = 0;
