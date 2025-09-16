@@ -61,7 +61,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [qrLoading, setQrLoading] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
-  const [orderForPayment, setOrderForPayment] = useState<any>(null);
+  const [orderForEInvoice, setOrderForEInvoice] = useState<any>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
@@ -69,7 +69,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
-  const [orderForEInvoice, setOrderForEInvoice] = useState<any>(null);
   const wsRef = useRef<WebSocket | null>(null); // Ref for WebSocket connection
 
   // Listen for print completion event
@@ -1921,7 +1920,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           await Promise.all([refetchTables(), refetchOrders()]);
           console.log("✅ Fallback refresh completed");
         } catch (fallbackError) {
-          console.error("❌ Fallback refresh also failed:", fallbackError);
+          console.error(
+            "❌ Table Grid: Fallback refresh also failed:",
+            fallbackError,
+          );
         }
       }
 
@@ -2625,7 +2627,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             const total = Math.floor(
                               Number(activeOrder.total || 0),
                             );
-                            
+
                             // Show original total without applying discount
                             console.log(
                               `💰 Table order ${activeOrder.orderNumber} - showing original total: ${total}`
@@ -2774,356 +2776,114 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               </div>
 
               {/* Order Items */}
-              <div>
-                <h4 className="font-medium mb-3">{t("orders.orderItems")}:</h4>
-                <div className="space-y-2">
-                  {orderItemsLoading ? (
-                    <p className="text-gray-500 text-center py-4">
-                      {t("common.loading")}
-                    </p>
-                  ) : (
-                    <>
-                      {(() => {
-                        // Process orderItems data consistently
-                        let itemsToRender = [];
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-700 mb-3">
+                  {t("orders.itemsOrdered")}:
+                </h4>
+                {orderItemsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : orderItems && Array.isArray(orderItems) && orderItems.length > 0 ? (
+                  <>
+                    <div className="text-sm text-green-600 font-medium mb-2">
+                      ✅ {t("orders.showing")} {orderItems.length} {t("orders.items")} -{" "}
+                      {t("orders.quantity")}{" "}
+                      {orderItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0)}{" "}
+                      - {t("orders.orderNumber")} {selectedOrder.orderNumber}
+                    </div>
+                    {orderItems.map((item: any) => {
+                      const unitPrice = Number(item.unitPrice || 0);
+                      const quantity = Number(item.quantity || 0);
+                      const itemDiscount = Number(item.discount || 0); // Lấy giảm giá từ database
+                      const itemTotal = Number(item.total || 0); // Lấy tổng tiền từ database
 
-                        if (Array.isArray(orderItems)) {
-                          itemsToRender = orderItems;
-                        } else if (
-                          orderItems &&
-                          (orderItems as any).data &&
-                          Array.isArray((orderItems as any).data)
-                        ) {
-                          itemsToRender = (orderItems as any).data;
-                        } else if (
-                          orderItems &&
-                          (orderItems as any).items &&
-                          Array.isArray((orderItems as any).items)
-                        ) {
-                          itemsToRender = (orderItems as any).items;
-                        } else if (
-                          orderItems &&
-                          typeof orderItems === "object"
-                        ) {
-                          try {
-                            itemsToRender = Object.values(orderItems).filter(
-                              (item) => item && typeof item === "object",
-                            );
-                          } catch (e) {
-                            itemsToRender = [];
-                          }
-                        }
+                      console.log(`📊 Table Grid Order Details: Using database values for item ${item.id}:`, {
+                        productId: item.productId,
+                        productName: item.productName,
+                        unitPrice,
+                        quantity,
+                        itemDiscount,
+                        itemTotal
+                      });
 
-                        if (itemsToRender && itemsToRender.length > 0) {
-                          return (
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ {t("orders.displaying")}{" "}
-                                {itemsToRender.length} {t("orders.items")} -{" "}
-                                {t("orders.quantity")}{" "}
-                                {itemsToRender.reduce(
-                                  (sum, item) => sum + (item.quantity || 0),
-                                  0,
-                                )}{" "}
-                                - {t("orders.orderNumber")}{" "}
-                                {selectedOrder?.orderNumber}
-                              </p>
-                              {itemsToRender.map((item: any, index: number) => (
-                                <div
-                                  key={`item-${item.id || index}`}
-                                  className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm"
-                                >
-                                  <div className="flex-1">
-                                    <p className="font-medium text-gray-900">
-                                      {item.productName ||
-                                        getProductName(item.productId) ||
-                                        `Sản phẩm #${item.productId}`}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      {t("pos.quantity")}:{" "}
-                                      <span className="font-medium">
-                                        {item.quantity}
-                                      </span>
-                                    </p>
-                                    {item.notes && (
-                                      <p className="text-xs text-blue-600 italic mt-1">
-                                        Ghi chú: {item.notes}
-                                      </p>
-                                    )}
+                      // Calculate price after discount for each item
+                      const priceAfterDiscount = itemDiscount > 0 ? (itemTotal / quantity) : unitPrice;
 
-                                    {/* Individual item discount display */}
-                                    {selectedOrder &&
-                                      Number(selectedOrder.discount || 0) > 0 &&
-                                      (() => {
-                                        // Get all items for discount calculation
-                                        const allItems = itemsToRender || [];
-                                        const currentIndex = allItems.findIndex(
-                                          (itm: any) => itm.id === item.id,
-                                        );
-                                        const isLastItem =
-                                          currentIndex === allItems.length - 1;
-
-                                        let itemDiscountAmount = 0;
-
-                                        if (isLastItem) {
-                                          // Last item: total discount - sum of all previous discounts
-                                          let previousDiscounts = 0;
-                                          const totalBeforeDiscount =
-                                            allItems.reduce(
-                                              (sum: number, itm: any) => {
-                                                return (
-                                                  sum +
-                                                  Number(itm.unitPrice || 0) *
-                                                    Number(itm.quantity || 0)
-                                                );
-                                              },
-                                              0,
-                                            );
-
-                                          for (
-                                            let i = 0;
-                                            i < allItems.length - 1;
-                                            i++
-                                          ) {
-                                            const prevItemSubtotal =
-                                              Number(
-                                                allItems[i].unitPrice || 0,
-                                              ) *
-                                              Number(allItems[i].quantity || 0);
-                                            const prevItemDiscount =
-                                              totalBeforeDiscount > 0
-                                                ? Math.floor(
-                                                    (Number(
-                                                      selectedOrder.discount ||
-                                                        0,
-                                                    ) *
-                                                      prevItemSubtotal) /
-                                                      totalBeforeDiscount,
-                                                  )
-                                                : 0;
-                                            previousDiscounts +=
-                                              prevItemDiscount;
-                                          }
-
-                                          itemDiscountAmount =
-                                            Number(
-                                              selectedOrder.discount || 0,
-                                            ) - previousDiscounts;
-                                        } else {
-                                          // Regular calculation for non-last items
-                                          const itemSubtotal =
-                                            Number(item.unitPrice || 0) *
-                                            Number(item.quantity || 0);
-                                          const totalBeforeDiscount =
-                                            allItems.reduce(
-                                              (sum: number, itm: any) => {
-                                                return (
-                                                  sum +
-                                                  Number(itm.unitPrice || 0) *
-                                                    Number(itm.quantity || 0)
-                                                );
-                                              },
-                                              0,
-                                            );
-                                          itemDiscountAmount =
-                                            totalBeforeDiscount > 0
-                                              ? Math.floor(
-                                                  (Number(
-                                                    selectedOrder.discount || 0,
-                                                  ) *
-                                                    itemSubtotal) /
-                                                    totalBeforeDiscount,
-                                                )
-                                              : 0;
-                                        }
-
-                                        return itemDiscountAmount > 0 ? (
-                                          <p className="text-xs text-red-600 mt-1">
-                                            Giảm giá: -
-                                            {Math.floor(
-                                              itemDiscountAmount,
-                                            ).toLocaleString("vi-VN")}{" "}
-                                            ₫
-                                          </p>
-                                        ) : null;
-                                      })()}
-                                  </div>
-                                  <div className="text-right ml-4">
-                                    <p className="font-bold text-lg text-green-600">
-                                      {Math.floor(
-                                        Number(item.total || 0),
-                                      ).toLocaleString("vi-VN")}{" "}
-                                      ₫
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      {Math.floor(
-                                        Number(item.unitPrice || 0),
-                                      ).toLocaleString("vi-VN")}{" "}
-                                      ₫/món
-                                    </p>
-                                  </div>
+                      return (
+                        <div key={item.id} className="bg-gray-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">
+                                {item.productName || getProductName(item.productId)}
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                {t("orders.quantity")}: {item.quantity}
+                              </div>
+                              {itemDiscount > 0 && (
+                                <div className="text-sm text-red-600 mt-1">
+                                  {t("orders.discount")}: -
+                                  {Math.floor(itemDiscount).toLocaleString("vi-VN")} ₫
                                 </div>
-                              ))}
-                            </div>
-                          );
-                        } else {
-                          return (
-                            <div className="text-center py-6 bg-gray-50 rounded-lg border">
-                              <p className="text-gray-600">
-                                Không có món nào trong đơn hàng{" "}
-                                {selectedOrder?.orderNumber}
-                              </p>
-                              {orderItemsLoading && (
-                                <p className="text-sm text-gray-500 mt-2">
-                                  Đang tải...
-                                </p>
                               )}
                             </div>
-                          );
-                        }
-                      })()}
-                    </>
-                  )}
-                </div>
+                            <div className="text-right">
+                              <div className="text-lg font-semibold text-gray-900">
+                                {Math.floor(itemTotal).toLocaleString("vi-VN")} ₫
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {Math.floor(priceAfterDiscount).toLocaleString("vi-VN")} ₫/{t("orders.item")}
+                              </div>
+                            </div>
+                          </div>
+                          {item.notes && (
+                            <div className="mt-2 text-sm text-gray-600 italic">
+                              {t("orders.notes")}: {item.notes}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    {t("orders.noItems")}
+                  </div>
+                )}
               </div>
 
-              <Separator />
+              <Separator className="my-4" />
 
-              {/* Tax and Total Summary */}
-              <div className="space-y-2">
-                {(() => {
-                  // Use same tax calculation logic as shopping cart and other components
-                  let subtotal = 0;
-                  let totalTax = 0;
-
-                  if (
-                    Array.isArray(orderItems) &&
-                    orderItems.length > 0 &&
-                    Array.isArray(products)
-                  ) {
-                    orderItems.forEach((item: any) => {
-                      const basePrice = Number(item.unitPrice || 0);
-                      const quantity = Number(item.quantity || 0);
-                      const product = products.find(
-                        (p: any) => p.id === item.productId,
-                      );
-
-                      console.log(
-                        `🔍 Table Grid - Tax calculation for item ${item.id}:`,
-                        {
-                          productId: item.productId,
-                          productName: item.productName,
-                          basePrice,
-                          quantity,
-                          productFound: !!product,
-                          afterTaxPrice: product?.afterTaxPrice,
-                          taxRate: product?.taxRate,
-                        },
-                      );
-
-                      // Calculate subtotal (base price without tax)
-                      subtotal += basePrice * quantity;
-
-                      // Only calculate tax if afterTaxPrice exists in database
-                      if (
-                        product?.afterTaxPrice &&
-                        product.afterTaxPrice !== null &&
-                        product.afterTaxPrice !== ""
-                      ) {
-                        const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                        // Tax per unit = afterTaxPrice - basePrice
-                        const taxPerUnit = Math.max(
-                          0,
-                          afterTaxPrice - basePrice,
-                        );
-                        const itemTax = Math.floor(taxPerUnit * quantity);
-                        totalTax += itemTax;
-
-                        console.log(`💰 Table Grid - Tax details:`, {
-                          productTaxRate: product?.taxRate || 0,
-                          afterTaxPrice,
-                          basePrice,
-                          taxPerUnit,
-                          itemTax,
-                          runningTotalTax: totalTax,
-                        });
-
-                        console.log(`💰 Table Grid - Tax calculated:`, {
-                          afterTaxPrice,
-                          basePrice,
-                          taxPerUnit,
-                          quantity,
-                          itemTax,
-                          runningTotalTax: totalTax,
-                        });
-                      } else {
-                        console.log(
-                          `⚪ Table Grid - No tax (no afterTaxPrice):`,
-                          {
-                            productName: item.productName,
-                            afterTaxPrice: product?.afterTaxPrice,
-                          },
-                        );
-                      }
-                      // No tax calculation if no afterTaxPrice in database
-                    });
-                  }
-
-                  const grandTotal = subtotal + totalTax;
-
-                  // Get discount amount from selected order
-                  const discountAmount = selectedOrder
-                    ? Number(selectedOrder.discount || 0)
-                    : 0;
-                  const finalTotal = Math.max(0, grandTotal - discountAmount);
-
-                  console.log(`📊 Table Grid - Final totals:`, {
-                    subtotal,
-                    totalTax,
-                    grandTotal,
-                    discountAmount,
-                    finalTotal,
-                    itemsCount: orderItems?.length,
-                  });
-
-                  return (
-                    <>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          {t("pos.subtotal")}:
-                        </span>
-                        <span className="font-medium">
-                          {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Thuế:</span>
-                        <span className="font-medium">
-                          {Math.abs(Math.floor(totalTax)).toLocaleString(
-                            "vi-VN",
-                          )}{" "}
-                          ₫
-                        </span>
-                      </div>
-                      {discountAmount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Giảm giá:</span>
-                          <span className="font-medium text-red-600">
-                            -
-                            {Math.floor(discountAmount).toLocaleString("vi-VN")}{" "}
-                            ₫
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between text-lg font-bold border-t pt-2">
-                        <span>{t("orders.totalAmount")}:</span>
-                        <span className="text-green-600">
-                          {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
-                        </span>
-                      </div>
-                    </>
-                  );
-                })()}
+              {/* Order Summary - Use data from database */}
+              <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">{t("tables.subtotal")}:</span>
+                  <span className="font-medium">
+                    {Math.floor(Number(selectedOrder.subtotal || 0)).toLocaleString("vi-VN")} ₫
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">{t("orders.tax")}:</span>
+                  <span className="font-medium">
+                    {Math.floor(Number(selectedOrder.tax || 0)).toLocaleString("vi-VN")} ₫
+                  </span>
+                </div>
+                {selectedOrder.discount && parseFloat(selectedOrder.discount) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">{t("orders.discount")}:</span>
+                    <span className="font-medium text-red-600">
+                      -
+                      {Math.floor(parseFloat(selectedOrder.discount)).toLocaleString("vi-VN")} ₫
+                    </span>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex justify-between">
+                  <span className="text-lg font-bold text-gray-900">{t("tables.total")}:</span>
+                  <span className="text-lg font-bold text-blue-600">
+                    {Math.floor(Number(selectedOrder.total || 0)).toLocaleString("vi-VN")} ₫
+                  </span>
+                </div>
               </div>
 
               {/* Payment Buttons */}
@@ -3188,6 +2948,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             `FOOD${String(item.productId).padStart(5, "0")}`,
                           taxRate: parseFloat(product?.taxRate || "0"),
                           afterTaxPrice: product?.afterTaxPrice || null,
+                          discount: item.discount || "0",
+                          discountAmount: item.discount,
                         };
                       });
 
@@ -3338,9 +3100,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   (p: any) => p.id === item.productId,
                                 )
                               : null;
-                            return product?.taxRate
-                              ? parseFloat(product.taxRate)
-                              : 10;
+                            return product?.taxRate ? parseFloat(product.taxRate) : 10;
                           })(),
                         }));
 
