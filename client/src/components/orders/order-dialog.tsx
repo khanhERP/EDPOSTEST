@@ -195,8 +195,12 @@ export function OrderDialog({
           console.log(
             `📝 Updating order with complete calculated totals for order ${existingOrder.id}`,
           );
+          
+          // Use the same tax calculation function to ensure consistency
+          const calculatedTax = calculateTax();
+          
           console.log(
-            `💰 Saving totals: subtotal=${totalSubtotal}, tax=${totalTax}, discount=${discount}, total=${totalAmount}`,
+            `💰 Saving totals: subtotal=${totalSubtotal}, tax=${calculatedTax}, discount=${discount}, total=${totalAmount}`,
           );
           const updateResponse = await apiRequest(
             "PUT",
@@ -205,9 +209,9 @@ export function OrderDialog({
               customerName: orderData.order.customerName,
               customerCount: orderData.order.customerCount,
               subtotal: totalSubtotal.toString(),
-              tax: totalTax.toString(),
+              tax: calculatedTax.toString(),
               discount: discount.toString(),
-              total: totalAmount.toString(), // total = subtotal + tax
+              total: (totalSubtotal + calculatedTax).toString(), // total = subtotal + tax
             },
           );
 
@@ -439,8 +443,8 @@ export function OrderDialog({
           itemTax = taxableAmount * taxRate;
         }
 
-        // Truncate individual tax amount and add to array
-        individualTaxAmounts.push(Math.trunc(itemTax));
+        // Round individual tax amount and add to array
+        individualTaxAmounts.push(Math.round(itemTax));
       });
     }
 
@@ -465,8 +469,8 @@ export function OrderDialog({
         itemTax = taxableAmount * taxRate;
       }
 
-      // Truncate individual tax amount and add to array
-      individualTaxAmounts.push(Math.trunc(itemTax));
+      // Round individual tax amount and add to array
+      individualTaxAmounts.push(Math.round(itemTax));
     });
 
     // Sum all individual rounded tax amounts
