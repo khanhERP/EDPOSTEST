@@ -386,7 +386,8 @@ export function OrderDialog({
    totalSubtotal += unitPrice * quantity;
   });
 
-  return totalSubtotal;
+  // Subtract discount from subtotal: price * quantity - discount
+  return Math.max(0, totalSubtotal - discount);
  };
 
  const calculateTax = () => {
