@@ -85,7 +85,7 @@ export function OrderDialog({
   }, [mode, open, existingOrder?.id, refetchExistingItems]);
 
   const createOrderMutation = useMutation({
-    mutationFn: async (orderData: { order: any; items: any[] }) => {
+    mutationFn: async (orderData: { order: any; items: any[]; existingItems?: any[] }) => {
       console.log("=== ORDER MUTATION STARTED ===");
       console.log("Mode:", mode);
       console.log("Existing order:", existingOrder);
@@ -134,6 +134,40 @@ export function OrderDialog({
               console.log("✅ Order totals recalculated:", recalcResult);
             } catch (error) {
               console.error("❌ Error recalculating order:", error);
+            }
+          }
+
+          // Step 1.6: Update discount for existing order items via API
+          if (discount > 0 && existingOrderItems && existingOrderItems.length > 0) {
+            console.log(
+              `💰 Updating discount for ${existingOrderItems.length} existing order items`,
+            );
+
+            // Calculate discount distribution among existing items
+            const updatedExistingItems = calculateDiscountDistribution(
+              existingOrderItems,
+              discount,
+            );
+
+            // Update each order item with its calculated discount via API
+            for (const item of updatedExistingItems) {
+              try {
+                const updateResponse = await apiRequest(
+                  "PUT",
+                  `/api/order-items/${item.id}`,
+                  {
+                    discount: parseFloat(item.discount || "0").toFixed(2),
+                  }
+                );
+
+                if (updateResponse.ok) {
+                  console.log(`✅ Updated order item ${item.id} with discount: ${item.discount}`);
+                } else {
+                  console.error(`❌ Failed to update order item ${item.id} discount`);
+                }
+              } catch (itemError) {
+                console.error(`❌ Error updating order item ${item.id} discount:`, itemError);
+              }
             }
           }
 
@@ -222,7 +256,7 @@ export function OrderDialog({
           queryClient.removeQueries({ 
             queryKey: ["/api/order-items", existingOrder.id] 
           });
-          
+
           // Force fresh fetch of order items
           const freshOrderItems = await queryClient.fetchQuery({
             queryKey: ["/api/order-items", existingOrder.id],
@@ -235,13 +269,13 @@ export function OrderDialog({
             staleTime: 0, // Force fresh data
             gcTime: 0, // Don't cache
           });
-          
+
           // Update existing items state immediately
           if (freshOrderItems && Array.isArray(freshOrderItems)) {
             setExistingItems(freshOrderItems);
             console.log("✅ Existing items state updated with fresh data");
           }
-          
+
           console.log("✅ Order items refetched successfully");
         } catch (error) {
           console.error("❌ Error refetching order items:", error);
@@ -373,10 +407,10 @@ export function OrderDialog({
     // Add existing order items if in edit mode
     if (
       mode === "edit" &&
-      existingOrderItems &&
-      Array.isArray(existingOrderItems)
+      existingItems &&
+      Array.isArray(existingItems)
     ) {
-      existingOrderItems.forEach((item) => {
+      existingItems.forEach((item) => {
         const unitPrice = parseFloat(item.unitPrice);
         const quantity = parseInt(item.quantity);
         totalSubtotal += unitPrice * quantity;
@@ -404,10 +438,10 @@ export function OrderDialog({
     // Add existing order items if in edit mode
     if (
       mode === "edit" &&
-      existingOrderItems &&
-      Array.isArray(existingOrderItems)
+      existingItems &&
+      Array.isArray(existingItems)
     ) {
-      existingOrderItems.forEach((item) => {
+      existingItems.forEach((item) => {
         const unitPrice = parseFloat(item.unitPrice);
         const quantity = parseInt(item.quantity);
         totalSubtotalBeforeDiscount += unitPrice * quantity;
@@ -497,10 +531,10 @@ export function OrderDialog({
     // Add existing order items if in edit mode
     if (
       mode === "edit" &&
-      existingOrderItems &&
-      Array.isArray(existingOrderItems)
+      existingItems &&
+      Array.isArray(existingItems)
     ) {
-      existingOrderItems.forEach((item) => {
+      existingItems.forEach((item) => {
         const unitPrice = parseFloat(item.unitPrice);
         const quantity = parseInt(item.quantity);
         totalSubtotal += unitPrice * quantity;
@@ -614,7 +648,7 @@ export function OrderDialog({
 
       // Track any modifications to existing items (quantity changes, removals, etc.)
       const hasExistingItemChanges = existingItems.length !== (existingOrderItems?.length || 0);
-      
+
       console.log(`📝 Order Dialog: Checking for existing item changes:`, {
         currentExistingItemsCount: existingItems.length,
         originalExistingItemsCount: existingOrderItems?.length || 0,
@@ -658,7 +692,8 @@ export function OrderDialog({
         const currentIndex = existingItems.findIndex(
           (existingItem, idx) => idx === index,
         );
-        const isLastItem = currentIndex === allItems.length - 1;
+        const isLastItem =
+          currentIndex === allItems.length - 1;
 
         let itemDiscountAmount = 0;
 
@@ -691,8 +726,8 @@ export function OrderDialog({
 
       // Always proceed with mutation - adding new items and updating order totals/info
       console.log(`📝 Order Dialog: Sending mutation with ${newItemsOnly.length} NEW items and updated order info`);
-      createOrderMutation.mutate({ 
-        order: updatedOrder, 
+      createOrderMutation.mutate({
+        order: updatedOrder,
         items: newItemsOnly,
         existingItems: updatedExistingItems // Include updated existing items with new discount values
       });
@@ -1411,10 +1446,10 @@ export function OrderDialog({
                                   // Add existing order items if in edit mode
                                   if (
                                     mode === "edit" &&
-                                    existingOrderItems &&
-                                    Array.isArray(existingOrderItems)
+                                    existingItems &&
+                                    Array.isArray(existingItems)
                                   ) {
-                                    existingOrderItems.forEach(
+                                    existingItems.forEach(
                                       (existingItem) => {
                                         const unitPrice = parseFloat(
                                           existingItem.unitPrice,

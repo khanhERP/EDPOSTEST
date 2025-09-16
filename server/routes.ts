@@ -2446,7 +2446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.change = change;
       }
 
-      console.log(`'=>$' Updating order with payment data:`, updateData);
+      console.log(`=>$ Updating order with payment data:`, updateData);
 
       const order = await storage.updateOrder(id, updateData, tenantDb);
 
@@ -3105,7 +3105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log("Deleting order item from storage...");
-      const success = await storage.deleteOrderItem(itemId, tenantDb); // Pass tenantDb to storage function
+      const success = await storage.removeOrderItem(itemId, tenantDb); // Pass tenantDb to storage function
 
       if (success) {
         console.log("Order item deleted successfully");
@@ -6272,7 +6272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           socket.setTimeout(3000);
 
-          await new Promise((resolve, reject) => {
+          await new Promise((resolve) => {
             socket.connect(config.port || 9100, config.ipAddress, () => {
               // Send test print command
               const testData = Buffer.from('\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00', 'utf8');
@@ -6327,7 +6327,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(testResult);
     } catch (error) {
       console.error("Error testing printer connection:", error);
-      res.status(500).json({ error: "Failed to test printer connection" });
+      res.status(500).json({
+        success: false,
+        message: "Failed to test printer connection",
+      });
     }
   });
 
@@ -6502,7 +6505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         }
       } else {
-        printResult = {
+        printResult= {
           success: false,
           message: "Unsupported printer connection type",
           printerId: selectedPrinter.id,
