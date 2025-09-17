@@ -1,12 +1,33 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Clock, LogIn, LogOut, Coffee, Play, QrCode, RefreshCw } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Clock,
+  LogIn,
+  LogOut,
+  Coffee,
+  Play,
+  QrCode,
+  RefreshCw,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "@/lib/i18n";
@@ -14,7 +35,9 @@ import QRCode from "qrcode";
 import type { Employee, AttendanceRecord } from "@shared/schema";
 
 export function ClockInOut() {
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
+    null,
+  );
   const [notes, setNotes] = useState("");
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
@@ -24,105 +47,126 @@ export function ClockInOut() {
   const { t } = useTranslation();
 
   const { data: employees } = useQuery({
-    queryKey: ['/api/employees'],
+    queryKey: ["/api/employees"],
   });
 
   const { data: todayAttendance, refetch: refetchTodayAttendance } = useQuery({
-    queryKey: ['/api/attendance/today', selectedEmployeeId],
+    queryKey: ["/api/attendance/today", selectedEmployeeId],
     enabled: !!selectedEmployeeId,
   });
 
   const clockInMutation = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/attendance/clock-in', {
-      employeeId: selectedEmployeeId,
-      notes
-    }),
+    mutationFn: () =>
+      apiRequest("POST", "/api/attendance/clock-in", {
+        employeeId: selectedEmployeeId,
+        notes,
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       refetchTodayAttendance();
       setNotes("");
       toast({
-        title: t("common.successTitle"),
-        description: t('attendance.clockInSuccessDesc'),
+        title: t("common.success"),
+        description: t("attendance.clockInSuccessDesc"),
       });
     },
     onError: () => {
       toast({
-        title: t("common.errorTitle"),
-        description: t('attendance.clockInError'),
+        title: t("common.error"),
+        description: t("attendance.clockInError"),
         variant: "destructive",
       });
     },
   });
 
   const clockOutMutation = useMutation({
-    mutationFn: () => apiRequest('POST', `/api/attendance/clock-out/${(todayAttendance as AttendanceRecord)?.id}`, {}),
+    mutationFn: () =>
+      apiRequest(
+        "POST",
+        `/api/attendance/clock-out/${(todayAttendance as AttendanceRecord)?.id}`,
+        {},
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       refetchTodayAttendance();
       toast({
-        title: t("common.successTitle"),
-        description: t('attendance.clockOutSuccessDesc'),
+        title: t("common.success"),
+        description: t("attendance.clockOutSuccessDesc"),
       });
     },
     onError: () => {
       toast({
-        title: t("common.errorTitle"),
-        description: t('attendance.clockOutError'),
+        title: t("common.error"),
+        description: t("attendance.clockOutError"),
         variant: "destructive",
       });
     },
   });
 
   const breakStartMutation = useMutation({
-    mutationFn: () => apiRequest('POST', `/api/attendance/break-start/${(todayAttendance as AttendanceRecord)?.id}`, {}),
+    mutationFn: () =>
+      apiRequest(
+        "POST",
+        `/api/attendance/break-start/${(todayAttendance as AttendanceRecord)?.id}`,
+        {},
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       refetchTodayAttendance();
       toast({
-        title: t("common.successTitle"),
-        description: t('attendance.breakStartSuccessDesc'),
+        title: t("common.success"),
+        description: t("attendance.breakStartSuccessDesc"),
       });
     },
     onError: () => {
       toast({
-        title: t("common.errorTitle"),
-        description: t('attendance.breakStartError'),
+        title: t("common.error"),
+        description: t("attendance.breakStartError"),
         variant: "destructive",
       });
     },
   });
 
   const breakEndMutation = useMutation({
-    mutationFn: () => apiRequest('POST', `/api/attendance/break-end/${(todayAttendance as AttendanceRecord)?.id}`, {}),
+    mutationFn: () =>
+      apiRequest(
+        "POST",
+        `/api/attendance/break-end/${(todayAttendance as AttendanceRecord)?.id}`,
+        {},
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       refetchTodayAttendance();
       toast({
-        title: t("common.successTitle"),
-        description: t('attendance.breakEndSuccessDesc'),
+        title: t("common.success"),
+        description: t("attendance.breakEndSuccessDesc"),
       });
     },
     onError: () => {
       toast({
-        title: t("common.errorTitle"),
-        description: t('attendance.breakEndError'),
+        title: t("common.error"),
+        description: t("attendance.breakEndError"),
         variant: "destructive",
       });
     },
   });
 
-  const selectedEmployee = (employees as Employee[] | undefined)?.find((emp: Employee) => emp.id === selectedEmployeeId);
+  const selectedEmployee = (employees as Employee[] | undefined)?.find(
+    (emp: Employee) => emp.id === selectedEmployeeId,
+  );
 
   const formatTime = (dateInput: Date | string) => {
-    return new Date(dateInput).toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
+    return new Date(dateInput).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
     });
   };
 
-  const getWorkingHours = (clockIn: Date | string, clockOut?: Date | string | null) => {
+  const getWorkingHours = (
+    clockIn: Date | string,
+    clockOut?: Date | string | null,
+  ) => {
     const start = new Date(clockIn);
     const end = clockOut ? new Date(clockOut) : new Date();
     const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
@@ -132,11 +176,13 @@ export function ClockInOut() {
   const getStatusBadge = (record: AttendanceRecord) => {
     if (!record.clockOut) {
       if (record.breakStart && !record.breakEnd) {
-        return <Badge variant="secondary">{t('attendance.status.onBreak')}</Badge>;
+        return (
+          <Badge variant="secondary">{t("attendance.status.onBreak")}</Badge>
+        );
       }
-      return <Badge variant="default">{t('attendance.status.working')}</Badge>;
+      return <Badge variant="default">{t("attendance.status.working")}</Badge>;
     }
-    return <Badge variant="outline">{t('attendance.status.clockedOut')}</Badge>;
+    return <Badge variant="outline">{t("attendance.status.clockedOut")}</Badge>;
   };
 
   const generateQRCode = async () => {
@@ -146,15 +192,15 @@ export function ClockInOut() {
         width: 256,
         margin: 2,
         color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
       });
       setQrCodeUrl(qrDataURL);
       setIsQRModalOpen(true);
     } catch (error) {
       toast({
-        title: t("common.errorTitle"),
+        title: t("common.error"),
         description: "QR 코드 생성에 실패했습니다.",
         variant: "destructive",
       });
@@ -170,10 +216,10 @@ export function ClockInOut() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="w-5 h-5" />
-                {t('attendance.employeeSelect')}
+                {t("attendance.employeeSelect")}
               </CardTitle>
               <CardDescription>
-                {t('attendance.selectEmployee')}
+                {t("attendance.selectEmployee")}
               </CardDescription>
             </div>
             <Button
@@ -183,37 +229,45 @@ export function ClockInOut() {
               className="flex items-center gap-2"
             >
               <QrCode className="w-4 h-4" />
-              {t('attendance.qrAttendance')}
+              {t("attendance.qrAttendance")}
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-2">
-            {(employees as Employee[] | undefined)?.map((employee: Employee) => (
-              <Button
-                key={employee.id}
-                variant={selectedEmployeeId === employee.id ? "default" : "outline"}
-                className="justify-start"
-                onClick={() => setSelectedEmployeeId(employee.id)}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span>{employee.name}</span>
-                  <Badge variant="secondary">{t(`employees.roles.${employee.role}`)}</Badge>
-                </div>
-              </Button>
-            )) || (
-              <p className="text-gray-500 text-center py-4">{t('common.loading')}</p>
+            {(employees as Employee[] | undefined)?.map(
+              (employee: Employee) => (
+                <Button
+                  key={employee.id}
+                  variant={
+                    selectedEmployeeId === employee.id ? "default" : "outline"
+                  }
+                  className="justify-start"
+                  onClick={() => setSelectedEmployeeId(employee.id)}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span>{employee.name}</span>
+                    <Badge variant="secondary">
+                      {t(`employees.roles.${employee.role}`)}
+                    </Badge>
+                  </div>
+                </Button>
+              ),
+            ) || (
+              <p className="text-gray-500 text-center py-4">
+                {t("common.loading")}
+              </p>
             )}
           </div>
 
           {selectedEmployeeId && (
             <div className="space-y-2">
-              <Label htmlFor="notes">{t('attendance.notes')}</Label>
+              <Label htmlFor="notes">{t("attendance.notes")}</Label>
               <Input
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder={t('attendance.notesPlaceholder')}
+                placeholder={t("attendance.notesPlaceholder")}
               />
             </div>
           )}
@@ -225,17 +279,19 @@ export function ClockInOut() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            {t('attendance.clockInOut')}
+            {t("attendance.clockInOut")}
           </CardTitle>
           <CardDescription>
-            {selectedEmployee ? `${selectedEmployee.name}${t('attendance.workingTime')}` : t('attendance.selectEmployee')}
+            {selectedEmployee
+              ? `${selectedEmployee.name}${t("attendance.workingTime")}`
+              : t("attendance.selectEmployee")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!selectedEmployee ? (
             <div className="text-center py-8">
               <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">{t('attendance.selectEmployee')}</p>
+              <p className="text-gray-500">{t("attendance.selectEmployee")}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -243,7 +299,9 @@ export function ClockInOut() {
               {todayAttendance && (todayAttendance as AttendanceRecord) && (
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-medium">{t('attendance.currentStatus')}</h4>
+                    <h4 className="font-medium">
+                      {t("attendance.currentStatus")}
+                    </h4>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -253,28 +311,44 @@ export function ClockInOut() {
                         setTimeout(() => setIsRefreshing(false), 1000);
                       }}
                       className="h-6 w-6 p-0"
-                      title={t('attendance.refresh')}
+                      title={t("attendance.refresh")}
                     >
-                      <RefreshCw className={`w-4 h-4 transition-transform duration-1000 ${isRefreshing ? 'rotate-180' : ''}`} />
+                      <RefreshCw
+                        className={`w-4 h-4 transition-transform duration-1000 ${isRefreshing ? "rotate-180" : ""}`}
+                      />
                     </Button>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span>{t('attendance.clockInTime')}:</span>
-                      <span className="font-medium">{formatTime((todayAttendance as AttendanceRecord).clockIn)}</span>
+                      <span>{t("attendance.clockInTime")}:</span>
+                      <span className="font-medium">
+                        {formatTime(
+                          (todayAttendance as AttendanceRecord).clockIn,
+                        )}
+                      </span>
                     </div>
                     {(todayAttendance as AttendanceRecord).clockOut && (
                       <div className="flex justify-between items-center">
-                        <span>{t('attendance.clockOutTime')}:</span>
-                        <span className="font-medium">{formatTime((todayAttendance as AttendanceRecord).clockOut!)}</span>
+                        <span>{t("attendance.clockOutTime")}:</span>
+                        <span className="font-medium">
+                          {formatTime(
+                            (todayAttendance as AttendanceRecord).clockOut!,
+                          )}
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between items-center">
-                      <span>{t('attendance.workingTime')}:</span>
-                      <span className="font-medium">{getWorkingHours((todayAttendance as AttendanceRecord).clockIn, (todayAttendance as AttendanceRecord).clockOut)}{t('attendance.hours')}</span>
+                      <span>{t("attendance.workingTime")}:</span>
+                      <span className="font-medium">
+                        {getWorkingHours(
+                          (todayAttendance as AttendanceRecord).clockIn,
+                          (todayAttendance as AttendanceRecord).clockOut,
+                        )}
+                        {t("attendance.hours")}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span>{t('common.status')}:</span>
+                      <span>{t("common.status")}:</span>
                       {getStatusBadge(todayAttendance as AttendanceRecord)}
                     </div>
                   </div>
@@ -290,20 +364,23 @@ export function ClockInOut() {
                     className="col-span-2"
                   >
                     <LogIn className="w-4 h-4 mr-2" />
-                    {clockInMutation.isPending ? t('common.loading') : t('attendance.clockIn')}
+                    {clockInMutation.isPending
+                      ? t("common.loading")
+                      : t("attendance.clockIn")}
                   </Button>
                 ) : (
                   <>
                     {!(todayAttendance as AttendanceRecord).clockOut && (
                       <>
-                        {(todayAttendance as AttendanceRecord).breakStart && !(todayAttendance as AttendanceRecord).breakEnd ? (
+                        {(todayAttendance as AttendanceRecord).breakStart &&
+                        !(todayAttendance as AttendanceRecord).breakEnd ? (
                           <Button
                             onClick={() => breakEndMutation.mutate()}
                             disabled={breakEndMutation.isPending}
                             variant="outline"
                           >
                             <Play className="w-4 h-4 mr-2" />
-                            {t('attendance.breakEnd')}
+                            {t("attendance.breakEnd")}
                           </Button>
                         ) : (
                           <Button
@@ -312,7 +389,7 @@ export function ClockInOut() {
                             variant="outline"
                           >
                             <Coffee className="w-4 h-4 mr-2" />
-                            {t('attendance.breakStart')}
+                            {t("attendance.breakStart")}
                           </Button>
                         )}
                         <Button
@@ -320,7 +397,7 @@ export function ClockInOut() {
                           disabled={clockOutMutation.isPending}
                         >
                           <LogOut className="w-4 h-4 mr-2" />
-                          {t('attendance.clockOut')}
+                          {t("attendance.clockOut")}
                         </Button>
                       </>
                     )}
@@ -338,10 +415,10 @@ export function ClockInOut() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <QrCode className="w-5 h-5" />
-              {t('attendance.qrCodeTitle')}
+              {t("attendance.qrCodeTitle")}
             </DialogTitle>
             <DialogDescription>
-              {t('attendance.qrCodeDescription')}
+              {t("attendance.qrCodeDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-4 py-4">
@@ -356,7 +433,7 @@ export function ClockInOut() {
             )}
             <div className="text-center space-y-2">
               <p className="text-sm text-gray-600">
-                {t('attendance.qrCodeInstructions')}
+                {t("attendance.qrCodeInstructions")}
               </p>
               <p className="text-xs text-gray-500">
                 URL: {window.location.origin}/attendance-qr
@@ -366,21 +443,23 @@ export function ClockInOut() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/attendance-qr`);
+                  navigator.clipboard.writeText(
+                    `${window.location.origin}/attendance-qr`,
+                  );
                   toast({
-                    title: t("common.successTitle"),
-                    description: t('attendance.copySuccessDesc'),
+                    title: t("common.success"),
+                    description: t("attendance.copySuccessDesc"),
                   });
                 }}
                 className="flex-1"
               >
-                {t('attendance.urlCopy')}
+                {t("attendance.urlCopy")}
               </Button>
               <Button
                 onClick={() => setIsQRModalOpen(false)}
                 className="flex-1"
               >
-                {t('common.close')}
+                {t("common.close")}
               </Button>
             </div>
           </div>

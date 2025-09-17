@@ -392,6 +392,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     product: "상품",
     combo: "콤보",
     service: "서비스",
+    create: "생성",
     confimremote:
       "상품 productname 데이터베이스에서 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
 
@@ -702,6 +703,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     product: "Product",
     combo: "Combo",
     service: "Service",
+    create: "Create",
 
     // Unit indicators
     perUnit: "per item",
@@ -798,6 +800,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     about: "Về chúng tôi",
     settings: "Cài đặt",
     profile: "Hồ sơ",
+    create: "Tạo",
     logout: "Đăng xuất",
     login: "Đăng nhập",
     register: "Đăng ký",
