@@ -152,8 +152,8 @@ export function ReceiptModal({
       const isChrome = /chrome/.test(userAgent);
       const isPOSTerminal = window.innerWidth <= 1024 && window.innerHeight <= 768;
 
-      console.log("🔍 Enhanced device detection:", { 
-        isIOS, isAndroid, isMobile, isSafari, isChrome, isPOSTerminal, 
+      console.log("🔍 Enhanced device detection:", {
+        isIOS, isAndroid, isMobile, isSafari, isChrome, isPOSTerminal,
         screenSize: `${window.innerWidth}x${window.innerHeight}`,
         userAgent: userAgent.substring(0, 100)
       });
@@ -209,7 +209,7 @@ export function ReceiptModal({
             console.log("✅ Receipt sent to configured printer successfully:", result);
 
             // Show success message based on device type
-            const successMessage = isMobile 
+            const successMessage = isMobile
               ? "✅ Hóa đơn đã được gửi đến máy in thành công!\nKiểm tra máy in POS của bạn."
               : "✅ Hóa đơn đã được gửi đến máy in POS thành công!";
 
@@ -254,9 +254,9 @@ export function ReceiptModal({
     console.log("📱 Using enhanced mobile printing for", isIOS ? 'iOS' : isAndroid ? 'Android' : 'Mobile');
 
     // Show user options for mobile printing with platform-specific messaging
-    const platformMessage = isIOS 
+    const platformMessage = isIOS
       ? "Máy in POS không khả dụng.\n\nChọn OK để tải file hóa đơn (Safari có thể mở trực tiếp).\nChọn Cancel để thử in trực tiếp từ trình duyệt."
-      : isAndroid 
+      : isAndroid
       ? "Máy in POS không khả dụng.\n\nChọn OK để tải/chia sẻ file hóa đơn.\nChọn Cancel để thử in trực tiếp từ Chrome."
       : "Máy in POS không khả dụng.\n\nChọn OK để tải file hóa đơn.\nChọn Cancel để thử in trực tiếp.";
 
@@ -435,9 +435,9 @@ export function ReceiptModal({
               printWindow.print();
 
               // Instructions for saving as PDF
-              const pdfInstructions = isIOS 
+              const pdfInstructions = isIOS
                 ? "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn destination\n2. Chọn 'Save as PDF' hoặc 'Lưu thành PDF'\n3. Nhấn Save để tải file PDF"
-                : isAndroid 
+                : isAndroid
                 ? "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn máy in\n2. Chọn 'Save as PDF' hoặc 'Lưu thành PDF'\n3. Nhấn Print để tải file PDF"
                 : "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn destination/máy in\n2. Chọn 'Save as PDF' hoặc 'Microsoft Print to PDF'\n3. Nhấn Save/Print để tải file PDF";
 
@@ -490,9 +490,9 @@ export function ReceiptModal({
 
   // Enhanced browser print dialog function
   const openBrowserPrintDialog = async (printContent: HTMLElement, isIOS: boolean, isAndroid: boolean, isSafari: boolean, isChrome: boolean) => {
-    const windowFeatures = isAndroid 
+    const windowFeatures = isAndroid
       ? 'width=400,height=600,scrollbars=yes,resizable=yes'
-      : isIOS 
+      : isIOS
       ? 'width=375,height=667,scrollbars=yes,resizable=yes'
       : 'width=400,height=600,scrollbars=yes';
 
@@ -519,9 +519,9 @@ export function ReceiptModal({
           }, printDelay);
 
         } catch (e) {
-          const browserTip = isSafari 
+          const browserTip = isSafari
             ? "Vui lòng sử dụng menu Safari → Share → Print"
-            : isChrome 
+            : isChrome
             ? "Vui lòng sử dụng menu Chrome (⋮) → Print"
             : "Vui lòng sử dụng menu trình duyệt để in";
 
@@ -942,7 +942,7 @@ export function ReceiptModal({
 
                     for (let i = 0; i < items.length - 1; i++) {
                       const prevItemSubtotal = parseFloat(items[i].unitPrice || items[i].price || "0") * (items[i].quantity || 1);
-                      const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                      const prevItemDiscount = totalBeforeDiscount > 0 ?
                         Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
                       previousDiscounts += prevItemDiscount;
                     }
@@ -954,7 +954,7 @@ export function ReceiptModal({
                     const totalBeforeDiscount = items.reduce((sum, itm) => {
                       return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
                     }, 0);
-                    itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                    itemDiscountAmount = totalBeforeDiscount > 0 ?
                       Math.floor((orderDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
                   }
                 }
@@ -979,11 +979,11 @@ export function ReceiptModal({
                         {(() => {
                           // First try to get discount from database (stored discount)
                           let itemDiscount = Math.floor(parseFloat(item.discount || "0"));
-                          
+
                           // If no stored discount but order has discount, calculate proportional discount
                           if (itemDiscount === 0 && orderDiscount > 0) {
                             const isLastItem = index === items.length - 1;
-                            
+
                             if (isLastItem) {
                               // Last item gets remaining discount
                               let previousDiscounts = 0;
@@ -993,7 +993,7 @@ export function ReceiptModal({
 
                               for (let i = 0; i < items.length - 1; i++) {
                                 const prevItemSubtotal = parseFloat(items[i].unitPrice || items[i].price || "0") * (items[i].quantity || 1);
-                                const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                                const prevItemDiscount = totalBeforeDiscount > 0 ?
                                   Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
                                 previousDiscounts += prevItemDiscount;
                               }
@@ -1004,11 +1004,11 @@ export function ReceiptModal({
                               const totalBeforeDiscount = items.reduce((sum, itm) => {
                                 return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
                               }, 0);
-                              itemDiscount = totalBeforeDiscount > 0 ? 
+                              itemDiscount = totalBeforeDiscount > 0 ?
                                 Math.floor((orderDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
                             }
                           }
-                          
+
                           return itemDiscount > 0 ? (
                             <div className="text-xs text-red-600">
                               {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
@@ -1178,11 +1178,11 @@ export function ReceiptModal({
                     }, 0);
 
                     for (let i = 0; i < cartItems.length - 1; i++) {
-                      const prevItemPrice = typeof cartItems[i].price === "string" 
-                        ? parseFloat(cartItems[i].price) 
+                      const prevItemPrice = typeof cartItems[i].price === "string"
+                        ? parseFloat(cartItems[i].price)
                         : cartItems[i].price;
                       const prevItemSubtotal = prevItemPrice * cartItems[i].quantity;
-                      const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                      const prevItemDiscount = totalBeforeDiscount > 0 ?
                         Math.floor((finalDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
                       previousDiscounts += prevItemDiscount;
                     }
@@ -1196,7 +1196,7 @@ export function ReceiptModal({
                       const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
                       return sum + (price * itm.quantity);
                     }, 0);
-                    itemDiscountAmount = totalBeforeDiscount > 0 ? 
+                    itemDiscountAmount = totalBeforeDiscount > 0 ?
                       Math.floor((finalDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
                   }
                 }
@@ -1223,11 +1223,11 @@ export function ReceiptModal({
                         {(() => {
                           // First try to get discount from item data
                           let itemDiscount = Math.floor(parseFloat(item.discount || "0"));
-                          
+
                           // If no stored discount but order has discount, calculate proportional discount
                           if (itemDiscount === 0 && finalDiscount > 0) {
                             const isLastItem = index === cartItems.length - 1;
-                            
+
                             if (isLastItem) {
                               // Last item gets remaining discount
                               let previousDiscounts = 0;
@@ -1237,11 +1237,11 @@ export function ReceiptModal({
                               }, 0);
 
                               for (let i = 0; i < cartItems.length - 1; i++) {
-                                const prevItemPrice = typeof cartItems[i].price === "string" 
-                                  ? parseFloat(cartItems[i].price) 
+                                const prevItemPrice = typeof cartItems[i].price === "string"
+                                  ? parseFloat(cartItems[i].price)
                                   : cartItems[i].price;
                                 const prevItemSubtotal = prevItemPrice * cartItems[i].quantity;
-                                const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                                const prevItemDiscount = totalBeforeDiscount > 0 ?
                                   Math.floor((finalDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
                                 previousDiscounts += prevItemDiscount;
                               }
@@ -1254,11 +1254,11 @@ export function ReceiptModal({
                                 const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
                                 return sum + (price * itm.quantity);
                               }, 0);
-                              itemDiscount = totalBeforeDiscount > 0 ? 
+                              itemDiscount = totalBeforeDiscount > 0 ?
                                 Math.floor((finalDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
                             }
                           }
-                          
+
                           return itemDiscount > 0 ? (
                             <div className="text-xs text-red-600">
                               {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
@@ -1357,35 +1357,39 @@ export function ReceiptModal({
           isOpen={showPaymentMethodModal}
           onClose={() => setShowPaymentMethodModal(false)}
           onSelectMethod={handlePaymentMethodSelect}
-          total={(() => {
-            // Use exact total with proper priority for receipt modal
-            if (
-              receipt?.exactTotal !== undefined &&
-              receipt.exactTotal !== null
-            ) {
-              return Math.floor(Number(receipt.exactTotal));
-            } else if (receipt?.total !== undefined && receipt.total !== null) {
-              return Math.floor(Number(receipt.total));
-            } else {
-              return Math.floor(Number(total || 0));
-            }
-          })()}
-          cartItems={cartItems}
-          receipt={receipt}
-          orderForPayment={
-            receipt
-              ? {
-                  id: receipt.id || `temp-${Date.now()}`,
-                  total: receipt.total,
-                  exactTotal: receipt.exactTotal,
-                  subtotal: receipt.subtotal,
-                  tax: receipt.tax,
-                  discount: receipt.discount,
-                  items: cartItems,
-                }
-              : null
+          total={
+            receipt?.exactTotal ||
+            parseFloat(receipt?.total || "0") ||
+            total ||
+            0
           }
-          onShowEInvoice={() => setShowEInvoiceModal(true)}
+          cartItems={receipt?.items || cartItems}
+          orderForPayment={
+            typeof window !== "undefined" && (window as any).orderForPayment
+              ? (window as any).orderForPayment
+              : {
+                  id: receipt?.id || `temp-${Date.now()}`,
+                  orderNumber: receipt?.orderNumber || receipt?.transactionId || `ORD-${Date.now()}`,
+                  tableId: receipt?.tableId || null,
+                  customerName: receipt?.customerName || "Khách hàng lẻ",
+                  status: "pending",
+                  paymentStatus: "pending",
+                  items: receipt?.items || cartItems || [],
+                  subtotal: receipt?.exactSubtotal || parseFloat(receipt?.subtotal || "0"),
+                  tax: receipt?.exactTax || parseFloat(receipt?.tax || "0"),
+                  discount: receipt?.exactDiscount || parseFloat(receipt?.discount || "0"),
+                  total: receipt?.exactTotal || parseFloat(receipt?.total || "0"),
+                  exactSubtotal: receipt?.exactSubtotal || parseFloat(receipt?.subtotal || "0"),
+                  exactTax: receipt?.exactTax || parseFloat(receipt?.tax || "0"),
+                  exactDiscount: receipt?.exactDiscount || parseFloat(receipt?.discount || "0"),
+                  exactTotal: receipt?.exactTotal || parseFloat(receipt?.total || "0"),
+                  orderedAt: new Date().toISOString(),
+                }
+          }
+          receipt={receipt}
+          onReceiptReady={(receiptData) => {
+            console.log("📋 Receipt ready from payment method:", receiptData);
+          }}
         />
       )}
 

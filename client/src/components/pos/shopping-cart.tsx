@@ -380,7 +380,7 @@ export function ShoppingCart({
       }));
 
       // Get current discount for active order
-      const currentDiscount = activeOrderId 
+      const currentDiscount = activeOrderId
         ? parseFloat(orderDiscounts[activeOrderId] || "0")
         : parseFloat(discountAmount || "0");
 
@@ -575,7 +575,7 @@ export function ShoppingCart({
 
     // Calculate accurate totals using the SAME logic as shopping cart display
     const calculatedSubtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-    
+
     // Use the EXACT same tax calculation logic as in the cart display
     const calculatedTax = cart.reduce((sum, item) => {
       if (item.taxRate && parseFloat(item.taxRate) > 0) {
@@ -736,7 +736,7 @@ export function ShoppingCart({
         subtotal: Math.floor(calculatedSubtotal),
         tax: Math.floor(calculatedTax),
         total: Math.floor(baseTotal),
-        discount: finalDiscount, // Include discount in checkout broadcast
+        discount: finalDiscount, // Include discount in broadcast message
         orderNumber: `POS-${Date.now()}`,
         timestamp: new Date().toISOString(),
         updateType: 'checkout_preview'
@@ -979,7 +979,7 @@ export function ShoppingCart({
       // Clear cart
       clearCart();
 
-      // Send WebSocket refresh signal to other components
+      // Send WebSocket signal for refresh
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(
           JSON.stringify({
@@ -1421,33 +1421,21 @@ export function ShoppingCart({
       )}
 
       {/* Receipt Preview Modal - Shows first like order management */}
-      <ReceiptModal
-        isOpen={showReceiptPreview}
-        onClose={handleReceiptPreviewCancel}
-        receipt={previewReceipt}
-        cartItems={cart.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),
-          quantity: item.quantity,
-          sku: `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "0"),
-          discount: item.discount || "0",
-          discountAmount: item.discountAmount || "0",
-          originalPrice: item.originalPrice || item.price,
-        }))}
-        total={
-          orderForPayment
-            ? {
-                amount: total,
-                discount: orderForPayment.discount || "0",
-                exactDiscount: parseFloat(orderForPayment.discount || "0"),
-              }
-            : total
-        }
-        isPreview={true}
-        onConfirm={handleReceiptPreviewConfirm}
-      />
+      {showReceiptPreview && previewReceipt && (
+        <ReceiptModal
+          isOpen={showReceiptPreview}
+          onClose={handleReceiptPreviewCancel}
+          receipt={{
+            ...previewReceipt,
+            orderForPayment: orderForPayment,
+            cartItems: lastCartItems,
+          }}
+          cartItems={lastCartItems}
+          total={previewReceipt?.exactTotal || 0}
+          isPreview={true}
+          onConfirm={handleReceiptPreviewConfirm}
+        />
+      )}
 
       {/* Payment Method Modal - Shows after receipt preview confirmation */}
       {showPaymentModal && orderForPayment && previewReceipt && (
