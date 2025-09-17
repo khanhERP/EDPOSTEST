@@ -1821,18 +1821,18 @@ export default function SalesOrders() {
                                                                 salesChannel ===
                                                                 "pos"
                                                               )
-                                                                return "Bán tại quầy";
+                                                                return t("common.comboValues.pos");
                                                               if (
                                                                 salesChannel ===
                                                                 "online"
                                                               )
-                                                                return "Bán online";
+                                                                return t("common.comboValues.online");
                                                               if (
                                                                 salesChannel ===
                                                                 "delivery"
                                                               )
-                                                                return "Giao hàng";
-                                                              return "Bán tại quầy"; // default
+                                                                return t("common.comboValues.delivery");
+                                                              return t("common.comboValues.pos"); // default
                                                             })()}
                                                           </td>
                                                           <td className="py-1 pr-4 font-medium whitespace-nowrap">

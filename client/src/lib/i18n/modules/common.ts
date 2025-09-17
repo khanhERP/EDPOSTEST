@@ -332,6 +332,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       snack: "간식",
       dessert: "디저트",
 
+      // Sales types
+      pos: "카운터 판매",
+      counter: "카운터 판매",
+
       // Table status
       occupied: "사용 중",
       reserved: "예약됨",
@@ -647,6 +651,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       waiter: "Waiter",
       chef: "Chef",
       cleaner: "Cleaner",
+
+      // Sales channels
+      pos: "Counter Sales",
+      online: "Online Sales",
+      delivery: "Delivery",
     },
 
     // Time periods
@@ -941,6 +950,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       days90: "90 ngày",
       days180: "180 ngày",
       days365: "365 ngày",
+
+      // Sales channels
+      pos: "Bán tại quầy",
+      online: "Bán online",
+      delivery: "Giao hàng",
     },
 
     // Product type
