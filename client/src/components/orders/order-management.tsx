@@ -2811,7 +2811,7 @@ export function OrderManagement() {
             {selectedCustomer && selectedOrder && (
               <div className="space-y-3">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium mb-2">Chi tiết thanh toán</h4>
+                  <h4 className="font-medium mb-2">{t('orders.mixedPaymentSummary')}</h4>
                   {(() => {
                     // Use exact total from orderDetailsCalculation memo (already calculated)
                     const { total: calculatedTotal } = orderDetailsCalculation;
