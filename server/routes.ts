@@ -941,8 +941,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `✅ Orders list API - Found ${ordersResult.length} orders${limitNum ? ` (page ${pageNum}/${totalPages})` : ' (all orders)'}`,
       );
 
+      // Fetch order items for each order
+      const ordersWithItems = await Promise.all(
+        ordersResult.map(async (order) => {
+          try {
+            const items = await database
+              .select({
+                id: orderItemsTable.id,
+                orderId: orderItemsTable.orderId,
+                productId: orderItemsTable.productId,
+                quantity: orderItemsTable.quantity,
+                unitPrice: orderItemsTable.unitPrice,
+                total: orderItemsTable.total,
+                discount: orderItemsTable.discount,
+                notes: orderItemsTable.notes,
+                productName: products.name,
+                productSku: products.sku,
+              })
+              .from(orderItemsTable)
+              .leftJoin(products, eq(orderItemsTable.productId, products.id))
+              .where(eq(orderItemsTable.orderId, order.id));
+
+            return {
+              ...order,
+              items: items || []
+            };
+          } catch (itemError) {
+            console.error(`❌ Error fetching items for order ${order.id}:`, itemError);
+            return {
+              ...order,
+              items: []
+            };
+          }
+        })
+      );
+
+      console.log(
+        `✅ Orders list API with items - Found ${ordersWithItems.length} orders with complete details`,
+      );
+
       res.json({
-        orders: ordersResult,
+        orders: ordersWithItems,
         pagination: {
           currentPage: pageNum,
           totalPages,
