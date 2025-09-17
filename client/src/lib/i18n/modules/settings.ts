@@ -194,6 +194,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templateCodePlaceholder: "예: 123451/88890345", 
     symbolPlaceholder: "예: AA/19E",
     templateNamePlaceholder: "예: 템플릿 1",
+    productsCount: "개 상품",
   },
   en: {
     title: "Settings",
@@ -391,6 +392,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templateCodePlaceholder: "e.g., 123451/88890345",
     symbolPlaceholder: "e.g., AA/19E", 
     templateNamePlaceholder: "e.g., Template 1",
+    productsCount: "products",
   },
   vi: {
     title: "Cài đặt",
@@ -588,5 +590,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templateCodePlaceholder: "Ví dụ: 123451/88890345",
     symbolPlaceholder: "Ví dụ: AA/19E",
     templateNamePlaceholder: "Ví dụ: Mẫu số 1",
+    productsCount: "sản phẩm",
   },
 };

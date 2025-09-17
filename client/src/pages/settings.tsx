@@ -2661,7 +2661,7 @@ export default function Settings() {
                                               p.categoryId === category.id,
                                           ).length
                                         : 0}{" "}
-                                      sản phẩm
+                                      {t("settings.productsCount")}
                                     </p>
                                   </div>
                                 </div>
