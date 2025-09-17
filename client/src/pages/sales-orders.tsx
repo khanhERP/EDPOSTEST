@@ -1449,9 +1449,8 @@ export default function SalesOrders() {
                             </tr>
                           ) : (
                             filteredInvoices.map((item, index) => {
-                              const customerCode =
-                                item.customerTaxCode ||
-                                `KH000${String(index + 1).padStart(3, "0")}`;
+                              const customerCode = item.customerCode || item.customerTaxCode || `KH000${String(index + 1).padStart(3, "0")}`;
+                              const customerName = item.customerName || "Khách hàng lẻ";
                               const discount = parseFloat(item.discount || "0");
                               const tax = parseFloat(item.tax || "0");
                               const subtotal = parseFloat(item.subtotal || "0");
@@ -1554,11 +1553,9 @@ export default function SalesOrders() {
                                     <td className="px-3 py-3">
                                       <div
                                         className="text-sm truncate"
-                                        title={
-                                          item.customerName || "Khách hàng lẻ"
-                                        }
+                                        title={customerName}
                                       >
-                                        {item.customerName || "Khách hàng lẻ"}
+                                        {customerName}
                                       </div>
                                     </td>
                                     <td className="px-3 py-3 text-right">

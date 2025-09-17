@@ -921,9 +921,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Process orders to ensure consistent field structure
-      const processedOrders = ordersResult.map(order => ({
+      const processedOrders = ordersResult.map((order, index) => ({
         ...order,
-        customerCode: order.customerTaxCode || null,
+        customerCode: order.customerTaxCode || `KH000${String(index + 1).padStart(3, "0")}`,
+        customerName: order.customerName || "Khách hàng lẻ",
         discount: order.discount || "0.00",
       }));
 
