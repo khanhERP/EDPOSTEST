@@ -172,7 +172,7 @@ export function EInvoiceModal({
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
 
       toast({
-        title: "Thanh toán thành công",
+        title: `${t("common.success")}`,
         description:
           "Hóa đơn điện tử đã được phát hành và đơn hàng đã được thanh toán",
       });
@@ -448,7 +448,7 @@ export function EInvoiceModal({
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found for later publishing");
         toast({
-          title: "Lỗi",
+          title: `${t("common.error")}`,
           description: "Không có sản phẩm nào trong giỏ hàng để lưu thông tin.",
           variant: "destructive",
         });
@@ -460,7 +460,7 @@ export function EInvoiceModal({
       if (!total || total <= 0) {
         console.error("❌ Invalid total amount for later publishing:", total);
         toast({
-          title: "Lỗi",
+          title: `${t("common.error")}`,
           description: "Tổng tiền không hợp lệ để lưu hóa đơn.",
           variant: "destructive",
         });
@@ -651,9 +651,8 @@ export function EInvoiceModal({
 
       // Show success message
       toast({
-        title: "Thành công",
-        description:
-          "Thông tin hóa đơn điện tử đã được lưu. Đang hiển thị màn hình in hóa đơn...",
+        title: `${t("common.success")}`,
+        description: `${t("einvoice.savedForLaterPublish")}.${t("einvoice.displayingForPrint")}`,
       });
 
       // Prepare comprehensive invoice data with receipt to display receipt modal
@@ -706,7 +705,7 @@ export function EInvoiceModal({
 
       toast({
         variant: "destructive",
-        title: "Lỗi",
+        title: `${t("common.error")}`,
         description: errorMessage,
       });
     } finally {
@@ -1200,7 +1199,7 @@ export function EInvoiceModal({
         }
 
         toast({
-          title: "Thành công",
+          title: `${t("common.success")}`,
           description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
         });
 
