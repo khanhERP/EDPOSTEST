@@ -1402,7 +1402,7 @@ export function ShoppingCart({
             {/* Discount Input */}
             <div className="space-y-2">
               <Label className="text-sm font-medium pos-text-primary">
-                Giảm giá (₫)
+                {t('common.discount')} (₫)
               </Label>
               <Input
                 type="text"
