@@ -2945,7 +2945,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             ? getOrderStatusBadge(activeOrder.status).variant
                             : statusConfig.variant
                         }
-                        className="text-xs"
+                        className="text-xs rounded-full px-3 py-1 font-medium shadow-sm border-0"
+                        style={{
+                          backgroundColor: table.status === "available" 
+                            ? "#dcfce7" 
+                            : table.status === "occupied" 
+                            ? "#fecaca" 
+                            : table.status === "reserved"
+                            ? "#fef3c7"
+                            : "#f3f4f6",
+                          color: table.status === "available"
+                            ? "#166534"
+                            : table.status === "occupied"
+                            ? "#dc2626"
+                            : table.status === "reserved"
+                            ? "#d97706"
+                            : "#6b7280"
+                        }}
                       >
                         {table.status === "occupied" && activeOrder
                           ? getOrderStatusBadge(activeOrder.status).label
