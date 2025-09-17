@@ -2336,22 +2336,22 @@ export function OrderManagement() {
                   <h4 className="font-medium mb-2">{t('orders.totalAmount')}</h4>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span>Tổng phụ</span>
+                      <span>{t('orders.subtotal')}</span>
                       <span>{formatCurrency(Math.floor(Number(selectedOrder?.subtotal || 0)))}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Thuế</span>
+                      <span>{t('orders.tax')}</span>
                       <span>{formatCurrency(Math.floor(Number(selectedOrder?.tax || 0)))}</span>
                     </div>
                     {selectedOrder?.discount && Number(selectedOrder.discount) > 0 && (
                       <div className="flex justify-between text-red-600">
-                        <span>{t("reports.discount")}</span>
+                        <span>{t("orders.discount")}</span>
                         <span>-{formatCurrency(Math.floor(Number(selectedOrder.discount)))}</span>
                       </div>
                     )}
                     <Separator />
                     <div className="flex justify-between font-medium">
-                      <span>Tổng tiền:</span>
+                      <span>{t('orders.total')}:</span>
                       <span>{formatCurrency(Math.floor(Number(selectedOrder?.total || 0)))}</span>
                     </div>
                   </div>
