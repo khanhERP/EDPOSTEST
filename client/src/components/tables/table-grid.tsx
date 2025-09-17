@@ -4027,9 +4027,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     {selectedOrder.orderNumber}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span>{t("tables.subtotal")}:</span>
-                  <span className="font-medium">
 </old_str>
                 <div className="flex justify-between text-sm">
                   <span>Tổng gốc:</span>
@@ -4487,37 +4484,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               {/* Payment Summary */}
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium mb-2">{t("orders.mixedPaymentSummary")}</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>{t("orders.totalOrder")}:</span>
-                    <span className="font-medium">
-                      {Number(selectedOrder?.total || 0).toLocaleString()} ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-blue-600">
-                    <span>{t("orders.pointsPayment")}:</span>
-                    <span className="font-medium">
-                      {mixedPaymentData.pointsToUse.toLocaleString()}P
-                      <span className="ml-1">
-                        (-
-                        {(
-                          mixedPaymentData.pointsToUse * 1000
-                        ).toLocaleString()}{" "}
-                        ₫)
-                      </span>
-                    </span>
-                  </div>
-                  <div className="border-t pt-2 flex justify-between font-medium text-orange-600">
-                    <span>{t("orders.remainingAmount")}:</span>
-                    <span className="text-sm text-gray-500">
-                      {Math.floor(
-                        mixedPaymentData.remainingAmount,
-                      ).toLocaleString()}{" "}
-                      ₫
-                    </span>
-                  </div>
-                </div>
-              </div>
 </old_str>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
