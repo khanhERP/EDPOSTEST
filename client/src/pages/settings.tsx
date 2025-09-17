@@ -3290,7 +3290,7 @@ export default function Settings() {
             </DialogTitle>
             <DialogDescription>
               {editingCategory
-                ? t("settings.updateProductInfo")
+                ? t("settings.updateCategoryInfo")
                 : t("settings.categoryManagementDesc")}
             </DialogDescription>
           </DialogHeader>

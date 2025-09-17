@@ -165,9 +165,10 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     stockStatus: "재고 상태",
     usageStatus: "사용 상태",
     updateProductInfo: "Update product information",
+    updateCategoryInfo: "Update category information",
     enterProductInfo: "Enter new product information",
     trackInventory: "Track Inventory",
-    enableInventoryTracking: "Enable inventory tracking for this product",
+    enableInventoryTracking: "이 상품의 재고 추적을 활성화",
     yes: "네",
     // Product form dialog
     addProductTitle: "상품 추가",
@@ -185,7 +186,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     usageStatusActive: "활성",
     usageStatusInactive: "비활성",
     selectUsageStatus: "상태를 선택하세요",
-    
+
     // Placeholders
     categoryNamePlaceholder: "카테고리 이름을 입력하세요",
     templateNumberPlaceholder: "예: 01GTKT0/001",
@@ -358,6 +359,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     stockStatus: "Stock Status",
     usageStatus: "Usage Status",
     updateProductInfo: "Update product information",
+    updateCategoryInfo: "Update category information",
     enterProductInfo: "Enter new product information",
     trackInventory: "Track Inventory",
     enableInventoryTracking: "Enable inventory tracking for this product",
@@ -380,7 +382,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     usageStatusActive: "Active",
     usageStatusInactive: "Inactive",
     selectUsageStatus: "Select status",
-    
+
     // Placeholders
     categoryNamePlaceholder: "Enter category name",
     templateNumberPlaceholder: "e.g., 01GTKT0/001",
@@ -553,6 +555,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     stockStatus: "Trạng thái kho",
     usageStatus: "Trạng thái sử dụng",
     updateProductInfo: "Cập nhật thông tin sản phẩm",
+    updateCategoryInfo: "Cập nhật thông tin danh mục",
     enterProductInfo: "Nhập thông tin sản phẩm mới",
     trackInventory: "Theo dõi tồn kho",
     enableInventoryTracking: "Kích hoạt theo dõi tồn kho cho sản phẩm này",
@@ -575,7 +578,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     usageStatusActive: "Hoạt động",
     usageStatusInactive: "Không hoạt động",
     selectUsageStatus: "Chọn trạng thái",
-    
+
     // Placeholders
     categoryNamePlaceholder: "Nhập tên danh mục",
     templateNumberPlaceholder: "Ví dụ: 01GTKT0/001",
