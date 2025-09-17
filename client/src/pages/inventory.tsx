@@ -863,7 +863,7 @@ export default function InventoryPage() {
                       name="taxRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Thuế (%)</FormLabel>
+                          <FormLabel>{t("common.comboValues.taxPercentage")}</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
