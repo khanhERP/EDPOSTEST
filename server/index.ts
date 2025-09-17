@@ -3,6 +3,64 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// CORS configuration
+app.use((req, res, next) => {
+  // Allow requests from specific origins
+  const allowedOrigins = [
+    'https://demo-edpos.vercel.app',
+    'http://localhost:5000',
+    'http://localhost:5001',
+    'http://127.0.0.1:5000',
+    'http://127.0.0.1:5001',
+    // Support multiple Replit deployments for backward compatibility
+    'https://64071157-147f-4160-96cd-6dc099d777d2-00-1d0mzv8b48h7n.pike.replit.dev',
+    'https://66622521-d7f0-4a33-aadd-c50d66665c71-00-wqfql649629t.pike.replit.dev',
+    // Add any future Replit URLs here
+  ];
+
+  const origin = req.headers.origin;
+  const referer = req.headers.referer;
+
+  // Enhanced logging for debugging
+  console.log(`🔍 CORS check - Origin: ${origin}, Referer: ${referer}`);
+  console.log(`🔍 Request URL: ${req.url}, Method: ${req.method}`);
+  console.log(`🔍 User-Agent: ${req.headers['user-agent']?.substring(0, 50)}...`);
+
+  // Always set these headers first
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-tenant-id');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Credentials', 'true');
+
+  // Handle origin-specific CORS with better coverage
+  if (origin) {
+    // Check if origin is allowed
+    const isAllowedOrigin = allowedOrigins.includes(origin);
+    const isReplitDev = origin.includes('.replit.dev');
+    const isVercelApp = origin.includes('demo-edpos.vercel.app');
+
+    if (isAllowedOrigin || isReplitDev || isVercelApp) {
+      res.header('Access-Control-Allow-Origin', origin);
+      console.log(`✅ CORS allowed for origin: ${origin} (allowed: ${isAllowedOrigin}, replit: ${isReplitDev}, vercel: ${isVercelApp})`);
+    } else {
+      // Still allow unknown origins but log them prominently
+      res.header('Access-Control-Allow-Origin', origin);
+      console.log(`⚠️ Unknown origin allowed: ${origin} - Consider adding to allowedOrigins`);
+    }
+  } else {
+    // No origin (same-origin requests)
+    res.header('Access-Control-Allow-Origin', '*');
+    console.log(`✅ CORS allowed for same-origin request`);
+  }
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -128,46 +186,28 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const PORT = process.env.PORT || 5001;
+  const PORT = process.env.PORT || 5000;
 
-  // Handle server errors first before trying to listen
-  server.on('error', (err: any) => {
-    if (err.code === 'EADDRINUSE') {
-      console.log(`⚠️ Port ${PORT} is busy, trying port ${PORT + 1}`);
-      setTimeout(() => {
-        server.listen({
-          port: PORT + 1,
-          host: "0.0.0.0",
-          reusePort: false,
-        }, () => {
-          log(`🚀 Server running on port ${PORT + 1}`);
-          import('./websocket-server').then((wsModule) => {
-            wsModule.initializeWebSocketServer(server);
-            log('WebSocket server initialized on same port as HTTP server');
-          });
-        });
-      }, 1000);
-    } else {
-      console.error('💥 Server error:', err);
-    }
+  // Start server
+  server.listen({
+    port: PORT,
+    host: "0.0.0.0",
+  }, () => {
+    log(`🚀 Server running on port ${PORT}`);
+
+    // Initialize WebSocket server after HTTP server is running
+    import('./websocket-server').then((wsModule) => {
+      wsModule.initializeWebSocketServer(server);
+      log('WebSocket server initialized on same port as HTTP server');
+    }).catch(error => {
+      console.error('Failed to initialize WebSocket server:', error);
+    });
   });
 
-  // Try to start server on primary port
-  try {
-    server.listen({
-      port: PORT,
-      host: "0.0.0.0",
-      reusePort: false,
-    }, () => {
-      log(`🚀 Server running on port ${PORT}`);
-
-      // Initialize WebSocket server after HTTP server is running
-      import('./websocket-server').then((wsModule) => {
-        wsModule.initializeWebSocketServer(server);
-        log('WebSocket server initialized on same port as HTTP server');
-      });
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-  }
+  server.on('error', (err: any) => {
+    console.error('💥 Server error:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.log(`⚠️ Port ${PORT} is already in use`);
+    }
+  });
 })();
