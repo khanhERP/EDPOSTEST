@@ -1848,7 +1848,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   // Helper function to handle delete order
   const handleDeleteOrder = (order: Order) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này?")) {
+    if (window.confirm(`${t("common.areyouremoteorder")}`)) {
       deleteOrderMutation.mutate(order.id);
     }
   };
@@ -2948,20 +2948,22 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         }
                         className="text-xs rounded-full px-3 py-1 font-medium shadow-sm border-0"
                         style={{
-                          backgroundColor: table.status === "available"
-                            ? "#dcfce7"
-                            : table.status === "occupied"
-                            ? "#fecaca"
-                            : table.status === "reserved"
-                            ? "#fef3c7"
-                            : "#f3f4f6",
-                          color: table.status === "available"
-                            ? "#166534"
-                            : table.status === "occupied"
-                            ? "#dc2626"
-                            : table.status === "reserved"
-                            ? "#d97706"
-                            : "#6b7280"
+                          backgroundColor:
+                            table.status === "available"
+                              ? "#dcfce7"
+                              : table.status === "occupied"
+                                ? "#fecaca"
+                                : table.status === "reserved"
+                                  ? "#fef3c7"
+                                  : "#f3f4f6",
+                          color:
+                            table.status === "available"
+                              ? "#166534"
+                              : table.status === "occupied"
+                                ? "#dc2626"
+                                : table.status === "reserved"
+                                  ? "#d97706"
+                                  : "#6b7280",
                         }}
                       >
                         {table.status === "occupied" && activeOrder
@@ -3349,8 +3351,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           sku:
                             item.productSku ||
                             `FOOD${String(item.productId).padStart(5, "0")}`,
-                          taxRate: parseFloat(item.taxRate || product?.taxRate || "0"),
-                          afterTaxPrice: item.afterTaxPrice || product?.afterTaxPrice,
+                          taxRate: parseFloat(
+                            item.taxRate || product?.taxRate || "0",
+                          ),
+                          afterTaxPrice:
+                            item.afterTaxPrice || product?.afterTaxPrice,
                           discount: item.discount || "0",
                           discountAmount: item.discount,
                         };
@@ -3458,7 +3463,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         const discountAmount = selectedOrder
                           ? Number(selectedOrder.discount || 0)
                           : 0;
-                        const finalTotal = Math.max(0, grandTotal - discountAmount);
+                        const finalTotal = Math.max(
+                          0,
+                          grandTotal - discountAmount,
+                        );
 
                         // Create receipt data using EXACT same values as Order Details
                         const processedItems = orderItems.map((item: any) => ({

@@ -1552,20 +1552,18 @@ export function PaymentMethodModal({
       if (invoiceData.publishLater) {
         console.log("⏳ E-Invoice publish later completed - will show receipt");
         toast({
-          title: "Thành công",
-          description:
-            "Hóa đơn đã được lưu để phát hành sau. Đang hiển thị hóa đơn để in...",
+          title: `${t("common.success")}`,
+          description: `${t("einvoice.savedForLaterPublish")}.${t("einvoice.displayingForPrint")}`,
         });
       } else if (invoiceData.publishedImmediately || invoiceData.success) {
         console.log("✅ E-Invoice published immediately - will show receipt");
         toast({
-          title: "Thành công",
-          description:
-            "Hóa đơn điện tử đã được phát hành thành công. Đang hiển thị hóa đơn để in...",
+          title: `${t("common.success")}`,
+          description: `${t("einvoice.savedForLaterPublish")}.${t("einvoice.displayingForPrint")}`,
         });
       } else {
         toast({
-          title: "Thành công",
+          title: `${t("common.success")}`,
           description: "Hóa đơn điện tử đã được phát hành thành công!",
         });
       }

@@ -9,6 +9,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     delete: "삭제",
     edit: "편집",
     add: "추가",
+    areyouremoteorder: "원격 주문을 취소하시겠습니까?",
     productUpdateSuccess: "상품이 업데이트되었습니다",
     productCreateSuccess: "상품이 생성되었습니다",
     invoiceSavedForLater: "나중에 발행하기 위해 송장이 저장되었습니다",
@@ -283,7 +284,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "발행되지 않음",
       published: "발행됨",
-      error: "발행 오류",
+      error: "발 �� 오류",
     },
 
     // Combo values
@@ -371,6 +372,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     add: "Add",
     search: "Search",
     filter: "Filter",
+    areyouremoteorder: "Are you sure you want to cancel this remote order?",
     amountShortfall: "Shortfall",
     export: "Export",
     import: "Import",
@@ -956,5 +958,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     description: "Mô tả",
     successTitle: "Thành công",
     templateUsage: "Trạng thái sử dụng",
+    areyouremoteorder: "Bạn có chắc chắn muốn xóa đơn hàng này?",
   },
 };
