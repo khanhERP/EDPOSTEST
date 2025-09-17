@@ -2914,7 +2914,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                 : "1rem",
                         }}
                       >
-                        <span className="text-center leading-none break-words whitespace-nowrap">
+                        <span className="text-center leading-none text-white whitespace-nowrap overflow-hidden text-ellipsis">
                           {table.tableNumber}
                         </span>
                       </div>
