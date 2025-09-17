@@ -2351,7 +2351,7 @@ export function OrderManagement() {
                     )}
                     <Separator />
                     <div className="flex justify-between font-medium">
-                      <span>{t('orders.total')}:</span>
+                      <span>{t('orders.total')}</span>
                       <span>{formatCurrency(Math.floor(Number(selectedOrder?.total || 0)))}</span>
                     </div>
                   </div>
