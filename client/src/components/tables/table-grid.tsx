@@ -2904,7 +2904,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     {/* Table Number */}
                     <div className="relative">
                       <div
-                        className={`px-3 py-2 rounded-lg ${statusConfig.color} flex items-center justify-center font-bold shadow-lg border-2 border-white min-w-[80px] max-w-[120px] h-12`}
+                        className={`px-3 py-2 rounded-lg ${statusConfig.color} flex items-center justify-center font-bold shadow-lg border-2 border-white min-w-[80px] min-h-[48px]`}
                         style={{
                           fontSize:
                             table.tableNumber.length > 8
@@ -2914,7 +2914,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                 : "1rem",
                         }}
                       >
-                        <span className="text-center leading-none text-white whitespace-nowrap overflow-hidden text-ellipsis">
+                        <span className="text-center leading-tight text-white break-words hyphens-auto px-1">
                           {table.tableNumber}
                         </span>
                       </div>
