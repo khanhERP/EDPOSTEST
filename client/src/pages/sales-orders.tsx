@@ -734,7 +734,7 @@ export default function SalesOrders() {
               : order.status === "cancelled"
                 ? 3
                 : 2,
-        customerName: order.customerName || "Khách hàng l ��",
+        customerName: order.customerName || "Khách hàng l ",
         invoiceStatus:
           order.status === "paid"
             ? 1

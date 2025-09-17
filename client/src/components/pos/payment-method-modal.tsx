@@ -1418,7 +1418,9 @@ export function PaymentMethodModal({
         subtotal: receiptSubtotal.toString(),
         tax: receiptTax.toString(),
         total: receiptTotal.toString(),
-        notes: `POS Cash Payment - Amount: ${cashAmountInput}, Change: ${finalChange}`,
+        notes: t("common.comboValues.posPaymentNote")
+          .replace("{amount}", cashAmountInput)
+          .replace("{change}", finalChange.toString()),
         paidAt: new Date(),
         discount: discountAmount.toString(),
       };

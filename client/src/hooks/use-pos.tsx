@@ -56,7 +56,9 @@ export function usePOS() {
         templateNumber: paymentData.templateNumber || null,
         symbol: paymentData.symbol || null,
         invoiceNumber: paymentData.invoiceNumber || null,
-        notes: `POS Order - ${paymentData.cashierName || 'System'}`,
+        notes: t("common.comboValues.posPaymentNote")
+          .replace("{amount}", paymentData.amountReceived || total.toString())
+          .replace("{change}", paymentData.change || "0"),
         paidAt: paymentData.paymentMethod !== 'einvoice' ? new Date() : null,
       };
 

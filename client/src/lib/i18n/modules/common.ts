@@ -360,6 +360,14 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       waiter: "웨이터",
       chef: "요리사",
       cleaner: "청소원",
+
+      // Sales channels
+      pos: "카운터 판매",
+      online: "온라인 판매",
+      delivery: "배송",
+
+      // Payment notes
+      posPaymentNote: "POS 현금 결제 - 금액: {amount}, 거스름돈: {change}",
     },
 
     // Time periods
