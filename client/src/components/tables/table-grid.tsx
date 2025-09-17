@@ -4028,7 +4028,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Tổng gốc:</span>
+                  <span>{t("tables.total")}:</span>
                   <span className="font-medium">
                     {(() => {
                       // Calculate correct total from order items for payment calculation
@@ -4082,7 +4082,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 {selectedOrder.discount &&
                   Number(selectedOrder.discount) > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-red-600">Giảm giá:</span>
+                      <span className="text-red-600">
+                        {t("common.discount")}:
+                      </span>
                       <span className="font-medium text-red-600">
                         -
                         {Math.floor(
