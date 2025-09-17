@@ -911,9 +911,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           employeeId: orders.employeeId,
           status: orders.status,
           customerName: orders.customerName,
+          customerCode: orders.customerTaxCode, // Add customer code from customerTaxCode field
+          customerTaxCode: orders.customerTaxCode, // Keep original field for compatibility
+          customerPhone: orders.customerPhone,
+          customerAddress: orders.customerAddress,
+          customerEmail: orders.customerEmail,
           customerCount: orders.customerCount,
           subtotal: orders.subtotal,
           tax: orders.tax,
+          discount: orders.discount,
           total: orders.total,
           paymentMethod: orders.paymentMethod,
           paymentStatus: orders.paymentStatus,
