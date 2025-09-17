@@ -655,17 +655,17 @@ export default function SalesOrders() {
 
   const getEInvoiceStatusBadge = (status: number) => {
     const statusLabels = {
-      0: "Chưa phát hành",
-      1: "Đã phát hành",
-      2: "Tạo nháp",
-      3: "Đã duyệt",
-      4: "Đã bị thay thế (hủy)",
-      5: "Thay thế tạm",
-      6: "Thay thế",
-      7: "Đã bị điều chỉnh",
-      8: "Điều chỉnh tạm",
-      9: "Điều chỉnh",
-      10: "Đã hủy",
+      0: t("common.einvoiceStatus.notPublished"),
+      1: t("common.einvoiceStatus.published"),
+      2: t("common.einvoiceStatus.draft"),
+      3: t("common.einvoiceStatus.approved"),
+      4: t("common.einvoiceStatus.replaced"),
+      5: t("common.einvoiceStatus.tempReplaced"),
+      6: t("common.einvoiceStatus.replacement"),
+      7: t("common.einvoiceStatus.adjusted"),
+      8: t("common.einvoiceStatus.tempAdjusted"),
+      9: t("common.einvoiceStatus.adjustment"),
+      10: t("common.einvoiceStatus.cancelled"),
     };
 
     const statusColors = {
@@ -688,7 +688,7 @@ export default function SalesOrders() {
           statusColors[status as keyof typeof statusColors] || statusColors[0]
         }
       >
-        {statusLabels[status as keyof typeof statusColors] || "Không xác định"}
+        {statusLabels[status as keyof typeof statusColors] || t("common.einvoiceStatus.notPublished")}
       </Badge>
     );
   };

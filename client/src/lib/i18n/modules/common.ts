@@ -284,7 +284,16 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     einvoiceStatus: {
       notPublished: "발행되지 않음",
       published: "발행됨",
-      error: "발 �� 오류",
+      error: "발행 오류",
+      draft: "초안",
+      approved: "승인됨",
+      replaced: "교체됨",
+      tempReplaced: "임시 교체",
+      replacement: "교체",
+      adjusted: "조정됨",
+      tempAdjusted: "임시 조정",
+      adjustment: "조정",
+      cancelled: "취소됨",
     },
 
     // Combo values
