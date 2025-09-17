@@ -1024,7 +1024,7 @@ export function ProductManagerModal({
                     >
                       {editingProduct
                         ? t("tables.updateProduct")
-                        : t("tables.createProduct")}
+                        : t("common.comboValues.createProduct")}
                     </Button>
                   </div>
                 </form>
