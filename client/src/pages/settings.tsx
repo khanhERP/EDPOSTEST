@@ -2872,8 +2872,8 @@ export default function Settings() {
                                       }`}
                                     >
                                       {product.stock > 0
-                                        ? t("settings.inStock")
-                                        : t("settings.outOfStock")}
+                                        ? t("common.inStock")
+                                        : t("common.outOfStock")}
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-center">

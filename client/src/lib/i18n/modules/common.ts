@@ -447,6 +447,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     editSpendingThreshold: "멤버십 등급 기준 수정",
     saveSpendingThreshold: "멤버십 등급 기준 저장",
 
+    // Stock status
+    inStock: "재고 있음",
+    outOfStock: "품절",
+
     // Time periods
     days30: "30일",
     days60: "60일",
@@ -817,6 +821,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     // Spending thresholds
     editSpendingThreshold: "Edit Membership Thresholds",
     saveSpendingThreshold: "Save Membership Thresholds",
+
+    // Stock status
+    inStock: "In Stock",
+    outOfStock: "Out of Stock",
 
     // Time periods
     days30: "30 days",
@@ -1199,6 +1207,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     // Spending thresholds
     editSpendingThreshold: "Sửa mức chi tiêu nâng hạng",
     saveSpendingThreshold: "Lưu mức chi tiêu nâng hạng",
+
+    // Stock status
+    inStock: "Còn hàng",
+    outOfStock: "Hết hàng",
 
     // Product type
     productType: "Loại sản phẩm",
