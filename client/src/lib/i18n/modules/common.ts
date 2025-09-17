@@ -377,6 +377,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       priceIncludesTax: "가격에 세금 포함",
       createProduct: "상품 생성",
       taxPercentage: "세금 (%)",
+      backToSales: "판매로 돌아가기",
     },
 
     // Time periods
@@ -684,6 +685,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       priceIncludesTax: "Price includes tax",
       createProduct: "Create Product",
       taxPercentage: "Tax (%)",
+      backToSales: "Back to Sales",
     },
 
     // Time periods
@@ -996,6 +998,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       priceIncludesTax: "Giá đã bao gồm thuế",
       createProduct: "Tạo sản phẩm",
       taxPercentage: "Thuế (%)",
+      backToSales: "Quay lại Bán hàng",
     },
 
     // Product type
