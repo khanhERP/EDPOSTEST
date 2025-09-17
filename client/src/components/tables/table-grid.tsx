@@ -2162,7 +2162,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
         // Show success message
         toast({
-          title: "Thành công",
+          title: `${t("common.success")}`,
           description: paymentData.publishLater
             ? "Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau"
             : "Đơn hàng đã được thanh toán thành công",
