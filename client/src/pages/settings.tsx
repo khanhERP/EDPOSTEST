@@ -471,7 +471,7 @@ export default function Settings() {
     const newMethod = {
       id: paymentMethods.length + 1,
       name: t("common.comboValues.newPaymentMethod"),
-      nameKey: "newPaymentMethod", 
+      nameKey: "newPaymentMethod",
       type: "custom",
       enabled: false,
       icon: "💳",
@@ -2024,9 +2024,15 @@ export default function Settings() {
                                         >
                                           <div className="flex flex-col items-center gap-2">
                                             <SettingsIcon className="w-8 h-8 text-gray-400" />
-                                            <p>{t("common.comboValues.noTemplatesFound")}</p>
+                                            <p>
+                                              {t(
+                                                "common.comboValues.noTemplatesFound",
+                                              )}
+                                            </p>
                                             <p className="text-xs">
-                                              {t("common.comboValues.clickAddTemplateToStart")}
+                                              {t(
+                                                "common.comboValues.clickAddTemplateToStart",
+                                              )}
                                             </p>
                                           </div>
                                         </td>
@@ -2842,7 +2848,10 @@ export default function Settings() {
                                       variant="outline"
                                       className="text-xs max-w-full break-words whitespace-normal leading-tight"
                                     >
-                                      <span className="block max-w-[100px] truncate" title={category?.name || "N/A"}>
+                                      <span
+                                        className="block max-w-[100px] truncate"
+                                        title={category?.name || "N/A"}
+                                      >
                                         {category?.name || "N/A"}
                                       </span>
                                     </Badge>
@@ -3145,12 +3154,6 @@ export default function Settings() {
                         {t("employees.totalEmployees")}:{" "}
                         {employeesData ? employeesData.length : 0}
                       </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Clock className="w-4 h-4 mr-2" />
-                          {t("attendance.title")}
-                        </Button>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -3199,8 +3202,10 @@ export default function Settings() {
                             <div className="flex items-center gap-2">
                               <span className="text-2xl">{method.icon}</span>
                               <span className="font-medium">
-                          {method.nameKey ? t(`common.${method.nameKey}`) : method.name}
-                        </span>
+                                {method.nameKey
+                                  ? t(`common.${method.nameKey}`)
+                                  : method.name}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Switch
@@ -3290,7 +3295,9 @@ export default function Settings() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {editingCategory ? t("settings.editCategory") : t("settings.addCategory")}
+              {editingCategory
+                ? t("settings.editCategory")
+                : t("settings.addCategory")}
             </DialogTitle>
             <DialogDescription>
               {editingCategory
@@ -3637,7 +3644,9 @@ export default function Settings() {
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  {t("common.comboValues.confirmDeleteCategoryDesc", { name: categoryToDelete?.name })}
+                  {t("common.comboValues.confirmDeleteCategoryDesc", {
+                    name: categoryToDelete?.name,
+                  })}
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
@@ -3688,7 +3697,9 @@ export default function Settings() {
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  {t("common.comboValues.confirmDeleteCustomerDesc", { name: customerToDelete?.name })}
+                  {t("common.comboValues.confirmDeleteCustomerDesc", {
+                    name: customerToDelete?.name,
+                  })}
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
@@ -3742,13 +3753,15 @@ export default function Settings() {
                   {t("settings.confirmDeleteProductDesc")}{" "}
                   <span className="font-semibold text-gray-900">
                     "{productToDelete?.name}"
-                  </span>?
+                  </span>
+                  ?
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>{t("common.warning")}:</strong> {t("settings.deleteProductWarning")}
+                      <strong>{t("common.warning")}:</strong>{" "}
+                      {t("settings.deleteProductWarning")}
                     </p>
                   </div>
                 </div>
@@ -3793,18 +3806,22 @@ export default function Settings() {
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  Bạn có chắc chắn muốn xóa nhân viên "{employeeToDelete?.name}" không?
+                  Bạn có chắc chắn muốn xóa nhân viên "{employeeToDelete?.name}"
+                  không?
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. Thông tin nhân viên sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
+                      tác. Thông tin nhân viên sẽ bị xóa vĩnh viễn khỏi hệ
+                      thống.
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Điều này bao gồm lịch sử làm việc, chấm công và các quyền truy cập.
+                  Điều này bao gồm lịch sử làm việc, chấm công và các quyền truy
+                  cập.
                 </p>
               </div>
             </AlertDialogDescription>
@@ -4403,7 +4420,9 @@ export default function Settings() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {editingPaymentMethod ? t("common.edit") + " " + t("settings.paymentMethods") : t("settings.addPayment")}
+              {editingPaymentMethod
+                ? t("common.edit") + " " + t("settings.paymentMethods")
+                : t("settings.addPayment")}
             </DialogTitle>
             <DialogDescription>
               {editingPaymentMethod
