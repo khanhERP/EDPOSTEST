@@ -197,22 +197,27 @@ export const useTranslatedToast = () => {
   const { t } = useTranslation();
   
   return {
-    success: (message: string) => toast({
+    success: (messageKey?: string, fallbackMessage?: string) => toast({
       title: t("common.success"),
-      description: message,
+      description: messageKey ? t(messageKey as any) : fallbackMessage || "",
     }),
-    error: (message: string) => toast({
+    error: (messageKey?: string, fallbackMessage?: string) => toast({
       title: t("common.error"), 
-      description: message,
+      description: messageKey ? t(messageKey as any) : fallbackMessage || "",
       variant: "destructive",
     }),
-    warning: (message: string) => toast({
+    warning: (messageKey?: string, fallbackMessage?: string) => toast({
       title: t("common.warning"),
-      description: message,
+      description: messageKey ? t(messageKey as any) : fallbackMessage || "",
     }),
-    info: (message: string) => toast({
+    info: (messageKey?: string, fallbackMessage?: string) => toast({
       title: t("common.info"),
-      description: message,
+      description: messageKey ? t(messageKey as any) : fallbackMessage || "",
+    }),
+    // Convenience methods for common messages
+    invoiceSaved: () => toast({
+      title: t("common.success"),
+      description: `${t("common.invoiceSavedForLater")} ${t("common.displayingInvoiceForPrint")}`,
     })
   };
 };
