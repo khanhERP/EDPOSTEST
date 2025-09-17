@@ -884,11 +884,11 @@ export function PaymentMethodModal({
             if (updatedOrder.tableId) {
               try {
                 console.log(`🔄 Checking table status update for table ${updatedOrder.tableId} after ${method} payment`);
-                
+
                 // Check if there are any other unpaid orders on this table
                 const ordersResponse = await fetch('/api/orders');
                 const allOrders = await ordersResponse.json();
-                
+
                 const otherActiveOrders = Array.isArray(allOrders) 
                   ? allOrders.filter((o: any) => 
                       o.tableId === updatedOrder.tableId && 
@@ -909,7 +909,7 @@ export function PaymentMethodModal({
                 // If no other unpaid orders, update table to available
                 if (otherActiveOrders.length === 0) {
                   console.log(`🔄 Updating table ${updatedOrder.tableId} to available after ${method} payment`);
-                  
+
                   const tableUpdateResponse = await fetch(`/api/tables/${updatedOrder.tableId}/status`, {
                     method: "PUT",
                     headers: {
