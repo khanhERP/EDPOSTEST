@@ -397,16 +397,20 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       noEmployeesFound: "직원을 찾을 수 없습니다",
       employeeSearchPlaceholder: "이름, ID 또는 전화번호로 검색",
       cannotDeleteEmployee: "직원을 삭제할 수 없습니다",
-      employeeHasAttendance: "이 직원은 시스템에 출근 기록이 있습니다. 데이터 무결성을 위해 삭제할 수 없습니다.",
-      employeeHasOrders: "이 직원은 시스템에 주문이 있습니다. 데이터 무결성을 위해 삭제할 수 없습니다.",
+      employeeHasAttendance:
+        "이 직원은 시스템에 출근 기록이 있습니다. 데이터 무결성을 위해 삭제할 수 없습니다.",
+      employeeHasOrders:
+        "이 직원은 시스템에 주문이 있습니다. 데이터 무결성을 위해 삭제할 수 없습니다.",
       employeeDeletedSuccess: "직원이 성공적으로 삭제되었습니다",
       employeeDeleteError: "직원 삭제 중 오류가 발생했습니다",
       totalEmployees: "총 직원 수",
       updatePaymentSuccess: "결제 방법이 성공적으로 업데이트되었습니다",
       newPaymentMethod: "새 결제 방법",
-      cannotDeleteCategory: "이 카테고리에는 {count}개의 제품이 있어 삭제할 수 없습니다. 먼저 제품을 삭제하거나 다른 카테고리로 이동하세요.",
+      cannotDeleteCategory:
+        "이 카테고리에는 {count}개의 제품이 있어 삭제할 수 없습니다. 먼저 제품을 삭제하거나 다른 카테고리로 이동하세요.",
       confirmDeleteCategory: "이 카테고리를 삭제하시겠습니까?",
-      deleteWarning: "경고: 이 작업은 되돌릴 수 없습니다. 카테고리가 시스템에서 영구적으로 삭제됩니다.",
+      deleteWarning:
+        "경고: 이 작업은 되돌릴 수 없습니다. 카테고리가 시스템에서 영구적으로 삭제됩니다.",
       ensureNoProducts: "삭제하기 전에 이 카테고리에 제품이 없는지 확인하세요.",
       deleteCategory: "카테고리 삭제",
       categoryDeletedSuccess: "카테고리가 성공적으로 삭제되었습니다",
@@ -436,15 +440,19 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       categoryUpdateError: "카테고리 업데이트 중 오류가 발생했습니다",
       pinMinLength: "PIN 코드는 최소 4자리여야 합니다",
       confirmDeleteCustomerTitle: "고객 삭제 확인",
-      confirmDeleteCustomerDesc: "\"{name}\" 고객을 삭제하시겠습니까?",
-      deleteCustomerWarning: "경고: 이 작업은 되돌릴 수 없습니다. 모든 고객 데이터가 시스템에서 영구적으로 삭제됩니다.",
-      deleteCustomerDetails: "여기에는 구매 내역, 적립 포인트 및 개인 정보가 포함됩니다.",
+      confirmDeleteCustomerDesc: '"{name}" 고객을 삭제하시겠습니까?',
+      deleteCustomerWarning:
+        "경고: 이 작업은 되돌릴 수 없습니다. 모든 고객 데이터가 시스템에서 영구적으로 삭제됩니다.",
+      deleteCustomerDetails:
+        "여기에는 구매 내역, 적립 포인트 및 개인 정보가 포함됩니다.",
       cancelAction: "취소",
       deleteCustomerAction: "고객 삭제",
       confirmDeleteCategoryTitle: "카테고리 삭제 확인",
       confirmDeleteCategoryDesc: "카테고리 '{name}'을(를) 삭제하시겠습니까?",
-      deleteCategoryWarning: "경고: 이 작업은 되돌릴 수 없습니다. 카테고리가 시스템에서 영구적으로 삭제됩니다.",
-      deleteCategoryDetails: "삭제하기 전에 이 카테고리에 제품이 없는지 확인하세요.",
+      deleteCategoryWarning:
+        "경고: 이 작업은 되돌릴 수 없습니다. 카테고리가 시스템에서 영구적으로 삭제됩니다.",
+      deleteCategoryDetails:
+        "삭제하기 전에 이 카테고리에 제품이 없는지 확인하세요.",
       deleteCategoryAction: "카테고리 삭제",
     },
 
@@ -459,6 +467,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     // Time periods
     days30: "30일",
     days60: "60일",
+    newPayment: "새 결제 방법",
     days90: "90일",
     days180: "180일",
     days365: "365일",
@@ -481,6 +490,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     cancel: "Cancel",
     delete: "Delete",
     edit: "Edit",
+    newPayment: "New Payment Method",
     add: "Add",
     restaurant: "Restaurant",
     remotemanagerproduct:
@@ -612,15 +622,21 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     clickAddTemplateToStart: "Click 'Add Template' to start",
     pleaseEnterRequired: "Please enter required information",
     confirmDeleteCustomerTitle: "Confirm Customer Deletion",
-    confirmDeleteCustomerDesc: "Are you sure you want to delete customer '{name}'?",
-    deleteCustomerWarning: "Warning: This action cannot be undone. Customer data will be permanently deleted.",
-    deleteCustomerDetails: "This includes purchase history, loyalty points and personal information.",
+    confirmDeleteCustomerDesc:
+      "Are you sure you want to delete customer '{name}'?",
+    deleteCustomerWarning:
+      "Warning: This action cannot be undone. Customer data will be permanently deleted.",
+    deleteCustomerDetails:
+      "This includes purchase history, loyalty points and personal information.",
     cancelAction: "Cancel",
     deleteCustomerAction: "Delete Customer",
     confirmDeleteCategoryTitle: "Confirm Category Deletion",
-    confirmDeleteCategoryDesc: "Are you sure you want to delete category '{name}'?",
-    deleteCategoryWarning: "Warning: This action cannot be undone. The category will be permanently deleted from the system.",
-    deleteCategoryDetails: "Please ensure there are no products in this category before deletion.",
+    confirmDeleteCategoryDesc:
+      "Are you sure you want to delete category '{name}'?",
+    deleteCategoryWarning:
+      "Warning: This action cannot be undone. The category will be permanently deleted from the system.",
+    deleteCategoryDetails:
+      "Please ensure there are no products in this category before deletion.",
     deleteCategoryAction: "Delete Category",
     templateUsage: "Template Usage",
     templateDefault: "Default Template",
@@ -630,9 +646,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     clickAddTemplateToStart: "Click 'Add Template' to start",
     pleaseEnterRequired: "Please enter required information",
     confirmDeleteCustomerTitle: "Confirm Customer Deletion",
-    confirmDeleteCustomerDesc: "Are you sure you want to delete customer '{name}'?",
-    deleteCustomerWarning: "Warning: This action cannot be undone. Customer data will be permanently deleted.",
-    deleteCustomerDetails: "This includes purchase history, loyalty points and personal information.",
+    confirmDeleteCustomerDesc:
+      "Are you sure you want to delete customer '{name}'?",
+    deleteCustomerWarning:
+      "Warning: This action cannot be undone. Customer data will be permanently deleted.",
+    deleteCustomerDetails:
+      "This includes purchase history, loyalty points and personal information.",
     cancelAction: "Cancel",
     deleteCustomerAction: "Delete Customer",
     invoiceErrorIssuedDelete:
@@ -786,7 +805,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       backToSales: "Back to Sales",
       printerConfiguration: "Printer Configuration",
       printerManagement: "Printer Management",
-      printerDescription: "Set up and manage printers connected to the POS system",
+      printerDescription:
+        "Set up and manage printers connected to the POS system",
       configurePrinter: "Configure Printer",
       addConnection: "Add Connection",
       addTemplate: "Add Template",
@@ -802,17 +822,22 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       noEmployeesFound: "No employees found",
       employeeSearchPlaceholder: "Search by name, ID, or phone",
       cannotDeleteEmployee: "Cannot delete employee",
-      employeeHasAttendance: "This employee has attendance records in the system. Cannot delete to maintain data integrity.",
-      employeeHasOrders: "This employee has orders in the system. Cannot delete to maintain data integrity.",
+      employeeHasAttendance:
+        "This employee has attendance records in the system. Cannot delete to maintain data integrity.",
+      employeeHasOrders:
+        "This employee has orders in the system. Cannot delete to maintain data integrity.",
       employeeDeletedSuccess: "Employee deleted successfully",
       employeeDeleteError: "Error occurred while deleting employee",
       totalEmployees: "Total employees",
       updatePaymentSuccess: "Payment method updated successfully",
       newPaymentMethod: "New Payment Method",
-      cannotDeleteCategory: "Cannot delete this category because it has {count} products. Please delete or move the products to another category first.",
+      cannotDeleteCategory:
+        "Cannot delete this category because it has {count} products. Please delete or move the products to another category first.",
       confirmDeleteCategory: "Do you want to delete this category?",
-      deleteCategoryWarning: "Warning: This action cannot be undone. The category will be permanently deleted from the system.",
-      deleteCategoryDetails: "Please ensure there are no products in this category before deletion.",
+      deleteCategoryWarning:
+        "Warning: This action cannot be undone. The category will be permanently deleted from the system.",
+      deleteCategoryDetails:
+        "Please ensure there are no products in this category before deletion.",
       deleteCategoryAction: "Delete Category",
     },
 
@@ -851,6 +876,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     edit: "Chỉnh sửa",
     add: "Thêm",
     restaurant: "Nhà hàng",
+    newPayment: "Phương thức thanh toán mới",
     search: "Tìm kiếm",
     filter: "Lọc",
     export: "Xuất",
@@ -1141,7 +1167,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       backToSales: "Quay lại Bán hàng",
       printerConfiguration: "Cấu hình máy in",
       printerManagement: "Quản lý máy in",
-      printerDescription: "Thiết lập và quản lý máy in kết nối với hệ thống POS",
+      printerDescription:
+        "Thiết lập và quản lý máy in kết nối với hệ thống POS",
       configurePrinter: "Cấu hình máy in",
       addConnection: "Thêm kết nối",
       addTemplate: "Thêm mẫu số",
@@ -1157,17 +1184,23 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       noEmployeesFound: "Không tìm thấy nhân viên nào phù hợp",
       employeeSearchPlaceholder: "Tìm kiếm theo tên, ID hoặc số điện thoại",
       cannotDeleteEmployee: "Không thể xóa nhân viên",
-      employeeHasAttendance: "Nhân viên này đã có dữ liệu chấm công trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
-      employeeHasOrders: "Nhân viên này đã có đơn hàng trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
+      employeeHasAttendance:
+        "Nhân viên này đã có dữ liệu chấm công trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
+      employeeHasOrders:
+        "Nhân viên này đã có đơn hàng trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
       employeeDeletedSuccess: "Nhân viên đã được xóa thành công",
       employeeDeleteError: "Có lỗi xảy ra khi xóa nhân viên",
       totalEmployees: "Tổng số nhân viên",
-      updatePaymentSuccess: "Phương thức thanh toán đã được cập nhật thành công",
+      updatePaymentSuccess:
+        "Phương thức thanh toán đã được cập nhật thành công",
       newPaymentMethod: "Phương thức thanh toán mới",
-      cannotDeleteCategory: "Không thể xóa danh mục này vì còn {count} sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.",
+      cannotDeleteCategory:
+        "Không thể xóa danh mục này vì còn {count} sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.",
       confirmDeleteCategory: "Bạn có chắc chắn muốn xóa danh mục này không?",
-      deleteCategoryWarning: "Cảnh báo: Hành động này không thể hoàn tác. Danh mục sẽ bị xóa vĩnh viễn khỏi hệ thống.",
-      deleteCategoryDetails: "Hãy đảm bảo rằng không còn sản phẩm nào trong danh mục này trước khi xóa.",
+      deleteCategoryWarning:
+        "Cảnh báo: Hành động này không thể hoàn tác. Danh mục sẽ bị xóa vĩnh viễn khỏi hệ thống.",
+      deleteCategoryDetails:
+        "Hãy đảm bảo rằng không còn sản phẩm nào trong danh mục này trước khi xóa.",
       deleteCategoryAction: "Xóa danh mục",
     },
 
