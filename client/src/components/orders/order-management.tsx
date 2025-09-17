@@ -2517,7 +2517,7 @@ export function OrderManagement() {
                           receiptDiscount: receiptPreview.discount,
                           receiptExactDiscount: receiptPreview.exactDiscount,
                           orderTotal: paymentOrderData.total,
-                          orderExactTotal: paymentOrderData.exactTotal,
+                          orderExactTotal: paymentData.exactTotal,
                           orderId: paymentOrderData.id
                         });
 
@@ -2554,7 +2554,7 @@ export function OrderManagement() {
                       className="flex-1 bg-blue-600 hover:bg-blue-700"
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
-                      {t('customers.pointManagement')}
+                      {t('orders.pointsPaymentTitle')}
                     </Button>
                   </div>
                 )}
