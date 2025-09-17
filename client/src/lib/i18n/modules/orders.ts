@@ -308,6 +308,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     pointsPaymentDesc: "Chọn khách hàng và số điểm để thanh toán đơn hàng",
     searchCustomers: "Tìm kiếm khách hàng",
     availablePoints: "Điểm có sẵn",
+    searchCustomerPlaceholder: "Tìm theo tên, số điện thoại hoặc mã khách hàng...",
     mixedPaymentTitle: "Thanh toán hỗn hợp",
     mixedPaymentButton: "Thanh toán hỗn hợp",
     mixedPaymentCancel: "Hủy thanh toán hỗn hợp",
