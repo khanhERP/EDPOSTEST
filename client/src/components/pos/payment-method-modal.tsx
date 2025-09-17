@@ -2177,8 +2177,8 @@ export function PaymentMethodModal({
                                 const changeAmount =
                                   receivedAmount - orderTotal;
                                 return changeAmount >= 0
-                                  ? "Tiền thối:"
-                                  : "Còn thiếu:";
+                                  ? t("pos.change") + ":"
+                                  : t("common.amountShortfall") + ":";
                               })()}
                             </span>
                             <span
