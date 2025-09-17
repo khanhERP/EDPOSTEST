@@ -87,7 +87,6 @@ const EINVOICE_PROVIDERS = [
   { name: "EHoaDon", value: "5" },
   { name: "BkavInvoice", value: "6" },
   { name: "MInvoice", value: "7" },
-  { name: "SInvoice", value: "8" },
   { name: "WinInvoice", value: "9" },
 ];
 
@@ -3684,45 +3683,32 @@ export default function Settings() {
       >
         <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-              <Trash2 className="w-5 h-5" />
-              {t("common.confirmDeleteCustomerTitle")}
+            <AlertDialogTitle>
+              Xác nhận xóa khách hàng
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-left">
-              <div className="space-y-3">
-                <p>
-                  {t("common.confirmDeleteCustomerDesc", { name: customerToDelete?.name })}
-                </p>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm text-red-700">
-                      {t("common.deleteCustomerWarning")}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {t("common.deleteCustomerDetails")}
-                </p>
-              </div>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa khách hàng "{customerToDelete?.name}" không?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel
-              onClick={() => {
-                setShowCustomerDeleteDialog(false);
-                setCustomerToDelete(null);
-              }}
-              className="hover:bg-gray-100"
-            >
-              {t("common.cancelAction")}
+          <div className="py-4">
+            <p className="text-sm text-red-600 mb-2">
+              Cảnh báo: Hành động này không thể hoàn tác. Tất cả dữ liệu của khách
+              hàng sẽ bị xóa vĩnh viễn khỏi hệ thống.
+            </p>
+            <p className="text-sm text-gray-600">
+              Điều này bao gồm lịch sử mua hàng, điểm tích lũy và thông tin cá
+              nhân.
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Hủy bỏ
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteCustomer}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-red-600 hover:bg-red-700"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              {t("common.deleteCustomerAction")}
+              Xóa khách hàng
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
