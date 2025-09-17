@@ -3006,13 +3006,13 @@ export default function Settings() {
                         <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                         <p className="text-gray-500">
                           {employeeSearchTerm
-                            ? "Không tìm thấy nhân viên nào phù hợp"
-                            : "Chưa có nhân viên nào được đăng ký"}
+                            ? t("employees.noEmployeesFound")
+                            : t("employees.noEmployeesRegistered")}
                         </p>
                         <p className="text-sm text-gray-400 mt-2">
                           {employeeSearchTerm
-                            ? "Thử tìm kiếm với từ khóa khác"
-                            : "Thêm nhân viên đầu tiên để bắt đầu"}
+                            ? t("employees.noEmployeesFoundDesc")
+                            : t("employees.noEmployeesRegisteredDesc")}
                         </p>
                       </div>
                     ) : (
@@ -3142,7 +3142,7 @@ export default function Settings() {
 
                     <div className="flex justify-between items-center mt-6">
                       <div className="text-sm text-gray-600">
-                        Tổng số nhân viên:{" "}
+                        {t("employees.totalEmployees")}:{" "}
                         {employeesData ? employeesData.length : 0}
                       </div>
                       <div className="flex gap-2">
