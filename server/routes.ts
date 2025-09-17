@@ -801,14 +801,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status,
         salesChannel,
         page = "1",
-        limit = "20",
+        limit,
         sortBy = "orderedAt",
         sortOrder = "desc",
       } = req.query;
 
       const pageNum = parseInt(page as string);
-      const limitNum = parseInt(limit as string);
-      const offset = (pageNum - 1) * limitNum;
+      const limitNum = limit ? parseInt(limit as string) : null;
+      const offset = limitNum ? (pageNum - 1) * limitNum : 0;
 
       console.log("🔍 GET /api/orders/list - Filter params:", {
         startDate,
@@ -872,7 +872,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
 
       const totalCount = totalCountResult?.count || 0;
-      const totalPages = Math.ceil(totalCount / limitNum);
+      const totalPages = limitNum ? Math.ceil(totalCount / limitNum) : 1;
 
       // Get paginated orders
       const orderBy =
@@ -880,7 +880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ? asc(orders[sortBy as keyof typeof orders] || orders.orderedAt)
           : desc(orders[sortBy as keyof typeof orders] || orders.orderedAt);
 
-      const ordersResult = await database
+      let ordersQuery = database
         .select({
           id: orders.id,
           orderNumber: orders.orderNumber,
@@ -905,12 +905,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(orders)
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-        .orderBy(orderBy)
-        .limit(limitNum)
-        .offset(offset);
+        .orderBy(orderBy);
+
+      // Apply pagination only if limit is specified
+      if (limitNum) {
+        ordersQuery = ordersQuery.limit(limitNum).offset(offset);
+      }
+
+      const ordersResult = await ordersQuery;
 
       console.log(
-        `✅ Orders list API - Found ${ordersResult.length} orders (page ${pageNum}/${totalPages})`,
+        `✅ Orders list API - Found ${ordersResult.length} orders${limitNum ? ` (page ${pageNum}/${totalPages})` : ' (all orders)'}`,
       );
 
       res.json({
@@ -920,7 +925,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalPages,
           totalCount,
           limit: limitNum,
-          hasNext: pageNum < totalPages,
+          hasNext: limitNum ? pageNum < totalPages : false,
           hasPrev: pageNum > 1,
         },
       });
