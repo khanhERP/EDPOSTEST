@@ -287,9 +287,9 @@ export function CustomerFormModal({ isOpen, onClose, customer }: CustomerFormMod
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Silver">Silver</SelectItem>
-                        <SelectItem value="Gold">Gold</SelectItem>
-                        <SelectItem value="VIP">VIP</SelectItem>
+                        <SelectItem value="Silver">{t('customers.silver')}</SelectItem>
+                        <SelectItem value="Gold">{t('customers.gold')}</SelectItem>
+                        <SelectItem value="VIP">{t('customers.vip')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
