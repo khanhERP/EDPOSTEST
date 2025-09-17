@@ -828,12 +828,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Build where conditions
       const whereConditions = [];
 
-      // Date range filter
+      // Date range filter - support yyyyMMdd format
       if (startDate && endDate) {
-        const start = new Date(startDate as string);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(endDate as string);
-        end.setHours(23, 59, 59, 999);
+        let start: Date;
+        let end: Date;
+        
+        // Check if date is in yyyyMMdd format (8 digits)
+        if (typeof startDate === 'string' && startDate.length === 8 && /^\d{8}$/.test(startDate)) {
+          // Parse yyyyMMdd format
+          const year = parseInt(startDate.substring(0, 4));
+          const month = parseInt(startDate.substring(4, 6)) - 1; // Month is 0-indexed
+          const day = parseInt(startDate.substring(6, 8));
+          start = new Date(year, month, day, 0, 0, 0, 0);
+        } else {
+          // Parse standard date format
+          start = new Date(startDate as string);
+          start.setHours(0, 0, 0, 0);
+        }
+        
+        if (typeof endDate === 'string' && endDate.length === 8 && /^\d{8}$/.test(endDate)) {
+          // Parse yyyyMMdd format
+          const year = parseInt(endDate.substring(0, 4));
+          const month = parseInt(endDate.substring(4, 6)) - 1; // Month is 0-indexed
+          const day = parseInt(endDate.substring(6, 8));
+          end = new Date(year, month, day, 23, 59, 59, 999);
+        } else {
+          // Parse standard date format
+          end = new Date(endDate as string);
+          end.setHours(23, 59, 59, 999);
+        }
 
         whereConditions.push(
           gte(orders.orderedAt, start),
