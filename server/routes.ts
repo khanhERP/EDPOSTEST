@@ -943,6 +943,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               orderId: item.order_items.orderId,
               productId: item.order_items.productId,
               quantity: item.order_items.quantity,
+              unit: item.order_items.unit || item.products?.unit || "cái", // ĐVT từ order_items hoặc products
               unitPrice: item.order_items.unitPrice,
               total: item.order_items.total,
               discount: item.order_items.discount || "0.00",
