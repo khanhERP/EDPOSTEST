@@ -2823,7 +2823,7 @@ export default function Settings() {
                                 >
                                   <td className="px-4 py-3">
                                     <div
-                                      className="font-medium truncate"
+                                      className="font-medium max-w-[200px] truncate"
                                       title={product.name}
                                     >
                                       {product.name}
@@ -2840,9 +2840,11 @@ export default function Settings() {
                                   <td className="px-4 py-3">
                                     <Badge
                                       variant="outline"
-                                      className="text-xs truncate"
+                                      className="text-xs max-w-full break-words whitespace-normal leading-tight"
                                     >
-                                      {category?.name || "N/A"}
+                                      <span className="block max-w-[100px] truncate" title={category?.name || "N/A"}>
+                                        {category?.name || "N/A"}
+                                      </span>
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-right">
