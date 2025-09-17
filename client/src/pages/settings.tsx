@@ -4402,15 +4402,19 @@ export default function Settings() {
       >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa phương thức thanh toán</DialogTitle>
+            <DialogTitle>
+              {editingPaymentMethod ? t("common.edit") + " " + t("settings.paymentMethods") : t("settings.addPayment")}
+            </DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin của phương thức thanh toán
+              {editingPaymentMethod
+                ? t("common.update") + " " + t("settings.paymentMethods")
+                : t("settings.addPayment")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="paymentMethodName" className="text-right">
-                Tên phương thức
+                {t("common.name")}
               </Label>
               <Input
                 id="paymentMethodName"
@@ -4422,12 +4426,12 @@ export default function Settings() {
                   }))
                 }
                 className="col-span-3"
-                placeholder="Nhập tên phương thức thanh toán"
+                placeholder={t("common.name")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="paymentMethodIcon" className="text-right">
-                Biểu tượng
+                {t("common.icon")}
               </Label>
               <Input
                 id="paymentMethodIcon"
@@ -4439,7 +4443,7 @@ export default function Settings() {
                   }))
                 }
                 className="col-span-3"
-                placeholder="Nhập emoji biểu tượng"
+                placeholder="💳"
               />
             </div>
           </div>
@@ -4451,13 +4455,13 @@ export default function Settings() {
                 resetPaymentMethodForm();
               }}
             >
-              Hủy bỏ
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleUpdatePaymentMethod}
               className="bg-green-600 hover:bg-green-700"
             >
-              Cập nhật
+              {t("common.update")}
             </Button>
           </DialogFooter>
         </DialogContent>
