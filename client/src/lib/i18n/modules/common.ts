@@ -281,7 +281,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     usageStatus: "사용 상태:",
 
     // E-invoice status
-    einvoiceStatusLabel: "전자세C��계산서 상태:",
+    einvoiceStatusLabel: "전자세C계산서 상태:",
     invoiceStatusLabel: "송장 상태:",
     einvoiceStatus: {
       notPublished: "발행되지 않음",
@@ -334,10 +334,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       snack: "간식",
       dessert: "디저트",
 
-      // Sales types
-      pos: "카운터 판매",
-      counter: "카운터 판매",
-
       // Table status
       occupied: "사용 중",
       reserved: "예약됨",
@@ -363,13 +359,17 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       chef: "요리사",
       cleaner: "청소원",
 
+      // Time periods
+      days30: "30일",
+      days60: "60일",
+      days90: "90일",
+      days180: "180일",
+      days365: "365일",
+
       // Sales channels
       pos: "카운터 판매",
       online: "온라인 판매",
       delivery: "배송",
-
-      // Payment notes
-      posPaymentNote: "POS 현금 결제 - 금액: {amount}, 거스름돈: {change}",
 
       // Product pricing
       afterTaxPrice: "세후 가격",
@@ -434,6 +434,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       categoryUpdatedSuccess: "카테고리가 성공적으로 업데이트되었습니다",
       categoryUpdateError: "카테고리 업데이트 중 오류가 발생했습니다",
       pinMinLength: "PIN 코드는 최소 4자리여야 합니다",
+      confirmDeleteCustomerTitle: "고객 삭제 확인",
+      confirmDeleteCustomerDesc: "\"{name}\" 고객을 삭제하시겠습니까?",
+      deleteCustomerWarning: "경고: 이 작업은 되돌릴 수 없습니다. 모든 고객 데이터가 시스템에서 영구적으로 삭제됩니다.",
+      deleteCustomerDetails: "여기에는 구매 내역, 적립 포인트 및 개인 정보가 포함됩니다.",
+      cancelAction: "취소",
+      deleteCustomerAction: "고객 삭제",
     },
 
     // Time periods
@@ -731,11 +737,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       chef: "Chef",
       cleaner: "Cleaner",
 
-      // Sales channels
-      pos: "Counter Sales",
-      online: "Online Sales",
-      delivery: "Delivery",
-
       // Product pricing
       afterTaxPrice: "After Tax Price",
       pricePlaceholder: "4000",
@@ -799,6 +800,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       categoryUpdatedSuccess: "Category updated successfully",
       categoryUpdateError: "Error occurred while updating category",
       pinMinLength: "PIN code should be at least 4 digits",
+      confirmDeleteCustomerTitle: "Confirm Customer Deletion",
+      confirmDeleteCustomerDesc: "Are you sure you want to delete customer \"{name}\"?",
+      deleteCustomerWarning: "Warning: This action cannot be undone. All customer data will be permanently deleted from the system.",
+      deleteCustomerDetails: "This includes purchase history, loyalty points, and personal information.",
+      cancelAction: "Cancel",
+      deleteCustomerAction: "Delete Customer",
     },
 
     // Time periods
@@ -1170,6 +1177,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       categoryUpdatedSuccess: "Danh mục đã được cập nhật thành công",
       categoryUpdateError: "Có lỗi xảy ra khi cập nhật danh mục",
       pinMinLength: "Mã PIN nên có ít nhất 4 chữ số",
+      confirmDeleteCustomerTitle: "Xác nhận xóa khách hàng",
+      confirmDeleteCustomerDesc: "Bạn có chắc chắn muốn xóa khách hàng \"{name}\" không?",
+      deleteCustomerWarning: "Cảnh báo: Hành động này không thể hoàn tác. Tất cả dữ liệu của khách hàng sẽ bị xóa vĩnh viễn khỏi hệ thống.",
+      deleteCustomerDetails: "Điều này bao gồm lịch sử mua hàng, điểm tích lũy và thông tin cá nhân.",
+      cancelAction: "Hủy bỏ",
+      deleteCustomerAction: "Xóa khách hàng",
     },
 
     // Product type

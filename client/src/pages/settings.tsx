@@ -3686,30 +3686,23 @@ export default function Settings() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              Xác nhận xóa khách hàng
+              {t("common.confirmDeleteCustomerTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  Bạn có chắc chắn muốn xóa khách hàng{" "}
-                  <span className="font-semibold text-gray-900">
-                    "{customerToDelete?.name}"
-                  </span>{" "}
-                  không?
+                  {t("common.confirmDeleteCustomerDesc", { name: customerToDelete?.name })}
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
-                      tác. Tất cả dữ liệu của khách hàng sẽ bị xóa vĩnh viễn
-                      khỏi hệ thống.
+                      {t("common.deleteCustomerWarning")}
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Điều này bao gồm lịch sử mua hàng, điểm tích lũy và thông tin
-                  cá nhân.
+                  {t("common.deleteCustomerDetails")}
                 </p>
               </div>
             </AlertDialogDescription>
@@ -3722,14 +3715,14 @@ export default function Settings() {
               }}
               className="hover:bg-gray-100"
             >
-              Hủy bỏ
+              {t("common.cancelAction")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteCustomer}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Xóa khách hàng
+              {t("common.deleteCustomerAction")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
