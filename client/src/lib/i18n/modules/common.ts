@@ -443,6 +443,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       deleteCustomerAction: "고객 삭제",
     },
 
+    // Spending thresholds
+    editSpendingThreshold: "멤버십 등급 기준 수정",
+    saveSpendingThreshold: "멤버십 등급 기준 저장",
+    },
+
     // Time periods
     days30: "30일",
     days60: "60일",
@@ -808,6 +813,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       deleteCustomerDetails: "This includes purchase history, loyalty points, and personal information.",
       cancelAction: "Cancel",
       deleteCustomerAction: "Delete Customer",
+    },
+
+    // Spending thresholds
+    editSpendingThreshold: "Edit Membership Thresholds",
+    saveSpendingThreshold: "Save Membership Thresholds",
     },
 
     // Time periods
@@ -1186,6 +1196,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       deleteCustomerDetails: "Điều này bao gồm lịch sử mua hàng, điểm tích lũy và thông tin cá nhân.",
       cancelAction: "Hủy bỏ",
       deleteCustomerAction: "Xóa khách hàng",
+    },
+
+    // Spending thresholds
+    editSpendingThreshold: "Sửa mức chi tiêu nâng hạng",
+    saveSpendingThreshold: "Lưu mức chi tiêu nâng hạng",
     },
 
     // Product type

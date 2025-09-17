@@ -291,7 +291,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                       size="sm"
                     >
                       <X className="w-4 h-4 mr-2" />
-                      Hủy
+                      {t("common.cancel")}
                     </Button>
                   </>
                 ) : (
