@@ -1005,7 +1005,7 @@ export function ProductManagerModal({
                           </FormControl>
                           <div className="space-y-1 leading-none">
                             <FormLabel>
-                              Giá đã bao gồm thuế
+                              {t("common.comboValues.priceIncludesTax")}
                             </FormLabel>
                           </div>
                         </FormItem>

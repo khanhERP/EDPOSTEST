@@ -372,6 +372,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       // Product pricing
       afterTaxPrice: "세후 가격",
       pricePlaceholder: "4000",
+      priceIncludesTax: "가격에 세금 포함",
     },
 
     // Time periods
@@ -672,6 +673,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       // Product pricing
       afterTaxPrice: "After Tax Price",
       pricePlaceholder: "4000",
+      priceIncludesTax: "Price includes tax",
     },
 
     // Time periods
@@ -975,6 +977,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       // Product pricing
       afterTaxPrice: "Giá sau thuế",
       pricePlaceholder: "4000",
+      priceIncludesTax: "Giá đã bao gồm thuế",
     },
 
     // Product type
