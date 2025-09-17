@@ -2905,7 +2905,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     {/* Table Number */}
                     <div className="relative">
                       <div
-                        className={`w-16 h-16 rounded-full ${statusConfig.color} flex items-center justify-center text-white font-bold shadow-lg border-2 border-white`}
+                        className={`w-16 h-16 rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white`}
                         style={{
                           fontSize:
                             table.tableNumber.length > 8
@@ -2913,6 +2913,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               : table.tableNumber.length > 5
                                 ? "0.8rem"
                                 : "0.95rem",
+                          backgroundColor: table.status === "available" 
+                            ? "#dcfce7" 
+                            : table.status === "occupied" 
+                            ? "#fecaca" 
+                            : table.status === "reserved"
+                            ? "#fef3c7"
+                            : "#f3f4f6",
+                          color: table.status === "available"
+                            ? "#166534"
+                            : table.status === "occupied"
+                            ? "#dc2626"
+                            : table.status === "reserved"
+                            ? "#d97706"
+                            : "#6b7280"
                         }}
                       >
                         <span className="text-center leading-none break-words px-1">
