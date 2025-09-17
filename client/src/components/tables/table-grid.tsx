@@ -3265,7 +3265,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   parseFloat(selectedOrder.discount) > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">
-                        {t("orders.discount")}:
+                        {t("common.discount")}:
                       </span>
                       <span className="font-medium text-red-600">
                         -
