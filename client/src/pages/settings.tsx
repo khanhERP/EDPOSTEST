@@ -3286,11 +3286,11 @@ export default function Settings() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {editingCategory ? "Sửa danh mục" : t("settings.addCategory")}
+              {editingCategory ? t("settings.editCategory") : t("settings.addCategory")}
             </DialogTitle>
             <DialogDescription>
               {editingCategory
-                ? "Cập nhật thông tin danh mục sản phẩm"
+                ? t("settings.updateProductInfo")
                 : t("settings.categoryManagementDesc")}
             </DialogDescription>
           </DialogHeader>
@@ -3353,7 +3353,7 @@ export default function Settings() {
               }
               className="bg-green-600 hover:bg-green-700"
             >
-              {editingCategory ? "Cập nhật" : t("common.create")}
+              {editingCategory ? t("common.update") : t("common.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
