@@ -3198,7 +3198,9 @@ export default function Settings() {
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <span className="text-2xl">{method.icon}</span>
-                              <span className="font-medium">{method.name}</span>
+                              <span className="font-medium">
+                          {method.nameKey ? t(`common.${method.nameKey}`) : method.name}
+                        </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Switch
