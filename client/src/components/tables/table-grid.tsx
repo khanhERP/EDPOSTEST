@@ -2909,10 +2909,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         style={{
                           fontSize:
                             table.tableNumber.length > 8
-                              ? "0.6rem"
+                              ? "0.7rem"
                               : table.tableNumber.length > 5
-                                ? "0.75rem"
-                                : "0.875rem",
+                                ? "0.875rem"
+                                : "1rem",
                         }}
                       >
                         <span className="text-center leading-tight break-all">
