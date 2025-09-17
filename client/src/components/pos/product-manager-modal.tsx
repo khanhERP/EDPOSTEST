@@ -749,7 +749,7 @@ export function ProductManagerModal({
                             <Input
                               {...field}
                               type="text"
-                              placeholder="4000"
+                              placeholder={t("common.comboValues.pricePlaceholder")}
                               onChange={(e) => {
                                 const value = e.target.value;
                                 // Only allow numbers
