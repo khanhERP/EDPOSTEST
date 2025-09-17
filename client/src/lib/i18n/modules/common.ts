@@ -22,6 +22,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     yes: "예",
     no: "아니오",
     success: "성공",
+    restaurant: "식당",
     error: "오류",
     warning: "경고",
     info: "정보",
@@ -467,6 +468,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     delete: "Delete",
     edit: "Edit",
     add: "Add",
+    restaurant: "Restaurant",
     remotemanagerproduct:
       "Are you sure you want to delete all inactive products from the database? This action cannot be undone.",
     search: "Search",
@@ -833,6 +835,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     delete: "Xóa",
     edit: "Chỉnh sửa",
     add: "Thêm",
+    restaurant: "Nhà hàng",
     search: "Tìm kiếm",
     filter: "Lọc",
     export: "Xuất",
