@@ -470,7 +470,7 @@ export default function Settings() {
   const addPaymentMethod = () => {
     const newMethod = {
       id: paymentMethods.length + 1,
-      name: "Phương thức thanh toán mới",
+      name: t("common.comboValues.newPaymentMethod"),
       nameKey: "newPayment",
       type: "custom",
       enabled: false,
