@@ -1314,7 +1314,7 @@ export function ShoppingCart({
 
                         return itemDiscountAmount > 0 ? (
                           <p className="text-xs text-red-600">
-                            Giảm giá: -
+                            {t('common.discount')}: -
                             {Math.floor(itemDiscountAmount).toLocaleString(
                               "vi-VN",
                             )}{" "}
