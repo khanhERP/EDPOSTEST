@@ -975,9 +975,40 @@ export function ReceiptModal({
                           {Math.floor(actualUnitPrice).toLocaleString("vi-VN")}{" "}
                           ₫
                         </div>
-                        {/* Display individual item discount from database */}
+                        {/* Display individual item discount from database or calculated */}
                         {(() => {
-                          const itemDiscount = Math.floor(parseFloat(item.discount || "0"));
+                          // First try to get discount from database (stored discount)
+                          let itemDiscount = Math.floor(parseFloat(item.discount || "0"));
+                          
+                          // If no stored discount but order has discount, calculate proportional discount
+                          if (itemDiscount === 0 && orderDiscount > 0) {
+                            const isLastItem = index === items.length - 1;
+                            
+                            if (isLastItem) {
+                              // Last item gets remaining discount
+                              let previousDiscounts = 0;
+                              const totalBeforeDiscount = items.reduce((sum, itm) => {
+                                return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
+                              }, 0);
+
+                              for (let i = 0; i < items.length - 1; i++) {
+                                const prevItemSubtotal = parseFloat(items[i].unitPrice || items[i].price || "0") * (items[i].quantity || 1);
+                                const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                                  Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                                previousDiscounts += prevItemDiscount;
+                              }
+                              itemDiscount = Math.max(0, orderDiscount - previousDiscounts);
+                            } else {
+                              // Regular calculation for non-last items
+                              const itemSubtotal = actualUnitPrice * quantity;
+                              const totalBeforeDiscount = items.reduce((sum, itm) => {
+                                return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
+                              }, 0);
+                              itemDiscount = totalBeforeDiscount > 0 ? 
+                                Math.floor((orderDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
+                            }
+                          }
+                          
                           return itemDiscount > 0 ? (
                             <div className="text-xs text-red-600">
                               {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
@@ -1188,9 +1219,46 @@ export function ReceiptModal({
                           ).toLocaleString("vi-VN")}{" "}
                           ₫
                         </div>
-                        {/* Display individual item discount from database for preview */}
+                        {/* Display individual item discount for preview mode */}
                         {(() => {
-                          const itemDiscount = Math.floor(parseFloat(item.discount || "0"));
+                          // First try to get discount from item data
+                          let itemDiscount = Math.floor(parseFloat(item.discount || "0"));
+                          
+                          // If no stored discount but order has discount, calculate proportional discount
+                          if (itemDiscount === 0 && finalDiscount > 0) {
+                            const isLastItem = index === cartItems.length - 1;
+                            
+                            if (isLastItem) {
+                              // Last item gets remaining discount
+                              let previousDiscounts = 0;
+                              const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
+                                const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
+                                return sum + (price * itm.quantity);
+                              }, 0);
+
+                              for (let i = 0; i < cartItems.length - 1; i++) {
+                                const prevItemPrice = typeof cartItems[i].price === "string" 
+                                  ? parseFloat(cartItems[i].price) 
+                                  : cartItems[i].price;
+                                const prevItemSubtotal = prevItemPrice * cartItems[i].quantity;
+                                const prevItemDiscount = totalBeforeDiscount > 0 ? 
+                                  Math.floor((finalDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                                previousDiscounts += prevItemDiscount;
+                              }
+                              itemDiscount = Math.max(0, finalDiscount - previousDiscounts);
+                            } else {
+                              // Regular calculation for non-last items
+                              const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                              const itemSubtotal = itemPrice * item.quantity;
+                              const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
+                                const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
+                                return sum + (price * itm.quantity);
+                              }, 0);
+                              itemDiscount = totalBeforeDiscount > 0 ? 
+                                Math.floor((finalDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
+                            }
+                          }
+                          
                           return itemDiscount > 0 ? (
                             <div className="text-xs text-red-600">
                               {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
