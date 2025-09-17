@@ -378,6 +378,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       createProduct: "상품 생성",
       taxPercentage: "세금 (%)",
       backToSales: "판매로 돌아가기",
+      printerConfiguration: "프린터 설정",
     },
 
     // Time periods
@@ -687,6 +688,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       createProduct: "Create Product",
       taxPercentage: "Tax (%)",
       backToSales: "Back to Sales",
+      printerConfiguration: "Printer Configuration",
     },
 
     // Time periods
@@ -1002,6 +1004,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       createProduct: "Tạo sản phẩm",
       taxPercentage: "Thuế (%)",
       backToSales: "Quay lại Bán hàng",
+      printerConfiguration: "Cấu hình máy in",
     },
 
     // Product type

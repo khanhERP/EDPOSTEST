@@ -897,7 +897,7 @@ export default function Settings() {
     } catch (error) {
       console.error("Product delete error:", error);
       toast({
-        title: t("common.error"),
+        title: "Lỗi",
         description: "Có lỗi xảy ra khi xóa sản phẩm",
         variant: "destructive",
       });
@@ -2210,7 +2210,7 @@ export default function Settings() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Printer className="h-5 w-5 text-green-600" />
-                          Cấu hình máy in
+                          {t("common.comboValues.printerConfiguration")}
                         </CardTitle>
                         <CardDescription>
                           Quản lý các máy in kết nối với hệ thống POS
