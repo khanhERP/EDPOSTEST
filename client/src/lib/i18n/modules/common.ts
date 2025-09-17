@@ -368,6 +368,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
       // Payment notes
       posPaymentNote: "POS 현금 결제 - 금액: {amount}, 거스름돈: {change}",
+      
+      // Product pricing
+      afterTaxPrice: "세후 가격",
     },
 
     // Time periods
@@ -664,6 +667,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       pos: "Counter Sales",
       online: "Online Sales",
       delivery: "Delivery",
+      
+      // Product pricing
+      afterTaxPrice: "After Tax Price",
     },
 
     // Time periods
@@ -963,6 +969,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       pos: "Bán tại quầy",
       online: "Bán online",
       delivery: "Giao hàng",
+      
+      // Product pricing
+      afterTaxPrice: "Giá sau thuế",
     },
 
     // Product type

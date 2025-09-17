@@ -582,7 +582,7 @@ export function ProductManagerModal({
                           {t("tables.taxRate")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
-                          Giá sau thuế
+                          {t("common.comboValues.afterTaxPrice")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
                           {t("tables.stock")}
@@ -827,7 +827,7 @@ export function ProductManagerModal({
                       name="afterTaxPrice"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Giá sau thuế</FormLabel>
+                          <FormLabel>{t("common.comboValues.afterTaxPrice")}</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
