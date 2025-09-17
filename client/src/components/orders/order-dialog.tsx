@@ -778,8 +778,6 @@ export function OrderDialog({
       });
 
       console.log("Placing order:", { order, items });
-      console.log(
-        `💰 Creating order with totals: subtotal=${subtotalAmount}, tax=${taxAmount}, discount=${discount}, fullTotal=${fullOrderTotal}`,
       );
       createOrderMutation.mutate({ order, items });
     }
