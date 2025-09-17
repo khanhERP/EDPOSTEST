@@ -506,37 +506,8 @@ export function OrderDialog({
   };
 
   const calculateGrandTotal = () => {
-    // Calculate subtotal (price * quantity) without discount subtraction
-    let totalSubtotal = 0;
-
-    // Add existing order items if in edit mode
-    if (mode === "edit" && existingItems && Array.isArray(existingItems)) {
-      existingItems.forEach((item) => {
-        const unitPrice = parseFloat(item.unitPrice);
-        const quantity = parseInt(item.quantity);
-        totalSubtotal += unitPrice * quantity;
-      });
-    }
-
-    // Add new cart items
-    cart.forEach((item) => {
-      const unitPrice = parseFloat(item.product.price);
-      const quantity = item.quantity;
-      totalSubtotal += unitPrice * quantity;
-    });
-
-    const tax = calculateTax();
-    // Formula: price * quantity + tax - discount
-    const finalTotal = Math.max(0, totalSubtotal + tax - discount);
-
-    console.log("💰 Order Dialog - Grand Total Calculation:", {
-      subtotal: totalSubtotal,
-      tax: tax,
-      discount: discount,
-      finalTotal: finalTotal,
-    });
-
-    return finalTotal;
+    // Use the same calculation as calculateTotal for consistency
+    return calculateTotal();
   };
 
   const handlePlaceOrder = async () => {
@@ -658,54 +629,18 @@ export function OrderDialog({
         proceedWithUpdate: true,
       });
 
-      // Calculate updated discount for existing items
-      const updatedExistingItems = existingItems.map((item, index) => {
-        // Get all items (existing + new)
-        const allItems = [
-          ...existingItems,
-          ...cart.map((cartItem) => ({
-            unitPrice: cartItem.product.price,
-            quantity: cartItem.quantity,
-          })),
-        ];
-
-        const currentIndex = existingItems.findIndex(
-          (existingItem, idx) => idx === index,
-        );
-        const isLastItem = currentIndex === allItems.length - 1;
-
+      // Calculate updated discount for existing items using proportional distribution
+      const updatedExistingItems = existingItems.map((item) => {
         let itemDiscountAmount = 0;
 
         if (discount > 0) {
-          if (isLastItem) {
-            // Last item: total discount - sum of all previous discounts
-            let previousDiscounts = 0;
-            const totalBeforeDiscount = calculateTotal() - calculateTax();
-
-            for (let i = 0; i < allItems.length - 1; i++) {
-              const prevItemSubtotal =
-                Number(allItems[i].unitPrice || 0) *
-                Number(allItems[i].quantity || 0);
-              const prevItemDiscount =
-                totalBeforeDiscount > 0
-                  ? Math.floor(
-                      (discount * prevItemSubtotal) / totalBeforeDiscount,
-                    )
-                  : 0;
-              previousDiscounts += prevItemDiscount;
-            }
-
-            itemDiscountAmount = discount - previousDiscounts;
-          } else {
-            // Regular calculation for non-last items
-            const itemSubtotal =
-              Number(item.unitPrice || 0) * Number(item.quantity || 0);
-            const totalBeforeDiscount = calculateTotal() - calculateTax();
-            itemDiscountAmount =
-              totalBeforeDiscount > 0
-                ? Math.floor((discount * itemSubtotal) / totalBeforeDiscount)
-                : 0;
-          }
+          const itemSubtotal =
+            Number(item.unitPrice || 0) * Number(item.quantity || 0);
+          const totalBeforeDiscount = calculateSubtotal();
+          itemDiscountAmount =
+            totalBeforeDiscount > 0
+              ? Math.floor((discount * itemSubtotal) / totalBeforeDiscount)
+              : 0;
         }
 
         return {
@@ -1026,72 +961,22 @@ export function OrderDialog({
                                 {/* Individual item discount for existing items */}
                                 {discount > 0 &&
                                   (() => {
-                                    // Get all items (existing + new)
-                                    const allItems = [
-                                      ...existingItems,
-                                      ...cart.map((cartItem) => ({
-                                        unitPrice: cartItem.product.price,
-                                        quantity: cartItem.quantity,
-                                      })),
-                                    ];
-
-                                    const currentIndex =
-                                      existingItems.findIndex(
-                                        (existingItem, idx) => idx === index,
-                                      );
-                                    const isLastItem =
-                                      currentIndex === allItems.length - 1;
-
-                                    let itemDiscountAmount = 0;
-
-                                    if (isLastItem) {
-                                      // Last item: total discount - sum of all previous discounts
-                                      let previousDiscounts = 0;
-                                      const totalBeforeDiscount =
-                                        calculateTotal() - calculateTax();
-
-                                      for (
-                                        let i = 0;
-                                        i < allItems.length - 1;
-                                        i++
-                                      ) {
-                                        const prevItemSubtotal =
-                                          Number(allItems[i].unitPrice || 0) *
-                                          Number(allItems[i].quantity || 0);
-                                        const prevItemDiscount =
-                                          totalBeforeDiscount > 0
-                                            ? Math.floor(
-                                                (discount * prevItemSubtotal) /
-                                                  totalBeforeDiscount,
-                                              )
-                                            : 0;
-                                        previousDiscounts += prevItemDiscount;
-                                      }
-
-                                      itemDiscountAmount =
-                                        discount - previousDiscounts;
-                                    } else {
-                                      // Regular calculation for non-last items
-                                      const itemSubtotal =
-                                        Number(item.unitPrice || 0) *
-                                        Number(item.quantity || 0);
-                                      const totalBeforeDiscount =
-                                        calculateTotal() - calculateTax();
-                                      itemDiscountAmount =
-                                        totalBeforeDiscount > 0
-                                          ? Math.floor(
-                                              (discount * itemSubtotal) /
-                                                totalBeforeDiscount,
-                                            )
-                                          : 0;
-                                    }
+                                    const itemSubtotal =
+                                      Number(item.unitPrice || 0) *
+                                      Number(item.quantity || 0);
+                                    const totalBeforeDiscount = calculateSubtotal();
+                                    const itemDiscountAmount =
+                                      totalBeforeDiscount > 0
+                                        ? Math.floor(
+                                            (discount * itemSubtotal) /
+                                              totalBeforeDiscount,
+                                          )
+                                        : 0;
 
                                     return itemDiscountAmount > 0 ? (
                                       <div className="text-xs text-red-600 mt-1">
                                         {t("common.discount")} -
-                                        {Math.floor(
-                                          itemDiscountAmount,
-                                        ).toLocaleString()}{" "}
+                                        {itemDiscountAmount.toLocaleString()}{" "}
                                         ₫
                                       </div>
                                     ) : null;
@@ -1575,71 +1460,23 @@ export function OrderDialog({
                           {/* Individual item discount display */}
                           {discount > 0 &&
                             (() => {
-                              // Get all items (existing + new)
-                              const allItems = [
-                                ...existingItems,
-                                ...cart.map((cartItem) => ({
-                                  unitPrice: cartItem.product.price,
-                                  quantity: cartItem.quantity,
-                                })),
-                              ];
-
-                              const currentCartIndex = cart.findIndex(
-                                (cartItem) =>
-                                  cartItem.product.id === item.product.id,
-                              );
-                              const currentOverallIndex =
-                                existingItems.length + currentCartIndex;
-                              const isLastItem =
-                                currentOverallIndex === allItems.length - 1;
-
-                              let itemDiscountAmount = 0;
-
-                              if (isLastItem) {
-                                // Last item: total discount - sum of all previous discounts
-                                let previousDiscounts = 0;
-                                const totalBeforeDiscount =
-                                  calculateTotal() - calculateTax();
-
-                                for (let i = 0; i < allItems.length - 1; i++) {
-                                  const prevItemSubtotal =
-                                    Number(allItems[i].unitPrice || 0) *
-                                    Number(allItems[i].quantity || 0);
-                                  const prevItemDiscount =
-                                    totalBeforeDiscount > 0
-                                      ? Math.floor(
-                                          (discount * prevItemSubtotal) /
-                                            totalBeforeDiscount,
-                                        )
-                                      : 0;
-                                  previousDiscounts += prevItemDiscount;
-                                }
-
-                                itemDiscountAmount =
-                                  discount - previousDiscounts;
-                              } else {
-                                // Regular calculation for non-last items
-                                const itemSubtotal =
-                                  Number(item.product.price) * item.quantity;
-                                const totalBeforeDiscount =
-                                  calculateTotal() - calculateTax();
-                                itemDiscountAmount =
-                                  totalBeforeDiscount > 0
-                                    ? Math.floor(
-                                        (discount * itemSubtotal) /
-                                          totalBeforeDiscount,
-                                      )
-                                    : 0;
-                              }
+                              const itemSubtotal =
+                                Number(item.product.price) * item.quantity;
+                              const totalBeforeDiscount = calculateSubtotal();
+                              const itemDiscountAmount =
+                                totalBeforeDiscount > 0
+                                  ? Math.floor(
+                                      (discount * itemSubtotal) /
+                                        totalBeforeDiscount,
+                                    )
+                                  : 0;
 
                               return itemDiscountAmount > 0 ? (
                                 <div className="text-xs text-red-600 mt-1 text-end">
                                   <span>{t("common.discount")}: </span>
                                   <span>
                                     -
-                                    {Math.floor(
-                                      itemDiscountAmount,
-                                    ).toLocaleString()}{" "}
+                                    {itemDiscountAmount.toLocaleString()}{" "}
                                     ₫
                                   </span>
                                 </div>
