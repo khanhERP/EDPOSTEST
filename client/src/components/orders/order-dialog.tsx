@@ -201,19 +201,16 @@ export function OrderDialog({
           const displayedDiscount = Math.floor(discount);
           const displayedTotal = Math.floor(footerTotal);
 
-          console.log(
-            "💰 Edit mode - Using EXACT footer displayed values:",
-            {
-              footerSubtotal,
-              footerTax,
-              footerTotal,
-              displayedSubtotal,
-              displayedTax,
-              displayedDiscount,
-              displayedTotal,
-              source: "footer_display_exact_match",
-            },
-          );
+          console.log("💰 Edit mode - Using EXACT footer displayed values:", {
+            footerSubtotal,
+            footerTax,
+            footerTotal,
+            displayedSubtotal,
+            displayedTax,
+            displayedDiscount,
+            displayedTotal,
+            source: "footer_display_exact_match",
+          });
 
           const updateResponse = await apiRequest(
             "PUT",
@@ -222,7 +219,7 @@ export function OrderDialog({
               customerName: orderData.order.customerName,
               customerCount: orderData.order.customerCount,
               subtotal: displayedSubtotal.toString(),
-              tax: displayedTax.toString(), 
+              tax: displayedTax.toString(),
               discount: displayedDiscount.toString(),
               total: displayedTotal.toString(),
             },
@@ -328,10 +325,7 @@ export function OrderDialog({
 
       toast({
         title: t("orders.orderUpdateSuccess"),
-        description:
-          mode === "edit"
-            ? "Đã cập nhật đơn hàng thành công"
-            : t("orders.orderUpdateSuccessDesc"),
+        description: t("orders.orderUpdateSuccessDesc"),
       });
 
       console.log("✅ Order mutation completed - proper update flow executed");
@@ -461,7 +455,11 @@ export function OrderDialog({
         const product = products?.find((p: Product) => p.id === item.productId);
         let itemTax = 0;
 
-        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
           // Use afterTaxPrice - price to get tax amount per unit
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const basePrice = Number(item.unitPrice || 0);
@@ -480,7 +478,11 @@ export function OrderDialog({
       const product = products?.find((p: Product) => p.id === item.product.id);
       let itemTax = 0;
 
-      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+      if (
+        product?.afterTaxPrice &&
+        product.afterTaxPrice !== null &&
+        product.afterTaxPrice !== ""
+      ) {
         // Use afterTaxPrice - price to get tax amount per unit
         const afterTaxPrice = parseFloat(product.afterTaxPrice);
         const basePrice = parseFloat(product.price);
@@ -897,7 +899,7 @@ export function OrderDialog({
                           </span>
                           {product.taxRate && (
                             <span className="text-xs text-gray-500">
-                              Thuế: {product.taxRate}%
+                              {t("reports.tax")}: {product.taxRate}%
                             </span>
                           )}
                         </div>
@@ -967,7 +969,8 @@ export function OrderDialog({
                                     const itemSubtotal =
                                       Number(item.unitPrice || 0) *
                                       Number(item.quantity || 0);
-                                    const totalBeforeDiscount = calculateSubtotal();
+                                    const totalBeforeDiscount =
+                                      calculateSubtotal();
                                     const itemDiscountAmount =
                                       totalBeforeDiscount > 0
                                         ? Math.floor(
@@ -979,8 +982,7 @@ export function OrderDialog({
                                     return itemDiscountAmount > 0 ? (
                                       <div className="text-xs text-red-600 mt-1">
                                         {t("common.discount")} -
-                                        {itemDiscountAmount.toLocaleString()}{" "}
-                                        ₫
+                                        {itemDiscountAmount.toLocaleString()} ₫
                                       </div>
                                     ) : null;
                                   })()}
@@ -1357,7 +1359,7 @@ export function OrderDialog({
 
                                 return taxAmount > 0 ? (
                                   <div>
-                                    Thuế:{" "}
+                                    {t("reports.tax")}:{" "}
                                     {Math.floor(taxAmount).toLocaleString()} ₫
                                   </div>
                                 ) : null;
@@ -1453,7 +1455,7 @@ export function OrderDialog({
 
                                 return (
                                   <div className="font-medium text-blue-600">
-                                    Tổng: {finalTotal.toLocaleString()} ₫
+                                    {t("reports.totalMoney")}: {finalTotal.toLocaleString()} ₫
                                   </div>
                                 );
                               })()}
@@ -1478,9 +1480,7 @@ export function OrderDialog({
                                 <div className="text-xs text-red-600 mt-1 text-end">
                                   <span>{t("common.discount")}: </span>
                                   <span>
-                                    -
-                                    {itemDiscountAmount.toLocaleString()}{" "}
-                                    ₫
+                                    -{itemDiscountAmount.toLocaleString()} ₫
                                   </span>
                                 </div>
                               ) : null;
@@ -1565,7 +1565,7 @@ export function OrderDialog({
                 </div>
                 <div className="w-px h-4 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-600">Thuế</span>
+                  <span className="text-gray-600">{t("reports.tax")}</span>
                   <span className="font-medium">
                     {Math.floor(calculateTax()).toLocaleString()} ₫
                   </span>

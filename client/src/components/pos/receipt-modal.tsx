@@ -134,7 +134,9 @@ export function ReceiptModal({
   }
 
   const handlePrint = async () => {
-    console.log("🖨️ Receipt Modal: Print button clicked - processing for multi-platform printing");
+    console.log(
+      "🖨️ Receipt Modal: Print button clicked - processing for multi-platform printing",
+    );
 
     const printContent = document.getElementById("receipt-content");
     if (!printContent) {
@@ -147,44 +149,59 @@ export function ReceiptModal({
       const userAgent = navigator.userAgent.toLowerCase();
       const isIOS = /iphone|ipad|ipod/.test(userAgent);
       const isAndroid = /android/.test(userAgent);
-      const isMobile = isIOS || isAndroid || /mobile|tablet|phone/.test(userAgent);
+      const isMobile =
+        isIOS || isAndroid || /mobile|tablet|phone/.test(userAgent);
       const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
       const isChrome = /chrome/.test(userAgent);
-      const isPOSTerminal = window.innerWidth <= 1024 && window.innerHeight <= 768;
+      const isPOSTerminal =
+        window.innerWidth <= 1024 && window.innerHeight <= 768;
 
       console.log("🔍 Enhanced device detection:", {
-        isIOS, isAndroid, isMobile, isSafari, isChrome, isPOSTerminal,
+        isIOS,
+        isAndroid,
+        isMobile,
+        isSafari,
+        isChrome,
+        isPOSTerminal,
         screenSize: `${window.innerWidth}x${window.innerHeight}`,
-        userAgent: userAgent.substring(0, 100)
+        userAgent: userAgent.substring(0, 100),
       });
 
       // Step 1: Check for active printer configurations
       let activePrinterConfigs = [];
       try {
         console.log("🖨️ Fetching active printer configurations...");
-        const printerResponse = await fetch('/api/printer-configs');
+        const printerResponse = await fetch("/api/printer-configs");
         if (printerResponse.ok) {
           const allConfigs = await printerResponse.json();
-          activePrinterConfigs = allConfigs.filter(config => config.isActive && (config.isEmployee || config.isKitchen));
-          console.log("✅ Found active printer configs:", activePrinterConfigs.length);
+          activePrinterConfigs = allConfigs.filter(
+            (config) =>
+              config.isActive && (config.isEmployee || config.isKitchen),
+          );
+          console.log(
+            "✅ Found active printer configs:",
+            activePrinterConfigs.length,
+          );
         }
       } catch (configError) {
-        console.log("⚠️ Could not fetch printer configs, using fallback methods");
+        console.log(
+          "⚠️ Could not fetch printer configs, using fallback methods",
+        );
       }
 
       // Step 2: Create receipt data structure for printing
       const receiptData = {
         content: printContent.innerHTML,
-        type: 'receipt',
+        type: "receipt",
         timestamp: new Date().toISOString(),
         orderId: receipt?.id,
         transactionId: receipt?.transactionId,
         deviceInfo: {
           userAgent: userAgent.substring(0, 100),
-          platform: isIOS ? 'iOS' : isAndroid ? 'Android' : 'Desktop',
-          browser: isSafari ? 'Safari' : isChrome ? 'Chrome' : 'Other',
-          isMobile: isMobile
-        }
+          platform: isIOS ? "iOS" : isAndroid ? "Android" : "Desktop",
+          browser: isSafari ? "Safari" : isChrome ? "Chrome" : "Other",
+          isMobile: isMobile,
+        },
       };
 
       // Step 3: Try configured printers first (POS API with active configs)
@@ -192,21 +209,26 @@ export function ReceiptModal({
         console.log("🖨️ Trying configured POS printers for all platforms...");
 
         try {
-          const printResponse = await fetch('/api/pos/print-receipt', {
-            method: 'POST',
+          const printResponse = await fetch("/api/pos/print-receipt", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               ...receiptData,
               printerConfigs: activePrinterConfigs,
-              preferredConfig: activePrinterConfigs.find(c => c.isEmployee) || activePrinterConfigs[0]
-            })
+              preferredConfig:
+                activePrinterConfigs.find((c) => c.isEmployee) ||
+                activePrinterConfigs[0],
+            }),
           });
 
           if (printResponse.ok) {
             const result = await printResponse.json();
-            console.log("✅ Receipt sent to configured printer successfully:", result);
+            console.log(
+              "✅ Receipt sent to configured printer successfully:",
+              result,
+            );
 
             // Show success message based on device type
             const successMessage = isMobile
@@ -225,20 +247,30 @@ export function ReceiptModal({
             }
             return;
           } else {
-            console.log("⚠️ Configured printer API returned error, trying platform-specific fallbacks");
+            console.log(
+              "⚠️ Configured printer API returned error, trying platform-specific fallbacks",
+            );
           }
         } catch (apiError) {
-          console.log("⚠️ Configured printer API failed, using platform-specific fallbacks:", apiError.message);
+          console.log(
+            "⚠️ Configured printer API failed, using platform-specific fallbacks:",
+            apiError.message,
+          );
         }
       }
 
       // Step 4: Platform-specific fallback methods
       if (isMobile) {
-        await handleMobilePrinting(printContent, isIOS, isAndroid, isSafari, isChrome);
+        await handleMobilePrinting(
+          printContent,
+          isIOS,
+          isAndroid,
+          isSafari,
+          isChrome,
+        );
       } else {
         await handleDesktopPrinting(printContent);
       }
-
     } catch (error) {
       console.error("❌ Print error:", error);
       alert(`Có lỗi xảy ra khi in: ${error.message}\nVui lòng thử lại.`);
@@ -250,15 +282,24 @@ export function ReceiptModal({
   };
 
   // Enhanced mobile printing handler
-  const handleMobilePrinting = async (printContent: HTMLElement, isIOS: boolean, isAndroid: boolean, isSafari: boolean, isChrome: boolean) => {
-    console.log("📱 Using enhanced mobile printing for", isIOS ? 'iOS' : isAndroid ? 'Android' : 'Mobile');
+  const handleMobilePrinting = async (
+    printContent: HTMLElement,
+    isIOS: boolean,
+    isAndroid: boolean,
+    isSafari: boolean,
+    isChrome: boolean,
+  ) => {
+    console.log(
+      "📱 Using enhanced mobile printing for",
+      isIOS ? "iOS" : isAndroid ? "Android" : "Mobile",
+    );
 
     // Show user options for mobile printing with platform-specific messaging
     const platformMessage = isIOS
       ? "Máy in POS không khả dụng.\n\nChọn OK để tải file hóa đơn (Safari có thể mở trực tiếp).\nChọn Cancel để thử in trực tiếp từ trình duyệt."
       : isAndroid
-      ? "Máy in POS không khả dụng.\n\nChọn OK để tải/chia sẻ file hóa đơn.\nChọn Cancel để thử in trực tiếp từ Chrome."
-      : "Máy in POS không khả dụng.\n\nChọn OK để tải file hóa đơn.\nChọn Cancel để thử in trực tiếp.";
+        ? "Máy in POS không khả dụng.\n\nChọn OK để tải/chia sẻ file hóa đơn.\nChọn Cancel để thử in trực tiếp từ Chrome."
+        : "Máy in POS không khả dụng.\n\nChọn OK để tải file hóa đơn.\nChọn Cancel để thử in trực tiếp.";
 
     const userChoice = confirm(platformMessage);
 
@@ -269,7 +310,13 @@ export function ReceiptModal({
     } else {
       // User chose to try browser print dialog
       console.log("📱 User chose to try browser print dialog");
-      await openBrowserPrintDialog(printContent, isIOS, isAndroid, isSafari, isChrome);
+      await openBrowserPrintDialog(
+        printContent,
+        isIOS,
+        isAndroid,
+        isSafari,
+        isChrome,
+      );
     }
   };
 
@@ -279,7 +326,11 @@ export function ReceiptModal({
 
     // Try direct browser print first
     try {
-      const printWindow = window.open("", "_blank", "width=800,height=600,scrollbars=yes");
+      const printWindow = window.open(
+        "",
+        "_blank",
+        "width=800,height=600,scrollbars=yes",
+      );
       if (printWindow) {
         const printHTML = generatePrintHTML(printContent, false);
         printWindow.document.write(printHTML);
@@ -341,13 +392,13 @@ export function ReceiptModal({
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Hóa đơn - ${receipt?.transactionId || 'HĐ'}</title>
+        <title>Hóa đơn - ${receipt?.transactionId || "HĐ"}</title>
         <style>
           body {
-            font-family: ${isIOS ? '-apple-system, BlinkMacSystemFont' : isAndroid ? 'Roboto' : 'Arial'}, monospace;
-            font-size: ${isMobile ? '14px' : '12px'};
+            font-family: ${isIOS ? "-apple-system, BlinkMacSystemFont" : isAndroid ? "Roboto" : "Arial"}, monospace;
+            font-size: ${isMobile ? "14px" : "12px"};
             line-height: 1.4;
-            margin: ${isMobile ? '15px' : '20px'};
+            margin: ${isMobile ? "15px" : "20px"};
             padding: 0;
             background: white;
             color: black;
@@ -359,15 +410,19 @@ export function ReceiptModal({
           .border-b { border-bottom: 1px solid #000; margin: 8px 0; padding-bottom: 8px; }
           .flex { display: flex; justify-content: space-between; align-items: center; }
           img { max-width: 100px; height: auto; }
-          .receipt-container { max-width: ${isMobile ? '350px' : '300px'}; margin: 0 auto; }
-          ${isMobile ? `
+          .receipt-container { max-width: ${isMobile ? "350px" : "300px"}; margin: 0 auto; }
+          ${
+            isMobile
+              ? `
           .print-instructions {
             margin-top: 20px;
             padding: 15px;
             background: #f0f0f0;
             border-radius: 8px;
             font-size: 12px;
-          }` : ''}
+          }`
+              : ""
+          }
           @media print {
             body { margin: 0; font-size: 12px; }
             .receipt-container { max-width: 100%; }
@@ -386,15 +441,19 @@ export function ReceiptModal({
       <body>
         <div class="receipt-container">
           ${printContent.innerHTML}
-          ${isMobile ? `
+          ${
+            isMobile
+              ? `
           <div class="print-instructions">
             <div class="font-bold text-center">Hướng dẫn in:</div>
             <div>• Nhấn nút Menu hoặc Share trên trình duyệt</div>
             <div>• Chọn "Print" hoặc "In"</div>
             <div>• Hoặc chia sẻ với ứng dụng in khác</div>
-            ${isIOS ? '<div>• Trên iOS: Chọn Share → Print</div>' : ''}
-            ${isAndroid ? '<div>• Trên Android: Menu → Print hoặc Share</div>' : ''}
-          </div>` : ''}
+            ${isIOS ? "<div>• Trên iOS: Chọn Share → Print</div>" : ""}
+            ${isAndroid ? "<div>• Trên Android: Menu → Print hoặc Share</div>" : ""}
+          </div>`
+              : ""
+          }
         </div>
         <script>
           // Auto-open print dialog after short delay (more reliable timing)
@@ -404,7 +463,7 @@ export function ReceiptModal({
             } catch (e) {
               console.log("Auto-print failed, user needs to print manually");
             }
-          }, ${isMobile ? '1500' : '800'});
+          }, ${isMobile ? "1500" : "800"});
         </script>
       </body>
       </html>
@@ -412,12 +471,16 @@ export function ReceiptModal({
   };
 
   // Enhanced download receipt file function - generates PDF
-  const downloadReceiptFile = async (printContent: HTMLElement, isIOS: boolean, isAndroid: boolean) => {
+  const downloadReceiptFile = async (
+    printContent: HTMLElement,
+    isIOS: boolean,
+    isAndroid: boolean,
+  ) => {
     try {
       console.log("📄 Generating PDF for receipt download");
 
       // Create a new window for PDF generation
-      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      const printWindow = window.open("", "_blank", "width=400,height=600");
       if (!printWindow) {
         throw new Error("Popup blocked - cannot generate PDF");
       }
@@ -427,7 +490,7 @@ export function ReceiptModal({
       printWindow.document.close();
 
       // Wait for content to load then trigger print to PDF
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         printWindow.onload = () => {
           setTimeout(() => {
             try {
@@ -438,8 +501,8 @@ export function ReceiptModal({
               const pdfInstructions = isIOS
                 ? "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn destination\n2. Chọn 'Save as PDF' hoặc 'Lưu thành PDF'\n3. Nhấn Save để tải file PDF"
                 : isAndroid
-                ? "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn máy in\n2. Chọn 'Save as PDF' hoặc 'Lưu thành PDF'\n3. Nhấn Print để tải file PDF"
-                : "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn destination/máy in\n2. Chọn 'Save as PDF' hoặc 'Microsoft Print to PDF'\n3. Nhấn Save/Print để tải file PDF";
+                  ? "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn máy in\n2. Chọn 'Save as PDF' hoặc 'Lưu thành PDF'\n3. Nhấn Print để tải file PDF"
+                  : "✅ Hộp thoại in đã mở!\n\nĐể lưu thành PDF:\n1. Trong hộp thoại in, chọn destination/máy in\n2. Chọn 'Save as PDF' hoặc 'Microsoft Print to PDF'\n3. Nhấn Save/Print để tải file PDF";
 
               alert(pdfInstructions);
 
@@ -460,28 +523,30 @@ export function ReceiptModal({
           }, 1000);
         };
       });
-
     } catch (error) {
       console.error("❌ PDF generation failed:", error);
 
       // Fallback to HTML download if PDF generation fails
       console.log("🔄 Falling back to HTML download");
       const cleanReceiptHTML = generatePrintHTML(printContent, true);
-      const blob = new Blob([cleanReceiptHTML], { type: 'text/html;charset=utf-8' });
+      const blob = new Blob([cleanReceiptHTML], {
+        type: "text/html;charset=utf-8",
+      });
       const fileName = `hoa-don-${receipt?.transactionId || Date.now()}.html`;
 
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = fileName;
-      a.style.display = 'none';
+      a.style.display = "none";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
       setTimeout(() => {
-        const fallbackInstructions = "⚠️ Không thể tạo PDF, đã tải file HTML thay thế.\n\nĐể chuyển thành PDF:\n1. Mở file HTML vừa tải\n2. Nhấn Ctrl+P (hoặc Cmd+P trên Mac)\n3. Chọn 'Save as PDF' trong hộp thoại in\n4. Nhấn Save để lưu file PDF";
+        const fallbackInstructions =
+          "⚠️ Không thể tạo PDF, đã tải file HTML thay thế.\n\nĐể chuyển thành PDF:\n1. Mở file HTML vừa tải\n2. Nhấn Ctrl+P (hoặc Cmd+P trên Mac)\n3. Chọn 'Save as PDF' trong hộp thoại in\n4. Nhấn Save để lưu file PDF";
         alert(fallbackInstructions);
         onClose();
       }, 500);
@@ -489,14 +554,20 @@ export function ReceiptModal({
   };
 
   // Enhanced browser print dialog function
-  const openBrowserPrintDialog = async (printContent: HTMLElement, isIOS: boolean, isAndroid: boolean, isSafari: boolean, isChrome: boolean) => {
+  const openBrowserPrintDialog = async (
+    printContent: HTMLElement,
+    isIOS: boolean,
+    isAndroid: boolean,
+    isSafari: boolean,
+    isChrome: boolean,
+  ) => {
     const windowFeatures = isAndroid
-      ? 'width=400,height=600,scrollbars=yes,resizable=yes'
+      ? "width=400,height=600,scrollbars=yes,resizable=yes"
       : isIOS
-      ? 'width=375,height=667,scrollbars=yes,resizable=yes'
-      : 'width=400,height=600,scrollbars=yes';
+        ? "width=375,height=667,scrollbars=yes,resizable=yes"
+        : "width=400,height=600,scrollbars=yes";
 
-    const printWindow = window.open('', '_blank', windowFeatures);
+    const printWindow = window.open("", "_blank", windowFeatures);
 
     if (printWindow) {
       const printHTML = generatePrintHTML(printContent, true);
@@ -517,13 +588,12 @@ export function ReceiptModal({
             }
             onClose();
           }, printDelay);
-
         } catch (e) {
           const browserTip = isSafari
             ? "Vui lòng sử dụng menu Safari → Share → Print"
             : isChrome
-            ? "Vui lòng sử dụng menu Chrome (⋮) → Print"
-            : "Vui lòng sử dụng menu trình duyệt để in";
+              ? "Vui lòng sử dụng menu Chrome (⋮) → Print"
+              : "Vui lòng sử dụng menu trình duyệt để in";
 
           alert(browserTip);
           setTimeout(() => {
@@ -534,9 +604,10 @@ export function ReceiptModal({
           }, 500);
         }
       }, printDelay);
-
     } else {
-      alert("Không thể mở cửa sổ in. Popup có thể bị chặn.\nSẽ tải file để bạn có thể in.");
+      alert(
+        "Không thể mở cửa sổ in. Popup có thể bị chặn.\nSẽ tải file để bạn có thể in.",
+      );
       downloadReceiptFile(printContent, isIOS, isAndroid);
     }
   };
@@ -595,7 +666,9 @@ export function ReceiptModal({
 
           // Auto close after print and refresh data
           setTimeout(() => {
-            console.log("🖨️ Receipt Modal: Auto-closing after print and refreshing data");
+            console.log(
+              "🖨️ Receipt Modal: Auto-closing after print and refreshing data",
+            );
 
             onClose();
 
@@ -928,7 +1001,9 @@ export function ReceiptModal({
 
                 // Calculate individual item discount if order has discount
                 let itemDiscountAmount = 0;
-                const orderDiscount = parseFloat(receipt.exactDiscount || receipt.discount || "0");
+                const orderDiscount = parseFloat(
+                  receipt.exactDiscount || receipt.discount || "0",
+                );
 
                 if (orderDiscount > 0) {
                   const isLastItem = index === items.length - 1;
@@ -937,13 +1012,25 @@ export function ReceiptModal({
                     // Last item: total discount - sum of all previous discounts
                     let previousDiscounts = 0;
                     const totalBeforeDiscount = items.reduce((sum, itm) => {
-                      return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
+                      return (
+                        sum +
+                        parseFloat(itm.unitPrice || itm.price || "0") *
+                          (itm.quantity || 1)
+                      );
                     }, 0);
 
                     for (let i = 0; i < items.length - 1; i++) {
-                      const prevItemSubtotal = parseFloat(items[i].unitPrice || items[i].price || "0") * (items[i].quantity || 1);
-                      const prevItemDiscount = totalBeforeDiscount > 0 ?
-                        Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                      const prevItemSubtotal =
+                        parseFloat(
+                          items[i].unitPrice || items[i].price || "0",
+                        ) * (items[i].quantity || 1);
+                      const prevItemDiscount =
+                        totalBeforeDiscount > 0
+                          ? Math.floor(
+                              (orderDiscount * prevItemSubtotal) /
+                                totalBeforeDiscount,
+                            )
+                          : 0;
                       previousDiscounts += prevItemDiscount;
                     }
 
@@ -952,10 +1039,19 @@ export function ReceiptModal({
                     // Regular calculation for non-last items
                     const itemSubtotal = actualUnitPrice * quantity;
                     const totalBeforeDiscount = items.reduce((sum, itm) => {
-                      return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
+                      return (
+                        sum +
+                        parseFloat(itm.unitPrice || itm.price || "0") *
+                          (itm.quantity || 1)
+                      );
                     }, 0);
-                    itemDiscountAmount = totalBeforeDiscount > 0 ?
-                      Math.floor((orderDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
+                    itemDiscountAmount =
+                      totalBeforeDiscount > 0
+                        ? Math.floor(
+                            (orderDiscount * itemSubtotal) /
+                              totalBeforeDiscount,
+                          )
+                        : 0;
                   }
                 }
 
@@ -978,7 +1074,9 @@ export function ReceiptModal({
                         {/* Display individual item discount from database or calculated */}
                         {(() => {
                           // First try to get discount from database (stored discount)
-                          let itemDiscount = Math.floor(parseFloat(item.discount || "0"));
+                          let itemDiscount = Math.floor(
+                            parseFloat(item.discount || "0"),
+                          );
 
                           // If no stored discount but order has discount, calculate proportional discount
                           if (itemDiscount === 0 && orderDiscount > 0) {
@@ -987,31 +1085,66 @@ export function ReceiptModal({
                             if (isLastItem) {
                               // Last item gets remaining discount
                               let previousDiscounts = 0;
-                              const totalBeforeDiscount = items.reduce((sum, itm) => {
-                                return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
-                              }, 0);
+                              const totalBeforeDiscount = items.reduce(
+                                (sum, itm) => {
+                                  return (
+                                    sum +
+                                    parseFloat(
+                                      itm.unitPrice || itm.price || "0",
+                                    ) *
+                                      (itm.quantity || 1)
+                                  );
+                                },
+                                0,
+                              );
 
                               for (let i = 0; i < items.length - 1; i++) {
-                                const prevItemSubtotal = parseFloat(items[i].unitPrice || items[i].price || "0") * (items[i].quantity || 1);
-                                const prevItemDiscount = totalBeforeDiscount > 0 ?
-                                  Math.floor((orderDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                                const prevItemSubtotal =
+                                  parseFloat(
+                                    items[i].unitPrice || items[i].price || "0",
+                                  ) * (items[i].quantity || 1);
+                                const prevItemDiscount =
+                                  totalBeforeDiscount > 0
+                                    ? Math.floor(
+                                        (orderDiscount * prevItemSubtotal) /
+                                          totalBeforeDiscount,
+                                      )
+                                    : 0;
                                 previousDiscounts += prevItemDiscount;
                               }
-                              itemDiscount = Math.max(0, orderDiscount - previousDiscounts);
+                              itemDiscount = Math.max(
+                                0,
+                                orderDiscount - previousDiscounts,
+                              );
                             } else {
                               // Regular calculation for non-last items
                               const itemSubtotal = actualUnitPrice * quantity;
-                              const totalBeforeDiscount = items.reduce((sum, itm) => {
-                                return sum + (parseFloat(itm.unitPrice || itm.price || "0") * (itm.quantity || 1));
-                              }, 0);
-                              itemDiscount = totalBeforeDiscount > 0 ?
-                                Math.floor((orderDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
+                              const totalBeforeDiscount = items.reduce(
+                                (sum, itm) => {
+                                  return (
+                                    sum +
+                                    parseFloat(
+                                      itm.unitPrice || itm.price || "0",
+                                    ) *
+                                      (itm.quantity || 1)
+                                  );
+                                },
+                                0,
+                              );
+                              itemDiscount =
+                                totalBeforeDiscount > 0
+                                  ? Math.floor(
+                                      (orderDiscount * itemSubtotal) /
+                                        totalBeforeDiscount,
+                                    )
+                                  : 0;
                             }
                           }
 
                           return itemDiscount > 0 ? (
                             <div className="text-xs text-red-600">
-                              {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
+                              {t("common.discount")} -
+                              {itemDiscount.toLocaleString("vi-VN")} ₫
                             </div>
                           ) : null;
                         })()}
@@ -1027,27 +1160,40 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               <div className="flex justify-between text-sm">
-                <span>Tạm tính:</span>
+                <span>{t("reports.subtotal")}:</span>
                 <span>
-                  {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.floor(
+                    parseFloat(receipt.subtotal || "0"),
+                  ).toLocaleString("vi-VN")}{" "}
+                  ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Thuế:</span>
+                <span>{t("reports.tax")}:</span>
                 <span>
-                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString(
+                    "vi-VN",
+                  )}{" "}
+                  ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm text-red-600">
-                <span>Giảm giá</span>
+                <span>{t("reports.discount")}</span>
                 <span className="font-medium">
-                  -{Math.floor(parseFloat(receipt.discount || "0")).toLocaleString("vi-VN")} ₫
+                  -
+                  {Math.floor(
+                    parseFloat(receipt.discount || "0"),
+                  ).toLocaleString("vi-VN")}{" "}
+                  ₫
                 </span>
               </div>
               <div className="flex justify-between font-bold">
-                <span>Tổng cộng:</span>
+                <span>{t("reports.totalMoney")}:</span>
                 <span>
-                  {Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt.total || "0")).toLocaleString(
+                    "vi-VN",
+                  )}{" "}
+                  ₫
                 </span>
               </div>
             </div>
@@ -1150,7 +1296,9 @@ export function ReceiptModal({
                       receipt.exactDiscount !== null &&
                       parseFloat(receipt.exactDiscount.toString()) > 0
                     ) {
-                      orderDiscount = parseFloat(receipt.exactDiscount.toString());
+                      orderDiscount = parseFloat(
+                        receipt.exactDiscount.toString(),
+                      );
                     } else if (
                       receipt &&
                       parseFloat(receipt.discount || "0") > 0
@@ -1173,31 +1321,52 @@ export function ReceiptModal({
                     // Last item: total discount - sum of all previous discounts
                     let previousDiscounts = 0;
                     const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                      const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
-                      return sum + (price * itm.quantity);
+                      const price =
+                        typeof itm.price === "string"
+                          ? parseFloat(itm.price)
+                          : itm.price;
+                      return sum + price * itm.quantity;
                     }, 0);
 
                     for (let i = 0; i < cartItems.length - 1; i++) {
-                      const prevItemPrice = typeof cartItems[i].price === "string"
-                        ? parseFloat(cartItems[i].price)
-                        : cartItems[i].price;
-                      const prevItemSubtotal = prevItemPrice * cartItems[i].quantity;
-                      const prevItemDiscount = totalBeforeDiscount > 0 ?
-                        Math.floor((finalDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                      const prevItemPrice =
+                        typeof cartItems[i].price === "string"
+                          ? parseFloat(cartItems[i].price)
+                          : cartItems[i].price;
+                      const prevItemSubtotal =
+                        prevItemPrice * cartItems[i].quantity;
+                      const prevItemDiscount =
+                        totalBeforeDiscount > 0
+                          ? Math.floor(
+                              (finalDiscount * prevItemSubtotal) /
+                                totalBeforeDiscount,
+                            )
+                          : 0;
                       previousDiscounts += prevItemDiscount;
                     }
 
                     itemDiscountAmount = finalDiscount - previousDiscounts;
                   } else {
                     // Regular calculation for non-last items
-                    const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                    const itemPrice =
+                      typeof item.price === "string"
+                        ? parseFloat(item.price)
+                        : item.price;
                     const itemSubtotal = itemPrice * item.quantity;
                     const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                      const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
-                      return sum + (price * itm.quantity);
+                      const price =
+                        typeof itm.price === "string"
+                          ? parseFloat(itm.price)
+                          : itm.price;
+                      return sum + price * itm.quantity;
                     }, 0);
-                    itemDiscountAmount = totalBeforeDiscount > 0 ?
-                      Math.floor((finalDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
+                    itemDiscountAmount =
+                      totalBeforeDiscount > 0
+                        ? Math.floor(
+                            (finalDiscount * itemSubtotal) /
+                              totalBeforeDiscount,
+                          )
+                        : 0;
                   }
                 }
 
@@ -1208,7 +1377,8 @@ export function ReceiptModal({
                         <div>{item.name}</div>
                         <div className="text-xs text-gray-600">
                           SKU:{" "}
-                          {item.sku || `FOOD${String(item.id).padStart(5, "0")}`}
+                          {item.sku ||
+                            `FOOD${String(item.id).padStart(5, "0")}`}
                         </div>
                         <div className="text-xs text-gray-600">
                           {item.quantity} x{" "}
@@ -1222,7 +1392,9 @@ export function ReceiptModal({
                         {/* Display individual item discount for preview mode */}
                         {(() => {
                           // First try to get discount from item data
-                          let itemDiscount = Math.floor(parseFloat(item.discount || "0"));
+                          let itemDiscount = Math.floor(
+                            parseFloat(item.discount || "0"),
+                          );
 
                           // If no stored discount but order has discount, calculate proportional discount
                           if (itemDiscount === 0 && finalDiscount > 0) {
@@ -1231,37 +1403,68 @@ export function ReceiptModal({
                             if (isLastItem) {
                               // Last item gets remaining discount
                               let previousDiscounts = 0;
-                              const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                                const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
-                                return sum + (price * itm.quantity);
-                              }, 0);
+                              const totalBeforeDiscount = cartItems.reduce(
+                                (sum, itm) => {
+                                  const price =
+                                    typeof itm.price === "string"
+                                      ? parseFloat(itm.price)
+                                      : itm.price;
+                                  return sum + price * itm.quantity;
+                                },
+                                0,
+                              );
 
                               for (let i = 0; i < cartItems.length - 1; i++) {
-                                const prevItemPrice = typeof cartItems[i].price === "string"
-                                  ? parseFloat(cartItems[i].price)
-                                  : cartItems[i].price;
-                                const prevItemSubtotal = prevItemPrice * cartItems[i].quantity;
-                                const prevItemDiscount = totalBeforeDiscount > 0 ?
-                                  Math.floor((finalDiscount * prevItemSubtotal) / totalBeforeDiscount) : 0;
+                                const prevItemPrice =
+                                  typeof cartItems[i].price === "string"
+                                    ? parseFloat(cartItems[i].price)
+                                    : cartItems[i].price;
+                                const prevItemSubtotal =
+                                  prevItemPrice * cartItems[i].quantity;
+                                const prevItemDiscount =
+                                  totalBeforeDiscount > 0
+                                    ? Math.floor(
+                                        (finalDiscount * prevItemSubtotal) /
+                                          totalBeforeDiscount,
+                                      )
+                                    : 0;
                                 previousDiscounts += prevItemDiscount;
                               }
-                              itemDiscount = Math.max(0, finalDiscount - previousDiscounts);
+                              itemDiscount = Math.max(
+                                0,
+                                finalDiscount - previousDiscounts,
+                              );
                             } else {
                               // Regular calculation for non-last items
-                              const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                              const itemPrice =
+                                typeof item.price === "string"
+                                  ? parseFloat(item.price)
+                                  : item.price;
                               const itemSubtotal = itemPrice * item.quantity;
-                              const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                                const price = typeof itm.price === "string" ? parseFloat(itm.price) : itm.price;
-                                return sum + (price * itm.quantity);
-                              }, 0);
-                              itemDiscount = totalBeforeDiscount > 0 ?
-                                Math.floor((finalDiscount * itemSubtotal) / totalBeforeDiscount) : 0;
+                              const totalBeforeDiscount = cartItems.reduce(
+                                (sum, itm) => {
+                                  const price =
+                                    typeof itm.price === "string"
+                                      ? parseFloat(itm.price)
+                                      : itm.price;
+                                  return sum + price * itm.quantity;
+                                },
+                                0,
+                              );
+                              itemDiscount =
+                                totalBeforeDiscount > 0
+                                  ? Math.floor(
+                                      (finalDiscount * itemSubtotal) /
+                                        totalBeforeDiscount,
+                                    )
+                                  : 0;
                             }
                           }
 
                           return itemDiscount > 0 ? (
                             <div className="text-xs text-red-600">
-                              {t("common.discount")} -{itemDiscount.toLocaleString("vi-VN")} ₫
+                              {t("common.discount")} -
+                              {itemDiscount.toLocaleString("vi-VN")} ₫
                             </div>
                           ) : null;
                         })()}
@@ -1282,27 +1485,40 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               <div className="flex justify-between text-sm">
-                <span>Tạm tính:</span>
+                <span>{t("reports.subtotal")}:</span>
                 <span>
-                  {Math.floor(parseFloat(receipt?.subtotal || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.floor(
+                    parseFloat(receipt?.subtotal || "0"),
+                  ).toLocaleString("vi-VN")}{" "}
+                  ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Thuế:</span>
+                <span>{t("reports.tax")}:</span>
                 <span>
-                  {Math.floor(parseFloat(receipt?.tax || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt?.tax || "0")).toLocaleString(
+                    "vi-VN",
+                  )}{" "}
+                  ₫
                 </span>
               </div>
               <div className="flex justify-between text-sm text-red-600">
-                <span>Giảm giá</span>
+                <span>{t("reports.discount")}</span>
                 <span className="font-medium">
-                  -{Math.floor(parseFloat(receipt?.discount || "0")).toLocaleString("vi-VN")} ₫
+                  -
+                  {Math.floor(
+                    parseFloat(receipt?.discount || "0"),
+                  ).toLocaleString("vi-VN")}{" "}
+                  ₫
                 </span>
               </div>
               <div className="flex justify-between font-bold">
-                <span>Tổng cộng:</span>
+                <span>{t("reports.totalMoney")}:</span>
                 <span>
-                  {Math.floor(parseFloat(receipt?.total || "0")).toLocaleString("vi-VN")} ₫
+                  {Math.floor(parseFloat(receipt?.total || "0")).toLocaleString(
+                    "vi-VN",
+                  )}{" "}
+                  ₫
                 </span>
               </div>
             </div>
@@ -1312,7 +1528,7 @@ export function ReceiptModal({
           <div className="p-4 text-center">
             <p>Đang tải dữ liệu hóa đơn...</p>
             <Button onClick={onClose} className="mt-4">
-              Đóng
+              {t("reports.close")}
             </Button>
           </div>
         )}
@@ -1369,20 +1585,34 @@ export function ReceiptModal({
               ? (window as any).orderForPayment
               : {
                   id: receipt?.id || `temp-${Date.now()}`,
-                  orderNumber: receipt?.orderNumber || receipt?.transactionId || `ORD-${Date.now()}`,
+                  orderNumber:
+                    receipt?.orderNumber ||
+                    receipt?.transactionId ||
+                    `ORD-${Date.now()}`,
                   tableId: receipt?.tableId || null,
                   customerName: receipt?.customerName || "Khách hàng lẻ",
                   status: "pending",
                   paymentStatus: "pending",
                   items: receipt?.items || cartItems || [],
-                  subtotal: receipt?.exactSubtotal || parseFloat(receipt?.subtotal || "0"),
+                  subtotal:
+                    receipt?.exactSubtotal ||
+                    parseFloat(receipt?.subtotal || "0"),
                   tax: receipt?.exactTax || parseFloat(receipt?.tax || "0"),
-                  discount: receipt?.exactDiscount || parseFloat(receipt?.discount || "0"),
-                  total: receipt?.exactTotal || parseFloat(receipt?.total || "0"),
-                  exactSubtotal: receipt?.exactSubtotal || parseFloat(receipt?.subtotal || "0"),
-                  exactTax: receipt?.exactTax || parseFloat(receipt?.tax || "0"),
-                  exactDiscount: receipt?.exactDiscount || parseFloat(receipt?.discount || "0"),
-                  exactTotal: receipt?.exactTotal || parseFloat(receipt?.total || "0"),
+                  discount:
+                    receipt?.exactDiscount ||
+                    parseFloat(receipt?.discount || "0"),
+                  total:
+                    receipt?.exactTotal || parseFloat(receipt?.total || "0"),
+                  exactSubtotal:
+                    receipt?.exactSubtotal ||
+                    parseFloat(receipt?.subtotal || "0"),
+                  exactTax:
+                    receipt?.exactTax || parseFloat(receipt?.tax || "0"),
+                  exactDiscount:
+                    receipt?.exactDiscount ||
+                    parseFloat(receipt?.discount || "0"),
+                  exactTotal:
+                    receipt?.exactTotal || parseFloat(receipt?.total || "0"),
                   orderedAt: new Date().toISOString(),
                 }
           }

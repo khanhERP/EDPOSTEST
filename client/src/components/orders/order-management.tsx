@@ -2008,7 +2008,7 @@ export function OrderManagement() {
                     {/* Show discount info if applicable */}
                     {order.discount && Number(order.discount) > 0 && (
                       <div className="flex items-center justify-between text-xs text-red-600">
-                        <span>Giảm giá:</span>
+                        <span>{t("reports.discount")}:</span>
                         <span>-{formatCurrency(Math.floor(Number(order.discount)))}</span>
                       </div>
                     )}
@@ -2314,7 +2314,7 @@ export function OrderManagement() {
                               </div>
                               {item.discount && Number(item.discount) > 0 && (
                                 <div className="text-xs text-red-600">
-                                  Giảm giá: -{Math.floor(Number(item.discount)).toLocaleString()} ₫
+                                  {t("reports.discount")}: -{Math.floor(Number(item.discount)).toLocaleString()} ₫
                                 </div>
                               )}
                             </div>
@@ -2345,7 +2345,7 @@ export function OrderManagement() {
                     </div>
                     {selectedOrder?.discount && Number(selectedOrder.discount) > 0 && (
                       <div className="flex justify-between text-red-600">
-                        <span>Giảm giá</span>
+                        <span>{t("reports.discount")}</span>
                         <span>-{formatCurrency(Math.floor(Number(selectedOrder.discount)))}</span>
                       </div>
                     )}
@@ -2733,7 +2733,7 @@ export function OrderManagement() {
                       Tổng gốc: {formatCurrency(orderDetailsCalculation.total)}
                     </p>
                     <p className="text-sm text-red-600">
-                      Giảm giá: -{formatCurrency(Math.floor(Number(selectedOrder.discount)))}
+                      {t("reports.discount")}: -{formatCurrency(Math.floor(Number(selectedOrder.discount)))}
                     </p>
                   </div>
                 )}
