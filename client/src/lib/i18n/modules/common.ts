@@ -315,6 +315,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       paid: "결제 완료",
       cancelled: "취소됨",
       completed: "완료",
+      serving: "서빙 중",
 
       // Product types
       food: "음식",

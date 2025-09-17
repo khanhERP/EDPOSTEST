@@ -695,9 +695,9 @@ export default function SalesOrders() {
 
   const getInvoiceStatusBadge = (status: number) => {
     const statusLabels = {
-      1: "Hoàn thành",
-      2: "Đang phục vụ",
-      3: "Đã hủy",
+      1: t("common.comboValues.completed"),
+      2: t("common.comboValues.serving"),
+      3: t("common.comboValues.cancelled"),
     };
 
     const statusColors = {
@@ -712,7 +712,7 @@ export default function SalesOrders() {
           statusColors[status as keyof typeof statusColors] || statusColors[1]
         }
       >
-        {statusLabels[status as keyof typeof statusColors] || "Hoàn thành"}
+        {statusLabels[status as keyof typeof statusColors] || t("common.comboValues.completed")}
       </Badge>
     );
   };
