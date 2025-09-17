@@ -3042,7 +3042,7 @@ export function OrderManagement() {
                   onClick={() => setMixedPaymentOpen(true)}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
-                  {t('orders.mixedPaymentTitle')}
+                  {t('orders.mixedPaymentButton')}
                 </Button>
               </div>
             </div>
