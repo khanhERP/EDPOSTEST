@@ -195,6 +195,13 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     symbolPlaceholder: "예: AA/19E",
     templateNamePlaceholder: "예: 템플릿 1",
     productsCount: "개 상품",
+    
+    // Product deletion confirmation
+    confirmDeleteProductTitle: "상품 삭제 확인",
+    confirmDeleteProductDesc: "정말로 상품을 삭제하시겠습니까?",
+    deleteProductWarning: "경고: 이 작업은 되돌릴 수 없습니다. 상품이 시스템에서 영구적으로 삭제됩니다.",
+    deleteProductDetails: "이는 이 상품이 포함된 주문 및 보고서에 영향을 줄 것입니다.",
+    deleteProductAction: "상품 삭제",
   },
   en: {
     title: "Settings",
@@ -393,6 +400,13 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     symbolPlaceholder: "e.g., AA/19E", 
     templateNamePlaceholder: "e.g., Template 1",
     productsCount: "products",
+    
+    // Product deletion confirmation
+    confirmDeleteProductTitle: "Confirm Product Deletion",
+    confirmDeleteProductDesc: "Are you sure you want to delete this product?",
+    deleteProductWarning: "Warning: This action cannot be undone. The product will be permanently deleted from the system.",
+    deleteProductDetails: "This will affect orders and reports containing this product.",
+    deleteProductAction: "Delete Product",
   },
   vi: {
     title: "Cài đặt",
@@ -591,5 +605,12 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     symbolPlaceholder: "Ví dụ: AA/19E",
     templateNamePlaceholder: "Ví dụ: Mẫu số 1",
     productsCount: "sản phẩm",
+    
+    // Product deletion confirmation
+    confirmDeleteProductTitle: "Xác nhận xóa sản phẩm",
+    confirmDeleteProductDesc: "Bạn có chắc chắn muốn xóa sản phẩm này không?",
+    deleteProductWarning: "Cảnh báo: Hành động này không thể hoàn tác. Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.",
+    deleteProductDetails: "Điều này sẽ ảnh hưởng đến các đơn hàng và báo cáo có chứa sản phẩm này.",
+    deleteProductAction: "Xóa sản phẩm",
   },
 };

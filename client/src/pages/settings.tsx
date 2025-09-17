@@ -3732,29 +3732,26 @@ export default function Settings() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              Xác nhận xóa sản phẩm
+              {t("settings.confirmDeleteProductTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  Bạn có chắc chắn muốn xóa sản phẩm{" "}
+                  {t("settings.confirmDeleteProductDesc")}{" "}
                   <span className="font-semibold text-gray-900">
                     "{productToDelete?.name}"
-                  </span>{" "}
-                  không?
+                  </span>?
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
-                      tác. Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                      <strong>{t("common.warning")}:</strong> {t("settings.deleteProductWarning")}
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Điều này sẽ ảnh hưởng đến các đơn hàng và báo cáo có chứa sản
-                  phẩm này.
+                  {t("settings.deleteProductDetails")}
                 </p>
               </div>
             </AlertDialogDescription>
@@ -3767,14 +3764,14 @@ export default function Settings() {
               }}
               className="hover:bg-gray-100"
             >
-              Hủy bỏ
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteProduct}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Xóa sản phẩm
+              {t("settings.deleteProductAction")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
