@@ -897,41 +897,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalCount = totalCountResult?.count || 0;
       const totalPages = limitNum ? Math.ceil(totalCount / limitNum) : 1;
 
-      // Get paginated orders
+      // Get paginated orders with proper field selection
       const orderBy =
         sortOrder === "asc"
-          ? asc(orders[sortBy as keyof typeof orders] || orders.orderedAt)
-          : desc(orders[sortBy as keyof typeof orders] || orders.orderedAt);
+          ? asc(orders.orderedAt)
+          : desc(orders.orderedAt);
 
       let ordersQuery = database
-        .select({
-          id: orders.id,
-          orderNumber: orders.orderNumber,
-          tableId: orders.tableId,
-          employeeId: orders.employeeId,
-          status: orders.status,
-          customerName: orders.customerName,
-          customerCode: orders.customerTaxCode, // Add customer code from customerTaxCode field
-          customerTaxCode: orders.customerTaxCode, // Keep original field for compatibility
-          customerPhone: orders.customerPhone,
-          customerAddress: orders.customerAddress,
-          customerEmail: orders.customerEmail,
-          customerCount: orders.customerCount,
-          subtotal: orders.subtotal,
-          tax: orders.tax,
-          discount: orders.discount,
-          total: orders.total,
-          paymentMethod: orders.paymentMethod,
-          paymentStatus: orders.paymentStatus,
-          salesChannel: orders.salesChannel,
-          einvoiceStatus: orders.einvoiceStatus,
-          templateNumber: orders.templateNumber,
-          symbol: orders.symbol,
-          invoiceNumber: orders.invoiceNumber,
-          notes: orders.notes,
-          orderedAt: orders.orderedAt,
-          paidAt: orders.paidAt,
-        })
+        .select()
         .from(orders)
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(orderBy);
@@ -947,30 +920,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `✅ Orders list API - Found ${ordersResult.length} orders${limitNum ? ` (page ${pageNum}/${totalPages})` : ' (all orders)'}`,
       );
 
+      // Process orders to ensure consistent field structure
+      const processedOrders = ordersResult.map(order => ({
+        ...order,
+        customerCode: order.customerTaxCode || null,
+        discount: order.discount || "0.00",
+      }));
+
       // Fetch order items for each order
       const ordersWithItems = await Promise.all(
-        ordersResult.map(async (order) => {
+        processedOrders.map(async (order) => {
           try {
             const items = await database
-              .select({
-                id: orderItemsTable.id,
-                orderId: orderItemsTable.orderId,
-                productId: orderItemsTable.productId,
-                quantity: orderItemsTable.quantity,
-                unitPrice: orderItemsTable.unitPrice,
-                total: orderItemsTable.total,
-                discount: orderItemsTable.discount,
-                notes: orderItemsTable.notes,
-                productName: products.name,
-                productSku: products.sku,
-              })
+              .select()
               .from(orderItemsTable)
               .leftJoin(products, eq(orderItemsTable.productId, products.id))
               .where(eq(orderItemsTable.orderId, order.id));
 
+            const processedItems = items.map(item => ({
+              id: item.order_items.id,
+              orderId: item.order_items.orderId,
+              productId: item.order_items.productId,
+              quantity: item.order_items.quantity,
+              unitPrice: item.order_items.unitPrice,
+              total: item.order_items.total,
+              discount: item.order_items.discount || "0.00",
+              notes: item.order_items.notes,
+              productName: item.products?.name || "Unknown Product",
+              productSku: item.products?.sku || "",
+            }));
+
             return {
               ...order,
-              items: items || []
+              items: processedItems
             };
           } catch (itemError) {
             console.error(`❌ Error fetching items for order ${order.id}:`, itemError);
