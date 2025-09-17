@@ -8,6 +8,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     amountShortfall: "부족 금액",
     delete: "삭제",
     edit: "편집",
+    remotemanagerproduct:
+      "비활성화된 모든 상품을 데이터베이스에서 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
     add: "추가",
     areyouremoteorder: "원격 주문을 취소하시겠습니까?",
     productUpdateSuccess: "상품이 업데이트되었습니다",
@@ -279,7 +281,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     usageStatus: "사용 상태:",
 
     // E-invoice status
-    einvoiceStatusLabel: "전자세금계산서 상태:",
+    einvoiceStatusLabel: "전자세C��계산서 상태:",
     invoiceStatusLabel: "송장 상태:",
     einvoiceStatus: {
       notPublished: "발행되지 않음",
@@ -368,7 +370,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
       // Payment notes
       posPaymentNote: "POS 현금 결제 - 금액: {amount}, 거스름돈: {change}",
-      
+
       // Product pricing
       afterTaxPrice: "세후 가격",
       pricePlaceholder: "4000",
@@ -389,6 +391,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     product: "상품",
     combo: "콤보",
     service: "서비스",
+    confimremote:
+      "상품 productname 데이터베이스에서 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
 
     // Unit indicators
     perUnit: "개당",
@@ -399,6 +403,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     delete: "Delete",
     edit: "Edit",
     add: "Add",
+    remotemanagerproduct:
+      "Are you sure you want to delete all inactive products from the database? This action cannot be undone.",
     search: "Search",
     filter: "Filter",
     areyouremoteorder: "Are you sure you want to cancel this remote order?",
@@ -671,7 +677,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       pos: "Counter Sales",
       online: "Online Sales",
       delivery: "Delivery",
-      
+
       // Product pricing
       afterTaxPrice: "After Tax Price",
       pricePlaceholder: "4000",
@@ -683,6 +689,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     // Time periods
     days30: "30 days",
     days60: "60 days",
+    confimremote:
+      "Are you sure you want to permanently delete productname from the database? This action cannot be undone.",
     days90: "90 days",
     days180: "180 days",
     days365: "365 days",
@@ -706,6 +714,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     filter: "Lọc",
     export: "Xuất",
     import: "Nhập",
+    confimremote:
+      "Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm productname khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.",
+    remotemanagerproduct:
+      "Bạn có chắc chắn muốn xóa vĩnh viễn tất cả sản phẩm vô hiệu khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.",
     loading: "Đang tải...",
     noData: "Không có dữ liệu",
     confirm: "Xác nhận",
@@ -977,7 +989,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       pos: "Bán tại quầy",
       online: "Bán online",
       delivery: "Giao hàng",
-      
+
       // Product pricing
       afterTaxPrice: "Giá sau thuế",
       pricePlaceholder: "4000",

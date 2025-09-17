@@ -47,20 +47,23 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, Category } from "@shared/schema";
 
-const stockUpdateSchema = (t: any) => z.object({
-  productId: z.number(),
-  quantity: z.number().min(1, t("inventory.quantityMinError") || "Quantity must be at least 1"),
-  type: z.enum(["add", "subtract", "set"]),
-  notes: z.string().optional(),
-  trackInventory: z.boolean().optional(),
-  // Fields for new product creation
-  name: z.string().min(1, "Tên sản phẩm là bắt buộc"),
-  sku: z.string().min(1, "SKU là bắt buộc"),
-  price: z.string().optional(),
-  categoryId: z.number().optional(),
-  productType: z.number().optional(),
-  taxRate: z.string().optional(),
-});
+const stockUpdateSchema = (t: any) =>
+  z.object({
+    productId: z.number(),
+    quantity: z
+      .number()
+      .min(1, t("inventory.quantityMinError") || "Quantity must be at least 1"),
+    type: z.enum(["add", "subtract", "set"]),
+    notes: z.string().optional(),
+    trackInventory: z.boolean().optional(),
+    // Fields for new product creation
+    name: z.string().min(1, "Tên sản phẩm là bắt buộc"),
+    sku: z.string().min(1, "SKU là bắt buộc"),
+    price: z.string().optional(),
+    categoryId: z.number().optional(),
+    productType: z.number().optional(),
+    taxRate: z.string().optional(),
+  });
 
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
 
@@ -70,7 +73,7 @@ export default function InventoryPage() {
 
   // Get search parameter from URL
   const urlParams = new URLSearchParams(window.location.search);
-  const initialSearch = urlParams.get('search') || '';
+  const initialSearch = urlParams.get("search") || "";
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -137,7 +140,13 @@ export default function InventoryPage() {
   });
 
   const updateProductTrackInventoryMutation = useMutation({
-    mutationFn: async ({ id, trackInventory }: { id: number; trackInventory: boolean }) => {
+    mutationFn: async ({
+      id,
+      trackInventory,
+    }: {
+      id: number;
+      trackInventory: boolean;
+    }) => {
       const response = await fetch(`/api/products/${id}/track-inventory`, {
         method: "PATCH",
         headers: {
@@ -240,13 +249,20 @@ export default function InventoryPage() {
     onError: (error) => {
       console.error("Delete product error:", error);
 
-      let errorMessage = t("inventory.deleteFailedDescription") || "Không thể xóa sản phẩm. Vui lòng thử lại.";
+      let errorMessage =
+        t("inventory.deleteFailedDescription") ||
+        "Không thể xóa sản phẩm. Vui lòng thử lại.";
 
-      if (error instanceof Error && error.message.includes("Cannot delete product")) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Cannot delete product")
+      ) {
         if (error.message.includes("transactions")) {
-          errorMessage = "Không thể xóa sản phẩm vì đã được sử dụng trong các giao dịch bán hàng.";
+          errorMessage =
+            "Không thể xóa sản phẩm vì đã được sử dụng trong các giao dịch bán hàng.";
         } else if (error.message.includes("orders")) {
-          errorMessage = "Không thể xóa sản phẩm vì đã được sử dụng trong các đơn hàng.";
+          errorMessage =
+            "Không thể xóa sản phẩm vì đã được sử dụng trong các đơn hàng.";
         }
       }
 
@@ -284,8 +300,6 @@ export default function InventoryPage() {
       });
     },
   });
-
-
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
@@ -348,7 +362,7 @@ export default function InventoryPage() {
   const handleDeleteProduct = (product: Product) => {
     if (
       window.confirm(
-        `Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${product.name}" khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.`,
+        `${t("common.confimremote").replace("productname", product.name)}`,
       )
     ) {
       deleteProductMutation.mutate(product.id);
@@ -356,11 +370,7 @@ export default function InventoryPage() {
   };
 
   const handleCleanupInactiveProducts = () => {
-    if (
-      window.confirm(
-        "Bạn có chắc chắn muốn xóa vĩnh viễn tất cả sản phẩm vô hiệu khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.",
-      )
-    ) {
+    if (window.confirm(`${t("common.remotemanagerproduct")}`)) {
       cleanupMutation.mutate();
     }
   };
@@ -389,7 +399,7 @@ export default function InventoryPage() {
         quantity: data.quantity,
         type: data.type,
         notes: data.notes,
-        trackInventory: data.trackInventory
+        trackInventory: data.trackInventory,
       };
       console.log("Updating stock with data:", updateData);
       updateStockMutation.mutate(updateData);
@@ -583,9 +593,7 @@ export default function InventoryPage() {
                           </div>
                         </th>
                         <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
-                          <div className="leading-tight break-words">
-                            SKU
-                          </div>
+                          <div className="leading-tight break-words">SKU</div>
                         </th>
                         <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[100px]">
                           <div className="leading-tight break-words">
@@ -649,19 +657,20 @@ export default function InventoryPage() {
                               </div>
                             </td>
                             <td className="py-4 px-2 text-gray-600">
-                              <div className="break-words">
-                                {product.sku}
-                              </div>
+                              <div className="break-words">{product.sku}</div>
                             </td>
                             <td className="py-4 px-2">
                               <Badge
                                 variant="outline"
                                 className="text-blue-700 border-blue-300 text-xs"
                               >
-                                {product.productType === 1 ? t("tables.goodsType") : 
-                                 product.productType === 2 ? t("tables.materialType") : 
-                                 product.productType === 3 ? t("tables.finishedProductType") : 
-                                 t("tables.goodsType")}
+                                {product.productType === 1
+                                  ? t("tables.goodsType")
+                                  : product.productType === 2
+                                    ? t("tables.materialType")
+                                    : product.productType === 3
+                                      ? t("tables.finishedProductType")
+                                      : t("tables.goodsType")}
                               </Badge>
                             </td>
                             <td className="py-4 px-2">
@@ -678,7 +687,9 @@ export default function InventoryPage() {
                               </span>
                             </td>
                             <td className="py-4 px-2 text-center">
-                              <Badge className={`${status.color} text-white text-xs`}>
+                              <Badge
+                                className={`${status.color} text-white text-xs`}
+                              >
                                 {status.label}
                               </Badge>
                             </td>
@@ -831,9 +842,15 @@ export default function InventoryPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="1">{t("tables.goodsType")}</SelectItem>
-                              <SelectItem value="2">{t("tables.materialType")}</SelectItem>
-                              <SelectItem value="3">{t("tables.finishedProductType")}</SelectItem>
+                              <SelectItem value="1">
+                                {t("tables.goodsType")}
+                              </SelectItem>
+                              <SelectItem value="2">
+                                {t("tables.materialType")}
+                              </SelectItem>
+                              <SelectItem value="3">
+                                {t("tables.finishedProductType")}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -863,7 +880,9 @@ export default function InventoryPage() {
                       name="taxRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("common.comboValues.taxPercentage")}</FormLabel>
+                          <FormLabel>
+                            {t("common.comboValues.taxPercentage")}
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -966,9 +985,7 @@ export default function InventoryPage() {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          {t("inventory.trackInventory")}
-                        </FormLabel>
+                        <FormLabel>{t("inventory.trackInventory")}</FormLabel>
                       </div>
                     </FormItem>
                   )}
