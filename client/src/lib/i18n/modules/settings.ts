@@ -173,6 +173,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     // Product form dialog
     addProductTitle: "상품 추가",
     addProductDesc: "새 상품 정보를 입력하세요",
+    editProductTitle: "상품 수정",
     editProductDesc: "상품 정보를 수정하세요",
     productDescriptionPlaceholder: "상품 설명을 입력하세요 (선택사항)",
     productDescriptionLabel: "상품 설명",
@@ -369,6 +370,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     // Product form dialog
     addProductTitle: "Add Product",
     addProductDesc: "Enter new product information",
+    editProductTitle: "Edit Product",
     editProductDesc: "Update product information",
     productDescriptionPlaceholder: "Enter product description (optional)",
     productDescriptionLabel: "Product Description",
@@ -565,6 +567,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     // Product form dialog
     addProductTitle: "Thêm sản phẩm",
     addProductDesc: "Nhập thông tin sản phẩm mới",
+    editProductTitle: "Sửa sản phẩm",
     editProductDesc: "Cập nhật thông tin sản phẩm",
     productDescriptionPlaceholder: "Nhập mô tả sản phẩm (tùy chọn)",
     productDescriptionLabel: "Mô tả sản phẩm",
