@@ -4027,7 +4027,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     {selectedOrder.orderNumber}
                   </span>
                 </div>
-</old_str>
                 <div className="flex justify-between text-sm">
                   <span>Tổng gốc:</span>
                   <span className="font-medium">
@@ -4483,19 +4482,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             <div className="space-y-4">
               {/* Payment Summary */}
               <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-2">{t("orders.mixedPaymentSummary")}</h4>
-</old_str>
+                <h4 className="font-medium mb-2">Tóm tắt thanh toán</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span>{t("orders.totalOrder")}:</span>
-</old_str>
+                    <span>Tổng đơn hàng:</span>
                     <span className="font-medium">
                       {Number(selectedOrder?.total || 0).toLocaleString()} ₫
                     </span>
                   </div>
                   <div className="flex justify-between text-blue-600">
-                    <span>{t("orders.pointsPayment")}:</span>
-</old_str>
+                    <span>Thanh toán bằng điểm:</span>
                     <span className="font-medium">
                       {mixedPaymentData.pointsToUse.toLocaleString()}P
                       <span className="ml-1">
@@ -4508,8 +4504,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     </span>
                   </div>
                   <div className="border-t pt-2 flex justify-between font-medium text-orange-600">
-                    <span>{t("orders.remainingAmount")}:</span>
-</old_str>
+                    <span>Cần thanh toán thêm:</span>
                     <p className="text-sm text-gray-500">
                       {Math.floor(
                         mixedPaymentData.remainingAmount,
