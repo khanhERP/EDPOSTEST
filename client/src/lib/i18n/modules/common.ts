@@ -446,7 +446,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     // Spending thresholds
     editSpendingThreshold: "멤버십 등급 기준 수정",
     saveSpendingThreshold: "멤버십 등급 기준 저장",
-    },
 
     // Time periods
     days30: "30일",
@@ -818,7 +817,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     // Spending thresholds
     editSpendingThreshold: "Edit Membership Thresholds",
     saveSpendingThreshold: "Save Membership Thresholds",
-    },
 
     // Time periods
     days30: "30 days",
@@ -1201,7 +1199,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     // Spending thresholds
     editSpendingThreshold: "Sửa mức chi tiêu nâng hạng",
     saveSpendingThreshold: "Lưu mức chi tiêu nâng hạng",
-    },
 
     // Product type
     productType: "Loại sản phẩm",
