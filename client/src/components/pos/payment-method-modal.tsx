@@ -1545,6 +1545,7 @@ export function PaymentMethodModal({
 
       invoiceData.receipt = {
         ...invoiceData.receipt,
+        tax: orderInfo?.tax,
         discount: receipt?.discount || orderInfo?.discount || 0,
       };
       // Set receipt data for modal
