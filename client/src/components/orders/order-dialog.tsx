@@ -713,7 +713,6 @@ export function OrderDialog({
       });
 
       console.log("Placing order:", { order, items });
-      );
       createOrderMutation.mutate({ order, items });
     }
   };
