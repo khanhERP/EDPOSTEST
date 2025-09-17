@@ -2905,22 +2905,22 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     {/* Table Number */}
                     <div className="relative">
                       <div
-                        className={`w-16 h-16 rounded-full ${statusConfig.color} flex items-center justify-center text-white font-bold shadow-lg border-2 border-white`}
+                        className={`px-4 py-2 rounded-lg ${statusConfig.color} flex items-center justify-center text-white font-bold shadow-lg border-2 border-white min-w-[80px] h-12`}
                         style={{
                           fontSize:
                             table.tableNumber.length > 8
-                              ? "0.65rem"
+                              ? "0.75rem"
                               : table.tableNumber.length > 5
-                                ? "0.8rem"
-                                : "0.95rem",
+                                ? "0.875rem"
+                                : "1rem",
                         }}
                       >
-                        <span className="text-center leading-none break-words px-1">
+                        <span className="text-center leading-none break-words whitespace-nowrap">
                           {table.tableNumber}
                         </span>
                       </div>
                       {activeOrder && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 rounded-full animate-pulse border-2 border-white shadow-md flex items-center justify-center">
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-500 rounded-full animate-pulse border-2 border-white shadow-md flex items-center justify-center">
                           <div className="w-2 h-2 bg-white rounded-full"></div>
                         </div>
                       )}
