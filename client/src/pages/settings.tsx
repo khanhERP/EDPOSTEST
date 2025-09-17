@@ -471,7 +471,7 @@ export default function Settings() {
     const newMethod = {
       id: paymentMethods.length + 1,
       name: t("common.comboValues.newPaymentMethod"),
-      nameKey: "newPayment",
+      nameKey: "newPaymentMethod", 
       type: "custom",
       enabled: false,
       icon: "💳",
