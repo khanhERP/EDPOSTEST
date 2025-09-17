@@ -2740,7 +2740,7 @@ export function OrderManagement() {
                 {selectedCustomer && (
                   <div className="mt-2 pt-2 border-t border-blue-200">
                     <p className="text-sm text-gray-600">
-                      Điểm có sẵn: {(selectedCustomer.points || 0).toLocaleString()}P
+                      {t('orders.availablePoints')}: {(selectedCustomer.points || 0).toLocaleString()}P
                       <span className="ml-2 text-green-600">
                         (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
                       </span>
@@ -2753,7 +2753,7 @@ export function OrderManagement() {
 
                       return customerPointsValue < finalTotal && (
                         <p className="text-sm text-orange-600 mt-1">
-                          Cần thanh toán thêm: {(finalTotal - customerPointsValue).toLocaleString()} ₫
+                          {t('orders.remainingAmount')}: {(finalTotal - customerPointsValue).toLocaleString()} ₫
                         </p>
                       );
                     })()}
