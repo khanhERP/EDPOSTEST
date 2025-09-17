@@ -36,6 +36,7 @@ export interface POSTranslations {
   sortByPrice: string;
   sortByStock: string;
   noProductsFound: string;
+  noProductsInCategory: string;
   searchProducts: string;
   scanBarcode: string;
   productScanned: string;
@@ -177,6 +178,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     sortByPrice: "가격순 정렬",
     sortByStock: "재고순 정렬",
     noProductsFound: "상품을 찾을 수 없습니다",
+    noProductsInCategory: "이 카테고리에는 상품이 없습니다",
     searchProducts: "상품 검색...",
     scanBarcode: "바코드 스캔",
     productScanned: "상품 스캔됨",
@@ -315,6 +317,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     sortByPrice: "Sort by Price",
     sortByStock: "Sort by Stock",
     noProductsFound: "No products found",
+    noProductsInCategory: "No products in this category",
     searchProducts: "Search products...",
     scanBarcode: "Scan Barcode",
     productScanned: "Product Scanned",
@@ -455,6 +458,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     sortByPrice: "Sắp xếp theo giá",
     sortByStock: "Sắp xếp theo tồn kho",
     noProductsFound: "Không tìm thấy sản phẩm",
+    noProductsInCategory: "Không có sản phẩm trong danh mục này",
     searchProducts: "Tìm kiếm sản phẩm...",
     scanBarcode: "Quét mã vạch",
     productScanned: "Đã quét sản phẩm",
