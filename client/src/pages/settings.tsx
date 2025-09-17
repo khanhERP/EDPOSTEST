@@ -1100,8 +1100,8 @@ export default function Settings() {
   const handleCreateEInvoice = () => {
     if (!validateEInvoiceForm()) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        title: t("common.error"),
+        description: t("common.comboValues.pleaseEnterRequired"),
         variant: "destructive",
       });
       return;
@@ -1113,8 +1113,8 @@ export default function Settings() {
   const handleUpdateEInvoice = () => {
     if (!validateEInvoiceForm()) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        title: t("common.error"),
+        description: t("common.comboValues.pleaseEnterRequired"),
         variant: "destructive",
       });
       return;
@@ -2014,7 +2014,7 @@ export default function Settings() {
                                           colSpan={9}
                                           className="p-8 text-center text-sm text-gray-500"
                                         >
-                                          Đang tải dữ liệu...
+                                          {t("common.comboValues.loadingData")}
                                         </td>
                                       </tr>
                                     ) : invoiceTemplates.length === 0 ? (
@@ -2025,9 +2025,9 @@ export default function Settings() {
                                         >
                                           <div className="flex flex-col items-center gap-2">
                                             <SettingsIcon className="w-8 h-8 text-gray-400" />
-                                            <p>Chưa có mẫu số HĐĐT nào</p>
+                                            <p>{t("common.comboValues.noTemplatesFound")}</p>
                                             <p className="text-xs">
-                                              Nhấn "Thêm mẫu số" để bắt đầu
+                                              {t("common.comboValues.clickAddTemplateToStart")}
                                             </p>
                                           </div>
                                         </td>
