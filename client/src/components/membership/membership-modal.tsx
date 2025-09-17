@@ -283,7 +283,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      Lưu mức chi tiêu
+                      {t("common.saveSpendingThreshold")}
                     </Button>
                     <Button
                       onClick={() => setIsEditingThresholds(false)}
@@ -301,7 +301,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                     size="sm"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    Sửa mức chi tiêu
+                    {t("common.editSpendingThreshold")}
                   </Button>
                 )}
                 <Button
