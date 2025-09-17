@@ -1331,12 +1331,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       });
     } else {
       // Mixed payment - use all available points + other payment method
-      const remainingAmount = finalTotal - pointsValue;
       setMixedPaymentData({
         customerId: selectedCustomer.id,
         pointsToUse: customerPoints,
         orderId: selectedOrder.id,
-        remainingAmount,
+        remainingAmount: finalTotal - pointsValue,
       });
       setPointsPaymentOpen(false);
       setMixedPaymentOpen(true);
@@ -2905,7 +2904,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     {/* Table Number */}
                     <div className="relative">
                       <div
-                        className={`px-4 py-2 rounded-lg ${statusConfig.color} flex items-center justify-center text-white font-bold shadow-lg border-2 border-white min-w-[80px] h-12`}
+                        className={`px-3 py-2 rounded-lg ${statusConfig.color} flex items-center justify-center font-bold shadow-lg border-2 border-white min-w-[80px] max-w-[120px] h-12`}
                         style={{
                           fontSize:
                             table.tableNumber.length > 8
@@ -2949,10 +2948,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         }
                         className="text-xs rounded-full px-3 py-1 font-medium shadow-sm border-0"
                         style={{
-                          backgroundColor: table.status === "available" 
-                            ? "#dcfce7" 
-                            : table.status === "occupied" 
-                            ? "#fecaca" 
+                          backgroundColor: table.status === "available"
+                            ? "#dcfce7"
+                            : table.status === "occupied"
+                            ? "#fecaca"
                             : table.status === "reserved"
                             ? "#fef3c7"
                             : "#f3f4f6",
@@ -3350,8 +3349,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           sku:
                             item.productSku ||
                             `FOOD${String(item.productId).padStart(5, "0")}`,
-                          taxRate: parseFloat(product?.taxRate || "0"),
-                          afterTaxPrice: product?.afterTaxPrice || null,
+                          taxRate: parseFloat(item.taxRate || product?.taxRate || "0"),
+                          afterTaxPrice: item.afterTaxPrice || product?.afterTaxPrice,
                           discount: item.discount || "0",
                           discountAmount: item.discount,
                         };
@@ -3386,7 +3385,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       };
 
                       console.log(
-                        "📄 Table: Showing receipt preview like POS with exact Order Details values",
+                        "📄 Table: Showing receipt preview with exact Order Details values",
                       );
                       console.log("💰 Exact values passed:", {
                         subtotal: orderDetailsSubtotal,
@@ -3459,10 +3458,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         const discountAmount = selectedOrder
                           ? Number(selectedOrder.discount || 0)
                           : 0;
-                        const finalTotal = Math.max(
-                          0,
-                          grandTotal - discountAmount,
-                        );
+                        const finalTotal = Math.max(0, grandTotal - discountAmount);
 
                         // Create receipt data using EXACT same values as Order Details
                         const processedItems = orderItems.map((item: any) => ({
