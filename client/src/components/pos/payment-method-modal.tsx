@@ -776,6 +776,71 @@ export function PaymentMethodModal({
         );
         console.log(`💰 ${method} Discount amount:`, discountAmount);
 
+        // Prepare order items with discount distribution
+        let orderItems = (orderInfo.items || cartItems || []).map(
+          (item: any) => ({
+            productId: item.productId || item.id,
+            quantity: parseInt(item.quantity?.toString() || "1"),
+            unitPrice: item.unitPrice || item.price?.toString() || "0",
+            total:
+              item.total ||
+              (
+                parseFloat(item.price || "0") * parseInt(item.quantity || "1")
+              ).toString(),
+            notes: null,
+            discount: "0.00", // Will be calculated below
+          }),
+        );
+
+        // Distribute discount among items if discount exists
+        if (discountAmount > 0 && orderItems.length > 0) {
+          console.log("💰 Distributing discount among order items");
+
+          // Calculate total amount (subtotal before discount)
+          const totalAmount = orderItems.reduce((sum, item) => {
+            const unitPrice = Number(item.unitPrice || 0);
+            const quantity = Number(item.quantity || 0);
+            return sum + unitPrice * quantity;
+          }, 0);
+
+          if (totalAmount > 0) {
+            let allocatedDiscount = 0;
+
+            orderItems = orderItems.map((item, index) => {
+              const unitPrice = Number(item.unitPrice || 0);
+              const quantity = Number(item.quantity || 0);
+              const itemTotal = unitPrice * quantity;
+
+              let itemDiscount = 0;
+
+              if (index === orderItems.length - 1) {
+                // Last item gets remaining discount to ensure total matches exactly
+                itemDiscount = Math.max(0, discountAmount - allocatedDiscount);
+              } else {
+                // Calculate proportional discount
+                const proportionalDiscount = (discountAmount * itemTotal) / totalAmount;
+                itemDiscount = Math.round(proportionalDiscount);
+                allocatedDiscount += itemDiscount;
+              }
+
+              return {
+                ...item,
+                discount: itemDiscount.toFixed(2),
+              };
+            });
+
+            console.log("💰 Discount distribution completed:", {
+              totalDiscount: discountAmount,
+              itemsWithDiscount: orderItems.map(item => ({
+                productId: item.productId,
+                unitPrice: item.unitPrice,
+                quantity: item.quantity,
+                discount: item.discount
+              }))
+            });
+          }
+        }
+
         const orderData = {
           orderNumber: `ORD-${Date.now()}`,
           tableId: null, // POS orders don't have tables
@@ -792,21 +857,6 @@ export function PaymentMethodModal({
           paidAt: new Date().toISOString(),
           discount: discountAmount.toString(),
         };
-
-        // Prepare order items
-        const orderItems = (orderInfo.items || cartItems || []).map(
-          (item: any) => ({
-            productId: item.productId || item.id,
-            quantity: parseInt(item.quantity?.toString() || "1"),
-            unitPrice: item.unitPrice || item.price?.toString() || "0",
-            total:
-              item.total ||
-              (
-                parseFloat(item.price || "0") * parseInt(item.quantity || "1")
-              ).toString(),
-            notes: null,
-          }),
-        );
 
         console.log(`📝 Creating POS ${method} order:`, orderData);
         console.log(`📦 Order items:`, orderItems);
@@ -889,10 +939,10 @@ export function PaymentMethodModal({
                 const ordersResponse = await fetch('/api/orders');
                 const allOrders = await ordersResponse.json();
 
-                const otherActiveOrders = Array.isArray(allOrders) 
-                  ? allOrders.filter((o: any) => 
-                      o.tableId === updatedOrder.tableId && 
-                      o.id !== updatedOrder.id && 
+                const otherActiveOrders = Array.isArray(allOrders)
+                  ? allOrders.filter((o: any) =>
+                      o.tableId === updatedOrder.tableId &&
+                      o.id !== updatedOrder.id &&
                       !["paid", "cancelled"].includes(o.status)
                     )
                   : [];
@@ -979,18 +1029,91 @@ export function PaymentMethodModal({
         `🔄 TEMPORARY ORDER DETECTED - using receipt preview data for QR payment ${orderInfo.id}`,
       );
 
+      // Get discount amount and calculate distribution for QR payment
+      const discountAmount = Math.floor(
+        parseFloat(
+          receipt?.discount ||
+            receipt?.exactDiscount ||
+            orderForPayment?.discount ||
+            orderInfo?.discount ||
+            "0",
+        ),
+      );
+
+      console.log("💰 QR Order Creation: Discount amount:", discountAmount);
+
+      // Prepare order items with discount distribution
+      let orderItems = (orderInfo.items || cartItems || []).map(
+        (item: any) => ({
+          productId: item.productId || item.id,
+          quantity: parseInt(item.quantity?.toString() || "1"),
+          unitPrice: item.unitPrice || item.price?.toString() || "0",
+          total:
+            item.total ||
+            (
+              parseFloat(item.price || "0") * parseInt(item.quantity || "1")
+            ).toString(),
+          notes: null,
+          discount: "0.00", // Will be calculated below
+        }),
+      );
+
+      // Distribute discount among items if discount exists
+      if (discountAmount > 0 && orderItems.length > 0) {
+        console.log("💰 Distributing QR discount among order items");
+
+        // Calculate total amount (subtotal before discount)
+        const totalAmount = orderItems.reduce((sum, item) => {
+          const unitPrice = Number(item.unitPrice || 0);
+          const quantity = Number(item.quantity || 0);
+          return sum + unitPrice * quantity;
+        }, 0);
+
+        if (totalAmount > 0) {
+          let allocatedDiscount = 0;
+
+          orderItems = orderItems.map((item, index) => {
+            const unitPrice = Number(item.unitPrice || 0);
+            const quantity = Number(item.quantity || 0);
+            const itemTotal = unitPrice * quantity;
+
+            let itemDiscount = 0;
+
+            if (index === orderItems.length - 1) {
+              // Last item gets remaining discount to ensure total matches exactly
+              itemDiscount = Math.max(0, discountAmount - allocatedDiscount);
+            } else {
+              // Calculate proportional discount
+              const proportionalDiscount = (discountAmount * itemTotal) / totalAmount;
+              itemDiscount = Math.round(proportionalDiscount);
+              allocatedDiscount += itemDiscount;
+            }
+
+            return {
+              ...item,
+              discount: itemDiscount.toFixed(2),
+            };
+          });
+
+          console.log("💰 QR Discount distribution completed:", {
+            totalDiscount: discountAmount,
+            itemsWithDiscount: orderItems.map(item => ({
+              productId: item.productId,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              discount: item.discount
+            }))
+          });
+        }
+      }
+
       // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
       const receiptSubtotal =
         receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
       const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
-      const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
+      const receiptTotal =
+        receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
-      console.log("💰 QR Complete: Using exact receipt preview data:", {
-        receiptSubtotal,
-        receiptTax,
-        receiptTotal,
-        source: "receipt_preview_exact",
-      });
 
       const orderData = {
         orderNumber: `ORD-${Date.now()}`,
@@ -1006,22 +1129,9 @@ export function PaymentMethodModal({
         total: receiptTotal.toString(),
         notes: `POS QR Payment - Transaction: ${currentTransactionUuid || "N/A"}`,
         paidAt: new Date().toISOString(),
+        discount: discountAmount.toString(),
       };
 
-      // Prepare order items
-      const orderItems = (orderInfo.items || cartItems || []).map(
-        (item: any) => ({
-          productId: item.productId || item.id,
-          quantity: parseInt(item.quantity?.toString() || "1"),
-          unitPrice: item.unitPrice || item.price?.toString() || "0",
-          total:
-            item.total ||
-            (
-              parseFloat(item.price || "0") * parseInt(item.quantity || "1")
-            ).toString(),
-          notes: null,
-        }),
-      );
 
       console.log("📝 Creating POS QR order:", orderData);
       console.log("📦 Order items:", orderItems);
@@ -1182,7 +1292,7 @@ export function PaymentMethodModal({
         `🔄 TEMPORARY ORDER DETECTED - using receipt preview data for cash payment ${orderInfo.id}`,
       );
 
-      // Get discount amount from multiple sources
+      // Get discount amount and calculate distribution for cash payment
       const discountAmount = Math.floor(
         parseFloat(
           receipt?.discount ||
@@ -1192,7 +1302,74 @@ export function PaymentMethodModal({
             "0",
         ),
       );
-      console.log("💰 Discount amount bán hàng trực tiếp:", discountAmount);
+
+      console.log("💰 Cash Order Creation: Discount amount:", discountAmount);
+
+      // Prepare order items with discount distribution
+      let orderItems = (orderInfo.items || cartItems || []).map(
+        (item: any) => ({
+          productId: item.productId || item.id,
+          quantity: parseInt(item.quantity?.toString() || "1"),
+          unitPrice: item.unitPrice || item.price?.toString() || "0",
+          total:
+            item.total ||
+            (
+              parseFloat(item.price || "0") * parseInt(item.quantity || "1")
+            ).toString(),
+          notes: null,
+          discount: "0.00", // Will be calculated below
+        }),
+      );
+
+      // Distribute discount among items if discount exists
+      if (discountAmount > 0 && orderItems.length > 0) {
+        console.log("💰 Distributing cash discount among order items");
+
+        // Calculate total amount (subtotal before discount)
+        const totalAmount = orderItems.reduce((sum, item) => {
+          const unitPrice = Number(item.unitPrice || 0);
+          const quantity = Number(item.quantity || 0);
+          return sum + unitPrice * quantity;
+        }, 0);
+
+        if (totalAmount > 0) {
+          let allocatedDiscount = 0;
+
+          orderItems = orderItems.map((item, index) => {
+            const unitPrice = Number(item.unitPrice || 0);
+            const quantity = Number(item.quantity || 0);
+            const itemTotal = unitPrice * quantity;
+
+            let itemDiscount = 0;
+
+            if (index === orderItems.length - 1) {
+              // Last item gets remaining discount to ensure total matches exactly
+              itemDiscount = Math.max(0, discountAmount - allocatedDiscount);
+            } else {
+              // Calculate proportional discount
+              const proportionalDiscount = (discountAmount * itemTotal) / totalAmount;
+              itemDiscount = Math.round(proportionalDiscount);
+              allocatedDiscount += itemDiscount;
+            }
+
+            return {
+              ...item,
+              discount: itemDiscount.toFixed(2),
+            };
+          });
+
+          console.log("💰 Cash Discount distribution completed:", {
+            totalDiscount: discountAmount,
+            itemsWithDiscount: orderItems.map(item => ({
+              productId: item.productId,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              discount: item.discount
+            }))
+          });
+        }
+      }
+
 
       // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
       const receiptSubtotal =
@@ -1202,12 +1379,6 @@ export function PaymentMethodModal({
         (receipt?.exactTotal || orderInfo?.exactTotal || 0) +
         (discountAmount || 0);
 
-      console.log("💰 Cash Complete: Using exact receipt preview data:", {
-        receiptSubtotal,
-        receiptTax,
-        receiptTotal,
-        source: "receipt_preview_exact",
-      });
 
       const orderData = {
         orderNumber: `ORD-${Date.now()}`,
@@ -1225,21 +1396,6 @@ export function PaymentMethodModal({
         paidAt: new Date(),
         discount: discountAmount.toString(),
       };
-
-      // Prepare order items
-      const orderItems = (orderInfo.items || cartItems || []).map(
-        (item: any) => ({
-          productId: item.productId || item.id,
-          quantity: parseInt(item.quantity?.toString() || "1"),
-          unitPrice: item.unitPrice || item.price?.toString() || "0",
-          total:
-            item.total ||
-            (
-              parseFloat(item.price || "0") * parseInt(item.quantity || "1")
-            ).toString(),
-          notes: null,
-        }),
-      );
 
       console.log("📝 Creating POS order:", orderData);
       console.log("📦 Order items:", orderItems);
