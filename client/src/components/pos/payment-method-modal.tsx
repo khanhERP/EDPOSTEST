@@ -818,7 +818,8 @@ export function PaymentMethodModal({
                 itemDiscount = Math.max(0, discountAmount - allocatedDiscount);
               } else {
                 // Calculate proportional discount
-                const proportionalDiscount = (discountAmount * itemTotal) / totalAmount;
+                const proportionalDiscount =
+                  (discountAmount * itemTotal) / totalAmount;
                 itemDiscount = Math.round(proportionalDiscount);
                 allocatedDiscount += itemDiscount;
               }
@@ -831,12 +832,12 @@ export function PaymentMethodModal({
 
             console.log("💰 Discount distribution completed:", {
               totalDiscount: discountAmount,
-              itemsWithDiscount: orderItems.map(item => ({
+              itemsWithDiscount: orderItems.map((item) => ({
                 productId: item.productId,
                 unitPrice: item.unitPrice,
                 quantity: item.quantity,
-                discount: item.discount
-              }))
+                discount: item.discount,
+              })),
             });
           }
         }
@@ -921,65 +922,88 @@ export function PaymentMethodModal({
 
           if (updateResponse.ok) {
             const updatedOrder = await updateResponse.json();
-            console.log(`✅ Order updated with ${method} payment successfully:`, {
-              orderId: updatedOrder.id,
-              orderNumber: updatedOrder.orderNumber,
-              status: updatedOrder.status,
-              paymentMethod: updatedOrder.paymentMethod,
-              paymentStatus: updatedOrder.paymentStatus,
-              paidAt: updatedOrder.paidAt,
-            });
+            console.log(
+              `✅ Order updated with ${method} payment successfully:`,
+              {
+                orderId: updatedOrder.id,
+                orderNumber: updatedOrder.orderNumber,
+                status: updatedOrder.status,
+                paymentMethod: updatedOrder.paymentMethod,
+                paymentStatus: updatedOrder.paymentStatus,
+                paidAt: updatedOrder.paidAt,
+              },
+            );
 
             // Update table status if order has a table
             if (updatedOrder.tableId) {
               try {
-                console.log(`🔄 Checking table status update for table ${updatedOrder.tableId} after ${method} payment`);
+                console.log(
+                  `🔄 Checking table status update for table ${updatedOrder.tableId} after ${method} payment`,
+                );
 
                 // Check if there are any other unpaid orders on this table
-                const ordersResponse = await fetch('/api/orders');
+                const ordersResponse = await fetch("/api/orders");
                 const allOrders = await ordersResponse.json();
 
                 const otherActiveOrders = Array.isArray(allOrders)
-                  ? allOrders.filter((o: any) =>
-                      o.tableId === updatedOrder.tableId &&
-                      o.id !== updatedOrder.id &&
-                      !["paid", "cancelled"].includes(o.status)
+                  ? allOrders.filter(
+                      (o: any) =>
+                        o.tableId === updatedOrder.tableId &&
+                        o.id !== updatedOrder.id &&
+                        !["paid", "cancelled"].includes(o.status),
                     )
                   : [];
 
-                console.log(`🔍 Other active orders on table ${updatedOrder.tableId}:`, {
-                  otherOrdersCount: otherActiveOrders.length,
-                  otherOrders: otherActiveOrders.map(o => ({
-                    id: o.id,
-                    orderNumber: o.orderNumber,
-                    status: o.status
-                  }))
-                });
+                console.log(
+                  `🔍 Other active orders on table ${updatedOrder.tableId}:`,
+                  {
+                    otherOrdersCount: otherActiveOrders.length,
+                    otherOrders: otherActiveOrders.map((o) => ({
+                      id: o.id,
+                      orderNumber: o.orderNumber,
+                      status: o.status,
+                    })),
+                  },
+                );
 
                 // If no other unpaid orders, update table to available
                 if (otherActiveOrders.length === 0) {
-                  console.log(`🔄 Updating table ${updatedOrder.tableId} to available after ${method} payment`);
+                  console.log(
+                    `🔄 Updating table ${updatedOrder.tableId} to available after ${method} payment`,
+                  );
 
-                  const tableUpdateResponse = await fetch(`/api/tables/${updatedOrder.tableId}/status`, {
-                    method: "PUT",
-                    headers: {
-                      "Content-Type": "application/json",
+                  const tableUpdateResponse = await fetch(
+                    `/api/tables/${updatedOrder.tableId}/status`,
+                    {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        status: "available",
+                      }),
                     },
-                    body: JSON.stringify({
-                      status: "available"
-                    }),
-                  });
+                  );
 
                   if (tableUpdateResponse.ok) {
-                    console.log(`✅ Table ${updatedOrder.tableId} updated to available after ${method} payment`);
+                    console.log(
+                      `✅ Table ${updatedOrder.tableId} updated to available after ${method} payment`,
+                    );
                   } else {
-                    console.error(`❌ Failed to update table ${updatedOrder.tableId} status after ${method} payment`);
+                    console.error(
+                      `❌ Failed to update table ${updatedOrder.tableId} status after ${method} payment`,
+                    );
                   }
                 } else {
-                  console.log(`⏳ Table ${updatedOrder.tableId} still has ${otherActiveOrders.length} active orders, keeping occupied status`);
+                  console.log(
+                    `⏳ Table ${updatedOrder.tableId} still has ${otherActiveOrders.length} active orders, keeping occupied status`,
+                  );
                 }
               } catch (tableError) {
-                console.error(`❌ Error updating table status after ${method} payment:`, tableError);
+                console.error(
+                  `❌ Error updating table status after ${method} payment:`,
+                  tableError,
+                );
               }
             }
 
@@ -997,7 +1021,10 @@ export function PaymentMethodModal({
             );
           } else {
             const errorText = await updateResponse.text();
-            console.error(`❌ Failed to update order with ${method} payment:`, errorText);
+            console.error(
+              `❌ Failed to update order with ${method} payment:`,
+              errorText,
+            );
             toast({
               title: "Lỗi",
               description: `Không thể cập nhật phương thức thanh toán ${method}`,
@@ -1005,7 +1032,10 @@ export function PaymentMethodModal({
             });
           }
         } catch (error) {
-          console.error(`❌ Error updating order with ${method} payment:`, error);
+          console.error(
+            `❌ Error updating order with ${method} payment:`,
+            error,
+          );
           toast({
             title: "Lỗi",
             description: `Lỗi khi xử lý thanh toán ${method}`,
@@ -1084,7 +1114,8 @@ export function PaymentMethodModal({
               itemDiscount = Math.max(0, discountAmount - allocatedDiscount);
             } else {
               // Calculate proportional discount
-              const proportionalDiscount = (discountAmount * itemTotal) / totalAmount;
+              const proportionalDiscount =
+                (discountAmount * itemTotal) / totalAmount;
               itemDiscount = Math.round(proportionalDiscount);
               allocatedDiscount += itemDiscount;
             }
@@ -1097,12 +1128,12 @@ export function PaymentMethodModal({
 
           console.log("💰 QR Discount distribution completed:", {
             totalDiscount: discountAmount,
-            itemsWithDiscount: orderItems.map(item => ({
+            itemsWithDiscount: orderItems.map((item) => ({
               productId: item.productId,
               unitPrice: item.unitPrice,
               quantity: item.quantity,
-              discount: item.discount
-            }))
+              discount: item.discount,
+            })),
           });
         }
       }
@@ -1111,9 +1142,7 @@ export function PaymentMethodModal({
       const receiptSubtotal =
         receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
       const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
-      const receiptTotal =
-        receipt?.exactTotal || orderInfo?.exactTotal || 0;
-
+      const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
       const orderData = {
         orderNumber: `ORD-${Date.now()}`,
@@ -1131,7 +1160,6 @@ export function PaymentMethodModal({
         paidAt: new Date().toISOString(),
         discount: discountAmount.toString(),
       };
-
 
       console.log("📝 Creating POS QR order:", orderData);
       console.log("📦 Order items:", orderItems);
@@ -1338,7 +1366,6 @@ export function PaymentMethodModal({
           orderItems = orderItems.map((item, index) => {
             const unitPrice = Number(item.unitPrice || 0);
             const quantity = Number(item.quantity || 0);
-            const itemTotal = unitPrice * quantity;
 
             let itemDiscount = 0;
 
@@ -1347,11 +1374,14 @@ export function PaymentMethodModal({
               itemDiscount = Math.max(0, discountAmount - allocatedDiscount);
             } else {
               // Calculate proportional discount
-              const proportionalDiscount = (discountAmount * itemTotal) / totalAmount;
+              const proportionalDiscount =
+                (discountAmount * unitPrice) / totalAmount;
               itemDiscount = Math.round(proportionalDiscount);
               allocatedDiscount += itemDiscount;
             }
 
+            const itemTotal = unitPrice * quantity - itemDiscount;
+            item.total = itemTotal.toString();
             return {
               ...item,
               discount: itemDiscount.toFixed(2),
@@ -1360,25 +1390,21 @@ export function PaymentMethodModal({
 
           console.log("💰 Cash Discount distribution completed:", {
             totalDiscount: discountAmount,
-            itemsWithDiscount: orderItems.map(item => ({
+            itemsWithDiscount: orderItems.map((item) => ({
               productId: item.productId,
               unitPrice: item.unitPrice,
               quantity: item.quantity,
-              discount: item.discount
-            }))
+              discount: item.discount,
+            })),
           });
         }
       }
-
 
       // SỬ DỤNG TRỰC TIẾP DỮ LIỆU TỪ RECEIPT PREVIEW - KHÔNG TÍNH TOÁN LẠI
       const receiptSubtotal =
         receipt?.exactSubtotal || orderInfo?.exactSubtotal || 0;
       const receiptTax = receipt?.exactTax || orderInfo?.exactTax || 0;
-      const receiptTotal =
-        (receipt?.exactTotal || orderInfo?.exactTotal || 0) +
-        (discountAmount || 0);
-
+      const receiptTotal = receipt?.exactTotal || orderInfo?.exactTotal || 0;
 
       const orderData = {
         orderNumber: `ORD-${Date.now()}`,
