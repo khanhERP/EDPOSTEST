@@ -1917,14 +1917,8 @@ export class DatabaseStorage implements IStorage {
       orderData.paidAt = new Date(orderData.paidAt);
     }
 
-    // Calculate fields logic if needed
-    if (orderData.subtotal !== undefined && orderData.tax !== undefined) {
-      const calculatedTotal = Number(orderData.subtotal) + Number(orderData.tax);
-      if (!orderData.total) {
-        orderData.total = calculatedTotal.toString();
-        console.log(`✅ Storage: No calculation performed - saved exact frontend values`);
-      }
-    }
+    // NO calculation - use exact frontend values
+    console.log(`✅ Storage: Saving exact frontend values without any calculation or modification`);
 
     const updateData = {
       ...orderData,

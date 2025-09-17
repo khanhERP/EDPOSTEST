@@ -2060,69 +2060,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currentDiscount: existingOrder.discount,
       });
 
-      // Use EXACT values from frontend - NO CALCULATION AT ALL
+      // Use EXACT values from frontend - ZERO calculation, ZERO validation
       console.log(
-        `💰 Using EXACT values from frontend for order ${id} - NO recalculation, NO validation`,
+        `💰 Using PURE frontend values for order ${id} - NO calculation, NO validation, NO modification`,
       );
 
-      // Simply use whatever frontend sends, no fallback to existing values
-      if (orderData.subtotal !== undefined && orderData.subtotal !== null) {
-        console.log(
-          `💰 Frontend subtotal: ${orderData.subtotal} (saving as-is)`,
-        );
-      }
-
-      if (orderData.tax !== undefined && orderData.tax !== null) {
-        console.log(`💰 Frontend tax: ${orderData.tax} (saving as-is)`);
-      }
-
-      if (orderData.total !== undefined && orderData.total !== null) {
-        console.log(`💰 Frontend total: ${orderData.total} (saving as-is)`);
-      }
-
-      if (orderData.discount !== undefined && orderData.discount !== null) {
-        console.log(
-          `💰 Frontend discount: ${orderData.discount} (saving as-is)`,
-        );
-      }
-
-      console.log(`💰 Final data (pure frontend values):`, {
+      // Log what frontend sent but DO NOT modify anything
+      console.log(`💰 Frontend values (saving exactly as received):`, {
         subtotal: orderData.subtotal,
         tax: orderData.tax,
         discount: orderData.discount,
         total: orderData.total,
-        source: "pure_frontend_no_calculation",
+        source: "pure_frontend_exact_save",
       });
-
-      // Ensure total = subtotal + tax (discount stored separately)
-      if (orderData.subtotal && orderData.tax) {
-        const expectedTotal =
-          Number(orderData.subtotal) + Number(orderData.tax);
-
-        // If total is provided, validate it matches subtotal + tax
-        if (orderData.total) {
-          const actualTotal = Number(orderData.total);
-          if (Math.abs(expectedTotal - actualTotal) > 0.01) {
-            console.warn(
-              `⚠️ Storage: Total inconsistency detected, correcting:`,
-              {
-                subtotal: orderData.subtotal,
-                tax: orderData.tax,
-                providedTotal: orderData.total,
-                correctedTotal: expectedTotal.toFixed(2),
-              },
-            );
-            orderData.total = expectedTotal.toFixed(2);
-          }
-        } else {
-          // Calculate total if not provided
-          orderData.total = expectedTotal.toFixed(2);
-        }
-
-        console.log(
-          `✅ Storage: Total calculation: ${orderData.subtotal} + ${orderData.tax} = ${orderData.total}`,
-        );
-      }
 
       // Fetch existing items to compare quantities and calculate discount distribution
       const existingOrderItems = await db

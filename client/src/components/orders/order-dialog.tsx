@@ -185,41 +185,45 @@ export function OrderDialog({
             }
           }
 
-          // Step 2: Use EXACT displayed values from screen (like create mode)
+          // Step 2: Use EXACT displayed values from screen footer (NO recalculation)
           console.log(
-            `📝 Using EXACT displayed values for order ${existingOrder.id}`,
+            `📝 Using EXACT displayed values for order ${existingOrder.id} - NO recalculation`,
           );
 
-          // Get EXACT values that user sees on screen from footer calculations
-          const displayedSubtotal = Math.floor(calculateSubtotal());
-          const displayedTax = Math.floor(calculateTax());
-          const displayedTotal = Math.floor(calculateTotal());
+          // Get the EXACT displayed values from the footer calculations
+          const footerSubtotal = calculateSubtotal();
+          const footerTax = calculateTax();
+          const footerTotal = calculateTotal();
+
+          // Use floor to match exactly what user sees in footer
+          const displayedSubtotal = Math.floor(footerSubtotal);
+          const displayedTax = Math.floor(footerTax);
+          const displayedDiscount = Math.floor(discount);
+          const displayedTotal = Math.floor(footerTotal);
 
           console.log(
-            "💰 Edit mode - Using EXACT displayed values from screen:",
+            "💰 Edit mode - Using EXACT footer displayed values:",
             {
-              existingItemsCount: existingItems.length,
-              newItemsCount: cart.length,
-              displayedSubtotal: displayedSubtotal,
-              displayedTax: displayedTax,
-              displayedDiscount: Math.floor(discount),
-              displayedTotal: displayedTotal,
-              source: "exact_screen_display_edit_mode",
+              footerSubtotal,
+              footerTax,
+              footerTotal,
+              displayedSubtotal,
+              displayedTax,
+              displayedDiscount,
+              displayedTotal,
+              source: "footer_display_exact_match",
             },
           );
 
-          console.log(
-            `💰 Edit mode - Saving EXACT displayed totals: subtotal=${displayedSubtotal}, tax=${displayedTax}, discount=${Math.floor(discount)}, total=${displayedTotal}`,
-          );
           const updateResponse = await apiRequest(
             "PUT",
             `/api/orders/${existingOrder.id}`,
             {
               customerName: orderData.order.customerName,
               customerCount: orderData.order.customerCount,
-              subtotal: displayedSubtotal.toString(), // Use exact displayed values
-              tax: displayedTax.toString(),
-              discount: Math.floor(discount).toString(),
+              subtotal: displayedSubtotal.toString(),
+              tax: displayedTax.toString(), 
+              discount: displayedDiscount.toString(),
               total: displayedTotal.toString(),
             },
           );
