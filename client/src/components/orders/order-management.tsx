@@ -1995,7 +1995,7 @@ export function OrderManagement() {
                       <span className="text-lg font-bold text-green-600">
                         {(() => {
                           const finalTotal = getOrderTotal(order);
-                          
+
                           if (finalTotal === 0) {
                             return <span className="text-gray-400">Đang tính...</span>;
                           }
@@ -3123,7 +3123,7 @@ export function OrderManagement() {
 
             // Close all modals
             setOrderForPayment(null);
-            setOrderDetailsOpen(false);
+            setOrderDetailsOpen(null);
             setSelectedOrder(null);
             setPreviewReceipt(null);
 
