@@ -2730,7 +2730,7 @@ export function OrderManagement() {
                 {selectedOrder.discount && Number(selectedOrder.discount) > 0 && (
                   <div className="mt-1">
                     <p className="text-sm text-gray-600">
-                      Tổng gốc: {formatCurrency(orderDetailsCalculation.total)}
+                      {t("tables.subtotal")}: {formatCurrency(orderDetailsCalculation.total)}
                     </p>
                     <p className="text-sm text-red-600">
                       {t("reports.discount")}: -{formatCurrency(Math.floor(Number(selectedOrder.discount)))}
