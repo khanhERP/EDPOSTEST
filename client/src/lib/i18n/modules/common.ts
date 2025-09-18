@@ -487,6 +487,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     perUnit: "개당",
     invoiceprintingcompleted:
       "송장 인쇄가 완료되었습니다. 데이터가 업데이트되었습니다.",
+    newPaymentMethod: "새 결제 방법",
+    templateUsage: "템플릿 사용",
   },
   en: {
     save: "Save",
@@ -506,6 +508,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     import: "Import",
     loading: "Loading...",
     noData: "No Data",
+    templateUsage: "Template Usage",
     confirm: "Confirm",
     yes: "Yes",
     no: "No",
@@ -874,6 +877,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
     // Unit indicators
     perUnit: "per item",
+    newPaymentMethod: "New Payment Method",
   },
   vi: {
     save: "Lưu",
@@ -1188,6 +1192,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       noTemplatesFound: "Chưa có mẫu số HĐĐT nào",
       clickAddTemplateToStart: "Nhấn 'Thêm mẫu số' để bắt đầu",
       loadingData: "Đang tải dữ liệu...",
+      templateUsage: "Trạng thái sử dụng",
       searchKeyword: "Thử tìm kiếm với từ khóa khác",
       addFirstEmployee: "Thêm nhân viên đầu tiên để bắt đầu",
       noEmployeesFound: "Không tìm thấy nhân viên nào phù hợp",
@@ -1248,5 +1253,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     successTitle: "Thành công",
     templateUsage: "Trạng thái sử dụng",
     areyouremoteorder: "Bạn có chắc chắn muốn xóa đơn hàng này?",
+    newPaymentMethod: "Phương thức thanh toán mới",
   },
 };
