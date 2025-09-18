@@ -209,6 +209,13 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     deleteConnectionWarning: "이 작업은 되돌릴 수 없습니다. HĐĐT 연결이 시스템에서 영구적으로 삭제됩니다.",
     deleteConnectionDetails: "이는 전자 인보이스 발행에 영향을 줄 수 있습니다.",
     deleteConnectionAction: "연결 삭제",
+    
+    // Template deletion confirmation
+    confirmDeleteTemplateTitle: "템플릿 삭제 확인",
+    confirmDeleteTemplateDesc: "정말로 템플릿 \"{name}\"을 삭제하시겠습니까?",
+    deleteTemplateWarning: "이 작업은 되돌릴 수 없습니다. 템플릿이 시스템에서 영구적으로 삭제됩니다.",
+    deleteTemplateDetails: "이는 전자 인보이스 발행에 영향을 줄 수 있습니다.",
+    deleteTemplateAction: "템플릿 삭제",
   },
   en: {
     title: "Settings",
@@ -421,6 +428,13 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     deleteConnectionWarning: "This action cannot be undone. The HĐĐT connection will be permanently deleted from the system.",
     deleteConnectionDetails: "This may affect electronic invoice generation.",
     deleteConnectionAction: "Delete Connection",
+    
+    // Template deletion confirmation
+    confirmDeleteTemplateTitle: "Confirm Template Deletion",
+    confirmDeleteTemplateDesc: "Are you sure you want to delete template \"{name}\"?",
+    deleteTemplateWarning: "This action cannot be undone. The template will be permanently deleted from the system.",
+    deleteTemplateDetails: "This may affect electronic invoice generation.",
+    deleteTemplateAction: "Delete Template",
   },
   vi: {
     title: "Cài đặt",
@@ -633,5 +647,12 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     deleteConnectionWarning: "Hành động này không thể hoàn tác. Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.",
     deleteConnectionDetails: "Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.",
     deleteConnectionAction: "Xóa kết nối",
+    
+    // Template deletion confirmation
+    confirmDeleteTemplateTitle: "Xác nhận xóa mẫu số HĐĐT",
+    confirmDeleteTemplateDesc: "Bạn có chắc chắn muốn xóa mẫu số \"{name}\" không?",
+    deleteTemplateWarning: "Hành động này không thể hoàn tác. Mẫu số HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.",
+    deleteTemplateDetails: "Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.",
+    deleteTemplateAction: "Xóa mẫu số",
   },
 };

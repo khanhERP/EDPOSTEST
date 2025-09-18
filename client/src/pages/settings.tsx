@@ -3859,9 +3859,7 @@ export default function Settings() {
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  {t("settings.confirmDeleteConnectionDesc", {
-                    name: eInvoiceToDelete?.softwareName,
-                  })}
+                  Bạn có chắc chắn muốn xóa kết nối "{eInvoiceToDelete?.softwareName}" không?
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
@@ -4323,28 +4321,26 @@ export default function Settings() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              Xác nhận xóa mẫu số HĐĐT
+              {t("settings.confirmDeleteTemplateTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  Bạn có chắc chắn muốn xóa mẫu số{" "}
-                  <span className="font-semibold text-gray-900">
-                    "{templateToDelete?.name}"
-                  </span>{" "}
-                  không?
+                  {t("settings.confirmDeleteTemplateDesc", {
+                    name: templateToDelete?.name,
+                  })}
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
-                      tác. Mẫu số HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                      <strong>{t("common.warning")}:</strong>{" "}
+                      {t("settings.deleteTemplateWarning")}
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.
+                  {t("settings.deleteTemplateDetails")}
                 </p>
               </div>
             </AlertDialogDescription>
@@ -4357,14 +4353,14 @@ export default function Settings() {
               }}
               className="hover:bg-gray-100"
             >
-              Hủy bỏ
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteTemplate}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Xóa mẫu số
+              {t("settings.deleteTemplateAction")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
