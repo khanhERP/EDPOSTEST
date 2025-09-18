@@ -3859,9 +3859,7 @@ export default function Settings() {
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  {t("settings.confirmDeleteConnectionDesc", {
-                    name: eInvoiceToDelete?.softwareName,
-                  })}
+                  Bạn có chắc chắn muốn xóa kết nối "{eInvoiceToDelete?.softwareName}" không?
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
