@@ -41,7 +41,7 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
     
     if (!pin.trim()) {
       toast({
-        title: ``,
+        title: `${t("common.")}`,
         description: "Vui lòng nhập mã PIN",
         variant: "destructive",
       });
