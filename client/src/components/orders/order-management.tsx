@@ -2517,7 +2517,7 @@ export function OrderManagement() {
                           receiptDiscount: receiptPreview.discount,
                           receiptExactDiscount: receiptPreview.exactDiscount,
                           orderTotal: paymentOrderData.total,
-                          orderExactTotal: paymentData.exactTotal,
+                          orderExactTotal: paymentOrderData.total,
                           orderId: paymentOrderData.id
                         });
 
