@@ -202,6 +202,13 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     deleteProductWarning: "경고: 이 작업은 되돌릴 수 없습니다. 상품이 시스템에서 영구적으로 삭제됩니다.",
     deleteProductDetails: "이는 이 상품이 포함된 주문 및 보고서에 영향을 줄 것입니다.",
     deleteProductAction: "상품 삭제",
+    
+    // E-invoice connection deletion confirmation
+    confirmDeleteConnectionTitle: "HĐĐT 연결 삭제 확인",
+    confirmDeleteConnectionDesc: "정말로 연결 \"{name}\"을 삭제하시겠습니까?",
+    deleteConnectionWarning: "이 작업은 되돌릴 수 없습니다. HĐĐT 연결이 시스템에서 영구적으로 삭제됩니다.",
+    deleteConnectionDetails: "이는 전자 인보이스 발행에 영향을 줄 수 있습니다.",
+    deleteConnectionAction: "연결 삭제",
   },
   en: {
     title: "Settings",
@@ -407,6 +414,13 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     deleteProductWarning: "Warning: This action cannot be undone. The product will be permanently deleted from the system.",
     deleteProductDetails: "This will affect orders and reports containing this product.",
     deleteProductAction: "Delete Product",
+    
+    // E-invoice connection deletion confirmation
+    confirmDeleteConnectionTitle: "Confirm E-invoice Connection Deletion",
+    confirmDeleteConnectionDesc: "Are you sure you want to delete connection \"{name}\"?",
+    deleteConnectionWarning: "This action cannot be undone. The HĐĐT connection will be permanently deleted from the system.",
+    deleteConnectionDetails: "This may affect electronic invoice generation.",
+    deleteConnectionAction: "Delete Connection",
   },
   vi: {
     title: "Cài đặt",
@@ -612,5 +626,12 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     deleteProductWarning: "Cảnh báo: Hành động này không thể hoàn tác. Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.",
     deleteProductDetails: "Điều này sẽ ảnh hưởng đến các đơn hàng và báo cáo có chứa sản phẩm này.",
     deleteProductAction: "Xóa sản phẩm",
+    
+    // E-invoice connection deletion confirmation
+    confirmDeleteConnectionTitle: "Xác nhận xóa kết nối HĐĐT",
+    confirmDeleteConnectionDesc: "Bạn có chắc chắn muốn xóa kết nối \"{name}\" không?",
+    deleteConnectionWarning: "Hành động này không thể hoàn tác. Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.",
+    deleteConnectionDetails: "Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.",
+    deleteConnectionAction: "Xóa kết nối",
   },
 };
