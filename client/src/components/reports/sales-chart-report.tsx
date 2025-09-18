@@ -2363,7 +2363,7 @@ export function SalesChartReport() {
           const orderSubtotal = Number(order.subtotal || 0);
           const orderDiscount = Number(order.discount || 0);
           const revenue = Math.max(0, orderSubtotal - orderDiscount);
-          const tax = Math.max(0, orderTotal - orderSubtotal);
+          const tax = Number(order.tax || 0) || Math.max(0, orderTotal - orderSubtotal); // Use tax from database first, fallback to calculation
 
           stats.orderCount += 1;
           stats.revenue += revenue;
