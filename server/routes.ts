@@ -962,9 +962,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Invoice status filter
       if (invoiceStatus !== undefined && invoiceStatus !== "all") {
-        whereConditions.push(
-          eq(orders.invoiceStatus, parseInt(invoiceStatus as string)),
-        );
+        const statusValue = parseInt(invoiceStatus as string);
+        if (!isNaN(statusValue)) {
+          whereConditions.push(eq(orders.invoiceStatus, statusValue));
+        }
       }
 
       // Payment method filter - include null values (unpaid orders)
