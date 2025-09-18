@@ -49,6 +49,60 @@ import {
 } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
+// Helper function to get payment method display name
+function getPaymentMethodName(method: string | number): string {
+  switch (method) {
+    case 1:
+    case "cash":
+      return "Tiền mặt";
+    case 2:
+    case "creditCard":
+    case "debitCard":
+      return "Chuyển khoản";
+    case 3:
+      return "TM/CK";
+    case 4:
+    case "qrCode":
+    case "momo":
+    case "zalopay":
+    case "vnpay":
+    case "grabpay":
+      return "QR Code";
+    case "einvoice":
+      return "Hóa đơn điện tử";
+    default:
+      return "Tiền mặt";
+  }
+}
+
+// Helper function to get e-invoice status display name
+function getEInvoiceStatusName(status: number): string {
+  const statusNames = {
+    0: "Chưa phát hành",
+    1: "Đã phát hành", 
+    2: "Tạo nháp",
+    3: "Đã duyệt",
+    4: "Đã bị thay thế (hủy)",
+    5: "Thay thế tạm",
+    6: "Thay thế",
+    7: "Đã bị điều chỉnh", 
+    8: "Điều chỉnh tạm",
+    9: "Điều chỉnh",
+    10: "Đã hủy"
+  };
+  return statusNames[status as keyof typeof statusNames] || "Chưa phát hành";
+}
+
+// Helper function to get invoice status display name
+function getInvoiceStatusName(status: number): string {
+  const statusNames = {
+    1: "Hoàn thành",
+    2: "Đang phục vụ", 
+    3: "Đã hủy"
+  };
+  return statusNames[status as keyof typeof statusNames] || "Hoàn thành";
+}
+
 // Function to calculate discount distribution among order items
 function calculateDiscountDistribution(items: any[], totalDiscount: number) {
   if (!items || items.length === 0 || totalDiscount <= 0) {
@@ -103,6 +157,7 @@ import {
   transactions as transactionsTable,
   transactionItems as transactionItemsTable,
   tables,
+  employees,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -897,15 +952,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalCount = totalCountResult?.count || 0;
       const totalPages = limitNum ? Math.ceil(totalCount / limitNum) : 1;
 
-      // Get paginated orders with proper field selection
+      // Get paginated orders with proper field selection including employee info
       const orderBy =
         sortOrder === "asc"
           ? asc(orders.orderedAt)
           : desc(orders.orderedAt);
 
       let ordersQuery = database
-        .select()
+        .select({
+          id: orders.id,
+          orderNumber: orders.orderNumber,
+          tableId: orders.tableId,
+          employeeId: orders.employeeId,
+          status: orders.status,
+          customerName: orders.customerName,
+          customerCount: orders.customerCount,
+          subtotal: orders.subtotal,
+          tax: orders.tax,
+          discount: orders.discount,
+          total: orders.total,
+          paymentMethod: orders.paymentMethod,
+          paymentStatus: orders.paymentStatus,
+          einvoiceStatus: orders.einvoiceStatus,
+          invoiceStatus: orders.invoiceStatus,
+          templateNumber: orders.templateNumber,
+          symbol: orders.symbol,
+          invoiceNumber: orders.invoiceNumber,
+          salesChannel: orders.salesChannel,
+          notes: orders.notes,
+          orderedAt: orders.orderedAt,
+          servedAt: orders.servedAt,
+          paidAt: orders.paidAt,
+          customerTaxCode: orders.customerTaxCode,
+          customerAddress: orders.customerAddress,
+          customerPhone: orders.customerPhone,
+          customerEmail: orders.customerEmail,
+          // Employee info
+          employeeCode: employees.employeeId,
+          employeeName: employees.name,
+        })
         .from(orders)
+        .leftJoin(employees, eq(orders.employeeId, employees.id))
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(orderBy);
 
@@ -926,6 +1013,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerCode: order.customerTaxCode || `KH000${String(index + 1).padStart(3, "0")}`,
         customerName: order.customerName || "Khách hàng lẻ",
         discount: order.discount || "0.00",
+        // Employee info with fallbacks
+        employeeCode: order.employeeCode || order.employeeId || "NV0001",
+        employeeName: order.employeeName || "Nhân viên",
+        // Payment method details
+        paymentMethodName: getPaymentMethodName(order.paymentMethod),
+        // Invoice status details
+        einvoiceStatusName: getEInvoiceStatusName(order.einvoiceStatus || 0),
+        invoiceStatusName: getInvoiceStatusName(order.invoiceStatus || 1),
       }));
 
       // Fetch order items for each order
