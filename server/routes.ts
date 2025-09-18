@@ -855,6 +855,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerCode,
         status,
         salesChannel,
+        einvoiceStatus,
+        invoiceStatus,
+        paymentMethod,
         page = "1",
         limit,
         sortBy = "orderedAt",
@@ -873,6 +876,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerCode,
         status,
         salesChannel,
+        einvoiceStatus,
+        invoiceStatus,
+        paymentMethod,
         page: pageNum,
         limit: limitNum,
       });
@@ -937,6 +943,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Sales channel filter
       if (salesChannel && salesChannel !== "all") {
         whereConditions.push(eq(orders.salesChannel, salesChannel as string));
+      }
+
+      // E-invoice status filter
+      if (einvoiceStatus !== undefined && einvoiceStatus !== "all") {
+        whereConditions.push(eq(orders.einvoiceStatus, parseInt(einvoiceStatus as string)));
+      }
+
+      // Invoice status filter
+      if (invoiceStatus !== undefined && invoiceStatus !== "all") {
+        whereConditions.push(eq(orders.invoiceStatus, parseInt(invoiceStatus as string)));
+      }
+
+      // Payment method filter
+      if (paymentMethod && paymentMethod !== "all") {
+        whereConditions.push(eq(orders.paymentMethod, paymentMethod as string));
       }
 
       // Get total count for pagination
