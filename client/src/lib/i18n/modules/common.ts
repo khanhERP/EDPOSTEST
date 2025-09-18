@@ -509,9 +509,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     loading: "Loading...",
     noData: "No Data",
     templateUsage: "Template Usage",
-    enterLoginId: "Enter login ID",
-    enterPassword: "Enter password",
-    enterUrl: "Enter URL",
     confirm: "Confirm",
     yes: "Yes",
     no: "No",
@@ -1219,9 +1216,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       deleteCategoryDetails:
         "Hãy đảm bảo rằng không còn sản phẩm nào trong danh mục này trước khi xóa.",
       deleteCategoryAction: "Xóa danh mục",
-      enterLoginId: "Nhập ID đăng nhập",
-      enterPassword: "Nhập mật khẩu",
-      enterUrl: "Nhập URL",
     },
 
     // Spending thresholds
