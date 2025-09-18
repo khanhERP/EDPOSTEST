@@ -210,6 +210,8 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
   // Create/Update mutation
   const saveMutation = useMutation({
     mutationFn: async (data: PurchaseFormData) => {
+      console.log("Starting mutation with data:", data);
+      
       if (!data.supplierId) {
         throw new Error(t("purchases.supplierRequired"));
       }
@@ -238,13 +240,20 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
         })),
       };
       
+      console.log("API payload:", payload);
+      
+      let response;
       if (isEditMode) {
-        return apiRequest("PUT", `/api/purchase-orders/${id}`, payload);
+        response = await apiRequest("PUT", `/api/purchase-orders/${id}`, payload);
       } else {
-        return apiRequest("POST", "/api/purchase-orders", payload);
+        response = await apiRequest("POST", "/api/purchase-orders", payload);
       }
+      
+      console.log("API response:", response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log("Mutation success:", response);
       toast({
         title: t("common.success"),
         description: isEditMode 
@@ -255,9 +264,11 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       navigate("/purchases");
     },
     onError: (error: any) => {
+      console.error("Mutation error:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Có lỗi xảy ra khi tạo đơn mua hàng";
       toast({
         title: t("common.error"),
-        description: error.message || t("common.unexpectedError"),
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -323,6 +334,16 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
 
   // Form submission
   const onSubmit = (data: PurchaseFormData) => {
+    // Kiểm tra các điều kiện bắt buộc
+    if (!data.supplierId || data.supplierId === 0) {
+      toast({
+        title: t("common.error"),
+        description: t("purchases.supplierRequired"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (selectedItems.length === 0) {
       toast({
         title: t("common.error"),
@@ -331,6 +352,30 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       });
       return;
     }
+
+    // Kiểm tra PO Number
+    if (!data.poNumber || data.poNumber.trim() === "") {
+      toast({
+        title: t("common.error"),
+        description: "Vui lòng nhập số PO",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Kiểm tra các items có số lượng hợp lệ
+    const hasInvalidQuantity = selectedItems.some(item => item.quantity <= 0 || item.unitPrice < 0);
+    if (hasInvalidQuantity) {
+      toast({
+        title: t("common.error"),
+        description: "Vui lòng kiểm tra lại số lượng và giá của các sản phẩm",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("Submitting purchase order data:", data);
+    console.log("Selected items:", selectedItems);
     
     saveMutation.mutate(data);
   };
