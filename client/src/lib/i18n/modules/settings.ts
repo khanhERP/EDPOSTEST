@@ -216,6 +216,11 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     deleteTemplateWarning: "이 작업은 되돌릴 수 없습니다. 템플릿이 시스템에서 영구적으로 삭제됩니다.",
     deleteTemplateDetails: "이는 전자 인보이스 발행에 영향을 줄 수 있습니다.",
     deleteTemplateAction: "템플릿 삭제",
+    
+    // Printer configuration
+    printerManagementDesc: "POS 시스템에 연결된 프린터 관리",
+    printerSetupDesc: "송장, 영수증 및 보고서용 프린터 설정 및 관리",
+    configurePrinter: "프린터 구성",
   },
   en: {
     title: "Settings",
@@ -435,6 +440,11 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     deleteTemplateWarning: "This action cannot be undone. The template will be permanently deleted from the system.",
     deleteTemplateDetails: "This may affect electronic invoice generation.",
     deleteTemplateAction: "Delete Template",
+    
+    // Printer configuration
+    printerManagementDesc: "Manage printers connected to the POS system",
+    printerSetupDesc: "Set up and manage printers for invoices, receipts, and reports",
+    configurePrinter: "Configure Printer",
   },
   vi: {
     title: "Cài đặt",
@@ -654,5 +664,10 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     deleteTemplateWarning: "Hành động này không thể hoàn tác. Mẫu số HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.",
     deleteTemplateDetails: "Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.",
     deleteTemplateAction: "Xóa mẫu số",
+    
+    // Printer configuration
+    printerManagementDesc: "Quản lý các máy in kết nối với hệ thống POS",
+    printerSetupDesc: "Thiết lập và quản lý máy in cho hóa đơn, biên lai và báo cáo",
+    configurePrinter: "Cấu hình máy in",
   },
 };

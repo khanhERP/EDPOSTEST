@@ -2218,21 +2218,20 @@ export default function Settings() {
                           {t("common.comboValues.printerConfiguration")}
                         </CardTitle>
                         <CardDescription>
-                          Quản lý các máy in kết nối với hệ thống POS
+                          {t("settings.printerManagementDesc")}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
                           <p className="text-sm text-gray-600">
-                            Thiết lập và quản lý máy in cho hóa đơn, biên lai và
-                            báo cáo
+                            {t("settings.printerSetupDesc")}
                           </p>
                           <Button
                             onClick={() => setShowPrinterConfig(true)}
                             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
                           >
                             <Printer className="mr-2 h-4 w-4" />
-                            Cấu hình máy in
+                            {t("settings.configurePrinter")}
                           </Button>
                         </div>
                       </CardContent>
