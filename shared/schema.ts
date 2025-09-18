@@ -157,6 +157,7 @@ export const orders = pgTable("orders", {
   paymentMethod: text("payment_method"), // "cash", "card", "mobile", "einvoice"
   paymentStatus: text("payment_status").notNull().default("pending"), // "pending", "paid", "refunded"
   einvoiceStatus: integer("einvoice_status").notNull().default(0), // 0=Chưa phát hành, 1=Đã phát hành, 2=Tạo nháp, 3=Đã duyệt, 4=Đã bị thay thế (hủy), 5=Thay thế tạm, 6=Thay thế, 7=Đã bị điều chỉnh, 8=Điều chỉnh tạm, 9=Điều chỉnh, 10=Đã hủy
+  invoiceStatus: integer("invoice_status").notNull().default(1), // 1=Hoàn thành, 2=Đang phục vụ, 3=Đã hủy
   templateNumber: varchar("template_number", { length: 50 }),
   symbol: varchar("symbol", { length: 20 }),
   invoiceNumber: varchar("invoice_number", { length: 50 }),
@@ -289,6 +290,7 @@ export const insertOrderSchema = createInsertSchema(orders)
       errorMap: () => ({ message: "Invalid payment status" }),
     }),
     einvoiceStatus: z.number().min(0).max(10).optional().default(0),
+    invoiceStatus: z.number().min(1).max(3).optional().default(1), // 1=Hoàn thành, 2=Đang phục vụ, 3=Đã hủy
     salesChannel: z.enum(["table", "pos", "online", "delivery"]).optional().default("table"),
     paidAt: z.union([z.date(), z.string().datetime()]).optional().transform((val) => {
       if (typeof val === 'string') {
