@@ -20,6 +20,15 @@ import {
   invoices,
   invoiceItems,
   printerConfigs, // Import printerConfigs schema
+  purchaseOrders,
+  purchaseOrderItems,
+  purchaseOrderDocuments,
+  type PurchaseOrder,
+  type PurchaseOrderItem,
+  type PurchaseOrderDocument,
+  type InsertPurchaseOrder,
+  type InsertPurchaseOrderItem,
+  type InsertPurchaseOrderDocument,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, and, gte, lte, or, sql, desc, not, like } from "drizzle-orm";
@@ -239,6 +248,29 @@ export interface IStorage {
   createPrinterConfig(configData: any, tenantDb?: any): Promise<PrinterConfig>;
   updatePrinterConfig(id: number, configData: any, tenantDb?: any): Promise<PrinterConfig | null>;
   deletePrinterConfig(id: number, tenantDb?: any): Promise<boolean>;
+
+  // Purchase Order Management
+  getPurchaseOrders(tenantDb?: any): Promise<PurchaseOrder[]>;
+  getPurchaseOrder(id: number, tenantDb?: any): Promise<PurchaseOrder | null>;
+  getPurchaseOrdersBySupplier(supplierId: number, tenantDb?: any): Promise<PurchaseOrder[]>;
+  getPurchaseOrdersByStatus(status: string, tenantDb?: any): Promise<PurchaseOrder[]>;
+  searchPurchaseOrders(query: string, tenantDb?: any): Promise<PurchaseOrder[]>;
+  createPurchaseOrder(orderData: InsertPurchaseOrder, items: InsertPurchaseOrderItem[], tenantDb?: any): Promise<PurchaseOrder>;
+  updatePurchaseOrder(id: number, updateData: Partial<InsertPurchaseOrder>, tenantDb?: any): Promise<PurchaseOrder | null>;
+  deletePurchaseOrder(id: number, tenantDb?: any): Promise<boolean>;
+  updatePurchaseOrderStatus(id: number, status: string, tenantDb?: any): Promise<PurchaseOrder | null>;
+  
+  // Purchase Order Items Management
+  getPurchaseOrderItems(purchaseOrderId: number, tenantDb?: any): Promise<PurchaseOrderItem[]>;
+  addPurchaseOrderItems(purchaseOrderId: number, items: InsertPurchaseOrderItem[], tenantDb?: any): Promise<PurchaseOrderItem[]>;
+  updatePurchaseOrderItem(id: number, updateData: Partial<InsertPurchaseOrderItem>, tenantDb?: any): Promise<PurchaseOrderItem | null>;
+  deletePurchaseOrderItem(id: number, tenantDb?: any): Promise<boolean>;
+  receiveItems(purchaseOrderId: number, receivedItems: Array<{id: number; receivedQuantity: number; productId?: number}>, tenantDb?: any): Promise<{success: boolean; status: string}>;
+  
+  // Purchase Order Documents Management
+  getPurchaseOrderDocuments(purchaseOrderId: number, tenantDb?: any): Promise<PurchaseOrderDocument[]>;
+  uploadPurchaseOrderDocument(documentData: InsertPurchaseOrderDocument, tenantDb?: any): Promise<PurchaseOrderDocument>;
+  deletePurchaseOrderDocument(id: number, tenantDb?: any): Promise<boolean>;
 }
 
 // Define interfaces for the schemas
@@ -3486,6 +3518,400 @@ export class DatabaseStorage implements IStorage {
       .delete(printerConfigs)
       .where(eq(printerConfigs.id, id));
     return result.rowCount > 0;
+  }
+
+  // Purchase Order Management Implementation
+  async getPurchaseOrders(tenantDb?: any): Promise<PurchaseOrder[]> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'getPurchaseOrders');
+      const result = await database
+        .select()
+        .from(purchaseOrders)
+        .orderBy(desc(purchaseOrders.createdAt));
+      return result || [];
+    } catch (error) {
+      console.error(`❌ Error in getPurchaseOrders:`, error);
+      return [];
+    }
+  }
+
+  async getPurchaseOrder(id: number, tenantDb?: any): Promise<PurchaseOrder | null> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'getPurchaseOrder');
+      const result = await database
+        .select()
+        .from(purchaseOrders)
+        .where(eq(purchaseOrders.id, id));
+      return result[0] || null;
+    } catch (error) {
+      console.error(`❌ Error in getPurchaseOrder:`, error);
+      return null;
+    }
+  }
+
+  async getPurchaseOrdersBySupplier(supplierId: number, tenantDb?: any): Promise<PurchaseOrder[]> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'getPurchaseOrdersBySupplier');
+      const result = await database
+        .select()
+        .from(purchaseOrders)
+        .where(eq(purchaseOrders.supplierId, supplierId))
+        .orderBy(desc(purchaseOrders.createdAt));
+      return result || [];
+    } catch (error) {
+      console.error(`❌ Error in getPurchaseOrdersBySupplier:`, error);
+      return [];
+    }
+  }
+
+  async getPurchaseOrdersByStatus(status: string, tenantDb?: any): Promise<PurchaseOrder[]> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'getPurchaseOrdersByStatus');
+      const result = await database
+        .select()
+        .from(purchaseOrders)
+        .where(eq(purchaseOrders.status, status))
+        .orderBy(desc(purchaseOrders.createdAt));
+      return result || [];
+    } catch (error) {
+      console.error(`❌ Error in getPurchaseOrdersByStatus:`, error);
+      return [];
+    }
+  }
+
+  async searchPurchaseOrders(query: string, tenantDb?: any): Promise<PurchaseOrder[]> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'searchPurchaseOrders');
+      const result = await database
+        .select()
+        .from(purchaseOrders)
+        .where(
+          or(
+            ilike(purchaseOrders.poNumber, `%${query}%`),
+            ilike(purchaseOrders.notes, `%${query}%`)
+          )
+        )
+        .orderBy(desc(purchaseOrders.createdAt));
+      return result || [];
+    } catch (error) {
+      console.error(`❌ Error in searchPurchaseOrders:`, error);
+      return [];
+    }
+  }
+
+  async createPurchaseOrder(orderData: InsertPurchaseOrder, items: InsertPurchaseOrderItem[], tenantDb?: any): Promise<PurchaseOrder> {
+    const database = this.getSafeDatabase(tenantDb, 'createPurchaseOrder');
+    
+    // Use transaction for atomicity
+    return await database.transaction(async (tx) => {
+      try {
+        // Generate PO number if not provided
+        const poNumber = orderData.poNumber || `PO-${Date.now()}`;
+        
+        // Calculate totals from items
+        const subtotal = items.reduce((sum, item) => sum + Number(item.total), 0);
+        const tax = subtotal * (Number(orderData.tax) || 0);
+        const total = subtotal + tax;
+        
+        // Create the purchase order with computed values
+        const [createdOrder] = await tx
+          .insert(purchaseOrders)
+          .values({
+            ...orderData,
+            poNumber,
+            subtotal: subtotal.toFixed(2),
+            tax: tax.toFixed(2),
+            total: total.toFixed(2),
+          })
+          .returning();
+
+        // Add items if provided
+        if (items && items.length > 0) {
+          const itemsWithOrderId = items.map(item => ({
+            ...item,
+            purchaseOrderId: createdOrder.id,
+            // Ensure receivedQuantity is initialized to 0
+            receivedQuantity: 0,
+          }));
+          
+          await tx
+            .insert(purchaseOrderItems)
+            .values(itemsWithOrderId);
+        }
+
+        return createdOrder;
+      } catch (error) {
+        console.error(`❌ Error in createPurchaseOrder:`, error);
+        throw error;
+      }
+    });
+  }
+
+  async updatePurchaseOrder(id: number, updateData: Partial<InsertPurchaseOrder>, tenantDb?: any): Promise<PurchaseOrder | null> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'updatePurchaseOrder');
+      const [updatedOrder] = await database
+        .update(purchaseOrders)
+        .set({
+          ...updateData,
+          updatedAt: new Date(),
+        })
+        .where(eq(purchaseOrders.id, id))
+        .returning();
+      return updatedOrder || null;
+    } catch (error) {
+      console.error(`❌ Error in updatePurchaseOrder:`, error);
+      throw error;
+    }
+  }
+
+  async deletePurchaseOrder(id: number, tenantDb?: any): Promise<boolean> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'deletePurchaseOrder');
+      
+      // Delete related items and documents first
+      await database.delete(purchaseOrderItems).where(eq(purchaseOrderItems.purchaseOrderId, id));
+      await database.delete(purchaseOrderDocuments).where(eq(purchaseOrderDocuments.purchaseOrderId, id));
+      
+      // Delete the purchase order
+      const result = await database.delete(purchaseOrders).where(eq(purchaseOrders.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`❌ Error in deletePurchaseOrder:`, error);
+      return false;
+    }
+  }
+
+  async updatePurchaseOrderStatus(id: number, status: string, tenantDb?: any): Promise<PurchaseOrder | null> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'updatePurchaseOrderStatus');
+      const [updatedOrder] = await database
+        .update(purchaseOrders)
+        .set({ 
+          status,
+          updatedAt: new Date(),
+        })
+        .where(eq(purchaseOrders.id, id))
+        .returning();
+      return updatedOrder || null;
+    } catch (error) {
+      console.error(`❌ Error in updatePurchaseOrderStatus:`, error);
+      throw error;
+    }
+  }
+
+  // Purchase Order Items Management Implementation
+  async getPurchaseOrderItems(purchaseOrderId: number, tenantDb?: any): Promise<PurchaseOrderItem[]> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'getPurchaseOrderItems');
+      const result = await database
+        .select()
+        .from(purchaseOrderItems)
+        .where(eq(purchaseOrderItems.purchaseOrderId, purchaseOrderId));
+      return result || [];
+    } catch (error) {
+      console.error(`❌ Error in getPurchaseOrderItems:`, error);
+      return [];
+    }
+  }
+
+  async addPurchaseOrderItems(purchaseOrderId: number, items: InsertPurchaseOrderItem[], tenantDb?: any): Promise<PurchaseOrderItem[]> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'addPurchaseOrderItems');
+      const itemsWithOrderId = items.map(item => ({
+        ...item,
+        purchaseOrderId,
+        receivedQuantity: 0, // Initialize to 0
+      }));
+      
+      const result = await database
+        .insert(purchaseOrderItems)
+        .values(itemsWithOrderId)
+        .returning();
+      return result || [];
+    } catch (error) {
+      console.error(`❌ Error in addPurchaseOrderItems:`, error);
+      throw error;
+    }
+  }
+
+  async updatePurchaseOrderItem(id: number, updateData: Partial<InsertPurchaseOrderItem>, tenantDb?: any): Promise<PurchaseOrderItem | null> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'updatePurchaseOrderItem');
+      const [updatedItem] = await database
+        .update(purchaseOrderItems)
+        .set(updateData)
+        .where(eq(purchaseOrderItems.id, id))
+        .returning();
+      return updatedItem || null;
+    } catch (error) {
+      console.error(`❌ Error in updatePurchaseOrderItem:`, error);
+      throw error;
+    }
+  }
+
+  async deletePurchaseOrderItem(id: number, tenantDb?: any): Promise<boolean> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'deletePurchaseOrderItem');
+      const result = await database.delete(purchaseOrderItems).where(eq(purchaseOrderItems.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`❌ Error in deletePurchaseOrderItem:`, error);
+      return false;
+    }
+  }
+
+  async receiveItems(purchaseOrderId: number, receivedItems: Array<{id: number; receivedQuantity: number; productId?: number}>, tenantDb?: any): Promise<{success: boolean; status: string}> {
+    const database = this.getSafeDatabase(tenantDb, 'receiveItems');
+    
+    // Use transaction for atomicity and consistency
+    return await database.transaction(async (tx) => {
+      try {
+        // Validate and update received quantities for each item
+        for (const receivedItem of receivedItems) {
+          // Get the current purchase order item to validate constraints
+          // SECURITY: Ensure item belongs to the specified purchase order
+          const [currentItem] = await tx
+            .select()
+            .from(purchaseOrderItems)
+            .where(
+              and(
+                eq(purchaseOrderItems.id, receivedItem.id),
+                eq(purchaseOrderItems.purchaseOrderId, purchaseOrderId)
+              )
+            )
+            .limit(1);
+            
+          if (!currentItem) {
+            throw new Error(`Purchase order item with ID ${receivedItem.id} not found`);
+          }
+          
+          // Validate received quantity constraints
+          if (receivedItem.receivedQuantity < 0) {
+            throw new Error(`Received quantity cannot be negative for item ${receivedItem.id}`);
+          }
+          
+          if (receivedItem.receivedQuantity > currentItem.quantity) {
+            throw new Error(`Received quantity (${receivedItem.receivedQuantity}) cannot exceed ordered quantity (${currentItem.quantity}) for item ${receivedItem.id}`);
+          }
+          
+          // Update received quantity
+          await tx
+            .update(purchaseOrderItems)
+            .set({ 
+              receivedQuantity: receivedItem.receivedQuantity
+            })
+            .where(eq(purchaseOrderItems.id, receivedItem.id));
+            
+          // Update inventory if product exists and inventory tracking is enabled
+          const increaseAmount = receivedItem.receivedQuantity - (currentItem.receivedQuantity || 0);
+          if (currentItem.productId && increaseAmount > 0) {
+            const [product] = await tx
+              .select()
+              .from(products)
+              .where(eq(products.id, currentItem.productId))
+              .limit(1);
+              
+            if (product && product.trackInventory) {
+              // Update product stock
+              await tx
+                .update(products)
+                .set({ 
+                  stock: sql`${products.stock} + ${increaseAmount}`
+                })
+                .where(eq(products.id, currentItem.productId));
+                
+              // Record inventory transaction for audit trail
+              await tx
+                .insert(inventoryTransactions)
+                .values({
+                  productId: currentItem.productId,
+                  type: 'purchase_receipt',
+                  quantity: increaseAmount,
+                  unitPrice: currentItem.unitPrice,
+                  totalAmount: (Number(currentItem.unitPrice) * increaseAmount).toFixed(2),
+                  referenceType: 'purchase_order',
+                  referenceId: purchaseOrderId.toString(),
+                  employeeId: null, // Could be passed as parameter if needed
+                  notes: `Received ${increaseAmount} units from PO ${purchaseOrderId}`,
+                });
+            }
+          }
+        }
+
+        // Recompute purchase order status based on all items
+        const allItems = await tx
+          .select()
+          .from(purchaseOrderItems)
+          .where(eq(purchaseOrderItems.purchaseOrderId, purchaseOrderId));
+          
+        const fullyReceived = allItems.every((item) => item.receivedQuantity >= item.quantity);
+        const partiallyReceived = allItems.some((item) => item.receivedQuantity > 0);
+
+        let newStatus = 'pending';
+        if (fullyReceived) {
+          newStatus = 'received';
+        } else if (partiallyReceived) {
+          newStatus = 'partially_received';
+        }
+
+        // Update purchase order status
+        await tx
+          .update(purchaseOrders)
+          .set({ 
+            status: newStatus,
+            updatedAt: new Date(),
+            actualDeliveryDate: fullyReceived ? new Date() : null,
+          })
+          .where(eq(purchaseOrders.id, purchaseOrderId));
+        
+        return { success: true, status: newStatus };
+      } catch (error) {
+        console.error(`❌ Error in receiveItems:`, error);
+        throw error;
+      }
+    });
+  }
+
+  // Purchase Order Documents Management Implementation
+  async getPurchaseOrderDocuments(purchaseOrderId: number, tenantDb?: any): Promise<PurchaseOrderDocument[]> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'getPurchaseOrderDocuments');
+      const result = await database
+        .select()
+        .from(purchaseOrderDocuments)
+        .where(eq(purchaseOrderDocuments.purchaseOrderId, purchaseOrderId))
+        .orderBy(desc(purchaseOrderDocuments.createdAt));
+      return result || [];
+    } catch (error) {
+      console.error(`❌ Error in getPurchaseOrderDocuments:`, error);
+      return [];
+    }
+  }
+
+  async uploadPurchaseOrderDocument(documentData: InsertPurchaseOrderDocument, tenantDb?: any): Promise<PurchaseOrderDocument> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'uploadPurchaseOrderDocument');
+      const [uploadedDoc] = await database
+        .insert(purchaseOrderDocuments)
+        .values(documentData)
+        .returning();
+      return uploadedDoc;
+    } catch (error) {
+      console.error(`❌ Error in uploadPurchaseOrderDocument:`, error);
+      throw error;
+    }
+  }
+
+  async deletePurchaseOrderDocument(id: number, tenantDb?: any): Promise<boolean> {
+    try {
+      const database = this.getSafeDatabase(tenantDb, 'deletePurchaseOrderDocument');
+      const result = await database.delete(purchaseOrderDocuments).where(eq(purchaseOrderDocuments.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`❌ Error in deletePurchaseOrderDocument:`, error);
+      return false;
+    }
   }
 }
 
