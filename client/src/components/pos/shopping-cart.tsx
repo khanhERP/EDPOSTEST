@@ -1036,7 +1036,7 @@ export function ShoppingCart({
 
       toast({
         title: `${t("common.success")}`,
-        description: "In hóa đơn hoàn tất. Dữ liệu đã được cập nhật.",
+        description: `${t("common.invoiceprintingcompleted")}`,
       });
     };
 
@@ -1314,7 +1314,7 @@ export function ShoppingCart({
 
                         return itemDiscountAmount > 0 ? (
                           <p className="text-xs text-red-600">
-                            {t('common.discount')}: -
+                            {t("common.discount")}: -
                             {Math.floor(itemDiscountAmount).toLocaleString(
                               "vi-VN",
                             )}{" "}
@@ -1402,7 +1402,7 @@ export function ShoppingCart({
             {/* Discount Input */}
             <div className="space-y-2">
               <Label className="text-sm font-medium pos-text-primary">
-                {t('common.discount')} (₫)
+                {t("common.discount")} (₫)
               </Label>
               <Input
                 type="text"

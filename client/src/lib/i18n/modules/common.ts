@@ -485,6 +485,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
 
     // Unit indicators
     perUnit: "개당",
+    invoiceprintingcompleted:
+      "송장 인쇄가 완료되었습니다. 데이터가 업데이트되었습니다.",
   },
   en: {
     save: "Save",
@@ -796,6 +798,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       cashier: "Cashier",
       waiter: "Waiter",
       chef: "Chef",
+      invoiceprintingcompleted:
+        "Invoice printing completed. Data has been updated.",
       cleaner: "Cleaner",
 
       // Product pricing
@@ -895,6 +899,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     close: "Đóng",
     amountShortfall: "Thiếu",
     open: "Mở",
+    invoiceprintingcompleted: "In hóa đơn hoàn tất. Dữ liệu đã được cập nhật.",
     view: "Xem",
     print: "In",
     download: "Tải xuống",
