@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1201,10 +1202,14 @@ export default function SalesOrders() {
   const totals = calculateTotals();
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-green-50 grocery-bg">
+      {/* Header */}
+      <POSHeader />
+
+      {/* Right Sidebar */}
       <RightSidebar />
 
-      <div className="main-content p-6">
+      <div className="main-content pt-16 px-6">
         <div className="max-w-full mx-auto">
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
