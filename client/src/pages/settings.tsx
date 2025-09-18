@@ -2087,8 +2087,8 @@ export default function Settings() {
                                                 className={`text-xs ${template.useCK ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
                                               >
                                                 {template.useCK
-                                                  ? "Sử dụng"
-                                                  : "Không sử dụng"}
+                                                  ? t("settings.usageStatusActive")
+                                                  : t("settings.usageStatusInactive")}
                                               </Badge>
                                             </td>
                                             <td className="px-3 py-3">
