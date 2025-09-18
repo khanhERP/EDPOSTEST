@@ -987,12 +987,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customerAddress: orders.customerAddress,
           customerPhone: orders.customerPhone,
           customerEmail: orders.customerEmail,
-          // Employee info with proper null handling
-          employeeCode: sql<string>`COALESCE(${employees.employeeId}, '')`,
-          employeeName: sql<string>`COALESCE(${employees.name}, '')`,
         })
         .from(orders)
-        .leftJoin(employees, eq(orders.employeeId, employees.id))
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(orderBy);
 
@@ -1007,21 +1003,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `✅ Orders list API - Found ${ordersResult.length} orders${limitNum ? ` (page ${pageNum}/${totalPages})` : ' (all orders)'}`,
       );
 
+      // Get employee data separately to avoid null reference issues
+      const employeeIds = [...new Set(ordersResult.map(order => order.employeeId).filter(Boolean))];
+      const employeeData = employeeIds.length > 0 ? await database
+        .select({
+          id: employees.id,
+          employeeId: employees.employeeId,
+          name: employees.name,
+        })
+        .from(employees)
+        .where(sql`${employees.id} IN (${employeeIds.map(id => `${id}`).join(',')})`) : [];
+
+      const employeeMap = new Map(employeeData.map(emp => [emp.id, emp]));
+
       // Process orders to ensure consistent field structure
-      const processedOrders = ordersResult.map((order, index) => ({
-        ...order,
-        customerCode: order.customerTaxCode || `KH000${String(index + 1).padStart(3, "0")}`,
-        customerName: order.customerName || "Khách hàng lẻ",
-        discount: order.discount || "0.00",
-        // Employee info with fallbacks
-        employeeCode: order.employeeCode || order.employeeId || "NV0001",
-        employeeName: order.employeeName || "Nhân viên",
-        // Payment method details
-        paymentMethodName: getPaymentMethodName(order.paymentMethod),
-        // Invoice status details
-        einvoiceStatusName: getEInvoiceStatusName(order.einvoiceStatus || 0),
-        invoiceStatusName: getInvoiceStatusName(order.invoiceStatus || 1),
-      }));
+      const processedOrders = ordersResult.map((order, index) => {
+        const employee = order.employeeId ? employeeMap.get(order.employeeId) : null;
+        
+        return {
+          ...order,
+          customerCode: order.customerTaxCode || `KH000${String(index + 1).padStart(3, "0")}`,
+          customerName: order.customerName || "Khách hàng lẻ",
+          discount: order.discount || "0.00",
+          // Employee info with fallbacks
+          employeeCode: employee?.employeeId || order.employeeId || "NV0001",
+          employeeName: employee?.name || "Nhân viên",
+          // Payment method details
+          paymentMethodName: getPaymentMethodName(order.paymentMethod),
+          // Invoice status details
+          einvoiceStatusName: getEInvoiceStatusName(order.einvoiceStatus || 0),
+          invoiceStatusName: getInvoiceStatusName(order.invoiceStatus || 1),
+        };
+      });
 
       // Fetch order items for each order
       const ordersWithItems = await Promise.all(
