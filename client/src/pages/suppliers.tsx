@@ -244,7 +244,7 @@ export default function SuppliersPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2 mt-4">
+                    <div className="flex gap-3 mt-6">
                       <Button
                         size="sm"
                         onClick={() => handleCreatePurchaseOrder(supplier)}
