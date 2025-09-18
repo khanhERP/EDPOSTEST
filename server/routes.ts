@@ -1031,10 +1031,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 total: orderItemsTable.total,
                 discount: orderItemsTable.discount,
                 notes: orderItemsTable.notes,
-                unit: orderItemsTable.unit,
-                // Product fields
-                productName: products.name,
-                productSku: products.sku,
+                // Product fields with safe handling
+                productName: sql<string>`COALESCE(${products.name}, 'Unknown Product')`,
+                productSku: sql<string>`COALESCE(${products.sku}, '')`,
               })
               .from(orderItemsTable)
               .leftJoin(products, eq(orderItemsTable.productId, products.id))
@@ -1045,7 +1044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               orderId: item.orderId,
               productId: item.productId,
               quantity: item.quantity,
-              unit: item.unit || "cái", // ĐVT từ order_items
+              unit: "cái", // Default unit
               unitPrice: item.unitPrice,
               total: item.total,
               discount: item.discount || "0.00",

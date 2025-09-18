@@ -2446,10 +2446,10 @@ export class DatabaseStorage implements IStorage {
           quantity: orderItemsTable.quantity,
           unitPrice: orderItemsTable.unitPrice,
           total: orderItemsTable.total,
-          discount: orderItemsTable.discount, // Include discount
+          discount: orderItemsTable.discount,
           notes: orderItemsTable.notes,
-          productName: products.name,
-          productSku: products.sku,
+          productName: sql<string>`COALESCE(${products.name}, 'Unknown Product')`,
+          productSku: sql<string>`COALESCE(${products.sku}, '')`,
         })
         .from(orderItemsTable)
         .leftJoin(products, eq(orderItemsTable.productId, products.id))
