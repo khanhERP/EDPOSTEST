@@ -18,6 +18,7 @@ export const purchasesTranslations = {
     
     // Purchase Order Details
     orderDate: "주문일",
+    expectedDate: "예상일",
     expectedDelivery: "예상 배송일",
     actualDelivery: "실제 배송일",
     supplier: "공급업체",
@@ -32,10 +33,18 @@ export const purchasesTranslations = {
     pending: "대기",
     confirmed: "확인됨",
     ordered: "주문됨",
-    partiallyReceived: "부분 입고",
-    received: "입고 완료",
+    partially_received: "부분 수령",
+    received: "수령 완료",
     cancelled: "취소됨",
     overdue: "연체됨",
+    
+    // Status Display Names
+    statusPending: "대기중",
+    statusApproved: "승인됨",
+    statusOrdered: "주문됨",
+    statusDelivered: "배송됨",
+    statusCompleted: "완료",
+    statusCancelled: "취소",
     
     // Items Management
     items: "품목",
@@ -90,6 +99,9 @@ export const purchasesTranslations = {
     dateRange: "기간",
     fromDate: "시작일",
     toDate: "종료일",
+    searchPlaceholder: "주문 번호 또는 공급업체명으로 검색...",
+    allStatuses: "모든 상태",
+    allSuppliers: "모든 공급업체",
     
     // Actions
     view: "보기",
@@ -102,6 +114,7 @@ export const purchasesTranslations = {
     save: "저장",
     submit: "제출",
     confirm: "확인",
+    actions: "작업",
     
     // Notifications & Messages
     orderCreated: "구매 주문이 생성되었습니다",
@@ -128,6 +141,12 @@ export const purchasesTranslations = {
     averageOrderValue: "평균 주문 금액",
     topSuppliers: "주요 공급업체",
     
+    // Dashboard Statistics Details
+    ordersThisMonth: "이번 달 주문",
+    awaitingApproval: "승인 대기중",
+    fullyReceived: "완전히 받음",
+    totalSpent: "총 지출 금액",
+    
     // Export & Reports
     exportToExcel: "엑셀로 내보내기",
     exportToPDF: "PDF로 내보내기",
@@ -141,8 +160,13 @@ export const purchasesTranslations = {
     nextPage: "다음 페이지",
     itemsPerPage: "페이지당 항목 수",
     noOrders: "구매 주문이 없습니다",
+    noOrdersFound: "검색 조건에 맞는 주문이 없습니다",
     noItems: "품목이 없습니다",
     loading: "로딩 중...",
+    loadingOrders: "주문을 불러오는 중...",
+    ordersFound: "개의 주문을 찾았습니다",
+    createFirstOrder: "첫 번째 구매 주문을 생성하여 시작하세요",
+    tryDifferentFilters: "다른 필터를 시도해보세요",
     
     // Advanced Features
     recurring: "정기 주문",
@@ -150,7 +174,9 @@ export const purchasesTranslations = {
     approval: "승인",
     workflow: "워크플로우",
     reminder: "알림",
-    notification: "알림"
+    notification: "알림",
+    
+    unknownSupplier: "알 수 없는 공급업체"
   },
   
   en: {
@@ -172,6 +198,7 @@ export const purchasesTranslations = {
     
     // Purchase Order Details
     orderDate: "Order Date",
+    expectedDate: "Expected Date",
     expectedDelivery: "Expected Delivery",
     actualDelivery: "Actual Delivery",
     supplier: "Supplier",
@@ -186,10 +213,18 @@ export const purchasesTranslations = {
     pending: "Pending",
     confirmed: "Confirmed",
     ordered: "Ordered",
-    partiallyReceived: "Partially Received",
+    partially_received: "Partially Received",
     received: "Received",
     cancelled: "Cancelled",
     overdue: "Overdue",
+    
+    // Status Display Names
+    statusPending: "Pending",
+    statusApproved: "Approved",
+    statusOrdered: "Ordered",
+    statusDelivered: "Delivered",
+    statusCompleted: "Completed",
+    statusCancelled: "Cancelled",
     
     // Items Management
     items: "Items",
@@ -244,6 +279,9 @@ export const purchasesTranslations = {
     dateRange: "Date Range",
     fromDate: "From Date",
     toDate: "To Date",
+    searchPlaceholder: "Search by PO number or supplier name...",
+    allStatuses: "All Statuses",
+    allSuppliers: "All Suppliers",
     
     // Actions
     view: "View",
@@ -256,6 +294,7 @@ export const purchasesTranslations = {
     save: "Save",
     submit: "Submit",
     confirm: "Confirm",
+    actions: "Actions",
     
     // Notifications & Messages
     orderCreated: "Purchase order created successfully",
@@ -282,6 +321,12 @@ export const purchasesTranslations = {
     averageOrderValue: "Average Order Value",
     topSuppliers: "Top Suppliers",
     
+    // Dashboard Statistics Details
+    ordersThisMonth: "Orders This Month",
+    awaitingApproval: "Awaiting Approval",
+    fullyReceived: "Fully Received",
+    totalSpent: "Total Spent",
+    
     // Export & Reports
     exportToExcel: "Export to Excel",
     exportToPDF: "Export to PDF",
@@ -295,8 +340,13 @@ export const purchasesTranslations = {
     nextPage: "Next Page",
     itemsPerPage: "Items per Page",
     noOrders: "No purchase orders found",
+    noOrdersFound: "No orders match your search criteria",
     noItems: "No items found",
     loading: "Loading...",
+    loadingOrders: "Loading purchase orders...",
+    ordersFound: "orders found",
+    createFirstOrder: "Create your first purchase order to get started",
+    tryDifferentFilters: "Try different filters or search terms",
     
     // Advanced Features
     recurring: "Recurring Order",
@@ -304,7 +354,9 @@ export const purchasesTranslations = {
     approval: "Approval",
     workflow: "Workflow",
     reminder: "Reminder",
-    notification: "Notification"
+    notification: "Notification",
+    
+    unknownSupplier: "Unknown Supplier"
   },
   
   vi: {
@@ -326,6 +378,7 @@ export const purchasesTranslations = {
     
     // Purchase Order Details
     orderDate: "Ngày đặt hàng",
+    expectedDate: "Ngày dự kiến",
     expectedDelivery: "Giao hàng dự kiến",
     actualDelivery: "Giao hàng thực tế",
     supplier: "Nhà cung cấp",
@@ -340,10 +393,18 @@ export const purchasesTranslations = {
     pending: "Đang chờ",
     confirmed: "Đã xác nhận",
     ordered: "Đã đặt hàng",
-    partiallyReceived: "Nhận một phần",
+    partially_received: "Nhận một phần",
     received: "Đã nhận",
     cancelled: "Đã hủy",
     overdue: "Quá hạn",
+    
+    // Status Display Names
+    statusPending: "Đang chờ",
+    statusApproved: "Đã duyệt",
+    statusOrdered: "Đã đặt hàng",
+    statusDelivered: "Đã giao",
+    statusCompleted: "Hoàn thành",
+    statusCancelled: "Đã hủy",
     
     // Items Management
     items: "Mặt hàng",
@@ -398,6 +459,9 @@ export const purchasesTranslations = {
     dateRange: "Khoảng thời gian",
     fromDate: "Từ ngày",
     toDate: "Đến ngày",
+    searchPlaceholder: "Tìm theo số PO hoặc tên nhà cung cấp...",
+    allStatuses: "Tất cả trạng thái",
+    allSuppliers: "Tất cả nhà cung cấp",
     
     // Actions
     view: "Xem",
@@ -410,6 +474,7 @@ export const purchasesTranslations = {
     save: "Lưu",
     submit: "Gửi",
     confirm: "Xác nhận",
+    actions: "Hành động",
     
     // Notifications & Messages
     orderCreated: "Đã tạo đơn mua hàng thành công",
@@ -436,6 +501,12 @@ export const purchasesTranslations = {
     averageOrderValue: "Giá trị trung bình mỗi đơn",
     topSuppliers: "Nhà cung cấp hàng đầu",
     
+    // Dashboard Statistics Details
+    ordersThisMonth: "Đơn hàng tháng này",
+    awaitingApproval: "Chờ phê duyệt",
+    fullyReceived: "Đã nhận đủ",
+    totalSpent: "Tổng chi tiêu",
+    
     // Export & Reports
     exportToExcel: "Xuất ra Excel",
     exportToPDF: "Xuất ra PDF",
@@ -449,8 +520,13 @@ export const purchasesTranslations = {
     nextPage: "Trang sau",
     itemsPerPage: "Số mục trên trang",
     noOrders: "Không tìm thấy đơn mua hàng",
+    noOrdersFound: "Không có đơn hàng nào khớp với tiêu chí tìm kiếm",
     noItems: "Không tìm thấy mặt hàng",
     loading: "Đang tải...",
+    loadingOrders: "Đang tải đơn mua hàng...",
+    ordersFound: "đơn hàng được tìm thấy",
+    createFirstOrder: "Tạo đơn mua hàng đầu tiên để bắt đầu",
+    tryDifferentFilters: "Thử các bộ lọc hoặc từ khóa tìm kiếm khác",
     
     // Advanced Features
     recurring: "Đơn hàng định kỳ",
@@ -458,6 +534,8 @@ export const purchasesTranslations = {
     approval: "Duyệt",
     workflow: "Quy trình",
     reminder: "Nhắc nhở",
-    notification: "Thông báo"
+    notification: "Thông báo",
+    
+    unknownSupplier: "Nhà cung cấp không xác định"
   }
 };
