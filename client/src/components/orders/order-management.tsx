@@ -2444,10 +2444,11 @@ export function OrderManagement() {
                             productId: item.productId,
                             productName: item.productName,
                             quantity: item.quantity.toString(),
-                            price: item.unitPrice,
+                            price: item.unitPrice.toString(),
                             total: (item.unitPrice * item.quantity).toString(),
                             sku: item.sku,
-                            taxRate: item.taxRate,
+                            taxRate: item.taxRate.toString(),
+                            afterTaxPrice: item.afterTaxPrice,
                           })),
                           orderItems: processedItems,
                           subtotal: Math.floor(calculatedSubtotal).toString(),
@@ -2892,7 +2893,7 @@ export function OrderManagement() {
             <div className="space-y-4">
               {/* Payment Summary */}
               <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-2">Tóm tắt thanh toán</h4>
+                <h4 className="font-medium mb-2">{t('orders.paymentSummary')}</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Tổng đơn hàng:</span>
