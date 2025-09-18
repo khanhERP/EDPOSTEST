@@ -105,7 +105,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [selectedItems, setSelectedItems] = useState<Array<{
@@ -177,7 +177,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       form.setValue("expectedDeliveryDate", order.expectedDeliveryDate || "");
       form.setValue("notes", order.notes || "");
       form.setValue("status", order.status);
-      
+
       // Load existing items
       if (order.items) {
         setSelectedItems(order.items.map((item: any) => ({
@@ -211,24 +211,28 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
   const saveMutation = useMutation({
     mutationFn: async (data: PurchaseFormData) => {
       console.log("Starting mutation with data:", data);
-      
-      if (!data.supplierId) {
+
+      if (!data.supplierId || data.supplierId === 0) {
         throw new Error(t("purchases.supplierRequired"));
       }
-      
+
+      if (selectedItems.length === 0) {
+        throw new Error(t("purchases.itemsRequired"));
+      }
+
       const subtotalAmount = selectedItems.reduce((sum, item) => sum + item.total, 0);
       const taxAmount = 0; // No tax applied
       const totalAmount = subtotalAmount;
-      
+
       const payload = {
         supplierId: Number(data.supplierId),
-        poNumber: data.poNumber,
+        poNumber: data.poNumber?.trim() || `PO-${Date.now()}`,
         expectedDeliveryDate: data.expectedDeliveryDate || null,
-        notes: data.notes || null,
+        notes: data.notes?.trim() || null,
         subtotal: subtotalAmount.toFixed(2),
-        tax: "0.00", // Consistent with UI showing 0% tax
-        total: subtotalAmount.toFixed(2), // No tax applied
-        status: data.status,
+        tax: "0.00",
+        total: subtotalAmount.toFixed(2),
+        status: data.status || "pending",
         items: selectedItems.map(item => ({
           productId: item.productId,
           productName: item.productName,
@@ -239,18 +243,23 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
           total: item.total.toFixed(2),
         })),
       };
-      
+
       console.log("API payload:", payload);
-      
-      let response;
-      if (isEditMode) {
-        response = await apiRequest("PUT", `/api/purchase-orders/${id}`, payload);
-      } else {
-        response = await apiRequest("POST", "/api/purchase-orders", payload);
+
+      try {
+        let response;
+        if (isEditMode) {
+          response = await apiRequest("PUT", `/api/purchase-orders/${id}`, payload);
+        } else {
+          response = await apiRequest("POST", "/api/purchase-orders", payload);
+        }
+
+        console.log("API response:", response);
+        return response;
+      } catch (apiError: any) {
+        console.error("API Error:", apiError);
+        throw new Error(apiError?.response?.data?.message || apiError?.message || "Failed to save purchase order");
       }
-      
-      console.log("API response:", response);
-      return response;
     },
     onSuccess: (response) => {
       console.log("Mutation success:", response);
@@ -265,7 +274,14 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
     },
     onError: (error: any) => {
       console.error("Mutation error:", error);
-      const errorMessage = error?.response?.data?.message || error?.message || "Có lỗi xảy ra khi tạo đơn mua hàng";
+      let errorMessage = "Có lỗi xảy ra khi tạo đơn mua hàng";
+
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
       toast({
         title: t("common.error"),
         description: errorMessage,
@@ -277,7 +293,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
   // Add product to order
   const addProduct = (product: ProductSelectionItem) => {
     const existingIndex = selectedItems.findIndex(item => item.productId === product.id);
-    
+
     if (existingIndex >= 0) {
       // Update existing item quantity
       const updatedItems = [...selectedItems];
@@ -306,7 +322,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       removeItem(index);
       return;
     }
-    
+
     const updatedItems = [...selectedItems];
     updatedItems[index].quantity = quantity;
     updatedItems[index].total = quantity * updatedItems[index].unitPrice;
@@ -373,10 +389,10 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       });
       return;
     }
-    
+
     console.log("Submitting purchase order data:", data);
     console.log("Selected items:", selectedItems);
-    
+
     saveMutation.mutate(data);
   };
 
@@ -782,7 +798,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                           </>
                         )}
                       </Button>
-                      
+
                       <Button 
                         type="button" 
                         variant="outline" 

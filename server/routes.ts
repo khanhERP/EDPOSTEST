@@ -4043,16 +4043,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/purchase-orders", async (req: Request, res) => {
     try {
+      console.log("📝 Creating purchase order with data:", req.body);
+      
       const { items = [], ...orderData } = req.body;
       
+      // Basic validation
+      if (!orderData.supplierId) {
+        return res.status(400).json({
+          message: "Supplier ID is required"
+        });
+      }
+      
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({
+          message: "At least one item is required"
+        });
+      }
+      
       // Validate purchase order data
-      const validatedOrderData = insertPurchaseOrderSchema.parse(orderData);
+      const validatedOrderData = insertPurchaseOrderSchema.parse({
+        ...orderData,
+        supplierId: Number(orderData.supplierId),
+        poNumber: orderData.poNumber || `PO-${Date.now()}`,
+        status: orderData.status || "pending",
+        subtotal: orderData.subtotal || "0.00",
+        tax: orderData.tax || "0.00",
+        total: orderData.total || "0.00"
+      });
       
       // Validate items array
-      const validatedItems = Array.isArray(items) ? 
-        items.map(item => insertPurchaseOrderItemSchema.parse(item)) : [];
+      const validatedItems = items.map(item => insertPurchaseOrderItemSchema.parse({
+        ...item,
+        productId: Number(item.productId),
+        quantity: Number(item.quantity),
+        unitPrice: String(item.unitPrice),
+        total: String(item.total),
+        receivedQuantity: Number(item.receivedQuantity || 0)
+      }));
       
       console.log("✅ Using global database connection for purchase order creation");
+      console.log("✅ Validated order data:", validatedOrderData);
+      console.log("✅ Validated items:", validatedItems);
       
       const result = await storage.createPurchaseOrder(validatedOrderData, validatedItems, db);
       console.log(`✅ Successfully created purchase order: ${result.poNumber}`);
@@ -4060,12 +4091,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("❌ Error creating purchase order:", error);
       if (error instanceof z.ZodError) {
+        console.error("❌ Validation errors:", error.errors);
         return res.status(400).json({
           message: "Invalid purchase order data",
           errors: error.errors,
         });
       }
-      res.status(500).json({ message: "Failed to create purchase order" });
+      
+      const errorMessage = error instanceof Error ? error.message : "Failed to create purchase order";
+      res.status(500).json({ 
+        message: errorMessage,
+        details: error instanceof Error ? error.stack : String(error)
+      });
     }
   });
 
