@@ -982,9 +982,11 @@ export function ReceiptModal({
               )}
               {receipt.paymentMethod === "einvoice" && (
                 <div className="flex justify-between text-sm text-blue-600">
-                  <span>Trạng thái E-Invoice:</span>
+                  <span>{t("einvoice.invoicestatus")}:</span>
                   <span>
-                    {receipt.invoiceNumber ? "Đã phát hành" : "Chờ phát hành"}
+                    {receipt.invoiceNumber
+                      ? `${t("einvoice.released")}`
+                      : `${t("einvoice.notReleased")}`}
                   </span>
                 </div>
               )}

@@ -266,17 +266,13 @@ export function SalesReport() {
 
       // Calculate totals based on unique combined data
       const totalRevenue = uniqueCombinedData.reduce(
-        (total: number, item: any) => {
-          const itemPrice = Number(item.price || item.total || 0);
-          const itemQuantity = Number(item.quantity || 1);
+        (sum: number, order: any) => {
+          // Revenue = Subtotal (đã trừ giảm giá) + Tax
+          const subtotal = Number(order.subtotal || 0); // Thành tiền sau khi trừ giảm giá
+          const tax = Number(order.tax || 0); // Thuế
+          const revenue = subtotal + tax; // Doanh thu thực tế
 
-          // Get discount from database, default to 0 if no data
-          const discountAmount =
-            item.discount !== undefined && item.discount !== null
-              ? Number(item.discount)
-              : 0;
-
-          return total + itemPrice * itemQuantity;
+          return sum + revenue;
         },
         0,
       );

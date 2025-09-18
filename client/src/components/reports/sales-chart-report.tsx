@@ -1062,8 +1062,7 @@ export function SalesChartReport() {
                                       </TableCell>
                                       <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
                                         {formatCurrency(
-                                          Number(transaction.total || 0) -
-                                            Number(transaction.subtotal || 0),
+                                          Number(transaction.tax || 0),
                                         )}
                                       </TableCell>
                                       <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
@@ -1072,11 +1071,7 @@ export function SalesChartReport() {
                                             0,
                                             Number(transaction.subtotal || 0) -
                                               Number(transaction.discount || 0),
-                                          ) +
-                                            (Number(transaction.total || 0) -
-                                              Number(
-                                                transaction.subtotal || 0,
-                                              )),
+                                          ) + Number(transaction.tax || 0),
                                         )}
                                       </TableCell>
                                       {(() => {
@@ -1548,7 +1543,7 @@ export function SalesChartReport() {
         customerName: order.customerName || "Khách lẻ",
         totalAmount: orderSubtotal, // Thành tiền từ DB
         discount: orderDiscount, // Giảm giá từ DB
-        revenue: orderRevenue, // Doanh thu = thành tiền - giảm giá
+        revenue: orderRevenue, // Doanh thu = thành tiền - giwe�m giá
         tax: orderTax, // Thuế từ DB
         vat: orderTax, // VAT = thuế
         totalMoney: orderTotal, // Tổng tiền từ DB

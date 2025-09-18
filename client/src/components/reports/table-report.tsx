@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -27,7 +26,12 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Utensils, Clock, Users, TrendingUp } from "lucide-react";
-import type { Order, Table as TableType, Invoice, Transaction } from "@shared/schema";
+import type {
+  Order,
+  Table as TableType,
+  Invoice,
+  Transaction,
+} from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 export function TableReport() {
@@ -54,7 +58,7 @@ export function TableReport() {
         console.log("Table Report - Orders loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Table Report - Error fetching orders:', error);
+        console.error("Table Report - Error fetching orders:", error);
         return [];
       }
     },
@@ -74,7 +78,7 @@ export function TableReport() {
         console.log("Table Report - Invoices loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Table Report - Error fetching invoices:', error);
+        console.error("Table Report - Error fetching invoices:", error);
         return [];
       }
     },
@@ -94,7 +98,7 @@ export function TableReport() {
         console.log("Table Report - Transactions loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Table Report - Error fetching transactions:', error);
+        console.error("Table Report - Error fetching transactions:", error);
         return [];
       }
     },
@@ -114,7 +118,7 @@ export function TableReport() {
         console.log("Table Report - Tables loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Table Report - Error fetching tables:', error);
+        console.error("Table Report - Error fetching tables:", error);
         return [];
       }
     },
@@ -135,7 +139,7 @@ export function TableReport() {
         console.log("Table Report - Order items loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Table Report - Error fetching order items:', error);
+        console.error("Table Report - Error fetching order items:", error);
         return [];
       }
     },
@@ -143,25 +147,32 @@ export function TableReport() {
     retryDelay: 1000,
   });
 
-  const { data: transactionItems = [], isLoading: transactionItemsLoading } = useQuery({
-    queryKey: ["/api/transaction-items"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/transaction-items");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+  const { data: transactionItems = [], isLoading: transactionItemsLoading } =
+    useQuery({
+      queryKey: ["/api/transaction-items"],
+      queryFn: async () => {
+        try {
+          const response = await fetch("/api/transaction-items");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          console.log(
+            "Table Report - Transaction items loaded:",
+            data?.length || 0,
+          );
+          return Array.isArray(data) ? data : [];
+        } catch (error) {
+          console.error(
+            "Table Report - Error fetching transaction items:",
+            error,
+          );
+          return [];
         }
-        const data = await response.json();
-        console.log("Table Report - Transaction items loaded:", data?.length || 0);
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Table Report - Error fetching transaction items:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
-  });
+      },
+      retry: 3,
+      retryDelay: 1000,
+    });
 
   const getTableData = () => {
     if (!orders || !tables) return null;
@@ -190,11 +201,12 @@ export function TableReport() {
         const dateMatch = orderDateOnly >= start && orderDateOnly <= end;
 
         // Only include paid/completed orders
-        const isCompleted = order.status === 'paid' || order.status === 'completed';
+        const isCompleted =
+          order.status === "paid" || order.status === "completed";
 
         return dateMatch && isCompleted;
       } catch (error) {
-        console.error('Table Report - Error filtering order:', order, error);
+        console.error("Table Report - Error filtering order:", order, error);
         return false;
       }
     });
@@ -210,22 +222,29 @@ export function TableReport() {
       orderItemsIsArray: Array.isArray(orderItems),
       orderItemsAvailable: !!orderItems,
       sampleOrderItems: orderItems?.slice(0, 5) || [],
-      allOrderItemsByOrder: completedOrders.map(order => ({
+      allOrderItemsByOrder: completedOrders.map((order) => ({
         orderId: order.id,
         orderNumber: order.orderNumber,
         tableId: order.tableId,
-        itemsCount: orderItems?.filter((item: any) => item.orderId === order.id)?.length || 0,
-        actualItems: orderItems?.filter((item: any) => item.orderId === order.id)?.map(item => ({
-          id: item.id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          orderId: item.orderId
-        })) || []
+        itemsCount:
+          orderItems?.filter((item: any) => item.orderId === order.id)
+            ?.length || 0,
+        actualItems:
+          orderItems
+            ?.filter((item: any) => item.orderId === order.id)
+            ?.map((item) => ({
+              id: item.id,
+              productId: item.productId,
+              productName: item.productName,
+              quantity: item.quantity,
+              orderId: item.orderId,
+            })) || [],
       })),
       totalItemsInSystem: orderItems?.length || 0,
-      uniqueOrderIds: [...new Set(orderItems?.map((item: any) => item.orderId) || [])],
-      completedOrderIds: completedOrders.map(o => o.id)
+      uniqueOrderIds: [
+        ...new Set(orderItems?.map((item: any) => item.orderId) || []),
+      ],
+      completedOrderIds: completedOrders.map((o) => o.id),
     });
 
     // Initialize table stats map
@@ -243,18 +262,18 @@ export function TableReport() {
         utilizationRate: 0,
         peakHours: {} as { [hour: number]: number },
         itemsSold: 0,
-        table: table
+        table: table,
       });
     });
 
     // Process completed orders
     completedOrders.forEach((order: any) => {
       const tableId = order.tableId;
-      
+
       // Only process orders with valid tableId
       if (tableId && tableStatsMap.has(tableId)) {
         const stats = tableStatsMap.get(tableId);
-        
+
         stats.totalRevenue += parseFloat(order.total || 0);
         stats.totalOrders += 1;
         stats.totalCustomers += order.customerCount || 1;
@@ -269,40 +288,51 @@ export function TableReport() {
             orderIdType: typeof order.id,
             orderIdValue: order.id,
             orderItemsTotal: orderItems.length,
-            sampleOrderItems: orderItems.slice(0, 3).map(item => ({
+            sampleOrderItems: orderItems.slice(0, 3).map((item) => ({
               id: item.id,
               orderId: item.orderId,
               orderIdType: typeof item.orderId,
               productName: item.productName,
-              quantity: item.quantity
+              quantity: item.quantity,
             })),
             orderItemsWithMatchingOrderId: orderItems.filter((item: any) => {
-              console.log(`  🔎 Comparing order.id=${order.id} (${typeof order.id}) with item.orderId=${item.orderId} (${typeof item.orderId})`);
+              console.log(
+                `  🔎 Comparing order.id=${order.id} (${typeof order.id}) with item.orderId=${item.orderId} (${typeof item.orderId})`,
+              );
               return item.orderId === order.id;
-            }).length
+            }).length,
           });
 
           // Find all order items that belong to this order
-          const itemsForThisOrder = orderItems.filter((item: any) => item.orderId === order.id);
-          
+          const itemsForThisOrder = orderItems.filter(
+            (item: any) => item.orderId === order.id,
+          );
+
           // Sum up all quantities for this order
           let totalQuantityForOrder = 0;
           itemsForThisOrder.forEach((item: any) => {
             const quantity = Number(item.quantity || 0);
             totalQuantityForOrder += quantity;
-            console.log(`  📦 Item ${item.id}: ${item.productName} x${quantity} (orderId: ${item.orderId})`);
+            console.log(
+              `  📦 Item ${item.id}: ${item.productName} x${quantity} (orderId: ${item.orderId})`,
+            );
           });
-          
+
           // Add to table stats
           stats.itemsSold += totalQuantityForOrder;
-          
-          console.log(`✅ Table ${tableId} - Order ${order.id}: Found ${itemsForThisOrder.length} items, total quantity: ${totalQuantityForOrder}, running total: ${stats.itemsSold}`);
+
+          console.log(
+            `✅ Table ${tableId} - Order ${order.id}: Found ${itemsForThisOrder.length} items, total quantity: ${totalQuantityForOrder}, running total: ${stats.itemsSold}`,
+          );
         } else {
-          console.error(`❌ Table ${tableId} - Order ${order.id}: orderItems is not available`, {
-            orderItemsType: typeof orderItems,
-            orderItemsIsArray: Array.isArray(orderItems),
-            orderItemsLength: orderItems?.length
-          });
+          console.error(
+            `❌ Table ${tableId} - Order ${order.id}: orderItems is not available`,
+            {
+              orderItemsType: typeof orderItems,
+              orderItemsIsArray: Array.isArray(orderItems),
+              orderItemsLength: orderItems?.length,
+            },
+          );
         }
       }
     });
@@ -310,7 +340,10 @@ export function TableReport() {
     // Calculate derived metrics
     const daysDiff = Math.max(
       1,
-      Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
+      Math.ceil(
+        (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+          (1000 * 60 * 60 * 24),
+      ) + 1,
     );
 
     tableStatsMap.forEach((stats) => {
@@ -321,54 +354,69 @@ export function TableReport() {
     });
 
     // Convert to array and sort by revenue (desc), then by table ID for zero revenue tables
-    const tableStats = Array.from(tableStatsMap.values())
-      .sort((a, b) => {
-        if (b.totalRevenue !== a.totalRevenue) {
-          return b.totalRevenue - a.totalRevenue;
-        }
-        // If revenue is equal (including 0), sort by table ID
-        return a.tableId - b.tableId;
-      });
+    const tableStats = Array.from(tableStatsMap.values()).sort((a, b) => {
+      if (b.totalRevenue !== a.totalRevenue) {
+        return b.totalRevenue - a.totalRevenue;
+      }
+      // If revenue is equal (including 0), sort by table ID
+      return a.tableId - b.tableId;
+    });
 
     // Final debug summary
-    const totalItemsCalculated = tableStats.reduce((sum, s) => sum + s.itemsSold, 0);
+    const totalItemsCalculated = tableStats.reduce(
+      (sum, s) => sum + s.itemsSold,
+      0,
+    );
     console.log("🎯 Table Report Summary:", {
       completedOrdersCount: completedOrders.length,
       orderItemsCount: orderItems?.length || 0,
       totalItemsSold: totalItemsCalculated,
-      tablesWithItems: tableStats.filter(s => s.itemsSold > 0).length,
-      tableResults: tableStats.map(s => ({
+      tablesWithItems: tableStats.filter((s) => s.itemsSold > 0).length,
+      tableResults: tableStats.map((s) => ({
         tableId: s.tableId,
         tableName: s.tableName,
         totalOrders: s.totalOrders,
         itemsSold: s.itemsSold,
-        revenue: s.totalRevenue
+        revenue: s.totalRevenue,
       })),
-      allTableStats: tableStats.map(s => ({
+      allTableStats: tableStats.map((s) => ({
         tableId: s.tableId,
         tableName: s.tableName,
         totalOrders: s.totalOrders,
         itemsSold: s.itemsSold,
-        revenue: s.totalRevenue
-      }))
+        revenue: s.totalRevenue,
+      })),
     });
 
     // Calculate totals
-    const totalRevenue = completedOrders.reduce((sum: number, order: any) => 
-      sum + parseFloat(order.total || 0), 0
-    );
+    const totalRevenue = completedOrders.reduce((sum: number, order: any) => {
+      // Revenue = Subtotal (đã trừ giảm giá) + Tax
+      const subtotal = Number(order.subtotal || 0); // Thành tiền sau khi trừ giảm giá
+      const tax = Number(order.tax || 0); // Thuế
+      const revenue = subtotal + tax; // Doanh thu thực tế
+      return sum + revenue;
+    }, 0);
     const totalOrders = completedOrders.length;
-    const totalCustomers = completedOrders.reduce((sum: number, order: any) => 
-      sum + (order.customerCount || 1), 0
+    const totalCustomers = completedOrders.reduce(
+      (sum: number, order: any) => sum + (order.customerCount || 1),
+      0,
     );
-    const averageUtilization = tableStats.length > 0 
-      ? tableStats.reduce((sum, stats) => sum + stats.totalOrders, 0) / tableStats.length 
-      : 0;
+    const averageUtilization =
+      tableStats.length > 0
+        ? tableStats.reduce((sum, stats) => sum + stats.totalOrders, 0) /
+          tableStats.length
+        : 0;
 
     // Sort tables by different metrics
-    const topRevenueTables = [...tableStats].sort((a, b) => b.totalRevenue - a.totalRevenue);
-    const topTurnoverTables = [...tableStats].sort((a, b) => b.utilizationRate - a.utilizationRate);
-    const topUtilizationTables = [...tableStats].sort((a, b) => b.totalOrders - a.totalOrders);
+    const topRevenueTables = [...tableStats].sort(
+      (a, b) => b.totalRevenue - a.totalRevenue,
+    );
+    const topTurnoverTables = [...tableStats].sort(
+      (a, b) => b.utilizationRate - a.utilizationRate,
+    );
+    const topUtilizationTables = [...tableStats].sort(
+      (a, b) => b.totalOrders - a.totalOrders,
+    );
 
     return {
       tableStats,
@@ -466,13 +514,21 @@ export function TableReport() {
 
   const tableData = getTableData();
 
-  const isLoading = ordersLoading || invoicesLoading || transactionsLoading || tablesLoading || orderItemsLoading || transactionItemsLoading;
+  const isLoading =
+    ordersLoading ||
+    invoicesLoading ||
+    transactionsLoading ||
+    tablesLoading ||
+    orderItemsLoading ||
+    transactionItemsLoading;
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <div className="ml-3 text-gray-500">{t("reports.loading") || "Đang tải dữ liệu..."}</div>
+        <div className="ml-3 text-gray-500">
+          {t("reports.loading") || "Đang tải dữ liệu..."}
+        </div>
       </div>
     );
   }
@@ -496,7 +552,9 @@ export function TableReport() {
                 <Utensils className="w-5 h-5" />
                 {t("reports.tableAnalysis")}
               </CardTitle>
-              <CardDescription>{t("reports.analyzeTableRevenueTrend")}</CardDescription>
+              <CardDescription>
+                {t("reports.analyzeTableRevenueTrend")}
+              </CardDescription>
             </div>
             <div className="flex items-center gap-4">
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
@@ -631,78 +689,95 @@ export function TableReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("tables.tableNumber") || "Bàn"}</TableHead>
-                <TableHead>{t("reports.currentStatus") || "Trạng thái hiện tại"}</TableHead>
+                <TableHead>
+                  {t("reports.currentStatus") || "Trạng thái hiện tại"}
+                </TableHead>
                 <TableHead>{t("reports.orders") || "Đơn hàng"}</TableHead>
-                <TableHead>{t("reports.totalRevenue") || "Tổng doanh thu"}</TableHead>
-                <TableHead>{t("reports.customerCount") || "Số khách hàng"}</TableHead>
-                <TableHead>{t("reports.averageOrderValue") || "Giá trị đơn hàng TB"}</TableHead>
-                <TableHead>{t("reports.turnoverRate") || "Tỷ lệ luân chuyển"}</TableHead>
+                <TableHead>
+                  {t("reports.totalRevenue") || "Tổng doanh thu"}
+                </TableHead>
+                <TableHead>
+                  {t("reports.customerCount") || "Số khách hàng"}
+                </TableHead>
+                <TableHead>
+                  {t("reports.averageOrderValue") || "Giá trị đơn hàng TB"}
+                </TableHead>
+                <TableHead>
+                  {t("reports.turnoverRate") || "Tỷ lệ luân chuyển"}
+                </TableHead>
                 <TableHead>{t("reports.peakTime") || "Giờ cao điểm"}</TableHead>
                 <TableHead>{t("reports.items") || "Số món bán"}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {tableData.tableStats.map((stats) => {
-                  const statusConfig = getTableStatusBadge(stats.table.status);
-                  const peakHour = getPeakHour(stats.peakHours);
+                const statusConfig = getTableStatusBadge(stats.table.status);
+                const peakHour = getPeakHour(stats.peakHours);
 
-                  return (
-                    <TableRow key={stats.tableId}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${
-                            stats.totalRevenue > 0 ? 'bg-green-500' : 'bg-gray-300'
-                          }`}></div>
-                          {stats.tableName}
-                          {stats.totalRevenue === 0 && (
-                            <span className="text-xs text-gray-400 ml-2">({t("reports.noRevenue") || "Chưa có doanh thu"})</span>
-                          )}
-                          <span className="text-xs text-gray-500">
-                            ({stats.table.capacity} {t("customers.people") || "người"})
+                return (
+                  <TableRow key={stats.tableId}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-3 h-3 rounded-full ${
+                            stats.totalRevenue > 0
+                              ? "bg-green-500"
+                              : "bg-gray-300"
+                          }`}
+                        ></div>
+                        {stats.tableName}
+                        {stats.totalRevenue === 0 && (
+                          <span className="text-xs text-gray-400 ml-2">
+                            ({t("reports.noRevenue") || "Chưa có doanh thu"})
                           </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusConfig.variant}>
-                          {statusConfig.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {stats.totalOrders} {t("orders.orderCount") || "đơn"}
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        {formatCurrency(stats.totalRevenue)}
-                      </TableCell>
-                      <TableCell>
-                        {stats.totalCustomers} {t("customers.people") || "người"}
-                      </TableCell>
-                      <TableCell>
-                        {stats.totalOrders > 0
-                          ? formatCurrency(stats.averageOrderValue)
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            stats.utilizationRate > 100 ? "default" : "outline"
-                          }
-                        >
-                          {stats.utilizationRate.toFixed(1)}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {peakHour !== null
-                          ? `${peakHour} ${t("reports.hour") || "giờ"}`
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {stats.itemsSold} {t("reports.items") || "món"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                        )}
+                        <span className="text-xs text-gray-500">
+                          ({stats.table.capacity}{" "}
+                          {t("customers.people") || "người"})
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusConfig.variant}>
+                        {statusConfig.label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {stats.totalOrders} {t("orders.orderCount") || "đơn"}
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      {formatCurrency(stats.totalRevenue)}
+                    </TableCell>
+                    <TableCell>
+                      {stats.totalCustomers} {t("customers.people") || "người"}
+                    </TableCell>
+                    <TableCell>
+                      {stats.totalOrders > 0
+                        ? formatCurrency(stats.averageOrderValue)
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          stats.utilizationRate > 100 ? "default" : "outline"
+                        }
+                      >
+                        {stats.utilizationRate.toFixed(1)}%
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {peakHour !== null
+                        ? `${peakHour} ${t("reports.hour") || "giờ"}`
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {stats.itemsSold} {t("reports.items") || "món"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
@@ -733,9 +808,7 @@ export function TableReport() {
                       >
                         {index + 1}
                       </Badge>
-                      <span className="font-medium">
-                        {stats.tableName}
-                      </span>
+                      <span className="font-medium">{stats.tableName}</span>
                     </div>
                     <span className="text-sm font-semibold text-green-600">
                       {formatCurrency(stats.totalRevenue)}
@@ -770,9 +843,7 @@ export function TableReport() {
                       >
                         {index + 1}
                       </Badge>
-                      <span className="font-medium">
-                        {stats.tableName}
-                      </span>
+                      <span className="font-medium">{stats.tableName}</span>
                     </div>
                     <span className="text-sm font-semibold">
                       {stats.utilizationRate.toFixed(1)}%
@@ -807,9 +878,7 @@ export function TableReport() {
                       >
                         {index + 1}
                       </Badge>
-                      <span className="font-medium">
-                        {stats.tableName}
-                      </span>
+                      <span className="font-medium">{stats.tableName}</span>
                     </div>
                     <span className="text-sm font-semibold">
                       {stats.totalOrders} {t("common.count")}

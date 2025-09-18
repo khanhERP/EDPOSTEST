@@ -305,6 +305,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       male: "남성",
       female: "여성",
       other: "기타",
+      posPaymentNote: "POS 현금 결제 - 금액: {amount}, 거스름돈: {change}",
 
       // Size options
       small: "소",
@@ -746,6 +747,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       // Size options
       small: "Small",
       medium: "Medium",
+      posPaymentNote: "POS Cash Payment - Amount: {amount}, Change: {change}",
       large: "Large",
       extraLarge: "Extra Large",
 
@@ -1132,6 +1134,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       partiallyPaid: "Thanh toán một phần",
       fullyPaid: "Đã thanh toán đủ",
       refunded: "Đã hoàn tiền",
+      posPaymentNote:
+        "Thanh toán bằng tiền mặt tại POS - Số tiền: {amount}, Tiền thừa: {change}",
 
       // Stock levels
       inStock: "Còn hàng",

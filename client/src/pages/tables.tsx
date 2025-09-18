@@ -155,14 +155,6 @@ export default function TablesPage() {
               </h1>
               <p className="mt-2 text-gray-600">{t("tables.description")}</p>
             </div>
-            <div className="flex gap-4">
-              <Link href="/">
-                <Button variant="outline">
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  {t('nav.pos')}
-                </Button>
-              </Link>
-            </div>
           </div>
 
           <Tabs defaultValue="tables" className="space-y-6">
