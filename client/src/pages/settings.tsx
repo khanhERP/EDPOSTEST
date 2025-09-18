@@ -3854,7 +3854,7 @@ export default function Settings() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              Xác nhận xóa kd��t nối HĐĐT
+              Xác nhận xóa kdt nối HĐĐT
             </AlertDialogTitle>
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
@@ -3938,7 +3938,7 @@ export default function Settings() {
                     }
                   }}
                   className={`${eInvoiceFormErrors.taxCode ? "border-red-500" : ""}`}
-                  placeholder="Nhập mã số thuế"
+                  placeholder={t("settings.taxIdPlaceholder")}
                 />
                 {eInvoiceFormErrors.taxCode && (
                   <p className="text-sm text-red-500">
@@ -3969,7 +3969,7 @@ export default function Settings() {
                     }
                   }}
                   className={`${eInvoiceFormErrors.loginId ? "border-red-500" : ""}`}
-                  placeholder="Nhập ID đăng nhập"
+                  placeholder={t("common.enterLoginId")}
                 />
                 {eInvoiceFormErrors.loginId && (
                   <p className="text-sm text-red-500">
@@ -4001,7 +4001,7 @@ export default function Settings() {
                     }
                   }}
                   className={`${eInvoiceFormErrors.password ? "border-red-500" : ""}`}
-                  placeholder="Nhập mật khẩu"
+                  placeholder={t("common.enterPassword")}
                 />
                 {eInvoiceFormErrors.password && (
                   <p className="text-sm text-red-500">
@@ -4075,7 +4075,7 @@ export default function Settings() {
                     }
                   }}
                   className={`${eInvoiceFormErrors.loginUrl ? "border-red-500" : ""}`}
-                  placeholder="https://api.example.com"
+                  placeholder={t("common.enterUrl")}
                 />
                 {eInvoiceFormErrors.loginUrl && (
                   <p className="text-sm text-red-500">
