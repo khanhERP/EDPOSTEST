@@ -1418,7 +1418,7 @@ export default function Settings() {
                   <span className="hidden lg:inline">
                     {t("settings.storeInfo")}
                   </span>
-                  <span className="lg:hidden">Cửa hàng</span>
+                  <span className="lg:hidden">{t("settings.storeInfo")}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="customers"
@@ -1428,7 +1428,7 @@ export default function Settings() {
                   <span className="hidden lg:inline">
                     {t("customers.title")}
                   </span>
-                  <span className="lg:hidden">Khách hàng</span>
+                  <span className="lg:hidden">{t("customers.title")}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="categories"
@@ -1438,7 +1438,7 @@ export default function Settings() {
                   <span className="hidden lg:inline">
                     {t("settings.categories")}
                   </span>
-                  <span className="lg:hidden">Sản phẩm</span>
+                  <span className="lg:hidden">{t("settings.categories")}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="employees"
@@ -1448,7 +1448,7 @@ export default function Settings() {
                   <span className="hidden lg:inline">
                     {t("settings.employees")}
                   </span>
-                  <span className="lg:hidden">Nhân viên</span>
+                  <span className="lg:hidden">{t("settings.employees")}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="payments"
@@ -1458,7 +1458,7 @@ export default function Settings() {
                   <span className="hidden lg:inline">
                     {t("settings.paymentMethods")}
                   </span>
-                  <span className="lg:hidden">Thanh toán</span>
+                  <span className="lg:hidden">{t("settings.paymentMethods")}</span>
                 </TabsTrigger>
               </TabsList>
             </div>
