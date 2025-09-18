@@ -199,7 +199,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
               src={logoPath}
               alt="EDPOS Logo"
               className="h-12 cursor-pointer"
-              onClick={() => (window.location.href = "/pos")}
+              onClick={() => (window.location.href = "/tables")}
             />
           </div>
           <div className="opacity-90 font-semibold text-[20px]">
