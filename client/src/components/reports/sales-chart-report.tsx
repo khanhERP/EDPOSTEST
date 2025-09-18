@@ -1564,26 +1564,27 @@ export function SalesChartReport() {
                   unit: "-",
                   quantity: 0,
                   unitPrice: 0,
-                  totalAmount: orderSubtotal, // Sử dụng thành tiền từ order
+                  totalAmount: orderSubtotal, // Thành tiền từ order (subtotal)
                   discount: orderDiscount, // Giảm giá từ order
                   revenue: orderRevenue, // Doanh thu từ order
                   tax: orderTax, // Thuế từ order
                   vat: orderTax, // VAT = thuế
-                  totalMoney: orderTotal, // Tổng tiền từ order
+                  totalMoney: orderTotal, // Tổng tiền từ order (total)
                   productGroup: "-",
-                  taxRate: 10, // Default tax rate for items
+                  taxRate: 0, // Default tax rate for empty orders
                 },
               ]
             : orderItemsForOrder.map((item: any) => {
-                // Sử dụng giá trị CHÍNH XÁC từ order_items và order
+                // Sử dụng giá trị CHÍNH XÁC từ order_items
                 const itemQuantity = Number(item.quantity || 1);
-                const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items (trước thuế)
-                const itemTotal = itemUnitPrice * itemQuantity; // Thành tiền = đơn giá * số lượng (trước thuế)
+                const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items
+                const itemTotal = itemUnitPrice * itemQuantity; // Thành tiền = đơn giá * số lượng
                 
-                // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
-                const itemDiscountRatio = Number(item.discount || 0); // Avoid division by zero
-                const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
-                const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
+                // Phân bổ giảm giá và thuế theo tỷ lệ thành tiền của item trong tổng order
+                const totalOrderAmount = orderSubtotal > 0 ? orderSubtotal : 1; // Avoid division by zero
+                const itemRatio = itemTotal / totalOrderAmount; // Tỷ lệ item trong order
+                const itemDiscount = orderDiscount * itemRatio; // Giảm giá phân bổ theo tỷ lệ
+                const itemTax = orderTax * itemRatio; // Thuế phân bổ theo tỷ lệ
                 const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
                 const itemTotalMoney = itemRevenue + itemTax; // Tổng tiền = doanh thu + thuế
 
