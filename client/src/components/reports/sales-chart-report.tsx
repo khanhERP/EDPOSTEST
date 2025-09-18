@@ -525,6 +525,7 @@ export function SalesChartReport() {
       total: order.total,
       subtotal: order.subtotal,
       discount: order.discount || 0,
+      tax: order.tax || 0,
       paymentMethod: order.paymentMethod || "cash",
       createdAt:
         order.orderedAt || order.createdAt || order.created_at || order.paidAt,
@@ -931,9 +932,9 @@ export function SalesChartReport() {
                                         Number(transaction.subtotal || 0) -
                                           Number(transaction.discount || 0),
                                       );
-                                      const transactionTax =
-                                        Number(transaction.total || 0) -
-                                        Number(transaction.subtotal || 0);
+                                      const transactionTax = Number(
+                                        transaction.tax || 0,
+                                      );
                                       const customerPayment =
                                         transactionRevenue + transactionTax;
 
@@ -1127,14 +1128,10 @@ export function SalesChartReport() {
                                                                 0,
                                                             ),
                                                         ) +
-                                                          (Number(
-                                                            transaction.total ||
+                                                          Number(
+                                                            transaction.tax ||
                                                               0,
-                                                          ) -
-                                                            Number(
-                                                              transaction.subtotal ||
-                                                                0,
-                                                            )),
+                                                          ),
                                                       )
                                                     : "-"}
                                                 </TableCell>
@@ -2701,10 +2698,8 @@ export function SalesChartReport() {
                                               Number(order.subtotal || 0) -
                                                 Number(order.discount || 0),
                                             );
-                                            const orderTax = Math.max(
-                                              0,
-                                              Number(order.total || 0) -
-                                                Number(order.subtotal || 0),
+                                            const orderTax = Number(
+                                              order.tax || 0,
                                             );
                                             customerPaymentForMethod +=
                                               orderRevenue + orderTax;
@@ -2977,11 +2972,7 @@ export function SalesChartReport() {
                                           Number(order.subtotal || 0) -
                                             Number(order.discount || 0),
                                         );
-                                        const orderTax = Math.max(
-                                          0,
-                                          Number(order.total || 0) -
-                                            Number(order.subtotal || 0),
-                                        );
+                                        const orderTax = Number(order.tax || 0);
                                         totalCustomerPaymentForMethod +=
                                           orderRevenue + orderTax;
                                       }
