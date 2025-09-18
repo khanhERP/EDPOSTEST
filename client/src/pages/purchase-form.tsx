@@ -80,7 +80,7 @@ const purchaseFormSchema = insertPurchaseOrderSchema.extend({
   items: z.array(insertPurchaseOrderItemSchema.extend({
     productName: z.string(),
     sku: z.string().optional(),
-    total: z.string(),
+    receivedQuantity: z.number().default(0),
   })).min(1, "At least one item is required"),
 });
 
@@ -113,6 +113,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
     productName: string;
     sku?: string;
     quantity: number;
+    receivedQuantity: number;
     unitPrice: number;
     total: number;
   }>>([]);
@@ -123,10 +124,12 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
   const form = useForm<PurchaseFormData>({
     resolver: zodResolver(purchaseFormSchema),
     defaultValues: {
-      supplierId: undefined,
+      supplierId: 0,
       poNumber: "",
-      orderDate: new Date().toISOString().split('T')[0],
-      expectedDeliveryDate: "",
+      expectedDeliveryDate: new Date().toISOString().split('T')[0],
+      subtotal: "0.00",
+      tax: "0.00", 
+      total: "0.00",
       notes: "",
       status: "pending" as const,
       items: [],
@@ -170,7 +173,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       const order = existingOrder as any;
       form.setValue("supplierId", order.supplierId);
       form.setValue("poNumber", order.poNumber);
-      form.setValue("orderDate", order.orderDate);
+      form.setValue("expectedDeliveryDate", order.expectedDeliveryDate);
       form.setValue("expectedDeliveryDate", order.expectedDeliveryDate || "");
       form.setValue("notes", order.notes || "");
       form.setValue("status", order.status);
@@ -182,6 +185,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
           productName: item.productName,
           sku: item.sku,
           quantity: item.quantity,
+          receivedQuantity: item.receivedQuantity || 0,
           unitPrice: parseFloat(item.unitPrice),
           total: parseFloat(item.unitPrice) * item.quantity,
         })));
@@ -196,6 +200,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       productName: item.productName,
       sku: item.sku || "",
       quantity: item.quantity,
+      receivedQuantity: item.receivedQuantity,
       unitPrice: item.unitPrice.toFixed(2),
       total: item.total.toFixed(2),
     }));
@@ -274,6 +279,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
         productName: product.name,
         sku: product.sku,
         quantity: 1,
+        receivedQuantity: 0,
         unitPrice: product.unitPrice || 0,
         total: product.unitPrice || 0,
       };
@@ -424,10 +430,10 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                       {/* Order Date */}
                       <FormField
                         control={form.control}
-                        name="orderDate"
+                        name="expectedDeliveryDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("purchases.orderDate")}</FormLabel>
+                            <FormLabel>{t("purchases.expectedDeliveryDate")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
@@ -501,7 +507,8 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                           <FormLabel>{t("purchases.notes")}</FormLabel>
                           <FormControl>
                             <Textarea 
-                              {...field} 
+                              {...field}
+                              value={field.value || ""}
                               placeholder={t("purchases.notesPlaceholder")}
                               rows={3}
                               data-testid="textarea-notes"
