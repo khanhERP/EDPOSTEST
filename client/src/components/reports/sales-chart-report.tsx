@@ -2363,7 +2363,7 @@ export function SalesChartReport() {
           const orderSubtotal = Number(order.subtotal || 0);
           const orderDiscount = Number(order.discount || 0);
           const revenue = Math.max(0, orderSubtotal - orderDiscount);
-          const tax = Number(order.tax || 0) || Math.max(0, orderTotal - orderSubtotal); // Use tax from database first, fallback to calculation
+          const tax = Number(order.tax || 0); // Use tax from database first, fallback to calculation
 
           stats.orderCount += 1;
           stats.revenue += revenue;
@@ -2800,13 +2800,7 @@ export function SalesChartReport() {
                                       )}
                                     </TableCell>
                                     <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
-                                      {formatCurrency(
-                                        Math.max(
-                                          0,
-                                          Number(order.total || 0) -
-                                            Number(order.subtotal || 0),
-                                        ),
-                                      )}
+                                      {formatCurrency(Number(order.tax || 0))}
                                     </TableCell>
                                     <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                       {formatCurrency(
@@ -2814,12 +2808,7 @@ export function SalesChartReport() {
                                           0,
                                           Number(order.subtotal || 0) -
                                             Number(order.discount || 0),
-                                        ) +
-                                          Math.max(
-                                            0,
-                                            Number(order.total || 0) -
-                                              Number(order.subtotal || 0),
-                                          ),
+                                        ) + Number(order.tax || 0),
                                       )}
                                     </TableCell>
                                     {(() => {
@@ -2853,11 +2842,7 @@ export function SalesChartReport() {
                                         Number(order.subtotal || 0) -
                                           Number(order.discount || 0),
                                       );
-                                      const orderTax = Math.max(
-                                        0,
-                                        Number(order.total || 0) -
-                                          Number(order.subtotal || 0),
-                                      );
+                                      const orderTax = Number(order.tax || 0);
                                       const customerPayment =
                                         orderRevenue + orderTax;
 
