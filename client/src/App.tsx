@@ -12,6 +12,7 @@ import InventoryPage from "@/pages/inventory";
 import ReportsPage from "@/pages/reports";
 import SettingsPage from "@/pages/settings";
 import SuppliersPage from "@/pages/suppliers";
+import PurchasesPage from "@/pages/purchases";
 import AttendancePage from "@/pages/attendance";
 import AttendanceQRPage from "./pages/attendance-qr";
 import CustomerDisplay from "@/pages/customer-display";
@@ -46,6 +47,10 @@ function Router({ onLogout }: { onLogout: () => void }) {
       <Route
         path="/suppliers"
         component={() => <SuppliersPage onLogout={onLogout} />}
+      />
+      <Route
+        path="/purchases"
+        component={() => <PurchasesPage onLogout={onLogout} />}
       />
       <Route
         path="/attendance"

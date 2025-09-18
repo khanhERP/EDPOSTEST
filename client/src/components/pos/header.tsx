@@ -11,6 +11,7 @@ import {
   Package,
   Settings as SettingsIcon,
   Building2,
+  ClipboardCheck,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import logoPath from "@assets/EDPOS_1753091767028.png";
@@ -231,6 +232,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                     "/employees",
                     "/attendance",
                     "/suppliers",
+                    "/purchases",
                     "/settings",
                   ].includes(location)
                     ? "bg-white bg-opacity-20"
@@ -481,6 +483,21 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                     >
                       <Building2 className="w-4 h-4 mr-3" />
                       {t("nav.suppliers")}
+                    </button>
+                  </Link>
+
+                  <Link href="/purchases">
+                    <button
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/purchases"
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                      data-testid="button-nav-purchases"
+                    >
+                      <ClipboardCheck className="w-4 h-4 mr-3" />
+                      {t("nav.purchases")}
                     </button>
                   </Link>
 

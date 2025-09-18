@@ -12,7 +12,9 @@ import {
   Menu,
   Package,
   ShoppingCart,
-  FileText
+  FileText,
+  ClipboardCheck,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -79,6 +81,16 @@ export function RightSidebar() {
       icon: Clock,
       label: t('nav.attendance'),
       href: "/attendance",
+    },
+    {
+      icon: Building2,
+      label: t('nav.suppliers'),
+      href: "/suppliers",
+    },
+    {
+      icon: ClipboardCheck,
+      label: t('nav.purchases'),
+      href: "/purchases",
     },
     {
       icon: Settings,
@@ -164,6 +176,7 @@ export function RightSidebar() {
                     isActive && "bg-gradient-to-r from-green-100 to-green-50 text-green-800 border-green-300 shadow-lg font-bold",
                     isNavCollapsed && !showText && "hover:w-64 group"
                   )}
+                  data-testid={`link${item.href.replace('/', '-')}`}
                 >
                   <Icon className={cn("w-6 h-6 flex-shrink-0", showText && "mr-4", isActive && "text-green-700")} />
                   {showText && (

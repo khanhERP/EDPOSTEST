@@ -137,6 +137,7 @@ export interface NavigationTranslations {
   employees: string;
   attendance: string;
   suppliers: string;
+  purchases: string;
   salesReports: string;
   inventoryReports: string;
   expensesReports: string;
