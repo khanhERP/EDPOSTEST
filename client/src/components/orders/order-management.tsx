@@ -2801,7 +2801,7 @@ export function OrderManagement() {
                 ))}
                 {filteredCustomers.length === 0 && (
                   <div className="p-8 text-center text-gray-500">
-                    Không tìm thấy khách hàng
+                    {t('orders.customerNotFound')}
                   </div>
                 )}
               </div>
