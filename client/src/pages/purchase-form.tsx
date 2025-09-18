@@ -238,9 +238,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       };
       
       if (isEditMode) {
-        return apiRequest(`/api/purchase-orders/${id}`, "PUT", payload);
+        return apiRequest("PUT", `/api/purchase-orders/${id}`, payload);
       } else {
-        return apiRequest("/api/purchase-orders", "POST", payload);
+        return apiRequest("POST", "/api/purchase-orders", payload);
       }
     },
     onSuccess: () => {
