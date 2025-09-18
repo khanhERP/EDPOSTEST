@@ -952,42 +952,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalCount = totalCountResult?.count || 0;
       const totalPages = limitNum ? Math.ceil(totalCount / limitNum) : 1;
 
-      // Get paginated orders with proper field selection including employee info
+      // Get paginated orders - simplified query without JOIN
       const orderBy =
         sortOrder === "asc"
           ? asc(orders.orderedAt)
           : desc(orders.orderedAt);
 
       let ordersQuery = database
-        .select({
-          id: orders.id,
-          orderNumber: orders.orderNumber,
-          tableId: orders.tableId,
-          employeeId: orders.employeeId,
-          status: orders.status,
-          customerName: orders.customerName,
-          customerCount: orders.customerCount,
-          subtotal: orders.subtotal,
-          tax: orders.tax,
-          discount: orders.discount,
-          total: orders.total,
-          paymentMethod: orders.paymentMethod,
-          paymentStatus: orders.paymentStatus,
-          einvoiceStatus: orders.einvoiceStatus,
-          invoiceStatus: orders.invoiceStatus,
-          templateNumber: orders.templateNumber,
-          symbol: orders.symbol,
-          invoiceNumber: orders.invoiceNumber,
-          salesChannel: orders.salesChannel,
-          notes: orders.notes,
-          orderedAt: orders.orderedAt,
-          servedAt: orders.servedAt,
-          paidAt: orders.paidAt,
-          customerTaxCode: orders.customerTaxCode,
-          customerAddress: orders.customerAddress,
-          customerPhone: orders.customerPhone,
-          customerEmail: orders.customerEmail,
-        })
+        .select()
         .from(orders)
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(orderBy);
@@ -1003,18 +975,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `✅ Orders list API - Found ${ordersResult.length} orders${limitNum ? ` (page ${pageNum}/${totalPages})` : ' (all orders)'}`,
       );
 
-      // Get employee data separately to avoid null reference issues
+      // Get employee data separately for all orders
       const employeeIds = [...new Set(ordersResult.map(order => order.employeeId).filter(Boolean))];
-      const employeeData = employeeIds.length > 0 ? await database
-        .select({
-          id: employees.id,
-          employeeId: employees.employeeId,
-          name: employees.name,
-        })
-        .from(employees)
-        .where(sql`${employees.id} IN (${employeeIds.map(id => `${id}`).join(',')})`) : [];
-
-      const employeeMap = new Map(employeeData.map(emp => [emp.id, emp]));
+      let employeeMap = new Map();
+      
+      if (employeeIds.length > 0) {
+        try {
+          const employeeData = await database
+            .select({
+              id: employees.id,
+              employeeId: employees.employeeId,
+              name: employees.name,
+            })
+            .from(employees)
+            .where(sql`${employees.id} = ANY(${employeeIds})`);
+          
+          employeeMap = new Map(employeeData.map(emp => [emp.id, emp]));
+        } catch (empError) {
+          console.warn("⚠️ Error fetching employee data, continuing without:", empError);
+        }
+      }
 
       // Process orders to ensure consistent field structure
       const processedOrders = ordersResult.map((order, index) => {
@@ -1026,7 +1006,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customerName: order.customerName || "Khách hàng lẻ",
           discount: order.discount || "0.00",
           // Employee info with fallbacks
-          employeeCode: employee?.employeeId || order.employeeId || "NV0001",
+          employeeCode: employee?.employeeId || "NV0001",
           employeeName: employee?.name || "Nhân viên",
           // Payment method details
           paymentMethodName: getPaymentMethodName(order.paymentMethod),
@@ -1041,23 +1021,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processedOrders.map(async (order) => {
           try {
             const items = await database
-              .select()
+              .select({
+                // Order item fields
+                id: orderItemsTable.id,
+                orderId: orderItemsTable.orderId,
+                productId: orderItemsTable.productId,
+                quantity: orderItemsTable.quantity,
+                unitPrice: orderItemsTable.unitPrice,
+                total: orderItemsTable.total,
+                discount: orderItemsTable.discount,
+                notes: orderItemsTable.notes,
+                unit: orderItemsTable.unit,
+                // Product fields
+                productName: products.name,
+                productSku: products.sku,
+              })
               .from(orderItemsTable)
               .leftJoin(products, eq(orderItemsTable.productId, products.id))
               .where(eq(orderItemsTable.orderId, order.id));
 
             const processedItems = items.map(item => ({
-              id: item.order_items.id,
-              orderId: item.order_items.orderId,
-              productId: item.order_items.productId,
-              quantity: item.order_items.quantity,
-              unit: item.order_items.unit || item.products?.unit || "cái", // ĐVT từ order_items hoặc products
-              unitPrice: item.order_items.unitPrice,
-              total: item.order_items.total,
-              discount: item.order_items.discount || "0.00",
-              notes: item.order_items.notes,
-              productName: item.products?.name || "Unknown Product",
-              productSku: item.products?.sku || "",
+              id: item.id,
+              orderId: item.orderId,
+              productId: item.productId,
+              quantity: item.quantity,
+              unit: item.unit || "cái", // ĐVT từ order_items
+              unitPrice: item.unitPrice,
+              total: item.total,
+              discount: item.discount || "0.00",
+              notes: item.notes,
+              productName: item.productName || "Unknown Product",
+              productSku: item.productSku || "",
             }));
 
             return {
