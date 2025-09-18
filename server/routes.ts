@@ -955,9 +955,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         whereConditions.push(eq(orders.invoiceStatus, parseInt(invoiceStatus as string)));
       }
 
-      // Payment method filter
+      // Payment method filter - include null values (unpaid orders)
       if (paymentMethod && paymentMethod !== "all") {
-        whereConditions.push(eq(orders.paymentMethod, paymentMethod as string));
+        if (paymentMethod === "null" || paymentMethod === "unpaid") {
+          // Filter for unpaid orders (paymentMethod is null)
+          whereConditions.push(sql`${orders.paymentMethod} IS NULL`);
+        } else {
+          // Filter for specific payment method
+          whereConditions.push(eq(orders.paymentMethod, paymentMethod as string));
+        }
       }
 
       // Get total count for pagination
