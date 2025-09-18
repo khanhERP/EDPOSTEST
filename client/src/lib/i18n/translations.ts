@@ -12,6 +12,7 @@ import { settingsTranslations } from "./modules/settings";
 import { tablesTranslations } from "./modules/tables";
 import { einvoiceTranslations } from "./modules/einvoice";
 import { suppliersTranslations } from "./modules/suppliers";
+import { purchasesTranslations } from "./modules/purchases";
 import type { LanguageTranslations } from "./types";
 
 export const translations: LanguageTranslations = {
@@ -30,6 +31,7 @@ export const translations: LanguageTranslations = {
     tables: tablesTranslations.ko,
     einvoice: einvoiceTranslations.ko,
     suppliers: suppliersTranslations.ko,
+    purchases: purchasesTranslations.ko,
   },
   en: {
     common: commonTranslations.en,
@@ -50,6 +52,7 @@ export const translations: LanguageTranslations = {
     tables: tablesTranslations.en,
     einvoice: einvoiceTranslations.en,
     suppliers: suppliersTranslations.en,
+    purchases: purchasesTranslations.en,
   },
   vi: {
     common: commonTranslations.vi,
@@ -78,5 +81,6 @@ export const translations: LanguageTranslations = {
     tables: tablesTranslations.vi,
     einvoice: einvoiceTranslations.vi,
     suppliers: suppliersTranslations.vi,
+    purchases: purchasesTranslations.vi,
   },
 };

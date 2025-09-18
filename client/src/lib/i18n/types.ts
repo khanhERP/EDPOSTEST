@@ -2161,6 +2161,130 @@ export interface SuppliersTranslations {
   requiredFields: string;
 }
 
+// Purchases translations interface
+export interface PurchasesTranslations {
+  title: string;
+  dashboard: string;
+  overview: string;
+  newPurchaseOrder: string;
+  searchPurchaseOrders: string;
+  purchaseOrder: string;
+  purchaseOrders: string;
+  poNumber: string;
+  createPurchaseOrder: string;
+  editPurchaseOrder: string;
+  deletePurchaseOrder: string;
+  duplicatePurchaseOrder: string;
+  orderDate: string;
+  expectedDelivery: string;
+  actualDelivery: string;
+  supplier: string;
+  supplierName: string;
+  supplierContact: string;
+  deliveryAddress: string;
+  notes: string;
+  internalNotes: string;
+  status: string;
+  pending: string;
+  confirmed: string;
+  ordered: string;
+  partiallyReceived: string;
+  received: string;
+  cancelled: string;
+  overdue: string;
+  items: string;
+  itemDetails: string;
+  addItem: string;
+  removeItem: string;
+  product: string;
+  productName: string;
+  sku: string;
+  description: string;
+  unitPrice: string;
+  quantity: string;
+  orderedQuantity: string;
+  receivedQuantity: string;
+  remainingQuantity: string;
+  totalAmount: string;
+  subtotal: string;
+  tax: string;
+  taxRate: string;
+  discount: string;
+  shippingCost: string;
+  totalCost: string;
+  receiveGoods: string;
+  receiveItems: string;
+  receiveAll: string;
+  partialReceipt: string;
+  receiptDate: string;
+  receivedBy: string;
+  qualityCheck: string;
+  damageReport: string;
+  documents: string;
+  attachments: string;
+  uploadDocument: string;
+  deleteDocument: string;
+  downloadDocument: string;
+  invoice: string;
+  deliveryNote: string;
+  packingList: string;
+  certificate: string;
+  filterBy: string;
+  filterByStatus: string;
+  filterBySupplier: string;
+  filterByDate: string;
+  dateRange: string;
+  fromDate: string;
+  toDate: string;
+  view: string;
+  edit: string;
+  delete: string;
+  duplicate: string;
+  approve: string;
+  reject: string;
+  cancel: string;
+  save: string;
+  submit: string;
+  confirm: string;
+  orderCreated: string;
+  orderUpdated: string;
+  orderDeleted: string;
+  orderCancelled: string;
+  goodsReceived: string;
+  inventoryUpdated: string;
+  documentUploaded: string;
+  orderNotFound: string;
+  supplierRequired: string;
+  itemsRequired: string;
+  invalidQuantity: string;
+  exceededQuantity: string;
+  uploadFailed: string;
+  totalOrders: string;
+  pendingOrders: string;
+  completedOrders: string;
+  totalValue: string;
+  averageOrderValue: string;
+  topSuppliers: string;
+  exportToExcel: string;
+  exportToPDF: string;
+  printOrder: string;
+  purchaseReport: string;
+  supplierReport: string;
+  backToList: string;
+  previousPage: string;
+  nextPage: string;
+  itemsPerPage: string;
+  noOrders: string;
+  noItems: string;
+  loading: string;
+  recurring: string;
+  template: string;
+  approval: string;
+  workflow: string;
+  reminder: string;
+  notification: string;
+}
+
 export interface TablesTranslations {
   title: string;
   description: string;
@@ -2428,7 +2552,8 @@ export type TranslationKey =
   | `notFound.${keyof NotFoundTranslations}`
   | `einvoice.${keyof EInvoiceTranslations}`
   | `pos.${keyof POSTranslations}`
-  | `suppliers.${keyof SuppliersTranslations}`;
+  | `suppliers.${keyof SuppliersTranslations}`
+  | `purchases.${keyof PurchasesTranslations}`;
 
 // Language-specific translations type
 export interface LanguageTranslations {
@@ -2447,6 +2572,7 @@ export interface LanguageTranslations {
     tables: TablesTranslations;
     einvoice: EInvoiceTranslations;
     suppliers: SuppliersTranslations;
+    purchases: PurchasesTranslations;
   };
   en: {
     common: CommonTranslations;
@@ -2463,6 +2589,7 @@ export interface LanguageTranslations {
     tables: TablesTranslations;
     einvoice: EInvoiceTranslations;
     suppliers: SuppliersTranslations;
+    purchases: PurchasesTranslations;
   };
   vi: {
     common: CommonTranslations;
@@ -2479,5 +2606,6 @@ export interface LanguageTranslations {
     tables: TablesTranslations;
     einvoice: EInvoiceTranslations;
     suppliers: SuppliersTranslations;
+    purchases: PurchasesTranslations;
   };
 }
