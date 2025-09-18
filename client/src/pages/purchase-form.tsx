@@ -232,6 +232,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
           productName: item.productName,
           sku: item.sku || "",
           quantity: item.quantity,
+          receivedQuantity: item.receivedQuantity || 0,
           unitPrice: item.unitPrice.toFixed(2),
           total: item.total.toFixed(2),
         })),
