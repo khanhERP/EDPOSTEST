@@ -1210,7 +1210,7 @@ export default function SalesOrders() {
       <RightSidebar />
 
       <div className="main-content pt-16 px-6">
-        <div className="max-w-full mx-auto">
+        <div className="max-w-full mx-auto py-8">
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="w-6 h-6 text-green-600" />
