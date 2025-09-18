@@ -536,7 +536,6 @@ export function SalesChartReport() {
       employeeId: order.employeeId,
       items: order.items || [],
       status: order.status,
-      tax: order.tax || 0, // Ensure tax is available from order
     }));
 
     // Calculate daily sales from filtered completed orders
@@ -933,7 +932,8 @@ export function SalesChartReport() {
                                           Number(transaction.discount || 0),
                                       );
                                       const transactionTax =
-                                        Number(transaction.tax || 0);
+                                        Number(transaction.total || 0) -
+                                        Number(transaction.subtotal || 0);
                                       const customerPayment =
                                         transactionRevenue + transactionTax;
 
@@ -1128,9 +1128,13 @@ export function SalesChartReport() {
                                                             ),
                                                         ) +
                                                           (Number(
-                                                            transaction.tax ||
+                                                            transaction.total ||
                                                               0,
-                                                          ))
+                                                          ) -
+                                                            Number(
+                                                              transaction.subtotal ||
+                                                                0,
+                                                            )),
                                                       )
                                                     : "-"}
                                                 </TableCell>
@@ -1530,7 +1534,7 @@ export function SalesChartReport() {
         Number(order.tax || 0) ||
         Number(order.total || 0) - Number(order.subtotal || 0); // Thuế từ DB hoặc tính từ total-subtotal
       const orderTotal = Number(order.total || 0); // Tổng tiền từ DB
-      const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = thành tiền - giwem giá
+      const orderRevenue = orderSubtotal - orderDiscount; // Doanh thu = thành tiền - giảm giá
 
       const orderSummary = {
         orderDate: order.orderedAt || order.createdAt || order.created_at,
@@ -1539,7 +1543,7 @@ export function SalesChartReport() {
         customerName: order.customerName || "Khách lẻ",
         totalAmount: orderSubtotal, // Thành tiền từ DB
         discount: orderDiscount, // Giảm giá từ DB
-        revenue: orderRevenue, // Doanh thu = thành tiền - giwem giá
+        revenue: orderRevenue, // Doanh thu = thành tiền - giwe�m giá
         tax: orderTax, // Thuế từ DB
         vat: orderTax, // VAT = thuế
         totalMoney: orderTotal, // Tổng tiền từ DB
@@ -1564,27 +1568,27 @@ export function SalesChartReport() {
                   unit: "-",
                   quantity: 0,
                   unitPrice: 0,
-                  totalAmount: orderSubtotal, // Thành tiền từ order (subtotal)
+                  totalAmount: orderSubtotal, // Sử dụng thành tiền từ order
                   discount: orderDiscount, // Giảm giá từ order
                   revenue: orderRevenue, // Doanh thu từ order
                   tax: orderTax, // Thuế từ order
                   vat: orderTax, // VAT = thuế
-                  totalMoney: orderTotal, // Tổng tiền từ order (total)
+                  totalMoney: orderTotal, // Tổng tiền từ order
                   productGroup: "-",
-                  taxRate: 0, // Default tax rate for empty orders
+                  taxRate: 10, // Default tax rate for items
                 },
               ]
             : orderItemsForOrder.map((item: any) => {
-                // Sử dụng giá trị CHÍNH XÁC từ order_items
+                // Sử dụng giá trị CHÍNH XÁC từ order_items và order
                 const itemQuantity = Number(item.quantity || 1);
-                const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items
-                const itemTotal = itemUnitPrice * itemQuantity; // Thành tiền = đơn giá * số lượng
-                
-                // Phân bổ giảm giá và thuế theo tỷ lệ thành tiền của item trong tổng order
-                const totalOrderAmount = orderSubtotal > 0 ? orderSubtotal : 1; // Avoid division by zero
-                const itemRatio = itemTotal / totalOrderAmount; // Tỷ lệ item trong order
-                const itemDiscount = orderDiscount * itemRatio; // Giảm giá phân bổ theo tỷ lệ
-                const itemTax = orderTax * itemRatio; // Thuế phân bổ theo tỷ lệ
+                const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items (trước thuế)
+                const itemTotal = itemUnitPrice * itemQuantity; // Thành tiền = đơn giá * số lượng (trước thuế)
+
+                // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
+                const itemDiscountRatio =
+                  orderSubtotal > 0 ? itemTotal / orderSubtotal : 0; // Avoid division by zero
+                const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
+                const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
                 const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
                 const itemTotalMoney = itemRevenue + itemTax; // Tổng tiền = doanh thu + thuế
 
@@ -2226,9 +2230,7 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(prev + 1, totalPages),
-                      )
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -2734,9 +2736,7 @@ export function SalesChartReport() {
                               item.orders.map(
                                 (order: any, orderIndex: number) => (
                                   <TableRow
-                                    key={`${item.employeeCode}-order-${
-                                      order.id || orderIndex
-                                    }`}
+                                    key={`${item.employeeCode}-order-${order.id || orderIndex}`}
                                     className="bg-blue-50/50 border-l-4 border-l-blue-400"
                                   >
                                     <TableCell className="text-center border-r bg-blue-50 w-12">
@@ -2962,8 +2962,7 @@ export function SalesChartReport() {
                                 Array.isArray(employee.orders)
                               ) {
                                 employee.orders.forEach((order: any) => {
-                                  const method =
-                                    order.paymentMethod || "cash";
+                                  const method = order.paymentMethod || "cash";
                                   allPaymentMethods.add(method);
                                 });
                               }
