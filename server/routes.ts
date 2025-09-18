@@ -686,7 +686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (
           product.afterTaxPrice &&
           product.afterTaxPrice !== null &&
-          product.afterTaxPrice !== ""
+          product?.afterTaxPrice.toString() !== ""
         ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const price = parseFloat(product.price);
@@ -962,10 +962,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Invoice status filter
       if (invoiceStatus !== undefined && invoiceStatus !== "all") {
-        const statusValue = parseInt(invoiceStatus as string);
-        if (!isNaN(statusValue)) {
-          whereConditions.push(eq(orders.invoiceStatus, statusValue));
-        }
+        whereConditions.push(
+          eq(orders.invoiceStatus, parseInt(invoiceStatus as string)),
+        );
       }
 
       // Payment method filter - include null values (unpaid orders)
@@ -1056,9 +1055,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             `KH000${String(index + 1).padStart(3, "0")}`,
           customerName: order.customerName || "Khách hàng lẻ",
           discount: order.discount || "0.00",
-          // Status fields with default values
-          invoiceStatus: order.invoiceStatus || 1,
-          einvoiceStatus: order.einvoiceStatus || 0,
           // Employee info with fallbacks
           employeeCode: employee?.employeeId || "NV0001",
           employeeName: employee?.name || "Nhân viên",
@@ -1072,7 +1068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Fetch order items for each order
       const ordersWithItems = await Promise.all(
-        processedOrders.map(async (order, index) => {
+        processedOrders.map(async (order) => {
           try {
             const items = await database
               .select({
@@ -2690,7 +2686,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error type:", error?.constructor?.name || "Unknown");
       console.error("Error message:", error?.message || "Unknown error");
       console.error("Error stack:", error?.stack || "No stack trace");
-      console.error("Order ID:", req.params.orderId);
 
       res.status(500).json({
         message: "Failed to fetch all order items",
@@ -3240,6 +3235,2123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API kiểm tra trạng thái máy in (legacy endpoint)
+  app.get("/api/print/status/:ip/:port?", async (req: TenantRequest, res) => {
+    try {
+      const { ip, port = 9100 } = req.params;
+      const net = require("net");
+
+      const checkPromise = new Promise((resolve, reject) => {
+        const client = new net.Socket();
+        client.setTimeout(3000);
+
+        client.connect(parseInt(port as string), ip, () => {
+          client.end();
+          resolve({
+            status: "connected",
+            ip: ip,
+            port: port,
+            timestamp: new Date().toISOString(),
+          });
+        });
+
+        client.on("timeout", () => {
+          client.destroy();
+          reject(new Error("timeout"));
+        });
+
+        client.on("error", (error) => {
+          reject(error);
+        });
+      });
+
+      const result = await checkPromise;
+      res.json({ success: true, printer: result });
+    } catch (error) {
+      res.json({
+        success: false,
+        status: "disconnected",
+        error: error instanceof Error ? error.message : "Connection failed",
+      });
+    }
+  });
+
+  // Get order items for a specific order
+  app.get("/api/order-items/:orderId", async (req: TenantRequest, res) => {
+    try {
+      console.log("=== GET ORDER ITEMS API CALLED ===");
+      const orderId = parseInt(req.params.orderId);
+      console.log("Order ID requested:", orderId);
+
+      if (isNaN(orderId)) {
+        console.error("Invalid order ID provided:", req.params.orderId);
+        return res.status(400).json({
+          message: "Invalid order ID",
+        });
+      }
+
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log("✅ Tenant database connection obtained for order items");
+      } catch (dbError) {
+        console.error(
+          "❌ Failed to get tenant database for order items:",
+          dbError,
+        );
+        tenantDb = null;
+      }
+
+      console.log("Fetching order items from storage...");
+      const items = await storage.getOrderItems(orderId, tenantDb);
+      console.log(`Found ${items.length} order items:`, items);
+
+      // Ensure items is always an array, even if empty
+      const safeItems = Array.isArray(items) ? items : [];
+      res.json(safeItems);
+    } catch (error) {
+      console.error("=== GET ORDER ITEMS ERROR ===");
+      console.error("Error type:", error?.constructor?.name || "Unknown");
+      console.error("Error message:", error?.message || "Unknown error");
+      console.error("Error stack:", error?.stack || "No stack trace");
+      console.error("Order ID:", req.params.orderId);
+
+      res.status(500).json({
+        message: "Failed to fetch order items",
+        details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // Update a specific order item
+  app.put("/api/order-items/:itemId", async (req: TenantRequest, res) => {
+    try {
+      console.log("=== UPDATE ORDER ITEM API CALLED ===");
+      const itemId = parseInt(req.params.itemId);
+      const updateData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log("Item ID to update:", itemId);
+      console.log("Update data:", updateData);
+
+      if (isNaN(itemId)) {
+        return res.status(400).json({
+          error: "Invalid item ID",
+        });
+      }
+
+      const database = tenantDb || db;
+
+      // Check if order item exists
+      const [existingItem] = await database
+        .select()
+        .from(orderItemsTable)
+        .where(eq(orderItemsTable.id, itemId))
+        .limit(1);
+
+      if (!existingItem) {
+        return res.status(404).json({
+          error: "Order item not found",
+        });
+      }
+
+      // Prepare update data
+      const updateFields: any = {};
+
+      if (updateData.quantity !== undefined) {
+        updateFields.quantity = parseInt(updateData.quantity);
+      }
+
+      if (updateData.unitPrice !== undefined) {
+        updateFields.unitPrice = updateData.unitPrice.toString();
+      }
+
+      if (updateData.total !== undefined) {
+        updateFields.total = updateData.total.toString();
+      }
+
+      if (updateData.discount !== undefined) {
+        updateFields.discount = parseFloat(updateData.discount || "0").toFixed(
+          2,
+        );
+      }
+
+      if (updateData.notes !== undefined) {
+        updateFields.notes = updateData.notes;
+      }
+
+      // Update the order item
+      const [updatedItem] = await database
+        .update(orderItemsTable)
+        .set(updateFields)
+        .where(eq(orderItemsTable.id, itemId))
+        .returning();
+
+      console.log("Order item updated successfully:", updatedItem);
+
+      res.json({
+        success: true,
+        orderItem: updatedItem,
+        message: "Order item updated successfully",
+      });
+    } catch (error) {
+      console.error("=== UPDATE ORDER ITEM ERROR ===");
+      console.error("Error type:", error?.constructor?.name || "Unknown");
+      console.error("Error message:", error?.message || "Unknown error");
+      console.error("Error stack:", error?.stack || "No stack trace");
+      console.error("Item ID:", req.params.itemId);
+      console.error("Update data:", req.body);
+
+      res.status(500).json({
+        error: "Failed to update order item",
+        details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // Delete a specific order item
+  app.delete("/api/order-items/:itemId", async (req: TenantRequest, res) => {
+    try {
+      console.log("=== DELETE ORDER ITEM API CALLED ===");
+      const itemId = parseInt(req.params.itemId);
+      const tenantDb = await getTenantDatabase(req); // Assuming tenantDb is needed here as well
+      console.log("Item ID requested:", itemId);
+
+      if (isNaN(itemId)) {
+        return res.status(400).json({
+          error: "Invalid item ID",
+        });
+      }
+
+      console.log("Deleting order item from storage...");
+      const success = await storage.removeOrderItem(itemId, tenantDb); // Pass tenantDb to storage function
+
+      if (success) {
+        console.log("Order item deleted successfully");
+        res.json({
+          success: true,
+          message: "Order item deleted successfully",
+        });
+      } else {
+        console.log("Order item not found");
+        res.status(404).json({
+          error: "Order item not found",
+        });
+      }
+    } catch (error) {
+      console.error("=== DELETE ORDER ITEM ERROR ===");
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      console.error("Item ID:", req.params.itemId);
+      res.status(500).json({
+        error: "Failed to delete order item",
+        details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // Get POS orders specifically
+  app.get(
+    "/api/orders/pos",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log("🔍 GET /api/orders/pos - Fetching POS orders");
+        const tenantDb = await getTenantDatabase(req);
+
+        const posOrders = await storage.getOrders(
+          undefined,
+          undefined,
+          tenantDb,
+          "pos",
+        );
+        console.log(`✅ Successfully fetched ${posOrders.length} POS orders`);
+        res.json(posOrders);
+      } catch (error) {
+        console.error("❌ Error fetching POS orders:", error);
+        res.status(500).json({
+          error: "Failed to fetch POS orders",
+        });
+      }
+    },
+  );
+
+  // Get table orders specifically
+  app.get(
+    "/api/orders/table",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log("🔍 GET /api/orders/table - Fetching table orders");
+        const tenantDb = await getTenantDatabase(req);
+
+        const tableOrders = await storage.getOrders(
+          undefined,
+          undefined,
+          tenantDb,
+          "table",
+        );
+        console.log(
+          `✅ Successfully fetched ${tableOrders.length} table orders`,
+        );
+        res.json(tableOrders);
+      } catch (error) {
+        console.error("❌ Error fetching table orders:", error);
+        res.status(500).json({
+          error: "Failed to fetch table orders",
+        });
+      }
+    },
+  );
+
+  // Add order items to existing order
+  app.post("/api/orders/:orderId/items", async (req: TenantRequest, res) => {
+    try {
+      const orderId = parseInt(req.params.orderId);
+      const { items } = req.body;
+
+      console.log(`📝 Adding ${items?.length || 0} items to order ${orderId}`);
+
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({
+          error: "Items array is required",
+        });
+      }
+
+      if (isNaN(orderId)) {
+        return res.status(400).json({
+          error: "Invalid order ID",
+        });
+      }
+
+      // Get tenant database connection
+      let tenantDb;
+      try {
+        tenantDb = await getTenantDatabase(req);
+        console.log(
+          "✅ Tenant database connection obtained for adding order items",
+        );
+      } catch (dbError) {
+        console.error(
+          "❌ Failed to get tenant database for adding order items:",
+          dbError,
+        );
+        return res.status(500).json({
+          error: "Database connection failed",
+        });
+      }
+
+      // Use tenant database for all operations
+      const database = tenantDb || db;
+
+      // Validate that order exists
+      const [existingOrder] = await database
+        .select()
+        .from(orders)
+        .where(eq(orders.id, orderId))
+        .limit(1);
+
+      if (!existingOrder) {
+        return res.status(404).json({
+          error: "Order not found",
+        });
+      }
+
+      // Validate items data
+      const validatedItems = items.map((item, index) => {
+        if (!item.productId || !item.quantity || !item.unitPrice) {
+          throw new Error(
+            `Item at index ${index} is missing required fields: productId, quantity, or unitPrice`,
+          );
+        }
+
+        return {
+          orderId,
+          productId: parseInt(item.productId),
+          quantity: parseInt(item.quantity),
+          unitPrice: item.unitPrice.toString(),
+          total: item.total
+            ? item.total.toString()
+            : (parseFloat(item.unitPrice) * parseInt(item.quantity)).toString(),
+          discount: "0.00", // Default discount, will be recalculated below
+          notes: item.notes || null,
+        };
+      });
+
+      console.log(`📝 Validated items for insertion:`, validatedItems);
+
+      // Insert new items using tenant database
+      const insertedItems = await database
+        .insert(orderItemsTable)
+        .values(validatedItems)
+        .returning();
+
+      console.log(
+        `✅ Successfully added ${insertedItems.length} items to order ${orderId}`,
+      );
+
+      // Recalculate discount distribution for all items in the order
+      const orderDiscount = Number(existingOrder.discount || 0);
+      if (orderDiscount > 0) {
+        console.log(
+          `🔄 Recalculating discount distribution for order ${orderId} with total discount ${orderDiscount}`,
+        );
+
+        // Get all order items after insertion
+        const updatedOrderItems = await database
+          .select()
+          .from(orderItemsTable)
+          .where(eq(orderItemsTable.orderId, orderId));
+
+        // Calculate new discount distribution
+        const itemsWithNewDiscount = calculateDiscountDistribution(
+          updatedOrderItems,
+          orderDiscount,
+        );
+
+        // Update each item's discount
+        for (const item of itemsWithNewDiscount) {
+          await database
+            .update(orderItemsTable)
+            .set({ discount: item.discount })
+            .where(eq(orderItemsTable.id, item.id));
+        }
+
+        console.log(
+          `✅ Updated discount distribution for ${itemsWithNewDiscount.length} items`,
+        );
+      }
+
+      // Fetch ALL order items to recalculate totals using order-dialog logic
+      const allOrderItems = await database
+        .select()
+        .from(orderItemsTable)
+        .where(eq(orderItemsTable.orderId, orderId));
+
+      console.log(
+        `📦 Found ${allOrderItems.length} total items for order ${orderId}`,
+      );
+
+      // Get products for tax calculation (same as order-dialog)
+      const allProducts = await database.select().from(products);
+      const productMap = new Map(allProducts.map((p) => [p.id, p]));
+
+      // EXACT same logic as order-dialog calculateTotal()
+      let calculatedSubtotal = 0; // Tiền tạm tính (trước thuế)
+
+      allOrderItems.forEach((item) => {
+        const unitPrice = Number(item.unitPrice || 0); // Giá trước thuế
+        const quantity = Number(item.quantity || 0);
+
+        // Calculate subtotal (base price * quantity) - EXACT same as order-dialog
+        const itemSubtotal = unitPrice * quantity;
+        calculatedSubtotal += itemSubtotal;
+      });
+
+      // EXACT same logic as order-dialog calculateTax()
+      let calculatedTax = 0; // Tổng thuế
+
+      allOrderItems.forEach((item) => {
+        const unitPrice = Number(item.unitPrice || 0);
+        const quantity = Number(item.quantity || 0);
+        const product = productMap.get(item.productId);
+
+        let itemTax = 0;
+        // Thuế = (after_tax_price - price) * quantity - EXACT same as order-dialog
+        if (
+          product?.afterTaxPrice &&
+          product.afterTaxPrice !== null &&
+          product.afterTaxPrice !== ""
+        ) {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
+          const preTaxPrice = unitPrice; // Giá trước thuế
+          const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
+          itemTax = taxPerUnit * quantity;
+        }
+        // Không có thuế nếu không có afterTaxPrice
+        calculatedTax += itemTax;
+      });
+
+      // EXACT same logic as order-dialog calculateGrandTotal()
+      const calculatedTotal = calculatedSubtotal + calculatedTax;
+
+      console.log(`💰 Calculated new totals using order-dialog logic:`, {
+        subtotal: calculatedSubtotal,
+        tax: calculatedTax,
+        total: calculatedTotal,
+        itemsCount: allOrderItems.length,
+        calculationMethod: "order-dialog-exact",
+      });
+
+      // Update order totals with calculated values using tenant database
+      const [updatedOrder] = await database
+        .update(orders)
+        .set({
+          subtotal: calculatedSubtotal.toString(),
+          tax: calculatedTax.toString(),
+          total: calculatedTotal.toString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      console.log(
+        `✅ Order ${orderId} totals updated successfully using order-dialog calculation`,
+      );
+
+      res.json({
+        success: true,
+        insertedItems,
+        updatedOrder,
+        message: `Added ${insertedItems.length} items and updated order totals using order-dialog logic`,
+      });
+    } catch (error) {
+      console.error(
+        `❌ Error adding items to order ${req.params.orderId}:`,
+        error,
+      );
+
+      let errorMessage = "Failed to add items to order";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      res.status(500).json({
+        error: errorMessage,
+        details: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  // Inventory Management
+  app.post("/api/inventory/update-stock", async (req: TenantRequest, res) => {
+    try {
+      const { productId, quantity, type, notes, trackInventory } = req.body;
+      const tenantDb = await getTenantDatabase(req);
+
+      // Get current product
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1);
+      if (!product) {
+        return res.status(404).json({
+          error: "Product not found",
+        });
+      }
+
+      let newStock = product.stock;
+      switch (type) {
+        case "add":
+          newStock += quantity;
+          break;
+        case "subtract":
+          newStock = Math.max(0, product.stock - quantity);
+          break;
+        case "set":
+          newStock = quantity;
+          break;
+      }
+
+      // Update product stock and trackInventory
+      const updateData: any = {
+        stock: newStock,
+      };
+      if (trackInventory !== undefined) {
+        updateData.trackInventory = trackInventory;
+      }
+
+      await db
+        .update(products)
+        .set(updateData)
+        .where(eq(products.id, productId));
+
+      // Create inventory transaction record using raw SQL to match exact schema
+      await db.execute(sql`
+        INSERT INTO inventory_transactions (product_id, type, quantity, previous_stock, new_stock, notes, created_at)
+        VALUES (${productId}, ${type}, ${quantity}, ${product.stock}, ${newStock}, ${notes || null}, ${new Date().toISOString()})
+      `);
+
+      res.json({
+        success: true,
+        newStock,
+      });
+    } catch (error) {
+      console.error("Stock update error:", error);
+      res.status(500).json({
+        error: "Failed to update stock",
+      });
+    }
+  });
+
+  // Store Settings
+  app.get("/api/store-settings", async (req: TenantRequest, res) => {
+    try {
+      const settings = await storage.getStoreSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching store settings:", error);
+      res.status(500).json({
+        error: "Failed to fetch store settings",
+      });
+    }
+  });
+
+  // Current cart state for customer display
+  app.get("/api/current-cart", async (req, res) => {
+    try {
+      console.log("📱 Customer Display: Current cart API called");
+
+      // Get store settings for customer display
+      const storeSettings = await storage.getStoreSettings();
+
+      const currentCartState = {
+        cart: [],
+        subtotal: 0,
+        tax: 0,
+        total: 0,
+        storeInfo: storeSettings,
+        qrPayment: null,
+      };
+
+      console.log("📱 Customer Display: Current cart API returning state:", {
+        cartItems: currentCartState.cart.length,
+        subtotal: currentCartState.subtotal,
+        tax: currentCartState.tax,
+        total: currentCartState.total,
+        hasStoreInfo: !!currentCartState.storeInfo,
+        storeName: currentCartState.storeInfo?.storeName,
+      });
+
+      res.json(currentCartState);
+    } catch (error) {
+      console.error("❌ Error fetching current cart:", error);
+      res.status(500).json({
+        error: "Failed to fetch current cart",
+      });
+    }
+  });
+
+  app.put("/api/store-settings", async (req: TenantRequest, res) => {
+    try {
+      const validatedData = insertStoreSettingsSchema.partial().parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
+      const settings = await storage.updateStoreSettings(
+        validatedData,
+        tenantDb,
+      );
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid store settings data",
+          errors: error.errors,
+        });
+      }
+      res.status(500).json({
+        message: "Failed to update store settings",
+      });
+    }
+  });
+
+  // Suppliers
+  app.get(
+    "/api/suppliers",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log("🔍 GET /api/suppliers - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for suppliers");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for suppliers:",
+            dbError,
+          );
+          tenantDb = null;
+        }
+
+        const { status, search } = req.query;
+        let suppliers;
+
+        if (search) {
+          suppliers = await storage.searchSuppliers(search as string, tenantDb);
+        } else if (status && status !== "all") {
+          suppliers = await storage.getSuppliersByStatus(
+            status as string,
+            tenantDb,
+          );
+        } else {
+          suppliers = await storage.getSuppliers(tenantDb);
+        }
+        console.log(`✅ Successfully fetched ${suppliers.length} suppliers`);
+        res.json(suppliers);
+      } catch (error) {
+        console.error("❌ Error fetching suppliers:", error);
+        res.status(500).json({
+          message: "Failed to fetch suppliers",
+        });
+      }
+    },
+  );
+
+  app.get("/api/suppliers/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const supplier = await storage.getSupplier(id, tenantDb);
+
+      if (!supplier) {
+        return res.status(404).json({
+          message: "Supplier not found",
+        });
+      }
+
+      res.json(supplier);
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to fetch supplier",
+      });
+    }
+  });
+
+  app.post("/api/suppliers", async (req: TenantRequest, res) => {
+    try {
+      const validatedData = insertSupplierSchema.parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
+      const supplier = await storage.createSupplier(validatedData, tenantDb);
+      res.status(201).json(supplier);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid supplier data",
+          errors: error.errors,
+        });
+      }
+      res.status(500).json({
+        message: "Failed to create supplier",
+      });
+    }
+  });
+
+  app.put("/api/suppliers/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertSupplierSchema.partial().parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
+      const supplier = await storage.updateSupplier(
+        id,
+        validatedData,
+        tenantDb,
+      );
+
+      if (!supplier) {
+        return res.status(404).json({
+          message: "Supplier not found",
+        });
+      }
+
+      res.json(supplier);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid supplier data",
+          errors: error.errors,
+        });
+      }
+      res.status(500).json({
+        message: "Failed to update supplier",
+      });
+    }
+  });
+
+  app.delete("/api/suppliers/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteSupplier(id, tenantDb);
+
+      if (!deleted) {
+        return res.status(404).json({
+          message: "Supplier not found",
+        });
+      }
+
+      res.json({
+        message: "Supplier deleted successfully",
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to delete supplier",
+      });
+    }
+  });
+
+  // Get next customer ID
+  app.get("/api/customers/next-id", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const nextId = await storage.getNextCustomerId(tenantDb);
+      res.json({
+        nextId,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to generate customer ID",
+      });
+    }
+  });
+
+  // Customer management routes - Added Here
+  app.get(
+    "/api/customers",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log("🔍 GET /api/customers - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for customers");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for customers:",
+            dbError,
+          );
+          tenantDb = null;
+        }
+
+        const customers = await storage.getCustomers(tenantDb);
+        console.log(`✅ Successfully fetched ${customers.length} customers`);
+        res.json(customers);
+      } catch (error) {
+        console.error("❌ Error fetching customers:", error);
+        res.status(500).json({
+          message: "Failed to fetch customers",
+        });
+      }
+    },
+  );
+
+  app.get("/api/customers/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const customer = await storage.getCustomer(id, tenantDb);
+      if (!customer) {
+        return res.status(404).json({
+          message: "Customer not found",
+        });
+      }
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to fetch customer",
+      });
+    }
+  });
+
+  // Create customer
+  app.post("/api/customers", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+
+      // Validate required fields
+      if (!req.body.name) {
+        return res.status(400).json({
+          message: "Customer name is required",
+        });
+      }
+
+      // Prepare customer data with proper defaults
+      const customerData = {
+        ...req.body,
+        customerId: req.body.customerId || undefined,
+        phone: req.body.phone || null,
+        email: req.body.email || null,
+        address: req.body.address || null,
+        dateOfBirth: req.body.dateOfBirth || null,
+        membershipLevel: req.body.membershipLevel || "Silver",
+        notes: req.body.notes || null,
+        status: req.body.status || "active",
+        totalSpent: "0",
+        pointsBalance: 0,
+      };
+
+      const [customer] = await db
+        .insert(customers)
+        .values(customerData)
+        .returning();
+      res.json(customer);
+    } catch (error: any) {
+      console.error("Error creating customer:", error);
+
+      // Handle specific database errors
+      if (error.code === "SQLITE_CONSTRAINT") {
+        return res.status(400).json({
+          message: "Customer with this ID already exists",
+        });
+      }
+
+      res.status(500).json({
+        message: "Failed to create customer",
+        error: error.message,
+      });
+    }
+  });
+
+  app.put("/api/customers/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customerData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+      const customer = await storage.updateCustomer(id, customerData, tenantDb);
+      if (!customer) {
+        return res.status(404).json({
+          message: "Customer not found",
+        });
+      }
+      res.json(customer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid customer data",
+          errors: error.errors,
+        });
+      }
+      res.status(500).json({
+        message: "Failed to update customer",
+      });
+    }
+  });
+
+  app.delete("/api/customers/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteCustomer(id, tenantDb);
+      if (!deleted) {
+        return res.status(404).json({
+          message: "Customer not found",
+        });
+      }
+      res.json({
+        message: "Customer deleted successfully",
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to delete customer",
+      });
+    }
+  });
+
+  app.post("/api/customers/:id/visit", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { amount, points } = req.body;
+      const tenantDb = await getTenantDatabase(req);
+
+      const customer = await storage.getCustomer(id, tenantDb);
+      if (!customer) {
+        return res.status(404).json({
+          message: "Customer not found",
+        });
+      }
+
+      const updatedCustomer = await storage.updateCustomerVisit(
+        id,
+        amount,
+        points,
+        tenantDb,
+      );
+      res.json(updatedCustomer);
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to update customer visit",
+      });
+    }
+  });
+
+  // Point Management API
+  app.get("/api/customers/:id/points", async (req: TenantRequest, res) => {
+    try {
+      const customerId = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const pointsData = await storage.getCustomerPoints(customerId, tenantDb);
+
+      if (!pointsData) {
+        return res.status(404).json({
+          message: "Customer not found",
+        });
+      }
+
+      res.json(pointsData);
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to fetch customer points",
+      });
+    }
+  });
+
+  app.post("/api/customers/:id/points", async (req: TenantRequest, res) => {
+    try {
+      const customerId = parseInt(req.params.id);
+      const pointUpdateSchema = z.object({
+        points: z.number().int().min(1),
+        description: z.string().min(1),
+        type: z.enum(["earned", "redeemed", "adjusted"]),
+        employeeId: z.number().optional(),
+        orderId: z.number().optional(),
+      });
+
+      const { points, description, type, employeeId, orderId } =
+        pointUpdateSchema.parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
+
+      const pointTransaction = await storage.updateCustomerPoints(
+        customerId,
+        points,
+        description,
+        type,
+        employeeId,
+        orderId,
+        tenantDb,
+      );
+
+      res.status(201).json(pointTransaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid point update data",
+          errors: error.errors,
+        });
+      }
+      if (error instanceof Error && error.message === "Customer not found") {
+        return res.status(404).json({
+          message: "Customer not found",
+        });
+      }
+      if (
+        error instanceof Error &&
+        error.message === "Insufficient points balance"
+      ) {
+        return res.status(400).json({
+          message: "Insufficient points balance",
+        });
+      }
+      res.status(500).json({
+        message: "Failed to update customer points",
+      });
+    }
+  });
+
+  app.get(
+    "/api/customers/:id/point-history",
+    async (req: TenantRequest, res) => {
+      try {
+        const customerId = parseInt(req.params.id);
+        const limit = parseInt(req.query.limit as string) || 50;
+        const tenantDb = await getTenantDatabase(req);
+
+        const pointHistory = await storage.getPointHistory(
+          customerId,
+          limit,
+          tenantDb,
+        );
+        res.json(pointHistory);
+      } catch (error) {
+        res.status(500).json({
+          message: "Failed to fetch point history",
+        });
+      }
+    },
+  );
+
+  // New endpoints for points management modal
+  app.post("/api/customers/adjust-points", async (req: TenantRequest, res) => {
+    try {
+      const pointUpdateSchema = z.object({
+        customerId: z.number().int().min(1),
+        points: z.number().int(),
+        type: z.enum(["earned", "redeemed", "adjusted"]),
+        description: z.string().min(1),
+      });
+
+      const { customerId, points, type, description } = pointUpdateSchema.parse(
+        req.body,
+      );
+      const tenantDb = await getTenantDatabase(req);
+
+      const pointTransaction = await storage.updateCustomerPoints(
+        customerId,
+        points,
+        description,
+        type,
+        undefined, // employeeId is optional and not provided here
+        undefined, // orderId is optional and not provided here
+        tenantDb,
+      );
+
+      res.status(201).json(pointTransaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid point adjustment data",
+          errors: error.errors,
+        });
+      }
+      if (error instanceof Error && error.message === "Customer not found") {
+        return res.status(404).json({
+          message: "Customer not found",
+        });
+      }
+      if (
+        error instanceof Error &&
+        error.message === "Insufficient points balance"
+      ) {
+        return res.status(400).json({
+          message: "Insufficient points balance",
+        });
+      }
+      res.status(500).json({
+        message: "Failed to adjust customer points",
+      });
+    }
+  });
+
+  app.post("/api/customers/redeem-points", async (req: TenantRequest, res) => {
+    try {
+      const redeemSchema = z.object({
+        customerId: z.number().int().min(1),
+        points: z.number().int().min(1),
+      });
+
+      const { customerId, points } = redeemSchema.parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
+
+      const pointTransaction = await storage.updateCustomerPoints(
+        customerId,
+        -points,
+        "포인트 결제 사용",
+        "redeemed",
+        undefined, // employeeId is optional
+        undefined, // orderId is optional
+        tenantDb,
+      );
+
+      res.status(201).json(pointTransaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid point redemption data",
+          errors: error.errors,
+        });
+      }
+      if (error instanceof Error && error.message === "Customer not found") {
+        return res.status(404).json({
+          message: "Customer not found",
+        });
+      }
+      if (
+        error instanceof Error &&
+        error.message === "Insufficient points balance"
+      ) {
+        return res.status(400).json({
+          message: "Insufficient points balance",
+        });
+      }
+      res.status(500).json({
+        message: "Failed to redeem customer points",
+      });
+    }
+  });
+
+  app.get("/api/point-transactions", async (req: TenantRequest, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const tenantDb = await getTenantDatabase(req);
+      // For now, get all point transactions across all customers
+      // In a real app, you might want to add pagination and filtering
+      const allTransactions = await storage.getAllPointTransactions(
+        limit,
+        tenantDb,
+      );
+      res.json(allTransactions);
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to fetch point transactions",
+      });
+    }
+  });
+
+  // Membership thresholds management
+  app.get("/api/membership-thresholds", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const thresholds = await storage.getMembershipThresholds(tenantDb);
+      res.json(thresholds);
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to fetch membership thresholds",
+      });
+    }
+  });
+
+  app.put("/api/membership-thresholds", async (req: TenantRequest, res) => {
+    try {
+      const thresholdSchema = z.object({
+        GOLD: z.number().min(0),
+        VIP: z.number().min(0),
+      });
+
+      const validatedData = thresholdSchema.parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
+      const thresholds = await storage.updateMembershipThresholds(
+        validatedData,
+        tenantDb,
+      );
+
+      res.json(thresholds);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid threshold data",
+          errors: error.errors,
+        });
+      }
+      res.status(500).json({
+        message: "Failed to update membership thresholds",
+      });
+    }
+  });
+
+  // Supplier Reports APIs
+  app.get("/api/supplier-debts", async (req: TenantRequest, res) => {
+    try {
+      const { startDate, endDate, supplierId } = req.query;
+      const tenantDb = await getTenantDatabase(req);
+
+      // Mock data for supplier debts - replace with actual database queries
+      const supplierDebts = [
+        {
+          id: 1,
+          supplierCode: "SUP001",
+          supplierName: "Nhà cung cấp A",
+          initialDebt: 500000,
+          newDebt: 300000,
+          payment: 200000,
+          finalDebt: 600000,
+          phone: "010-1234-5678",
+        },
+        {
+          id: 2,
+          supplierCode: "SUP002",
+          supplierName: "Nhà cung cấp B",
+          initialDebt: 800000,
+          newDebt: 400000,
+          payment: 300000,
+          finalDebt: 900000,
+          phone: "010-2345-6789",
+        },
+      ];
+
+      // Filter by supplier if specified
+      let filteredDebts = supplierDebts;
+      if (supplierId) {
+        filteredDebts = supplierDebts.filter(
+          (debt) => debt.id === parseInt(supplierId as string),
+        );
+      }
+
+      res.json(filteredDebts);
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to fetch supplier debts",
+      });
+    }
+  });
+
+  app.get("/api/supplier-purchases", async (req: TenantRequest, res) => {
+    try {
+      const { startDate, endDate, supplierId } = req.query;
+      const tenantDb = await getTenantDatabase(req);
+
+      // Mock data for supplier purchases - replace with actual database queries
+      const supplierPurchases = [
+        {
+          id: 1,
+          supplierCode: "SUP001",
+          supplierName: "Nhà cung cấp A",
+          purchaseValue: 1500000,
+          paymentValue: 1200000,
+          netValue: 300000,
+          phone: "010-1234-5678",
+        },
+        {
+          id: 2,
+          supplierCode: "SUP002",
+          supplierName: "Nhà cung cấp B",
+          purchaseValue: 2000000,
+          paymentValue: 1700000,
+          netValue: 300000,
+          phone: "010-2345-6789",
+        },
+      ];
+
+      // Filter by supplier if specified
+      let filteredPurchases = supplierPurchases;
+      if (supplierId) {
+        filteredPurchases = supplierPurchases.filter(
+          (purchase) => purchase.id === parseInt(supplierId as string),
+        );
+      }
+
+      res.json(filteredPurchases);
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to fetch supplier purchases",
+      });
+    }
+  });
+
+  // Invoice templates management
+  app.get(
+    "/api/invoice-templates",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log(
+          "🔍 GET /api/invoice-templates - Starting request processing",
+        );
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log(
+            "✅ Tenant database connection obtained for invoice templates",
+          );
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for invoice templates:",
+            dbError,
+          );
+          tenantDb = null;
+        }
+
+        const templates = await storage.getInvoiceTemplates(tenantDb);
+        console.log(
+          `✅ Successfully fetched ${templates.length} invoice templates`,
+        );
+        res.json(templates);
+      } catch (error) {
+        console.error("❌ Error fetching invoice templates:", error);
+        res.status(500).json({
+          error: "Failed to fetch invoice templates",
+        });
+      }
+    },
+  );
+
+  app.get("/api/invoice-templates/active", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const activeTemplates = await storage.getActiveInvoiceTemplates();
+      res.json(activeTemplates);
+    } catch (error) {
+      console.error("Error fetching active invoice templates:", error);
+      res.status(500).json({
+        error: "Failed to fetch active invoice templates",
+      });
+    }
+  });
+
+  app.post("/api/invoice-templates", async (req: TenantRequest, res) => {
+    try {
+      const templateData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+      const template = await storage.createInvoiceTemplate(
+        templateData,
+        tenantDb,
+      );
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Invoice template creation error:", error);
+      res.status(500).json({
+        message: "Failed to create invoice template",
+      });
+    }
+  });
+
+  app.put("/api/invoice-templates/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const templateData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+      const template = await storage.updateInvoiceTemplate(
+        id,
+        templateData,
+        tenantDb,
+      );
+
+      if (!template) {
+        return res.status(404).json({
+          message: "Invoice template not found",
+        });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error("Invoice template update error:", error);
+      res.status(500).json({
+        message: "Failed to update invoice template",
+      });
+    }
+  });
+
+  app.delete("/api/invoice-templates/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteInvoiceTemplate(id, tenantDb);
+
+      if (!deleted) {
+        return res.status(404).json({
+          message: "Invoice template not found",
+        });
+      }
+
+      res.json({
+        message: "Invoice template deleted successfully",
+      });
+    } catch (error) {
+      console.error("Invoice template deletion error:", error);
+      res.status(500).json({
+        message: "Failed to delete invoice template",
+      });
+    }
+  });
+
+  // Invoices management
+  app.get(
+    "/api/invoices",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log("🔍 GET /api/invoices - Starting request processing");
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log("✅ Tenant database connection obtained for invoices");
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for invoices:",
+            dbError,
+          );
+          tenantDb = null;
+        }
+
+        const invoices = await storage.getInvoices(tenantDb);
+        console.log(`✅ Successfully fetched ${invoices.length} invoices`);
+        res.json(invoices);
+      } catch (error) {
+        console.error("❌ Error fetching invoices:", error);
+        res.status(500).json({
+          message: "Failed to fetch invoices",
+        });
+      }
+    },
+  );
+
+  app.post("/api/invoices", async (req: TenantRequest, res) => {
+    try {
+      console.log("🔍 POST /api/invoices - Creating new invoice");
+      const tenantDb = await getTenantDatabase(req);
+      const invoiceData = req.body;
+
+      console.log(
+        "📄 Invoice data received:",
+        JSON.stringify(invoiceData, null, 2),
+      );
+
+      // Validate required fields
+      if (!invoiceData.customerName) {
+        return res.status(400).json({
+          error: "Customer name is required",
+        });
+      }
+
+      if (!invoiceData.total || parseFloat(invoiceData.total) <= 0) {
+        return res.status(400).json({
+          error: "Valid total amount is required",
+        });
+      }
+
+      if (
+        !invoiceData.items ||
+        !Array.isArray(invoiceData.items) ||
+        invoiceData.items.length === 0
+      ) {
+        return res.status(400).json({
+          error: "Invoice items are required",
+        });
+      }
+
+      // Create invoice in database
+      const invoice = await storage.createInvoice(invoiceData, tenantDb);
+
+      console.log("✅ Invoice created successfully:", invoice);
+      res.status(201).json({
+        success: true,
+        invoice: invoice,
+        message: "Invoice created successfully",
+      });
+    } catch (error) {
+      console.error("❌ Error creating invoice:", error);
+
+      let errorMessage = "Failed to create invoice";
+      if (error instanceof Error) {
+        errorMessage = `Failed to create invoice: ${error.message}`;
+      }
+
+      res.status(500).json({
+        error: errorMessage,
+        details: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.get("/api/invoices/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+
+      if (isNaN(id)) {
+        return res.status(400).json({
+          error: "Invalid invoice ID",
+        });
+      }
+
+      const invoice = await storage.getInvoice(id, tenantDb);
+
+      if (!invoice) {
+        return res.status(404).json({
+          error: "Invoice not found",
+        });
+      }
+
+      res.json(invoice);
+    } catch (error) {
+      console.error("❌ Error fetching invoice:", error);
+      res.status(500).json({
+        message: "Failed to fetch invoice",
+      });
+    }
+  });
+
+  app.put("/api/invoices/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const updateData = req.body;
+
+      if (isNaN(id)) {
+        return res.status(400).json({
+          error: "Invalid invoice ID",
+        });
+      }
+
+      const invoice = await storage.updateInvoice(id, updateData, tenantDb);
+
+      if (!invoice) {
+        return res.status(404).json({
+          error: "Invoice not found",
+        });
+      }
+
+      res.json(invoice);
+    } catch (error) {
+      console.error("❌ Error updating invoice:", error);
+      res.status(500).json({
+        message: "Failed to update invoice",
+      });
+    }
+  });
+
+  app.delete("/api/invoices/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+
+      if (isNaN(id)) {
+        return res.status(400).json({
+          error: "Invalid invoice ID",
+        });
+      }
+
+      const deleted = await storage.deleteInvoice(id, tenantDb);
+
+      if (!deleted) {
+        return res.status(404).json({
+          error: "Invoice not found",
+        });
+      }
+
+      res.json({
+        message: "Invoice deleted successfully",
+      });
+    } catch (error) {
+      console.error("❌ Error deleting invoice:", error);
+      res.status(500).json({
+        message: "Failed to delete invoice",
+      });
+    }
+  });
+
+  // E-invoice connections management
+  app.get(
+    "/api/einvoice-connections",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log(
+          "🔍 GET /api/einvoice-connections - Starting request processing",
+        );
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log(
+            "✅ Tenant database connection obtained for e-invoice connections",
+          );
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for e-invoice connections:",
+            dbError,
+          );
+          tenantDb = null;
+        }
+
+        const connections = await storage.getEInvoiceConnections(tenantDb);
+        console.log(
+          `✅ Successfully fetched ${connections.length} e-invoice connections`,
+        );
+        res.json(connections);
+      } catch (error) {
+        console.error("❌ Error fetching e-invoice connections:", error);
+        res.status(500).json({
+          message: "Failed to fetch e-invoice connections",
+        });
+      }
+    },
+  );
+
+  app.post("/api/einvoice-connections", async (req: TenantRequest, res) => {
+    try {
+      const connectionData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+      const connection = await storage.createEInvoiceConnection(
+        connectionData,
+        tenantDb,
+      );
+      res.status(201).json(connection);
+    } catch (error) {
+      console.error("E-invoice connection creation error:", error);
+      res.status(500).json({
+        message: "Failed to create e-invoice connection",
+      });
+    }
+  });
+
+  app.put("/api/einvoice-connections/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const connectionData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+      const connection = await storage.updateEInvoiceConnection(
+        id,
+        connectionData,
+        tenantDb,
+      );
+
+      if (!connection) {
+        return res.status(404).json({
+          message: "E-invoice connection not found",
+        });
+      }
+
+      res.json(connection);
+    } catch (error) {
+      console.error("E-invoice connection update error:", error);
+      res.status(500).json({
+        message: "Failed to update e-invoice connection",
+      });
+    }
+  });
+
+  app.delete(
+    "/api/einvoice-connections/:id",
+    async (req: TenantRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const tenantDb = await getTenantDatabase(req);
+        const deleted = await storage.deleteEInvoiceConnection(id, tenantDb);
+
+        if (!deleted) {
+          return res.status(404).json({
+            message: "E-invoice connection not found",
+          });
+        }
+
+        res.json({
+          message: "E-invoice connection deleted successfully",
+        });
+      } catch (error) {
+        console.error("E-invoice connection deletion error:", error);
+        res.status(500).json({
+          message: "Failed to delete e-invoice connection",
+        });
+      }
+    },
+  );
+
+  // Menu Analysis API
+  app.get("/api/menu-analysis", async (req, res) => {
+    try {
+      const { startDate, endDate, categoryId, productType, productSearch } =
+        req.query;
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log("Menu Analysis API called with params:", {
+        startDate,
+        endDate,
+        search: req.query.search,
+        categoryId,
+        productType: req.query.productType,
+      });
+
+      console.log("Executing transaction and order queries...");
+
+      // Build date conditions
+      const dateConditions = [];
+      if (startDate && endDate) {
+        const startDateTime = new Date(startDate as string);
+        const endDateTime = new Date(endDate as string);
+        endDateTime.setHours(23, 59, 59, 999);
+        dateConditions.push(
+          gte(transactionsTable.createdAt, startDateTime),
+          lte(transactionsTable.createdAt, endDateTime),
+        );
+      } else if (startDate) {
+        const startDateTime = new Date(startDate as string);
+        dateConditions.push(gte(transactionsTable.createdAt, startDateTime));
+      } else if (endDate) {
+        const endDateTime = new Date(endDate as string);
+        dateConditions.push(lte(transactionsTable.createdAt, endDateTime));
+      }
+
+      // Build category conditions
+      const categoryConditions = [];
+      if (categoryId && categoryId !== "all") {
+        categoryConditions.push(
+          eq(products.categoryId, parseInt(categoryId as string)),
+        );
+      }
+
+      // Query transaction items with proper Drizzle ORM
+      let transactionResults = [];
+      try {
+        transactionResults = await db
+          .select({
+            productId: transactionItemsTable.productId,
+            productName: products.name,
+            categoryId: products.categoryId,
+            categoryName: categories.name,
+            totalQuantity: sql<number>`SUM(${transactionItemsTable.quantity})`,
+            totalRevenue: sql<number>`SUM(CAST(${transactionItemsTable.unitPrice} AS NUMERIC) * ${transactionItemsTable.quantity})`,
+          })
+          .from(transactionItemsTable)
+          .innerJoin(
+            transactionsTable,
+            eq(transactionItemsTable.transactionId, transactionsTable.id),
+          )
+          .innerJoin(products, eq(transactionItemsTable.productId, products.id))
+          .leftJoin(categories, eq(products.categoryId, categories.id))
+          .where(and(...dateConditions, ...categoryConditions))
+          .groupBy(
+            transactionItemsTable.productId,
+            products.name,
+            products.categoryId,
+            categories.name,
+          );
+      } catch (error) {
+        console.error("Error querying transaction items:", error);
+        transactionResults = [];
+      }
+
+      // Query order items with proper Drizzle ORM
+      const orderDateConditions = [];
+      if (startDate && endDate) {
+        const startDateTime = new Date(startDate as string);
+        const endDateTime = new Date(endDate as string);
+        endDateTime.setHours(23, 59, 59, 999);
+        orderDateConditions.push(
+          gte(orders.orderedAt, startDateTime),
+          lte(orders.orderedAt, endDateTime),
+        );
+      } else if (startDate) {
+        const startDateTime = new Date(startDate as string);
+        orderDateConditions.push(gte(orders.orderedAt, startDateTime));
+      } else if (endDate) {
+        const endDateTime = new Date(endDate as string);
+        orderDateConditions.push(lte(orders.orderedAt, endDateTime));
+      }
+
+      let orderResults = [];
+      try {
+        orderResults = await db
+          .select({
+            productId: orderItemsTable.productId,
+            productName: products.name,
+            categoryId: products.categoryId,
+            categoryName: categories.name,
+            totalQuantity: sql<number>`SUM(${orderItemsTable.quantity})`,
+            totalRevenue: sql<number>`SUM(CAST(${orderItemsTable.unitPrice} AS NUMERIC) * ${orderItemsTable.quantity} - ${orderItemsTable.discount})`,
+          })
+          .from(orderItemsTable)
+          .innerJoin(orders, eq(orderItemsTable.orderId, orders.id))
+          .innerJoin(products, eq(orderItemsTable.productId, products.id))
+          .leftJoin(categories, eq(products.categoryId, categories.id))
+          .where(
+            and(
+              or(eq(orders.status, "paid"), eq(orders.status, "completed")),
+              ...orderDateConditions,
+              ...categoryConditions,
+            ),
+          )
+          .groupBy(
+            orderItemsTable.productId,
+            products.name,
+            products.categoryId,
+            categories.name,
+          );
+      } catch (error) {
+        console.error("Error querying order items:", error);
+        orderResults = [];
+      }
+
+      console.log("Transaction stats:", transactionResults.length, "items");
+      console.log("Order stats:", orderResults.length, "items");
+
+      // Combine and aggregate results
+      const productMap = new Map();
+      const categoryMap = new Map();
+
+      // Process transaction results
+      transactionResults.forEach((item) => {
+        const key = item.productId;
+        if (productMap.has(key)) {
+          const existing = productMap.get(key);
+          existing.totalQuantity += Number(item.totalQuantity || 0);
+          existing.totalRevenue += Number(item.totalRevenue || 0);
+        } else {
+          productMap.set(key, {
+            productId: item.productId,
+            productName: item.productName,
+            categoryId: item.categoryId,
+            categoryName: item.categoryName,
+            totalQuantity: Number(item.totalQuantity || 0),
+            totalRevenue: Number(item.totalRevenue || 0),
+          });
+        }
+      });
+
+      // Process order results
+      orderResults.forEach((item) => {
+        const key = item.productId;
+        if (productMap.has(key)) {
+          const existing = productMap.get(key);
+          existing.totalQuantity += Number(item.totalQuantity || 0);
+          existing.totalRevenue += Number(item.totalRevenue || 0);
+        } else {
+          productMap.set(key, {
+            productId: item.productId,
+            productName: item.productName,
+            categoryId: item.categoryId,
+            categoryName: item.categoryName,
+            totalQuantity: Number(item.totalQuantity || 0),
+            totalRevenue: Number(item.totalRevenue || 0),
+          });
+        }
+      });
+
+      // Calculate category stats
+      productMap.forEach((product) => {
+        const categoryKey = product.categoryId;
+        if (categoryMap.has(categoryKey)) {
+          const existing = categoryMap.get(categoryKey);
+          existing.totalQuantity += product.totalQuantity;
+          existing.totalRevenue += product.totalRevenue;
+          existing.productCount += 1;
+        } else {
+          categoryMap.set(categoryKey, {
+            categoryId: product.categoryId,
+            categoryName: product.categoryName,
+            totalQuantity: product.totalQuantity,
+            totalRevenue: product.totalRevenue,
+            productCount: 1,
+          });
+        }
+      });
+
+      const productStats = Array.from(productMap.values());
+      const categoryStats = Array.from(categoryMap.values());
+
+      // Calculate totals
+      const totalRevenue = productStats.reduce(
+        (sum, product) => sum + product.totalRevenue,
+        0,
+      );
+      const totalQuantity = productStats.reduce(
+        (sum, product) => sum + product.totalQuantity,
+        0,
+      );
+
+      // Top selling products (by quantity)
+      const topSellingProducts = productStats
+        .sort((a, b) => b.totalQuantity - a.totalQuantity)
+        .slice(0, 10);
+
+      // Top revenue products
+      const topRevenueProducts = productStats
+        .sort((a, b) => b.totalRevenue - a.totalRevenue)
+        .slice(0, 10);
+
+      const result = {
+        totalRevenue,
+        totalQuantity,
+        categoryStats,
+        productStats,
+        topSellingProducts,
+        topRevenueProducts,
+      };
+
+      console.log("Menu Analysis Results:", {
+        totalRevenue,
+        totalQuantity,
+        categoryCount: categoryStats.length,
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Menu analysis error:", error);
+      res.status(500).json({
+        error: "Failed to fetch menu analysis",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  // Printer configuration management APIs
+  app.get(
+    "/api/printer-configs",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        console.log(
+          "🔍 GET /api/printer-configs - Starting request processing",
+        );
+        let tenantDb;
+        try {
+          tenantDb = await getTenantDatabase(req);
+          console.log(
+            "✅ Tenant database connection obtained for printer configs",
+          );
+        } catch (dbError) {
+          console.error(
+            "❌ Failed to get tenant database for printer configs:",
+            dbError,
+          );
+          tenantDb = null;
+        }
+
+        const configs = await storage.getPrinterConfigs(tenantDb);
+        console.log(
+          `✅ Successfully fetched ${configs.length} printer configs`,
+        );
+        res.json(configs);
+      } catch (error) {
+        console.error("❌ Error fetching printer configs:", error);
+        res.status(500).json({
+          error: "Failed to fetch printer configs",
+        });
+      }
+    },
+  );
+
+  app.post("/api/printer-configs", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const configData = req.body;
+
+      console.log("Creating printer config with data:", configData);
+
+      const config = await storage.createPrinterConfig(configData, tenantDb);
+      res.status(201).json(config);
+    } catch (error) {
+      console.error("Error creating printer config:", error);
+      res.status(500).json({
+        error: "Failed to create printer config",
+      });
+    }
+  });
+
+  app.put("/api/printer-configs/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const configData = req.body;
+
+      console.log(`Updating printer config ${id} with data:`, configData);
+
+      const config = await storage.updatePrinterConfig(
+        id,
+        configData,
+        tenantDb,
+      );
+
+      if (!config) {
+        return res.status(404).json({
+          error: "Printer config not found",
+        });
+      }
+
+      res.json(config);
+    } catch (error) {
+      console.error("Error updating printer config:", error);
+      res.status(500).json({
+        error: "Failed to update printer config",
+      });
+    }
+  });
+
+  app.delete("/api/printer-configs/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log(`Deleting printer config ${id}`);
+
+      const deleted = await storage.deletePrinterConfig(id, tenantDb);
+
+      if (!deleted) {
+        return res.status(404).json({
+          error: "Printer config not found",
+        });
+      }
+
+      res.json({
+        message: "Printer config deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting printer config:", error);
+      res.status(500).json({
+        error: "Failed to delete printer config",
+      });
+    }
+  });
+
+  app.post("/api/printer-configs/:id/test", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+
+      // Get printer config
+      const configs = await storage.getPrinterConfigs(tenantDb);
+      const config = configs.find((c) => c.id === id);
+
+      if (!config) {
+        return res.status(404).json({
+          success: false,
+          message: "Printer config not found",
+        });
+      }
+
+      // Test connection based on connection type
+      let testResult = { success: false, message: "Unknown connection type" };
+
+      if (config.connectionType === "network" && config.ipAddress) {
+        // Test network connection
+        const net = require("net");
+
+        const testPromise = new Promise((resolve) => {
+          const client = new net.Socket();
+          client.setTimeout(3000);
+
+          client.connect(config.port || 9100, config.ipAddress, () => {
+            // Send test print command
+            const testData = Buffer.from(
+              "\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00",
+              "utf8",
+            );
+
+            client.write(testData, (error) => {
+              if (error) {
+                resolve({
+                  success: false,
+                  message: `Failed to send test data: ${error.message}`,
+                });
+              } else {
+                client.end();
+                resolve({
+                  success: true,
+                  message: `Successfully connected to ${config.name}`,
+                });
+              }
+            });
+          });
+
+          client.on("error", (err) => {
+            resolve({
+              success: false,
+              message: `Connection failed: ${err.message}`,
+            });
+          });
+
+          client.on("timeout", () => {
+            client.destroy();
+            resolve({ success: false, message: "Connection timeout" });
+          });
+        });
+
+        testResult = await testPromise;
+      } else if (config.connectionType === "usb") {
+        // For USB printers, we can't directly test but we can check if the config is valid
+        testResult = {
+          success: true,
+          message: "USB printer detection not implemented",
+        };
+      } else {
+        testResult = {
+          success: false,
+          message: "Invalid printer configuration",
+        };
+      }
+
+      res.json(testResult);
+    } catch (error) {
+      console.error("Error testing printer connection:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to test printer connection",
+      });
+    }
+  });
+
   // Customer Reports APIs
   app.get("/api/customer-debts", async (req: TenantRequest, res) => {
     try {
@@ -3602,7 +5714,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       productSalesData.forEach((item) => {
         const productId = item.productId;
         const quantity = Number(item.quantity || 0);
-        const revenue = Number(item.total || 0);
+        const revenue = Number(item.unitPrice || 0) * quantity;
         const discount = Number(item.discount || 0);
 
         if (productMap.has(productId)) {
@@ -3643,15 +5755,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate totals
       const totalRevenue = productStats.reduce(
-        (sum, product) => sum + product.totalRevenue,
+        (sum, p) => sum + p.totalRevenue,
         0,
       );
       const totalQuantity = productStats.reduce(
-        (sum, product) => sum + product.totalQuantity,
+        (sum, p) => sum + p.totalQuantity,
         0,
       );
       const totalDiscount = productStats.reduce(
-        (sum, product) => sum + product.totalDiscount,
+        (sum, p) => sum + p.totalDiscount,
         0,
       );
       const totalProducts = productStats.length;
@@ -3722,7 +5834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               try {
                 if (!order) return false;
 
-                // Try multiple date fields - prioritize orderedAt, paidAt, createdAt
+                // Try multiple date fields - prioritize orderedAt, then paidAt, then createdAt
                 const orderDate = new Date(
                   order.orderedAt ||
                     order.paidAt ||
@@ -4385,33 +6497,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     tenantMiddleware,
     async (req: TenantRequest, res) => {
       try {
-        console.log(
-          "🔍 GET /api/printer-configs - Starting request processing",
-        );
-        let tenantDb;
-        try {
-          tenantDb = await getTenantDatabase(req);
-          console.log(
-            "✅ Tenant database connection obtained for printer configs",
-          );
-        } catch (dbError) {
-          console.error(
-            "❌ Failed to get tenant database for printer configs:",
-            dbError,
-          );
-          tenantDb = null;
-        }
-
+        const tenantDb = await getTenantDatabase(req);
         const configs = await storage.getPrinterConfigs(tenantDb);
-        console.log(
-          `✅ Successfully fetched ${configs.length} printer configs`,
-        );
         res.json(configs);
       } catch (error) {
-        console.error("❌ Error fetching printer configs:", error);
-        res.status(500).json({
-          error: "Failed to fetch printer configs",
-        });
+        console.error("Error fetching printer configs:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch printer configurations" });
       }
     },
   );
@@ -4421,15 +6514,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantDb = await getTenantDatabase(req);
       const configData = req.body;
 
-      console.log("Creating printer config with data:", configData);
+      // Validate required fields
+      if (!configData.name || !configData.connectionType) {
+        return res
+          .status(400)
+          .json({ error: "Name and connection type are required" });
+      }
 
       const config = await storage.createPrinterConfig(configData, tenantDb);
       res.status(201).json(config);
     } catch (error) {
       console.error("Error creating printer config:", error);
-      res.status(500).json({
-        error: "Failed to create printer config",
-      });
+      res.status(500).json({ error: "Failed to create printer configuration" });
     }
   });
 
@@ -4439,25 +6535,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantDb = await getTenantDatabase(req);
       const configData = req.body;
 
-      console.log(`Updating printer config ${id} with data:`, configData);
-
       const config = await storage.updatePrinterConfig(
         id,
         configData,
         tenantDb,
       );
       if (!config) {
-        return res.status(404).json({
-          error: "Printer config not found",
-        });
+        return res
+          .status(404)
+          .json({ error: "Printer configuration not found" });
       }
 
       res.json(config);
     } catch (error) {
       console.error("Error updating printer config:", error);
-      res.status(500).json({
-        error: "Failed to update printer config",
-      });
+      res.status(500).json({ error: "Failed to update printer configuration" });
     }
   });
 
@@ -4466,91 +6558,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
 
-      console.log(`Deleting printer config ${id}`);
-
       const deleted = await storage.deletePrinterConfig(id, tenantDb);
-
       if (!deleted) {
-        return res.status(404).json({
-          error: "Printer config not found",
-        });
+        return res
+          .status(404)
+          .json({ error: "Printer configuration not found" });
       }
 
-      res.json({
-        message: "Printer config deleted successfully",
-      });
+      res.json({ message: "Printer configuration deleted successfully" });
     } catch (error) {
       console.error("Error deleting printer config:", error);
-      res.status(500).json({
-        error: "Failed to delete printer config",
-      });
+      res.status(500).json({ error: "Failed to delete printer configuration" });
     }
   });
 
+  // Test printer connection
   app.post("/api/printer-configs/:id/test", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
 
-      // Get printer config
-      const configs = await storage.getPrinterConfigs(tenantDb);
-      const config = configs.find((c) => c.id === id);
-
+      const [config] = await db
+        .select()
+        .from(printerConfigs)
+        .where(eq(printerConfigs.id, id));
       if (!config) {
-        return res.status(404).json({
-          success: false,
-          message: "Printer config not found",
-        });
+        return res
+          .status(404)
+          .json({ error: "Printer configuration not found" });
       }
 
-      // Test connection based on connection type
-      let testResult = { success: false, message: "Unknown connection type" };
+      // Test connection based on printer type
+      let testResult = { success: false, message: "" };
 
       if (config.connectionType === "network" && config.ipAddress) {
-        // Test network connection
-        const net = require("net");
+        // Test network printer connection
+        try {
+          const net = require("net");
+          const socket = new net.Socket();
 
-        const testPromise = new Promise((resolve) => {
-          const client = new net.Socket();
-          client.setTimeout(5000);
+          socket.setTimeout(3000);
 
-          client.connect(config.port || 9100, config.ipAddress, () => {
-            // Send test print command
-            const testData = Buffer.from(
-              "\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00",
-              "utf8",
-            );
+          await new Promise((resolve) => {
+            socket.connect(config.port || 9100, config.ipAddress, () => {
+              // Send test print command
+              const testData = Buffer.from(
+                "\x1B@Test Print from EDPOS\n\n\n\x1DV\x41\x00",
+                "utf8",
+              );
 
-            client.write(testData, (error) => {
-              if (error) {
-                resolve({
-                  success: false,
-                  message: `Failed to send test data: ${error.message}`,
-                });
-              } else {
-                client.end();
-                resolve({
-                  success: true,
-                  message: `Successfully connected to ${config.name}`,
-                });
-              }
+              socket.write(testData, (error) => {
+                if (error) {
+                  resolve({
+                    success: false,
+                    message: `Failed to send test data: ${error.message}`,
+                  });
+                } else {
+                  socket.destroy();
+                  resolve({
+                    success: true,
+                    message: `Successfully connected to ${config.name}`,
+                  });
+                }
+              });
+            });
+
+            socket.on("error", (err) => {
+              resolve({
+                success: false,
+                message: `Connection failed: ${err.message}`,
+              });
+            });
+
+            socket.on("timeout", () => {
+              socket.destroy();
+              resolve({ success: false, message: "Connection timeout" });
             });
           });
-
-          client.on("error", (err) => {
-            resolve({
-              success: false,
-              message: `Connection failed: ${err.message}`,
-            });
-          });
-
-          client.on("timeout", () => {
-            client.destroy();
-            resolve({ success: false, message: "Connection timeout" });
-          });
-        });
-
-        testResult = await testPromise;
+        } catch (error) {
+          testResult = {
+            success: false,
+            message: `Network test failed: ${error.message}`,
+          };
+        }
       } else if (config.connectionType === "usb") {
         // For USB printers, we can't directly test but we can check if the config is valid
         testResult = {

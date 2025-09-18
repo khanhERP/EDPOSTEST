@@ -1,0 +1,49 @@
+Build a "Purchase Management" module for a POS system similar to demo.edpos.vn, The module should include:
+
+1. 📋 Purchase Order Dashboard:
+   - Display a list of purchase orders with columns: PO Number, Supplier Name, Date, Status (Pending / Received / Cancelled), Total Amount.
+   - Include filters by date, supplier, and status.
+
+2. 📝 Create New Purchase Order:
+   - Form to input:
+     - Supplier name (dropdown or text)
+     - Product list (name, quantity, unit price)
+     - Expected delivery date
+     - Notes or remarks
+   - Auto-calculate total cost.
+   - Save as “Pending” status by default.
+
+3. 📎 Upload Supporting Documents:
+   - Allow users to attach **images (JPG, PNG)** and **PDF files** as proof of purchase (e.g., invoices, receipts).
+   - Show file preview (thumbnail for images, icon for PDFs).
+   - Store files securely and link them to the corresponding purchase order.
+   - Allow download/view of attachments from the dashboard.
+
+4. 🔄 Inventory Integration:
+   - When a purchase order is marked as “Received,” automatically update the **inventory quantities** for the purchased items.
+   - Ensure that purchased items are matched with existing inventory records by SKU or Product ID.
+   - If a purchased item does not exist in inventory, prompt to create a new inventory entry.
+   - Maintain unified inventory data for both **sales products** and **purchased items**, with clear distinction or tagging (e.g., "For Sale", "For Internal Use").
+
+5. ✅ Receive Goods:
+   - Mark PO as “Received” when items arrive.
+   - Allow partial receipt and log remaining items.
+   - Trigger inventory update only for received quantities.
+
+6. 🧾 Supplier Management:
+   - Add/Edit/Delete supplier profiles with contact info.
+   - Link suppliers to purchase orders.
+
+7. 📚 Purchase History & Logs:
+   - View detailed logs of past purchases.
+   - Include timestamps, user actions, and file attachments.
+
+8. 🔔 Notifications:
+   - Alert when expected delivery date is overdue.
+   - Optional popup or email notification.
+
+9. 📱 Responsive UI:
+   - Mobile-friendly layout.
+   - Consistent design with existing POS interface.
+
+Use mock data for suppliers and products. Ensure modular code structure for future expansion (e.g., invoice generation, payment tracking, barcode scanning).

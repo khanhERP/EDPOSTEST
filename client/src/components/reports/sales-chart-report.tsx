@@ -531,6 +531,7 @@ export function SalesChartReport() {
       created_at:
         order.orderedAt || order.createdAt || order.created_at || order.paidAt,
       customerName: order.customerName,
+      tax: order.tax || 0,
       customerId: order.customerId,
       cashierName: order.employeeName || order.cashierName,
       employeeId: order.employeeId,
@@ -931,9 +932,9 @@ export function SalesChartReport() {
                                         Number(transaction.subtotal || 0) -
                                           Number(transaction.discount || 0),
                                       );
-                                      const transactionTax =
-                                        Number(transaction.total || 0) -
-                                        Number(transaction.subtotal || 0);
+                                      const transactionTax = Number(
+                                        transaction.tax || 0,
+                                      );
                                       const customerPayment =
                                         transactionRevenue + transactionTax;
 
@@ -1127,14 +1128,10 @@ export function SalesChartReport() {
                                                                 0,
                                                             ),
                                                         ) +
-                                                          (Number(
-                                                            transaction.total ||
+                                                          Number(
+                                                            transaction.tax ||
                                                               0,
-                                                          ) -
-                                                            Number(
-                                                              transaction.subtotal ||
-                                                                0,
-                                                            )),
+                                                          ),
                                                       )
                                                     : "-"}
                                                 </TableCell>
@@ -2446,13 +2443,7 @@ export function SalesChartReport() {
                           ),
                         ),
                         "Giảm giá": formatCurrency(Number(order.discount || 0)),
-                        Thuế: formatCurrency(
-                          Math.max(
-                            0,
-                            Number(order.total || 0) -
-                              Number(order.subtotal || 0),
-                          ),
-                        ),
+                        Thuế: formatCurrency(Number(order.tax || 0)),
                         "Tổng cộng": formatCurrency(Number(order.total || 0)),
                         "Phương thức thanh toán": getPaymentMethodLabel(
                           order.paymentMethod || "cash",
@@ -2701,10 +2692,8 @@ export function SalesChartReport() {
                                               Number(order.subtotal || 0) -
                                                 Number(order.discount || 0),
                                             );
-                                            const orderTax = Math.max(
-                                              0,
-                                              Number(order.total || 0) -
-                                                Number(order.subtotal || 0),
+                                            const orderTax = Number(
+                                              order.tax || 0,
                                             );
                                             customerPaymentForMethod +=
                                               orderRevenue + orderTax;
@@ -2977,11 +2966,7 @@ export function SalesChartReport() {
                                           Number(order.subtotal || 0) -
                                             Number(order.discount || 0),
                                         );
-                                        const orderTax = Math.max(
-                                          0,
-                                          Number(order.total || 0) -
-                                            Number(order.subtotal || 0),
-                                        );
+                                        const orderTax = Number(order.tax || 0);
                                         totalCustomerPaymentForMethod +=
                                           orderRevenue + orderTax;
                                       }

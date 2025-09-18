@@ -1392,7 +1392,7 @@ export default function Settings() {
               <p className="text-gray-600">{t("settings.description")}</p>
             </div>
             <Button
-              onClick={() => (window.location.href = "/pos")}
+              onClick={() => (window.location.href = "/")}
               variant="outline"
               className="bg-white hover:bg-green-50 border-green-200 text-green-700 hover:text-green-800"
             >
@@ -3856,7 +3856,7 @@ export default function Settings() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              Xác nhận xóa kết nối HĐĐT
+              Xác nhận xóa kd��t nối HĐĐT
             </AlertDialogTitle>
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
