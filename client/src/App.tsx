@@ -13,6 +13,7 @@ import ReportsPage from "@/pages/reports";
 import SettingsPage from "@/pages/settings";
 import SuppliersPage from "@/pages/suppliers";
 import PurchasesPage from "@/pages/purchases";
+import PurchaseFormPage from "@/pages/purchase-form";
 import AttendancePage from "@/pages/attendance";
 import AttendanceQRPage from "./pages/attendance-qr";
 import CustomerDisplay from "@/pages/customer-display";
@@ -51,6 +52,14 @@ function Router({ onLogout }: { onLogout: () => void }) {
       <Route
         path="/purchases"
         component={() => <PurchasesPage onLogout={onLogout} />}
+      />
+      <Route
+        path="/purchases/create"
+        component={() => <PurchaseFormPage onLogout={onLogout} />}
+      />
+      <Route
+        path="/purchases/:id/edit"
+        component={({ params }) => <PurchaseFormPage id={params.id} onLogout={onLogout} />}
       />
       <Route
         path="/attendance"

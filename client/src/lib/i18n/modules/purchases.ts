@@ -176,7 +176,23 @@ export const purchasesTranslations = {
     reminder: "알림",
     notification: "알림",
     
-    unknownSupplier: "알 수 없는 공급업체"
+    unknownSupplier: "알 수 없는 공급업체",
+    
+    // Purchase Form specific translations
+    orderDetails: "주문 상세정보",
+    orderDetailsDescription: "구매 주문의 기본 정보를 입력하세요",
+    selectSupplier: "공급업체를 선택하세요",
+    poNumberPlaceholder: "PO 번호를 입력하세요",
+    notesPlaceholder: "메모나 특별 지시사항을 입력하세요",
+    orderSummary: "주문 요약",
+    selectProducts: "상품 선택",
+    selectProductsDescription: "주문할 상품을 선택하세요",
+    searchProducts: "상품 검색",
+    noItemsSelected: "선택된 상품이 없습니다",
+    clickAddItemToStart: "'상품 추가' 버튼을 클릭해서 시작하세요",
+    totalQuantity: "총 수량",
+    createOrderDescription: "새로운 구매 주문을 작성합니다",
+    editOrderDescription: "기존 구매 주문을 수정합니다"
   },
   
   en: {
@@ -356,7 +372,23 @@ export const purchasesTranslations = {
     reminder: "Reminder",
     notification: "Notification",
     
-    unknownSupplier: "Unknown Supplier"
+    unknownSupplier: "Unknown Supplier",
+    
+    // Purchase Form specific translations
+    orderDetails: "Order Details",
+    orderDetailsDescription: "Enter basic information for the purchase order",
+    selectSupplier: "Select a supplier",
+    poNumberPlaceholder: "Enter PO number",
+    notesPlaceholder: "Enter notes or special instructions",
+    orderSummary: "Order Summary",
+    selectProducts: "Select Products",
+    selectProductsDescription: "Choose products to order",
+    searchProducts: "Search products",
+    noItemsSelected: "No items selected",
+    clickAddItemToStart: "Click 'Add Item' button to start",
+    totalQuantity: "Total Quantity",
+    createOrderDescription: "Create a new purchase order",
+    editOrderDescription: "Edit existing purchase order"
   },
   
   vi: {
@@ -536,6 +568,22 @@ export const purchasesTranslations = {
     reminder: "Nhắc nhở",
     notification: "Thông báo",
     
-    unknownSupplier: "Nhà cung cấp không xác định"
+    unknownSupplier: "Nhà cung cấp không xác định",
+    
+    // Purchase Form specific translations
+    orderDetails: "Chi tiết đơn hàng",
+    orderDetailsDescription: "Nhập thông tin cơ bản cho đơn đặt hàng",
+    selectSupplier: "Chọn nhà cung cấp",
+    poNumberPlaceholder: "Nhập số PO",
+    notesPlaceholder: "Nhập ghi chú hoặc hướng dẫn đặc biệt",
+    orderSummary: "Tóm tắt đơn hàng",
+    selectProducts: "Chọn sản phẩm",
+    selectProductsDescription: "Chọn sản phẩm để đặt hàng",
+    searchProducts: "Tìm kiếm sản phẩm",
+    noItemsSelected: "Không có mục nào được chọn",
+    clickAddItemToStart: "Nhấp vào nút 'Thêm mục' để bắt đầu",
+    totalQuantity: "Tổng số lượng",
+    createOrderDescription: "Tạo đơn đặt hàng mới",
+    editOrderDescription: "Chỉnh sửa đơn đặt hàng hiện tại"
   }
 };
