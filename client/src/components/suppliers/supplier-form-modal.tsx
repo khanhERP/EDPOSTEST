@@ -50,7 +50,7 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
         taxId: supplier.taxId || "",
         bankAccount: supplier.bankAccount || "",
         paymentTerms: supplier.paymentTerms || "30일",
-        status: supplier.status,
+        status: supplier.status as "active" | "inactive",
         notes: supplier.notes || "",
       });
     } else {
@@ -178,7 +178,7 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
               <Label htmlFor="contactPerson">{t('suppliers.contactPerson')}</Label>
               <Input
                 id="contactPerson"
-                value={formData.contactPerson}
+                value={formData.contactPerson || ""}
                 onChange={(e) => handleInputChange('contactPerson', e.target.value)}
                 placeholder={t('suppliers.contactPersonPlaceholder')}
               />
@@ -187,7 +187,7 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
               <Label htmlFor="phone">{t('suppliers.phone')}</Label>
               <Input
                 id="phone"
-                value={formData.phone}
+                value={formData.phone || ""}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder={t('suppliers.phonePlaceholder')}
               />
@@ -200,7 +200,7 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
               <Input
                 id="email"
                 type="email"
-                value={formData.email}
+                value={formData.email || ""}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder={t('suppliers.emailPlaceholder')}
               />
@@ -209,7 +209,7 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
               <Label htmlFor="taxId">{t('suppliers.taxId')}</Label>
               <Input
                 id="taxId"
-                value={formData.taxId}
+                value={formData.taxId || ""}
                 onChange={(e) => handleInputChange('taxId', e.target.value)}
                 placeholder={t('suppliers.taxIdPlaceholder')}
               />
@@ -220,7 +220,7 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
             <Label htmlFor="address">{t('suppliers.address')}</Label>
             <Input
               id="address"
-              value={formData.address}
+              value={formData.address || ""}
               onChange={(e) => handleInputChange('address', e.target.value)}
               placeholder={t('suppliers.addressPlaceholder')}
             />
@@ -231,14 +231,14 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
               <Label htmlFor="bankAccount">{t('suppliers.bankAccount')}</Label>
               <Input
                 id="bankAccount"
-                value={formData.bankAccount}
+                value={formData.bankAccount || ""}
                 onChange={(e) => handleInputChange('bankAccount', e.target.value)}
                 placeholder={t('suppliers.bankAccountPlaceholder')}
               />
             </div>
             <div>
               <Label htmlFor="paymentTerms">{t('suppliers.paymentTerms')}</Label>
-              <Select value={formData.paymentTerms} onValueChange={(value) => handleInputChange('paymentTerms', value)}>
+              <Select value={formData.paymentTerms || "30일"} onValueChange={(value) => handleInputChange('paymentTerms', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -270,7 +270,7 @@ export function SupplierFormModal({ isOpen, onClose, supplier }: SupplierFormMod
             <Label htmlFor="notes">{t('suppliers.notes')}</Label>
             <Textarea
               id="notes"
-              value={formData.notes}
+              value={formData.notes || ""}
               onChange={(e) => handleInputChange('notes', e.target.value)}
               placeholder={t('suppliers.notesPlaceholder')}
               rows={3}
