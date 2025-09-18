@@ -273,10 +273,28 @@ export async function initializeSampleData() {
       `);
 
       console.log(
-        "Migration for invoice_status column completed successfully.",
+        "Migration for invoice_status column in invoices completed successfully.",
       );
     } catch (error) {
-      console.log("Invoice status migration failed or already applied:", error);
+      console.log("Invoice status migration for invoices failed or already applied:", error);
+    }
+
+    // Add invoice_status column to orders table
+    try {
+      await db.execute(sql`
+        ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_status INTEGER NOT NULL DEFAULT 1
+      `);
+
+      // Create index for invoice_status
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_orders_invoice_status ON orders(invoice_status)
+      `);
+
+      console.log(
+        "Migration for invoice_status column in orders completed successfully.",
+      );
+    } catch (error) {
+      console.log("Invoice status migration for orders failed or already applied:", error);
     }
 
     // Add template_number and symbol columns to orders table
