@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Printer, Plus, Trash2, TestTube, Wifi, Usb, Bluetooth, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface PrinterConfigModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ interface PrinterConfig {
 }
 
 export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps) {
+  const { t } = useTranslation();
   const [selectedConfig, setSelectedConfig] = useState<PrinterConfig | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -293,7 +295,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Printer className="h-5 w-5" />
-            Cấu hình máy in
+            {t("pos.printerConfiguration")}
           </DialogTitle>
         </DialogHeader>
 
@@ -303,13 +305,13 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
-                {isEditing ? "Chỉnh sửa máy in" : "Thêm máy in mới"}
+                {isEditing ? t("pos.editPrinter") : t("pos.addNewPrinter")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Tên máy in</Label>
+                  <Label htmlFor="name">{t("pos.printerName")}</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -320,29 +322,29 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                 </div>
 
                 <div>
-                  <Label htmlFor="printerType">Loại máy in</Label>
+                  <Label htmlFor="printerType">{t("pos.printerType")}</Label>
                   <Select value={formData.printerType} onValueChange={(value) => setFormData({ ...formData, printerType: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="thermal">Thermal (Nhiệt)</SelectItem>
-                      <SelectItem value="inkjet">Inkjet (Phun mực)</SelectItem>
-                      <SelectItem value="laser">Laser</SelectItem>
+                      <SelectItem value="thermal">{t("pos.thermal")}</SelectItem>
+                      <SelectItem value="inkjet">{t("pos.inkjet")}</SelectItem>
+                      <SelectItem value="laser">{t("pos.laser")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="connectionType">Loại kết nối</Label>
+                  <Label htmlFor="connectionType">{t("pos.connectionType")}</Label>
                   <Select value={formData.connectionType} onValueChange={(value) => setFormData({ ...formData, connectionType: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="usb">USB</SelectItem>
-                      <SelectItem value="network">Mạng (Network)</SelectItem>
-                      <SelectItem value="bluetooth">Bluetooth</SelectItem>
+                      <SelectItem value="network">{t("pos.network")}</SelectItem>
+                      <SelectItem value="bluetooth">{t("pos.bluetooth")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -350,7 +352,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                 {formData.connectionType === "network" && (
                   <>
                     <div>
-                      <Label htmlFor="ipAddress">Địa chỉ IP</Label>
+                      <Label htmlFor="ipAddress">{t("pos.ipAddress")}</Label>
                       <Input
                         id="ipAddress"
                         value={formData.ipAddress}
@@ -360,7 +362,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                       />
                     </div>
                     <div>
-                      <Label htmlFor="port">Cổng (Port)</Label>
+                      <Label htmlFor="port">{t("pos.port")}</Label>
                       <Input
                         id="port"
                         type="number"
@@ -373,7 +375,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
 
                 {formData.connectionType === "bluetooth" && (
                   <div>
-                    <Label htmlFor="macAddress">Địa chỉ MAC</Label>
+                    <Label htmlFor="macAddress">{t("pos.macAddress")}</Label>
                     <Input
                       id="macAddress"
                       value={formData.macAddress}
@@ -391,7 +393,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                     checked={formData.isEmployee}
                     onCheckedChange={(checked) => setFormData({ ...formData, isEmployee: checked })}
                   />
-                  <Label htmlFor="isEmployee">Máy in nhân viên</Label>
+                  <Label htmlFor="isEmployee">{t("pos.employeePrinter")}</Label>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -400,7 +402,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                     checked={formData.isKitchen}
                     onCheckedChange={(checked) => setFormData({ ...formData, isKitchen: checked })}
                   />
-                  <Label htmlFor="isKitchen">Máy in bếp</Label>
+                  <Label htmlFor="isKitchen">{t("pos.kitchenPrinter")}</Label>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -409,7 +411,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                     checked={formData.isActive}
                     onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
                   />
-                  <Label htmlFor="isActive">Đang sử dụng</Label>
+                  <Label htmlFor="isActive">{t("pos.inUse")}</Label>
                 </div>
 
                 <div className="flex gap-2">
@@ -418,11 +420,11 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                     disabled={createConfigMutation.isPending || updateConfigMutation.isPending}
                     className="flex-1"
                   >
-                    {isEditing ? "Cập nhật" : "Thêm mới"}
+                    {isEditing ? t("pos.update") : t("pos.addNew")}
                   </Button>
                   {isEditing && (
                     <Button type="button" variant="outline" onClick={resetForm}>
-                      Hủy
+                      {t("pos.cancel")}
                     </Button>
                   )}
                 </div>
@@ -434,21 +436,21 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>Danh sách máy in</span>
+                <span>{t("pos.printerList")}</span>
                 {totalItems > 0 && (
                   <span className="text-sm text-gray-500">
-                    ({totalItems} máy in)
+                    ({totalItems} {t("pos.printers")})
                   </span>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="text-center py-4">Đang tải...</div>
+                <div className="text-center py-4">{t("pos.loading")}</div>
               ) : printerConfigs.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Printer className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Chưa có cấu hình máy in nào</p>
+                  <p>{t("pos.noPrinterConfigs")}</p>
                 </div>
               ) : (
                 <>
@@ -462,7 +464,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                               <div className="font-medium flex items-center gap-2">
                                 {config.name}
                                 {!config.isActive && (
-                                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Tắt</span>
+                                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">{t("pos.off")}</span>
                                 )}
                               </div>
                               <div className="text-sm text-gray-500">
@@ -475,13 +477,13 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                           </div>
                           <div className="flex items-center gap-1">
                             {config.isEmployee && config.isActive && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Nhân viên</span>
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{t("pos.employee")}</span>
                             )}
                             {config.isKitchen && config.isActive && (
-                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Bếp</span>
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">{t("pos.kitchen")}</span>
                             )}
                             {config.isActive && (
-                              <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Đang dùng</span>
+                              <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">{t("pos.using")}</span>
                             )}
                           </div>
                         </div>
@@ -495,14 +497,14 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                               disabled={testConnectionMutation.isPending}
                             >
                               <TestTube className="h-3 w-3 mr-1" />
-                              Test
+                              {t("pos.test")}
                             </Button>
                             <Button 
                               size="sm" 
                               variant="outline"
                               onClick={() => handleEdit(config)}
                             >
-                              Sửa
+                              {t("pos.edit")}
                             </Button>
                             <Button 
                               size="sm" 
@@ -528,7 +530,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                   {totalPages > 1 && (
                     <div className="flex items-center justify-between mt-4 pt-4 border-t">
                       <div className="text-sm text-gray-500">
-                        Hiển thị {startIndex + 1}-{Math.min(endIndex, totalItems)} của {totalItems} máy in
+                        {t("common.showing")} {startIndex + 1}-{Math.min(endIndex, totalItems)} {t("common.of")} {totalItems} {t("pos.printers")}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
@@ -538,7 +540,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                           disabled={currentPage === 1}
                         >
                           <ChevronLeft className="h-4 w-4" />
-                          Trước
+                          {t("common.previous")}
                         </Button>
                         <div className="flex items-center gap-1">
                           {Array.from({ length: totalPages }, (_, i) => (
@@ -559,7 +561,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
                           onClick={() => setCurrentPage(currentPage + 1)}
                           disabled={currentPage === totalPages}
                         >
-                          Sau
+                          {t("common.next")}
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </div>
@@ -573,7 +575,7 @@ export function PrinterConfigModal({ isOpen, onClose }: PrinterConfigModalProps)
 
         <div className="flex justify-end pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
-            Đóng
+            {t("pos.close")}
           </Button>
         </div>
       </DialogContent>

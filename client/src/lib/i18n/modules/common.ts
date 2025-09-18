@@ -231,6 +231,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     customerGroup: "고객 그룹",
     walkInCustomer: "일반 고객",
     backToPOS: "POS로 돌아가기",
+    description: "설명",
+    previous: "이전",
+    next: "다음",
 
     // Payment method modal
     selectPaymentMethod: "결제 방법 선택",
@@ -910,8 +913,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     upload: "Tải lên",
     refresh: "Làm mới",
     back: "Quay lại",
-    next: "Tiếp theo",
-    previous: "Trước đó",
+    next: "Sau",
+    previous: "Trước",
     all: "Tất cả",
     none: "Không có",
     other: "Khác",
