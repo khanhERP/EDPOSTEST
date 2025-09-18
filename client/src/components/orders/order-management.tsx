@@ -2861,15 +2861,15 @@ export function OrderManagement() {
               }
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {pointsPaymentMutation.isPending ? 'Đang xử lý...' :
+              {pointsPaymentMutation.isPending ? `${t('pos.processing')}...` :
                (() => {
-                 if (!selectedOrder || !selectedCustomer) return 'Thanh toán bằng điểm';
+                 if (!selectedOrder || !selectedCustomer) return `${t('orders.pointsPayment')}`;
                  // Use exact total from orderDetailsCalculation memo (already calculated)
                  const { total: calculatedTotal } = orderDetailsCalculation;
                  const discount = Math.floor(Number(selectedOrder.discount || 0));
                  const finalTotal = Math.max(0, calculatedTotal - discount);
                  const customerPointsValue = (selectedCustomer.points || 0) * 1000;
-                 return customerPointsValue >= finalTotal ? 'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp';
+                 return customerPointsValue >= finalTotal ? `${t('orders.pointsPayment')}` : `${t('orders.mixedPaymentTitle')}`;
                })()}
             </Button>
           </div>
