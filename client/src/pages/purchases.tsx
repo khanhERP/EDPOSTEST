@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { POSHeader } from "@/components/pos/header";
+import { RightSidebar } from "@/components/ui/right-sidebar";
 import { ClipboardCheck, Plus, Search, Filter, BarChart3, Calendar, Package, User, DollarSign, Eye } from "lucide-react";
 import type { PurchaseOrder, Supplier } from "@shared/schema";
 
 interface PurchasesPageProps {
-  onLogout?: () => void;
+  onLogout: () => void;
 }
 
 export default function PurchasesPage({ onLogout }: PurchasesPageProps) {
@@ -112,16 +114,23 @@ export default function PurchasesPage({ onLogout }: PurchasesPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-green-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <ClipboardCheck className="w-8 h-8 text-green-600" />
-            <h1 className="text-3xl font-bold text-gray-900">{t("purchases.title")}</h1>
+    <div className="min-h-screen bg-green-50 grocery-bg">
+      {/* Header */}
+      <POSHeader />
+
+      {/* Right Sidebar */}
+      <RightSidebar />
+
+      <div className="main-content pt-16 px-6">
+        <div className="mx-auto py-8">
+          {/* Page Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <ClipboardCheck className="w-8 h-8 text-green-600" />
+              <h1 className="text-3xl font-bold text-gray-900">{t("purchases.title")}</h1>
+            </div>
+            <p className="text-gray-600">{t("purchases.dashboard")}</p>
           </div>
-          <p className="text-gray-600">{t("purchases.dashboard")}</p>
-        </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -360,6 +369,7 @@ export default function PurchasesPage({ onLogout }: PurchasesPageProps) {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );
