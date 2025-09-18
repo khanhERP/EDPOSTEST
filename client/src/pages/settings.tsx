@@ -3854,7 +3854,7 @@ export default function Settings() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              Xác nhận xóa kd��t nối HĐĐT
+              Xác nhận xóa kết nối HĐĐT
             </AlertDialogTitle>
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
@@ -3916,173 +3916,136 @@ export default function Settings() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="taxCode" className="text-right mt-2">
-                {t("settings.taxIdRequired")}{" "}
-                <span className="text-red-500">*</span>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="taxCode" className="text-right">
+                {t("settings.taxIdRequired")} *
               </Label>
-              <div className="col-span-3 space-y-1">
-                <Input
-                  id="taxCode"
-                  value={eInvoiceForm.taxCode}
-                  onChange={(e) => {
-                    setEInvoiceForm((prev) => ({
-                      ...prev,
-                      taxCode: e.target.value,
-                    }));
-                    if (eInvoiceFormErrors.taxCode) {
-                      setEInvoiceFormErrors((prev) => ({
-                        ...prev,
-                        taxCode: "",
-                      }));
-                    }
-                  }}
-                  className={`${eInvoiceFormErrors.taxCode ? "border-red-500" : ""}`}
-                  placeholder="Nhập mã số thuế"
-                />
-                {eInvoiceFormErrors.taxCode && (
-                  <p className="text-sm text-red-500">
-                    {eInvoiceFormErrors.taxCode}
-                  </p>
-                )}
-              </div>
+              <Input
+                id="taxCode"
+                value={eInvoiceForm.taxCode}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({
+                    ...prev,
+                    taxCode: e.target.value,
+                  }))
+                }
+                className={`col-span-3 ${
+                  eInvoiceFormErrors.taxCode ? "border-red-500" : ""
+                }`}
+                placeholder={t("settings.taxIdPlaceholder")}
+              />
+              {eInvoiceFormErrors.taxCode && (
+                <div className="col-span-4 text-sm text-red-500">
+                  {eInvoiceFormErrors.taxCode}
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="loginId" className="text-right mt-2">
-                {t("settings.loginIdLabel")}{" "}
-                <span className="text-red-500">*</span>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="loginId" className="text-right">
+                {t("settings.loginIdLabel")} *
               </Label>
-              <div className="col-span-3 space-y-1">
-                <Input
-                  id="loginId"
-                  value={eInvoiceForm.loginId}
-                  onChange={(e) => {
-                    setEInvoiceForm((prev) => ({
-                      ...prev,
-                      loginId: e.target.value,
-                    }));
-                    if (eInvoiceFormErrors.loginId) {
-                      setEInvoiceFormErrors((prev) => ({
-                        ...prev,
-                        loginId: "",
-                      }));
-                    }
-                  }}
-                  className={`${eInvoiceFormErrors.loginId ? "border-red-500" : ""}`}
-                  placeholder="Nhập ID đăng nhập"
-                />
-                {eInvoiceFormErrors.loginId && (
-                  <p className="text-sm text-red-500">
-                    {eInvoiceFormErrors.loginId}
-                  </p>
-                )}
-              </div>
+              <Input
+                id="loginId"
+                value={eInvoiceForm.loginId}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({
+                    ...prev,
+                    loginId: e.target.value,
+                  }))
+                }
+                className={`col-span-3 ${
+                  eInvoiceFormErrors.loginId ? "border-red-500" : ""
+                }`}
+                placeholder={t("settings.loginIdLabel")}
+              />
+              {eInvoiceFormErrors.loginId && (
+                <div className="col-span-4 text-sm text-red-500">
+                  {eInvoiceFormErrors.loginId}
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="password" className="text-right mt-2">
-                {t("settings.passwordLabel")}{" "}
-                <span className="text-red-500">*</span>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="password" className="text-right">
+                {t("settings.passwordLabel")} *
               </Label>
-              <div className="col-span-3 space-y-1">
-                <Input
-                  id="password"
-                  type="password"
-                  value={eInvoiceForm.password}
-                  onChange={(e) => {
-                    setEInvoiceForm((prev) => ({
-                      ...prev,
-                      password: e.target.value,
-                    }));
-                    if (eInvoiceFormErrors.password) {
-                      setEInvoiceFormErrors((prev) => ({
-                        ...prev,
-                        password: "",
-                      }));
-                    }
-                  }}
-                  className={`${eInvoiceFormErrors.password ? "border-red-500" : ""}`}
-                  placeholder="Nhập mật khẩu"
-                />
-                {eInvoiceFormErrors.password && (
-                  <p className="text-sm text-red-500">
-                    {eInvoiceFormErrors.password}
-                  </p>
-                )}
-              </div>
+              <Input
+                id="password"
+                type="password"
+                value={eInvoiceForm.password}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({
+                    ...prev,
+                    password: e.target.value,
+                  }))
+                }
+                className={`col-span-3 ${
+                  eInvoiceFormErrors.password ? "border-red-500" : ""
+                }`}
+                placeholder={t("settings.passwordLabel")}
+              />
+              {eInvoiceFormErrors.password && (
+                <div className="col-span-4 text-sm text-red-500">
+                  {eInvoiceFormErrors.password}
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="softwareName" className="text-right mt-2">
-                {t("settings.softwareLabel")}{" "}
-                <span className="text-red-500">*</span>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="softwareName" className="text-right">
+                {t("settings.softwareLabel")} *
               </Label>
-              <div className="col-span-3 space-y-1">
-                <Select
-                  value={eInvoiceForm.softwareName}
-                  onValueChange={(value) => {
-                    setEInvoiceForm((prev) => ({
-                      ...prev,
-                      softwareName: value,
-                    }));
-                    if (eInvoiceFormErrors.softwareName) {
-                      setEInvoiceFormErrors((prev) => ({
-                        ...prev,
-                        softwareName: "",
-                      }));
-                    }
-                  }}
+              <Select
+                value={eInvoiceForm.softwareName}
+                onValueChange={(value) =>
+                  setEInvoiceForm((prev) => ({
+                    ...prev,
+                    softwareName: value,
+                  }))
+                }
+              >
+                <SelectTrigger
+                  className={`col-span-3 ${
+                    eInvoiceFormErrors.softwareName ? "border-red-500" : ""
+                  }`}
                 >
-                  <SelectTrigger
-                    className={`${eInvoiceFormErrors.softwareName ? "border-red-500" : ""}`}
-                  >
-                    <SelectValue
-                      placeholder={t("settings.selectSoftwarePlaceholder")}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EINVOICE_PROVIDERS.map((provider) => (
-                      <SelectItem key={provider.value} value={provider.name}>
-                        {provider.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {eInvoiceFormErrors.softwareName && (
-                  <p className="text-sm text-red-500">
-                    {eInvoiceFormErrors.softwareName}
-                  </p>
-                )}
-              </div>
+                  <SelectValue placeholder={t("settings.selectSoftwarePlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {EINVOICE_PROVIDERS.map((provider) => (
+                    <SelectItem key={provider.value} value={provider.name}>
+                      {provider.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {eInvoiceFormErrors.softwareName && (
+                <div className="col-span-4 text-sm text-red-500">
+                  {eInvoiceFormErrors.softwareName}
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="loginUrl" className="text-right mt-2">
-                {t("settings.loginUrlLabel")}{" "}
-                <span className="text-red-500">*</span>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="loginUrl" className="text-right">
+                {t("settings.loginUrlLabel")} *
               </Label>
-              <div className="col-span-3 space-y-1">
-                <Input
-                  id="loginUrl"
-                  value={eInvoiceForm.loginUrl}
-                  onChange={(e) => {
-                    setEInvoiceForm((prev) => ({
-                      ...prev,
-                      loginUrl: e.target.value,
-                    }));
-                    if (eInvoiceFormErrors.loginUrl) {
-                      setEInvoiceFormErrors((prev) => ({
-                        ...prev,
-                        loginUrl: "",
-                      }));
-                    }
-                  }}
-                  className={`${eInvoiceFormErrors.loginUrl ? "border-red-500" : ""}`}
-                  placeholder="https://api.example.com"
-                />
-                {eInvoiceFormErrors.loginUrl && (
-                  <p className="text-sm text-red-500">
-                    {eInvoiceFormErrors.loginUrl}
-                  </p>
-                )}
-              </div>
+              <Input
+                id="loginUrl"
+                value={eInvoiceForm.loginUrl}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({
+                    ...prev,
+                    loginUrl: e.target.value,
+                  }))
+                }
+                className={`col-span-3 ${
+                  eInvoiceFormErrors.loginUrl ? "border-red-500" : ""
+                }`}
+                placeholder="https://example.com/login"
+              />
+              {eInvoiceFormErrors.loginUrl && (
+                <div className="col-span-4 text-sm text-red-500">
+                  {eInvoiceFormErrors.loginUrl}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="signMethod" className="text-right">
@@ -4091,22 +4054,19 @@ export default function Settings() {
               <Select
                 value={eInvoiceForm.signMethod}
                 onValueChange={(value) =>
-                  setEInvoiceForm((prev) => ({ ...prev, signMethod: value }))
+                  setEInvoiceForm((prev) => ({
+                    ...prev,
+                    signMethod: value,
+                  }))
                 }
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Ký server">
-                    {t("settings.signMethodServer")}
-                  </SelectItem>
-                  <SelectItem value="Ký USB Token">
-                    {t("settings.signMethodUsbToken")}
-                  </SelectItem>
-                  <SelectItem value="Ký HSM">
-                    {t("settings.signMethodHsm")}
-                  </SelectItem>
+                  <SelectItem value="Ký server">{t("settings.signMethodServer")}</SelectItem>
+                  <SelectItem value="USB Token">{t("settings.signMethodUsbToken")}</SelectItem>
+                  <SelectItem value="HSM">{t("settings.signMethodHsm")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -4117,19 +4077,18 @@ export default function Settings() {
               <Select
                 value={eInvoiceForm.cqtCode}
                 onValueChange={(value) =>
-                  setEInvoiceForm((prev) => ({ ...prev, cqtCode: value }))
+                  setEInvoiceForm((prev) => ({
+                    ...prev,
+                    cqtCode: value,
+                  }))
                 }
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cấp nhật">
-                    {t("settings.cqtCodeLevel1")}
-                  </SelectItem>
-                  <SelectItem value="Cấp hai">
-                    {t("settings.cqtCodeLevel2")}
-                  </SelectItem>
+                  <SelectItem value="Cấp nhật">{t("settings.cqtCodeLevel1")}</SelectItem>
+                  <SelectItem value="Cấp hai">{t("settings.cqtCodeLevel2")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -4160,7 +4119,10 @@ export default function Settings() {
                   id="isDefault"
                   checked={eInvoiceForm.isActive}
                   onCheckedChange={(checked) =>
-                    setEInvoiceForm((prev) => ({ ...prev, isActive: checked }))
+                    setEInvoiceForm((prev) => ({
+                      ...prev,
+                      isActive: checked,
+                    }))
                   }
                 />
                 <Label htmlFor="isDefault" className="text-sm">
