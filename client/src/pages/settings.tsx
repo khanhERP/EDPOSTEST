@@ -3806,22 +3806,20 @@ export default function Settings() {
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  Bạn có chắc chắn muốn xóa nhân viên "{employeeToDelete?.name}"
-                  không?
+                  {t("employees.confirmDeleteEmployeeDesc", {
+                    name: employeeToDelete?.name,
+                  })}
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
-                      tác. Thông tin nhân viên sẽ bị xóa vĩnh viễn khỏi hệ
-                      thống.
+                      {t("employees.deleteEmployeeWarning")}
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Điều này bao gồm lịch sử làm việc, chấm công và các quyền truy
-                  cập.
+                  {t("employees.deleteEmployeeDetails")}
                 </p>
               </div>
             </AlertDialogDescription>
