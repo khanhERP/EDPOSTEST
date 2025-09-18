@@ -48,7 +48,7 @@ export default function AttendancePage() {
                   {t('employees.employeeManagement')}
                 </Button>
               </Link>
-              <Link href="/">
+              <Link href="/sales-orders">
                 <Button variant="outline">
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   {t('common.comboValues.backToSales')}

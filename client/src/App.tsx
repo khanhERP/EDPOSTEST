@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Switch, Route } from "wouter";
+import { useState, useEffect } from "react";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,9 +21,19 @@ import SalesOrders from "@/pages/sales-orders";
 import NotFoundPage from "./pages/not-found";
 
 function Router({ onLogout }: { onLogout: () => void }) {
+  const RedirectToSales = () => {
+    const [, setLocation] = useLocation();
+    
+    useEffect(() => {
+      setLocation('/sales-orders', { replace: true });
+    }, [setLocation]);
+    
+    return null;
+  };
+
   return (
     <Switch>
-      <Route path="/" component={() => <TablesPage onLogout={onLogout} />} />
+      <Route path="/" component={RedirectToSales} />
       <Route path="/pos" component={() => <POSPage onLogout={onLogout} />} />
       <Route
         path="/tables"

@@ -16,7 +16,7 @@ export default function NotFound() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('notFound.title')}</h1>
             <p className="text-gray-600 mb-6">{t('notFound.description')}</p>
             
-            <Link href="/">
+            <Link href="/sales-orders">
               <Button className="bg-green-600 hover:bg-green-700">
                 <Home className="w-4 h-4 mr-2" />
                 {t('notFound.backToHome')}

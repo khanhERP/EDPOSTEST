@@ -31,7 +31,7 @@ export default function EmployeesPage() {
               <p className="mt-2 text-gray-600">{t("employees.description")}</p>
             </div>
             <div className="flex gap-4">
-              <Link href="/">
+              <Link href="/sales-orders">
                 <Button variant="outline">
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   {t('nav.pos')}

@@ -114,7 +114,7 @@ export default function SuppliersPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 {t('suppliers.addSupplier')}
               </Button>
-              <Link href="/">
+              <Link href="/sales-orders">
                 <Button variant="outline">
                   {t('common.backToPOS')}
                 </Button>

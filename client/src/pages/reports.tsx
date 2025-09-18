@@ -68,7 +68,7 @@ export default function ReportsPage() {
               <p className="mt-2 text-gray-600">{t("reports.description")}</p>
             </div>
             <div className="flex gap-4">
-              <Link href="/">
+              <Link href="/sales-orders">
                 <Button variant="outline">
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   {t("nav.pos")}
