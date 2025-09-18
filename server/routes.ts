@@ -987,9 +987,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customerAddress: orders.customerAddress,
           customerPhone: orders.customerPhone,
           customerEmail: orders.customerEmail,
-          // Employee info
-          employeeCode: employees.employeeId,
-          employeeName: employees.name,
+          // Employee info with proper null handling
+          employeeCode: sql<string>`COALESCE(${employees.employeeId}, '')`,
+          employeeName: sql<string>`COALESCE(${employees.name}, '')`,
         })
         .from(orders)
         .leftJoin(employees, eq(orders.employeeId, employees.id))
