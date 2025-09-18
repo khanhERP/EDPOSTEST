@@ -3998,11 +3998,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Purchase Orders Management API
-  app.get("/api/purchase-orders", tenantMiddleware, async (req: TenantRequest, res) => {
+  app.get("/api/purchase-orders", async (req: Request, res) => {
     try {
       console.log("🔍 GET /api/purchase-orders - Starting request processing");
-      const tenantDb = await getTenantDatabase(req);
-      console.log("✅ Tenant database connection obtained for purchase orders");
+      console.log("✅ Using global database connection for purchase orders");
 
       const { status, supplierId, search, startDate, endDate, page, limit } = req.query;
       
@@ -4016,7 +4015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         limit: limit ? parseInt(limit as string) : undefined,
       };
       
-      const result = await storage.getPurchaseOrders(options, tenantDb);
+      const result = await storage.getPurchaseOrders(options, db);
       console.log(`✅ Successfully fetched ${Array.isArray(result) ? result.length : result.orders?.length || 0} purchase orders`);
       res.json(result);
     } catch (error) {
@@ -4042,7 +4041,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/purchase-orders", tenantMiddleware, async (req: TenantRequest, res) => {
+  app.post("/api/purchase-orders", async (req: Request, res) => {
     try {
       const { items = [], ...orderData } = req.body;
       
@@ -4053,9 +4052,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedItems = Array.isArray(items) ? 
         items.map(item => insertPurchaseOrderItemSchema.parse(item)) : [];
       
-      const tenantDb = await getTenantDatabase(req);
+      console.log("✅ Using global database connection for purchase order creation");
       
-      const result = await storage.createPurchaseOrder(validatedOrderData, validatedItems, tenantDb);
+      const result = await storage.createPurchaseOrder(validatedOrderData, validatedItems, db);
       console.log(`✅ Successfully created purchase order: ${result.poNumber}`);
       res.status(201).json(result);
     } catch (error) {
