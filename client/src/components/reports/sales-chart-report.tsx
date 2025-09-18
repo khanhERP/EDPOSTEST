@@ -1579,10 +1579,9 @@ export function SalesChartReport() {
                 const itemQuantity = Number(item.quantity || 1);
                 const itemUnitPrice = Number(item.unitPrice || 0); // Đơn giá từ order_items (trước thuế)
                 const itemTotal = itemUnitPrice * itemQuantity; // Thành tiền = đơn giá * số lượng (trước thuế)
-
+                
                 // Phân bổ giảm giá và thuế theo tỷ lệ của item trong tổng order
-                const itemDiscountRatio =
-                  orderSubtotal > 0 ? itemTotal / orderSubtotal : 0; // Avoid division by zero
+                const itemDiscountRatio = Number(item.discount || 0); // Avoid division by zero
                 const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
                 const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
                 const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
