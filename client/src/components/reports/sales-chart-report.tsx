@@ -4613,10 +4613,14 @@ export function SalesChartReport() {
                     "Mã hàng": product.productSku,
                     "Tên hàng": product.productName,
                     "Đơn vị tính": t("common.perUnit"),
-                    "Số lượng bán": product.totalQuantity,
-                    "Thành tiền": formatCurrency(product.totalRevenue),
+                    "Số lượng bán": product.quantity,
+                    "Thành tiền": formatCurrency(
+                      (product.unitPrice || 0) * (product.quantity || 1),
+                    ),
                     "Giảm giá": formatCurrency(product.discount),
-                    "Doanh thu": formatCurrency(product.totalRevenue),
+                    "Doanh thu": formatCurrency(
+                      (product.total || 0) - (product.discount || 0),
+                    ),
                     "Nhóm hàng": product.categoryName,
                   })),
                   // Add summary row
@@ -4716,12 +4720,12 @@ export function SalesChartReport() {
                           {t("common.perUnit")}
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge variant="outline">
-                            {product.totalQuantity}
-                          </Badge>
+                          <Badge variant="outline">{product.quantity}</Badge>
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {formatCurrency(product.totalRevenue)}
+                          {formatCurrency(
+                            (product.unitPrice || 0) * (product.quantity || 1),
+                          )}
                         </TableCell>
                         {analysisType !== "employee" && (
                           <TableCell className="text-right text-red-600">
@@ -4730,7 +4734,7 @@ export function SalesChartReport() {
                         )}
                         <TableCell className="text-right font-semibold text-green-600">
                           {formatCurrency(
-                            (product.totalRevenue || 0) -
+                            (product.unitPrice || 0) * (product.quantity || 1) -
                               (product.discount || 0),
                           )}
                         </TableCell>

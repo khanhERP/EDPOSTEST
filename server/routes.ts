@@ -79,16 +79,16 @@ function getPaymentMethodName(method: string | number): string {
 function getEInvoiceStatusName(status: number): string {
   const statusNames = {
     0: "Chưa phát hành",
-    1: "Đã phát hành", 
+    1: "Đã phát hành",
     2: "Tạo nháp",
     3: "Đã duyệt",
     4: "Đã bị thay thế (hủy)",
     5: "Thay thế tạm",
     6: "Thay thế",
-    7: "Đã bị điều chỉnh", 
+    7: "Đã bị điều chỉnh",
     8: "Điều chỉnh tạm",
     9: "Điều chỉnh",
-    10: "Đã hủy"
+    10: "Đã hủy",
   };
   return statusNames[status as keyof typeof statusNames] || "Chưa phát hành";
 }
@@ -97,8 +97,8 @@ function getEInvoiceStatusName(status: number): string {
 function getInvoiceStatusName(status: number): string {
   const statusNames = {
     1: "Hoàn thành",
-    2: "Đang phục vụ", 
-    3: "Đã hủy"
+    2: "Đang phục vụ",
+    3: "Đã hủy",
   };
   return statusNames[status as keyof typeof statusNames] || "Hoàn thành";
 }
@@ -893,9 +893,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (startDate && endDate) {
         let start: Date;
         let end: Date;
-        
+
         // Check if date is in yyyyMMdd format (8 digits)
-        if (typeof startDate === 'string' && startDate.length === 8 && /^\d{8}$/.test(startDate)) {
+        if (
+          typeof startDate === "string" &&
+          startDate.length === 8 &&
+          /^\d{8}$/.test(startDate)
+        ) {
           // Parse yyyyMMdd format
           const year = parseInt(startDate.substring(0, 4));
           const month = parseInt(startDate.substring(4, 6)) - 1; // Month is 0-indexed
@@ -906,8 +910,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           start = new Date(startDate as string);
           start.setHours(0, 0, 0, 0);
         }
-        
-        if (typeof endDate === 'string' && endDate.length === 8 && /^\d{8}$/.test(endDate)) {
+
+        if (
+          typeof endDate === "string" &&
+          endDate.length === 8 &&
+          /^\d{8}$/.test(endDate)
+        ) {
           // Parse yyyyMMdd format
           const year = parseInt(endDate.substring(0, 4));
           const month = parseInt(endDate.substring(4, 6)) - 1; // Month is 0-indexed
@@ -947,12 +955,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // E-invoice status filter
       if (einvoiceStatus !== undefined && einvoiceStatus !== "all") {
-        whereConditions.push(eq(orders.einvoiceStatus, parseInt(einvoiceStatus as string)));
+        whereConditions.push(
+          eq(orders.einvoiceStatus, parseInt(einvoiceStatus as string)),
+        );
       }
 
       // Invoice status filter
       if (invoiceStatus !== undefined && invoiceStatus !== "all") {
-        whereConditions.push(eq(orders.invoiceStatus, parseInt(invoiceStatus as string)));
+        whereConditions.push(
+          eq(orders.invoiceStatus, parseInt(invoiceStatus as string)),
+        );
       }
 
       // Payment method filter - include null values (unpaid orders)
@@ -962,7 +974,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           whereConditions.push(sql`${orders.paymentMethod} IS NULL`);
         } else {
           // Filter for specific payment method
-          whereConditions.push(eq(orders.paymentMethod, paymentMethod as string));
+          whereConditions.push(
+            eq(orders.paymentMethod, paymentMethod as string),
+          );
         }
       }
 
@@ -981,9 +995,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get paginated orders - simplified query without JOIN
       const orderBy =
-        sortOrder === "asc"
-          ? asc(orders.orderedAt)
-          : desc(orders.orderedAt);
+        sortOrder === "asc" ? asc(orders.orderedAt) : desc(orders.orderedAt);
 
       let ordersQuery = database
         .select()
@@ -999,13 +1011,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ordersResult = await ordersQuery;
 
       console.log(
-        `✅ Orders list API - Found ${ordersResult.length} orders${limitNum ? ` (page ${pageNum}/${totalPages})` : ' (all orders)'}`,
+        `✅ Orders list API - Found ${ordersResult.length} orders${limitNum ? ` (page ${pageNum}/${totalPages})` : " (all orders)"}`,
       );
 
       // Get employee data separately for all orders
-      const employeeIds = [...new Set(ordersResult.map(order => order.employeeId).filter(Boolean))];
+      const employeeIds = [
+        ...new Set(
+          ordersResult.map((order) => order.employeeId).filter(Boolean),
+        ),
+      ];
       let employeeMap = new Map();
-      
+
       if (employeeIds.length > 0) {
         try {
           const employeeData = await database
@@ -1016,20 +1032,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             })
             .from(employees)
             .where(sql`${employees.id} = ANY(${employeeIds})`);
-          
-          employeeMap = new Map(employeeData.map(emp => [emp.id, emp]));
+
+          employeeMap = new Map(employeeData.map((emp) => [emp.id, emp]));
         } catch (empError) {
-          console.warn("⚠️ Error fetching employee data, continuing without:", empError);
+          console.warn(
+            "⚠️ Error fetching employee data, continuing without:",
+            empError,
+          );
         }
       }
 
       // Process orders to ensure consistent field structure
       const processedOrders = ordersResult.map((order, index) => {
-        const employee = order.employeeId ? employeeMap.get(order.employeeId) : null;
-        
+        const employee = order.employeeId
+          ? employeeMap.get(order.employeeId)
+          : null;
+
         return {
           ...order,
-          customerCode: order.customerTaxCode || `KH000${String(index + 1).padStart(3, "0")}`,
+          customerCode:
+            order.customerTaxCode ||
+            `KH000${String(index + 1).padStart(3, "0")}`,
           customerName: order.customerName || "Khách hàng lẻ",
           discount: order.discount || "0.00",
           // Employee info with fallbacks
@@ -1066,7 +1089,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .leftJoin(products, eq(orderItemsTable.productId, products.id))
               .where(eq(orderItemsTable.orderId, order.id));
 
-            const processedItems = items.map(item => ({
+            const processedItems = items.map((item) => ({
               id: item.id,
               orderId: item.orderId,
               productId: item.productId,
@@ -1082,16 +1105,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             return {
               ...order,
-              items: processedItems
+              items: processedItems,
             };
           } catch (itemError) {
-            console.error(`❌ Error fetching items for order ${order.id}:`, itemError);
+            console.error(
+              `❌ Error fetching items for order ${order.id}:`,
+              itemError,
+            );
             return {
               ...order,
-              items: []
+              items: [],
             };
           }
-        })
+        }),
       );
 
       console.log(
@@ -2279,14 +2305,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             unitPrice: item.unitPrice.toString(),
             total: item.total
               ? item.total.toString()
-              : (parseFloat(item.unitPrice) * parseInt(item.quantity)).toString(),
+              : (
+                  parseFloat(item.unitPrice) * parseInt(item.quantity)
+                ).toString(),
             discount: "0.00",
             notes: item.notes || null,
           }));
 
-          await db
-            .insert(orderItemsTable)
-            .values(validatedItems);
+          await db.insert(orderItemsTable).values(validatedItems);
 
           console.log("✅ Items added successfully via direct storage");
         } catch (addError) {
@@ -2334,10 +2360,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Step 2: Fix timestamp handling before updating order
-      if (orderData.paidAt && typeof orderData.paidAt === 'string') {
+      if (orderData.paidAt && typeof orderData.paidAt === "string") {
         orderData.paidAt = new Date(orderData.paidAt);
       }
-      if (orderData.orderedAt && typeof orderData.orderedAt === 'string') {
+      if (orderData.orderedAt && typeof orderData.orderedAt === "string") {
         orderData.orderedAt = new Date(orderData.orderedAt);
       }
 
@@ -5705,6 +5731,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             categoryId: item.categoryId,
             categoryName: item.categoryName,
             productType: item.productType,
+            unitPrice: item.unitPrice, // This is the pre-tax price
+            quantity: item.quantity,
+            total: item.total, // This should also be pre-tax total
             discount: item.discount,
             totalQuantity: quantity,
             totalRevenue: revenue,
