@@ -1590,7 +1590,7 @@ export function SalesChartReport() {
                 const itemDiscount = orderDiscount * itemDiscountRatio; // Giảm giá theo tỷ lệ
                 const itemTax = orderTax * itemDiscountRatio; // Thuế theo tỷ lệ
                 const itemRevenue = itemTotal - itemDiscount; // Doanh thu = thành tiền - giảm giá
-                const itemTotalMoney = itemTotal + itemTax; // Tổng tiền = thành tiền + thuế
+                const itemTotalMoney = itemRevenue + itemTax; // Tổng tiền = doanh thu + thuế
 
                 // Get tax rate from product database, default to 0 if not available
                 const product = Array.isArray(products)
@@ -1611,7 +1611,7 @@ export function SalesChartReport() {
                   revenue: itemRevenue, // Doanh thu = thành tiền - giảm giá
                   tax: itemTax, // Thuế phân bổ
                   vat: itemTax, // VAT = thuế
-                  totalMoney: itemTotalMoney, // Tổng tiền = thành tiền + thuế
+                  totalMoney: itemTotalMoney, // Tổng tiền = doanh thu + thuế
                   productGroup: item.categoryName || "Chưa phân loại",
                   taxRate: itemTaxRate,
                 };
@@ -2059,7 +2059,7 @@ export function SalesChartReport() {
                                   })()}
                                 </TableCell>
                                 <TableCell className="text-right min-w-[100px] px-2">
-                                  {formatCurrency(item.vat)}
+                                  {formatCurrency(item.tax)}
                                 </TableCell>
                                 <TableCell className="text-right font-bold text-blue-600 min-w-[120px] px-2">
                                   {formatCurrency(item.totalMoney)}
