@@ -132,8 +132,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     password: "",
     softwareName: "",
     loginUrl: "",
-    signMethod: "Ký server",
-    cqtCode: "Cấp nhật",
+    signMethod: "server",
+    cqtCode: "level1",
     notes: "",
     isActive: true,
   });
@@ -180,22 +180,20 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
           errorData.message.includes("attendance records")
         ) {
           toast({
-            title: "Không thể xóa nhân viên",
-            description:
-              "Nhân viên này đã có dữ liệu chấm công trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
+            title: t("settings.cannotDeleteEmployee"),
+            description: t("settings.cannotDeleteEmployeeAttendance"),
             variant: "destructive",
           });
         } else if (errorData.message && errorData.message.includes("orders")) {
           toast({
-            title: "Không thể xóa nhân viên",
-            description:
-              "Nhân viên này đã có đơn hàng trong hệ thống. Không thể xóa để đảm bảo tính toàn vẹn dữ liệu.",
+            title: t("settings.cannotDeleteEmployee"),
+            description: t("settings.cannotDeleteEmployeeOrders"),
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Lỗi",
-            description: errorData.message || "Có lỗi xảy ra khi xóa nhân viên",
+            title: t("common.error"),
+            description: errorData.message || t("settings.employeeDeleteErrorDesc"),
             variant: "destructive",
           });
         }
@@ -210,8 +208,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
       });
 
       toast({
-        title: "Thành công",
-        description: "Nhân viên đã được xóa thành công",
+        title: t("settings.employeeDeleteSuccessTitle"),
+        description: t("settings.employeeDeleteSuccessDesc"),
       });
 
       setShowEmployeeDeleteDialog(false);
@@ -219,8 +217,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     } catch (error) {
       console.error("Employee delete error:", error);
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi xóa nhân viên",
+        title: t("settings.genericErrorTitle"),
+        description: t("settings.employeeDeleteErrorDesc"),
         variant: "destructive",
       });
     }
@@ -371,7 +369,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
   const [paymentMethods, setPaymentMethods] = useState([
     {
       id: 1,
-      name: "Tiền mặt",
       nameKey: "cash",
       type: "cash",
       enabled: true,
@@ -379,7 +376,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     },
     {
       id: 2,
-      name: "Thẻ tín dụng",
       nameKey: "creditCard",
       type: "card",
       enabled: false,
@@ -387,7 +383,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     },
     {
       id: 3,
-      name: "Thẻ ghi nợ",
       nameKey: "debitCard",
       type: "debit",
       enabled: false,
@@ -395,7 +390,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     },
     {
       id: 4,
-      name: "MoMo",
       nameKey: "momo",
       type: "digital",
       enabled: false,
@@ -403,7 +397,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     },
     {
       id: 5,
-      name: "ZaloPay",
       nameKey: "zalopay",
       type: "digital",
       enabled: false,
@@ -411,7 +404,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     },
     {
       id: 6,
-      name: "VNPay",
       nameKey: "vnpay",
       type: "digital",
       enabled: false,
@@ -419,7 +411,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     },
     {
       id: 7,
-      name: "QR Code",
       nameKey: "qrCode",
       type: "qr",
       enabled: true,
@@ -427,7 +418,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     },
     {
       id: 8,
-      name: "ShopeePay",
       nameKey: "shopeepay",
       type: "digital",
       enabled: false,
@@ -435,7 +425,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     },
     {
       id: 9,
-      name: "GrabPay",
       nameKey: "grabpay",
       type: "digital",
       enabled: false,
@@ -447,7 +436,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
   const [editingPaymentMethod, setEditingPaymentMethod] = useState<any>(null);
   const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false);
   const [paymentMethodForm, setPaymentMethodForm] = useState({
-    name: "",
     icon: "",
   });
 
@@ -476,8 +464,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
   const addPaymentMethod = () => {
     const newMethod = {
       id: paymentMethods.length + 1,
-      name: t("common.comboValues.newPaymentMethod"),
-      nameKey: "newPaymentMethod",
+      nameKey: "newPayment",
       type: "custom",
       enabled: false,
       icon: "💳",
@@ -498,7 +485,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
   // Payment method management functions
   const handleEditPaymentMethod = (method: any) => {
     setPaymentMethodForm({
-      name: method.name,
       icon: method.icon,
     });
     setEditingPaymentMethod(method);
@@ -506,13 +492,12 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
   };
 
   const handleUpdatePaymentMethod = () => {
-    if (!paymentMethodForm.name.trim() || !editingPaymentMethod) return;
+    if (!editingPaymentMethod) return;
 
     const updatedMethods = paymentMethods.map((method) =>
       method.id === editingPaymentMethod.id
         ? {
             ...method,
-            name: paymentMethodForm.name.trim(),
             icon: paymentMethodForm.icon,
           }
         : method,
@@ -523,11 +508,11 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
 
     setShowPaymentMethodForm(false);
     setEditingPaymentMethod(null);
-    setPaymentMethodForm({ name: "", icon: "" });
+    setPaymentMethodForm({ icon: "" });
 
     toast({
-      title: "Thành công",
-      description: "Phương thức thanh toán đã được cập nhật thành công",
+      title: t("settings.paymentUpdateSuccessTitle"),
+      description: t("settings.paymentUpdateSuccessDesc"),
     });
   };
 
@@ -562,8 +547,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
       await queryClient.refetchQueries({ queryKey: ["/api/customers"] });
 
       toast({
-        title: "Thành công",
-        description: "Khách hàng đã được xóa thành công",
+        title: t("common.success"),
+        description: t("settings.customerDeleteSuccess"),
       });
 
       setShowCustomerDeleteDialog(false);
@@ -571,8 +556,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     } catch (error) {
       console.error("Customer delete error:", error);
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi xóa khách hàng",
+        title: t("common.error"),
+        description: t("settings.customerDeleteError"),
         variant: "destructive",
       });
     }
@@ -628,7 +613,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     if (!categoryForm.name.trim()) {
       toast({
         title: t("common.error"),
-        description: "Vui lòng nhập tên danh mục",
+        description: t("settings.categoryNameRequired"),
         variant: "destructive",
       });
       return;
@@ -655,7 +640,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
 
       toast({
         title: t("common.success"),
-        description: "Danh mục đã được tạo thành công",
+        description: t("settings.categoryCreateSuccess"),
       });
       setShowCategoryForm(false);
       resetCategoryForm();
@@ -663,7 +648,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
       console.error("Category creation error:", error);
       toast({
         title: t("common.error"),
-        description: "Có lỗi xảy ra khi tạo danh mục",
+        description: t("settings.categoryCreateError"),
         variant: "destructive",
       });
     }
@@ -673,7 +658,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     if (!categoryForm.name.trim()) {
       toast({
         title: t("common.error"),
-        description: "Vui lòng nhập tên danh mục",
+        description: t("settings.categoryNameRequired"),
         variant: "destructive",
       });
       return;
@@ -682,7 +667,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     if (!editingCategory) {
       toast({
         title: t("common.error"),
-        description: "Không tìm thấy danh mục cần cập nhật",
+        description: t("settings.categoryNotFound"),
         variant: "destructive",
       });
       return;
@@ -713,13 +698,13 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
 
       toast({
         title: t("common.success"),
-        description: "Danh mục đã được cập nhật thành công",
+        description: t("settings.categoryUpdateSuccess"),
       });
     } catch (error) {
       console.error("Category update error:", error);
       toast({
         title: t("common.error"),
-        description: "Có lỗi xảy ra khi cập nhật danh mục",
+        description: t("settings.categoryUpdateError"),
         variant: "destructive",
       });
     }
@@ -734,7 +719,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     if (categoryProducts && categoryProducts.length > 0) {
       toast({
         title: t("common.error"),
-        description: `Không thể xóa danh mục này vì còn ${categoryProducts.length} sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.`,
+        description: t("settings.categoryDeleteWithProducts", { count: categoryProducts.length }),
         variant: "destructive",
       });
       return;
@@ -767,7 +752,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
 
       toast({
         title: t("common.success"),
-        description: "Danh mục đã được xóa thành công",
+        description: t("settings.categoryDeleteSuccess"),
       });
 
       setShowDeleteDialog(false);
@@ -775,11 +760,11 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     } catch (error) {
       console.error("Category delete error:", error);
 
-      let errorMessage = "Có lỗi xảy ra khi xóa danh mục";
+      let errorMessage = t("settings.categoryDeleteError");
       if (error instanceof Error) {
         if (error.message.includes("products")) {
           errorMessage =
-            "Không thể xóa danh mục vì vẫn còn sản phẩm trong danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.";
+            t("settings.categoryDeleteErrorWithProducts");
         } else {
           errorMessage = error.message;
         }
@@ -894,7 +879,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
 
       toast({
         title: t("common.success"),
-        description: "Sản phẩm đã được xóa thành công",
+        description: t("settings.productDeleteSuccess"),
       });
 
       setShowProductDeleteDialog(false);
@@ -902,8 +887,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     } catch (error) {
       console.error("Product delete error:", error);
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi xóa sản phẩm",
+        title: t("settings.genericErrorTitle"),
+        description: t("settings.productDeleteError"),
         variant: "destructive",
       });
     }
@@ -974,16 +959,16 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
         queryKey: ["/api/einvoice-connections"],
       });
       toast({
-        title: "Thành công",
-        description: "Kết nối HĐĐT đã được tạo thành công",
+        title: t("common.success"),
+        description: t("settings.einvoiceConnectionCreateSuccess"),
       });
       setShowEInvoiceForm(false);
       resetEInvoiceForm();
     },
     onError: () => {
       toast({
-        title: "Lỗi",
-        description: "Có l i xảy ra khi tạo kết nối HĐĐT",
+        title: t("common.error"),
+        description: t("settings.einvoiceConnectionCreateError"),
         variant: "destructive",
       });
     },
@@ -1003,16 +988,16 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
         queryKey: ["/api/einvoice-connections"],
       });
       toast({
-        title: "Thành công",
-        description: "Kết nối HĐĐT đã được cập nhật thành công",
+        title: t("common.success"),
+        description: t("settings.einvoiceConnectionUpdateSuccess"),
       });
       setShowEInvoiceForm(false);
       resetEInvoiceForm();
     },
     onError: () => {
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi cập nhật kết nối HĐĐT",
+        title: t("common.error"),
+        description: t("settings.einvoiceConnectionUpdateError"),
         variant: "destructive",
       });
     },
@@ -1031,16 +1016,16 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
         queryKey: ["/api/einvoice-connections"],
       });
       toast({
-        title: "Thành công",
-        description: "Kết nối HĐĐT đã được xóa thành công",
+        title: t("common.success"),
+        description: t("settings.einvoiceConnectionDeleteSuccess"),
       });
       setShowEInvoiceDeleteDialog(false);
       setEInvoiceToDelete(null);
     },
     onError: () => {
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi xóa kết nối HĐĐT",
+        title: t("common.error"),
+        description: t("settings.einvoiceConnectionDeleteError"),
         variant: "destructive",
       });
     },
@@ -1054,8 +1039,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
       password: "",
       softwareName: "",
       loginUrl: "",
-      signMethod: "Ký server",
-      cqtCode: "Cấp nhật",
+      signMethod: "server",
+      cqtCode: "level1",
       notes: "",
       isActive: true,
     });
@@ -1079,23 +1064,23 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     };
 
     if (!eInvoiceForm.taxCode.trim()) {
-      errors.taxCode = "Mã số thuế là bắt buộc";
+      errors.taxCode = t("settings.taxCodeRequired");
     }
 
     if (!eInvoiceForm.loginId.trim()) {
-      errors.loginId = "ID đăng nhập là bắt buộc";
+      errors.loginId = t("settings.loginIdRequired");
     }
 
     if (!eInvoiceForm.password.trim()) {
-      errors.password = "Mật khẩu là bắt buộc";
+      errors.password = t("settings.passwordRequired");
     }
 
     if (!eInvoiceForm.softwareName.trim()) {
-      errors.softwareName = "Phần mềm HĐĐT là bắt buộc";
+      errors.softwareName = t("settings.softwareNameRequired");
     }
 
     if (!eInvoiceForm.loginUrl.trim()) {
-      errors.loginUrl = "Đường dẫn đăng nhập là bắt buộc";
+      errors.loginUrl = t("settings.loginUrlRequired");
     }
 
     setEInvoiceFormErrors(errors);
@@ -1141,8 +1126,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
       password: eInvoice.password || "",
       softwareName: eInvoice.softwareName || "",
       loginUrl: eInvoice.loginUrl || "",
-      signMethod: eInvoice.signMethod || "Ký server",
-      cqtCode: eInvoice.cqtCode || "Cấp nhật",
+      signMethod: eInvoice.signMethod || "server",
+      cqtCode: eInvoice.cqtCode || "level1",
       notes: eInvoice.notes === "-" ? "" : eInvoice.notes || "",
       isActive: eInvoice.isActive !== undefined ? eInvoice.isActive : true,
     });
@@ -1221,16 +1206,16 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoice-templates"] });
       toast({
-        title: "Thành công",
-        description: "Mẫu số HĐĐT đã được tạo thành công",
+        title: t("common.success"),
+        description: t("settings.einvoiceTemplateCreateSuccess"),
       });
       setShowTemplateForm(false);
       resetTemplateForm();
     },
     onError: () => {
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi tạo mẫu số HĐĐT",
+        title: t("common.error"),
+        description: t("settings.einvoiceTemplateCreateError"),
         variant: "destructive",
       });
     },
@@ -1248,16 +1233,16 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoice-templates"] });
       toast({
-        title: "Thành công",
-        description: "Mẫu số HĐĐT đã được cập nhật thành công",
+        title: t("common.success"),
+        description: t("settings.einvoiceTemplateUpdateSuccess"),
       });
       setShowTemplateForm(false);
       resetTemplateForm();
     },
     onError: () => {
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi cập nhật mẫu số HĐĐT",
+        title: t("common.error"),
+        description: t("settings.einvoiceTemplateUpdateError"),
         variant: "destructive",
       });
     },
@@ -1274,16 +1259,16 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoice-templates"] });
       toast({
-        title: "Thành công",
-        description: "Mẫu số HĐĐT đã được xóa thành công",
+        title: t("common.success"),
+        description: t("settings.einvoiceTemplateDeleteSuccess"),
       });
       setShowTemplateDeleteDialog(false);
       setTemplateToDelete(null);
     },
     onError: () => {
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi xóa mẫu số HĐĐT",
+        title: t("common.error"),
+        description: t("settings.einvoiceTemplateDeleteError"),
         variant: "destructive",
       });
     },
@@ -1296,8 +1281,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
       !templateForm.symbol.trim()
     ) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        title: t("common.error"),
+        description: t("settings.requiredFieldsError"),
         variant: "destructive",
       });
       return;
@@ -1323,8 +1308,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
       !templateForm.symbol.trim()
     ) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        title: t("common.error"),
+        description: t("settings.requiredFieldsError"),
         variant: "destructive",
       });
       return;
@@ -1481,7 +1466,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                     <span className="hidden md:inline">
                       {t("settings.basicInfo")}
                     </span>
-                    <span className="md:hidden">Cơ bản</span>
+                    <span className="md:hidden">{t("settings.basicInfoShort")}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="einvoice"
@@ -1491,7 +1476,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                     <span className="hidden md:inline">
                       {t("settings.einvoiceSetup")}
                     </span>
-                    <span className="md:hidden">HĐĐT</span>
+                    <span className="md:hidden">{t("settings.einvoiceShort")}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="operations"
@@ -1501,7 +1486,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                     <span className="hidden md:inline">
                       {t("settings.operations")}
                     </span>
-                    <span className="md:hidden">HĐ</span>
+                    <span className="md:hidden">{t("settings.operationsShort")}</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -3032,7 +3017,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                     {employeesLoading ? (
                       <div className="text-center py-8">
                         <p className="text-gray-500">
-                          Đang tải dữ liệu nhân viên...
+                          {t("settings.loadingEmployeeData")}
                         </p>
                       </div>
                     ) : !filteredEmployees || filteredEmployees.length === 0 ? (
@@ -3227,9 +3212,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                             <div className="flex items-center gap-2">
                               <span className="text-2xl">{method.icon}</span>
                               <span className="font-medium">
-                                {method.nameKey
-                                  ? t(`common.${method.nameKey}`)
-                                  : method.name}
+                                {t(`settings.payments.${method.nameKey}`)}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -3360,15 +3343,15 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="fas fa-utensils">
-                    🍽️ Món ăn chính
+                    🍽️ {t("settings.categoryIcons.mainDish")}
                   </SelectItem>
-                  <SelectItem value="fas fa-coffee">☕ Đồ uống</SelectItem>
-                  <SelectItem value="fas fa-cookie">🍪 Đồ ăn vặt</SelectItem>
+                  <SelectItem value="fas fa-coffee">☕ {t("settings.categoryIcons.beverage")}</SelectItem>
+                  <SelectItem value="fas fa-cookie">🍪 {t("settings.categoryIcons.snack")}</SelectItem>
                   <SelectItem value="fas fa-ice-cream">
-                    🍨 Tráng miệng
+                    🍨 {t("settings.categoryIcons.dessert")}
                   </SelectItem>
-                  <SelectItem value="fas fa-beer">🍺 Đồ uống có cồn</SelectItem>
-                  <SelectItem value="fas fa-apple-alt">🍎 Trái cây</SelectItem>
+                  <SelectItem value="fas fa-beer">🍺 {t("settings.categoryIcons.alcoholic")}</SelectItem>
+                  <SelectItem value="fas fa-apple-alt">🍎 {t("settings.categoryIcons.fruit")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -4412,23 +4395,16 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="paymentMethodName" className="text-right">
-                {t("common.name")}
-              </Label>
-              <Input
-                id="paymentMethodName"
-                value={paymentMethodForm.name}
-                onChange={(e) =>
-                  setPaymentMethodForm((prev) => ({
-                    ...prev,
-                    name: e.target.value,
-                  }))
-                }
-                className="col-span-3"
-                placeholder={t("common.name")}
-              />
-            </div>
+            {editingPaymentMethod && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">
+                  {t("common.name")}
+                </Label>
+                <span className="col-span-3 text-sm text-gray-600">
+                  {t(`settings.payments.${editingPaymentMethod.nameKey}`)}
+                </span>
+              </div>
+            )}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="paymentMethodIcon" className="text-right">
                 {t("common.icon")}
