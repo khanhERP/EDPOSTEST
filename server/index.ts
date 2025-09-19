@@ -168,7 +168,7 @@ app.use((req, res, next) => {
     wsModule.initializeWebSocketServer(server);
     log('WebSocket server initialized on same port as HTTP server');
   } catch (error) {
-    log('Failed to start WebSocket server:', error);
+    log(`Failed to start WebSocket server: ${error instanceof Error ? error.message : String(error)}`);
     console.error('WebSocket error details:', error);
     // Continue without WebSocket if it fails
   }
