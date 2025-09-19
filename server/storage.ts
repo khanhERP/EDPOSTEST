@@ -509,6 +509,7 @@ interface StoreSettings {
   vipThreshold?: string;
   createdAt: string;
   updatedAt: string;
+  priceIncludesTax?: number; // Changed to number to match database
 }
 
 interface InsertStoreSettings {
@@ -522,6 +523,7 @@ interface InsertStoreSettings {
   taxRate?: string;
   goldThreshold?: string;
   vipThreshold?: string;
+  priceIncludesTax?: boolean; // Accepts boolean for input
 }
 
 interface Supplier {
@@ -2649,7 +2651,23 @@ export class DatabaseStorage implements IStorage {
       return newSettings;
     }
 
-    return settings;
+    // Map database fields to camelCase and ensure priceIncludesTax is boolean
+    return {
+      id: settings.id,
+      storeName: settings.storeName || '',
+      storeCode: settings.storeCode || '',
+      businessType: settings.businessType || 'POS',
+      openTime: settings.openTime || '09:00',
+      closeTime: settings.closeTime || '22:00',
+      logoUrl: settings.logoUrl || null,
+      currency: settings.currency || 'VND',
+      taxRate: settings.taxRate || '10',
+      goldThreshold: settings.goldThreshold || '3000000',
+      vipThreshold: settings.vipThreshold || '10000000',
+      createdAt: settings.createdAt,
+      updatedAt: settings.updatedAt,
+      priceIncludesTax: Boolean(settings.priceIncludesTax || 0) // Convert 0/1 to boolean
+    };
   }
 
   async updateStoreSettings(
@@ -2663,9 +2681,17 @@ export class DatabaseStorage implements IStorage {
     }
     const currentSettings = await this.getStoreSettings(tenantDb);
 
+    // Prepare update data with proper type conversion
+    const updateData: any = { ...settings, updatedAt: new Date() };
+
+    // Handle priceIncludesTax conversion for database
+    if (settings.priceIncludesTax !== undefined) {
+      updateData.priceIncludesTax = settings.priceIncludesTax ? 1 : 0;
+    }
+
     const [updatedSettings] = await database
       .update(storeSettings)
-      .set({ ...settings, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(storeSettings.id, currentSettings.id))
       .returning();
 
