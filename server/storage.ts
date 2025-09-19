@@ -891,9 +891,16 @@ export class DatabaseStorage implements IStorage {
         imageUrl: insertProduct.imageUrl || null,
         isActive: true,
         taxRate: insertProduct.taxRate || "0.00",
-        priceIncludesTax: Boolean(insertProduct.priceIncludesTax || false),
+        priceIncludesTax: Boolean(insertProduct.priceIncludesTax),
         afterTaxPrice: insertProduct.afterTaxPrice || null
       };
+
+      console.log("Storage: PriceIncludesTax save debug:", {
+        inputValue: insertProduct.priceIncludesTax,
+        inputType: typeof insertProduct.priceIncludesTax,
+        savedValue: productData.priceIncludesTax,
+        savedType: typeof productData.priceIncludesTax
+      });
 
       console.log("Storage: Inserting product data:", productData);
 
@@ -976,6 +983,13 @@ export class DatabaseStorage implements IStorage {
           priceIncludesTax: Boolean(updateData.priceIncludesTax)
         })
       };
+
+      console.log("Storage: Update PriceIncludesTax debug:", {
+        inputValue: updateData.priceIncludesTax,
+        inputType: typeof updateData.priceIncludesTax,
+        processedValue: processedUpdates.priceIncludesTax,
+        processedType: typeof processedUpdates.priceIncludesTax
+      });
 
       const [product] = await database
         .update(products)

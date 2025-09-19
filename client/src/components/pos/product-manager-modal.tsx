@@ -324,9 +324,12 @@ export function ProductManagerModal({
       afterTaxPrice: data.afterTaxPrice ? data.afterTaxPrice.toString() : undefined
     };
 
-    console.log("Transformed data with priceIncludesTax:", {
-      ...transformedData,
-      priceIncludesTax: transformedData.priceIncludesTax
+    console.log("PriceIncludesTax submission debug:", {
+      originalValue: data.priceIncludesTax,
+      originalType: typeof data.priceIncludesTax,
+      transformedValue: transformedData.priceIncludesTax,
+      transformedType: typeof transformedData.priceIncludesTax,
+      booleanConversion: Boolean(data.priceIncludesTax)
     });
 
     console.log("Transformed data:", transformedData);
@@ -1163,9 +1166,16 @@ export function ProductManagerModal({
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
                             <Checkbox
-                              checked={field.value || false}
+                              checked={Boolean(field.value)}
                               onCheckedChange={(checked) => {
-                                field.onChange(checked);
+                                // Ensure we save the actual boolean value
+                                field.onChange(Boolean(checked));
+                                
+                                console.log("PriceIncludesTax checkbox changed:", {
+                                  checked: checked,
+                                  booleanValue: Boolean(checked),
+                                  fieldValue: Boolean(checked)
+                                });
                                 
                                 // Recalculate prices based on priceIncludesTax setting
                                 const currentPrice = form.getValues("price");
