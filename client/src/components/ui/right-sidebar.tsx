@@ -68,11 +68,6 @@ export function RightSidebar() {
       href: "/inventory",
     },
     {
-      icon: BarChart3,
-      label: t('nav.reports'),
-      href: "/reports",
-    },
-    {
       icon: Users,
       label: t('nav.employees'),
       href: "/employees",
@@ -91,6 +86,11 @@ export function RightSidebar() {
       icon: ClipboardCheck,
       label: t('nav.purchases'),
       href: "/purchases",
+    },
+    {
+      icon: BarChart3,
+      label: t('nav.reports'),
+      href: "/reports",
     },
     {
       icon: Settings,
