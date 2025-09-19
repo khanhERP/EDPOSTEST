@@ -218,6 +218,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
             <div className="text-sm opacity-90">{t("common.time")}</div>
             <div className="font-medium">{formatTime(currentTime)}</div>
           </div>
+          <LanguageSwitcher />
           {/* Navigation Menu */}
           <nav className="flex items-center space-x-4">
             <div className="relative pos-dropdown">
@@ -589,9 +590,6 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
 
           </div>
 
-        <div className="flex items-center space-x-4">
-          <LanguageSwitcher />
-        </div>
       </div>
       {showProductManager && (
         <ProductManagerModal
