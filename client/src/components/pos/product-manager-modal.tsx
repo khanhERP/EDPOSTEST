@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { X, Plus, Upload, Download, Edit, Trash2 } from "lucide-react";
+import { X, Plus, Upload, Download, Edit, Trash2, Link, FileImage } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +38,7 @@ import { z } from "zod";
 import { useTranslation } from "@/lib/i18n";
 import { BulkImportModal } from "./bulk-import-modal";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as XLSX from "xlsx";
 
 interface ProductManagerModalProps {
@@ -76,7 +77,19 @@ export function ProductManagerModal({
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [imageInputMethod, setImageInputMethod] = useState<"url" | "file">("url");
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const { toast } = useToast();
+
+  // 파일을 Base64로 변환하는 함수
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
 
   const {
     data: products = [],
@@ -94,11 +107,24 @@ export function ProductManagerModal({
 
   const createProductMutation = useMutation({
     mutationFn: async (data: z.infer<typeof productFormSchema>) => {
-      console.log("Sending product data:", data);
+      let finalData = { ...data };
+      
+      // 파일 업로드가 선택되고 파일이 있는 경우 Base64로 변환
+      if (imageInputMethod === "file" && selectedImageFile) {
+        try {
+          const base64Image = await convertFileToBase64(selectedImageFile);
+          finalData.imageUrl = base64Image;
+        } catch (error) {
+          console.error("파일 변환 오류:", error);
+          throw new Error("이미지 파일 처리 중 오류가 발생했습니다.");
+        }
+      }
+      
+      console.log("Sending product data:", finalData);
       const response = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(finalData),
       });
 
       if (!response.ok) {
@@ -113,6 +139,9 @@ export function ProductManagerModal({
       queryClient.invalidateQueries({ queryKey: ["/api/products/active"] });
       setShowAddForm(false);
       resetForm();
+      // 파일 상태 초기화
+      setSelectedImageFile(null);
+      setImageInputMethod("url");
       toast({
         title: "Success",
         description: "Product created successfully",
@@ -146,10 +175,23 @@ export function ProductManagerModal({
       id: number;
       data: Partial<z.infer<typeof productFormSchema>>;
     }) => {
+      let finalData = { ...data };
+      
+      // 파일 업로드가 선택되고 파일이 있는 경우 Base64로 변환
+      if (imageInputMethod === "file" && selectedImageFile) {
+        try {
+          const base64Image = await convertFileToBase64(selectedImageFile);
+          finalData.imageUrl = base64Image;
+        } catch (error) {
+          console.error("파일 변환 오류:", error);
+          throw new Error("이미지 파일 처리 중 오류가 발생했습니다.");
+        }
+      }
+      
       const response = await fetch(`/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(finalData),
       });
       if (!response.ok) throw new Error("Failed to update product");
       return response.json();
@@ -158,6 +200,9 @@ export function ProductManagerModal({
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products/active"] });
       setEditingProduct(null);
+      // 파일 상태 초기화
+      setSelectedImageFile(null);
+      setImageInputMethod("url");
       toast({
         title: "Success",
         description: "Product updated successfully",
@@ -321,6 +366,9 @@ export function ProductManagerModal({
   const resetForm = () => {
     setShowAddForm(false);
     setEditingProduct(null);
+    // 파일 상태 초기화
+    setSelectedImageFile(null);
+    setImageInputMethod("url");
     form.reset({
       name: "",
       sku: "",
@@ -432,6 +480,9 @@ export function ProductManagerModal({
       }
       // Reset form completely when opening modal
       if (!editingProduct) {
+        // 새 상품 추가 시 초기화
+        setSelectedImageFile(null);
+        setImageInputMethod("url");
         form.reset({
           name: "",
           sku: "",
@@ -445,6 +496,15 @@ export function ProductManagerModal({
           priceIncludesTax: false,
           afterTaxPrice: "",
         });
+      } else {
+        // 편집 모드에서 기존 이미지 URL이 있는지 확인
+        if (editingProduct.imageUrl && editingProduct.imageUrl.trim() !== "") {
+          setImageInputMethod("url");
+          setSelectedImageFile(null);
+        } else {
+          setImageInputMethod("url"); // 기본은 URL 방식
+          setSelectedImageFile(null);
+        }
       }
     }
   }, [isOpen, refetch, editingProduct, initialSearchSKU]);
@@ -954,22 +1014,110 @@ export function ProductManagerModal({
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="imageUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("tables.imageUrlOptional")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder={t("tables.imageUrl")}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* 이미지 입력 방식 선택 */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">
+                      {t("tables.imageUrlOptional")}
+                    </Label>
+                    <Tabs 
+                      value={imageInputMethod} 
+                      onValueChange={(value) => setImageInputMethod(value as "url" | "file")}
+                      className="w-full"
+                    >
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="url" className="flex items-center gap-2">
+                          <Link className="w-4 h-4" />
+                          URL 입력
+                        </TabsTrigger>
+                        <TabsTrigger value="file" className="flex items-center gap-2">
+                          <FileImage className="w-4 h-4" />
+                          파일 업로드
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="url" className="mt-3">
+                        <FormField
+                          control={form.control}
+                          name="imageUrl"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder={t("tables.imageUrl")}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TabsContent>
+                      
+                      <TabsContent value="file" className="mt-3">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-center w-full">
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                {selectedImageFile ? (
+                                  <>
+                                    <FileImage className="w-8 h-8 mb-2 text-green-500" />
+                                    <p className="text-sm text-gray-700 font-medium">
+                                      {selectedImageFile.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {(selectedImageFile.size / 1024).toFixed(1)} KB
+                                    </p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                                    <p className="mb-2 text-sm text-gray-500">
+                                      <span className="font-semibold">이미지 파일을 선택하거나</span>
+                                    </p>
+                                    <p className="text-xs text-gray-500">드래그엤드롭으로 업로드</p>
+                                  </>
+                                )}
+                              </div>
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    // 이미지 파일 크기 제한 (5MB)
+                                    if (file.size > 5 * 1024 * 1024) {
+                                      toast({
+                                        title: "오류",
+                                        description: "이미지 크기는 5MB를 초과할 수 없습니다.",
+                                        variant: "destructive",
+                                      });
+                                      return;
+                                    }
+                                    setSelectedImageFile(file);
+                                    // imageUrl 필드를 비워서 URL과 중복되지 않도록 함
+                                    form.setValue("imageUrl", "");
+                                  }
+                                }}
+                              />
+                            </label>
+                          </div>
+                          {selectedImageFile && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedImageFile(null)}
+                              className="w-full"
+                            >
+                              <X className="w-4 h-4 mr-2" />
+                              파일 제거
+                            </Button>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
 
                   <div className="space-y-4">
                     <FormField
