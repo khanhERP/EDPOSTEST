@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -63,7 +64,7 @@ import {
   Send,
   X,
 } from "lucide-react";
-import { insertPurchaseOrderSchema, insertPurchaseOrderItemSchema } from "@shared/schema";
+import { insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, insertProductSchema } from "@shared/schema";
 
 // Import types we need
 type PurchaseOrderItem = {
