@@ -1159,7 +1159,53 @@ export function ProductManagerModal({
                       )}
                     />
 
-                    
+                    <FormField
+                      control={form.control}
+                      name="priceIncludesTax"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={Boolean(field.value)}
+                              onCheckedChange={(checked) => {
+                                // Ensure we save the actual boolean value
+                                field.onChange(Boolean(checked));
+                                
+                                console.log("PriceIncludesTax checkbox changed:", {
+                                  checked: checked,
+                                  booleanValue: Boolean(checked),
+                                  fieldValue: Boolean(checked)
+                                });
+                                
+                                // Recalculate prices based on priceIncludesTax setting
+                                const currentPrice = form.getValues("price");
+                                const taxRate = parseFloat(form.getValues("taxRate") || "8.00");
+                                
+                                if (currentPrice && !isNaN(parseInt(currentPrice))) {
+                                  const priceNum = parseInt(currentPrice);
+                                  
+                                  if (checked) {
+                                    // Price includes tax: calculate base price and set afterTaxPrice
+                                    const basePrice = Math.round(priceNum / (1 + taxRate / 100));
+                                    form.setValue("price", basePrice.toString());
+                                    form.setValue("afterTaxPrice", priceNum.toString());
+                                  } else {
+                                    // Price is base price: calculate afterTaxPrice
+                                    const afterTaxPrice = Math.round(priceNum + (priceNum * taxRate / 100));
+                                    form.setValue("afterTaxPrice", afterTaxPrice.toString());
+                                  }
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              {t("common.comboValues.priceIncludesTax")}
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   <div className="flex justify-end">
