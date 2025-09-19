@@ -19,39 +19,22 @@ export default function TablesPage() {
   // Add WebSocket listener for data refresh
   useEffect(() => {
     let ws: WebSocket | null = null;
-    let reconnectTimer: NodeJS.Timeout | null = null;
-    let shouldReconnect = true;
 
     const connectWebSocket = () => {
-      if (!shouldReconnect) return;
-      
       try {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const wsUrl = `${protocol}//${window.location.host}/ws`;
-        
-        console.log("📡 Tables: Attempting WebSocket connection to:", wsUrl);
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log("📡 Tables: WebSocket connected successfully");
-          
-          // Clear any pending reconnect timer
-          if (reconnectTimer) {
-            clearTimeout(reconnectTimer);
-            reconnectTimer = null;
-          }
-          
+          console.log("📡 Tables: WebSocket connected for refresh signals");
           // Register as table management client
-          try {
-            ws?.send(
-              JSON.stringify({
-                type: "register_table_management",
-                timestamp: new Date().toISOString(),
-              }),
-            );
-          } catch (sendError) {
-            console.error("❌ Tables: Error sending registration message:", sendError);
-          }
+          ws?.send(
+            JSON.stringify({
+              type: "register_table_management",
+              timestamp: new Date().toISOString(),
+            }),
+          );
         };
 
         ws.onmessage = (event) => {
@@ -95,41 +78,19 @@ export default function TablesPage() {
           }
         };
 
-        ws.onclose = (event) => {
-          console.log("📡 Tables: WebSocket connection closed:", {
-            code: event.code,
-            reason: event.reason,
-            wasClean: event.wasClean
-          });
-          
-          if (shouldReconnect) {
-            console.log("📡 Tables: Scheduling reconnect in 3 seconds...");
-            reconnectTimer = setTimeout(() => {
-              connectWebSocket();
-            }, 3000);
-          }
+        ws.onclose = () => {
+          console.log(
+            "📡 Tables: WebSocket disconnected, attempting reconnect...",
+          );
+          setTimeout(connectWebSocket, 2000);
         };
 
         ws.onerror = (error) => {
-          console.error("❌ Tables: WebSocket error occurred:", {
-            error,
-            readyState: ws?.readyState,
-            url: wsUrl
-          });
-          
-          // Don't immediately reconnect on error, let onclose handle it
-          if (ws) {
-            ws.close();
-          }
+          console.error("❌ Tables: WebSocket error:", error);
         };
       } catch (error) {
-        console.error("❌ Tables: Failed to create WebSocket connection:", error);
-        
-        if (shouldReconnect) {
-          reconnectTimer = setTimeout(() => {
-            connectWebSocket();
-          }, 5000);
-        }
+        console.error("❌ Tables: Failed to connect WebSocket:", error);
+        setTimeout(connectWebSocket, 2000);
       }
     };
 
@@ -166,24 +127,9 @@ export default function TablesPage() {
     connectWebSocket();
 
     return () => {
-      console.log("🧹 Tables: Cleaning up WebSocket and event listeners");
-      shouldReconnect = false;
-      
-      // Clear reconnect timer
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-        reconnectTimer = null;
+      if (ws) {
+        ws.close();
       }
-      
-      // Close WebSocket connection properly
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        try {
-          ws.close(1000, "Component unmounting");
-        } catch (error) {
-          console.error("❌ Tables: Error closing WebSocket:", error);
-        }
-      }
-      
       // Clean up event listeners
       window.removeEventListener("einvoicePublished", handleEInvoiceEvents);
       window.removeEventListener("einvoiceSavedForLater", handleEInvoiceEvents);

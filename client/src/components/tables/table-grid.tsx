@@ -42,12 +42,6 @@ interface TableGridProps {
 }
 
 export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
-  const { toast } = useToast();
-  const { t, currentLanguage } = useTranslation();
-  const queryClient = useQueryClient();
-  const wsRef = useRef<WebSocket | null>(null); // Ref for WebSocket connection
-
-  // All state declarations must be at the top - no conditional hooks
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
@@ -75,7 +69,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const [orderForPayment, setOrderForPayment] = useState<any>(null);
   const [activeFloor, setActiveFloor] = useState("1층");
-
+  const { toast } = useToast();
+  const { t, currentLanguage } = useTranslation();
+  const queryClient = useQueryClient();
+  const wsRef = useRef<WebSocket | null>(null); // Ref for WebSocket connection
 
   // Listen for print completion event
   useEffect(() => {
@@ -253,7 +250,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         refetchOrderItems();
       }
     }
-  }, [orderDetailsOpen, selectedOrder?.id, queryClient, refetchOrderItems]);
+  }, [orderDetailsOpen, selectedOrder?.id]);
 
   // Handle events but only refresh when absolutely necessary
   useEffect(() => {
@@ -285,7 +282,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       window.removeEventListener("paymentCompleted", handlePaymentCompleted);
       window.removeEventListener("orderTotalsUpdated", handleOrderUpdate);
     };
-  }, [queryClient]);
+  }, []);
 
   // Enhanced WebSocket connection for AGGRESSIVE real-time updates
   useEffect(() => {
@@ -749,7 +746,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         console.log("📡 Table Grid: WebSocket not available for broadcasting");
       }
     },
-    [activeOrders, products, getProductName, queryClient],
+    [activeOrders, products, getProductName],
   );
 
   // Clear customer display when no order details are open
@@ -2303,7 +2300,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 product.afterTaxPrice !== ""
               ) {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                const taxPerUnit = afterTaxPrice - basePrice;
+                const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
                 calculatedTax += Math.floor(taxPerUnit * quantity);
               }
 

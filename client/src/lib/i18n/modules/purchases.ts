@@ -403,7 +403,7 @@ export const purchasesTranslations = {
   
   vi: {
     // Dashboard & Overview
-    title: "Danh sách phiếu nhập hàng",
+    title: "Quản lý Mua hàng",
     dashboard: "Bảng điều khiển Mua hàng",
     overview: "Tổng quan",
     newPurchaseOrder: "Đơn mua hàng mới",

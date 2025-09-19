@@ -267,7 +267,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     selectpaymentmethod: "Select payment method for the remaining amount",
   },
   vi: {
-    orderManagement: "Danh sách đơn hàng bán",
+    orderManagement: "Danh sách phiếu nhập hàng",
     orderDetails: "Chi tiết đơn hàng",
     orderNumber: "Số đơn hàng",
     orderCode: "Số đơn bán",

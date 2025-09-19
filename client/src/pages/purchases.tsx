@@ -250,6 +250,15 @@ export default function PurchasesPage({ onLogout }: PurchasesPageProps) {
 
         {/* Purchase Orders Table */}
         <Card>
+          <CardHeader>
+            <CardTitle>{t("purchases.purchaseOrders")}</CardTitle>
+            <CardDescription>
+              {filteredOrders.length > 0 
+                ? `${filteredOrders.length} ${t("purchases.ordersFound")}`
+                : t("purchases.overview")
+              }
+            </CardDescription>
+          </CardHeader>
           <CardContent>
             {isOrdersLoading ? (
               <div className="text-center py-12">
