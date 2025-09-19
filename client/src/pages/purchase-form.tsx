@@ -14,6 +14,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -323,7 +324,8 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
   // Create new product mutation
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest("POST", "/api/products", data);
+      const response = await apiRequest("POST", "/api/products", data);
+      return response.json();
     },
     onSuccess: (newProduct) => {
       toast({
