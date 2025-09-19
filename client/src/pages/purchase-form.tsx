@@ -321,6 +321,61 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
     },
   });
 
+  // Create new product mutation
+  const createProductMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("POST", "/api/products", data);
+    },
+    onSuccess: (newProduct) => {
+      toast({
+        title: t("common.success"),
+        description: t("inventory.productCreated") || "Product created successfully",
+      });
+      
+      // Update products query cache
+      queryClient.setQueryData(["/api/products"], (old: any[]) => {
+        return [...(old || []), { ...newProduct, unitPrice: Number(newProduct.price) || 0 }];
+      });
+      
+      // Add new product to selected items automatically
+      addProduct({
+        id: newProduct.id,
+        name: newProduct.name,
+        sku: newProduct.sku,
+        stock: newProduct.stock,
+        unitPrice: Number(newProduct.price) || 0,
+      });
+      
+      // Close dialog and reset form
+      setIsNewProductDialogOpen(false);
+      newProductForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("common.error"),
+        description: error.message || t("common.unexpectedError"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle new product creation
+  const handleCreateNewProduct = (data: any) => {
+    const payload = {
+      name: data.name,
+      sku: data.sku || "",
+      categoryId: data.categoryId,
+      productType: data.productType,
+      price: data.price,
+      stock: data.stock,
+      trackInventory: data.trackInventory,
+      isActive: true,
+      taxRate: data.taxRate,
+    };
+    
+    createProductMutation.mutate(payload);
+  };
+
   // Add product to order
   const addProduct = (product: ProductSelectionItem) => {
     const existingIndex = selectedItems.findIndex(item => item.productId === product.id);
