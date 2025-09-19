@@ -109,6 +109,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
 
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
+  const [isNewProductDialogOpen, setIsNewProductDialogOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Array<{
     productId: number;
     productName: string;
@@ -134,6 +135,29 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       notes: "",
       status: "pending" as const,
       items: [],
+    },
+  });
+
+  // New product form
+  const newProductForm = useForm({
+    resolver: zodResolver(insertProductSchema.extend({
+      categoryId: z.number(),
+      productType: z.number().default(1),
+      price: z.string(),
+      stock: z.number().default(0),
+      trackInventory: z.boolean().default(true),
+      taxRate: z.string().default("8.00"),
+    })),
+    defaultValues: {
+      name: "",
+      sku: "",
+      categoryId: 1,
+      productType: 1,
+      price: "0",
+      stock: 0,
+      trackInventory: true,
+      isActive: true,
+      taxRate: "8.00",
     },
   });
 
