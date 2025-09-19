@@ -250,8 +250,6 @@ export default function PurchasesPage({ onLogout }: PurchasesPageProps) {
 
         {/* Purchase Orders Table */}
         <Card>
-          <CardHeader>
-          </CardHeader>
           <CardContent>
             {isOrdersLoading ? (
               <div className="text-center py-12">
