@@ -278,19 +278,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       }
     };
 
-    window.addEventListener("paymentCompleted", handlePaymentCompleted);
-    window.addEventListener("orderTotalsUpdated", handleOrderUpdate);
+    window.addEventListener("paymentCompleted", handlePaymentCompleted as EventListener);
+    window.addEventListener("orderTotalsUpdated", handleOrderUpdate as EventListener);
 
     return () => {
-      window.removeEventListener("paymentCompleted", handlePaymentCompleted);
-      window.removeEventListener("orderTotalsUpdated", handleOrderUpdate);
+      window.removeEventListener("paymentCompleted", handlePaymentCompleted as EventListener);
+      window.removeEventListener("orderTotalsUpdated", handleOrderUpdate as EventListener);
     };
   }, [queryClient]);
 
   // Enhanced WebSocket connection for AGGRESSIVE real-time updates
   useEffect(() => {
-    let ws = null;
-    let reconnectTimeout = null;
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
     let shouldReconnect = true;
 
     const connectWebSocket = () => {
