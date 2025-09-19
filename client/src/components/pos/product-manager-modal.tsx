@@ -320,9 +320,14 @@ export function ProductManagerModal({
       trackInventory: data.trackInventory !== false,
       imageUrl: data.imageUrl?.trim() || null,
       taxRate: data.taxRate.toString(),
-      priceIncludesTax: data.priceIncludesTax || false,
+      priceIncludesTax: Boolean(data.priceIncludesTax), // Explicitly convert to boolean
       afterTaxPrice: data.afterTaxPrice ? data.afterTaxPrice.toString() : undefined
     };
+
+    console.log("Transformed data with priceIncludesTax:", {
+      ...transformedData,
+      priceIncludesTax: transformedData.priceIncludesTax
+    });
 
     console.log("Transformed data:", transformedData);
 
@@ -346,7 +351,7 @@ export function ProductManagerModal({
       imageUrl: product.imageUrl || "",
       trackInventory: product.trackInventory !== false,
       taxRate: product.taxRate || "8.00",
-      priceIncludesTax: product.priceIncludesTax || false,
+      priceIncludesTax: Boolean(product.priceIncludesTax), // Ensure boolean type
       // Use saved after-tax price if available, otherwise calculate
       afterTaxPrice: product.afterTaxPrice || (() => {
         const basePrice = parseFloat(product.price);
@@ -355,6 +360,12 @@ export function ProductManagerModal({
       })(),
     });
     setShowAddForm(true);
+    
+    console.log("Editing product with priceIncludesTax:", {
+      productId: product.id,
+      priceIncludesTax: product.priceIncludesTax,
+      formValue: Boolean(product.priceIncludesTax)
+    });
   };
 
   const handleDelete = (id: number) => {
@@ -379,9 +390,11 @@ export function ProductManagerModal({
       imageUrl: "",
       trackInventory: true,
       taxRate: "8.00",
-      priceIncludesTax: false,
+      priceIncludesTax: false, // Explicitly set to false for new products
       afterTaxPrice: "",
     });
+    
+    console.log("Form reset with priceIncludesTax: false");
   };
 
   const getCategoryName = (categoryId: number) => {
