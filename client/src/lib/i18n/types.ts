@@ -441,7 +441,17 @@ export interface OrdersTranslations {
   discount: string;
   tip: string;
   finalTotal: string;
-  status: string;
+  status: {
+    pending: string;
+    confirmed: string;
+    preparing: string;
+    ready: string;
+    served: string;
+    paid: string;
+    cancelled: string;
+    delivering: string;
+    completed: string;
+  };
   paymentStatus: string;
   paymentMethod: string;
   notes: string;

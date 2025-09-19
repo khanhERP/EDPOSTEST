@@ -100,20 +100,24 @@ export const attendanceRecords = pgTable("attendance_records", {
 
 export const storeSettings = pgTable("store_settings", {
   id: serial("id").primaryKey(),
-  storeName: text("store_name").notNull().default("EDPOS 레스토랑"),
-  storeCode: text("store_code"),
-  taxId: text("tax_id"),
-  businessType: text("business_type").default("restaurant"),
-  pinCode: text("pin_code"),
-  address: text("address"),
-  phone: text("phone"),
-  email: text("email"),
-  openTime: text("open_time").default("09:00"),
-  closeTime: text("close_time").default("22:00"),
-  goldThreshold: text("gold_threshold").default("300000"),
-  vipThreshold: text("vip_threshold").default("1000000"),
-  priceIncludesTax: boolean("price_includes_tax").notNull().default(false),
+  storeName: varchar("store_name", { length: 100 }).notNull(),
+  storeCode: varchar("store_code", { length: 50 }).notNull(),
+  businessType: varchar("business_type", { length: 50 }).default("restaurant"),
+  openTime: varchar("open_time", { length: 10 }).default("09:00"),
+  closeTime: varchar("close_time", { length: 10 }).default("22:00"),
+  logoUrl: varchar("logo_url", { length: 255 }),
+  currency: varchar("currency", { length: 10 }).default("VND"),
+  taxRate: varchar("tax_rate", { length: 10 }).default("10"),
+  goldThreshold: varchar("gold_threshold", { length: 20 }).default("3000000"),
+  vipThreshold: varchar("vip_threshold", { length: 20 }).default("10000000"),
+  priceIncludesTax: boolean("price_includes_tax").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  address: varchar("address", { length: 255 }),
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 100 }),
+  taxId: varchar("tax_id", { length: 20 }),
+  pinCode: varchar("pin_code", { length: 10 }),
 });
 
 export const suppliers = pgTable("suppliers", {
@@ -634,7 +638,12 @@ export type Table = InferSelectModel<typeof tables>;
 export type InsertTable = InferInsertModel<typeof tables>;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
-export type StoreSettings = typeof storeSettings.$inferSelect;
+export type StoreSettings = InferSelectModel<typeof storeSettings> & {
+  priceIncludesTax?: boolean;
+};
+export type InsertStoreSettings = InferInsertModel<typeof storeSettings> & {
+  priceIncludesTax?: boolean;
+};
 export type Supplier = typeof suppliers.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
