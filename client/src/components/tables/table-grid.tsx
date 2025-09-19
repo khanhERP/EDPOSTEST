@@ -161,7 +161,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     gcTime: 5 * 60 * 1000, // Giữ cache 5 phút
     retry: 2,
     queryFn: async () => {
-      const orderId = selectedOrder.id;
+      const orderId = selectedOrder?.id;
       if (!orderId) {
         return [];
       }
@@ -304,7 +304,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           wsRef.current = ws;
 
           // Register as table grid client
-          ws.send(
+          ws?.send(
             JSON.stringify({
               type: "register_table_grid",
               timestamp: new Date().toISOString(),
@@ -550,7 +550,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const broadcastCartUpdate = useCallback(
     async (specificTableId?: number) => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        let cartItems = [];
+        let cartItems: any[] = [];
         let orderSubtotal = 0;
         let orderTax = 0;
         let orderTotal = 0;
