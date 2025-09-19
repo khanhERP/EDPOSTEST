@@ -65,7 +65,11 @@ import {
   Send,
   X,
 } from "lucide-react";
-import { insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, insertProductSchema } from "@shared/schema";
+import {
+  insertPurchaseOrderSchema,
+  insertPurchaseOrderItemSchema,
+  insertProductSchema,
+} from "@shared/schema";
 
 // Import types we need
 type PurchaseOrderItem = {
@@ -79,11 +83,15 @@ type PurchaseOrderItem = {
 
 // Form validation schema using shared schema
 const purchaseFormSchema = insertPurchaseOrderSchema.extend({
-  items: z.array(insertPurchaseOrderItemSchema.extend({
-    productName: z.string(),
-    sku: z.string().optional(),
-    receivedQuantity: z.number().default(0),
-  })).min(1, "At least one item is required"),
+  items: z
+    .array(
+      insertPurchaseOrderItemSchema.extend({
+        productName: z.string(),
+        sku: z.string().optional(),
+        receivedQuantity: z.number().default(0),
+      }),
+    )
+    .min(1, "At least one item is required"),
 });
 
 type PurchaseFormData = z.infer<typeof purchaseFormSchema>;
@@ -102,7 +110,10 @@ interface PurchaseFormPageProps {
   onLogout: () => void;
 }
 
-export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps) {
+export default function PurchaseFormPage({
+  id,
+  onLogout,
+}: PurchaseFormPageProps) {
   const [, navigate] = useLocation();
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -111,15 +122,17 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [isNewProductDialogOpen, setIsNewProductDialogOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<Array<{
-    productId: number;
-    productName: string;
-    sku?: string;
-    quantity: number;
-    receivedQuantity: number;
-    unitPrice: number;
-    total: number;
-  }>>([]);
+  const [selectedItems, setSelectedItems] = useState<
+    Array<{
+      productId: number;
+      productName: string;
+      sku?: string;
+      quantity: number;
+      receivedQuantity: number;
+      unitPrice: number;
+      total: number;
+    }>
+  >([]);
 
   const isEditMode = Boolean(id);
 
@@ -129,9 +142,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
     defaultValues: {
       supplierId: 0,
       poNumber: "",
-      expectedDeliveryDate: new Date().toISOString().split('T')[0],
+      expectedDeliveryDate: new Date().toISOString().split("T")[0],
       subtotal: "0.00",
-      tax: "0.00", 
+      tax: "0.00",
       total: "0.00",
       notes: "",
       status: "pending" as const,
@@ -141,14 +154,16 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
 
   // New product form
   const newProductForm = useForm({
-    resolver: zodResolver(insertProductSchema.extend({
-      categoryId: z.number(),
-      productType: z.number().default(1),
-      price: z.string(),
-      stock: z.number().default(0),
-      trackInventory: z.boolean().default(true),
-      taxRate: z.string().default("8.00"),
-    })),
+    resolver: zodResolver(
+      insertProductSchema.extend({
+        categoryId: z.number(),
+        productType: z.number().default(1),
+        price: z.string(),
+        stock: z.number().default(0),
+        trackInventory: z.boolean().default(true),
+        taxRate: z.string().default("8.00"),
+      }),
+    ),
     defaultValues: {
       name: "",
       sku: "",
@@ -177,18 +192,20 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
   // Fetch products for selection
   const { data: allProducts = [] } = useQuery({
     queryKey: ["/api/products"],
-    select: (data: any[]) => (data || []).map((product: any) => ({
-      ...product,
-      unitPrice: Number(product.price) || 0
-    })),
+    select: (data: any[]) =>
+      (data || []).map((product: any) => ({
+        ...product,
+        unitPrice: Number(product.price) || 0,
+      })),
   });
 
   // Filter products based on search
   const products = useMemo(() => {
-    return allProducts.filter((product: any) => 
-      productSearch === "" || 
-      product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(productSearch.toLowerCase())
+    return allProducts.filter(
+      (product: any) =>
+        productSearch === "" ||
+        product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        product.sku?.toLowerCase().includes(productSearch.toLowerCase()),
     );
   }, [allProducts, productSearch]);
 
@@ -201,7 +218,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
 
   // Load existing order data
   useEffect(() => {
-    if (existingOrder && typeof existingOrder === 'object') {
+    if (existingOrder && typeof existingOrder === "object") {
       const order = existingOrder as any;
       form.setValue("supplierId", order.supplierId);
       form.setValue("poNumber", order.poNumber);
@@ -211,22 +228,24 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
 
       // Load existing items
       if (order.items) {
-        setSelectedItems(order.items.map((item: any) => ({
-          productId: item.productId,
-          productName: item.productName,
-          sku: item.sku,
-          quantity: item.quantity,
-          receivedQuantity: item.receivedQuantity || 0,
-          unitPrice: parseFloat(item.unitPrice),
-          total: parseFloat(item.unitPrice) * item.quantity,
-        })));
+        setSelectedItems(
+          order.items.map((item: any) => ({
+            productId: item.productId,
+            productName: item.productName,
+            sku: item.sku,
+            quantity: item.quantity,
+            receivedQuantity: item.receivedQuantity || 0,
+            unitPrice: parseFloat(item.unitPrice),
+            total: parseFloat(item.unitPrice) * item.quantity,
+          })),
+        );
       }
     }
   }, [existingOrder, form]);
 
   // Update form items when selectedItems changes - convert to schema format
   useEffect(() => {
-    const schemaItems = selectedItems.map(item => ({
+    const schemaItems = selectedItems.map((item) => ({
       productId: item.productId,
       productName: item.productName,
       sku: item.sku || "",
@@ -251,7 +270,10 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
         throw new Error(t("purchases.itemsRequired"));
       }
 
-      const subtotalAmount = selectedItems.reduce((sum, item) => sum + item.total, 0);
+      const subtotalAmount = selectedItems.reduce(
+        (sum, item) => sum + item.total,
+        0,
+      );
       const taxAmount = 0; // No tax applied
       const totalAmount = subtotalAmount;
 
@@ -264,7 +286,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
         tax: "0.00",
         total: subtotalAmount.toFixed(2),
         status: data.status || "pending",
-        items: selectedItems.map(item => ({
+        items: selectedItems.map((item) => ({
           productId: item.productId,
           productName: item.productName,
           sku: item.sku || "",
@@ -280,7 +302,11 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       try {
         let response;
         if (isEditMode) {
-          response = await apiRequest("PUT", `/api/purchase-orders/${id}`, payload);
+          response = await apiRequest(
+            "PUT",
+            `/api/purchase-orders/${id}`,
+            payload,
+          );
         } else {
           response = await apiRequest("POST", "/api/purchase-orders", payload);
         }
@@ -289,14 +315,18 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
         return response;
       } catch (apiError: any) {
         console.error("API Error:", apiError);
-        throw new Error(apiError?.response?.data?.message || apiError?.message || "Failed to save purchase order");
+        throw new Error(
+          apiError?.response?.data?.message ||
+            apiError?.message ||
+            "Failed to save purchase order",
+        );
       }
     },
     onSuccess: (response) => {
       console.log("Mutation success:", response);
       toast({
         title: t("common.success"),
-        description: isEditMode 
+        description: isEditMode
           ? t("purchases.orderUpdated")
           : t("purchases.orderCreated"),
       });
@@ -330,17 +360,21 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
     onSuccess: (newProduct) => {
       toast({
         title: t("common.success"),
-        description: t("inventory.productCreated") || "Product created successfully",
+        description:
+          t("inventory.productCreated") || "Product created successfully",
       });
-      
+
       // Update products query cache
       queryClient.setQueryData(["/api/products"], (old: any[]) => {
-        return [...(old || []), { ...newProduct, unitPrice: Number(newProduct.price) || 0 }];
+        return [
+          ...(old || []),
+          { ...newProduct, unitPrice: Number(newProduct.price) || 0 },
+        ];
       });
-      
+
       // Invalidate queries for cache consistency
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      
+
       // Add new product to selected items automatically
       addProduct({
         id: newProduct.id,
@@ -349,7 +383,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
         stock: newProduct.stock,
         unitPrice: Number(newProduct.price) || 0,
       });
-      
+
       // Close dialog and reset form
       setIsNewProductDialogOpen(false);
       newProductForm.reset();
@@ -376,19 +410,23 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       isActive: true,
       taxRate: data.taxRate,
     };
-    
+
     createProductMutation.mutate(payload);
   };
 
   // Add product to order
   const addProduct = (product: ProductSelectionItem) => {
-    const existingIndex = selectedItems.findIndex(item => item.productId === product.id);
+    const existingIndex = selectedItems.findIndex(
+      (item) => item.productId === product.id,
+    );
 
     if (existingIndex >= 0) {
       // Update existing item quantity
       const updatedItems = [...selectedItems];
       updatedItems[existingIndex].quantity += 1;
-      updatedItems[existingIndex].total = updatedItems[existingIndex].quantity * updatedItems[existingIndex].unitPrice;
+      updatedItems[existingIndex].total =
+        updatedItems[existingIndex].quantity *
+        updatedItems[existingIndex].unitPrice;
       setSelectedItems(updatedItems);
     } else {
       // Add new item
@@ -470,7 +508,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
     }
 
     // Kiểm tra các items có số lượng hợp lệ
-    const hasInvalidQuantity = selectedItems.some(item => item.quantity <= 0 || item.unitPrice < 0);
+    const hasInvalidQuantity = selectedItems.some(
+      (item) => item.quantity <= 0 || item.unitPrice < 0,
+    );
     if (hasInvalidQuantity) {
       toast({
         title: t("common.error"),
@@ -492,9 +532,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate("/purchases")}
               data-testid="button-back"
             >
@@ -503,10 +543,14 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {isEditMode ? t("purchases.editPurchaseOrder") : t("purchases.createPurchaseOrder")}
+                {isEditMode
+                  ? t("purchases.editPurchaseOrder")
+                  : t("purchases.createPurchaseOrder")}
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {isEditMode ? t("purchases.editOrderDescription") : t("purchases.createOrderDescription")}
+                {isEditMode
+                  ? t("purchases.editOrderDescription")
+                  : t("purchases.createOrderDescription")}
               </p>
             </div>
           </div>
@@ -537,19 +581,26 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("purchases.supplier")}</FormLabel>
-                            <Select 
-                              onValueChange={(value) => field.onChange(parseInt(value))}
+                            <Select
+                              onValueChange={(value) =>
+                                field.onChange(parseInt(value))
+                              }
                               value={field.value?.toString() || ""}
                               data-testid="select-supplier"
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder={t("purchases.selectSupplier")} />
+                                  <SelectValue
+                                    placeholder={t("purchases.selectSupplier")}
+                                  />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
                                 {suppliers.map((supplier: any) => (
-                                  <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                                  <SelectItem
+                                    key={supplier.id}
+                                    value={supplier.id.toString()}
+                                  >
                                     {supplier.name}
                                   </SelectItem>
                                 ))}
@@ -568,8 +619,8 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                           <FormItem>
                             <FormLabel>{t("purchases.poNumber")}</FormLabel>
                             <FormControl>
-                              <Input 
-                                {...field} 
+                              <Input
+                                {...field}
                                 placeholder={t("purchases.poNumberPlaceholder")}
                                 data-testid="input-po-number"
                               />
@@ -585,10 +636,12 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                         name="expectedDeliveryDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("purchases.expectedDeliveryDate")}</FormLabel>
+                            <FormLabel>
+                              {t("purchases.expectedDeliveryDate")}
+                            </FormLabel>
                             <FormControl>
-                              <Input 
-                                {...field} 
+                              <Input
+                                {...field}
                                 type="date"
                                 data-testid="input-order-date"
                               />
@@ -597,7 +650,6 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                           </FormItem>
                         )}
                       />
-
                     </div>
 
                     {/* Status (Edit Mode Only) */}
@@ -608,7 +660,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("purchases.status")}</FormLabel>
-                            <Select 
+                            <Select
                               onValueChange={field.onChange}
                               value={field.value}
                               data-testid="select-status"
@@ -619,11 +671,21 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="pending">{t("purchases.pending")}</SelectItem>
-                                <SelectItem value="confirmed">{t("purchases.confirmed")}</SelectItem>
-                                <SelectItem value="partially_received">{t("purchases.partially_received")}</SelectItem>
-                                <SelectItem value="received">{t("purchases.received")}</SelectItem>
-                                <SelectItem value="cancelled">{t("purchases.cancelled")}</SelectItem>
+                                <SelectItem value="pending">
+                                  {t("purchases.pending")}
+                                </SelectItem>
+                                <SelectItem value="confirmed">
+                                  {t("purchases.confirmed")}
+                                </SelectItem>
+                                <SelectItem value="partially_received">
+                                  {t("purchases.partially_received")}
+                                </SelectItem>
+                                <SelectItem value="received">
+                                  {t("purchases.received")}
+                                </SelectItem>
+                                <SelectItem value="cancelled">
+                                  {t("purchases.cancelled")}
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -640,7 +702,7 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                         <FormItem>
                           <FormLabel>{t("purchases.notes")}</FormLabel>
                           <FormControl>
-                            <Textarea 
+                            <Textarea
                               {...field}
                               value={field.value || ""}
                               placeholder={t("purchases.notesPlaceholder")}
@@ -668,7 +730,10 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                           {t("purchases.itemsDescription")}
                         </CardDescription>
                       </div>
-                      <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+                      <Dialog
+                        open={isProductDialogOpen}
+                        onOpenChange={setIsProductDialogOpen}
+                      >
                         <DialogTrigger asChild>
                           <Button size="sm" data-testid="button-add-item">
                             <Plus className="h-4 w-4 mr-2" />
@@ -679,7 +744,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                           <DialogHeader>
                             <div className="flex items-center justify-between">
                               <div>
-                                <DialogTitle>{t("purchases.selectProducts")}</DialogTitle>
+                                <DialogTitle>
+                                  {t("purchases.selectProducts")}
+                                </DialogTitle>
                                 <DialogDescription>
                                   {t("purchases.selectProductsDescription")}
                                 </DialogDescription>
@@ -702,7 +769,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                               <Input
                                 placeholder={t("purchases.searchProducts")}
                                 value={productSearch}
-                                onChange={(e) => setProductSearch(e.target.value)}
+                                onChange={(e) =>
+                                  setProductSearch(e.target.value)
+                                }
                                 className="pl-10"
                                 data-testid="input-product-search"
                               />
@@ -717,20 +786,25 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                                     data-testid={`product-${product.id}`}
                                   >
                                     <div>
-                                      <p className="font-medium">{product.name}</p>
+                                      <p className="font-medium">
+                                        {product.name}
+                                      </p>
                                       {product.sku && (
-                                        <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                                        <p className="text-sm text-gray-500">
+                                          SKU: {product.sku}
+                                        </p>
                                       )}
                                     </div>
                                     <div className="text-right">
                                       <p className="font-medium">
-                                        {new Intl.NumberFormat('ko-KR', {
-                                          style: 'currency',
-                                          currency: 'KRW',
+                                        {new Intl.NumberFormat("ko-KR", {
+                                          style: "currency",
+                                          currency: "KRW",
                                         }).format(product.unitPrice || 0)}
                                       </p>
                                       <p className="text-sm text-gray-500">
-                                        {t("inventory.stock")}: {product.stock || 0}
+                                        {t("inventory.stock")}:{" "}
+                                        {product.stock || 0}
                                       </p>
                                     </div>
                                   </div>
@@ -747,7 +821,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                         <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p>{t("purchases.noItemsSelected")}</p>
-                        <p className="text-sm">{t("purchases.clickAddItemToStart")}</p>
+                        <p className="text-sm">
+                          {t("purchases.clickAddItemToStart")}
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -755,20 +831,33 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                           <TableHeader>
                             <TableRow>
                               <TableHead>{t("purchases.product")}</TableHead>
-                              <TableHead className="w-24">{t("purchases.quantity")}</TableHead>
-                              <TableHead className="w-32">{t("purchases.unitPrice")}</TableHead>
-                              <TableHead className="w-32">{t("purchases.totalAmount")}</TableHead>
+                              <TableHead className="w-24">
+                                {t("purchases.quantity")}
+                              </TableHead>
+                              <TableHead className="w-32">
+                                {t("purchases.unitPrice")}
+                              </TableHead>
+                              <TableHead className="w-32">
+                                {t("purchases.totalAmount")}
+                              </TableHead>
                               <TableHead className="w-12"></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {selectedItems.map((item, index) => (
-                              <TableRow key={index} data-testid={`item-row-${index}`}>
+                              <TableRow
+                                key={index}
+                                data-testid={`item-row-${index}`}
+                              >
                                 <TableCell>
                                   <div>
-                                    <p className="font-medium">{item.productName}</p>
+                                    <p className="font-medium">
+                                      {item.productName}
+                                    </p>
                                     {item.sku && (
-                                      <p className="text-sm text-gray-500">SKU: {item.sku}</p>
+                                      <p className="text-sm text-gray-500">
+                                        SKU: {item.sku}
+                                      </p>
                                     )}
                                   </div>
                                 </TableCell>
@@ -776,7 +865,12 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                                   <Input
                                     type="number"
                                     value={item.quantity}
-                                    onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 0)}
+                                    onChange={(e) =>
+                                      updateItemQuantity(
+                                        index,
+                                        parseInt(e.target.value) || 0,
+                                      )
+                                    }
                                     min="1"
                                     className="w-20"
                                     data-testid={`input-quantity-${index}`}
@@ -786,7 +880,12 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                                   <Input
                                     type="number"
                                     value={item.unitPrice}
-                                    onChange={(e) => updateItemUnitPrice(index, parseFloat(e.target.value) || 0)}
+                                    onChange={(e) =>
+                                      updateItemUnitPrice(
+                                        index,
+                                        parseFloat(e.target.value) || 0,
+                                      )
+                                    }
                                     min="0"
                                     step="0.01"
                                     className="w-28"
@@ -794,9 +893,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                                   />
                                 </TableCell>
                                 <TableCell className="font-medium">
-                                  {new Intl.NumberFormat('ko-KR', {
-                                    style: 'currency',
-                                    currency: 'KRW',
+                                  {new Intl.NumberFormat("ko-KR", {
+                                    style: "currency",
+                                    currency: "KRW",
                                   }).format(item.total)}
                                 </TableCell>
                                 <TableCell>
@@ -832,10 +931,13 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span>{t("purchases.subtotal")}</span>
-                        <span className="font-medium" data-testid="text-subtotal">
-                          {new Intl.NumberFormat('ko-KR', {
-                            style: 'currency',
-                            currency: 'KRW',
+                        <span
+                          className="font-medium"
+                          data-testid="text-subtotal"
+                        >
+                          {new Intl.NumberFormat("ko-KR", {
+                            style: "currency",
+                            currency: "KRW",
                           }).format(subtotal)}
                         </span>
                       </div>
@@ -843,9 +945,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                         <div className="flex justify-between">
                           <span>{t("purchases.tax")}</span>
                           <span className="font-medium" data-testid="text-tax">
-                            {new Intl.NumberFormat('ko-KR', {
-                              style: 'currency',
-                              currency: 'KRW',
+                            {new Intl.NumberFormat("ko-KR", {
+                              style: "currency",
+                              currency: "KRW",
                             }).format(tax)}
                           </span>
                         </div>
@@ -854,9 +956,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                       <div className="flex justify-between text-lg font-bold">
                         <span>{t("purchases.totalCost")}</span>
                         <span data-testid="text-total">
-                          {new Intl.NumberFormat('ko-KR', {
-                            style: 'currency',
-                            currency: 'KRW',
+                          {new Intl.NumberFormat("ko-KR", {
+                            style: "currency",
+                            currency: "KRW",
                           }).format(total)}
                         </span>
                       </div>
@@ -866,9 +968,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
 
                     {/* Form Actions */}
                     <div className="space-y-2">
-                      <Button 
-                        type="submit" 
-                        className="w-full" 
+                      <Button
+                        type="submit"
+                        className="w-full"
                         disabled={saveMutation.isPending}
                         data-testid="button-submit"
                       >
@@ -880,14 +982,16 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                         ) : (
                           <>
                             <Send className="h-4 w-4 mr-2" />
-                            {isEditMode ? t("common.update") : t("common.create")}
+                            {isEditMode
+                              ? t("common.update")
+                              : t("common.create")}
                           </>
                         )}
                       </Button>
 
-                      <Button 
-                        type="button" 
-                        variant="outline" 
+                      <Button
+                        type="button"
+                        variant="outline"
                         className="w-full"
                         onClick={() => navigate("/purchases")}
                         data-testid="button-cancel"
@@ -902,12 +1006,17 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                     <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                       <div className="flex justify-between">
                         <span>{t("purchases.items")}:</span>
-                        <span data-testid="text-item-count">{selectedItems.length}</span>
+                        <span data-testid="text-item-count">
+                          {selectedItems.length}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>{t("purchases.totalQuantity")}:</span>
                         <span data-testid="text-total-quantity">
-                          {selectedItems.reduce((sum, item) => sum + item.quantity, 0)}
+                          {selectedItems.reduce(
+                            (sum, item) => sum + item.quantity,
+                            0,
+                          )}
                         </span>
                       </div>
                     </div>
@@ -919,16 +1028,23 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
         </Form>
 
         {/* New Product Dialog */}
-        <Dialog open={isNewProductDialogOpen} onOpenChange={setIsNewProductDialogOpen}>
+        <Dialog
+          open={isNewProductDialogOpen}
+          onOpenChange={setIsNewProductDialogOpen}
+        >
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>{t("inventory.addProduct")}</DialogTitle>
               <DialogDescription>
-                {t("inventory.addProductDescription") || "Create a new product for your inventory"}
+                {t("inventory.addProductDescription") ||
+                  "Create a new product for your inventory"}
               </DialogDescription>
             </DialogHeader>
             <Form {...newProductForm}>
-              <form onSubmit={newProductForm.handleSubmit(handleCreateNewProduct)} className="space-y-4">
+              <form
+                onSubmit={newProductForm.handleSubmit(handleCreateNewProduct)}
+                className="space-y-4"
+              >
                 <FormField
                   control={newProductForm.control}
                   name="name"
@@ -937,7 +1053,10 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                       <FormLabel>{t("common.name")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder={t("inventory.productNamePlaceholder") || "Enter product name"}
+                          placeholder={
+                            t("inventory.productNamePlaceholder") ||
+                            "Enter product name"
+                          }
                           {...field}
                           data-testid="input-product-name"
                         />
@@ -955,7 +1074,10 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                       <FormLabel>{t("inventory.sku")}</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder={t("inventory.skuPlaceholder") || "Enter SKU (optional)"}
+                          placeholder={
+                            t("inventory.skuPlaceholder") ||
+                            "Enter SKU (optional)"
+                          }
                           {...field}
                           data-testid="input-product-sku"
                         />
@@ -971,15 +1093,26 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("common.category")}</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
+                      <Select
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        value={field.value?.toString()}
+                      >
                         <FormControl>
                           <SelectTrigger data-testid="select-category">
-                            <SelectValue placeholder={t("inventory.selectCategory") || "Select category"} />
+                            <SelectValue
+                              placeholder={
+                                t("inventory.selectCategory") ||
+                                "Select category"
+                              }
+                            />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {categories.map((category: any) => (
-                            <SelectItem key={category.id} value={category.id.toString()}>
+                            <SelectItem
+                              key={category.id}
+                              value={category.id.toString()}
+                            >
                               {category.name}
                             </SelectItem>
                           ))}
@@ -1022,7 +1155,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                           type="number"
                           min="0"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                           data-testid="input-product-stock"
                         />
                       </FormControl>
@@ -1039,7 +1174,8 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                       <div className="space-y-0.5">
                         <FormLabel>{t("inventory.trackInventory")}</FormLabel>
                         <FormDescription>
-                          {t("inventory.trackInventoryDescription") || "Track stock levels for this product"}
+                          {t("inventory.trackInventoryDescription") ||
+                            "Track stock levels for this product"}
                         </FormDescription>
                       </div>
                       <FormControl>

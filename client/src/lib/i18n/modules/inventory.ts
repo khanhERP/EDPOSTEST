@@ -1,6 +1,7 @@
 export const inventoryTranslations = {
   ko: {
     title: '재고 관리',
+    addProduct : '신규 상품 추가',
     description: '상품 재고를 관리합니다',
     totalProducts: '총 상품',
     lowStock: '재고 부족',
@@ -67,6 +68,7 @@ export const inventoryTranslations = {
   },
   en: {
     title: 'Inventory Management',
+    addProduct : 'Add new product',
     description: 'Manage product inventory',
     totalProducts: 'Total Products',
     lowStock: 'Low Stock',
@@ -133,6 +135,7 @@ export const inventoryTranslations = {
   },
   vi: {
     title: 'Quản lý tồn kho',
+    addProduct : 'Thêm sản phẩm mới',
     description: 'Quản lý tồn kho sản phẩm',
     totalProducts: 'Tổng sản phẩm',
     lowStock: 'Sắp hết hàng',
