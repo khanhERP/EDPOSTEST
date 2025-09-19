@@ -1613,7 +1613,10 @@ export default function Settings() {
                               id="priceIncludesTax"
                               checked={storeSettings.priceIncludesTax || false}
                               onCheckedChange={(checked) =>
-                                handleStoreSettingChange("priceIncludesTax", checked ? "true" : "false")
+                                setStoreSettings((prev) => ({
+                                  ...prev,
+                                  priceIncludesTax: Boolean(checked),
+                                }))
                               }
                             />
                             <Label htmlFor="priceIncludesTax" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
