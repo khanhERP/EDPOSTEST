@@ -3153,75 +3153,8 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async createProduct(productData: Omit<Product, "id">): Promise<Product> {
-    if (!this.db) {
-      console.error(`❌ Database is undefined in createProduct`);
-      throw new Error(`Database connection is not available`);
-    }
-    try {
-      console.log("Storage: Creating product with data:", productData);
-      const [product] = await this.db
-        .insert(products)
-        .values({
-          ...productData,
-          productType: productData.productType || 1,
-        })
-        .returning();
-      console.log("Storage: Product created successfully:", product);
-      return product;
-    } catch (error: any) {
-      console.error("Storage: Error creating product:", error);
-      
-      // Handle duplicate key error by fixing sequence
-      if (error?.code === '23505' && error?.constraint === 'products_pkey') {
-        console.log("🔧 Fixing products sequence due to duplicate key error...");
-        try {
-          // Get max ID from products table using Drizzle SQL
-          const maxIdResult = await this.db.execute(sql`SELECT COALESCE(MAX(id), 0) as max_id FROM products`);
-          const maxId = maxIdResult.rows[0]?.max_id || 0;
-          const newSeqValue = maxId + 100; // Set sequence well above current max
-          
-          console.log(`📊 Current max ID: ${maxId}, setting sequence to: ${newSeqValue}`);
-          
-          // Reset sequence using Drizzle SQL
-          await this.db.execute(sql`SELECT setval('products_id_seq', ${newSeqValue}, true)`);
-          console.log(`✅ Products sequence reset to ${newSeqValue}`);
-          
-          // Retry the insert
-          console.log("🔄 Retrying product creation...");
-          const [product] = await this.db
-            .insert(products)
-            .values({
-              ...productData,
-              productType: productData.productType || 1,
-            })
-            .returning();
-          
-          console.log("✅ Product created successfully on retry:", product);
-          return product;
-        } catch (retryError) {
-          console.error("❌ Failed to fix sequence and retry:", retryError);
-          // Even if sequence fix fails, try with a random high ID
-          try {
-            console.log("🎲 Attempting with random high ID...");
-            const randomId = Date.now(); // Use timestamp as ID
-            const productWithId = { ...productData, id: randomId, productType: productData.productType || 1 };
-            const [product] = await this.db
-              .insert(products)
-              .values(productWithId)
-              .returning();
-            console.log("✅ Product created with random ID:", product);
-            return product;
-          } catch (finalError) {
-            console.error("❌ All retry attempts failed:", finalError);
-            throw retryError;
-          }
-        }
-      }
-      
-      throw error;
-    }
-  }
+  // Note: Removed duplicate createProduct method to avoid conflicts
+  // All product creation now uses the createProduct method with tenantDb parameter (line 872)
 
   // Invoice template methods
   async getInvoiceTemplates(tenantDb: any = null): Promise<any[]> {
