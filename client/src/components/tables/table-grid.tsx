@@ -13,6 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { OrderDialog } from "@/components/orders/order-dialog";
 import {
   Users,
@@ -67,6 +68,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const [orderForPayment, setOrderForPayment] = useState<any>(null);
+  const [activeFloor, setActiveFloor] = useState("1층");
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -2899,25 +2901,40 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     return floorNumA - floorNumB;
   });
 
+  // Set first floor as active if no active floor is set
+  useEffect(() => {
+    if (sortedFloors.length > 0 && !sortedFloors.includes(activeFloor)) {
+      setActiveFloor(sortedFloors[0]);
+    }
+  }, [sortedFloors, activeFloor]);
+
   return (
     <>
-      <div className="space-y-8">
-        {sortedFloors.map((floor) => (
-          <div key={floor} className="space-y-4">
-            {/* Floor Header */}
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-lg shadow-md">
-                {floor}
-              </div>
-              <div className="flex-1 h-px bg-gray-300"></div>
-              <div className="text-sm text-gray-600">
-                {tablesByFloor[floor].length}개 테이블
-              </div>
-            </div>
+      {sortedFloors.length > 0 ? (
+        <Tabs value={activeFloor} onValueChange={setActiveFloor} className="w-full">
+          {/* Floor Tabs */}
+          <div className="w-full overflow-x-auto mb-6">
+            <TabsList className="h-auto min-h-[50px] items-center justify-start gap-1 bg-white border border-gray-200 rounded-lg p-2 shadow-sm inline-flex">
+              {sortedFloors.map((floor) => (
+                <TabsTrigger
+                  key={floor}
+                  value={floor}
+                  className="flex items-center gap-2 text-sm px-4 py-3 whitespace-nowrap data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-blue-50 transition-all duration-200 rounded-md font-medium border border-transparent data-[state=active]:border-blue-600"
+                >
+                  <span className="font-semibold">{floor}</span>
+                  <span className="text-xs bg-gray-100 data-[state=active]:bg-blue-400 px-2 py-1 rounded-full">
+                    {tablesByFloor[floor].length}
+                  </span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
-            {/* Tables for this floor */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {tablesByFloor[floor].map((table: Table) => {
+          {/* Floor Content */}
+          {sortedFloors.map((floor) => (
+            <TabsContent key={floor} value={floor} className="mt-0">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {tablesByFloor[floor].map((table: Table) => {
                 const statusConfig = getTableStatus(table.status);
                 const activeOrder = getActiveOrder(table.id);
                 const isSelected = selectedTableId === table.id;
@@ -3090,18 +3107,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     </CardContent>
                   </Card>
                 );
-              })}
-            </div>
-          </div>
-        ))}
-
-        {/* Show message if no tables */}
-        {sortedFloors.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            테이블이 없습니다.
-          </div>
-        )}
-      </div>
+                })}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          테이블이 없습니다.
+        </div>
+      )}
 
       {/* Order Dialog */}
       <OrderDialog
