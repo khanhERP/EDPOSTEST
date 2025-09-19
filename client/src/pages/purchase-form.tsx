@@ -204,7 +204,6 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       const order = existingOrder as any;
       form.setValue("supplierId", order.supplierId);
       form.setValue("poNumber", order.poNumber);
-      form.setValue("expectedDeliveryDate", order.expectedDeliveryDate);
       form.setValue("expectedDeliveryDate", order.expectedDeliveryDate || "");
       form.setValue("notes", order.notes || "");
       form.setValue("status", order.status);
@@ -336,6 +335,9 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
       queryClient.setQueryData(["/api/products"], (old: any[]) => {
         return [...(old || []), { ...newProduct, unitPrice: Number(newProduct.price) || 0 }];
       });
+      
+      // Invalidate queries for cache consistency
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       
       // Add new product to selected items automatically
       addProduct({
@@ -594,24 +596,6 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                         )}
                       />
 
-                      {/* Expected Delivery Date */}
-                      <FormField
-                        control={form.control}
-                        name="expectedDeliveryDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("purchases.expectedDelivery")}</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="date"
-                                data-testid="input-expected-delivery"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </div>
 
                     {/* Status (Edit Mode Only) */}
@@ -931,6 +915,175 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
             </div>
           </form>
         </Form>
+
+        {/* New Product Dialog */}
+        <Dialog open={isNewProductDialogOpen} onOpenChange={setIsNewProductDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t("inventory.addProduct")}</DialogTitle>
+              <DialogDescription>
+                {t("inventory.addProductDescription") || "Create a new product for your inventory"}
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...newProductForm}>
+              <form onSubmit={newProductForm.handleSubmit(handleCreateNewProduct)} className="space-y-4">
+                <FormField
+                  control={newProductForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("common.name")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={t("inventory.productNamePlaceholder") || "Enter product name"}
+                          {...field}
+                          data-testid="input-product-name"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={newProductForm.control}
+                  name="sku"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("inventory.sku")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={t("inventory.skuPlaceholder") || "Enter SKU (optional)"}
+                          {...field}
+                          data-testid="input-product-sku"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={newProductForm.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("common.category")}</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-category">
+                            <SelectValue placeholder={t("inventory.selectCategory") || "Select category"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((category: any) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={newProductForm.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("inventory.unitPrice")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                          data-testid="input-product-price"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={newProductForm.control}
+                  name="stock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("inventory.currentStock")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          data-testid="input-product-stock"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={newProductForm.control}
+                  name="trackInventory"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>{t("inventory.trackInventory")}</FormLabel>
+                        <FormDescription>
+                          {t("inventory.trackInventoryDescription") || "Track stock levels for this product"}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-track-inventory"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsNewProductDialogOpen(false)}
+                    className="flex-1"
+                    data-testid="button-cancel-new-product"
+                  >
+                    {t("common.cancel")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createProductMutation.isPending}
+                    className="flex-1"
+                    data-testid="button-create-product"
+                  >
+                    {createProductMutation.isPending ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        {t("common.creating")}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        {t("common.create")}
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
