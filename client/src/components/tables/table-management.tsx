@@ -417,12 +417,30 @@ export function TableManagement() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("tables.floorLabel")}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t("tables.floorPlaceholder")}
-                        {...field}
-                      />
-                    </FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={t("tables.floorPlaceholder")}
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="1층">1층</SelectItem>
+                        <SelectItem value="2층">2층</SelectItem>
+                        <SelectItem value="3층">3층</SelectItem>
+                        <SelectItem value="4층">4층</SelectItem>
+                        <SelectItem value="5층">5층</SelectItem>
+                        <SelectItem value="6층">6층</SelectItem>
+                        <SelectItem value="7층">7층</SelectItem>
+                        <SelectItem value="8층">8층</SelectItem>
+                        <SelectItem value="9층">9층</SelectItem>
+                        <SelectItem value="10층">10층</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
