@@ -675,7 +675,7 @@ export default function InventoryPage() {
                             </td>
                             <td className="py-4 px-2">
                               <Badge
-                                className="text-green-700 text-xs"
+                                className="text-green-700 text-xs bg-transparent"
                               >
                                 {category?.name || t("inventory.uncategorized")}
                               </Badge>
