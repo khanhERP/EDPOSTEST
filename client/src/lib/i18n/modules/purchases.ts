@@ -63,7 +63,8 @@ export const purchasesTranslations = {
     receivedQuantity: "입고 수량",
     remainingQuantity: "잔여 수량",
     totalAmount: "총 금액",
-    purchases.itemsDescription: "구매 주문에 포함된 품목 목록",   
+    itemsDescription: "구매 주문에 포함된 품목 목록",
+    
     // Pricing & Calculations
     subtotal: "소계",
     tax: "세금",
@@ -261,6 +262,7 @@ export const purchasesTranslations = {
     receivedQuantity: "Received Quantity",
     remainingQuantity: "Remaining Quantity",
     totalAmount: "Total Amount",
+    itemsDescription: "List of items included in the purchase order",
     
     // Pricing & Calculations
     subtotal: "Subtotal",
@@ -459,6 +461,7 @@ export const purchasesTranslations = {
     receivedQuantity: "Số lượng nhận",
     remainingQuantity: "Số lượng còn lại",
     totalAmount: "Tổng tiền",
+    itemsDescription: "Danh sách các mặt hàng trong đơn mua hàng",
     
     // Pricing & Calculations
     subtotal: "Tạm tính",
