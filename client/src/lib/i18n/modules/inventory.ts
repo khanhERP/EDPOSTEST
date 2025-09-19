@@ -1,6 +1,4 @@
-import type { InventoryTranslations } from '../types';
-
-export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
+export const inventoryTranslations = {
   ko: {
     title: '재고 관리',
     description: '상품 재고를 관리합니다',
@@ -59,6 +57,13 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     duplicateSkuDescription: "이 SKU는 다른 상품에서 이미 사용되고 있습니다",
     quantityMinError: "수량은 최소 1개 이상이어야 합니다",
     trackInventory: "재고 추적",
+    trackInventoryDescription: "이 상품의 재고 수준을 추적합니다",
+    addProduct: "상품 추가",
+    addProductDescription: "새 상품을 인벤토리에 추가합니다",
+    selectCategory: "카테고리를 선택하세요",
+    sku: "SKU",
+    stock: "재고",
+    productCreated: "상품이 성공적으로 생성되었습니다",
   },
   en: {
     title: 'Inventory Management',
@@ -118,6 +123,13 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     duplicateSkuDescription: "This SKU is already used by another product",
     quantityMinError: "Quantity must be at least 1",
     trackInventory: "Track Inventory",
+    trackInventoryDescription: "Track stock levels for this product",
+    addProduct: "Add Product",
+    addProductDescription: "Create a new product for your inventory",
+    selectCategory: "Select category",
+    sku: "SKU",
+    stock: "Stock",
+    productCreated: "Product created successfully",
   },
   vi: {
     title: 'Quản lý tồn kho',
@@ -186,5 +198,12 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     duplicateSkuDescription: "SKU này đã được sử dụng cho sản phẩm khác",
     quantityMinError: "Số lượng phải ít nhất là 1",
     trackInventory: "Theo dõi tồn kho",
+    trackInventoryDescription: "Theo dõi mức tồn kho cho sản phẩm này",
+    addProduct: "Thêm sản phẩm",
+    addProductDescription: "Tạo sản phẩm mới cho kho hàng của bạn",
+    selectCategory: "Chọn danh mục",
+    sku: "SKU",
+    stock: "Tồn kho",
+    productCreated: "Sản phẩm đã được tạo thành công",
   }
 };
