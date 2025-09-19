@@ -257,6 +257,15 @@ export const insertProductSchema = createInsertSchema(products)
         },
       ),
     priceIncludesTax: z.boolean().optional().default(false),
+    afterTaxPrice: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
+        {
+          message: "After tax price must be a positive number",
+        },
+      ),
   });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({

@@ -1164,7 +1164,28 @@ export function ProductManagerModal({
                           <FormControl>
                             <Checkbox
                               checked={field.value || false}
-                              onCheckedChange={field.onChange}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                                
+                                // Recalculate prices based on priceIncludesTax setting
+                                const currentPrice = form.getValues("price");
+                                const taxRate = parseFloat(form.getValues("taxRate") || "8.00");
+                                
+                                if (currentPrice && !isNaN(parseInt(currentPrice))) {
+                                  const priceNum = parseInt(currentPrice);
+                                  
+                                  if (checked) {
+                                    // Price includes tax: calculate base price and set afterTaxPrice
+                                    const basePrice = Math.round(priceNum / (1 + taxRate / 100));
+                                    form.setValue("price", basePrice.toString());
+                                    form.setValue("afterTaxPrice", priceNum.toString());
+                                  } else {
+                                    // Price is base price: calculate afterTaxPrice
+                                    const afterTaxPrice = Math.round(priceNum + (priceNum * taxRate / 100));
+                                    form.setValue("afterTaxPrice", afterTaxPrice.toString());
+                                  }
+                                }
+                              }}
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">

@@ -890,7 +890,9 @@ export class DatabaseStorage implements IStorage {
         trackInventory: insertProduct.trackInventory !== false,
         imageUrl: insertProduct.imageUrl || null,
         isActive: true,
-        priceIncludesTax: Boolean(insertProduct.priceIncludesTax || false)
+        taxRate: insertProduct.taxRate || "0.00",
+        priceIncludesTax: Boolean(insertProduct.priceIncludesTax || false),
+        afterTaxPrice: insertProduct.afterTaxPrice || null
       };
 
       console.log("Storage: Inserting product data:", productData);
