@@ -11,7 +11,11 @@ import { Link } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 import { useQueryClient } from "@tanstack/react-query";
 
-export default function TablesPage() {
+interface TablesPageProps {
+  onLogout: () => void;
+}
+
+export default function TablesPage({ onLogout }: TablesPageProps) {
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -120,9 +124,9 @@ export default function TablesPage() {
     };
 
     // Listen for e-invoice related events
-    window.addEventListener("einvoicePublished", handleEInvoiceEvents);
-    window.addEventListener("einvoiceSavedForLater", handleEInvoiceEvents);
-    window.addEventListener("forceDataRefresh", handleEInvoiceEvents);
+    window.addEventListener("einvoicePublished", handleEInvoiceEvents as EventListener);
+    window.addEventListener("einvoiceSavedForLater", handleEInvoiceEvents as EventListener);
+    window.addEventListener("forceDataRefresh", handleEInvoiceEvents as EventListener);
 
     connectWebSocket();
 
@@ -131,9 +135,9 @@ export default function TablesPage() {
         ws.close();
       }
       // Clean up event listeners
-      window.removeEventListener("einvoicePublished", handleEInvoiceEvents);
-      window.removeEventListener("einvoiceSavedForLater", handleEInvoiceEvents);
-      window.removeEventListener("forceDataRefresh", handleEInvoiceEvents);
+      window.removeEventListener("einvoicePublished", handleEInvoiceEvents as EventListener);
+      window.removeEventListener("einvoiceSavedForLater", handleEInvoiceEvents as EventListener);
+      window.removeEventListener("forceDataRefresh", handleEInvoiceEvents as EventListener);
     };
   }, [queryClient]);
 

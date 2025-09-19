@@ -76,7 +76,7 @@ function Router({ onLogout }: { onLogout: () => void }) {
         component={() => <AttendancePage onLogout={onLogout} />}
       />
       <Route path="/attendance-qr" component={AttendanceQRPage} />
-      <Route path="/inventory" component={InventoryPage} />
+      <Route path="/inventory" component={() => <InventoryPage onLogout={onLogout} />} />
       <Route path="/customer-display" component={CustomerDisplay} />
       <Route path="/sales-orders" component={SalesOrders} />
       <Route path="*" component={NotFoundPage} />

@@ -34,7 +34,11 @@ import { EmployeeReport } from "@/components/reports/employee-report";
 import { SalesChannelReport } from "@/components/reports/sales-channel-report";
 import { FinancialReport } from "@/components/reports/financial-report";
 
-export default function ReportsPage() {
+interface ReportsPageProps {
+  onLogout: () => void;
+}
+
+export default function ReportsPage({ onLogout }: ReportsPageProps) {
   const { t } = useTranslation();
   const search = useSearch();
   const [activeTab, setActiveTab] = useState("overview");

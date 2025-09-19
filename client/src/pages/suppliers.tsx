@@ -15,7 +15,11 @@ import { useTranslation } from "@/lib/i18n";
 import type { Supplier } from "@shared/schema";
 import { SupplierFormModal } from "@/components/suppliers/supplier-form-modal";
 
-export default function SuppliersPage() {
+interface SuppliersPageProps {
+  onLogout: () => void;
+}
+
+export default function SuppliersPage({ onLogout }: SuppliersPageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);

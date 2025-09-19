@@ -67,7 +67,11 @@ const stockUpdateSchema = (t: any) =>
 
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
 
-export default function InventoryPage() {
+interface InventoryPageProps {
+  onLogout: () => void;
+}
+
+export default function InventoryPage({ onLogout }: InventoryPageProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
 

@@ -8,7 +8,11 @@ import { UserPlus, ShoppingCart } from "lucide-react";
 import { Link } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 
-export default function EmployeesPage() {
+interface EmployeesPageProps {
+  onLogout: () => void;
+}
+
+export default function EmployeesPage({ onLogout }: EmployeesPageProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const { t } = useTranslation();
 

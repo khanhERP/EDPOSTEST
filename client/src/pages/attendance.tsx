@@ -10,7 +10,11 @@ import { Calendar, Clock, Users, ShoppingCart } from "lucide-react";
 import { Link } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 
-export default function AttendancePage() {
+interface AttendancePageProps {
+  onLogout: () => void;
+}
+
+export default function AttendancePage({ onLogout }: AttendancePageProps) {
   const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]

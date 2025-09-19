@@ -90,7 +90,11 @@ const EINVOICE_PROVIDERS = [
   { name: "WinInvoice", value: "9" },
 ];
 
-export default function Settings() {
+interface SettingsPageProps {
+  onLogout: () => void;
+}
+
+export default function SettingsPage({ onLogout }: SettingsPageProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
