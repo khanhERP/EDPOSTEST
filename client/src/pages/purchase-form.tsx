@@ -167,6 +167,12 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
     select: (data: any) => data || [],
   });
 
+  // Fetch categories for new product form
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+    select: (data: any) => data || [],
+  });
+
   // Fetch products for selection
   const { data: allProducts = [] } = useQuery({
     queryKey: ["/api/products"],
