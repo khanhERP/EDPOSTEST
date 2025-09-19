@@ -546,6 +546,30 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     };
   }, [queryClient, refetchTables, refetchOrders]);
 
+  // Set first floor as active if no active floor is set - MUST be with other hooks
+  useEffect(() => {
+    // Group tables by floor
+    const tablesByFloor = Array.isArray(tables) ? tables.reduce((acc, table) => {
+      const floor = table.floor || '1층';
+      if (!acc[floor]) {
+        acc[floor] = [];
+      }
+      acc[floor].push(table);
+      return acc;
+    }, {} as Record<string, Table[]>) : {};
+
+    // Sort floors numerically (1층, 2층, 3층, etc.)
+    const sortedFloors = Object.keys(tablesByFloor).sort((a, b) => {
+      const floorNumA = parseInt(a.replace('층', '')) || 0;
+      const floorNumB = parseInt(b.replace('층', '')) || 0;
+      return floorNumA - floorNumB;
+    });
+
+    if (sortedFloors.length > 0 && !sortedFloors.includes(activeFloor)) {
+      setActiveFloor(sortedFloors[0]);
+    }
+  }, [tables, activeFloor]);
+
   // Broadcast cart updates to customer display - only for selected table
   const broadcastCartUpdate = useCallback(
     async (specificTableId?: number) => {
@@ -2903,13 +2927,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     const floorNumB = parseInt(b.replace('층', '')) || 0;
     return floorNumA - floorNumB;
   });
-
-  // Set first floor as active if no active floor is set
-  useEffect(() => {
-    if (sortedFloors.length > 0 && !sortedFloors.includes(activeFloor)) {
-      setActiveFloor(sortedFloors[0]);
-    }
-  }, [sortedFloors, activeFloor]);
 
   return (
     <>
