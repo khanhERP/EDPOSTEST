@@ -418,7 +418,6 @@ export default function InventoryPage() {
     <div className="min-h-screen bg-green-50 grocery-bg">
       <POSHeader />
       <RightSidebar />
-
       <div className="main-content pt-16 px-6">
         <div className="max-w-7xl mx-auto py-8">
           {/* Page Header */}
@@ -652,7 +651,7 @@ export default function InventoryPage() {
                             className="border-b border-gray-100 hover:bg-green-50/50"
                           >
                             <td className="py-4 px-2">
-                              <div className="font-medium text-gray-900 break-words">
+                              <div className="font-medium text-gray-900 break-words text-[13px]">
                                 {product.name}
                               </div>
                             </td>
@@ -750,7 +749,6 @@ export default function InventoryPage() {
           </Card>
         </div>
       </div>
-
       {/* Stock Update Dialog */}
       <Dialog open={showStockDialog} onOpenChange={setShowStockDialog}>
         <DialogContent className="sm:max-w-md">
