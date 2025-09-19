@@ -63,7 +63,7 @@ export const purchasesTranslations = {
     receivedQuantity: "입고 수량",
     remainingQuantity: "잔여 수량",
     totalAmount: "총 금액",
-    
+    purchases.itemsDescription: "구매 주문에 포함된 품목 목록",   
     // Pricing & Calculations
     subtotal: "소계",
     tax: "세금",
