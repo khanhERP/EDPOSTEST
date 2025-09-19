@@ -2882,184 +2882,225 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     );
   }
 
+  // Group tables by floor
+  const tablesByFloor = Array.isArray(tables) ? tables.reduce((acc, table) => {
+    const floor = table.floor || '1층';
+    if (!acc[floor]) {
+      acc[floor] = [];
+    }
+    acc[floor].push(table);
+    return acc;
+  }, {} as Record<string, Table[]>) : {};
+
+  // Sort floors numerically (1층, 2층, 3층, etc.)
+  const sortedFloors = Object.keys(tablesByFloor).sort((a, b) => {
+    const floorNumA = parseInt(a.replace('층', '')) || 0;
+    const floorNumB = parseInt(b.replace('층', '')) || 0;
+    return floorNumA - floorNumB;
+  });
+
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {Array.isArray(tables) &&
-          tables.map((table: Table) => {
-            const statusConfig = getTableStatus(table.status);
-            const activeOrder = getActiveOrder(table.id);
-            const isSelected = selectedTableId === table.id;
+      <div className="space-y-8">
+        {sortedFloors.map((floor) => (
+          <div key={floor} className="space-y-4">
+            {/* Floor Header */}
+            <div className="flex items-center space-x-4">
+              <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-lg shadow-md">
+                {floor}
+              </div>
+              <div className="flex-1 h-px bg-gray-300"></div>
+              <div className="text-sm text-gray-600">
+                {tablesByFloor[floor].length}개 테이블
+              </div>
+            </div>
 
-            return (
-              <Card
-                key={table.id}
-                className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                  isSelected ? "ring-2 ring-blue-500" : ""
-                } ${table.status === "occupied" ? "bg-red-50" : "bg-white"}`}
-                onClick={() => handleTableClick(table)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex flex-col items-center text-center space-y-3">
-                    {/* Table Number */}
-                    <div className="relative">
-                      <div
-                        className={`px-3 py-2 rounded-lg ${statusConfig.color} flex items-center justify-center font-bold shadow-lg border-2 border-white min-w-[80px] min-h-[48px]`}
-                        style={{
-                          fontSize:
-                            table.tableNumber.length > 8
-                              ? "0.75rem"
-                              : table.tableNumber.length > 5
-                                ? "0.875rem"
-                                : "1rem",
-                        }}
-                      >
-                        <span className="text-center leading-tight text-white break-words hyphens-auto px-1">
-                          {table.tableNumber}
-                        </span>
-                      </div>
-                      {activeOrder && (
-                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-500 rounded-full animate-pulse border-2 border-white shadow-md flex items-center justify-center">
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        </div>
-                      )}
-                    </div>
+            {/* Tables for this floor */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {tablesByFloor[floor].map((table: Table) => {
+                const statusConfig = getTableStatus(table.status);
+                const activeOrder = getActiveOrder(table.id);
+                const isSelected = selectedTableId === table.id;
 
-                    {/* Table Info */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-center text-sm text-gray-600">
-                        <Users className="w-3 h-3 mr-1" />
-                        {activeOrder ? (
-                          <span>
-                            {activeOrder.customerCount || 1}/{table.capacity}{" "}
-                            {t("orders.people")}
-                          </span>
-                        ) : (
-                          <span>
-                            {table.capacity} {t("orders.people")}
-                          </span>
-                        )}
-                      </div>
-                      <Badge
-                        variant={
-                          table.status === "occupied" && activeOrder
-                            ? getOrderStatusBadge(activeOrder.status).variant
-                            : statusConfig.variant
-                        }
-                        className="text-xs rounded-full px-3 py-1 font-medium shadow-sm border-0"
-                        style={{
-                          backgroundColor:
-                            table.status === "available"
-                              ? "#dcfce7"
-                              : table.status === "occupied"
-                                ? "#fecaca"
-                                : table.status === "reserved"
-                                  ? "#fef3c7"
-                                  : "#f3f4f6",
-                          color:
-                            table.status === "available"
-                              ? "#166534"
-                              : table.status === "occupied"
-                                ? "#dc2626"
-                                : table.status === "reserved"
-                                  ? "#d97706"
-                                  : "#6b7280",
-                        }}
-                      >
-                        {table.status === "occupied" && activeOrder
-                          ? getOrderStatusBadge(activeOrder.status).label
-                          : statusConfig.label}
-                      </Badge>
-                    </div>
-
-                    {/* Order Info */}
-                    {activeOrder && (
-                      <div className="space-y-1 text-xs text-gray-600">
-                        <div className="flex items-center justify-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {new Date(activeOrder.orderedAt).toLocaleTimeString(
-                            currentLanguage === "ko"
-                              ? "ko-KR"
-                              : currentLanguage === "en"
-                                ? "en-US"
-                                : "vi-VN",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
+                return (
+                  <Card
+                    key={table.id}
+                    className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                      isSelected ? "ring-2 ring-blue-500" : ""
+                    } ${table.status === "occupied" ? "bg-red-50" : "bg-white"}`}
+                    onClick={() => handleTableClick(table)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex flex-col items-center text-center space-y-3">
+                        {/* Table Number */}
+                        <div className="relative">
+                          <div
+                            className={`px-3 py-2 rounded-lg ${statusConfig.color} flex items-center justify-center font-bold shadow-lg border-2 border-white min-w-[80px] min-h-[48px]`}
+                            style={{
+                              fontSize:
+                                table.tableNumber.length > 8
+                                  ? "0.75rem"
+                                  : table.tableNumber.length > 5
+                                    ? "0.875rem"
+                                    : "1rem",
+                            }}
+                          >
+                            <span className="text-center leading-tight text-white break-words hyphens-auto px-1">
+                              {table.tableNumber}
+                            </span>
+                          </div>
+                          {activeOrder && (
+                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-500 rounded-full animate-pulse border-2 border-white shadow-md flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
                           )}
                         </div>
-                        <div className="font-medium text-gray-900">
-                          {(() => {
-                            const total = Math.floor(
-                              Number(activeOrder.total || 0),
-                            );
 
-                            // Show original total without applying discount
-                            console.log(
-                              `💰 Table order ${activeOrder.orderNumber} - showing original total: ${total}`,
-                            );
-                            return total.toLocaleString("vi-VN");
-                          })()}{" "}
-                          ₫
+                        {/* Table Info */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-center text-sm text-gray-600">
+                            <Users className="w-3 h-3 mr-1" />
+                            {activeOrder ? (
+                              <span>
+                                {activeOrder.customerCount || 1}/{table.capacity}{" "}
+                                {t("orders.people")}
+                              </span>
+                            ) : (
+                              <span>
+                                {table.capacity} {t("orders.people")}
+                              </span>
+                            )}
+                          </div>
+                          <Badge
+                            variant={
+                              table.status === "occupied" && activeOrder
+                                ? getOrderStatusBadge(activeOrder.status).variant
+                                : statusConfig.variant
+                            }
+                            className="text-xs rounded-full px-3 py-1 font-medium shadow-sm border-0"
+                            style={{
+                              backgroundColor:
+                                table.status === "available"
+                                  ? "#dcfce7"
+                                  : table.status === "occupied"
+                                    ? "#fecaca"
+                                    : table.status === "reserved"
+                                      ? "#fef3c7"
+                                      : "#f3f4f6",
+                              color:
+                                table.status === "available"
+                                  ? "#166534"
+                                  : table.status === "occupied"
+                                    ? "#dc2626"
+                                    : table.status === "reserved"
+                                      ? "#d97706"
+                                      : "#6b7280",
+                            }}
+                          >
+                            {table.status === "occupied" && activeOrder
+                              ? getOrderStatusBadge(activeOrder.status).label
+                              : statusConfig.label}
+                          </Badge>
                         </div>
+
+                        {/* Order Info */}
+                        {activeOrder && (
+                          <div className="space-y-1 text-xs text-gray-600">
+                            <div className="flex items-center justify-center">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {new Date(activeOrder.orderedAt).toLocaleTimeString(
+                                currentLanguage === "ko"
+                                  ? "ko-KR"
+                                  : currentLanguage === "en"
+                                    ? "en-US"
+                                    : "vi-VN",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
+                            </div>
+                            <div className="font-medium text-gray-900">
+                              {(() => {
+                                const total = Math.floor(
+                                  Number(activeOrder.total || 0),
+                                );
+
+                                // Show original total without applying discount
+                                console.log(
+                                  `💰 Table order ${activeOrder.orderNumber} - showing original total: ${total}`,
+                                );
+                                return total.toLocaleString("vi-VN");
+                              })()}{" "}
+                              ₫
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Quick Actions */}
+                        {table.status === "occupied" && (
+                          <div className="space-y-1 w-full">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (activeOrder) {
+                                  handleViewOrderDetails(activeOrder);
+                                }
+                              }}
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              {t("orders.viewDetails")}
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="w-full text-xs bg-blue-600 hover:bg-blue-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (activeOrder) {
+                                  handleEditOrder(activeOrder, table);
+                                }
+                              }}
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              {t("orders.addMore")}
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="w-full text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (activeOrder) {
+                                  handleDeleteOrder(activeOrder);
+                                }
+                              }}
+                            >
+                              <X className="w-3 h-3 mr-1" />
+                              {t("tables.deleteOrder")}
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        ))}
 
-                    {/* Quick Actions */}
-                    {table.status === "occupied" && (
-                      <div className="space-y-1 w-full">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full text-xs"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (activeOrder) {
-                              handleViewOrderDetails(activeOrder);
-                            }
-                          }}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          {t("orders.viewDetails")}
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="w-full text-xs bg-blue-600 hover:bg-blue-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (activeOrder) {
-                              handleEditOrder(activeOrder, table);
-                            }
-                          }}
-                        >
-                          <Plus className="w-3 h-3 mr-1" />
-                          {t("orders.addMore")}
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="w-full text-xs"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (activeOrder) {
-                              handleDeleteOrder(activeOrder);
-                            }
-                          }}
-                        >
-                          <X className="w-3 h-3 mr-1" />
-                          {t("tables.deleteOrder")}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+        {/* Show message if no tables */}
+        {sortedFloors.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            테이블이 없습니다.
+          </div>
+        )}
       </div>
 
       {/* Order Dialog */}
