@@ -905,13 +905,15 @@ export class DatabaseStorage implements IStorage {
       if (error?.code === '23505' && error?.constraint === 'products_pkey') {
         console.log("🔧 Fixing products sequence due to duplicate key error...");
         try {
-          // Get max ID from products table
-          const maxIdResult = await database.raw('SELECT COALESCE(MAX(id), 0) as max_id FROM products');
+          // Get max ID from products table using Drizzle SQL
+          const maxIdResult = await database.execute(sql`SELECT COALESCE(MAX(id), 0) as max_id FROM products`);
           const maxId = maxIdResult.rows[0]?.max_id || 0;
           const newSeqValue = maxId + 100; // Set sequence well above current max
           
-          // Reset sequence
-          await database.raw(`SELECT setval('products_id_seq', ${newSeqValue}, true)`);
+          console.log(`📊 Current max ID: ${maxId}, setting sequence to: ${newSeqValue}`);
+          
+          // Reset sequence using Drizzle SQL
+          await database.execute(sql`SELECT setval('products_id_seq', ${newSeqValue}, true)`);
           console.log(`✅ Products sequence reset to ${newSeqValue}`);
           
           // Retry the insert
@@ -925,7 +927,21 @@ export class DatabaseStorage implements IStorage {
           return product;
         } catch (retryError) {
           console.error("❌ Failed to fix sequence and retry:", retryError);
-          throw retryError;
+          // Even if sequence fix fails, try with a random high ID
+          try {
+            console.log("🎲 Attempting with random high ID...");
+            const randomId = Date.now(); // Use timestamp as ID
+            const productWithId = { ...productData, id: randomId };
+            const [product] = await database
+              .insert(products)
+              .values(productWithId)
+              .returning();
+            console.log("✅ Product created with random ID:", product);
+            return product;
+          } catch (finalError) {
+            console.error("❌ All retry attempts failed:", finalError);
+            throw retryError;
+          }
         }
       }
       
