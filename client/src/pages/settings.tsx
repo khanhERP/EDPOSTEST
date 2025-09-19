@@ -1607,7 +1607,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                           {storeSettings.pinCode &&
                             storeSettings.pinCode.length < 4 && (
                               <p className="text-sm text-orange-500">
-                                Mã PIN nên có ít nhất 4 chữ số
+                                {t("settings.pinCodeMinLength")}
                               </p>
                             )}
                         </div>
@@ -1624,11 +1624,11 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                               }
                             />
                             <Label htmlFor="priceIncludesTax" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                              Giá đã bao gồm thuế
+                              {t("settings.priceIncludesTax")}
                             </Label>
                           </div>
                           <p className="text-xs text-gray-500">
-                            Khi bật, giá hiển thị sẽ là giá đã bao gồm thuế
+                            {t("settings.priceIncludesTaxDesc")}
                           </p>
                         </div>
                       </CardContent>
@@ -1726,7 +1726,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                               <span className="hidden md:inline">
                                 {t("settings.connectionManagement")}
                               </span>
-                              <span className="md:hidden">Kết nối</span>
+                              <span className="md:hidden">{t("settings.connections")}</span>
                             </TabsTrigger>
                             <TabsTrigger
                               value="settings"
@@ -1735,7 +1735,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                               <span className="hidden md:inline">
                                 {t("settings.templateManagement")}
                               </span>
-                              <span className="md:hidden">Mẫu số</span>
+                              <span className="md:hidden">{t("settings.templates")}</span>
                             </TabsTrigger>
                           </TabsList>
 
@@ -1832,9 +1832,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                                       >
                                         <div className="flex flex-col items-center gap-2">
                                           <SettingsIcon className="w-8 h-8 text-gray-400" />
-                                          <p>Chưa có kết nối HĐĐT nào</p>
+                                          <p>{t("settings.noConnectionsYet")}</p>
                                           <p className="text-xs">
-                                            Nhấn "Thêm kết nối" để bắt đầu
+                                            {t("settings.clickToAddConnection")}
                                           </p>
                                         </div>
                                       </td>

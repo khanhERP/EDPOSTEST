@@ -59,6 +59,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     taxIdRequired: "사업자등록번호",
     pinCodeLabel: "PIN 코드",
     pinCodePlaceholder: "PIN 코드 4-6자리를 입력하세요",
+    pinCodeMinLength: "PIN 코드는 최소 4자리여야 합니다",
     priceIncludesTax: "가격에 세금 포함",
     priceIncludesTaxDesc: "활성화하면 표시되는 가격이 세금 포함 가격입니다",
     loginIdLabel: "로그인 ID",
@@ -119,6 +120,10 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     notesPlaceholder: "메모를 입력하세요 (선택사항)",
     operations: "운영",
     cancel: "취소",
+    connections: "연결",
+    templates: "템플릿",
+    noConnectionsYet: "아직 HĐĐT 연결이 없습니다",
+    clickToAddConnection: "'연결 추가'를 클릭하여 시작하세요",
     // Product Management
     totalCategories: "총 카테고리",
     totalProducts: "총 상품",
@@ -282,6 +287,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     taxIdRequired: "Tax ID",
     pinCodeLabel: "PIN Code",
     pinCodePlaceholder: "Enter 4-6 digit PIN code",
+    pinCodeMinLength: "PIN code should be at least 4 digits",
     priceIncludesTax: "Price Includes Tax",
     priceIncludesTaxDesc: "When enabled, displayed prices will be tax-inclusive",
     loginIdLabel: "Login ID",
@@ -343,6 +349,10 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     notesPlaceholder: "Enter notes (optional)",
     operations: "Operations",
     cancel: "Cancel",
+    connections: "Connections",
+    templates: "Templates",
+    noConnectionsYet: "No HĐĐT connections yet",
+    clickToAddConnection: "Click 'Add Connection' to get started"
     // Product Management
     totalCategories: "Total Categories",
     totalProducts: "Total Products",
@@ -508,6 +518,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     taxIdRequired: "Mã số thuế",
     pinCodeLabel: "Mã PIN",
     pinCodePlaceholder: "Nhập mã PIN 4-6 chữ số",
+    pinCodeMinLength: "Mã PIN nên có ít nhất 4 chữ số",
     priceIncludesTax: "Giá đã bao gồm thuế",
     priceIncludesTaxDesc: "Khi bật, giá hiển thị sẽ là giá đã bao gồm thuế",
     loginIdLabel: "ID đăng nhập",
@@ -569,6 +580,10 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     notesPlaceholder: "Nhập ghi chú (tùy chọn)",
     operations: "Hoạt động",
     cancel: "Hủy bỏ",
+    connections: "Kết nối",
+    templates: "Mẫu số",
+    noConnectionsYet: "Chưa có kết nối HĐĐT nào",
+    clickToAddConnection: "Nhấn 'Thêm kết nối' để bắt đầu"
     // Product Management
     totalCategories: "Tổng số danh mục",
     totalProducts: "Tổng số sản phẩm",
