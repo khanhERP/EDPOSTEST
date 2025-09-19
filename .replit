@@ -15,6 +15,10 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
+localPort = 33959
+externalPort = 3002
+
+[[ports]]
 localPort = 40893
 externalPort = 3001
 
@@ -45,15 +49,6 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Restart Server"
-author = 45358938
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
 
 [agent]
 integrations = ["javascript_openai:1.0.0"]

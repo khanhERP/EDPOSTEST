@@ -455,26 +455,7 @@ export default function Settings() {
   };
 
   const saveStoreSettings = () => {
-    console.log("Saving store settings:", storeSettings);
-    
-    // Prepare the complete settings object with all fields
-    const settingsToSave = {
-      storeName: storeSettings.storeName,
-      storeCode: storeSettings.storeCode,
-      address: storeSettings.address,
-      phone: storeSettings.phone,
-      email: storeSettings.email,
-      taxId: storeSettings.taxId,
-      businessType: storeSettings.businessType,
-      pinCode: storeSettings.pinCode,
-      openTime: storeSettings.openTime,
-      closeTime: storeSettings.closeTime,
-      priceIncludesTax: Boolean(storeSettings.priceIncludesTax)
-    };
-    
-    console.log("Final settings to save:", settingsToSave);
-    
-    updateStoreSettingsMutation.mutate(settingsToSave);
+    updateStoreSettingsMutation.mutate(storeSettings);
     // Save payment methods to localStorage so other components can access them
     localStorage.setItem("paymentMethods", JSON.stringify(paymentMethods));
   };
