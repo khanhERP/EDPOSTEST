@@ -509,6 +509,7 @@ interface StoreSettings {
   vipThreshold?: string;
   createdAt: string;
   updatedAt: string;
+  priceIncludesTax?: boolean; // Added for clarity
 }
 
 interface InsertStoreSettings {
@@ -522,6 +523,7 @@ interface InsertStoreSettings {
   taxRate?: string;
   goldThreshold?: string;
   vipThreshold?: string;
+  priceIncludesTax?: boolean; // Added for clarity
 }
 
 interface Supplier {
@@ -2649,7 +2651,23 @@ export class DatabaseStorage implements IStorage {
       return newSettings;
     }
 
-    return settings;
+    // Map database fields to camelCase and ensure priceIncludesTax is boolean
+    return {
+      id: settings.id,
+      storeName: settings.storeName || '',
+      storeCode: settings.storeCode || '',
+      businessType: settings.businessType || 'POS',
+      openTime: settings.openTime || '09:00',
+      closeTime: settings.closeTime || '22:00',
+      logoUrl: settings.logoUrl || null,
+      currency: settings.currency || 'VND',
+      taxRate: settings.taxRate || '10',
+      goldThreshold: settings.goldThreshold || '3000000',
+      vipThreshold: settings.vipThreshold || '10000000',
+      createdAt: settings.createdAt,
+      updatedAt: settings.updatedAt,
+      priceIncludesTax: Boolean(settings.priceIncludesTax) // Ensure boolean type
+    };
   }
 
   async updateStoreSettings(
@@ -2663,9 +2681,17 @@ export class DatabaseStorage implements IStorage {
     }
     const currentSettings = await this.getStoreSettings(tenantDb);
 
+    // Ensure priceIncludesTax is handled correctly as a boolean (0 or 1 for DB)
+    const updateData: Partial<InsertStoreSettings> = {
+      ...settings,
+      ...(settings.priceIncludesTax !== undefined && {
+        priceIncludesTax: Boolean(settings.priceIncludesTax)
+      })
+    };
+
     const [updatedSettings] = await database
       .update(storeSettings)
-      .set({ ...settings, updatedAt: new Date() })
+      .set({...updateData, updatedAt: new Date() })
       .where(eq(storeSettings.id, currentSettings.id))
       .returning();
 
