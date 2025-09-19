@@ -898,8 +898,37 @@ export class DatabaseStorage implements IStorage {
 
       console.log("Storage: Product created successfully:", product);
       return product;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Storage: Error creating product:", error);
+      
+      // Handle duplicate key error by fixing sequence
+      if (error?.code === '23505' && error?.constraint === 'products_pkey') {
+        console.log("🔧 Fixing products sequence due to duplicate key error...");
+        try {
+          // Get max ID from products table
+          const maxIdResult = await database.raw('SELECT COALESCE(MAX(id), 0) as max_id FROM products');
+          const maxId = maxIdResult.rows[0]?.max_id || 0;
+          const newSeqValue = maxId + 100; // Set sequence well above current max
+          
+          // Reset sequence
+          await database.raw(`SELECT setval('products_id_seq', ${newSeqValue}, true)`);
+          console.log(`✅ Products sequence reset to ${newSeqValue}`);
+          
+          // Retry the insert
+          console.log("🔄 Retrying product creation...");
+          const [product] = await database
+            .insert(products)
+            .values(productData)
+            .returning();
+          
+          console.log("✅ Product created successfully on retry:", product);
+          return product;
+        } catch (retryError) {
+          console.error("❌ Failed to fix sequence and retry:", retryError);
+          throw retryError;
+        }
+      }
+      
       throw error;
     }
   }
