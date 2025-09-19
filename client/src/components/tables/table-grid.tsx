@@ -115,14 +115,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     };
   }, [queryClient]);
 
-  // Helper function to get product name - defined early to avoid hoisting issues
-  const getProductName = (productId: number) => {
-    const product = Array.isArray(products)
-      ? products.find((p: any) => p.id === productId)
-      : null;
-    return product?.name || `Product #${productId}`;
-  };
-
   const {
     data: tables,
     isLoading,
@@ -185,6 +177,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchOnMount: false,
     refetchInterval: false,
   });
+
+  // Helper function to get product name - defined after products hook
+  const getProductName = (productId: number) => {
+    const product = Array.isArray(products)
+      ? products.find((p: any) => p.id === productId)
+      : null;
+    return product?.name || `Product #${productId}`;
+  };
 
   const { data: storeSettings } = useQuery({
     queryKey: ["/api/store-settings"],
