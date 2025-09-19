@@ -28,6 +28,7 @@ export const purchasesTranslations = {
     deliveryAddress: "배송 주소",
     notes: "메모",
     internalNotes: "내부 메모",
+    expectedDeliveryDate: "예상 배송일",
     
     // Status Management
     status: "상태",
@@ -422,6 +423,7 @@ export const purchasesTranslations = {
     deliveryAddress: "Địa chỉ giao hàng",
     notes: "Ghi chú",
     internalNotes: "Ghi chú nội bộ",
+    expectedDeliveryDate: ""
     
     // Status Management
     status: "Trạng thái",
