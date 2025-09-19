@@ -16,6 +16,7 @@ export const purchasesTranslations = {
     editPurchaseOrder: "구매 주문 편집",
     deletePurchaseOrder: "구매 주문 삭제",
     duplicatePurchaseOrder: "구매 주문 복사",
+    onTime
     
     // Purchase Order Details
     orderDate: "주문일",
@@ -414,6 +415,7 @@ export const purchasesTranslations = {
     editPurchaseOrder: "Chỉnh sửa đơn mua hàng",
     deletePurchaseOrder: "Xóa đơn mua hàng",
     duplicatePurchaseOrder: "Sao chép đơn mua hàng",
+    onTime: "Đúng giờ",
     
     // Purchase Order Details
     orderDate: "Ngày đặt hàng",
