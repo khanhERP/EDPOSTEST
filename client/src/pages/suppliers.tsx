@@ -169,7 +169,7 @@ export default function SuppliersPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredSuppliers.map((supplier: Supplier) => (
-                <Card key={supplier.id} className="h-full">
+                <Card key={supplier.id} className="h-full flex flex-col">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
@@ -181,7 +181,7 @@ export default function SuppliersPage() {
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="flex flex-col h-full">
+                  <CardContent className="p-6 pt-0 flex flex-col flex-1">
                     <div className="space-y-2">
                       {supplier.contactPerson && (
                         <div className="flex items-center text-sm text-gray-600">
@@ -244,7 +244,7 @@ export default function SuppliersPage() {
                       </div>
                     </div>
 
-                    <div className="flex justify-center gap-3 mt-auto pt-6">
+                    <div className="flex justify-center gap-2 mt-auto pt-4 border-t border-gray-100">
                       <Button
                         size="sm"
                         onClick={() => handleCreatePurchaseOrder(supplier)}
