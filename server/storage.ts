@@ -259,14 +259,14 @@ export interface IStorage {
   updatePurchaseOrder(id: number, updateData: Partial<InsertPurchaseOrder>, tenantDb?: any): Promise<PurchaseOrder | null>;
   deletePurchaseOrder(id: number, tenantDb?: any): Promise<boolean>;
   updatePurchaseOrderStatus(id: number, status: string, tenantDb?: any): Promise<PurchaseOrder | null>;
-  
+
   // Purchase Order Items Management
   getPurchaseOrderItems(purchaseOrderId: number, tenantDb?: any): Promise<PurchaseOrderItem[]>;
   addPurchaseOrderItems(purchaseOrderId: number, items: InsertPurchaseOrderItem[], tenantDb?: any): Promise<PurchaseOrderItem[]>;
   updatePurchaseOrderItem(id: number, updateData: Partial<InsertPurchaseOrderItem>, tenantDb?: any): Promise<PurchaseOrderItem | null>;
   deletePurchaseOrderItem(id: number, tenantDb?: any): Promise<boolean>;
   receiveItems(purchaseOrderId: number, receivedItems: Array<{id: number; receivedQuantity: number; productId?: number}>, tenantDb?: any): Promise<{success: boolean; status: string}>;
-  
+
   // Purchase Order Documents Management
   getPurchaseOrderDocuments(purchaseOrderId: number, tenantDb?: any): Promise<PurchaseOrderDocument[]>;
   uploadPurchaseOrderDocument(documentData: InsertPurchaseOrderDocument, tenantDb?: any): Promise<PurchaseOrderDocument>;
@@ -297,6 +297,7 @@ interface Product {
   imageUrl: string | null;
   isActive: boolean;
   afterTaxPrice: number | null;
+  priceIncludesTax: boolean; // Added for clarity
 }
 
 interface InsertProduct {
@@ -309,6 +310,7 @@ interface InsertProduct {
   trackInventory?: boolean;
   imageUrl?: string | null;
   isActive?: boolean;
+  priceIncludesTax?: boolean; // Added for clarity
 }
 
 interface Transaction {
@@ -877,6 +879,7 @@ export class DatabaseStorage implements IStorage {
     }
     try {
       console.log("Storage: Creating product with data:", insertProduct);
+      console.log("PriceIncludesTax value:", insertProduct.priceIncludesTax, typeof insertProduct.priceIncludesTax);
       const productData = {
         name: insertProduct.name,
         sku: insertProduct.sku,
@@ -887,6 +890,7 @@ export class DatabaseStorage implements IStorage {
         trackInventory: insertProduct.trackInventory !== false,
         imageUrl: insertProduct.imageUrl || null,
         isActive: true,
+        priceIncludesTax: Boolean(insertProduct.priceIncludesTax || false)
       };
 
       console.log("Storage: Inserting product data:", productData);
@@ -897,10 +901,11 @@ export class DatabaseStorage implements IStorage {
         .returning();
 
       console.log("Storage: Product created successfully:", product);
+      console.log("Created product priceIncludesTax:", product.priceIncludesTax);
       return product;
     } catch (error: any) {
       console.error("Storage: Error creating product:", error);
-      
+
       // Handle duplicate key error by fixing sequence
       if (error?.code === '23505' && error?.constraint === 'products_pkey') {
         console.log("🔧 Fixing products sequence due to duplicate key error...");
@@ -909,20 +914,20 @@ export class DatabaseStorage implements IStorage {
           const maxIdResult = await database.execute(sql`SELECT COALESCE(MAX(id), 0) as max_id FROM products`);
           const maxId = maxIdResult.rows[0]?.max_id || 0;
           const newSeqValue = maxId + 100; // Set sequence well above current max
-          
+
           console.log(`📊 Current max ID: ${maxId}, setting sequence to: ${newSeqValue}`);
-          
+
           // Reset sequence using Drizzle SQL
           await database.execute(sql`SELECT setval('products_id_seq', ${newSeqValue}, true)`);
           console.log(`✅ Products sequence reset to ${newSeqValue}`);
-          
+
           // Retry the insert
           console.log("🔄 Retrying product creation...");
           const [product] = await database
             .insert(products)
             .values(productData)
             .returning();
-          
+
           console.log("✅ Product created successfully on retry:", product);
           return product;
         } catch (retryError) {
@@ -944,7 +949,7 @@ export class DatabaseStorage implements IStorage {
           }
         }
       }
-      
+
       throw error;
     }
   }
@@ -959,15 +964,33 @@ export class DatabaseStorage implements IStorage {
       console.error(`❌ Database is undefined in updateProduct`);
       throw new Error(`Database connection is not available`);
     }
-    const [product] = await database
-      .update(products)
-      .set({
+    try {
+      console.log("Updating product with data:", updateData);
+      console.log("PriceIncludesTax value:", updateData.priceIncludesTax, typeof updateData.priceIncludesTax);
+
+      const processedUpdates = {
         ...updateData,
-        imageUrl: updateData.imageUrl || null,
-      })
-      .where(and(eq(products.id, id), eq(products.isActive, true)))
-      .returning();
-    return product || undefined;
+        ...(updateData.priceIncludesTax !== undefined && {
+          priceIncludesTax: Boolean(updateData.priceIncludesTax)
+        })
+      };
+
+      const [product] = await database
+        .update(products)
+        .set({
+          ...processedUpdates,
+          imageUrl: updateData.imageUrl || null,
+        })
+        .where(and(eq(products.id, id), eq(products.isActive, true)))
+        .returning();
+
+      console.log("Product updated:", product);
+      console.log("Updated product priceIncludesTax:", product?.priceIncludesTax);
+      return product || undefined;
+    } catch (error) {
+      console.error("Error updating product:", error);
+      throw error;
+    }
   }
 
   async deleteProduct(id: number, tenantDb?: any): Promise<boolean> {
@@ -3634,18 +3657,18 @@ export class DatabaseStorage implements IStorage {
 
   async createPurchaseOrder(orderData: InsertPurchaseOrder, items: InsertPurchaseOrderItem[], tenantDb?: any): Promise<PurchaseOrder> {
     const database = this.getSafeDatabase(tenantDb, 'createPurchaseOrder');
-    
+
     // Use transaction for atomicity
     return await database.transaction(async (tx) => {
       try {
         // Generate PO number if not provided
         const poNumber = orderData.poNumber || `PO-${Date.now()}`;
-        
+
         // Calculate totals from items
         const subtotal = items.reduce((sum, item) => sum + Number(item.total), 0);
         const tax = subtotal * (Number(orderData.tax) || 0);
         const total = subtotal + tax;
-        
+
         // Create the purchase order with computed values
         const [createdOrder] = await tx
           .insert(purchaseOrders)
@@ -3666,7 +3689,7 @@ export class DatabaseStorage implements IStorage {
             // Ensure receivedQuantity is initialized to 0
             receivedQuantity: 0,
           }));
-          
+
           await tx
             .insert(purchaseOrderItems)
             .values(itemsWithOrderId);
@@ -3701,11 +3724,11 @@ export class DatabaseStorage implements IStorage {
   async deletePurchaseOrder(id: number, tenantDb?: any): Promise<boolean> {
     try {
       const database = this.getSafeDatabase(tenantDb, 'deletePurchaseOrder');
-      
+
       // Delete related items and documents first
       await database.delete(purchaseOrderItems).where(eq(purchaseOrderItems.purchaseOrderId, id));
       await database.delete(purchaseOrderDocuments).where(eq(purchaseOrderDocuments.purchaseOrderId, id));
-      
+
       // Delete the purchase order
       const result = await database.delete(purchaseOrders).where(eq(purchaseOrders.id, id));
       return result.rowCount > 0;
@@ -3756,7 +3779,7 @@ export class DatabaseStorage implements IStorage {
         purchaseOrderId,
         receivedQuantity: 0, // Initialize to 0
       }));
-      
+
       const result = await database
         .insert(purchaseOrderItems)
         .values(itemsWithOrderId)
@@ -3796,7 +3819,7 @@ export class DatabaseStorage implements IStorage {
 
   async receiveItems(purchaseOrderId: number, receivedItems: Array<{id: number; receivedQuantity: number; productId?: number}>, tenantDb?: any): Promise<{success: boolean; status: string}> {
     const database = this.getSafeDatabase(tenantDb, 'receiveItems');
-    
+
     // Use transaction for atomicity and consistency
     return await database.transaction(async (tx) => {
       try {
@@ -3814,20 +3837,20 @@ export class DatabaseStorage implements IStorage {
               )
             )
             .limit(1);
-            
+
           if (!currentItem) {
             throw new Error(`Purchase order item with ID ${receivedItem.id} not found`);
           }
-          
+
           // Validate received quantity constraints
           if (receivedItem.receivedQuantity < 0) {
             throw new Error(`Received quantity cannot be negative for item ${receivedItem.id}`);
           }
-          
+
           if (receivedItem.receivedQuantity > currentItem.quantity) {
             throw new Error(`Received quantity (${receivedItem.receivedQuantity}) cannot exceed ordered quantity (${currentItem.quantity}) for item ${receivedItem.id}`);
           }
-          
+
           // Update received quantity
           await tx
             .update(purchaseOrderItems)
@@ -3835,7 +3858,7 @@ export class DatabaseStorage implements IStorage {
               receivedQuantity: receivedItem.receivedQuantity
             })
             .where(eq(purchaseOrderItems.id, receivedItem.id));
-            
+
           // Update inventory if product exists and inventory tracking is enabled
           const increaseAmount = receivedItem.receivedQuantity - (currentItem.receivedQuantity || 0);
           if (currentItem.productId && increaseAmount > 0) {
@@ -3844,7 +3867,7 @@ export class DatabaseStorage implements IStorage {
               .from(products)
               .where(eq(products.id, currentItem.productId))
               .limit(1);
-              
+
             if (product && product.trackInventory) {
               // Update product stock
               await tx
@@ -3853,7 +3876,7 @@ export class DatabaseStorage implements IStorage {
                   stock: sql`${products.stock} + ${increaseAmount}`
                 })
                 .where(eq(products.id, currentItem.productId));
-                
+
               // Record inventory transaction for audit trail
               await tx
                 .insert(inventoryTransactions)
@@ -3877,7 +3900,7 @@ export class DatabaseStorage implements IStorage {
           .select()
           .from(purchaseOrderItems)
           .where(eq(purchaseOrderItems.purchaseOrderId, purchaseOrderId));
-          
+
         const fullyReceived = allItems.every((item) => item.receivedQuantity >= item.quantity);
         const partiallyReceived = allItems.some((item) => item.receivedQuantity > 0);
 
@@ -3897,7 +3920,7 @@ export class DatabaseStorage implements IStorage {
             actualDeliveryDate: fullyReceived ? new Date() : null,
           })
           .where(eq(purchaseOrders.id, purchaseOrderId));
-        
+
         return { success: true, status: newStatus };
       } catch (error) {
         console.error(`❌ Error in receiveItems:`, error);

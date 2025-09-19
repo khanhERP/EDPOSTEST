@@ -452,6 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         trackInventory: req.body.trackInventory !== false,
         imageUrl: req.body.imageUrl || null,
         taxRate: req.body.taxRate.toString(),
+        priceIncludesTax: Boolean(req.body.priceIncludesTax || false),
         afterTaxPrice:
           req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== ""
             ? req.body.afterTaxPrice.toString()
@@ -508,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== ""
             ? req.body.afterTaxPrice.toString()
             : null,
-        priceIncludesTax: req.body.priceIncludesTax || false,
+        priceIncludesTax: Boolean(req.body.priceIncludesTax),
         trackInventory: req.body.trackInventory !== false,
       };
 
