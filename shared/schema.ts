@@ -12,7 +12,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
-import { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import { InferSelectModel, InferInsertModel, InferSelectType, InferInsertType } from "drizzle-orm";
 
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -186,9 +186,10 @@ export const purchaseOrderDocuments = pgTable("purchase_order_documents", {
 
 export const tables = pgTable("tables", {
   id: serial("id").primaryKey(),
-  tableNumber: text("table_number").notNull().unique(),
-  capacity: integer("capacity").notNull().default(4),
-  status: text("status").notNull().default("available"), // "available", "occupied", "reserved", "maintenance"
+  tableNumber: varchar("table_number", { length: 50 }).notNull(),
+  capacity: integer("capacity").default(4),
+  status: varchar("status", { length: 20 }).default("available"),
+  floor: varchar("floor", { length: 50 }).default("1층"), // Added floor field
   qrCode: text("qr_code"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -322,6 +323,7 @@ export const insertTableSchema = createInsertSchema(tables)
         message: "Status must be available, occupied, reserved, or maintenance",
       }),
     }),
+    floor: z.string().optional().default("1층"),
   });
 
 export const insertOrderSchema = createInsertSchema(orders)
@@ -627,7 +629,8 @@ export const insertPointTransactionSchema = createInsertSchema(
 export type Customer = InferSelectModel<typeof customers>;
 export type PointTransaction = typeof pointTransactions.$inferSelect;
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
-export type Table = typeof tables.$inferSelect;
+export type Table = InferSelectModel<typeof tables>;
+export type InsertTable = InferInsertModel<typeof tables>;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type StoreSettings = typeof storeSettings.$inferSelect;

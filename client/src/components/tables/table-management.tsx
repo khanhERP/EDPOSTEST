@@ -50,6 +50,7 @@ const createTableFormSchema = (t: any) =>
     tableNumber: z.string().min(1, t("tables.tableNumberRequired")),
     capacity: z.number().min(1, t("tables.capacityMinimum")),
     status: z.enum(["available", "occupied", "reserved", "maintenance"]),
+    floor: z.string().min(1, "층 정보는 필수입니다"),
     qrCode: z.string().optional(),
   });
 
@@ -57,6 +58,7 @@ type TableFormData = {
   tableNumber: string;
   capacity: number;
   status: "available" | "occupied" | "reserved" | "maintenance";
+  floor: string;
   qrCode?: string;
 };
 
@@ -105,6 +107,7 @@ export function TableManagement() {
       tableNumber: "",
       capacity: 1,
       status: "available",
+      floor: "1층",
       qrCode: "",
     },
   });
@@ -178,6 +181,7 @@ export function TableManagement() {
           | "occupied"
           | "reserved"
           | "maintenance",
+        floor: table.floor || "1층",
         qrCode: table.qrCode || "",
       });
     } else {
@@ -186,6 +190,7 @@ export function TableManagement() {
         tableNumber: "",
         capacity: 1,
         status: "available",
+        floor: "1층",
         qrCode: "",
       });
     }
@@ -266,6 +271,7 @@ export function TableManagement() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("tables.tableNumberLabel")}</TableHead>
+                <TableHead>{t("tables.floorLabel")}</TableHead>
                 <TableHead>{t("tables.capacityLabel")}</TableHead>
                 <TableHead>{t("tables.statusLabel")}</TableHead>
                 <TableHead>{t("tables.qrCodeLabel")}</TableHead>
@@ -281,6 +287,11 @@ export function TableManagement() {
                     <TableRow key={table.id}>
                       <TableCell className="font-medium">
                         {table.tableNumber}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium text-blue-600">
+                          {table.floor || "1층"}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -334,7 +345,7 @@ export function TableManagement() {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center py-8 text-gray-500"
                   >
                     {t("tables.noTables")}
@@ -393,6 +404,23 @@ export function TableManagement() {
                         onChange={(e) =>
                           field.onChange(parseInt(e.target.value) || 1)
                         }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="floor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("tables.floorLabel")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t("tables.floorPlaceholder")}
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
