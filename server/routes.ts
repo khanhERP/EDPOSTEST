@@ -3796,8 +3796,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Store Settings
   app.get("/api/store-settings", async (req: TenantRequest, res) => {
     try {
-      const settings = await storage.getStoreSettings();
-      res.json(settings);
+      const db = await getTenantDatabase(req.tenant);
+      
+      // Use direct SQL to avoid column mapping issues
+      const result = await db.execute(sql`
+        SELECT id, store_name, store_code, tax_id, business_type, pin_code, 
+               address, phone, email, open_time, close_time, 
+               gold_threshold, vip_threshold, updated_at, price_includes_tax
+        FROM store_settings 
+        LIMIT 1
+      `);
+      
+      const settings = result.rows[0];
+      
+      if (!settings) {
+        // Create default settings if none exist
+        await db.execute(sql`
+          INSERT INTO store_settings (store_name, store_code, business_type, open_time, close_time, price_includes_tax) 
+          VALUES ('EDPOS 레스토랑', 'STORE001', 'restaurant', '09:00', '22:00', false)
+        `);
+        
+        const newResult = await db.execute(sql`
+          SELECT id, store_name, store_code, tax_id, business_type, pin_code, 
+                 address, phone, email, open_time, close_time, 
+                 gold_threshold, vip_threshold, updated_at, price_includes_tax
+          FROM store_settings 
+          LIMIT 1
+        `);
+        
+        res.json(newResult.rows[0]);
+      } else {
+        res.json(settings);
+      }
     } catch (error) {
       console.error("Error fetching store settings:", error);
       res.status(500).json({

@@ -203,7 +203,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
             />
           </div>
           <div className="opacity-90 font-semibold text-[20px]">
-            {storeSettings?.storeName || t("common.restaurant")}
+            {storeSettings?.storeName || "EDPOS 레스토랑"}
           </div>
         </div>
 
