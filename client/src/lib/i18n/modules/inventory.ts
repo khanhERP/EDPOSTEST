@@ -53,6 +53,7 @@ export const inventoryTranslations = {
     confirmDelete: "삭제하시겠습니까?",
     deleteFailed: "삭제에 실패했습니다",
     createFailed: "상품 생성에 실패했습니다",
+    createFailedDescription: "상품 생성에 실패했습니다. 다시 시도해주세요.",
     updateFailed: "상품 수정에 실패했습니다",
     duplicateSku: "이미 존재하는 상품입니다",
     duplicateSkuDescription: "이 SKU는 다른 상품에서 이미 사용되고 있습니다",
