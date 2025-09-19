@@ -321,7 +321,7 @@ export function ProductManagerModal({
       imageUrl: data.imageUrl?.trim() || null,
       taxRate: data.taxRate.toString(),
       priceIncludesTax: data.priceIncludesTax || false,
-      afterTaxPrice: data.afterTaxPrice ? data.afterTaxPrice.toString() : null
+      afterTaxPrice: data.afterTaxPrice ? data.afterTaxPrice.toString() : undefined
     };
 
     console.log("Transformed data:", transformedData);
@@ -421,13 +421,13 @@ export function ProductManagerModal({
 
     products.forEach((product, index) => {
       exportData.push([
-        index + 1,
+        (index + 1).toString(),
         product.name,
         product.sku,
         getCategoryName(product.categoryId),
-        parseFloat(product.price),
+        parseFloat(product.price).toString(),
         product.taxRate || "8.00",
-        product.stock,
+        product.stock.toString(),
         product.imageUrl || "",
       ]);
     });
@@ -810,10 +810,11 @@ export function ProductManagerModal({
                               {...field}
                               type="text"
                               placeholder={t("common.comboValues.pricePlaceholder")}
+                              value={field.value ? parseInt(field.value).toLocaleString('ko-KR') : ''}
                               onChange={(e) => {
                                 const value = e.target.value;
-                                // Only allow numbers
-                                const sanitized = value.replace(/[^0-9]/g, '');
+                                // Only allow numbers and commas
+                                const sanitized = value.replace(/[^0-9,]/g, '').replace(/,/g, '');
                                 
                                 // Check if the number would exceed the limit
                                 const num = parseInt(sanitized);
@@ -822,7 +823,7 @@ export function ProductManagerModal({
                                   return;
                                 }
                                 
-                                // Store the integer value
+                                // Store the integer value (without commas)
                                 field.onChange(sanitized);
                                 
                                 // Calculate after tax price from base price
@@ -892,11 +893,12 @@ export function ProductManagerModal({
                             <Input
                               {...field}
                               type="text"
-                              placeholder="4320"
+                              placeholder="4,320"
+                              value={field.value ? parseInt(field.value).toLocaleString('ko-KR') : ''}
                               onChange={(e) => {
                                 const value = e.target.value;
-                                // Only allow numbers
-                                const sanitized = value.replace(/[^0-9]/g, '');
+                                // Only allow numbers and commas
+                                const sanitized = value.replace(/[^0-9,]/g, '').replace(/,/g, '');
                                 
                                 // Check if the number would exceed the limit
                                 const num = parseInt(sanitized);
@@ -905,7 +907,7 @@ export function ProductManagerModal({
                                   return;
                                 }
                                 
-                                // Store the integer value
+                                // Store the integer value (without commas)
                                 field.onChange(sanitized);
                                 
                                 // Calculate base price from after tax price
@@ -1044,6 +1046,7 @@ export function ProductManagerModal({
                               <FormControl>
                                 <Input
                                   {...field}
+                                  value={field.value || ''}
                                   placeholder={t("tables.imageUrl")}
                                 />
                               </FormControl>
