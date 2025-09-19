@@ -226,6 +226,7 @@ export const purchasesTranslations = {
     deliveryAddress: "Delivery Address",
     notes: "Notes",
     internalNotes: "Internal Notes",
+    expectedDeliveryDate: "Expected Delivery Date",
     
     // Status Management
     status: "Status",
@@ -423,7 +424,7 @@ export const purchasesTranslations = {
     deliveryAddress: "Địa chỉ giao hàng",
     notes: "Ghi chú",
     internalNotes: "Ghi chú nội bộ",
-    expectedDeliveryDate: ""
+    expectedDeliveryDate: "Ngày giao hàng dự kiến",
     
     // Status Management
     status: "Trạng thái",
