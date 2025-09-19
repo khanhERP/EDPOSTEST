@@ -306,6 +306,7 @@ export default function Settings() {
     pinCode: "",
     openTime: "09:00",
     closeTime: "22:00",
+    priceIncludesTax: false,
   });
 
   // Update local state when data is loaded
@@ -322,6 +323,7 @@ export default function Settings() {
         pinCode: storeData.pinCode || "",
         openTime: storeData.openTime || "09:00",
         closeTime: storeData.closeTime || "22:00",
+        priceIncludesTax: storeData.priceIncludesTax || false,
       });
     }
   }, [storeData]);
@@ -1604,6 +1606,23 @@ export default function Settings() {
                                 Mã PIN nên có ít nhất 4 chữ số
                               </p>
                             )}
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="priceIncludesTax"
+                              checked={storeSettings.priceIncludesTax || false}
+                              onCheckedChange={(checked) =>
+                                handleStoreSettingChange("priceIncludesTax", checked ? "true" : "false")
+                              }
+                            />
+                            <Label htmlFor="priceIncludesTax" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                              Giá đã bao gồm thuế
+                            </Label>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Khi bật, giá hiển thị sẽ là giá đã bao gồm thuế
+                          </p>
                         </div>
                       </CardContent>
                     </Card>

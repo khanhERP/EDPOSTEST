@@ -112,6 +112,7 @@ export const storeSettings = pgTable("store_settings", {
   closeTime: text("close_time").default("22:00"),
   goldThreshold: text("gold_threshold").default("300000"),
   vipThreshold: text("vip_threshold").default("1000000"),
+  priceIncludesTax: boolean("price_includes_tax").notNull().default(false),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
