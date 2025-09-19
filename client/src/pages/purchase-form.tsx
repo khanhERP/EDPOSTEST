@@ -691,10 +691,24 @@ export default function PurchaseFormPage({ id, onLogout }: PurchaseFormPageProps
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl">
                           <DialogHeader>
-                            <DialogTitle>{t("purchases.selectProducts")}</DialogTitle>
-                            <DialogDescription>
-                              {t("purchases.selectProductsDescription")}
-                            </DialogDescription>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <DialogTitle>{t("purchases.selectProducts")}</DialogTitle>
+                                <DialogDescription>
+                                  {t("purchases.selectProductsDescription")}
+                                </DialogDescription>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsNewProductDialogOpen(true)}
+                                className="flex items-center gap-2"
+                                data-testid="button-add-new-product"
+                              >
+                                <Plus className="h-4 w-4" />
+                                {t("inventory.addProduct")}
+                              </Button>
+                            </div>
                           </DialogHeader>
                           <div className="space-y-4">
                             <div className="relative">
