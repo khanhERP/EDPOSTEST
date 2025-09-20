@@ -48,7 +48,7 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     save: "저장",
     add: "추가",
     saving: "저장 중...",
-    confirmDelete: "정말로 {{name}}을(를) 삭제하시겠습니까?",
+    confirmDelete: "정말로 {{name}} 을(를) 삭제하시겠습니까?",
     deleteSuccess: "직원이 성공적으로 삭제되었습니다",
     deleteError: "직원 삭제 중 오류가 발생했습니다",
     emailAlreadyExists: "이메일이 이미 사용되고 있습니다",
@@ -64,9 +64,11 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     totalEmployees: "총 직원 수",
     totalEmployeesCount: "총 직원 수: {{count}}",
     confirmDeleteEmployeeTitle: "직원 삭제 확인",
-    confirmDeleteEmployeeDesc: "정말로 직원 \"{{name}}\"을(를) 삭제하시겠습니까?",
-    deleteEmployeeWarning: "경고: 이 작업은 되돌릴 수 없습니다. 직원 정보가 시스템에서 영구적으로 삭제됩니다.",
-    deleteEmployeeDetails: "여기에는 근무 이력, 출근 기록 및 접근 권한이 포함됩니다.",
+    confirmDeleteEmployeeDesc: "정말로 직원 {{name}} 을(를) 삭제하시겠습니까?",
+    deleteEmployeeWarning:
+      "경고: 이 작업은 되돌릴 수 없습니다. 직원 정보가 시스템에서 영구적으로 삭제됩니다.",
+    deleteEmployeeDetails:
+      "여기에는 근무 이력, 출근 기록 및 접근 권한이 포함됩니다.",
     cancelAction: "취소",
     deleteEmployeeAction: "직원 삭제",
   },
@@ -133,9 +135,12 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     totalEmployees: "Total employees",
     totalEmployeesCount: "Total employees: {{count}}",
     confirmDeleteEmployeeTitle: "Confirm Delete Employee",
-    confirmDeleteEmployeeDesc: "Are you sure you want to delete employee \"{{name}}\"?",
-    deleteEmployeeWarning: "Warning: This action cannot be undone. Employee information will be permanently deleted from the system.",
-    deleteEmployeeDetails: "This includes work history, attendance records, and access permissions.",
+    confirmDeleteEmployeeDesc:
+      "Are you sure you want to delete employee {{name}}?",
+    deleteEmployeeWarning:
+      "Warning: This action cannot be undone. Employee information will be permanently deleted from the system.",
+    deleteEmployeeDetails:
+      "This includes work history, attendance records, and access permissions.",
     cancelAction: "Cancel",
     deleteEmployeeAction: "Delete Employee",
   },
@@ -202,9 +207,12 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     totalEmployees: "Tổng số nhân viên",
     totalEmployeesCount: "Tổng số nhân viên: {{count}}",
     confirmDeleteEmployeeTitle: "Xác nhận xóa nhân viên",
-    confirmDeleteEmployeeDesc: "Bạn có chắc chắn muốn xóa nhân viên \"{{name}}\" không?",
-    deleteEmployeeWarning: "Cảnh báo: Hành động này không thể hoàn tác. Thông tin nhân viên sẽ bị xóa vĩnh viễn khỏi hệ thống.",
-    deleteEmployeeDetails: "Điều này bao gồm lịch sử làm việc, chấm công và các quyền truy cập.",
+    confirmDeleteEmployeeDesc:
+      "Bạn có chắc chắn muốn xóa nhân viên {{name}} không?",
+    deleteEmployeeWarning:
+      "Cảnh báo: Hành động này không thể hoàn tác. Thông tin nhân viên sẽ bị xóa vĩnh viễn khỏi hệ thống.",
+    deleteEmployeeDetails:
+      "Điều này bao gồm lịch sử làm việc, chấm công và các quyền truy cập.",
     cancelAction: "Hủy bỏ",
     deleteEmployeeAction: "Xóa nhân viên",
   },

@@ -18,6 +18,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     displayingInvoiceForPrint: "인쇄를 위해 송장을 표시하는 중입니다",
     invoiceSavedSuccess: "송장이 성공적으로 저장되었습니다",
     search: "검색",
+    successTitle: "성공",
     confirm: "확인",
     yes: "예",
     no: "아니오",
@@ -877,6 +878,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     service: "Service",
     create: "Create",
     update: "Update",
+    successTitle: "Success",
 
     // Unit indicators
     perUnit: "per item",
@@ -1252,6 +1254,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     customerGroup: "Nhóm khách hàng",
     walkInCustomer: "Khách hàng vãng lai",
     backToPOS: "Quay lại POS",
+    successTitle: "Thành công",
     description: "Mô tả",
     successTitle: "Thành công",
     templateUsage: "Trạng thái sử dụng",
