@@ -233,114 +233,14 @@ export function CustomerDisplay({
 
                               {item.taxRate && parseFloat(item.taxRate) > 0 && (
                                 <p className="text-sm text-orange-600">
-                                  Thuế ({item.taxRate}%): {(() => {
-                                    const basePrice = parseFloat(item.price || "0");
-                                    const quantity = item.quantity || 1;
-                                    const subtotal = basePrice * quantity;
-
-                                    // Calculate discount for this item - SAME logic as shopping-cart
-                                    const orderDiscount = discount || 0;
-                                    let itemDiscountAmount = 0;
-
-                                    if (orderDiscount > 0) {
-                                      const currentIndex = cartItems.findIndex(
-                                        (cartItem) => cartItem.id === item.id,
-                                      );
-                                      const isLastItem = currentIndex === cartItems.length - 1;
-
-                                      if (isLastItem) {
-                                        // Last item: total discount - sum of all previous discounts
-                                        let previousDiscounts = 0;
-                                        const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                                          return sum + parseFloat(itm.price) * itm.quantity;
-                                        }, 0);
-
-                                        for (let i = 0; i < cartItems.length - 1; i++) {
-                                          const prevItemSubtotal =
-                                            parseFloat(cartItems[i].price) * cartItems[i].quantity;
-                                          const prevItemDiscount =
-                                            totalBeforeDiscount > 0
-                                              ? Math.floor(
-                                                  (orderDiscount * prevItemSubtotal) / totalBeforeDiscount,
-                                                )
-                                              : 0;
-                                          previousDiscounts += prevItemDiscount;
-                                        }
-
-                                        itemDiscountAmount = orderDiscount - previousDiscounts;
-                                      } else {
-                                        // Regular calculation for non-last items
-                                        const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                                          return sum + parseFloat(itm.price) * itm.quantity;
-                                        }, 0);
-                                        itemDiscountAmount =
-                                          totalBeforeDiscount > 0
-                                            ? Math.floor((orderDiscount * subtotal) / totalBeforeDiscount)
-                                            : 0;
-                                      }
-                                    }
-
-                                    // Tax = (price * quantity - discount) * taxRate
-                                    const taxableAmount = Math.max(0, subtotal - itemDiscountAmount);
-                                    const taxRate = parseFloat(item.taxRate) / 100;
-                                    const calculatedTax = Math.floor(taxableAmount * taxRate);
-                                    return calculatedTax.toLocaleString("vi-VN");
-                                  })()} ₫
+                                  Thuế ({item.taxRate}%)
                                 </p>
                               )}
 
-                              {/* Show item discount if applicable - SAME logic as shopping-cart */}
+                              {/* Show item discount if applicable */}
                               {discount && discount > 0 && (
                                 <p className="text-sm text-red-600">
-                                  Giảm giá: -{(() => {
-                                    const basePrice = parseFloat(item.price || "0");
-                                    const quantity = item.quantity || 1;
-                                    const subtotal = basePrice * quantity;
-
-                                    // Calculate discount for this item - SAME logic as shopping-cart
-                                    const orderDiscount = discount || 0;
-                                    let itemDiscountAmount = 0;
-
-                                    if (orderDiscount > 0) {
-                                      const currentIndex = cartItems.findIndex(
-                                        (cartItem) => cartItem.id === item.id,
-                                      );
-                                      const isLastItem = currentIndex === cartItems.length - 1;
-
-                                      if (isLastItem) {
-                                        // Last item: total discount - sum of all previous discounts
-                                        let previousDiscounts = 0;
-                                        const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                                          return sum + parseFloat(itm.price) * itm.quantity;
-                                        }, 0);
-
-                                        for (let i = 0; i < cartItems.length - 1; i++) {
-                                          const prevItemSubtotal =
-                                            parseFloat(cartItems[i].price) * cartItems[i].quantity;
-                                          const prevItemDiscount =
-                                            totalBeforeDiscount > 0
-                                              ? Math.floor(
-                                                  (orderDiscount * prevItemSubtotal) / totalBeforeDiscount,
-                                                )
-                                              : 0;
-                                          previousDiscounts += prevItemDiscount;
-                                        }
-
-                                        itemDiscountAmount = orderDiscount - previousDiscounts;
-                                      } else {
-                                        // Regular calculation for non-last items
-                                        const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                                          return sum + parseFloat(itm.price) * itm.quantity;
-                                        }, 0);
-                                        itemDiscountAmount =
-                                          totalBeforeDiscount > 0
-                                            ? Math.floor((orderDiscount * subtotal) / totalBeforeDiscount)
-                                            : 0;
-                                      }
-                                    }
-
-                                    return Math.floor(itemDiscountAmount).toLocaleString("vi-VN");
-                                  })()} ₫
+                                  Giảm giá được áp dụng
                                 </p>
                               )}
                             </div>
