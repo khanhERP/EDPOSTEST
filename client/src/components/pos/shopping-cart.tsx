@@ -256,24 +256,13 @@ export function ShoppingCart({
   const getDisplayPrice = (item: any): number => {
     const basePrice = parseFloat(item.price);
     
-    console.log("Shopping Cart: Price calculation debug", {
-      productName: item.name,
-      basePrice: basePrice,
-      priceIncludesTax: priceIncludesTax,
-      taxRate: item.taxRate,
-      storeSettings: storeSettings
-    });
-    
     if (priceIncludesTax) {
       // If store setting says to include tax, calculate price with tax
       const taxRate = parseFloat(item.taxRate || "0");
-      const priceWithTax = basePrice * (1 + taxRate / 100);
-      console.log("Shopping Cart: Price with tax:", priceWithTax);
-      return priceWithTax;
+      return basePrice * (1 + taxRate / 100);
     }
     
     // If store setting says not to include tax, show base price
-    console.log("Shopping Cart: Showing base price:", basePrice);
     return basePrice;
   };
 
@@ -1198,7 +1187,7 @@ export function ShoppingCart({
                   </h4>
                   <div className="space-y-1">
                     <p className="text-xs pos-text-secondary">
-                      {getDisplayPrice(item).toLocaleString("vi-VN")}{" "}
+                      {Math.round(getDisplayPrice(item)).toLocaleString("vi-VN")}{" "}
                       ₫ {t("pos.each")}
                     </p>
                     {item.taxRate && parseFloat(item.taxRate) > 0 && (
