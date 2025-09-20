@@ -1,6 +1,11 @@
-
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +29,7 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
     queryKey: ["/api/store-settings"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/store-settings");
+      console.log("Store settings:", response.json());
       return response.json();
     },
   });
@@ -38,7 +44,7 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!pin.trim()) {
       toast({
         title: `${t("common.")}`,
@@ -55,12 +61,12 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
       if (storeData?.pinCode && pin === storeData.pinCode) {
         // Lưu trạng thái đăng nhập vào sessionStorage
         sessionStorage.setItem("pinAuthenticated", "true");
-        
+
         toast({
           title: "Đăng nhập thành công",
           description: "Chào mừng bạn đến với hệ thống POS",
         });
-        
+
         onAuthSuccess();
       } else {
         toast({
@@ -82,14 +88,14 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
   };
 
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ''); // Chỉ cho phép số
+    const value = e.target.value.replace(/\D/g, ""); // Chỉ cho phép số
     if (value.length <= 6) {
       setPin(value);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSubmit(e as any);
     }
   };
@@ -128,7 +134,10 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
         <CardContent className="space-y-6 pt-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pin" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="pin"
+                className="text-sm font-medium text-gray-700"
+              >
                 Mã PIN
               </Label>
               <div className="relative">
@@ -195,7 +204,7 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
                 className="h-12 text-lg font-semibold"
                 onClick={() => {
                   if (pin.length < 6) {
-                    setPin(prev => prev + num);
+                    setPin((prev) => prev + num);
                   }
                 }}
                 disabled={isLoading || pin.length >= 6}
@@ -218,7 +227,7 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
               className="h-12 text-lg font-semibold"
               onClick={() => {
                 if (pin.length < 6) {
-                  setPin(prev => prev + "0");
+                  setPin((prev) => prev + "0");
                 }
               }}
               disabled={isLoading || pin.length >= 6}
@@ -229,7 +238,7 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
               type="button"
               variant="outline"
               className="h-12 text-lg font-semibold text-red-600"
-              onClick={() => setPin(prev => prev.slice(0, -1))}
+              onClick={() => setPin((prev) => prev.slice(0, -1))}
               disabled={isLoading || pin.length === 0}
             >
               ←

@@ -3796,38 +3796,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Store Settings
   app.get("/api/store-settings", async (req: TenantRequest, res) => {
     try {
-      const db = await getTenantDatabase(req.tenant);
-      
-      // Use direct SQL to avoid column mapping issues
-      const result = await db.execute(sql`
-        SELECT id, store_name, store_code, tax_id, business_type, pin_code, 
-               address, phone, email, open_time, close_time, 
-               gold_threshold, vip_threshold, updated_at, price_includes_tax
-        FROM store_settings 
-        LIMIT 1
-      `);
-      
-      const settings = result.rows[0];
-      
-      if (!settings) {
-        // Create default settings if none exist
-        await db.execute(sql`
-          INSERT INTO store_settings (store_name, store_code, business_type, open_time, close_time, price_includes_tax) 
-          VALUES ('EDPOS 레스토랑', 'STORE001', 'restaurant', '09:00', '22:00', false)
-        `);
-        
-        const newResult = await db.execute(sql`
-          SELECT id, store_name, store_code, tax_id, business_type, pin_code, 
-                 address, phone, email, open_time, close_time, 
-                 gold_threshold, vip_threshold, updated_at, price_includes_tax
-          FROM store_settings 
-          LIMIT 1
-        `);
-        
-        res.json(newResult.rows[0]);
-      } else {
-        res.json(settings);
-      }
+      const settings = await storage.getStoreSettings();
+      console.log("Store settings fetched:", settings);
+      res.json(settings);
     } catch (error) {
       console.error("Error fetching store settings:", error);
       res.status(500).json({
@@ -3882,14 +3853,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(settings);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "Invalid store settings data",
-          errors: error.errors,
-        });
+        console.error("Validation error:", error.errors);
+        return res.status(400).json({ error: "Invalid settings data." });
       }
-      res.status(500).json({
-        message: "Failed to update store settings",
-      });
+      console.error("Error updating store settings:", error);
+      res
+        .status(500)
+        .json({ error: "Failed to update store settings. Please try again." });
     }
   });
 
@@ -4034,8 +4004,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("🔍 GET /api/purchase-orders - Starting request processing");
       console.log("✅ Using global database connection for purchase orders");
 
-      const { status, supplierId, search, startDate, endDate, page, limit } = req.query;
-      
+      const { status, supplierId, search, startDate, endDate, page, limit } =
+        req.query;
+
       const options = {
         status: status as string,
         supplierId: supplierId ? parseInt(supplierId as string) : undefined,
@@ -4045,9 +4016,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         page: page ? parseInt(page as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined,
       };
-      
+
       const result = await storage.getPurchaseOrders(options, db);
-      console.log(`✅ Successfully fetched ${Array.isArray(result) ? result.length : result.orders?.length || 0} purchase orders`);
+      console.log(
+        `✅ Successfully fetched ${Array.isArray(result) ? result.length : result.orders?.length || 0} purchase orders`,
+      );
       res.json(result);
     } catch (error) {
       console.error("❌ Error fetching purchase orders:", error);
@@ -4055,42 +4028,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/purchase-orders/:id", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-      const purchaseOrder = await storage.getPurchaseOrder(id, tenantDb);
+  app.get(
+    "/api/purchase-orders/:id",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const tenantDb = await getTenantDatabase(req);
+        const purchaseOrder = await storage.getPurchaseOrder(id, tenantDb);
 
-      if (!purchaseOrder) {
-        return res.status(404).json({ message: "Purchase order not found" });
+        if (!purchaseOrder) {
+          return res.status(404).json({ message: "Purchase order not found" });
+        }
+
+        res.json(purchaseOrder);
+      } catch (error) {
+        console.error("❌ Error fetching purchase order:", error);
+        res.status(500).json({ message: "Failed to fetch purchase order" });
       }
-
-      res.json(purchaseOrder);
-    } catch (error) {
-      console.error("❌ Error fetching purchase order:", error);
-      res.status(500).json({ message: "Failed to fetch purchase order" });
-    }
-  });
+    },
+  );
 
   app.post("/api/purchase-orders", async (req: Request, res) => {
     try {
       console.log("📝 Creating purchase order with data:", req.body);
-      
+
       const { items = [], ...orderData } = req.body;
-      
+
       // Basic validation
       if (!orderData.supplierId) {
         return res.status(400).json({
-          message: "Supplier ID is required"
+          message: "Supplier ID is required",
         });
       }
-      
+
       if (!Array.isArray(items) || items.length === 0) {
         return res.status(400).json({
-          message: "At least one item is required"
+          message: "At least one item is required",
         });
       }
-      
+
       // Validate purchase order data
       const validatedOrderData = insertPurchaseOrderSchema.parse({
         ...orderData,
@@ -4099,24 +4076,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: orderData.status || "pending",
         subtotal: orderData.subtotal || "0.00",
         tax: orderData.tax || "0.00",
-        total: orderData.total || "0.00"
+        total: orderData.total || "0.00",
       });
-      
+
       // Validate items array
-      const validatedItems = items.map(item => insertPurchaseOrderItemSchema.parse({
-        ...item,
-        productId: Number(item.productId),
-        quantity: Number(item.quantity),
-        unitPrice: String(item.unitPrice),
-        total: String(item.total),
-        receivedQuantity: Number(item.receivedQuantity || 0)
-      }));
-      
-      console.log("✅ Using global database connection for purchase order creation");
+      const validatedItems = items.map((item) =>
+        insertPurchaseOrderItemSchema.parse({
+          ...item,
+          productId: Number(item.productId),
+          quantity: Number(item.quantity),
+          unitPrice: String(item.unitPrice),
+          total: String(item.total),
+          receivedQuantity: Number(item.receivedQuantity || 0),
+        }),
+      );
+
+      console.log(
+        "✅ Using global database connection for purchase order creation",
+      );
       console.log("✅ Validated order data:", validatedOrderData);
       console.log("✅ Validated items:", validatedItems);
-      
-      const result = await storage.createPurchaseOrder(validatedOrderData, validatedItems, db);
+
+      const result = await storage.createPurchaseOrder(
+        validatedOrderData,
+        validatedItems,
+        db,
+      );
       console.log(`✅ Successfully created purchase order: ${result.poNumber}`);
       res.status(201).json(result);
     } catch (error) {
@@ -4128,237 +4113,335 @@ export async function registerRoutes(app: Express): Promise<Server> {
           errors: error.errors,
         });
       }
-      
-      const errorMessage = error instanceof Error ? error.message : "Failed to create purchase order";
-      res.status(500).json({ 
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create purchase order";
+      res.status(500).json({
         message: errorMessage,
-        details: error instanceof Error ? error.stack : String(error)
+        details: error instanceof Error ? error.stack : String(error),
       });
     }
   });
 
-  app.put("/api/purchase-orders/:id", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const validatedData = insertPurchaseOrderSchema.partial().parse(req.body);
-      const tenantDb = await getTenantDatabase(req);
-      
-      const purchaseOrder = await storage.updatePurchaseOrder(id, validatedData, tenantDb);
+  app.put(
+    "/api/purchase-orders/:id",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const validatedData = insertPurchaseOrderSchema
+          .partial()
+          .parse(req.body);
+        const tenantDb = await getTenantDatabase(req);
 
-      if (!purchaseOrder) {
-        return res.status(404).json({ message: "Purchase order not found" });
+        const purchaseOrder = await storage.updatePurchaseOrder(
+          id,
+          validatedData,
+          tenantDb,
+        );
+
+        if (!purchaseOrder) {
+          return res.status(404).json({ message: "Purchase order not found" });
+        }
+
+        console.log(`✅ Successfully updated purchase order: ${id}`);
+        res.json(purchaseOrder);
+      } catch (error) {
+        console.error("❌ Error updating purchase order:", error);
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({
+            message: "Invalid purchase order data",
+            errors: error.errors,
+          });
+        }
+        res.status(500).json({ message: "Failed to update purchase order" });
       }
+    },
+  );
 
-      console.log(`✅ Successfully updated purchase order: ${id}`);
-      res.json(purchaseOrder);
-    } catch (error) {
-      console.error("❌ Error updating purchase order:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "Invalid purchase order data",
-          errors: error.errors,
-        });
+  app.delete(
+    "/api/purchase-orders/:id",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const tenantDb = await getTenantDatabase(req);
+        const deleted = await storage.deletePurchaseOrder(id, tenantDb);
+
+        if (!deleted) {
+          return res.status(404).json({ message: "Purchase order not found" });
+        }
+
+        console.log(`✅ Successfully deleted purchase order: ${id}`);
+        res.json({ message: "Purchase order deleted successfully" });
+      } catch (error) {
+        console.error("❌ Error deleting purchase order:", error);
+        res.status(500).json({ message: "Failed to delete purchase order" });
       }
-      res.status(500).json({ message: "Failed to update purchase order" });
-    }
-  });
-
-  app.delete("/api/purchase-orders/:id", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-      const deleted = await storage.deletePurchaseOrder(id, tenantDb);
-
-      if (!deleted) {
-        return res.status(404).json({ message: "Purchase order not found" });
-      }
-
-      console.log(`✅ Successfully deleted purchase order: ${id}`);
-      res.json({ message: "Purchase order deleted successfully" });
-    } catch (error) {
-      console.error("❌ Error deleting purchase order:", error);
-      res.status(500).json({ message: "Failed to delete purchase order" });
-    }
-  });
+    },
+  );
 
   // Purchase Order Items Management
-  app.get("/api/purchase-orders/:id/items", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const purchaseOrderId = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-      const items = await storage.getPurchaseOrderItems(purchaseOrderId, tenantDb);
-      
-      console.log(`✅ Successfully fetched ${items.length} purchase order items`);
-      res.json(items);
-    } catch (error) {
-      console.error("❌ Error fetching purchase order items:", error);
-      res.status(500).json({ message: "Failed to fetch purchase order items" });
-    }
-  });
+  app.get(
+    "/api/purchase-orders/:id/items",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const purchaseOrderId = parseInt(req.params.id);
+        const tenantDb = await getTenantDatabase(req);
+        const items = await storage.getPurchaseOrderItems(
+          purchaseOrderId,
+          tenantDb,
+        );
 
-  app.post("/api/purchase-orders/:id/items", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const purchaseOrderId = parseInt(req.params.id);
-      const items = Array.isArray(req.body) ? req.body : [req.body];
-      const validatedItems = items.map(item => insertPurchaseOrderItemSchema.parse({
-        ...item,
-        purchaseOrderId
-      }));
-      
-      const tenantDb = await getTenantDatabase(req);
-      const result = await storage.addPurchaseOrderItems(purchaseOrderId, validatedItems, tenantDb);
-      
-      console.log(`✅ Successfully added ${result.length} items to purchase order: ${purchaseOrderId}`);
-      res.status(201).json(result);
-    } catch (error) {
-      console.error("❌ Error adding purchase order items:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "Invalid purchase order item data",
-          errors: error.errors,
-        });
+        console.log(
+          `✅ Successfully fetched ${items.length} purchase order items`,
+        );
+        res.json(items);
+      } catch (error) {
+        console.error("❌ Error fetching purchase order items:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to fetch purchase order items" });
       }
-      res.status(500).json({ message: "Failed to add purchase order items" });
-    }
-  });
+    },
+  );
 
-  app.put("/api/purchase-order-items/:id", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const validatedData = insertPurchaseOrderItemSchema.partial().parse(req.body);
-      const tenantDb = await getTenantDatabase(req);
-      
-      const item = await storage.updatePurchaseOrderItem(id, validatedData, tenantDb);
+  app.post(
+    "/api/purchase-orders/:id/items",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const purchaseOrderId = parseInt(req.params.id);
+        const items = Array.isArray(req.body) ? req.body : [req.body];
+        const validatedItems = items.map((item) =>
+          insertPurchaseOrderItemSchema.parse({
+            ...item,
+            purchaseOrderId,
+          }),
+        );
 
-      if (!item) {
-        return res.status(404).json({ message: "Purchase order item not found" });
+        const tenantDb = await getTenantDatabase(req);
+        const result = await storage.addPurchaseOrderItems(
+          purchaseOrderId,
+          validatedItems,
+          tenantDb,
+        );
+
+        console.log(
+          `✅ Successfully added ${result.length} items to purchase order: ${purchaseOrderId}`,
+        );
+        res.status(201).json(result);
+      } catch (error) {
+        console.error("❌ Error adding purchase order items:", error);
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({
+            message: "Invalid purchase order item data",
+            errors: error.errors,
+          });
+        }
+        res.status(500).json({ message: "Failed to add purchase order items" });
       }
+    },
+  );
 
-      console.log(`✅ Successfully updated purchase order item: ${id}`);
-      res.json(item);
-    } catch (error) {
-      console.error("❌ Error updating purchase order item:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "Invalid purchase order item data",
-          errors: error.errors,
-        });
+  app.put(
+    "/api/purchase-order-items/:id",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const validatedData = insertPurchaseOrderItemSchema
+          .partial()
+          .parse(req.body);
+        const tenantDb = await getTenantDatabase(req);
+
+        const item = await storage.updatePurchaseOrderItem(
+          id,
+          validatedData,
+          tenantDb,
+        );
+
+        if (!item) {
+          return res
+            .status(404)
+            .json({ message: "Purchase order item not found" });
+        }
+
+        console.log(`✅ Successfully updated purchase order item: ${id}`);
+        res.json(item);
+      } catch (error) {
+        console.error("❌ Error updating purchase order item:", error);
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({
+            message: "Invalid purchase order item data",
+            errors: error.errors,
+          });
+        }
+        res
+          .status(500)
+          .json({ message: "Failed to update purchase order item" });
       }
-      res.status(500).json({ message: "Failed to update purchase order item" });
-    }
-  });
+    },
+  );
 
-  app.delete("/api/purchase-order-items/:id", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-      const deleted = await storage.deletePurchaseOrderItem(id, tenantDb);
+  app.delete(
+    "/api/purchase-order-items/:id",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const tenantDb = await getTenantDatabase(req);
+        const deleted = await storage.deletePurchaseOrderItem(id, tenantDb);
 
-      if (!deleted) {
-        return res.status(404).json({ message: "Purchase order item not found" });
+        if (!deleted) {
+          return res
+            .status(404)
+            .json({ message: "Purchase order item not found" });
+        }
+
+        console.log(`✅ Successfully deleted purchase order item: ${id}`);
+        res.json({ message: "Purchase order item deleted successfully" });
+      } catch (error) {
+        console.error("❌ Error deleting purchase order item:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to delete purchase order item" });
       }
-
-      console.log(`✅ Successfully deleted purchase order item: ${id}`);
-      res.json({ message: "Purchase order item deleted successfully" });
-    } catch (error) {
-      console.error("❌ Error deleting purchase order item:", error);
-      res.status(500).json({ message: "Failed to delete purchase order item" });
-    }
-  });
+    },
+  );
 
   // Receive Goods API
-  app.post("/api/purchase-orders/:id/receive", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const purchaseOrderId = parseInt(req.params.id);
-      const { receivedItems } = req.body;
-      
-      if (!Array.isArray(receivedItems) || receivedItems.length === 0) {
-        return res.status(400).json({ 
-          message: "receivedItems array is required and must not be empty" 
+  app.post(
+    "/api/purchase-orders/:id/receive",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const purchaseOrderId = parseInt(req.params.id);
+        const { receivedItems } = req.body;
+
+        if (!Array.isArray(receivedItems) || receivedItems.length === 0) {
+          return res.status(400).json({
+            message: "receivedItems array is required and must not be empty",
+          });
+        }
+
+        // Define validation schema for receive items
+        const receiveItemSchema = z.object({
+          id: z.number().positive(),
+          receivedQuantity: z.number().min(0),
+          productId: z.number().positive().optional(),
+        });
+
+        // Validate each received item using Zod
+        const validatedItems = receivedItems.map((item) =>
+          receiveItemSchema.parse(item),
+        );
+
+        const tenantDb = await getTenantDatabase(req);
+        const result = await storage.receiveItems(
+          purchaseOrderId,
+          validatedItems,
+          tenantDb,
+        );
+
+        console.log(
+          `✅ Successfully processed receipt for purchase order: ${purchaseOrderId}, new status: ${result.status}`,
+        );
+        res.json(result);
+      } catch (error) {
+        console.error("❌ Error processing goods receipt:", error);
+        res.status(500).json({
+          message: "Failed to process goods receipt",
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
-
-      // Define validation schema for receive items
-      const receiveItemSchema = z.object({
-        id: z.number().positive(),
-        receivedQuantity: z.number().min(0),
-        productId: z.number().positive().optional()
-      });
-
-      // Validate each received item using Zod
-      const validatedItems = receivedItems.map(item => receiveItemSchema.parse(item));
-      
-      const tenantDb = await getTenantDatabase(req);
-      const result = await storage.receiveItems(purchaseOrderId, validatedItems, tenantDb);
-      
-      console.log(`✅ Successfully processed receipt for purchase order: ${purchaseOrderId}, new status: ${result.status}`);
-      res.json(result);
-    } catch (error) {
-      console.error("❌ Error processing goods receipt:", error);
-      res.status(500).json({ 
-        message: "Failed to process goods receipt",
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+    },
+  );
 
   // Purchase Order Documents Management
-  app.get("/api/purchase-orders/:id/documents", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const purchaseOrderId = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-      const documents = await storage.getPurchaseOrderDocuments(purchaseOrderId, tenantDb);
-      
-      console.log(`✅ Successfully fetched ${documents.length} documents for purchase order: ${purchaseOrderId}`);
-      res.json(documents);
-    } catch (error) {
-      console.error("❌ Error fetching purchase order documents:", error);
-      res.status(500).json({ message: "Failed to fetch purchase order documents" });
-    }
-  });
+  app.get(
+    "/api/purchase-orders/:id/documents",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const purchaseOrderId = parseInt(req.params.id);
+        const tenantDb = await getTenantDatabase(req);
+        const documents = await storage.getPurchaseOrderDocuments(
+          purchaseOrderId,
+          tenantDb,
+        );
 
-  app.post("/api/purchase-orders/:id/documents", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const purchaseOrderId = parseInt(req.params.id);
-      const validatedData = insertPurchaseOrderDocumentSchema.parse({
-        ...req.body,
-        purchaseOrderId
-      });
-      
-      const tenantDb = await getTenantDatabase(req);
-      const document = await storage.uploadPurchaseOrderDocument(validatedData, tenantDb);
-      
-      console.log(`✅ Successfully uploaded document for purchase order: ${purchaseOrderId}`);
-      res.status(201).json(document);
-    } catch (error) {
-      console.error("❌ Error uploading purchase order document:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          message: "Invalid document data",
-          errors: error.errors,
+        console.log(
+          `✅ Successfully fetched ${documents.length} documents for purchase order: ${purchaseOrderId}`,
+        );
+        res.json(documents);
+      } catch (error) {
+        console.error("❌ Error fetching purchase order documents:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to fetch purchase order documents" });
+      }
+    },
+  );
+
+  app.post(
+    "/api/purchase-orders/:id/documents",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const purchaseOrderId = parseInt(req.params.id);
+        const validatedData = insertPurchaseOrderDocumentSchema.parse({
+          ...req.body,
+          purchaseOrderId,
         });
+
+        const tenantDb = await getTenantDatabase(req);
+        const document = await storage.uploadPurchaseOrderDocument(
+          validatedData,
+          tenantDb,
+        );
+
+        console.log(
+          `✅ Successfully uploaded document for purchase order: ${purchaseOrderId}`,
+        );
+        res.status(201).json(document);
+      } catch (error) {
+        console.error("❌ Error uploading purchase order document:", error);
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({
+            message: "Invalid document data",
+            errors: error.errors,
+          });
+        }
+        res.status(500).json({ message: "Failed to upload document" });
       }
-      res.status(500).json({ message: "Failed to upload document" });
-    }
-  });
+    },
+  );
 
-  app.delete("/api/purchase-order-documents/:id", tenantMiddleware, async (req: TenantRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const tenantDb = await getTenantDatabase(req);
-      const deleted = await storage.deletePurchaseOrderDocument(id, tenantDb);
+  app.delete(
+    "/api/purchase-order-documents/:id",
+    tenantMiddleware,
+    async (req: TenantRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const tenantDb = await getTenantDatabase(req);
+        const deleted = await storage.deletePurchaseOrderDocument(id, tenantDb);
 
-      if (!deleted) {
-        return res.status(404).json({ message: "Document not found" });
+        if (!deleted) {
+          return res.status(404).json({ message: "Document not found" });
+        }
+
+        console.log(`✅ Successfully deleted purchase order document: ${id}`);
+        res.json({ message: "Document deleted successfully" });
+      } catch (error) {
+        console.error("❌ Error deleting purchase order document:", error);
+        res.status(500).json({ message: "Failed to delete document" });
       }
-
-      console.log(`✅ Successfully deleted purchase order document: ${id}`);
-      res.json({ message: "Document deleted successfully" });
-    } catch (error) {
-      console.error("❌ Error deleting purchase order document:", error);
-      res.status(500).json({ message: "Failed to delete document" });
-    }
-  });
+    },
+  );
 
   // Get next customer ID
   app.get("/api/customers/next-id", async (req: TenantRequest, res) => {
