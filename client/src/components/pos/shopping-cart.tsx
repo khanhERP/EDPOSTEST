@@ -442,16 +442,13 @@ export function ShoppingCart({
         ? parseFloat(orderDiscounts[activeOrderId] || "0")
         : parseFloat(discountAmount || "0");
 
-      // Calculate final total after discount (exactly as displayed on shopping cart)
-      const finalTotalAfterDiscount = Math.max(0, total - currentDiscount);
-      
-      // Send EXACT values as displayed on screen
+      // Send EXACT values as displayed on screen - no recalculation
       const cartUpdateMessage = {
         type: "cart_update",
         cart: validatedCart,
         subtotal: Math.round(subtotal),
         tax: Math.round(tax),
-        total: Math.round(finalTotalAfterDiscount),
+        total: Math.round(Math.max(0, total - currentDiscount)),
         discount: currentDiscount,
         orderNumber: activeOrderId || `ORD-${Date.now()}`,
         timestamp: new Date().toISOString(),
@@ -460,8 +457,7 @@ export function ShoppingCart({
       console.log("📡 Shopping Cart: Broadcasting EXACT displayed values:", {
         subtotal: Math.round(subtotal),
         tax: Math.round(tax),
-        totalBeforeDiscount: Math.round(total),
-        finalTotalAfterDiscount: Math.round(finalTotalAfterDiscount),
+        finalTotal: Math.round(Math.max(0, total - currentDiscount)),
         discount: currentDiscount,
       });
 
@@ -1550,17 +1546,14 @@ export function ShoppingCart({
                       total: item.total || "0",
                     }));
 
-                    // Calculate final total after discount
-                    const finalTotalAfterDiscount = Math.max(0, Math.round(subtotal + recalculatedTax) - value);
-                    
                     // Send EXACT values displayed on screen
                     wsRef.current.send(
                       JSON.stringify({
                         type: "cart_update",
                         cart: validatedCart,
                         subtotal: Math.round(subtotal),
-                        tax: Math.round(recalculatedTax),
-                        total: finalTotalAfterDiscount,
+                        tax: Math.round(tax),
+                        total: Math.max(0, Math.round(total) - value),
                         discount: value,
                         orderNumber: activeOrderId || `ORD-${Date.now()}`,
                         timestamp: new Date().toISOString(),
