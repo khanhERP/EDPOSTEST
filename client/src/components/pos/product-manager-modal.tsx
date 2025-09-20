@@ -658,9 +658,6 @@ export function ProductManagerModal({
                           {t("tables.taxRate")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
-                          {t("common.comboValues.afterTaxPrice")}
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
                           {t("tables.stock")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
@@ -704,19 +701,6 @@ export function ProductManagerModal({
                           </td>
                           <td className="py-3 px-4 pos-text-secondary">
                             {product.taxRate || "8.00"}%
-                          </td>
-                          <td className="py-3 px-4 font-medium">
-                            {(() => {
-                              // Use saved after-tax price if available, otherwise calculate
-                              if (product.afterTaxPrice) {
-                                return Math.round(parseFloat(product.afterTaxPrice)).toLocaleString("vi-VN", { maximumFractionDigits: 0 });
-                              } else {
-                                const basePrice = parseFloat(product.price);
-                                const taxRate = parseFloat(product.taxRate || "8.00");
-                                const afterTaxPrice = basePrice + (basePrice * taxRate / 100);
-                                return Math.round(afterTaxPrice).toLocaleString("vi-VN", { maximumFractionDigits: 0 });
-                              }
-                            })()} ₫
                           </td>
                           <td className="py-3 px-4">
                             <span
