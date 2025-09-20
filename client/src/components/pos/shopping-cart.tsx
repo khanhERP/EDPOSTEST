@@ -439,9 +439,9 @@ export function ShoppingCart({
       const cartUpdateMessage = {
         type: "cart_update",
         cart: validatedCart,
-        subtotal: accurateSubtotal,
-        tax: accurateTax,
-        total: accurateTotal,
+        subtotal: subtotal,
+        tax: tax,
+        total: total,
         discount: currentDiscount,
         orderNumber: activeOrderId || `ORD-${Date.now()}`,
         timestamp: new Date().toISOString(),
@@ -1541,17 +1541,13 @@ export function ShoppingCart({
                       total: item.total || "0",
                     }));
 
-                    const accurateSubtotal = Math.round(subtotal);
-                    const accurateTax = Math.round(recalculatedTax);
-                    const accurateTotal = Math.round(subtotal + recalculatedTax);
-
                     wsRef.current.send(
                       JSON.stringify({
                         type: "cart_update",
                         cart: validatedCart,
-                        subtotal: accurateSubtotal,
-                        tax: accurateTax,
-                        total: accurateTotal,
+                        subtotal: subtotal,
+                        tax: recalculatedTax,
+                        total: subtotal + recalculatedTax,
                         discount: value,
                         orderNumber: activeOrderId || `ORD-${Date.now()}`,
                         timestamp: new Date().toISOString(),
