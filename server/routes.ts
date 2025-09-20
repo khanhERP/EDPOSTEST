@@ -3672,7 +3672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           product.afterTaxPrice !== ""
         ) {
           const afterTaxPrice = parseFloat(product.afterTaxPrice); // Giá sau thuế
-          const preTaxPrice = unitPrice; // Giá trước thuế
+          const preTaxPrice = unitPrice; // Giá trưSu�c thuế
           const taxPerUnit = Math.max(0, afterTaxPrice - preTaxPrice); // Thuế trên đơn vị
           itemTax = taxPerUnit * quantity;
         }
@@ -3797,12 +3797,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/store-settings", async (req: TenantRequest, res) => {
     try {
       const settings = await storage.getStoreSettings();
-      console.log("Store settings fetched:", settings);
       res.json(settings);
     } catch (error) {
       console.error("Error fetching store settings:", error);
       res.status(500).json({
         error: "Failed to fetch store settings",
+      });
+    }
+  });
+
+  app.put("/api/store-settings", async (req: TenantRequest, res) => {
+    try {
+      const validatedData = insertStoreSettingsSchema.partial().parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
+      const settings = await storage.updateStoreSettings(
+        validatedData,
+        tenantDb,
+      );
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid store settings data",
+          errors: error.errors,
+        });
+      }
+      res.status(500).json({
+        message: "Failed to update store settings",
       });
     }
   });
@@ -3839,27 +3860,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         error: "Failed to fetch current cart",
       });
-    }
-  });
-
-  app.put("/api/store-settings", async (req: TenantRequest, res) => {
-    try {
-      const validatedData = insertStoreSettingsSchema.partial().parse(req.body);
-      const tenantDb = await getTenantDatabase(req);
-      const settings = await storage.updateStoreSettings(
-        validatedData,
-        tenantDb,
-      );
-      res.json(settings);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error("Validation error:", error.errors);
-        return res.status(400).json({ error: "Invalid settings data." });
-      }
-      console.error("Error updating store settings:", error);
-      res
-        .status(500)
-        .json({ error: "Failed to update store settings. Please try again." });
     }
   });
 

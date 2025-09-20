@@ -13,6 +13,7 @@ app.use((req, res, next) => {
     "http://localhost:5001",
     "http://127.0.0.1:5000",
     "http://127.0.0.1:5001",
+    "https://64071157-147f-4160-96cd-6dc099d777d2-00-1d0mzv8b48h7n.pike.replit.dev",
     // Support multiple Replit deployments for backward compatibility
     "https://64071157-147f-4160-96cd-6dc099d777d2-00-1d0mzv8b48h7n.pike.replit.dev",
     "https://66622521-d7f0-4a33-aadd-c50d66665c71-00-wqfql649629t.pike.replit.dev",
@@ -48,7 +49,7 @@ app.use((req, res, next) => {
     const isVercelApp = origin.includes("demo-edpos.vercel.app");
 
     if (isAllowedOrigin || isReplitDev || isVercelApp) {
-      res.header("Access-Control-Allow-Origin", "*");
+      res.header("Access-Control-Allow-Origin", origin);
       console.log(
         `✅ CORS allowed for origin: ${origin} (allowed: ${isAllowedOrigin}, replit: ${isReplitDev}, vercel: ${isVercelApp})`,
       );

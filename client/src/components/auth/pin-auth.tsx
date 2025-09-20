@@ -28,9 +28,18 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
   const { data: storeData } = useQuery({
     queryKey: ["/api/store-settings"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/store-settings");
-      console.log("Store settings:", response.json());
-      return response.json();
+      try {
+        const response = await apiRequest("GET", "/api/store-settings");
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json(); // Chờ lấy JSON
+        console.log("Store settings:", data);
+        return data;
+      } catch (error) {
+        console.error("Failed to fetch store settings:", error);
+        throw error; // Ném lỗi để query có thể xử lý tiếp
+      }
     },
   });
 
@@ -57,6 +66,8 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
     setIsLoading(true);
 
     try {
+      console.log("Submitting PIN:", pin);
+      console.log("storeData:", storeData);
       // Kiểm tra PIN với dữ liệu từ store settings
       if (storeData?.pinCode && pin === storeData.pinCode) {
         // Lưu trạng thái đăng nhập vào sessionStorage
