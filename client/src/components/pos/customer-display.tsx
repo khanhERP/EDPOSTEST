@@ -292,13 +292,16 @@ export function CustomerDisplay({
                           </div>
 
                           <div className="text-right">
-                            <div className="flex flex-col items-end space-y-1">
-                              <span className="text-sm text-gray-500">SL: {item.quantity || 1}</span>
-                              <div className="text-xl font-bold text-blue-600">
-                                {Math.round(parseFloat(item.total || "0")).toLocaleString("vi-VN")} ₫
+                              <div className="flex flex-col items-end space-y-1">
+                                <span className="text-sm text-gray-500">SL: {item.quantity || 1}</span>
+                                <div className="text-xl font-bold text-blue-600">
+                                  {parseFloat(item.total || "0").toLocaleString("vi-VN", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })} ₫
+                                </div>
                               </div>
                             </div>
-                          </div>
                         </div>
                       </div>
                     ))}
