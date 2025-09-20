@@ -40,10 +40,12 @@ export function CustomerDisplay({
   const [currentOrder, setCurrentOrder] = useState<any>(null);
   const [orderNumber, setOrderNumber] = useState<string>("");
 
-  // Use EXACT data received from WebSocket - already calculated and rounded correctly in shopping-cart
+  // Use tax data from WebSocket instead of recalculating
+  // The subtotal, tax, and total are already calculated correctly in shopping-cart
+  // and sent via WebSocket, so we should use those values directly
   const correctSubtotal = currentSubtotal;
   const correctTax = currentTax;
-  const finalTotal = currentTotal; // Use the total sent from shopping cart directly
+  const finalTotal = Math.max(0, currentSubtotal + currentTax - (discount || 0));
 
   console.log("Customer Display: Calculation breakdown", {
     correctSubtotal,
@@ -314,7 +316,10 @@ export function CustomerDisplay({
                       <div className="flex justify-between text-2xl font-bold">
                         <span className="text-gray-800">Tổng cộng:</span>
                         <span className="text-green-600">
-                          {Math.round(finalTotal).toLocaleString("vi-VN")} ₫
+                          {finalTotal.toLocaleString("vi-VN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })} ₫
                         </span>
                       </div>
                     </div>
