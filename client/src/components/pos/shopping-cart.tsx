@@ -256,24 +256,13 @@ export function ShoppingCart({
   const getDisplayPrice = (item: any): number => {
     const basePrice = parseFloat(item.price);
     
-    console.log("🔍 Price Display Debug:", {
-      itemName: item.name,
-      basePrice: basePrice,
-      taxRate: item.taxRate,
-      priceIncludesTax: priceIncludesTax,
-      storeSettings: storeSettings
-    });
-    
-    // If price_includes_tax = true, display price with tax included
     if (priceIncludesTax) {
+      // If store setting says to include tax, calculate price with tax
       const taxRate = parseFloat(item.taxRate || "0");
-      const priceWithTax = basePrice * (1 + taxRate / 100);
-      console.log("✅ Displaying price with tax:", priceWithTax);
-      return priceWithTax;
+      return basePrice * (1 + taxRate / 100);
     }
     
-    // If price_includes_tax = false, display base price only (without tax)
-    console.log("✅ Displaying base price:", basePrice);
+    // If store setting says not to include tax, show base price
     return basePrice;
   };
 
