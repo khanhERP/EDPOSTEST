@@ -431,34 +431,23 @@ export function ShoppingCart({
         ? parseFloat(orderDiscounts[activeOrderId] || "0")
         : parseFloat(discountAmount || "0");
 
-      // Use EXACT values displayed on shopping cart - rounded as displayed
-      const displayedSubtotal = Math.round(subtotal);
-      const displayedTax = Math.round(tax);
-      const displayedTotal = Math.round(
-        Math.max(
-          0,
-          total - currentDiscount,
-        ),
-      );
-
+      // Send EXACT values as displayed on screen - no recalculation
       const cartUpdateMessage = {
         type: "cart_update",
         cart: validatedCart,
-        subtotal: displayedSubtotal,
-        tax: displayedTax,
-        total: displayedTotal,
+        subtotal: Math.round(subtotal),
+        tax: Math.round(tax),
+        total: Math.round(Math.max(0, total - currentDiscount)),
         discount: currentDiscount,
         orderNumber: activeOrderId || `ORD-${Date.now()}`,
         timestamp: new Date().toISOString(),
       };
 
-      console.log("📡 Shopping Cart: Broadcasting cart update with EXACT displayed values:", {
-        cartItems: validatedCart.length,
-        displayedSubtotal: displayedSubtotal,
-        displayedTax: displayedTax,
-        displayedTotal: displayedTotal,
+      console.log("📡 Shopping Cart: Broadcasting EXACT displayed values:", {
+        subtotal: Math.round(subtotal),
+        tax: Math.round(tax),
+        finalTotal: Math.round(Math.max(0, total - currentDiscount)),
         discount: currentDiscount,
-        calculatedValues: { subtotal, tax, total },
       });
 
       try {
@@ -1546,21 +1535,14 @@ export function ShoppingCart({
                       total: item.total || "0",
                     }));
 
-                    // Send the EXACT values that are displayed on screen
-                    const displayedSubtotal = Math.round(subtotal);
-                    const displayedTax = Math.round(recalculatedTax);
-                    const displayedFinalTotal = Math.max(
-                      0,
-                      Math.round(subtotal + recalculatedTax) - value,
-                    );
-
+                    // Send EXACT values displayed on screen
                     wsRef.current.send(
                       JSON.stringify({
                         type: "cart_update",
                         cart: validatedCart,
-                        subtotal: displayedSubtotal,
-                        tax: displayedTax,
-                        total: displayedFinalTotal,
+                        subtotal: Math.round(subtotal),
+                        tax: Math.round(tax),
+                        total: Math.max(0, Math.round(total) - value),
                         discount: value,
                         orderNumber: activeOrderId || `ORD-${Date.now()}`,
                         timestamp: new Date().toISOString(),
