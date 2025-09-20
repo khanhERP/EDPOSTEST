@@ -1561,24 +1561,43 @@ export function ReceiptModal({
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
               {(() => {
-                // Calculate totals for preview
-                const subtotal = parseFloat(receipt?.subtotal || "0");
-                const tax = parseFloat(receipt?.tax || "0");
-                const discount = parseFloat(receipt?.discount || "0");
+                // Calculate totals for preview based on cartItems and store settings
+                let subtotal = 0;
+                let tax = 0;
+                let discount = 0;
+
+                // Calculate from cartItems for preview mode
+                cartItems.forEach(item => {
+                  const basePrice = typeof item.price === "string" 
+                    ? parseFloat(item.price) 
+                    : item.price;
+                  const quantity = item.quantity;
+                  const itemTaxRate = parseFloat(item.taxRate || "0");
+                  
+                  subtotal += basePrice * quantity;
+                  tax += (basePrice * quantity * itemTaxRate) / 100;
+                });
+
+                // Get discount from receipt or order data
+                if (receipt?.exactDiscount !== undefined && receipt?.exactDiscount !== null) {
+                  discount = parseFloat(receipt.exactDiscount.toString());
+                } else if (receipt?.discount !== undefined && receipt?.discount !== null) {
+                  discount = parseFloat(receipt.discount.toString());
+                }
 
                 if (priceIncludesTax) {
-                  // When price includes tax: 
-                  // - Tạm tính = subtotal - tax  
-                  // - Tổng tiền = subtotal - tax - discount
-                  const actualSubtotal = subtotal - tax;
-                  const finalTotal = subtotal - tax - discount;
+                  // When price includes tax:
+                  // - Tạm tính = subtotal (base prices without tax)
+                  // - Thuế = calculated tax amount
+                  // - Tổng tiền = subtotal + tax - discount
+                  const finalTotal = subtotal + tax - discount;
 
                   return (
                     <>
                       <div className="flex justify-between text-sm">
                         <span>{t("reports.subtotal")}:</span>
                         <span>
-                          {Math.floor(actualSubtotal).toLocaleString("vi-VN")} ₫
+                          {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
@@ -1602,8 +1621,8 @@ export function ReceiptModal({
                     </>
                   );
                 } else {
-                  // When price doesn't include tax: keep current display
-                  const finalTotal = parseFloat(receipt?.total || "0");
+                  // When price doesn't include tax: standard calculation
+                  const finalTotal = subtotal + tax - discount;
 
                   return (
                     <>
