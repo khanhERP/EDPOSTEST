@@ -1862,7 +1862,33 @@ export function PaymentMethodModal({
                     {t("common.totalAmount")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {Math.floor(Number(total || 0)).toLocaleString("vi-VN")} ₫
+                    {(() => {
+                      // Get priceIncludesTax setting from localStorage or default to false
+                      const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
+                      const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+
+                      // Use exact total from orderForPayment or receipt if available
+                      let displayTotal = total || 0;
+
+                      if (orderForPayment && priceIncludesTax) {
+                        // When priceIncludesTax = true: total = subtotal - tax - discount
+                        const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
+                        const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
+                        const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
+                        displayTotal = Math.max(0, subtotal - tax - discount);
+                      } else if (orderForPayment && !priceIncludesTax) {
+                        // When priceIncludesTax = false: total = subtotal + tax - discount
+                        const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
+                        const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
+                        const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
+                        displayTotal = Math.max(0, subtotal + tax - discount);
+                      } else if (receipt) {
+                        // Use receipt's exact total if available
+                        displayTotal = receipt.exactTotal || receipt.total || total || 0;
+                      }
+
+                      return Math.floor(Number(displayTotal)).toLocaleString("vi-VN");
+                    })()} ₫
                   </p>
                 </div>
 
