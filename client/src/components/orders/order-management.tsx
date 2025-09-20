@@ -55,9 +55,9 @@ function OrderSummaryDisplay({ orderDetailsCalculation, selectedOrder }: {
   const discount = parseFloat(selectedOrder.discount || "0");
 
   if (priceIncludesTax) {
-    // When price includes tax: Tạm tính = subtotal - tax (base price without tax), Tổng tiền = subtotal - tax - discount
+    // When price includes tax: Tạm tính = subtotal - tax (base price without tax)
     const subtotalWithoutTax = subtotal - tax;
-    const finalTotal = subtotal - tax - discount;
+    const finalTotal = subtotalWithoutTax - discount;
 
     return (
       <>
