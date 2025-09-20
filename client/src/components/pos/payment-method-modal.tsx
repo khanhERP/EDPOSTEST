@@ -1863,11 +1863,19 @@ export function PaymentMethodModal({
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
                     {(() => {
-                      // Get priceIncludesTax setting from localStorage or default to false
+                      // Use exact total from orderForPayment or receipt first
+                      if (orderForPayment?.exactTotal) {
+                        return Math.floor(Number(orderForPayment.exactTotal)).toLocaleString("vi-VN");
+                      }
+
+                      if (receipt?.exactTotal) {
+                        return Math.floor(Number(receipt.exactTotal)).toLocaleString("vi-VN");
+                      }
+
+                      // Fallback calculation
                       const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                       const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
-                      // Calculate display total based on priceIncludesTax setting
                       let displayTotal = total || 0;
 
                       if (orderForPayment) {
@@ -1876,23 +1884,18 @@ export function PaymentMethodModal({
                         const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
 
                         if (priceIncludesTax) {
-                          // When priceIncludesTax = true: total = subtotal - tax - discount
-                          displayTotal = Math.max(0, subtotal - tax - discount);
+                          displayTotal = Math.max(0, subtotal - discount);
                         } else {
-                          // When priceIncludesTax = false: total = subtotal + tax - discount
                           displayTotal = Math.max(0, subtotal + tax - discount);
                         }
                       } else if (receipt) {
-                        // Use receipt's exact total if available
                         const receiptSubtotal = Number(receipt.subtotal || receipt.exactSubtotal || 0);
                         const receiptTax = Number(receipt.tax || receipt.exactTax || 0);
                         const receiptDiscount = Number(receipt.discount || receipt.exactDiscount || 0);
 
                         if (priceIncludesTax) {
-                          // When priceIncludesTax = true: total = subtotal - tax - discount
-                          displayTotal = Math.max(0, receiptSubtotal - receiptTax - receiptDiscount);
+                          displayTotal = Math.max(0, receiptSubtotal - receiptDiscount);
                         } else {
-                          // When priceIncludesTax = false: total = subtotal + tax - discount
                           displayTotal = Math.max(0, receiptSubtotal + receiptTax - receiptDiscount);
                         }
                       }
@@ -2001,11 +2004,19 @@ export function PaymentMethodModal({
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
                       {(() => {
-                        // Get priceIncludesTax setting from localStorage or default to false
+                        // Use exact total from orderForPayment or receipt first
+                        if (orderForPayment?.exactTotal) {
+                          return Math.floor(Number(orderForPayment.exactTotal)).toLocaleString("vi-VN");
+                        }
+
+                        if (receipt?.exactTotal) {
+                          return Math.floor(Number(receipt.exactTotal)).toLocaleString("vi-VN");
+                        }
+
+                        // Fallback calculation
                         const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                         const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
-                        // Calculate display total based on priceIncludesTax setting
                         let displayTotal = total || 0;
 
                         if (orderForPayment) {
@@ -2014,23 +2025,18 @@ export function PaymentMethodModal({
                           const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
 
                           if (priceIncludesTax) {
-                            // When priceIncludesTax = true: total = subtotal - tax - discount
-                            displayTotal = Math.max(0, subtotal - tax - discount);
+                            displayTotal = Math.max(0, subtotal - discount);
                           } else {
-                            // When priceIncludesTax = false: total = subtotal + tax - discount
                             displayTotal = Math.max(0, subtotal + tax - discount);
                           }
                         } else if (receipt) {
-                          // Use receipt's exact total if available
                           const receiptSubtotal = Number(receipt.subtotal || receipt.exactSubtotal || 0);
                           const receiptTax = Number(receipt.tax || receipt.exactTax || 0);
                           const receiptDiscount = Number(receipt.discount || receipt.exactDiscount || 0);
 
                           if (priceIncludesTax) {
-                            // When priceIncludesTax = true: total = subtotal - tax - discount
-                            displayTotal = Math.max(0, receiptSubtotal - receiptTax - receiptDiscount);
+                            displayTotal = Math.max(0, receiptSubtotal - receiptDiscount);
                           } else {
-                            // When priceIncludesTax = false: total = subtotal + tax - discount
                             displayTotal = Math.max(0, receiptSubtotal + receiptTax - receiptDiscount);
                           }
                         }
@@ -2169,11 +2175,19 @@ export function PaymentMethodModal({
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
                       {(() => {
-                        // Get priceIncludesTax setting from localStorage or default to false
+                        // Use exact total from orderForPayment or receipt first
+                        if (orderForPayment?.exactTotal) {
+                          return Math.floor(Number(orderForPayment.exactTotal)).toLocaleString("vi-VN");
+                        }
+
+                        if (receipt?.exactTotal) {
+                          return Math.floor(Number(receipt.exactTotal)).toLocaleString("vi-VN");
+                        }
+
+                        // Fallback calculation
                         const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                         const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
-                        // Calculate display total based on priceIncludesTax setting
                         let displayTotal = total || 0;
 
                         if (orderForPayment) {
@@ -2182,23 +2196,18 @@ export function PaymentMethodModal({
                           const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
 
                           if (priceIncludesTax) {
-                            // When priceIncludesTax = true: total = subtotal - tax - discount
-                            displayTotal = Math.max(0, subtotal - tax - discount);
+                            displayTotal = Math.max(0, subtotal - discount);
                           } else {
-                            // When priceIncludesTax = false: total = subtotal + tax - discount
                             displayTotal = Math.max(0, subtotal + tax - discount);
                           }
                         } else if (receipt) {
-                          // Use receipt's exact total if available
                           const receiptSubtotal = Number(receipt.subtotal || receipt.exactSubtotal || 0);
                           const receiptTax = Number(receipt.tax || receipt.exactTax || 0);
                           const receiptDiscount = Number(receipt.discount || receipt.exactDiscount || 0);
 
                           if (priceIncludesTax) {
-                            // When priceIncludesTax = true: total = subtotal - tax - discount
-                            displayTotal = Math.max(0, receiptSubtotal - receiptTax - receiptDiscount);
+                            displayTotal = Math.max(0, receiptSubtotal - receiptDiscount);
                           } else {
-                            // When priceIncludesTax = false: total = subtotal + tax - discount
                             displayTotal = Math.max(0, receiptSubtotal + receiptTax - receiptDiscount);
                           }
                         }
