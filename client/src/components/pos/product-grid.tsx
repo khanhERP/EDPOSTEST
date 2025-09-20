@@ -36,6 +36,19 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
+  // Fetch store settings to check price inclusion of tax
+  const { data: storeSettings } = useQuery({
+    queryKey: ["/api/store-settings"],
+    queryFn: async () => {
+      const response = await fetch("/api/store-settings");
+      if (!response.ok) throw new Error('Failed to fetch store settings');
+      return response.json();
+    },
+    staleTime: Infinity, // Assuming store settings don't change frequently
+  });
+
+  const priceIncludesTax = storeSettings?.price_include_tax ?? false;
+
   // Assume setCart and other necessary hooks/context are available if this were a real component
   // For demonstration, we'll just use the onAddToCart prop
   const setCart = (items: CartItem[]) => {
@@ -109,6 +122,17 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     // Pass productId to onAddToCart as expected by the interface
     // Toast notification will be handled by the usePOS hook only
     onAddToCart(product.id);
+  };
+
+  // Function to calculate the display price based on store settings
+  const getDisplayPrice = (product: Product): number => {
+    const basePrice = parseFloat(product.price);
+    if (priceIncludesTax) {
+      // Assuming product.taxRate is a string like "0.10" for 10%
+      const taxRate = parseFloat(product.taxRate || "0");
+      return basePrice * (1 + taxRate);
+    }
+    return basePrice;
   };
 
   // Mock updateCart function to demonstrate the change
@@ -228,8 +252,8 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
       switch (sortBy) {
         case 'price':
-          aValue = parseFloat(a.price);
-          bValue = parseFloat(b.price);
+          aValue = getDisplayPrice(a);
+          bValue = getDisplayPrice(b);
           break;
         case 'stock':
           aValue = a.stock;
@@ -344,7 +368,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                         <h3 className="font-medium pos-text-primary mb-1 line-clamp-2">{product.name}</h3>
                         <p className="text-sm pos-text-secondary mb-2">SKU: {product.sku}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
+                          <span className="text-lg font-bold text-green-600">{getDisplayPrice(product).toLocaleString()} ₫</span>
                           {product.trackInventory !== false && (
                             <span className={`text-xs font-medium ${stockStatus.color}`}>
                               {stockStatus.text}
@@ -376,7 +400,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                         <h3 className="font-medium pos-text-primary mb-1">{product.name}</h3>
                         <p className="text-sm pos-text-secondary mb-1">SKU: {product.sku}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
+                          <span className="text-lg font-bold text-green-600">{getDisplayPrice(product).toLocaleString()} ₫</span>
                           {product.trackInventory !== false && (
                             <span className={`text-xs font-medium ${stockStatus.color}`}>
                               {stockStatus.text}
