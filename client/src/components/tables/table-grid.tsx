@@ -3319,51 +3319,89 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
               {/* Order Summary - Use data from database */}
               <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">{t("tables.subtotal")}:</span>
-                  <span className="font-medium">
-                    {Math.floor(
-                      Number(selectedOrder.subtotal || 0),
-                    ).toLocaleString("vi-VN")}{" "}
-                    ₫
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">{t("orders.tax")}:</span>
-                  <span className="font-medium">
-                    {Math.floor(Number(selectedOrder.tax || 0)).toLocaleString(
-                      "vi-VN",
-                    )}{" "}
-                    ₫
-                  </span>
-                </div>
-                {selectedOrder.discount &&
-                  parseFloat(selectedOrder.discount) > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        {t("common.discount")}:
-                      </span>
-                      <span className="font-medium text-red-600">
-                        -
-                        {Math.floor(
-                          parseFloat(selectedOrder.discount),
-                        ).toLocaleString("vi-VN")}{" "}
-                        ₫
-                      </span>
-                    </div>
-                  )}
-                <Separator />
-                <div className="flex justify-between">
-                  <span className="text-lg font-bold text-gray-900">
-                    {t("tables.total")}:
-                  </span>
-                  <span className="text-lg font-bold text-blue-600">
-                    {Math.floor(
-                      Number(selectedOrder.total || 0),
-                    ).toLocaleString("vi-VN")}{" "}
-                    ₫
-                  </span>
-                </div>
+                {(() => {
+                  const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+                  const subtotal = parseFloat(selectedOrder.subtotal || "0");
+                  const tax = parseFloat(selectedOrder.tax || "0");
+                  const discount = parseFloat(selectedOrder.discount || "0");
+
+                  if (priceIncludesTax) {
+                    // When price includes tax: Tạm tính = subtotal - tax, Tổng tiền = subtotal - tax - discount
+                    const actualSubtotal = subtotal - tax;
+                    const finalTotal = subtotal - tax - discount;
+
+                    return (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">{t("tables.subtotal")}:</span>
+                          <span className="font-medium">
+                            {Math.floor(actualSubtotal).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">{t("orders.tax")}:</span>
+                          <span className="font-medium">
+                            {Math.floor(tax).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                        {discount > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">{t("common.discount")}:</span>
+                            <span className="font-medium text-red-600">
+                              -{Math.floor(discount).toLocaleString("vi-VN")} ₫
+                            </span>
+                          </div>
+                        )}
+                        <Separator />
+                        <div className="flex justify-between">
+                          <span className="text-lg font-bold text-gray-900">
+                            {t("tables.total")}:
+                          </span>
+                          <span className="text-lg font-bold text-blue-600">
+                            {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                      </>
+                    );
+                  } else {
+                    // When price doesn't include tax: keep current display
+                    const finalTotal = subtotal + tax - discount;
+
+                    return (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">{t("tables.subtotal")}:</span>
+                          <span className="font-medium">
+                            {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">{t("orders.tax")}:</span>
+                          <span className="font-medium">
+                            {Math.floor(tax).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                        {discount > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">{t("common.discount")}:</span>
+                            <span className="font-medium text-red-600">
+                              -{Math.floor(discount).toLocaleString("vi-VN")} ₫
+                            </span>
+                          </div>
+                        )}
+                        <Separator />
+                        <div className="flex justify-between">
+                          <span className="text-lg font-bold text-gray-900">
+                            {t("tables.total")}:
+                          </span>
+                          <span className="text-lg font-bold text-blue-600">
+                            {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                      </>
+                    );
+                  }
+                })()}
               </div>
 
               {/* Payment Buttons */}
