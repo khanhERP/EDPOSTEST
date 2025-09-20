@@ -40,83 +40,12 @@ export function CustomerDisplay({
   const [currentOrder, setCurrentOrder] = useState<any>(null);
   const [orderNumber, setOrderNumber] = useState<string>("");
 
-  // Calculate correct subtotal from cart items (pre-tax price * quantity)
-  const calculateCorrectSubtotal = () => {
-    return cartItems.reduce((sum, item) => {
-      // Use the base price (before tax) for subtotal calculation
-      const basePrice = parseFloat(item.price || "0");
-      const quantity = item.quantity || 0;
-      return sum + basePrice * quantity;
-    }, 0);
-  };
-
-  // Calculate correct tax from cart items - EXACT same logic as shopping-cart
-  const calculateCorrectTax = () => {
-    return cartItems.reduce((sum, item) => {
-      if (item.taxRate && parseFloat(item.taxRate) > 0) {
-        const basePrice = parseFloat(item.price);
-        const quantity = item.quantity;
-        const subtotal = basePrice * quantity;
-
-        // Calculate discount for this item - SAME logic as shopping-cart
-        const orderDiscount = discount || 0;
-        let itemDiscountAmount = 0;
-
-        if (orderDiscount > 0) {
-          const currentIndex = cartItems.findIndex(
-            (cartItem) => cartItem.id === item.id,
-          );
-          const isLastItem = currentIndex === cartItems.length - 1;
-
-          if (isLastItem) {
-            // Last item: total discount - sum of all previous discounts
-            let previousDiscounts = 0;
-            const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-              return sum + parseFloat(itm.price) * itm.quantity;
-            }, 0);
-
-            for (let i = 0; i < cartItems.length - 1; i++) {
-              const prevItemSubtotal =
-                parseFloat(cartItems[i].price) * cartItems[i].quantity;
-              const prevItemDiscount =
-                totalBeforeDiscount > 0
-                  ? Math.floor(
-                      (orderDiscount * prevItemSubtotal) / totalBeforeDiscount,
-                    )
-                  : 0;
-              previousDiscounts += prevItemDiscount;
-            }
-
-            itemDiscountAmount = orderDiscount - previousDiscounts;
-          } else {
-            // Regular calculation for non-last items
-            const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-              return sum + parseFloat(itm.price) * itm.quantity;
-            }, 0);
-            itemDiscountAmount =
-              totalBeforeDiscount > 0
-                ? Math.floor((orderDiscount * subtotal) / totalBeforeDiscount)
-                : 0;
-          }
-        }
-
-        // Tax = (price * quantity - discount) * taxRate - SAME as shopping-cart
-        const taxableAmount = Math.max(0, subtotal - itemDiscountAmount);
-        const taxRate = parseFloat(item.taxRate) / 100;
-        const calculatedTax = Math.floor(taxableAmount * taxRate);
-
-        return sum + calculatedTax;
-      }
-      return sum;
-    }, 0);
-  };
-
-  // Get the correct pre-tax subtotal and tax
-  const correctSubtotal = calculateCorrectSubtotal();
-  const correctTax = calculateCorrectTax();
-
-  // Calculate final total with discount
-  const finalTotal = Math.max(0, correctSubtotal + correctTax - (discount || 0));
+  // Use tax data from WebSocket instead of recalculating
+  // The subtotal, tax, and total are already calculated correctly in shopping-cart
+  // and sent via WebSocket, so we should use those values directly
+  const correctSubtotal = currentSubtotal;
+  const correctTax = currentTax;
+  const finalTotal = Math.max(0, currentSubtotal + currentTax - (discount || 0));
 
   console.log("Customer Display: Calculation breakdown", {
     correctSubtotal,
@@ -457,7 +386,7 @@ export function CustomerDisplay({
                     <div className="flex justify-between text-lg">
                       <span className="text-gray-600">Tạm tính:</span>
                       <span className="font-semibold">
-                        {calculateCorrectSubtotal().toLocaleString("vi-VN", {
+                        {currentSubtotal.toLocaleString("vi-VN", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })} ₫
@@ -467,7 +396,7 @@ export function CustomerDisplay({
                     <div className="flex justify-between text-lg">
                       <span className="text-gray-600">Thuế:</span>
                       <span className="font-semibold text-orange-600">
-                        {calculateCorrectTax().toLocaleString("vi-VN", {
+                        {currentTax.toLocaleString("vi-VN", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })} ₫
@@ -487,7 +416,7 @@ export function CustomerDisplay({
                       <div className="flex justify-between text-2xl font-bold">
                         <span className="text-gray-800">Tổng cộng:</span>
                         <span className="text-green-600">
-                          {Math.max(0, calculateCorrectSubtotal() + calculateCorrectTax() - (discount || 0)).toLocaleString("vi-VN", {
+                          {finalTotal.toLocaleString("vi-VN", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })} ₫
