@@ -1105,7 +1105,6 @@ export function PaymentMethodModal({
           orderItems = orderItems.map((item, index) => {
             const unitPrice = Number(item.unitPrice || 0);
             const quantity = Number(item.quantity || 0);
-            const itemTotal = unitPrice * quantity;
 
             let itemDiscount = 0;
 
@@ -1115,11 +1114,13 @@ export function PaymentMethodModal({
             } else {
               // Calculate proportional discount
               const proportionalDiscount =
-                (discountAmount * itemTotal) / totalAmount;
+                (discountAmount * unitPrice) / totalAmount;
               itemDiscount = Math.round(proportionalDiscount);
               allocatedDiscount += itemDiscount;
             }
 
+            const itemTotal = unitPrice * quantity - itemDiscount;
+            item.total = itemTotal.toString();
             return {
               ...item,
               discount: itemDiscount.toFixed(2),
@@ -1969,21 +1970,21 @@ export function PaymentMethodModal({
                         const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                         const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
-                        // Use exact total from orderForPayment or receipt if available
+                        // Calculate display total based on priceIncludesTax setting
                         let displayTotal = total || 0;
 
-                        if (orderForPayment && priceIncludesTax) {
-                          // When priceIncludesTax = true: total = subtotal - tax - discount
+                        if (orderForPayment) {
                           const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
                           const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
                           const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
-                          displayTotal = Math.max(0, subtotal - tax - discount);
-                        } else if (orderForPayment && !priceIncludesTax) {
-                          // When priceIncludesTax = false: total = subtotal + tax - discount
-                          const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
-                          const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
-                          const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
-                          displayTotal = Math.max(0, subtotal + tax - discount);
+
+                          if (priceIncludesTax) {
+                            // When priceIncludesTax = true: total = subtotal - tax - discount
+                            displayTotal = Math.max(0, subtotal - tax - discount);
+                          } else {
+                            // When priceIncludesTax = false: total = subtotal + tax - discount
+                            displayTotal = Math.max(0, subtotal + tax - discount);
+                          }
                         } else if (receipt) {
                           // Use receipt's exact total if available
                           displayTotal = receipt.exactTotal || receipt.total || total || 0;
@@ -2127,21 +2128,21 @@ export function PaymentMethodModal({
                         const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                         const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
-                        // Use exact total from orderForPayment or receipt if available
+                        // Calculate display total based on priceIncludesTax setting
                         let displayTotal = total || 0;
 
-                        if (orderForPayment && priceIncludesTax) {
-                          // When priceIncludesTax = true: total = subtotal - tax - discount
+                        if (orderForPayment) {
                           const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
                           const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
                           const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
-                          displayTotal = Math.max(0, subtotal - tax - discount);
-                        } else if (orderForPayment && !priceIncludesTax) {
-                          // When priceIncludesTax = false: total = subtotal + tax - discount
-                          const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
-                          const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
-                          const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
-                          displayTotal = Math.max(0, subtotal + tax - discount);
+
+                          if (priceIncludesTax) {
+                            // When priceIncludesTax = true: total = subtotal - tax - discount
+                            displayTotal = Math.max(0, subtotal - tax - discount);
+                          } else {
+                            // When priceIncludesTax = false: total = subtotal + tax - discount
+                            displayTotal = Math.max(0, subtotal + tax - discount);
+                          }
                         } else if (receipt) {
                           // Use receipt's exact total if available
                           displayTotal = receipt.exactTotal || receipt.total || total || 0;
