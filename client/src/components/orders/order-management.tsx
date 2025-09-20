@@ -54,49 +54,23 @@ function OrderSummaryDisplay({ orderDetailsCalculation, selectedOrder }: {
   const tax = orderDetailsCalculation.tax;
   const discount = parseFloat(selectedOrder.discount || "0");
 
-  console.log(`💰 OrderSummaryDisplay: Calculation details:`, {
-    priceIncludesTax,
-    orderSubtotal: subtotal,
-    orderTax: tax,
-    orderDiscount: discount,
-    orderNumber: selectedOrder.orderNumber
-  });
-
   if (priceIncludesTax) {
-    // When priceIncludesTax = true: 
-    // Tạm tính = subtotal - tax (base price without tax)
-    // Tổng cộng = subtotal - tax (before discount)
-    // Tổng tiền = subtotal - tax - discount (final total)
-    const baseSubtotal = Math.max(0, subtotal - tax);
-    const totalBeforeDiscount = baseSubtotal;
-    const finalTotal = Math.max(0, baseSubtotal - discount);
-
-    console.log(`💰 OrderSummaryDisplay (priceIncludesTax=true):`, {
-      baseSubtotal,
-      totalBeforeDiscount,
-      finalTotal,
-      tax,
-      discount
-    });
+    // When price includes tax: Tạm tính = subtotal - tax (base price without tax), Tổng tiền = subtotal - tax - discount
+    const subtotalWithoutTax = subtotal - tax;
+    const finalTotal = subtotal - tax - discount;
 
     return (
       <>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">{t("reports.subtotal")}:</span>
           <span className="font-medium">
-            {Math.floor(baseSubtotal).toLocaleString("vi-VN")} ₫
+            {Math.floor(subtotalWithoutTax).toLocaleString("vi-VN")} ₫
           </span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">{t("reports.tax")}:</span>
           <span className="font-medium">
             {Math.floor(tax).toLocaleString("vi-VN")} ₫
-          </span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">{t("reports.total")}:</span>
-          <span className="font-medium">
-            {Math.floor(totalBeforeDiscount).toLocaleString("vi-VN")} ₫
           </span>
         </div>
         {discount > 0 && (
@@ -119,20 +93,8 @@ function OrderSummaryDisplay({ orderDetailsCalculation, selectedOrder }: {
       </>
     );
   } else {
-    // When priceIncludesTax = false:
-    // Tạm tính = subtotal (base price)
-    // Tổng cộng = subtotal + tax (before discount)
-    // Tổng tiền = subtotal + tax - discount (final total)
-    const totalBeforeDiscount = subtotal + tax;
-    const finalTotal = Math.max(0, totalBeforeDiscount - discount);
-
-    console.log(`💰 OrderSummaryDisplay (priceIncludesTax=false):`, {
-      subtotal,
-      tax,
-      totalBeforeDiscount,
-      finalTotal,
-      discount
-    });
+    // When price doesn't include tax: Tạm tính = subtotal, Thuế = tax, Tổng tiền = subtotal + tax - discount
+    const finalTotal = subtotal + tax - discount;
 
     return (
       <>
@@ -146,12 +108,6 @@ function OrderSummaryDisplay({ orderDetailsCalculation, selectedOrder }: {
           <span className="text-gray-600">{t("reports.tax")}:</span>
           <span className="font-medium">
             {Math.floor(tax).toLocaleString("vi-VN")} ₫
-          </span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">{t("reports.total")}:</span>
-          <span className="font-medium">
-            {Math.floor(totalBeforeDiscount).toLocaleString("vi-VN")} ₫
           </span>
         </div>
         {discount > 0 && (

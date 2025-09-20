@@ -132,7 +132,6 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     useall: "모두 사용",
     additionalpaymentrequired: "추가 결제 필요",
     selectpaymentmethod: "남은 금액에 대한 결제 방법을 선택하세요",
-    amountToPay: "결제할 금액",
   },
   en: {
     orderManagement: "Order Management",
@@ -268,7 +267,6 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     useall: "Use All",
     additionalpaymentrequired: "Additional payment required",
     selectpaymentmethod: "Select payment method for the remaining amount",
-    amountToPay: "Amount to Pay",
   },
   vi: {
     orderManagement: "Danh sách phiếu nhập hàng",
@@ -405,6 +403,5 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     useall: "Sử dụng tất cả",
     additionalpaymentrequired: "Cần thanh toán thêm",
     selectpaymentmethod: "Chọn phương thức thanh toán cho phần còn lại",
-    amountToPay: "Số tiền cần thanh toán",
   },
 };
