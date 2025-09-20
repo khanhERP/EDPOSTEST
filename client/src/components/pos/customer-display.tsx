@@ -70,10 +70,10 @@ export function CustomerDisplay({
   // Get the correct pre-tax subtotal and tax
   const correctSubtotal = calculateCorrectSubtotal();
   const correctTax = calculateCorrectTax();
-  
+
   // Calculate final total with discount
   const finalTotal = Math.max(0, correctSubtotal + correctTax - (discount || 0));
-  
+
   console.log("Customer Display: Calculation breakdown", {
     correctSubtotal,
     correctTax,
@@ -177,183 +177,127 @@ export function CustomerDisplay({
       {/* Main Content */}
       <div className="flex-1 p-4 flex flex-col">
         <div className="max-w-6xl mx-auto flex-1 flex flex-col">
+          {/* Cart Items or QR Payment */}
           {qrPayment ? (
-            // QR Payment Display - Optimized for no scrolling
-            <div className="flex flex-col items-center justify-center h-full py-4">
-              {console.log(
-                "🎯 Customer Display: Rendering QR payment section:",
-                {
-                  hasQrPayment: !!qrPayment,
-                  qrCodeUrl: qrPayment?.qrCodeUrl?.substring(0, 50) + "...",
-                  amount: qrPayment?.amount,
-                  paymentMethod: qrPayment?.paymentMethod,
-                  timestamp: new Date().toISOString(),
-                },
-              )}
-              <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
-                <div className="text-center mb-4">
-                  <div className="text-4xl mb-2">📱</div>
+            // QR Payment Display
+            <div className="flex-1 flex items-center justify-center">
+              <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+                <div className="text-center mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                    Quét mã QR để thanh toán
+                    Thanh toán QR Code
                   </h2>
-                  <p className="text-base text-gray-600">
-                    Sử dụng ứng dụng ngân hàng để quét mã QR
+                  <p className="text-gray-600">
+                    Quét mã QR để thanh toán
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-2xl p-4 mb-4">
-                  <p className="text-sm text-gray-600 mb-1">
-                    Số tiền cần thanh toán
-                  </p>
-                  <p className="text-2xl font-bold text-green-600 text-center">
-                    {qrPayment.amount.toLocaleString("vi-VN", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}{" "}
-                    ₫
-                  </p>
+                {/* QR Code */}
+                <div className="bg-white p-4 rounded-lg border-2 border-gray-200 mb-6">
+                  <img
+                    src={qrPayment.qrCodeUrl}
+                    alt="QR Payment Code"
+                    className="w-full h-auto max-w-xs mx-auto"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
                 </div>
 
-                <div className="flex justify-center mb-4 flex-1 flex items-center">
-                  <div className="bg-white p-4 rounded-2xl border-4 border-green-200 shadow-xl">
-                    {qrPayment.qrCodeUrl ? (
-                      <img
-                        src={qrPayment.qrCodeUrl}
-                        alt="QR Code thanh toán"
-                        className="w-56 h-56 max-w-full max-h-full object-contain"
-                        onLoad={() => {
-                          console.log(
-                            "✅ Customer Display: QR Code image loaded successfully",
-                          );
-                          console.log(
-                            "🎯 Customer Display: QR Code URL preview:",
-                            qrPayment.qrCodeUrl.substring(0, 50) + "...",
-                          );
-                        }}
-                        onError={(e) => {
-                          console.error(
-                            "❌ Customer Display: QR Code image failed to load:",
-                            e,
-                          );
-                          console.error(
-                            "❌ Customer Display: Failed QR URL:",
-                            qrPayment.qrCodeUrl,
-                          );
-                        }}
-                      />
-                    ) : (
-                      <div className="w-56 h-56 flex items-center justify-center bg-gray-100 rounded-lg">
-                        <div className="text-center">
-                          <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div>
-                          <p className="text-gray-500">Đang tải QR code...</p>
-                        </div>
-                      </div>
-                    )}
+                {/* Payment Info */}
+                <div className="text-center space-y-2">
+                  <div className="text-sm text-gray-600">
+                    Phương thức: {qrPayment.paymentMethod}
                   </div>
-                </div>
-
-                <div className="text-center">
-                  <p className="text-xs text-gray-500 mb-1">
+                  <div className="text-3xl font-bold text-green-600">
+                    {Math.floor(qrPayment.amount).toLocaleString("vi-VN")} ₫
+                  </div>
+                  <div className="text-sm text-gray-500">
                     Mã giao dịch: {qrPayment.transactionUuid}
-                  </p>
-                  <p className="text-sm text-blue-600 font-medium">
-                    Vui lòng quét mã QR để hoàn tất thanh toán
-                  </p>
+                  </div>
                 </div>
               </div>
             </div>
           ) : cartItems.length === 0 ? (
-            // Empty Cart Display
-            <div className="text-center py-20">
-              <div className="mb-8">
-                <div className="text-8xl mb-4">🛒</div>
-                <h2 className="text-4xl font-bold text-gray-700 mb-4">
-                  Chào mừng quý khách!
+            // Empty Cart
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-8xl text-gray-300 mb-6">🛒</div>
+                <h2 className="text-3xl font-semibold text-gray-600 mb-4">
+                  Giỏ hàng trống
                 </h2>
                 <p className="text-xl text-gray-500">
-                  Vui lòng chờ thu ngân xử lý đơn hàng của bạn
+                  Đang chờ thêm sản phẩm...
                 </p>
               </div>
             </div>
           ) : (
-            // Cart Display
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Items List */}
-              <div className="lg:col-span-2">
-                <div className="bg-white rounded-2xl shadow-xl p-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <span className="bg-green-100 p-2 rounded-lg mr-3">🛍️</span>
+            // Cart Items Display - Similar to Shopping Cart
+            <div className="flex-1 overflow-hidden flex">
+              {/* Left side - Cart Items List */}
+              <div className="flex-1 overflow-hidden flex flex-col">
+                <div className="bg-white border-b border-gray-200 p-4">
+                  <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                    <span className="mr-3">🛒</span>
                     Đơn hàng của bạn
+                    <span className="ml-3 text-lg font-normal text-gray-600">
+                      ({cartItems.length} món)
+                    </span>
                   </h2>
+                </div>
 
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto p-4">
+                  <div className="space-y-3">
                     {cartItems.map((item, index) => (
-                      <div
-                        key={`${item.id}-${index}`}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border-l-4 border-green-400"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="bg-green-100 text-green-800 rounded-full min-w-[32px] h-8 flex items-center justify-center text-xs font-medium px-2">
-                            {orderNumber ||
-                              currentOrder?.orderNumber ||
-                              `#${index + 1}`}
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-lg text-gray-800">
-                              {item.name ||
-                                item.productName ||
-                                item.product?.name ||
-                                (orderNumber
-                                  ? `${orderNumber}`
-                                  : `Sản phẩm ${item.id || item.productId}`)}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {formatCurrency(item.price)} × {item.quantity}
-                            </p>
-                            
-                            {/* Individual item discount display */}
-                            {discount && discount > 0 && (() => {
-                              const currentIndex = cartItems.findIndex(cartItem => cartItem.id === item.id);
-                              const isLastItem = currentIndex === cartItems.length - 1;
-                              
-                              let itemDiscountAmount = 0;
-                              
-                              if (isLastItem) {
-                                // Last item: total discount - sum of all previous discounts
-                                let previousDiscounts = 0;
-                                const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                                  return sum + (parseFloat(itm.price || "0") * (itm.quantity || 0));
-                                }, 0);
-                                
-                                for (let i = 0; i < cartItems.length - 1; i++) {
-                                  const prevItemSubtotal = parseFloat(cartItems[i].price || "0") * (cartItems[i].quantity || 0);
-                                  const prevItemDiscount = totalBeforeDiscount > 0 ? 
-                                    Math.floor((discount * prevItemSubtotal) / totalBeforeDiscount) : 0;
-                                  previousDiscounts += prevItemDiscount;
-                                }
-                                
-                                itemDiscountAmount = discount - previousDiscounts;
-                              } else {
-                                // Regular calculation for non-last items
-                                const itemSubtotal = parseFloat(item.price || "0") * (item.quantity || 0);
-                                const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
-                                  return sum + (parseFloat(itm.price || "0") * (itm.quantity || 0));
-                                }, 0);
-                                itemDiscountAmount = totalBeforeDiscount > 0 ? 
-                                  Math.floor((discount * itemSubtotal) / totalBeforeDiscount) : 0;
-                              }
-                              
-                              return itemDiscountAmount > 0 ? (
-                                <p className="text-sm text-red-600">
-                                  Giảm giá: -{Math.floor(itemDiscountAmount).toLocaleString("vi-VN")} ₫
+                      <div key={`${item.id}-${index}`} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0 pr-4">
+                            <h4 className="font-semibold text-gray-900 text-lg mb-2 leading-tight">
+                              {item.name || item.productName || `Sản phẩm ${item.id}`}
+                            </h4>
+
+                            <div className="space-y-1">
+                              <p className="text-sm text-gray-600">
+                                {Math.round(parseFloat(item.price || "0")).toLocaleString("vi-VN")} ₫ × {item.quantity || 1}
+                              </p>
+
+                              {item.taxRate && parseFloat(item.taxRate) > 0 && (
+                                <p className="text-sm text-orange-600">
+                                  Thuế ({item.taxRate}%): {(() => {
+                                    const basePrice = parseFloat(item.price || "0");
+                                    const quantity = item.quantity || 1;
+                                    const subtotal = basePrice * quantity;
+                                    const taxRate = parseFloat(item.taxRate) / 100;
+                                    const calculatedTax = Math.floor(subtotal * taxRate);
+                                    return calculatedTax.toLocaleString("vi-VN");
+                                  })()} ₫
                                 </p>
-                              ) : null;
-                            })()}
+                              )}
+
+                              {/* Show item discount if applicable */}
+                              {discount && discount > 0 && (
+                                <p className="text-sm text-red-600">
+                                  Giảm giá: -{(() => {
+                                    const basePrice = parseFloat(item.price || "0");
+                                    const quantity = item.quantity || 1;
+                                    const subtotal = basePrice * quantity;
+                                    const totalBeforeDiscount = cartItems.reduce((sum, itm) => {
+                                      return sum + parseFloat(itm.price || "0") * (itm.quantity || 1);
+                                    }, 0);
+                                    const itemDiscount = totalBeforeDiscount > 0
+                                      ? Math.floor((discount * subtotal) / totalBeforeDiscount)
+                                      : 0;
+                                    return itemDiscount.toLocaleString("vi-VN");
+                                  })()} ₫
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xl font-bold text-green-600">
-                            {formatCurrency(item.total)}
+
+                          <div className="text-right">
+                            <div className="flex flex-col items-end space-y-1">
+                              <span className="text-sm text-gray-500">SL: {item.quantity || 1}</span>
+                              <div className="text-xl font-bold text-blue-600">
+                                {Math.round(parseFloat(item.total || "0")).toLocaleString("vi-VN")} ₫
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -362,60 +306,70 @@ export function CustomerDisplay({
                 </div>
               </div>
 
-              {/* Order Summary */}
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl shadow-xl p-6 sticky top-8">
-                  <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                    <span className="bg-blue-100 p-2 rounded-lg mr-3">📋</span>
-                    Tổng thanh toán
+              {/* Right side - Order Summary */}
+              <div className="w-96 bg-white border-l border-gray-200 flex flex-col">
+                <div className="bg-blue-50 border-b border-gray-200 p-4">
+                  <h3 className="text-xl font-bold text-blue-800 text-center">
+                    Tổng kết đơn hàng
                   </h3>
+                </div>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <div className="flex-1 p-4 space-y-4">
+                  {/* Order Number */}
+                  {orderNumber && (
+                    <div className="bg-gray-50 rounded-lg p-3 text-center">
+                      <div className="text-sm text-gray-600 mb-1">Số đơn hàng</div>
+                      <div className="font-bold text-gray-800">{orderNumber}</div>
+                    </div>
+                  )}
+
+                  {/* Financial Summary */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-lg">
                       <span className="text-gray-600">Tạm tính:</span>
-                      <span className="font-medium">
-                        {formatCurrency(correctSubtotal)}
+                      <span className="font-semibold">
+                        {Math.round(calculateCorrectSubtotal()).toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                    <div className="flex justify-between text-lg">
                       <span className="text-gray-600">Thuế:</span>
-                      <span className="font-medium">
-                        {formatCurrency(correctTax)}
+                      <span className="font-semibold text-orange-600">
+                        {Math.round(calculateCorrectTax()).toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
 
                     {discount && discount > 0 && (
-                      <div className="flex items-center justify-between py-2 border-b border-gray-200 gap-x-4">
+                      <div className="flex justify-between text-lg">
                         <span className="text-gray-600">Giảm giá:</span>
-                        <span className="font-medium text-red-600">
-                          -{formatCurrency(discount)}
+                        <span className="font-semibold text-red-600">
+                          -{discount.toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between py-4 border-t-2 border-green-200 gap-x-4">
-                      <span className="text-xl font-bold text-gray-800">
-                        Tổng cộng:
-                      </span>
-                      <span className="text-2xl font-bold text-green-600">
-                        {formatCurrency(
-                          Math.max(0, correctSubtotal + correctTax - (discount || 0))
-                        )}
-                      </span>
+                    <div className="border-t pt-3">
+                      <div className="flex justify-between text-2xl font-bold">
+                        <span className="text-gray-800">Tổng cộng:</span>
+                        <span className="text-green-600">
+                          {Math.round(
+                            Math.max(0, calculateCorrectSubtotal() + calculateCorrectTax() - (discount || 0))
+                          ).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
                     </div>
+                  </div>
 
-                    {/* Item Count */}
-                    <div className="bg-green-50 rounded-lg p-4 text-center">
-                      <div className="text-sm text-green-700 mb-1">
-                        Tổng số sản phẩm
-                      </div>
-                      <div className="text-2xl font-bold text-green-800">
-                        {cartItems.reduce(
-                          (sum, item) => sum + (item.quantity || 0),
-                          0,
-                        )}
-                      </div>
+                  {/* Item Statistics */}
+                  <div className="bg-green-50 rounded-lg p-4 text-center">
+                    <div className="text-sm text-green-700 mb-1">
+                      Tổng số món
+                    </div>
+                    <div className="text-3xl font-bold text-green-800">
+                      {cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                    </div>
+                    <div className="text-sm text-green-600 mt-1">
+                      {cartItems.length} loại sản phẩm
                     </div>
                   </div>
                 </div>
