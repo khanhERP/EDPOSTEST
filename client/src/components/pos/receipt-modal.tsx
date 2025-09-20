@@ -1090,8 +1090,7 @@ export function ReceiptModal({
                         </div>
                         <div className="text-xs text-gray-600">
                           {quantity} x{" "}
-                          {Math.floor(getDisplayPrice(item)).toLocaleString("vi-VN")}{" "}
-                          ₫
+                          {Math.round(getDisplayPrice(item)).toLocaleString("vi-VN")} ₫
                         </div>
                         {/* Display individual item discount from database or calculated */}
                         {(() => {
@@ -1172,7 +1171,7 @@ export function ReceiptModal({
                         })()}
                       </div>
                       <div>
-                        {Math.floor(getDisplayPrice(item) * quantity).toLocaleString("vi-VN")} ₫
+                        {Math.round(getDisplayPrice(item) * quantity).toLocaleString("vi-VN")} ₫
                       </div>
                     </div>
                   </div>
@@ -1404,7 +1403,7 @@ export function ReceiptModal({
                         </div>
                         <div className="text-xs text-gray-600">
                           {item.quantity} x{" "}
-                          {Math.floor(
+                          {Math.round(
                             (() => {
                               const basePrice = typeof item.price === "string"
                                 ? parseFloat(item.price)
@@ -1417,8 +1416,7 @@ export function ReceiptModal({
 
                               return basePrice;
                             })()
-                          ).toLocaleString("vi-VN")}{" "}
-                          ₫
+                          ).toLocaleString("vi-VN")} ₫
                         </div>
                         {/* Display individual item discount for preview mode */}
                         {(() => {
@@ -1501,12 +1499,11 @@ export function ReceiptModal({
                         })()}
                       </div>
                       <div>
-                        {Math.floor(
+                        {Math.round(
                           (typeof item.price === "string"
                             ? parseFloat(item.price)
                             : item.price) * item.quantity,
-                        ).toLocaleString("vi-VN")}{" "}
-                        ₫
+                        ).toLocaleString("vi-VN")} ₫
                       </div>
                     </div>
                   </div>
