@@ -20,11 +20,12 @@ interface PinAuthProps {
 }
 
 export function PinAuth({ onAuthSuccess }: PinAuthProps) {
+  const { t } = useTranslation();
   const [pin, setPin] = useState("");
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { t } = useTranslation();
+
 
   // Fetch store settings để lấy PIN
   const { data: storeData } = useQuery({
