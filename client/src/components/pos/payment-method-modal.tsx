@@ -1868,8 +1868,7 @@ export function PaymentMethodModal({
                       const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                       const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
-                      // Use exact total from orderForPayment or receipt if available
-                      let displayTotal = total || 0;
+                      let displayTotal = 0;
 
                       if (orderForPayment) {
                         const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
@@ -1880,12 +1879,15 @@ export function PaymentMethodModal({
                           // When priceIncludesTax = true: total = subtotal - tax - discount
                           displayTotal = Math.max(0, subtotal - tax - discount);
                         } else {
-                          // When priceIncludesTax = false: total = subtotal + tax - discount
-                          displayTotal = Math.max(0, subtotal + tax - discount);
+                          // When priceIncludesTax = false: total = order.total (use existing total)
+                          displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || 0);
                         }
                       } else if (receipt) {
                         // Use receipt's exact total if available
-                        displayTotal = receipt.exactTotal || receipt.total || total || 0;
+                        displayTotal = receipt.exactTotal || receipt.total || 0;
+                      } else {
+                        // Fallback to prop total
+                        displayTotal = total || 0;
                       }
 
                       return Math.floor(Number(displayTotal)).toLocaleString("vi-VN");
@@ -1996,8 +1998,7 @@ export function PaymentMethodModal({
                         const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                         const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
-                        // Use exact total from orderForPayment or receipt if available
-                        let displayTotal = total || 0;
+                        let displayTotal = 0;
 
                         if (orderForPayment) {
                           const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
@@ -2009,11 +2010,14 @@ export function PaymentMethodModal({
                             displayTotal = Math.max(0, subtotal - tax - discount);
                           } else {
                             // When priceIncludesTax = false: total = order.total (use existing total)
-                            displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || total || 0);
+                            displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || 0);
                           }
                         } else if (receipt) {
                           // Use receipt's exact total if available
-                          displayTotal = receipt.exactTotal || receipt.total || total || 0;
+                          displayTotal = receipt.exactTotal || receipt.total || 0;
+                        } else {
+                          // Fallback to prop total
+                          displayTotal = total || 0;
                         }
 
                         return Math.floor(Number(displayTotal)).toLocaleString("vi-VN");
@@ -2154,8 +2158,7 @@ export function PaymentMethodModal({
                         const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                         const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
-                        // Use exact total from orderForPayment or receipt if available
-                        let displayTotal = total || 0;
+                        let displayTotal = 0;
 
                         if (orderForPayment) {
                           const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
@@ -2167,11 +2170,14 @@ export function PaymentMethodModal({
                             displayTotal = Math.max(0, subtotal - tax - discount);
                           } else {
                             // When priceIncludesTax = false: total = order.total (use existing total)
-                            displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || total || 0);
+                            displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || 0);
                           }
                         } else if (receipt) {
                           // Use receipt's exact total if available
-                          displayTotal = receipt.exactTotal || receipt.total || total || 0;
+                          displayTotal = receipt.exactTotal || receipt.total || 0;
+                        } else {
+                          // Fallback to prop total
+                          displayTotal = total || 0;
                         }
 
                         return Math.floor(Number(displayTotal)).toLocaleString("vi-VN");
