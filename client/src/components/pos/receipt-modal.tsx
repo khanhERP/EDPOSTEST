@@ -936,7 +936,7 @@ export function ReceiptModal({
           <div
             id="receipt-content"
             className="receipt-print bg-white"
-            style={{ padding: "16px" }}
+            style={{ padding: "16px", fontSize: "16px", fontWeight: "bold" }}
           >
             <div className="text-center mb-4">
               <p className="text-xs font-semibold mb-1">
@@ -1085,7 +1085,7 @@ export function ReceiptModal({
                             const isLastItem = index === items.length - 1;
 
                             if (isLastItem) {
-                              // Last item gets remaining discount
+                              // Last item: total discount - sum of all previous discounts
                               let previousDiscounts = 0;
                               const totalBeforeDiscount = items.reduce(
                                 (sum, itm) => {
@@ -1205,7 +1205,7 @@ export function ReceiptModal({
           <div
             id="receipt-content"
             className="receipt-print bg-white"
-            style={{ padding: "16px" }}
+            style={{ padding: "16px", fontSize: "16px", fontWeight: "bold" }}
           >
             <div className="text-center mb-4">
               <p className="text-xs font-semibold mb-1">
