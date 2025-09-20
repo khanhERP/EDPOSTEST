@@ -1026,7 +1026,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               }))
             : [];
 
-          // Use EXACT database values from completed order - NO RECALCULATION
+          // Use EXACT database values without any calculation
           const receiptData = {
             ...completedOrder,
             transactionId: `TXN-${Date.now()}`,
@@ -1619,7 +1619,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     },
   });
 
-  // Add mutation to recalculate order totals
+  // Mutation to recalculate order totals
   const recalculateOrderMutation = useMutation({
     mutationFn: async (orderId: number) => {
       console.log("🧮 Recalculating order total for order:", orderId);
@@ -1703,7 +1703,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       queryClient.clear(); // Clear entire cache
       queryClient.removeQueries(); // Remove all queries
 
-      // Force immediate fresh fetch without cache
+      // Force immediate fresh fetch with no-cache
       Promise.all([
         fetch("/api/orders", { cache: "no-store" }).then((r) => r.json()),
         fetch("/api/tables", { cache: "no-store" }).then((r) => r.json()),
@@ -3333,20 +3333,26 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     return (
                       <>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">{t("tables.subtotal")}:</span>
+                          <span className="text-gray-600">
+                            {t("reports.subtotal")}:
+                          </span>
                           <span className="font-medium">
                             {Math.floor(actualSubtotal).toLocaleString("vi-VN")} ₫
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">{t("orders.tax")}:</span>
+                          <span className="text-gray-600">
+                            {t("reports.tax")}:
+                          </span>
                           <span className="font-medium">
                             {Math.floor(tax).toLocaleString("vi-VN")} ₫
                           </span>
                         </div>
                         {discount > 0 && (
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">{t("common.discount")}:</span>
+                            <span className="text-gray-600">
+                              {t("common.discount")}:
+                            </span>
                             <span className="font-medium text-red-600">
                               -{Math.floor(discount).toLocaleString("vi-VN")} ₫
                             </span>
@@ -3355,7 +3361,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <Separator />
                         <div className="flex justify-between">
                           <span className="text-lg font-bold text-gray-900">
-                            {t("tables.total")}:
+                            {t("reports.totalMoney")}:
                           </span>
                           <span className="text-lg font-bold text-blue-600">
                             {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
@@ -3364,26 +3370,32 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       </>
                     );
                   } else {
-                    // When price doesn't include tax: total = subtotal + tax - discount
+                    // When priceIncludesTax = false: keep current logic (total = subtotal + tax - discount)
                     const finalTotal = subtotal + tax - discount;
 
                     return (
                       <>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">{t("tables.subtotal")}:</span>
+                          <span className="text-gray-600">
+                            {t("reports.subtotal")}:
+                          </span>
                           <span className="font-medium">
                             {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">{t("orders.tax")}:</span>
+                          <span className="text-gray-600">
+                            {t("reports.tax")}:
+                          </span>
                           <span className="font-medium">
                             {Math.floor(tax).toLocaleString("vi-VN")} ₫
                           </span>
                         </div>
                         {discount > 0 && (
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">{t("common.discount")}:</span>
+                            <span className="text-gray-600">
+                              {t("common.discount")}:
+                            </span>
                             <span className="font-medium text-red-600">
                               -{Math.floor(discount).toLocaleString("vi-VN")} ₫
                             </span>
@@ -3392,7 +3404,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <Separator />
                         <div className="flex justify-between">
                           <span className="text-lg font-bold text-gray-900">
-                            {t("tables.total")}:
+                            {t("reports.totalMoney")}:
                           </span>
                           <span className="text-lg font-bold text-blue-600">
                             {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
