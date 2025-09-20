@@ -2317,7 +2317,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 ? products.find((p: any) => p.id === item.productId)
                 : null;
 
-              // Calculate subtotal
+              // Calculate subtotal (base price without tax)
               calculatedSubtotal += basePrice * quantity;
 
               // Calculate tax using same logic as Order Details
@@ -3067,8 +3067,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                                 let displayTotal;
                                 if (priceIncludesTax) {
-                                  // When priceIncludesTax = true: total = subtotal - discount (subtotal already includes tax)
-                                  displayTotal = Math.max(0, subtotal - discount);
+                                  // When priceIncludesTax = true: total = subtotal - tax - discount
+                                  displayTotal = Math.max(0, subtotal - tax - discount);
                                 } else {
                                   // When priceIncludesTax = false: total = subtotal + tax - discount
                                   displayTotal = Math.max(0, subtotal + tax - discount);
