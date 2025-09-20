@@ -3326,7 +3326,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   const discount = parseFloat(selectedOrder.discount || "0");
 
                   if (priceIncludesTax) {
-                    // When price includes tax: Tạm tính = subtotal - tax, Tổng tiền = subtotal - tax - discount
+                    // When priceIncludesTax = true: total = subtotal - tax - discount
                     const actualSubtotal = subtotal - tax;
                     const finalTotal = subtotal - tax - discount;
 
@@ -3364,7 +3364,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       </>
                     );
                   } else {
-                    // When price doesn't include tax: keep current display
+                    // When price doesn't include tax: total = subtotal + tax - discount
                     const finalTotal = subtotal + tax - discount;
 
                     return (
@@ -3577,10 +3577,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         const discountAmount = selectedOrder
                           ? Number(selectedOrder.discount || 0)
                           : 0;
-                        const finalTotal = Math.max(
-                          0,
-                          grandTotal - discountAmount,
-                        );
+                        const finalTotal = Math.max(0, grandTotal - discountAmount);
 
                         // Create receipt data using EXACT same values as Order Details
                         const processedItems = orderItems.map((item: any) => ({
