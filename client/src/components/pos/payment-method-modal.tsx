@@ -578,7 +578,7 @@ export function PaymentMethodModal({
                 const fallbackMessage = {
                   type: "qr_payment",
                   qrCodeUrl: qrUrl,
-                  amount: orderTotal,
+                  amount: Math.floor(orderTotal),
                   transactionUuid: `FALLBACK-${Date.now()}`,
                   paymentMethod: "QR Code",
                   timestamp: new Date().toISOString(),
@@ -1864,7 +1864,7 @@ export function PaymentMethodModal({
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
                     {(() => {
-                      // Get priceIncludesTax setting from localStorage or default to false
+                      // Get priceIncludesTax setting from database
                       const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                       const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
@@ -1992,7 +1992,7 @@ export function PaymentMethodModal({
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
                       {(() => {
-                        // Get priceIncludesTax setting from localStorage or default to false
+                        // Get priceIncludesTax setting from database
                         const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                         const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
@@ -2150,7 +2150,7 @@ export function PaymentMethodModal({
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
                       {(() => {
-                        // Get priceIncludesTax setting from localStorage or default to false
+                        // Get priceIncludesTax setting from database
                         const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
                         const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
