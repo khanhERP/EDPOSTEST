@@ -3059,15 +3059,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             </div>
                             <div className="font-medium text-gray-900">
                               {(() => {
-                                const total = Math.floor(
-                                  Number(activeOrder.total || 0),
-                                );
+                                // Get priceIncludesTax setting
+                                const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+                                const subtotal = Number(activeOrder.subtotal || 0);
+                                const tax = Number(activeOrder.tax || 0);
+                                const discount = Number(activeOrder.discount || 0);
 
-                                // Show original total without applying discount
+                                let displayTotal;
+                                if (priceIncludesTax) {
+                                  // When priceIncludesTax = true: total = subtotal - tax - discount
+                                  displayTotal = Math.max(0, subtotal - tax - discount);
+                                } else {
+                                  // When priceIncludesTax = false: total = subtotal + tax - discount
+                                  displayTotal = Math.max(0, subtotal + tax - discount);
+                                }
+
                                 console.log(
-                                  `💰 Table order ${activeOrder.orderNumber} - showing original total: ${total}`,
+                                  `💰 Table order ${activeOrder.orderNumber} - priceIncludesTax: ${priceIncludesTax}, calculated total: ${displayTotal}`,
                                 );
-                                return total.toLocaleString("vi-VN");
+                                return Math.floor(displayTotal).toLocaleString("vi-VN");
                               })()}{" "}
                               ₫
                             </div>
