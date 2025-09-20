@@ -867,6 +867,19 @@ export function OrderManagement() {
       vi: "vi-VN",
     };
 
+    // For Vietnamese, use dd/mm/yyyy format
+    if (currentLanguage === "vi") {
+      return date.toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }) + " " + date.toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    }
+
     return date.toLocaleString(
       localeMap[currentLanguage as keyof typeof localeMap] || "ko-KR",
       {
