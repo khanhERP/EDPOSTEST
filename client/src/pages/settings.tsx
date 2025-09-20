@@ -3450,7 +3450,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   setProductForm({ ...productForm, sku: e.target.value })
                 }
                 className="col-span-3"
-                placeholder="Nhập SKU sản phẩm"
+                placeholder={t("settings.productSkuPlaceholder")}
                 disabled={!!editingProduct}
               />
             </div>
@@ -4228,7 +4228,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   setTemplateForm((prev) => ({ ...prev, name: e.target.value }))
                 }
                 className="col-span-3"
-                placeholder="Ví dụ: Mẫu số 1"
+                placeholder={t("settings.templateNamePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -4245,7 +4245,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   }))
                 }
                 className="col-span-3"
-                placeholder="Ví dụ: 01GTKT0/001"
+                placeholder={t("settings.templateNumberPlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -4262,7 +4262,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   }))
                 }
                 className="col-span-3"
-                placeholder="Ví dụ: 123451/88890345"
+                placeholder={t("settings.templateCodePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -4279,7 +4279,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   }))
                 }
                 className="col-span-3"
-                placeholder="Ví dụ: AA/19E"
+                placeholder={t("settings.symbolPlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -4308,8 +4308,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   }))
                 }
                 className="col-span-3"
-                placeholder={t("common.notesPlaceholder")}
                 rows={3}
+                placeholder={t("settings.notesPlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
