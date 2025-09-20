@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Shield, Lock, Eye, EyeOff } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
 
 interface PinAuthProps {
   onAuthSuccess: () => void;
@@ -23,6 +24,7 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Fetch store settings để lấy PIN
   const { data: storeData } = useQuery({
@@ -56,7 +58,7 @@ export function PinAuth({ onAuthSuccess }: PinAuthProps) {
 
     if (!pin.trim()) {
       toast({
-        title: `${t("common.")}`,
+        title: "Lỗi",
         description: "Vui lòng nhập mã PIN",
         variant: "destructive",
       });
