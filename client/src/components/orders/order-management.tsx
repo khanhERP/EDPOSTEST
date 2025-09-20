@@ -2534,9 +2534,22 @@ export function OrderManagement() {
                         </span>
                         <span className="text-lg font-bold text-green-600">
                           {(() => {
-                            const finalTotal = getOrderTotal(order, storeSettings);
+                            // Get the correct total based on priceIncludesTax setting
+                            const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+                            const subtotal = Math.floor(Number(order.subtotal || 0));
+                            const tax = Math.floor(Number(order.tax || 0));
+                            const discount = Math.floor(Number(order.discount || 0));
 
-                            if (finalTotal === 0) {
+                            let finalTotal;
+                            if (priceIncludesTax) {
+                              // priceIncludesTax = true: total = subtotal - tax - discount
+                              finalTotal = Math.max(0, subtotal - tax - discount);
+                            } else {
+                              // priceIncludesTax = false: total = subtotal + tax - discount  
+                              finalTotal = Math.max(0, subtotal + tax - discount);
+                            }
+
+                            if (finalTotal === 0 && subtotal === 0) {
                               return (
                                 <span className="text-gray-400">
                                   Đang tính...
