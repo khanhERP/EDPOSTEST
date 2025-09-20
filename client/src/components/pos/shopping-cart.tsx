@@ -249,8 +249,8 @@ export function ShoppingCart({
     },
   });
 
-  // Get price_include_tax setting from store settings
-  const priceIncludesTax = storeSettings?.price_include_tax === true;
+  // Get price_includes_tax setting from store settings
+  const priceIncludesTax = storeSettings?.price_includes_tax === true;
 
   // Function to calculate display price based on store settings
   const getDisplayPrice = (item: any): number => {

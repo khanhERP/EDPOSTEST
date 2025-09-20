@@ -47,7 +47,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     staleTime: Infinity, // Assuming store settings don't change frequently
   });
 
-  const priceIncludesTax = storeSettings?.price_include_tax ?? false;
+  const priceIncludesTax = storeSettings?.price_includes_tax ?? false;
 
   // Assume setCart and other necessary hooks/context are available if this were a real component
   // For demonstration, we'll just use the onAddToCart prop
