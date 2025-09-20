@@ -1957,7 +1957,6 @@ export function PaymentMethodModal({
                         orderForPayment?.exactSubtotal ||
                         receipt?.subtotal ||
                         orderForPayment?.subtotal ||
-                        total ||
                         0
                       ) || 0;
 
@@ -1983,6 +1982,11 @@ export function PaymentMethodModal({
                       } else {
                         // When priceIncludesTax = false: total = subtotal + tax - discount
                         finalTotal = Math.max(0, exactSubtotal + exactTax - exactDiscount);
+                      }
+
+                      // Use total prop as fallback if calculation results in 0 or invalid
+                      if (!finalTotal || finalTotal <= 0) {
+                        finalTotal = Number(total) || 0;
                       }
 
                       // Ensure finalTotal is a valid number
