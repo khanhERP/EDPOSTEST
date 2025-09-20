@@ -128,9 +128,9 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
   const getDisplayPrice = (product: Product): number => {
     const basePrice = parseFloat(product.price);
     if (priceIncludesTax) {
-      // Assuming product.taxRate is a string like "0.10" for 10%
+      // product.taxRate is a percentage like "8.00" for 8%
       const taxRate = parseFloat(product.taxRate || "0");
-      return basePrice * (1 + taxRate);
+      return basePrice * (1 + taxRate / 100);
     }
     return basePrice;
   };
