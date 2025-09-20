@@ -2008,8 +2008,8 @@ export function PaymentMethodModal({
                             // When priceIncludesTax = true: total = subtotal - tax - discount
                             displayTotal = Math.max(0, subtotal - tax - discount);
                           } else {
-                            // When priceIncludesTax = false: total = subtotal + tax - discount
-                            displayTotal = Math.max(0, subtotal + tax - discount);
+                            // When priceIncludesTax = false: total = order.total (use existing total)
+                            displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || total || 0);
                           }
                         } else if (receipt) {
                           // Use receipt's exact total if available
@@ -2166,8 +2166,8 @@ export function PaymentMethodModal({
                             // When priceIncludesTax = true: total = subtotal - tax - discount
                             displayTotal = Math.max(0, subtotal - tax - discount);
                           } else {
-                            // When priceIncludesTax = false: total = subtotal + tax - discount
-                            displayTotal = Math.max(0, subtotal + tax - discount);
+                            // When priceIncludesTax = false: total = order.total (use existing total)
+                            displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || total || 0);
                           }
                         } else if (receipt) {
                           // Use receipt's exact total if available
