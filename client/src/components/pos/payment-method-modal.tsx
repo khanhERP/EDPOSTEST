@@ -1876,11 +1876,11 @@ export function PaymentMethodModal({
                         const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
 
                         if (priceIncludesTax) {
-                          // When priceIncludesTax = true: total = subtotal - tax - discount
-                          displayTotal = Math.max(0, subtotal - tax - discount);
+                          // When priceIncludesTax = true: total = subtotal - discount (subtotal already includes tax)
+                          displayTotal = Math.max(0, subtotal - discount);
                         } else {
-                          // When priceIncludesTax = false: total = order.total (use existing total)
-                          displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || 0);
+                          // When priceIncludesTax = false: total = subtotal + tax - discount
+                          displayTotal = Math.max(0, subtotal + tax - discount);
                         }
                       } else if (receipt) {
                         // Use receipt's exact total if available
@@ -2006,11 +2006,11 @@ export function PaymentMethodModal({
                           const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
 
                           if (priceIncludesTax) {
-                            // When priceIncludesTax = true: total = subtotal - tax - discount
-                            displayTotal = Math.max(0, subtotal - tax - discount);
+                            // When priceIncludesTax = true: total = subtotal - discount (subtotal already includes tax)
+                            displayTotal = Math.max(0, subtotal - discount);
                           } else {
-                            // When priceIncludesTax = false: total = order.total (use existing total)
-                            displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || 0);
+                            // When priceIncludesTax = false: total = subtotal + tax - discount
+                            displayTotal = Math.max(0, subtotal + tax - discount);
                           }
                         } else if (receipt) {
                           // Use receipt's exact total if available
@@ -2166,11 +2166,11 @@ export function PaymentMethodModal({
                           const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
 
                           if (priceIncludesTax) {
-                            // When priceIncludesTax = true: total = subtotal - tax - discount
-                            displayTotal = Math.max(0, subtotal - tax - discount);
+                            // When priceIncludesTax = true: total = subtotal - discount (subtotal already includes tax)
+                            displayTotal = Math.max(0, subtotal - discount);
                           } else {
-                            // When priceIncludesTax = false: total = order.total (use existing total)
-                            displayTotal = Number(orderForPayment.total || orderForPayment.exactTotal || 0);
+                            // When priceIncludesTax = false: total = subtotal + tax - discount
+                            displayTotal = Math.max(0, subtotal + tax - discount);
                           }
                         } else if (receipt) {
                           // Use receipt's exact total if available
@@ -2454,16 +2454,19 @@ export function PaymentMethodModal({
               // Priority: orderInfo data first, then receipt, then fallback to prop total
               let calculatedTotal = 0;
 
-              if (orderInfo?.total) {
-                calculatedTotal = parseFloat(orderInfo.total.toString());
+              if (orderForPayment) {
+                const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
+                const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
+                const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
+                const priceIncludesTax = JSON.parse(localStorage.getItem("storeSettings") || "{}")?.priceIncludesTax || false;
+
+                if (priceIncludesTax) {
+                  calculatedTotal = Math.max(0, subtotal - discount);
+                } else {
+                  calculatedTotal = Math.max(0, subtotal + tax - discount);
+                }
                 console.log(
-                  "💰 Using orderInfo.total for EInvoice:",
-                  calculatedTotal,
-                );
-              } else if (orderInfo?.exactTotal) {
-                calculatedTotal = parseFloat(orderInfo.exactTotal.toString());
-                console.log(
-                  "💰 Using orderInfo.exactTotal for EInvoice:",
+                  "💰 Using orderForPayment data for EInvoice:",
                   calculatedTotal,
                 );
               } else if (receipt?.exactTotal) {
