@@ -2831,49 +2831,100 @@ export function OrderManagement() {
                 <Separator />
 
                 {/* Order Summary */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">
-                    {t("orders.totalAmount")}
-                  </h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>{t("orders.subtotal")}</span>
-                      <span>
-                        {formatCurrency(
-                          Math.floor(Number(selectedOrder?.subtotal || 0)),
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t("orders.tax")}</span>
-                      <span>
-                        {formatCurrency(
-                          Math.floor(Number(selectedOrder?.tax || 0)),
-                        )}
-                      </span>
-                    </div>
-                    {selectedOrder?.discount &&
-                      Number(selectedOrder.discount) > 0 && (
-                        <div className="flex justify-between text-red-600">
-                          <span>{t("orders.discount")}</span>
-                          <span>
-                            -
-                            {formatCurrency(
-                              Math.floor(Number(selectedOrder.discount)),
-                            )}
-                          </span>
-                        </div>
-                      )}
-                    <Separator />
-                    <div className="flex justify-between font-medium">
-                      <span>{t("orders.total")}</span>
-                      <span>
-                        {formatCurrency(
-                          Math.floor(Number(selectedOrder?.total || 0)),
-                        )}
-                      </span>
-                    </div>
-                  </div>
+                {/* Order Summary - Use data from database with priceIncludesTax logic */}
+                <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                  {(() => {
+                    // Query store settings to get priceIncludesTax setting
+                    const { data: storeSettings } = useQuery({
+                      queryKey: ["/api/store-settings"],
+                      queryFn: async () => {
+                        const response = await apiRequest("GET", "/api/store-settings");
+                        return response.json();
+                      },
+                    });
+
+                    const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+                    const subtotal = orderDetailsCalculation.subtotal;
+                    const tax = orderDetailsCalculation.tax;
+                    const discount = parseFloat(selectedOrder.discount || "0");
+
+                    if (priceIncludesTax) {
+                      // When price includes tax: Tạm tính = subtotal - tax, Tổng tiền = subtotal - tax - discount
+                      const actualSubtotal = subtotal - tax;
+                      const finalTotal = subtotal - tax - discount;
+
+                      return (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">{t("reports.subtotal")}:</span>
+                            <span className="font-medium">
+                              {Math.floor(actualSubtotal).toLocaleString("vi-VN")} ₫
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">{t("reports.tax")}:</span>
+                            <span className="font-medium">
+                              {Math.floor(tax).toLocaleString("vi-VN")} ₫
+                            </span>
+                          </div>
+                          {discount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">{t("common.discount")}:</span>
+                              <span className="font-medium text-red-600">
+                                -{Math.floor(discount).toLocaleString("vi-VN")} ₫
+                              </span>
+                            </div>
+                          )}
+                          <Separator />
+                          <div className="flex justify-between">
+                            <span className="text-lg font-bold text-gray-900">
+                              {t("reports.totalMoney")}:
+                            </span>
+                            <span className="text-lg font-bold text-blue-600">
+                              {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
+                            </span>
+                          </div>
+                        </>
+                      );
+                    } else {
+                      // When price doesn't include tax: keep current display
+                      const finalTotal = subtotal + tax - discount;
+
+                      return (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">{t("reports.subtotal")}:</span>
+                            <span className="font-medium">
+                              {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">{t("reports.tax")}:</span>
+                            <span className="font-medium">
+                              {Math.floor(tax).toLocaleString("vi-VN")} ₫
+                            </span>
+                          </div>
+                          {discount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">{t("common.discount")}:</span>
+                              <span className="font-medium text-red-600">
+                                -{Math.floor(discount).toLocaleString("vi-VN")} ₫
+                              </span>
+                            </div>
+                          )}
+                          <Separator />
+                          <div className="flex justify-between">
+                            <span className="text-lg font-bold text-gray-900">
+                              {t("reports.totalMoney")}:
+                            </span>
+                            <span className="text-lg font-bold text-blue-600">
+                              {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
+                            </span>
+                          </div>
+                        </>
+                      );
+                    }
+                  })()}
                 </div>
 
                 {/* Status Update Actions */}
