@@ -3337,11 +3337,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   const discount = parseFloat(selectedOrder.discount || "0");
 
                   let finalTotal;
+                  let displaySubtotal;
+                  
                   if (priceIncludesTax) {
-                    // When priceIncludesTax = true: total = subtotal - tax - discount
+                    // When priceIncludesTax = true: 
+                    // Tạm tính = subtotal - tax (giá chưa thuế)
+                    // Tổng tiền = subtotal - tax - discount
+                    displaySubtotal = Math.max(0, subtotal - tax);
                     finalTotal = Math.max(0, subtotal - tax - discount);
                   } else {
-                    // When priceIncludesTax = false: total = subtotal + tax - discount
+                    // When priceIncludesTax = false:
+                    // Tạm tính = subtotal (giá gốc)
+                    // Tổng tiền = subtotal + tax - discount
+                    displaySubtotal = subtotal;
                     finalTotal = Math.max(0, subtotal + tax - discount);
                   }
 
@@ -3350,6 +3358,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     subtotal,
                     tax,
                     discount,
+                    displaySubtotal,
                     finalTotal,
                     orderNumber: selectedOrder.orderNumber
                   });
@@ -3361,7 +3370,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           {t("reports.subtotal")}:
                         </span>
                         <span className="font-medium">
-                          {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
+                          {Math.floor(displaySubtotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
