@@ -368,7 +368,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                         <h3 className="font-medium pos-text-primary mb-1 line-clamp-2">{product.name}</h3>
                         <p className="text-sm pos-text-secondary mb-2">SKU: {product.sku}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-green-600">{getDisplayPrice(product).toLocaleString()} ₫</span>
+                          <span className="text-lg font-bold text-green-600">{Math.round(getDisplayPrice(product)).toLocaleString("vi-VN")} ₫</span>
                           {product.trackInventory !== false && (
                             <span className={`text-xs font-medium ${stockStatus.color}`}>
                               {stockStatus.text}
@@ -400,7 +400,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                         <h3 className="font-medium pos-text-primary mb-1">{product.name}</h3>
                         <p className="text-sm pos-text-secondary mb-1">SKU: {product.sku}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-green-600">{getDisplayPrice(product).toLocaleString()} ₫</span>
+                          <span className="text-lg font-bold text-green-600">{Math.round(getDisplayPrice(product)).toLocaleString("vi-VN")} ₫</span>
                           {product.trackInventory !== false && (
                             <span className={`text-xs font-medium ${stockStatus.color}`}>
                               {stockStatus.text}
