@@ -58,13 +58,13 @@ export function ReceiptModal({
   // Function to calculate display price based on store settings
   const getDisplayPrice = (item: any): number => {
     const basePrice = parseFloat(item.unitPrice || item.price || "0");
-    
+
     if (priceIncludesTax) {
       // If store setting says to include tax, calculate price with tax
       const taxRate = parseFloat(item.taxRate || "0");
       return basePrice * (1 + taxRate / 100);
     }
-    
+
     // If store setting says not to include tax, show base price
     return basePrice;
   };
@@ -1172,7 +1172,7 @@ export function ReceiptModal({
                         })()}
                       </div>
                       <div>
-                        {Math.floor(actualTotal).toLocaleString("vi-VN")} ₫
+                        {Math.floor(getDisplayPrice(item) * quantity).toLocaleString("vi-VN")} ₫
                       </div>
                     </div>
                   </div>
@@ -1409,12 +1409,12 @@ export function ReceiptModal({
                               const basePrice = typeof item.price === "string"
                                 ? parseFloat(item.price)
                                 : item.price;
-                              
+
                               if (priceIncludesTax) {
                                 const taxRate = parseFloat(item.taxRate || "0");
                                 return basePrice * (1 + taxRate / 100);
                               }
-                              
+
                               return basePrice;
                             })()
                           ).toLocaleString("vi-VN")}{" "}
