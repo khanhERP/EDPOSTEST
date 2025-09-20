@@ -1560,91 +1560,81 @@ export function ReceiptModal({
             </div>
 
             <div className="border-t border-gray-300 pt-3 space-y-1">
-              {priceIncludesTax ? (
-                // When price includes tax: subtotal = subtotal - tax, total = subtotal - tax - discount
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span>{t("reports.subtotal")}:</span>
-                    <span>
-                      {Math.floor(
-                        parseFloat(receipt?.subtotal || "0") - parseFloat(receipt?.tax || "0"),
-                      ).toLocaleString("vi-VN")}{" "}
-                      ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>{t("reports.tax")}:</span>
-                    <span>
-                      {Math.floor(parseFloat(receipt?.tax || "0")).toLocaleString(
-                        "vi-VN",
-                      )}{" "}
-                      ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>{t("reports.discount")}</span>
-                    <span className="font-medium">
-                      -
-                      {Math.floor(
-                        parseFloat(receipt?.discount || "0"),
-                      ).toLocaleString("vi-VN")}{" "}
-                      ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-bold">
-                    <span>{t("reports.totalMoney")}:</span>
-                    <span>
-                      {Math.floor(
-                        parseFloat(receipt?.subtotal || "0") - 
-                        parseFloat(receipt?.tax || "0") - 
-                        parseFloat(receipt?.discount || "0")
-                      ).toLocaleString("vi-VN")}{" "}
-                      ₫
-                    </span>
-                  </div>
-                </>
-              ) : (
-                // When price doesn't include tax: keep current display
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span>{t("reports.subtotal")}:</span>
-                    <span>
-                      {Math.floor(
-                        parseFloat(receipt?.subtotal || "0"),
-                      ).toLocaleString("vi-VN")}{" "}
-                      ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>{t("reports.tax")}:</span>
-                    <span>
-                      {Math.floor(parseFloat(receipt?.tax || "0")).toLocaleString(
-                        "vi-VN",
-                      )}{" "}
-                      ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>{t("reports.discount")}</span>
-                    <span className="font-medium">
-                      -
-                      {Math.floor(
-                        parseFloat(receipt?.discount || "0"),
-                      ).toLocaleString("vi-VN")}{" "}
-                      ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-bold">
-                    <span>{t("reports.totalMoney")}:</span>
-                    <span>
-                      {Math.floor(parseFloat(receipt?.total || "0")).toLocaleString(
-                        "vi-VN",
-                      )}{" "}
-                      ₫
-                    </span>
-                  </div>
-                </>
-              )}
+              {(() => {
+                // Calculate totals for preview
+                const subtotal = parseFloat(receipt?.subtotal || "0");
+                const tax = parseFloat(receipt?.tax || "0");
+                const discount = parseFloat(receipt?.discount || "0");
+
+                if (priceIncludesTax) {
+                  // When price includes tax: 
+                  // - Tạm tính = subtotal - tax  
+                  // - Tổng tiền = subtotal - tax - discount
+                  const actualSubtotal = subtotal - tax;
+                  const finalTotal = subtotal - tax - discount;
+
+                  return (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("reports.subtotal")}:</span>
+                        <span>
+                          {Math.floor(actualSubtotal).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("reports.tax")}:</span>
+                        <span>
+                          {Math.floor(tax).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm text-red-600">
+                        <span>{t("reports.discount")}</span>
+                        <span className="font-medium">
+                          -{Math.floor(discount).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>{t("reports.totalMoney")}:</span>
+                        <span>
+                          {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                    </>
+                  );
+                } else {
+                  // When price doesn't include tax: keep current display
+                  const finalTotal = parseFloat(receipt?.total || "0");
+
+                  return (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("reports.subtotal")}:</span>
+                        <span>
+                          {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>{t("reports.tax")}:</span>
+                        <span>
+                          {Math.floor(tax).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm text-red-600">
+                        <span>{t("reports.discount")}</span>
+                        <span className="font-medium">
+                          -{Math.floor(discount).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-bold">
+                        <span>{t("reports.totalMoney")}:</span>
+                        <span>
+                          {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
+                        </span>
+                      </div>
+                    </>
+                  );
+                }
+              })()}
             </div>
           </div>
         ) : (
