@@ -3345,6 +3345,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     finalTotal = Math.max(0, subtotal + tax - discount);
                   }
 
+                  console.log(`💰 Order Details Total Calculation:`, {
+                    priceIncludesTax,
+                    subtotal,
+                    tax,
+                    discount,
+                    finalTotal,
+                    orderNumber: selectedOrder.orderNumber
+                  });
+
                   return (
                     <>
                       <div className="flex justify-between text-sm">
@@ -3382,9 +3391,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           {Math.floor(finalTotal).toLocaleString("vi-VN")} ₫
                         </span>
                       </div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        Tính theo: {priceIncludesTax ? "Giá đã bao gồm thuế" : "Giá chưa bao gồm thuế"}
+                      </div>
                     </>
                   );
-                })()}
+                })()}</div>
               </div>
 
               {/* Payment Buttons */}
