@@ -3845,10 +3845,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
             <AlertDialogDescription className="text-left">
               <div className="space-y-3">
                 <p>
-                  {t("employees.confirmDeleteEmployeeDesc").replace(
-                    "{{name}}",
-                    employeeToDelete?.name || "",
-                  )}
+                  {t("employees.confirmDeleteEmployeeDesc", {
+                    name: employeeToDelete?.name || "",
+                  })}
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-start gap-2">
