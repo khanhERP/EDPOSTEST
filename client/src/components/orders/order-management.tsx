@@ -93,7 +93,7 @@ function OrderSummaryDisplay({ orderDetailsCalculation, selectedOrder }: {
       </>
     );
   } else {
-    // When price doesn't include tax: keep current display
+    // When price doesn't include tax: Tạm tính = subtotal, Thuế = tax, Tổng tiền = subtotal + tax - discount
     const finalTotal = subtotal + tax - discount;
 
     return (
@@ -2935,7 +2935,7 @@ export function OrderManagement() {
                     selectedOrder={selectedOrder}
                   />
                 </div>
-                      
+
 
                 {/* Status Update Actions */}
                 {selectedOrder.status !== "paid" &&
@@ -3863,7 +3863,7 @@ export function OrderManagement() {
             quantity: parseInt(item.quantity || "1"),
             sku: item.sku || `SP${item.productId}`,
             taxRate: parseFloat(item.taxRate || "0"),
-            afterTaxPrice: item.afterTaxPrice || null,
+            afterTaxPrice: item.afterTaxPrice,
           })) || []
         }
         total={
