@@ -908,10 +908,10 @@ export function OrderDialog({
                               if (priceIncludesTax && taxRate > 0) {
                                 // If price includes tax, display price * (1 + tax/100)
                                 const priceWithTax = basePrice * (1 + taxRate / 100);
-                                return Math.floor(priceWithTax).toLocaleString();
+                                return Math.round(priceWithTax).toLocaleString();
                               } else {
                                 // If price doesn't include tax, display base price
-                                return basePrice.toLocaleString();
+                                return Math.round(basePrice).toLocaleString();
                               }
                             })()} ₫
                           </span>
@@ -1290,10 +1290,10 @@ export function OrderDialog({
                                 if (priceIncludesTax && taxRate > 0) {
                                   // If price includes tax, display price * (1 + tax/100) * quantity
                                   const priceWithTax = basePrice * (1 + taxRate / 100);
-                                  return Math.floor(priceWithTax * quantity).toLocaleString();
+                                  return Math.round(priceWithTax * quantity).toLocaleString();
                                 } else {
                                   // If price doesn't include tax, display base price * quantity
-                                  return (basePrice * quantity).toLocaleString();
+                                  return Math.round(basePrice * quantity).toLocaleString();
                                 }
                               })()} ₫
                             </span>
@@ -1333,10 +1333,10 @@ export function OrderDialog({
                                   if (priceIncludesTax && taxRate > 0) {
                                     // If price includes tax, display price * (1 + tax/100)
                                     const priceWithTax = basePrice * (1 + taxRate / 100);
-                                    return Math.floor(priceWithTax).toLocaleString();
+                                    return Math.round(priceWithTax).toLocaleString();
                                   } else {
                                     // If price doesn't include tax, display base price
-                                    return basePrice.toLocaleString();
+                                    return Math.round(basePrice).toLocaleString();
                                   }
                                 })()} ₫
                               </div>
