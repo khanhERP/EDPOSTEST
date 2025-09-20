@@ -331,14 +331,20 @@ export function CustomerDisplay({
                     <div className="flex justify-between text-lg">
                       <span className="text-gray-600">Tạm tính:</span>
                       <span className="font-semibold">
-                        {Math.round(calculateCorrectSubtotal()).toLocaleString("vi-VN")} ₫
+                        {calculateCorrectSubtotal().toLocaleString("vi-VN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })} ₫
                       </span>
                     </div>
 
                     <div className="flex justify-between text-lg">
                       <span className="text-gray-600">Thuế:</span>
                       <span className="font-semibold text-orange-600">
-                        {Math.round(calculateCorrectTax()).toLocaleString("vi-VN")} ₫
+                        {calculateCorrectTax().toLocaleString("vi-VN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })} ₫
                       </span>
                     </div>
 
@@ -355,9 +361,10 @@ export function CustomerDisplay({
                       <div className="flex justify-between text-2xl font-bold">
                         <span className="text-gray-800">Tổng cộng:</span>
                         <span className="text-green-600">
-                          {Math.round(
-                            Math.max(0, calculateCorrectSubtotal() + calculateCorrectTax() - (discount || 0))
-                          ).toLocaleString("vi-VN")} ₫
+                          {Math.max(0, calculateCorrectSubtotal() + calculateCorrectTax() - (discount || 0)).toLocaleString("vi-VN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })} ₫
                         </span>
                       </div>
                     </div>
