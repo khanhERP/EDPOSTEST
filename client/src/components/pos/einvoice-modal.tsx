@@ -379,11 +379,7 @@ export function EInvoiceModal({
               address: taxInfo.diaChi || prev.address,
             }));
             
-            // Hiển thị toast thông báo thành công nhẹ nhàng
-            toast({
-              title: "Thành công",
-              description: "Đã cập nhật thông tin từ mã số thuế",
-            });
+            
           } else {
             // Trạng thái không hợp lệ - hiển thị thông tin trạng thái
             toast({
