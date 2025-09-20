@@ -2011,7 +2011,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                                       </th>
                                       <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
                                         <div className="leading-tight">
-                                          {t("settings.templateSymbol")}
+                                          {t("settings.symbolLabel")}
                                         </div>
                                       </th>
                                       <th className="w-[120px] px-3 py-3 text-center font-medium text-sm text-gray-600">
