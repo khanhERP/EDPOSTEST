@@ -3338,10 +3338,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                   let finalTotal;
                   if (priceIncludesTax) {
-                    // When price includes tax: total = subtotal - discount (subtotal already includes tax)
-                    finalTotal = Math.max(0, subtotal - discount);
+                    // When priceIncludesTax = true: total = subtotal - tax - discount
+                    finalTotal = Math.max(0, subtotal - tax - discount);
                   } else {
-                    // When price doesn't include tax: total = subtotal + tax - discount
+                    // When priceIncludesTax = false: total = subtotal + tax - discount
                     finalTotal = Math.max(0, subtotal + tax - discount);
                   }
 
@@ -3455,7 +3455,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           productId: item.productId,
                           productName:
                             item.productName || getProductName(item.productId),
-                          price: parseFloat(item.price || item.unitPrice || "0"),
+                          price: parseFloat(item.price || item.unitPrice),
                           quantity: item.quantity,
                           sku:
                             item.productSku ||
@@ -4523,8 +4523,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 {mixedPaymentData && (
                   <div className="mt-2 pt-2 border-t border-gray-300">
                     <p className="text-xs text-blue-600">
-                      Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P
-                      (-
+                      Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}
+                      P (-
                       {(
                         mixedPaymentData.pointsToUse * 1000
                       ).toLocaleString()}{" "}
