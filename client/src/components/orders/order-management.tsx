@@ -2505,9 +2505,10 @@ export function OrderManagement() {
                         </span>
                         <span className="text-lg font-bold text-green-600">
                           {(() => {
-                            const finalTotal = getOrderTotal(order);
-
-                            if (finalTotal === 0) {
+                            // Use stored total from database (already calculated correctly)
+                            const storedTotal = Math.floor(Number(order.total || 0));
+                            
+                            if (storedTotal === 0) {
                               return (
                                 <span className="text-gray-400">
                                   Đang tính...
@@ -2515,7 +2516,7 @@ export function OrderManagement() {
                               );
                             }
 
-                            return formatCurrency(finalTotal);
+                            return formatCurrency(storedTotal);
                           })()}
                         </span>
                       </div>
