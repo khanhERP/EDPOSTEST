@@ -962,7 +962,7 @@ export function ReceiptModal({
               </div>
               <div className="flex justify-between text-sm">
                 <span>{t("pos.date")}</span>
-                <span>{new Date(receipt.createdAt).toLocaleString()}</span>
+                <span>{new Date().toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>{t("pos.cashier")}</span>
@@ -1555,7 +1555,12 @@ export function ReceiptModal({
           ) : (
             <div className="flex justify-center space-x-3">
               <Button
-                onClick={handlePrint}
+                onClick={() => {
+                  handlePrint(); // First print
+                  setTimeout(() => {
+                    handlePrint(); // Second print after a short delay
+                  }, 100); // Adjust delay if necessary
+                }}
                 className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
               >
                 <Printer className="mr-2" size={16} />
