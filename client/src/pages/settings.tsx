@@ -193,7 +193,8 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
         } else {
           toast({
             title: t("common.error"),
-            description: errorData.message || t("settings.employeeDeleteErrorDesc"),
+            description:
+              errorData.message || t("settings.employeeDeleteErrorDesc"),
             variant: "destructive",
           });
         }
@@ -719,7 +720,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     if (categoryProducts && categoryProducts.length > 0) {
       toast({
         title: t("common.error"),
-        description: t("settings.categoryDeleteWithProducts", { count: categoryProducts.length }),
+        description: t("settings.categoryDeleteWithProducts", {
+          count: categoryProducts.length,
+        }),
         variant: "destructive",
       });
       return;
@@ -763,8 +766,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
       let errorMessage = t("settings.categoryDeleteError");
       if (error instanceof Error) {
         if (error.message.includes("products")) {
-          errorMessage =
-            t("settings.categoryDeleteErrorWithProducts");
+          errorMessage = t("settings.categoryDeleteErrorWithProducts");
         } else {
           errorMessage = error.message;
         }
@@ -1383,7 +1385,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
               <p className="text-gray-600">{t("settings.description")}</p>
             </div>
             <Button
-              onClick={() => (window.location.href = "/")}
+              onClick={() => (window.location.href = "/tables")}
               variant="outline"
               className="bg-white hover:bg-green-50 border-green-200 text-green-700 hover:text-green-800"
             >
@@ -1449,7 +1451,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   <span className="hidden lg:inline">
                     {t("settings.paymentMethods")}
                   </span>
-                  <span className="lg:hidden">{t("settings.paymentMethods")}</span>
+                  <span className="lg:hidden">
+                    {t("settings.paymentMethods")}
+                  </span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1466,7 +1470,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                     <span className="hidden md:inline">
                       {t("settings.basicInfo")}
                     </span>
-                    <span className="md:hidden">{t("settings.basicInfoShort")}</span>
+                    <span className="md:hidden">
+                      {t("settings.basicInfoShort")}
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="einvoice"
@@ -1476,7 +1482,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                     <span className="hidden md:inline">
                       {t("settings.einvoiceSetup")}
                     </span>
-                    <span className="md:hidden">{t("settings.einvoiceShort")}</span>
+                    <span className="md:hidden">
+                      {t("settings.einvoiceShort")}
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="operations"
@@ -1486,7 +1494,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                     <span className="hidden md:inline">
                       {t("settings.operations")}
                     </span>
-                    <span className="md:hidden">{t("settings.operationsShort")}</span>
+                    <span className="md:hidden">
+                      {t("settings.operationsShort")}
+                    </span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -1608,7 +1618,10 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                                 }))
                               }
                             />
-                            <Label htmlFor="priceIncludesTax" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            <Label
+                              htmlFor="priceIncludesTax"
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
                               {t("settings.priceIncludesTax")}
                             </Label>
                           </div>
@@ -1711,7 +1724,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                               <span className="hidden md:inline">
                                 {t("settings.connectionManagement")}
                               </span>
-                              <span className="md:hidden">{t("settings.connections")}</span>
+                              <span className="md:hidden">
+                                {t("settings.connections")}
+                              </span>
                             </TabsTrigger>
                             <TabsTrigger
                               value="settings"
@@ -1720,7 +1735,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                               <span className="hidden md:inline">
                                 {t("settings.templateManagement")}
                               </span>
-                              <span className="md:hidden">{t("settings.templates")}</span>
+                              <span className="md:hidden">
+                                {t("settings.templates")}
+                              </span>
                             </TabsTrigger>
                           </TabsList>
 
@@ -1817,7 +1834,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                                       >
                                         <div className="flex flex-col items-center gap-2">
                                           <SettingsIcon className="w-8 h-8 text-gray-400" />
-                                          <p>{t("settings.noConnectionsYet")}</p>
+                                          <p>
+                                            {t("settings.noConnectionsYet")}
+                                          </p>
                                           <p className="text-xs">
                                             {t("settings.clickToAddConnection")}
                                           </p>
@@ -2098,8 +2117,12 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                                                 className={`text-xs ${template.useCK ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
                                               >
                                                 {template.useCK
-                                                  ? t("settings.usageStatusActive")
-                                                  : t("settings.usageStatusInactive")}
+                                                  ? t(
+                                                      "settings.usageStatusActive",
+                                                    )
+                                                  : t(
+                                                      "settings.usageStatusInactive",
+                                                    )}
                                               </Badge>
                                             </td>
                                             <td className="px-3 py-3">
@@ -3345,13 +3368,21 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   <SelectItem value="fas fa-utensils">
                     🍽️ {t("settings.categoryIcons.mainDish")}
                   </SelectItem>
-                  <SelectItem value="fas fa-coffee">☕ {t("settings.categoryIcons.beverage")}</SelectItem>
-                  <SelectItem value="fas fa-cookie">🍪 {t("settings.categoryIcons.snack")}</SelectItem>
+                  <SelectItem value="fas fa-coffee">
+                    ☕ {t("settings.categoryIcons.beverage")}
+                  </SelectItem>
+                  <SelectItem value="fas fa-cookie">
+                    🍪 {t("settings.categoryIcons.snack")}
+                  </SelectItem>
                   <SelectItem value="fas fa-ice-cream">
                     🍨 {t("settings.categoryIcons.dessert")}
                   </SelectItem>
-                  <SelectItem value="fas fa-beer">🍺 {t("settings.categoryIcons.alcoholic")}</SelectItem>
-                  <SelectItem value="fas fa-apple-alt">🍎 {t("settings.categoryIcons.fruit")}</SelectItem>
+                  <SelectItem value="fas fa-beer">
+                    🍺 {t("settings.categoryIcons.alcoholic")}
+                  </SelectItem>
+                  <SelectItem value="fas fa-apple-alt">
+                    🍎 {t("settings.categoryIcons.fruit")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -4013,7 +4044,9 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                     eInvoiceFormErrors.softwareName ? "border-red-500" : ""
                   }`}
                 >
-                  <SelectValue placeholder={t("settings.selectSoftwarePlaceholder")} />
+                  <SelectValue
+                    placeholder={t("settings.selectSoftwarePlaceholder")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {EINVOICE_PROVIDERS.map((provider) => (
@@ -4070,9 +4103,15 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Ký server">{t("settings.signMethodServer")}</SelectItem>
-                  <SelectItem value="USB Token">{t("settings.signMethodUsbToken")}</SelectItem>
-                  <SelectItem value="HSM">{t("settings.signMethodHsm")}</SelectItem>
+                  <SelectItem value="Ký server">
+                    {t("settings.signMethodServer")}
+                  </SelectItem>
+                  <SelectItem value="USB Token">
+                    {t("settings.signMethodUsbToken")}
+                  </SelectItem>
+                  <SelectItem value="HSM">
+                    {t("settings.signMethodHsm")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -4093,8 +4132,12 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cấp nhật">{t("settings.cqtCodeLevel1")}</SelectItem>
-                  <SelectItem value="Cấp hai">{t("settings.cqtCodeLevel2")}</SelectItem>
+                  <SelectItem value="Cấp nhật">
+                    {t("settings.cqtCodeLevel1")}
+                  </SelectItem>
+                  <SelectItem value="Cấp hai">
+                    {t("settings.cqtCodeLevel2")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -4397,9 +4440,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
           <div className="grid gap-4 py-4">
             {editingPaymentMethod && (
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">
-                  {t("common.name")}
-                </Label>
+                <Label className="text-right">{t("common.name")}</Label>
                 <span className="col-span-3 text-sm text-gray-600">
                   {t(`settings.payments.${editingPaymentMethod.nameKey}`)}
                 </span>

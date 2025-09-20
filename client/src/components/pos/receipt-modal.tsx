@@ -395,8 +395,9 @@ export function ReceiptModal({
         <title>Hóa đơn - ${receipt?.transactionId || "HĐ"}</title>
         <style>
           body {
-            font-family: ${isIOS ? "-apple-system, BlinkMacSystemFont" : isAndroid ? "Roboto" : "Arial"}, monospace;
-            font-size: ${isMobile ? "14px" : "12px"};
+            font-family: tahoma;
+            font-weight: bold;
+            font-size: ${isMobile ? "15px" : "13px"};
             line-height: 1.4;
             margin: ${isMobile ? "15px" : "20px"};
             padding: 0;
@@ -621,8 +622,9 @@ export function ReceiptModal({
             <title>Receipt</title>
             <style>
               body {
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
+                font-family: tahoma;
+                font-size: "15px";
+                font-weight: bold;
                 margin: 0;
                 padding: 20px;
                 background: white;
@@ -733,10 +735,11 @@ export function ReceiptModal({
               <title>Receipt</title>
               <style>
                 body {
-                  font-family: monospace;
+                  font-family: tahoma;
+                  font-size: "15px";
+                  font-weight: bold;
                   margin: 0;
                   padding: 10px;
-                  font-size: 12px;
                   line-height: 1.4;
                   background: white;
                 }
