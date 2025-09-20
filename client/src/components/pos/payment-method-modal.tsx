@@ -346,21 +346,38 @@ export function PaymentMethodModal({
         setQrLoading(true);
         const transactionUuid = `TXN-${Date.now()}`;
 
-        // Use exact total with proper priority and discount consideration
-        const baseTotal =
-          receipt?.exactTotal ??
-          orderInfo?.exactTotal ??
-          orderInfo?.total ??
-          total ??
-          0;
+        // Get store settings to check priceIncludesTax
+        const storeSettingsStr = localStorage.getItem('storeSettings');
+        const storeSettings = storeSettingsStr ? JSON.parse(storeSettingsStr) : null;
+        const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+
+        // Get exact values from receipt or orderInfo
+        const exactSubtotal = receipt?.exactSubtotal ||
+                             orderInfo?.exactSubtotal ||
+                             parseFloat(receipt?.subtotal || "0") ||
+                             parseFloat(orderInfo?.subtotal || "0") ||
+                             0;
+
+        const exactTax = receipt?.exactTax ||
+                        orderInfo?.exactTax ||
+                        parseFloat(receipt?.tax || "0") ||
+                        parseFloat(orderInfo?.tax || "0") ||
+                        0;
 
         // Get discount amount
         const discountAmount = Math.floor(
           parseFloat(receipt?.discount || orderInfo?.discount || "0"),
         );
 
-        // Calculate final total after discount
-        const orderTotal = Math.max(0, baseTotal - discountAmount);
+        // Calculate final total based on priceIncludesTax setting
+        let orderTotal;
+        if (priceIncludesTax) {
+          // When priceIncludesTax = true: total = subtotal - tax - discount
+          orderTotal = Math.max(0, exactSubtotal - exactTax - discountAmount);
+        } else {
+          // When priceIncludesTax = false: total = subtotal + tax - discount
+          orderTotal = Math.max(0, exactSubtotal + exactTax - discountAmount);
+        }
 
         const qrRequest: CreateQRPosRequest = {
           transactionUuid,
@@ -656,15 +673,27 @@ export function PaymentMethodModal({
       // Generate QR code for VNPay
       try {
         setQrLoading(true);
-        // Use exact total with proper priority and discount consideration for VNPay QR payment
-        const baseTotal =
-          receipt?.exactTotal ??
-          orderForPayment?.exactTotal ??
-          orderForPayment?.total ??
-          orderInfo?.exactTotal ??
-          orderInfo?.total ??
-          total ??
-          0;
+        // Get store settings to check priceIncludesTax for VNPay QR payment
+        const storeSettingsStr = localStorage.getItem('storeSettings');
+        const storeSettings = storeSettingsStr ? JSON.parse(storeSettingsStr) : null;
+        const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+
+        // Get exact values from receipt or orderForPayment
+        const exactSubtotal = receipt?.exactSubtotal ||
+                             orderForPayment?.exactSubtotal ||
+                             orderInfo?.exactSubtotal ||
+                             parseFloat(receipt?.subtotal || "0") ||
+                             parseFloat(orderForPayment?.subtotal || "0") ||
+                             parseFloat(orderInfo?.subtotal || "0") ||
+                             0;
+
+        const exactTax = receipt?.exactTax ||
+                        orderForPayment?.exactTax ||
+                        orderInfo?.exactTax ||
+                        parseFloat(receipt?.tax || "0") ||
+                        parseFloat(orderForPayment?.tax || "0") ||
+                        parseFloat(orderInfo?.tax || "0") ||
+                        0;
 
         // Get discount amount from multiple sources
         const discountAmount = Math.floor(
@@ -677,8 +706,15 @@ export function PaymentMethodModal({
           ),
         );
 
-        // Calculate final total after discount
-        const orderTotal = Math.max(0, baseTotal - discountAmount);
+        // Calculate final total based on priceIncludesTax setting
+        let orderTotal;
+        if (priceIncludesTax) {
+          // When priceIncludesTax = true: total = subtotal - tax - discount
+          orderTotal = Math.max(0, exactSubtotal - exactTax - discountAmount);
+        } else {
+          // When priceIncludesTax = false: total = subtotal + tax - discount
+          orderTotal = Math.max(0, exactSubtotal + exactTax - discountAmount);
+        }
         const qrData = `Payment via ${method}\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
         const qrUrl = await QRCodeLib.toDataURL(qrData, {
           width: 256,
@@ -1286,14 +1322,40 @@ export function PaymentMethodModal({
   const handleCashPaymentComplete = async () => {
     const receivedAmount = parseFloat(cashAmountInput || "0");
 
-    // Use exact total from previous screen
-    const orderTotal =
-      receipt?.exactTotal ??
-      parseFloat(receipt?.total || "0") ??
-      orderInfo?.exactTotal ??
-      orderInfo?.total ??
-      total ??
-      0;
+    // Get store settings to check priceIncludesTax for cash payment
+    const storeSettingsStr = localStorage.getItem('storeSettings');
+    const storeSettings = storeSettingsStr ? JSON.parse(storeSettingsStr) : null;
+    const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+
+    // Get exact values from receipt or orderInfo
+    const exactSubtotal = receipt?.exactSubtotal ||
+                         orderInfo?.exactSubtotal ||
+                         parseFloat(receipt?.subtotal || "0") ||
+                         parseFloat(orderInfo?.subtotal || "0") ||
+                         0;
+
+    const exactTax = receipt?.exactTax ||
+                    orderInfo?.exactTax ||
+                    parseFloat(receipt?.tax || "0") ||
+                    parseFloat(orderInfo?.tax || "0") ||
+                    0;
+
+    const exactDiscount = parseFloat(
+      receipt?.discount ||
+      receipt?.exactDiscount ||
+      orderInfo?.discount ||
+      "0"
+    );
+
+    // Calculate final total based on priceIncludesTax setting
+    let orderTotal;
+    if (priceIncludesTax) {
+      // When priceIncludesTax = true: total = subtotal - tax - discount
+      orderTotal = Math.max(0, exactSubtotal - exactTax - exactDiscount);
+    } else {
+      // When priceIncludesTax = false: total = subtotal + tax - discount
+      orderTotal = Math.max(0, exactSubtotal + exactTax - exactDiscount);
+    }
 
     // Tính tiền thối: Tiền khách đưa - Tiền cần thanh toán
     const changeAmount = receivedAmount - orderTotal;
@@ -1863,14 +1925,41 @@ export function PaymentMethodModal({
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
                     {(() => {
-                      // Priority: Use exact total from receipt or orderForPayment
-                      const exactTotal = receipt?.exactTotal ||
-                                         orderForPayment?.exactTotal ||
-                                         parseFloat(receipt?.total || "0") ||
-                                         parseFloat(orderForPayment?.total || "0") ||
-                                         total || 0;
+                      // Get store settings to check priceIncludesTax
+                      const storeSettingsStr = localStorage.getItem('storeSettings');
+                      const storeSettings = storeSettingsStr ? JSON.parse(storeSettingsStr) : null;
+                      const priceIncludesTax = storeSettings?.priceIncludesTax || false;
 
-                      return Math.floor(Number(exactTotal)).toLocaleString("vi-VN");
+                      // Get exact values from receipt or orderForPayment
+                      const exactSubtotal = receipt?.exactSubtotal ||
+                                           orderForPayment?.exactSubtotal ||
+                                           parseFloat(receipt?.subtotal || "0") ||
+                                           parseFloat(orderForPayment?.subtotal || "0") ||
+                                           0;
+
+                      const exactTax = receipt?.exactTax ||
+                                      orderForPayment?.exactTax ||
+                                      parseFloat(receipt?.tax || "0") ||
+                                      parseFloat(orderForPayment?.tax || "0") ||
+                                      0;
+
+                      const exactDiscount = parseFloat(
+                        receipt?.discount ||
+                        receipt?.exactDiscount ||
+                        orderForPayment?.discount ||
+                        "0"
+                      );
+
+                      let finalTotal;
+                      if (priceIncludesTax) {
+                        // When priceIncludesTax = true: total = subtotal - tax - discount
+                        finalTotal = Math.max(0, exactSubtotal - exactTax - exactDiscount);
+                      } else {
+                        // When priceIncludesTax = false: total = subtotal + tax - discount
+                        finalTotal = Math.max(0, exactSubtotal + exactTax - exactDiscount);
+                      }
+
+                      return Math.floor(Number(finalTotal)).toLocaleString("vi-VN");
                     })()} ₫
                   </p>
                 </div>
