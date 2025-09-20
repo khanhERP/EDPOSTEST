@@ -52,6 +52,23 @@ export function ReceiptModal({
     enabled: isOpen, // Only fetch when modal is open
   });
 
+  // Get priceIncludesTax setting from store settings
+  const priceIncludesTax = storeSettings?.priceIncludesTax === true;
+
+  // Function to calculate display price based on store settings
+  const getDisplayPrice = (item: any): number => {
+    const basePrice = parseFloat(item.unitPrice || item.price || "0");
+    
+    if (priceIncludesTax) {
+      // If store setting says to include tax, calculate price with tax
+      const taxRate = parseFloat(item.taxRate || "0");
+      return basePrice * (1 + taxRate / 100);
+    }
+    
+    // If store setting says not to include tax, show base price
+    return basePrice;
+  };
+
   // Log receipt modal state for debugging - ALWAYS CALL THIS HOOK
   useEffect(() => {
     if (isOpen) {
@@ -1073,7 +1090,7 @@ export function ReceiptModal({
                         </div>
                         <div className="text-xs text-gray-600">
                           {quantity} x{" "}
-                          {Math.floor(actualUnitPrice).toLocaleString("vi-VN")}{" "}
+                          {Math.floor(getDisplayPrice(item)).toLocaleString("vi-VN")}{" "}
                           ₫
                         </div>
                         {/* Display individual item discount from database or calculated */}
@@ -1388,9 +1405,18 @@ export function ReceiptModal({
                         <div className="text-xs text-gray-600">
                           {item.quantity} x{" "}
                           {Math.floor(
-                            typeof item.price === "string"
-                              ? parseFloat(item.price)
-                              : item.price,
+                            (() => {
+                              const basePrice = typeof item.price === "string"
+                                ? parseFloat(item.price)
+                                : item.price;
+                              
+                              if (priceIncludesTax) {
+                                const taxRate = parseFloat(item.taxRate || "0");
+                                return basePrice * (1 + taxRate / 100);
+                              }
+                              
+                              return basePrice;
+                            })()
                           ).toLocaleString("vi-VN")}{" "}
                           ₫
                         </div>
