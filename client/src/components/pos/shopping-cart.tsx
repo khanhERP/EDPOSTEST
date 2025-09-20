@@ -269,7 +269,7 @@ export function ShoppingCart({
       const taxRate = parseFloat(item.taxRate || "0");
       const priceWithTax = basePrice * (1 + taxRate / 100);
       console.log("Shopping Cart: Price with tax:", priceWithTax);
-      return Math.round(priceWithTax);
+      return priceWithTax;
     }
     
     // If store setting says not to include tax, show base price
@@ -1198,9 +1198,7 @@ export function ShoppingCart({
                   </h4>
                   <div className="space-y-1">
                     <p className="text-xs pos-text-secondary">
-                      {Math.round(getDisplayPrice(item)).toLocaleString(
-                        "vi-VN",
-                      )}{" "}
+                      {getDisplayPrice(item).toLocaleString("vi-VN")}{" "}
                       ₫ {t("pos.each")}
                     </p>
                     {item.taxRate && parseFloat(item.taxRate) > 0 && (
