@@ -431,29 +431,23 @@ export function ShoppingCart({
         ? parseFloat(orderDiscounts[activeOrderId] || "0")
         : parseFloat(discountAmount || "0");
 
-      // Calculate accurate values using rounded integers for consistency
-      const accurateSubtotal = Math.round(subtotal);
-      const accurateTax = Math.round(tax);
-      const accurateTotal = Math.round(total);
-
       const cartUpdateMessage = {
         type: "cart_update",
         cart: validatedCart,
-        subtotal: accurateSubtotal,
-        tax: accurateTax,
-        total: accurateTotal,
-        discount: currentDiscount,
+        subtotal: subtotal,
+        tax: tax,
+        total: total,
+        discount: currentDiscount, // Add discount to broadcast message
         orderNumber: activeOrderId || `ORD-${Date.now()}`,
         timestamp: new Date().toISOString(),
       };
 
-      console.log("📡 Shopping Cart: Broadcasting cart update with accurate data:", {
+      console.log("📡 Shopping Cart: Broadcasting cart update:", {
         cartItems: validatedCart.length,
-        subtotal: accurateSubtotal,
-        tax: accurateTax,
-        total: accurateTotal,
+        subtotal: subtotal,
+        tax: tax,
+        total: total,
         discount: currentDiscount,
-        originalValues: { subtotal, tax, total },
       });
 
       try {
@@ -482,7 +476,7 @@ export function ShoppingCart({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [cart, subtotal, tax, total, discount, broadcastCartUpdate]);
+  }, [cart, subtotal, tax, total, broadcastCartUpdate]);
 
   const getPaymentMethods = () => {
     // Only return cash and bank transfer payment methods
@@ -1465,64 +1459,6 @@ export function ShoppingCart({
                     wsRef.current &&
                     wsRef.current.readyState === WebSocket.OPEN
                   ) {
-                    // Recalculate tax with new discount value
-                    const recalculatedTax = cart.reduce((sum, item) => {
-                      if (item.taxRate && parseFloat(item.taxRate) > 0) {
-                        const basePrice = parseFloat(item.price);
-                        const quantity = item.quantity;
-                        const itemSubtotal = basePrice * quantity;
-
-                        // Calculate discount for this item with new discount value
-                        let itemDiscountAmount = 0;
-
-                        if (value > 0) {
-                          const currentIndex = cart.findIndex(
-                            (cartItem) => cartItem.id === item.id,
-                          );
-                          const isLastItem = currentIndex === cart.length - 1;
-
-                          if (isLastItem) {
-                            // Last item: total discount - sum of all previous discounts
-                            let previousDiscounts = 0;
-                            const totalBeforeDiscount = cart.reduce((sum, itm) => {
-                              return sum + parseFloat(itm.price) * itm.quantity;
-                            }, 0);
-
-                            for (let i = 0; i < cart.length - 1; i++) {
-                              const prevItemSubtotal =
-                                parseFloat(cart[i].price) * cart[i].quantity;
-                              const prevItemDiscount =
-                                totalBeforeDiscount > 0
-                                  ? Math.floor(
-                                      (value * prevItemSubtotal) / totalBeforeDiscount,
-                                    )
-                                  : 0;
-                              previousDiscounts += prevItemDiscount;
-                            }
-
-                            itemDiscountAmount = value - previousDiscounts;
-                          } else {
-                            // Regular calculation for non-last items
-                            const totalBeforeDiscount = cart.reduce((sum, itm) => {
-                              return sum + parseFloat(itm.price) * itm.quantity;
-                            }, 0);
-                            itemDiscountAmount =
-                              totalBeforeDiscount > 0
-                                ? Math.floor((value * itemSubtotal) / totalBeforeDiscount)
-                                : 0;
-                          }
-                        }
-
-                        // Tax = (price * quantity - discount) * taxRate
-                        const taxableAmount = Math.max(0, itemSubtotal - itemDiscountAmount);
-                        const taxRate = parseFloat(item.taxRate) / 100;
-                        const calculatedTax = Math.floor(taxableAmount * taxRate);
-
-                        return sum + calculatedTax;
-                      }
-                      return sum;
-                    }, 0);
-
                     // Ensure cart items have proper structure
                     const validatedCart = cart.map((item) => ({
                       ...item,
@@ -1541,33 +1477,26 @@ export function ShoppingCart({
                       total: item.total || "0",
                     }));
 
-                    const accurateSubtotal = Math.round(subtotal);
-                    const accurateTax = Math.round(recalculatedTax);
-                    const accurateTotal = Math.round(subtotal + recalculatedTax);
-
                     wsRef.current.send(
                       JSON.stringify({
                         type: "cart_update",
-                        cart: validatedCart,
-                        subtotal: accurateSubtotal,
-                        tax: accurateTax,
-                        total: accurateTotal,
-                        discount: value,
+                        cart: validatedCart, // Send validated cart items
+                        subtotal: Math.floor(subtotal),
+                        tax: Math.floor(tax),
+                        total: Math.floor(total), // Total before discount
+                        discount: value, // The new discount value
                         orderNumber: activeOrderId || `ORD-${Date.now()}`,
                         timestamp: new Date().toISOString(),
-                        updateType: "discount_update",
+                        updateType: "discount_update", // Indicate this is a discount update
                       }),
                     );
 
                     console.log(
-                      "📡 Shopping Cart: Discount update broadcasted with recalculated tax:",
+                      "📡 Shopping Cart: Discount update broadcasted:",
                       {
                         discount: value,
                         cartItems: validatedCart.length,
-                        subtotal: accurateSubtotal,
-                        tax: accurateTax,
-                        total: accurateTotal,
-                        recalculatedTax: recalculatedTax,
+                        total: Math.floor(total),
                       },
                     );
                   }
