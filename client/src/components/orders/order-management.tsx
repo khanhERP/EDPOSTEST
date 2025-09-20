@@ -867,9 +867,12 @@ export function OrderManagement() {
       vi: "vi-VN",
     };
 
-    return date.toLocaleTimeString(
+    return date.toLocaleString(
       localeMap[currentLanguage as keyof typeof localeMap] || "ko-KR",
       {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
