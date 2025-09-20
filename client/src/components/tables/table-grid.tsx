@@ -3396,7 +3396,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       </div>
                     </>
                   );
-                })()}</div>
+                })()}
               </div>
 
               {/* Payment Buttons */}
