@@ -208,11 +208,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     fruits: "과일",
     // Tab labels
     basic: "기본",
-    invoice: "HĐ",
-
-    // Template table headers
-    basicInfoShort: "기본",
-    operationsShort: "운영",
+    invoice: "인보이스",
     // Product Management
     totalCategories: "총 카테고리",
     totalProducts: "총 상품",
@@ -287,32 +283,32 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     // Placeholders
     categoryNamePlaceholder: "카테고리 이름을 입력하세요",
     templateNumberPlaceholder: "예: 01GTKT0/001",
-    templateCodePlaceholder: "예: 123451/88890345",
+    templateCodePlaceholder: "예: 123451/88890345", 
     symbolPlaceholder: "예: AA/19E",
     templateNamePlaceholder: "예: 템플릿 1",
     productsCount: "개 상품",
-
+    
     // Product deletion confirmation
     confirmDeleteProductTitle: "상품 삭제 확인",
     confirmDeleteProductDesc: "정말로 상품을 삭제하시겠습니까?",
     deleteProductWarning: "경고: 이 작업은 되돌릴 수 없습니다. 상품이 시스템에서 영구적으로 삭제됩니다.",
     deleteProductDetails: "이는 이 상품이 포함된 주문 및 보고서에 영향을 줄 것입니다.",
     deleteProductAction: "상품 삭제",
-
+    
     // E-invoice connection deletion confirmation
     confirmDeleteConnectionTitle: "HĐĐT 연결 삭제 확인",
     confirmDeleteConnectionDesc: "정말로 연결 \"{name}\"을 삭제하시겠습니까?",
     deleteConnectionWarning: "이 작업은 되돌릴 수 없습니다. HĐĐT 연결이 시스템에서 영구적으로 삭제됩니다.",
     deleteConnectionDetails: "이는 전자 인보이스 발행에 영향을 줄 수 있습니다.",
     deleteConnectionAction: "연결 삭제",
-
+    
     // Template deletion confirmation
     confirmDeleteTemplateTitle: "템플릿 삭제 확인",
     confirmDeleteTemplateDesc: "정말로 템플릿 \"{name}\"을 삭제하시겠습니까?",
     deleteTemplateWarning: "이 작업은 되돌릴 수 없습니다. 템플릿이 시스템에서 영구적으로 삭제됩니다.",
     deleteTemplateDetails: "이는 전자 인보이스 발행에 영향을 줄 수 있습니다.",
     deleteTemplateAction: "템플릿 삭제",
-
+    
     // Printer configuration
     printerManagementDesc: "POS 시스템에 연결된 프린터 관리",
     printerSetupDesc: "송장, 영수증 및 보고서용 프린터 설정 및 관리",
@@ -604,31 +600,31 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     categoryNamePlaceholder: "Enter category name",
     templateNumberPlaceholder: "e.g., 01GTKT0/001",
     templateCodePlaceholder: "e.g., 123451/88890345",
-    symbolPlaceholder: "e.g., AA/19E",
+    symbolPlaceholder: "e.g., AA/19E", 
     templateNamePlaceholder: "e.g., Template 1",
     productsCount: "products",
-
+    
     // Product deletion confirmation
     confirmDeleteProductTitle: "Confirm Product Deletion",
     confirmDeleteProductDesc: "Are you sure you want to delete this product?",
     deleteProductWarning: "Warning: This action cannot be undone. The product will be permanently deleted from the system.",
     deleteProductDetails: "This will affect orders and reports containing this product.",
     deleteProductAction: "Delete Product",
-
+    
     // E-invoice connection deletion confirmation
     confirmDeleteConnectionTitle: "Confirm E-invoice Connection Deletion",
     confirmDeleteConnectionDesc: "Are you sure you want to delete connection \"{name}\"?",
     deleteConnectionWarning: "This action cannot be undone. The HĐĐT connection will be permanently deleted from the system.",
     deleteConnectionDetails: "This may affect electronic invoice generation.",
     deleteConnectionAction: "Delete Connection",
-
+    
     // Template deletion confirmation
     confirmDeleteTemplateTitle: "Confirm Template Deletion",
     confirmDeleteTemplateDesc: "Are you sure you want to delete template \"{name}\"?",
     deleteTemplateWarning: "This action cannot be undone. The template will be permanently deleted from the system.",
     deleteTemplateDetails: "This may affect electronic invoice generation.",
     deleteTemplateAction: "Delete Template",
-
+    
     // Printer configuration
     printerManagementDesc: "Manage printers connected to the POS system",
     printerSetupDesc: "Set up and manage printers for invoices, receipts, and reports",
@@ -923,28 +919,28 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     symbolPlaceholder: "Ví dụ: AA/19E",
     templateNamePlaceholder: "Ví dụ: Mẫu số 1",
     productsCount: "sản phẩm",
-
+    
     // Product deletion confirmation
     confirmDeleteProductTitle: "Xác nhận xóa sản phẩm",
     confirmDeleteProductDesc: "Bạn có chắc chắn muốn xóa sản phẩm này không?",
     deleteProductWarning: "Cảnh báo: Hành động này không thể hoàn tác. Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.",
     deleteProductDetails: "Điều này sẽ ảnh hưởng đến các đơn hàng và báo cáo có chứa sản phẩm này.",
     deleteProductAction: "Xóa sản phẩm",
-
+    
     // E-invoice connection deletion confirmation
     confirmDeleteConnectionTitle: "Xác nhận xóa kết nối HĐĐT",
     confirmDeleteConnectionDesc: "Bạn có chắc chắn muốn xóa kết nối \"{name}\" không?",
     deleteConnectionWarning: "Hành động này không thể hoàn tác. Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.",
     deleteConnectionDetails: "Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.",
     deleteConnectionAction: "Xóa kết nối",
-
+    
     // Template deletion confirmation
     confirmDeleteTemplateTitle: "Xác nhận xóa mẫu số HĐĐT",
     confirmDeleteTemplateDesc: "Bạn có chắc chắn muốn xóa mẫu số \"{name}\" không?",
     deleteTemplateWarning: "Hành động này không thể hoàn tác. Mẫu số HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.",
     deleteTemplateDetails: "Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.",
     deleteTemplateAction: "Xóa mẫu số",
-
+    
     // Printer configuration
     printerManagementDesc: "Quản lý các máy in kết nối với hệ thống POS",
     printerSetupDesc: "Thiết lập và quản lý máy in cho hóa đơn, biên lai và báo cáo",
