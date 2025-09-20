@@ -1863,44 +1863,14 @@ export function PaymentMethodModal({
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
                     {(() => {
-                      // Use exact total from orderForPayment or receipt first
-                      if (orderForPayment?.exactTotal) {
-                        return Math.floor(Number(orderForPayment.exactTotal)).toLocaleString("vi-VN");
-                      }
+                      // Priority: Use exact total from receipt or orderForPayment
+                      const exactTotal = receipt?.exactTotal ||
+                                         orderForPayment?.exactTotal ||
+                                         parseFloat(receipt?.total || "0") ||
+                                         parseFloat(orderForPayment?.total || "0") ||
+                                         total || 0;
 
-                      if (receipt?.exactTotal) {
-                        return Math.floor(Number(receipt.exactTotal)).toLocaleString("vi-VN");
-                      }
-
-                      // Fallback calculation
-                      const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
-                      const priceIncludesTax = storeSettings?.priceIncludesTax || false;
-
-                      let displayTotal = total || 0;
-
-                      if (orderForPayment) {
-                        const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
-                        const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
-                        const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
-
-                        if (priceIncludesTax) {
-                          displayTotal = Math.max(0, subtotal - discount);
-                        } else {
-                          displayTotal = Math.max(0, subtotal + tax - discount);
-                        }
-                      } else if (receipt) {
-                        const receiptSubtotal = Number(receipt.subtotal || receipt.exactSubtotal || 0);
-                        const receiptTax = Number(receipt.tax || receipt.exactTax || 0);
-                        const receiptDiscount = Number(receipt.discount || receipt.exactDiscount || 0);
-
-                        if (priceIncludesTax) {
-                          displayTotal = Math.max(0, receiptSubtotal - receiptDiscount);
-                        } else {
-                          displayTotal = Math.max(0, receiptSubtotal + receiptTax - receiptDiscount);
-                        }
-                      }
-
-                      return Math.floor(Number(displayTotal)).toLocaleString("vi-VN");
+                      return Math.floor(Number(exactTotal)).toLocaleString("vi-VN");
                     })()} ₫
                   </p>
                 </div>
@@ -2004,44 +1974,14 @@ export function PaymentMethodModal({
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
                       {(() => {
-                        // Use exact total from orderForPayment or receipt first
-                        if (orderForPayment?.exactTotal) {
-                          return Math.floor(Number(orderForPayment.exactTotal)).toLocaleString("vi-VN");
-                        }
+                        // Priority: Use exact total from receipt or orderForPayment
+                        const exactTotal = receipt?.exactTotal ||
+                                         orderForPayment?.exactTotal ||
+                                         parseFloat(receipt?.total || "0") ||
+                                         parseFloat(orderForPayment?.total || "0") ||
+                                         total || 0;
 
-                        if (receipt?.exactTotal) {
-                          return Math.floor(Number(receipt.exactTotal)).toLocaleString("vi-VN");
-                        }
-
-                        // Fallback calculation
-                        const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
-                        const priceIncludesTax = storeSettings?.priceIncludesTax || false;
-
-                        let displayTotal = total || 0;
-
-                        if (orderForPayment) {
-                          const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
-                          const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
-                          const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
-
-                          if (priceIncludesTax) {
-                            displayTotal = Math.max(0, subtotal - discount);
-                          } else {
-                            displayTotal = Math.max(0, subtotal + tax - discount);
-                          }
-                        } else if (receipt) {
-                          const receiptSubtotal = Number(receipt.subtotal || receipt.exactSubtotal || 0);
-                          const receiptTax = Number(receipt.tax || receipt.exactTax || 0);
-                          const receiptDiscount = Number(receipt.discount || receipt.exactDiscount || 0);
-
-                          if (priceIncludesTax) {
-                            displayTotal = Math.max(0, receiptSubtotal - receiptDiscount);
-                          } else {
-                            displayTotal = Math.max(0, receiptSubtotal + receiptTax - receiptDiscount);
-                          }
-                        }
-
-                        return Math.floor(Number(displayTotal)).toLocaleString("vi-VN");
+                        return Math.floor(Number(exactTotal)).toLocaleString("vi-VN");
                       })()} ₫
                     </p>
                   </div>
@@ -2175,44 +2115,14 @@ export function PaymentMethodModal({
                     </p>
                     <p className="text-2xl font-bold text-blue-600">
                       {(() => {
-                        // Use exact total from orderForPayment or receipt first
-                        if (orderForPayment?.exactTotal) {
-                          return Math.floor(Number(orderForPayment.exactTotal)).toLocaleString("vi-VN");
-                        }
+                        // Priority: Use exact total from receipt or orderForPayment
+                        const exactTotal = receipt?.exactTotal ||
+                                         orderForPayment?.exactTotal ||
+                                         parseFloat(receipt?.total || "0") ||
+                                         parseFloat(orderForPayment?.total || "0") ||
+                                         total || 0;
 
-                        if (receipt?.exactTotal) {
-                          return Math.floor(Number(receipt.exactTotal)).toLocaleString("vi-VN");
-                        }
-
-                        // Fallback calculation
-                        const storeSettings = JSON.parse(localStorage.getItem("storeSettings") || "{}");
-                        const priceIncludesTax = storeSettings?.priceIncludesTax || false;
-
-                        let displayTotal = total || 0;
-
-                        if (orderForPayment) {
-                          const subtotal = Number(orderForPayment.subtotal || orderForPayment.exactSubtotal || 0);
-                          const tax = Number(orderForPayment.tax || orderForPayment.exactTax || 0);
-                          const discount = Number(orderForPayment.discount || orderForPayment.exactDiscount || 0);
-
-                          if (priceIncludesTax) {
-                            displayTotal = Math.max(0, subtotal - discount);
-                          } else {
-                            displayTotal = Math.max(0, subtotal + tax - discount);
-                          }
-                        } else if (receipt) {
-                          const receiptSubtotal = Number(receipt.subtotal || receipt.exactSubtotal || 0);
-                          const receiptTax = Number(receipt.tax || receipt.exactTax || 0);
-                          const receiptDiscount = Number(receipt.discount || receipt.exactDiscount || 0);
-
-                          if (priceIncludesTax) {
-                            displayTotal = Math.max(0, receiptSubtotal - receiptDiscount);
-                          } else {
-                            displayTotal = Math.max(0, receiptSubtotal + receiptTax - receiptDiscount);
-                          }
-                        }
-
-                        return Math.floor(Number(displayTotal)).toLocaleString("vi-VN");
+                        return Math.floor(Number(exactTotal)).toLocaleString("vi-VN");
                       })()} ₫
                     </p>
                   </div>
@@ -2483,46 +2393,14 @@ export function PaymentMethodModal({
                 },
               );
 
-              // Priority: orderInfo data first, then receipt, then fallback to prop total
-              let calculatedTotal = 0;
+              // Priority: Use exact total from receipt or orderForPayment
+              const exactTotal = receipt?.exactTotal ||
+                                 orderForPayment?.exactTotal ||
+                                 parseFloat(receipt?.total || "0") ||
+                                 parseFloat(orderForPayment?.total || "0") ||
+                                 total || 0;
 
-              if (orderInfo?.total) {
-                calculatedTotal = parseFloat(orderInfo.total.toString());
-                console.log(
-                  "💰 Using orderInfo.total for EInvoice:",
-                  calculatedTotal,
-                );
-              } else if (orderInfo?.exactTotal) {
-                calculatedTotal = parseFloat(orderInfo.exactTotal.toString());
-                console.log(
-                  "💰 Using orderInfo.exactTotal for EInvoice:",
-                  calculatedTotal,
-                );
-              } else if (receipt?.exactTotal) {
-                calculatedTotal = parseFloat(receipt.exactTotal.toString());
-                console.log(
-                  "💰 Using receipt.exactTotal for EInvoice:",
-                  calculatedTotal,
-                );
-              } else if (receipt?.total) {
-                calculatedTotal = parseFloat(receipt.total.toString());
-                console.log(
-                  "💰 Using receipt.total for EInvoice:",
-                  calculatedTotal,
-                );
-              } else {
-                calculatedTotal = parseFloat(total?.toString() || "0");
-                console.log(
-                  "💰 Using fallback total for EInvoice:",
-                  calculatedTotal,
-                );
-              }
-
-              console.log(
-                "💰 Final calculated total for EInvoice:",
-                calculatedTotal,
-              );
-              return Math.floor(calculatedTotal || 0);
+              return Math.floor(Number(exactTotal) || 0);
             })()}
             selectedPaymentMethod={selectedPaymentMethod}
             cartItems={(() => {
