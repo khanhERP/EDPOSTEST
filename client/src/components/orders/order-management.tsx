@@ -55,8 +55,11 @@ function OrderSummaryDisplay({ orderDetailsCalculation, selectedOrder }: {
   const discount = parseFloat(selectedOrder.discount || "0");
 
   if (priceIncludesTax) {
-    // When price includes tax: Tổng tiền = subtotal - tax - discount
-    const finalTotal = subtotal - tax - discount;
+    // When price includes tax: Giống Receipt Modal
+    // - Tạm tính = subtotal (giá đã bao gồm thuế)  
+    // - Thuế = tax amount (hiển thị dương)
+    // - Tổng tiền = subtotal + tax - discount
+    const finalTotal = subtotal + tax - discount;
 
     return (
       <>
@@ -69,7 +72,7 @@ function OrderSummaryDisplay({ orderDetailsCalculation, selectedOrder }: {
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">{t("reports.tax")}:</span>
           <span className="font-medium">
-            -{Math.floor(tax).toLocaleString("vi-VN")} ₫
+            {Math.floor(tax).toLocaleString("vi-VN")} ₫
           </span>
         </div>
         {discount > 0 && (
@@ -92,7 +95,10 @@ function OrderSummaryDisplay({ orderDetailsCalculation, selectedOrder }: {
       </>
     );
   } else {
-    // When price doesn't include tax: Tạm tính = subtotal, Thuế = tax, Tổng tiền = subtotal + tax - discount
+    // When price doesn't include tax: Giống Receipt Modal  
+    // - Tạm tính = subtotal (giá chưa bao gồm thuế)
+    // - Thuế = tax amount (hiển thị dương)
+    // - Tổng tiền = subtotal + tax - discount
     const finalTotal = subtotal + tax - discount;
 
     return (
