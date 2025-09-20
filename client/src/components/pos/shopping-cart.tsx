@@ -256,11 +256,11 @@ export function ShoppingCart({
   const getDisplayPrice = (item: any): number => {
     const basePrice = parseFloat(item.price);
     
-    if (priceIncludesTax) {
-      // If store setting says to include tax, calculate price with tax
-      const taxRate = parseFloat(item.taxRate || "0");
-      return basePrice * (1 + taxRate / 100);
-    }
+    // if (priceIncludesTax) {
+    //   // If store setting says to include tax, calculate price with tax
+    //   const taxRate = parseFloat(item.taxRate || "0");
+    //   return basePrice * (1 + taxRate / 100);
+    // }
     
     // If store setting says not to include tax, show base price
     return basePrice;

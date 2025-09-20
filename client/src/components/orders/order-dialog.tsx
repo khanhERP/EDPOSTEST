@@ -901,24 +901,25 @@ export function OrderDialog({
                           >
                             {(() => {
                               // Check store setting for price display
-                              const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+                              const priceIncludesTax =
+                                storeSettings?.priceIncludesTax || false;
                               const basePrice = Number(product.price);
                               const taxRate = Number(product.taxRate || 0);
-                              
-                              if (priceIncludesTax && taxRate > 0) {
-                                // If price includes tax, display price * (1 + tax/100)
-                                const priceWithTax = basePrice * (1 + taxRate / 100);
-                                return Math.round(priceWithTax).toLocaleString();
-                              } else {
-                                // If price doesn't include tax, display base price
-                                return Math.round(basePrice).toLocaleString();
-                              }
-                            })()} ₫
+
+                              // if (priceIncludesTax && taxRate > 0) {
+                              //   // If price includes tax, display price * (1 + tax/100)
+                              //   const priceWithTax = basePrice * (1 + taxRate / 100);
+                              //   return Math.round(priceWithTax).toLocaleString();
+                              // } else {
+                              //   // If price doesn't include tax, display base price
+                              // }
+                              return Math.round(basePrice).toLocaleString();
+                            })()}{" "}
+                            ₫
                           </span>
                           {product.taxRate && (
                             <span className="text-xs text-gray-500">
                               {t("reports.tax")}: {product.taxRate}%
-                              {storeSettings?.priceIncludesTax ? " (đã bao gồm)" : " (chưa bao gồm)"}
                             </span>
                           )}
                         </div>
@@ -1282,20 +1283,29 @@ export function OrderDialog({
                             </h4>
                             <span className="text-sm font-bold">
                               {(() => {
-                                const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+                                const priceIncludesTax =
+                                  storeSettings?.priceIncludesTax || false;
                                 const basePrice = Number(item.product.price);
-                                const taxRate = Number(item.product.taxRate || 0);
+                                const taxRate = Number(
+                                  item.product.taxRate || 0,
+                                );
                                 const quantity = item.quantity;
-                                
-                                if (priceIncludesTax && taxRate > 0) {
-                                  // If price includes tax, display price * (1 + tax/100) * quantity
-                                  const priceWithTax = basePrice * (1 + taxRate / 100);
-                                  return Math.round(priceWithTax * quantity).toLocaleString();
-                                } else {
-                                  // If price doesn't include tax, display base price * quantity
-                                  return Math.round(basePrice * quantity).toLocaleString();
-                                }
-                              })()} ₫
+
+                                // if (priceIncludesTax && taxRate > 0) {
+                                //   // If price includes tax, display price * (1 + tax/100) * quantity
+                                //   const priceWithTax =
+                                //     basePrice * (1 + taxRate / 100);
+                                //   return Math.round(
+                                //     priceWithTax * quantity,
+                                //   ).toLocaleString();
+                                // } else {
+                                //   // If price doesn't include tax, display base price * quantity
+                                // }
+                                return Math.round(
+                                  basePrice * quantity,
+                                ).toLocaleString();
+                              })()}{" "}
+                              ₫
                             </span>
                           </div>
 
@@ -1326,19 +1336,26 @@ export function OrderDialog({
                               <div>
                                 {t("tables.unitPrice")}:{" "}
                                 {(() => {
-                                  const priceIncludesTax = storeSettings?.priceIncludesTax || false;
+                                  const priceIncludesTax =
+                                    storeSettings?.priceIncludesTax || false;
                                   const basePrice = Number(item.product.price);
-                                  const taxRate = Number(item.product.taxRate || 0);
-                                  
-                                  if (priceIncludesTax && taxRate > 0) {
-                                    // If price includes tax, display price * (1 + tax/100)
-                                    const priceWithTax = basePrice * (1 + taxRate / 100);
-                                    return Math.round(priceWithTax).toLocaleString();
-                                  } else {
-                                    // If price doesn't include tax, display base price
-                                    return Math.round(basePrice).toLocaleString();
-                                  }
-                                })()} ₫
+                                  const taxRate = Number(
+                                    item.product.taxRate || 0,
+                                  );
+
+                                  // if (priceIncludesTax && taxRate > 0) {
+                                  //   // If price includes tax, display price * (1 + tax/100)
+                                  //   const priceWithTax =
+                                  //     basePrice * (1 + taxRate / 100);
+                                  //   return Math.round(
+                                  //     priceWithTax,
+                                  //   ).toLocaleString();
+                                  // } else {
+                                  //   // If price doesn't include tax, display base price
+                                  // }
+                                  return Math.round(basePrice).toLocaleString();
+                                })()}{" "}
+                                ₫
                               </div>
                               {(() => {
                                 // Calculate tax amount for this item
@@ -1498,7 +1515,8 @@ export function OrderDialog({
 
                                 return (
                                   <div className="font-medium text-blue-600">
-                                    {t("reports.totalMoney")}: {finalTotal.toLocaleString()} ₫
+                                    {t("reports.totalMoney")}:{" "}
+                                    {finalTotal.toLocaleString()} ₫
                                   </div>
                                 );
                               })()}
