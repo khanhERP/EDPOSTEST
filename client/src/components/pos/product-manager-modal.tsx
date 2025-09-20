@@ -885,52 +885,6 @@ export function ProductManagerModal({
 
                     <FormField
                       control={form.control}
-                      name="afterTaxPrice"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("common.comboValues.afterTaxPrice")}</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="text"
-                              placeholder="4,320"
-                              value={field.value ? parseInt(field.value).toLocaleString('ko-KR') : ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                // Only allow numbers and commas
-                                const sanitized = value.replace(/[^0-9,]/g, '').replace(/,/g, '');
-                                
-                                // Check if the number would exceed the limit
-                                const num = parseInt(sanitized);
-                                if (!isNaN(num) && num >= 100000000) {
-                                  // Don't allow input that would exceed the limit
-                                  return;
-                                }
-                                
-                                // Store the integer value (without commas)
-                                field.onChange(sanitized);
-                                
-                                // Calculate base price from after tax price
-                                if (sanitized && !isNaN(parseInt(sanitized))) {
-                                  const afterTaxPrice = parseInt(sanitized);
-                                  const taxRate = parseFloat(form.getValues("taxRate") || "8.00");
-                                  
-                                  // Calculate base price: basePrice = afterTaxPrice / (1 + taxRate/100)
-                                  const basePrice = Math.round(afterTaxPrice / (1 + taxRate / 100));
-                                  
-                                  // Update the price field
-                                  form.setValue("price", basePrice.toString());
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
                       name="stock"
                       render={({ field }) => (
                         <FormItem>
