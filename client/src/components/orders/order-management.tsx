@@ -320,6 +320,14 @@ export function OrderManagement() {
     enabled: pointsPaymentOpen,
   });
 
+  const { data: storeSettings } = useQuery({
+    queryKey: ["/api/store-settings"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/store-settings");
+      return response.json();
+    },
+  });
+
   const { data: orderItems, isLoading: orderItemsLoading } = useQuery({
     queryKey: ["/api/order-items", selectedOrder?.id],
     enabled: !!selectedOrder?.id && orderDetailsOpen,
@@ -946,10 +954,30 @@ export function OrderManagement() {
     };
   }, [selectedOrder, orderItems, products]);
 
-  // Function to get order total - simply return stored total from database
-  const getOrderTotal = React.useCallback((order: Order) => {
+  // Function to get order total - check priceIncludesTax setting
+  const getOrderTotal = React.useCallback((order: Order, storeSettings?: any) => {
     const storedTotal = Math.floor(Number(order.total || 0));
-    return storedTotal;
+    
+    // If no store settings available, return stored total
+    if (!storeSettings) {
+      return storedTotal;
+    }
+    
+    const priceIncludesTax = storeSettings.priceIncludesTax || false;
+    
+    if (!priceIncludesTax) {
+      // priceIncludesTax = false: total không thay đổi
+      return storedTotal;
+    } else {
+      // priceIncludesTax = true: total = subtotal - tax - discount
+      // We need to calculate from order data
+      const subtotal = Math.floor(Number(order.subtotal || 0));
+      const tax = Math.floor(Number(order.tax || 0));
+      const discount = Math.floor(Number(order.discount || 0));
+      
+      const calculatedTotal = Math.max(0, subtotal - tax - discount);
+      return calculatedTotal;
+    }
   }, []);
 
   const formatTime = (dateString: string | Date) => {
@@ -2505,7 +2533,7 @@ export function OrderManagement() {
                         </span>
                         <span className="text-lg font-bold text-green-600">
                           {(() => {
-                            const finalTotal = getOrderTotal(order);
+                            const finalTotal = getOrderTotal(order, storeSettings);
 
                             if (finalTotal === 0) {
                               return (
